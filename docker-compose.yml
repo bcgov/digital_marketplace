@@ -1,0 +1,11 @@
+version: "3"
+services:
+  db:
+    image: postgres:10
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: digitalmarketplace
+      POSTGRES_PASSWORD: digitalmarketplace
+      POSTGRES_DB: digitalmarketplace

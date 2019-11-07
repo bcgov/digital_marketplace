@@ -1,0 +1,456 @@
+// Custom Bootstrap variable overrides.
+
+$grid-breakpoints: (
+  xs: 0,
+  sm: 570px,
+  md: 900px,
+  lg: 1100px,
+  xl: 1400px 
+);
+
+$container-max-widths: (
+  sm: 530px,
+  md: 860px,
+  lg: 1060px,
+  xl: 1060px // Maximum container width fixed at lg size.
+);
+
+$spacer: 1rem;
+
+$spacers: (
+	n6: ($spacer * -4),
+	n7: ($spacer * -5),
+	6: ($spacer * 4),
+	7: ($spacer * 5)
+);
+
+$grid-gutter-width: $spacer * 2;
+
+// Theme colors.
+// Bootstrap updates the theme map based on these variables,
+// so we don't need to update the map at all.
+$primary: #0C99D6;
+$primary-alt: #17A2B8;
+$info: #003366;
+$info-alt: #38598A;
+$info-alt-2: #0F4C8B;
+$warn: #FCBA19;
+$danger: #DC3545;
+$success: #28A745;
+
+$theme-colors: (
+  'primary-alt': $primary-alt,
+  'info-alt': $info-alt,
+  'info-alt-2': $info-alt-2
+);
+
+$component-active-bg: $primary;
+$link-color: $primary;
+
+$font-weight-bold: 500;
+$font-weight-bolder: 700;
+
+$input-btn-padding-x: 1rem;
+$input-btn-padding-x-sm: 0.75rem;
+$input-btn-padding-x-lg: 1.25rem;
+
+$badge-font-size: 85%;
+
+$enable-validation-icons: false;
+
+// Custom variables.
+
+$fixed-bar-height: 71px;
+
+// Import Bootstrap.
+
+@import 'node_modules/bootstrap/scss/bootstrap.scss';
+
+// Global styles.
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: $info;
+}
+
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+input:-ms-clear {
+  display: none;
+}
+
+input[type="date"],
+input[type="time"] {
+
+  &::-ms-clear {
+    display: none;
+  }
+
+  &::-webkit-clear-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    display: none;
+  }
+}
+
+.app {
+  $page-transition-duration: 240ms;
+
+  .page-container {
+    opacity: 1;
+    transform: translateY(0);
+    transition-property: opacity, transform;
+    transition-duration: $page-transition-duration;
+    transition-timing-function: ease-out;
+    z-index: 2;
+  }
+
+  &.in-transition {
+    pointer-events: none;
+
+    .page-container {
+      opacity: 0;
+      transform: translateY($spacer / 2);
+    }
+  }
+}
+
+.navbar .transition-indicator {
+  display: none;
+
+  .in-transition & {
+    display: block;
+  }
+}
+
+// Custom Bootstrap style overrides.
+
+.btn,
+button {
+
+  &.disabled:not(.btn-link):not(.dropdown-item),
+  &:disabled:not(.btn-link):not(.dropdown-item) {
+    background-color: $secondary;
+    border-color: $secondary;
+  }
+}
+
+a {
+  cursor: pointer;
+
+  &.disabled {
+    opacity: $btn-disabled-opacity;
+    cursor: default;
+  }
+}
+
+.blockquote {
+  margin-left: $spacer;
+  padding-left: $spacer;
+  border-left: 2px solid $gray-200;
+}
+
+blockquote {
+  @extend .blockquote;
+}
+
+table {
+  @extend .table;
+
+  thead {
+    @extend .small;
+    @extend .text-secondary;
+    @extend .text-uppercase;
+    @extend .font-weight-bold;
+    @extend .bg-light;
+  }
+}
+
+pre {
+  @extend .bg-light;
+  @extend .p-3;
+  @extend .border;
+  @extend .rounded;
+}
+
+label {
+  @extend .py-1;
+
+  .custom-checkbox &,
+  .custom-radio & {
+    @extend .font-size-base;
+    @extend .py-0;
+  }
+}
+
+nav.navbar .nav-link:hover {
+  text-decoration: underline;
+}
+
+.nav-tabs .nav-item .active {
+  cursor: default;
+  pointer-events: none;
+}
+
+.card-body {
+  @extend .p-4;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 0.35em 0.7em;
+}
+
+.custom-radio,
+.custom-checkbox {
+
+  .custom-control-label::before {
+    transition: none;
+  }
+}
+
+// Custom utilities.
+
+.o-0 {
+  opacity: 0 !important;
+}
+
+.o-25 {
+  opacity: 0.25 !important;
+}
+
+.o-50 {
+  opacity: 0.50 !important;
+}
+
+.o-75 {
+  opacity: 0.75 !important;
+}
+
+.o-100 {
+  opacity: 1 !important;
+}
+
+.font-size-small {
+  font-size: $font-size-sm;
+}
+
+.font-size-base {
+  font-size: $font-size-base;
+}
+
+.font-size-large {
+  font-size: $font-size-lg;
+}
+
+.text-decoration-underline {
+  text-decoration: underline !important;
+}
+
+// Create classes for each of the text colors
+// that apply the color when the element is being hovered.
+// .text-hover-primary, .text-hover-danger, etc.
+@each $color, $value in $theme-colors {
+  .text-hover-#{$color} {
+    @include hover {
+      color: $value !important;
+    }
+  }
+}
+@each $color, $value in $colors {
+  .text-hover-#{$color} {
+    @include hover {
+      color: $value !important;
+    }
+  }
+}
+@each $color, $value in $grays {
+  .text-hover-gray-#{$color} {
+    @include hover {
+      color: $value !important;
+    }
+  }
+}
+
+.text-wrap {
+  white-space: normal !important;
+}
+
+.vertical-line {
+  position: relative;
+
+  &:after {
+    content: ' ';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    bottom: 0;
+    border-right: $border-width solid $border-color;
+  }
+}
+
+.fixed-bar {
+  height: $fixed-bar-height;
+}
+
+.border-bottom-info-alt {
+  border-bottom: 1px solid darken($info-alt, 6%);
+}
+
+.border-bottom-gov {
+  border-bottom: 2px solid $warn;
+}
+
+.border-top-gov {
+  border-top: 2px solid $warn;
+}
+
+// Custom components
+
+.react-select-container {
+  flex-grow: 1;
+
+  // Handle validation states.
+  @each $state, $data in $form-validation-states {
+    $color: map-get($data, color);
+    $icon: map-get($data, icon);
+
+		&.is-#{$state} {
+
+      .react-select__control {
+        border-color: $color;
+
+        @if $enable-validation-icons {
+          padding-right: $input-height-inner;
+          background-image: $icon;
+          background-repeat: no-repeat;
+          background-position: center right $input-height-inner-quarter;
+          background-size: $input-height-inner-half $input-height-inner-half;
+        }
+
+        &--is-focused {
+          border-color: $color;
+          box-shadow: 0 0 0 $input-focus-width rgba($color, .25);
+        }
+
+        ~ .#{$state}-feedback,
+        ~ .#{$state}-tooltip {
+          display: block;
+        }
+      }
+    }
+  }
+
+  // Standard control styles.
+  .react-select {
+
+    &__control {
+      @extend .form-control;
+      @extend .p-0;
+      display: flex;
+
+      &--is-disabled {
+        background-color: $input-disabled-bg;
+        opacity: 1;
+
+        .react-select__placeholder {
+          opacity: 0;
+        }
+      }
+
+      &--is-focused {
+        // Copied from:
+        // https://github.com/twbs/bootstrap/blob/de1a6e3201a2f047c5abd2430795be32d37e9a35/scss/mixins/_forms.scss#L15
+        color: $input-focus-color;
+        background-color: $input-focus-bg;
+        border-color: $input-focus-border-color;
+        outline: 0;
+        // Avoid using mixin so we can pass custom focus shadow properly
+        @if $enable-shadows {
+          box-shadow: $input-box-shadow, $input-focus-box-shadow;
+        } @else {
+          box-shadow: $input-focus-box-shadow;
+        }
+      }
+    }
+
+    &__placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &__option {
+      color: $input-color;
+
+      &--is-focused {
+        background: $input-btn-focus-color;
+      }
+
+      &--is-selected {
+        background: rgba($component-active-bg, 0.75) !important;
+        color: $white;
+      }
+    }
+  }
+}
+
+.markdown {
+  
+  img {
+    max-width: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+
+    &:not(:first-child) {
+      margin-top: 2*$spacer;
+    }
+  }
+
+  blockquote,
+  table,
+  pre {
+    margin-top: 2*$spacer;
+    margin-bottom: 2*$spacer;
+  }
+
+}
+
+.vi-card {
+  margin-bottom: 2rem;
+
+  @include media-breakpoint-up(md) {
+    .card {
+      min-height: 440px;
+    }
+  }
+}
+
+// Custom page overrides.
+
+.route-termsAndConditions {
+
+  .markdown {
+
+    & > ul {
+      padding-left: 0;
+    }
+
+    ul {
+      &,
+      li {
+        list-style-type: none; 
+      }
+    }
+  }
+}

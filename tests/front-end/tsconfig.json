@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "moduleResolution": "node",
+    "noErrorTruncation": true,
+    "allowJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "front-end/*": ["../../src/front-end/*"],
+      "shared/*": ["../../src/shared/*"]
+    },
+    "types": ["node", "mocha"]
+  },
+  "include": [
+    "**/*.ts"
+  ]
+}
