@@ -19,7 +19,7 @@ export async function up(connection: Knex): Promise<void> {
         table.string('avatarImageUrl');
         table.boolean('notificationsOn').notNullable();
         table.boolean('acceptedTerms').notNullable();
-        table.string('idpUsername');
+        table.string('idpUsername').notNullable();
 
         // Indices
         table.index(['name']);
