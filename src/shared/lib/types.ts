@@ -1,5 +1,3 @@
-import { compareDates } from 'shared/lib';
-
 /**
  * "ADT" stands for "Algebraic Data Type".
  *
@@ -29,79 +27,20 @@ export enum ClientHttpMethod {
   Options = 'OPTIONS'
 }
 
-export type Id = string;
-
-export enum IssuerType {
-  Google = 'GOOGLE'
+export enum UserTypes {
+  Vendor = 'VENDOR',
+  Government = 'GOV',
+  Admin = 'ADMIN'
 }
 
-export interface User {
-  id: Id;
-  name: string;
-  email: string;
-  issuerUid: string;
-  issuerType: IssuerType;
+export enum UserStatuses {
+  Active = 'ACTIVE',
+  InactiveByUser = 'INACTIVE_USER',
+  InactiveByAdmin = 'INACTIVE_ADMIN'
 }
 
-export interface Librarian {
-  email: string;
-}
-
-export type SessionUser
-  = ADT<'user', User>
-  | ADT<'librarian', Librarian>;
-
-export interface Session {
-  id: Id;
-  issuerRequestState?: string;
-  user?: SessionUser;
-}
-
-export interface Author {
-  id: Id;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  createdAt: Date;
-}
-
-export function authorToFullName(author: Author): string {
-  return `${author.firstName}${author.middleName ? ` ${author.middleName}` : ''} ${author.lastName}`;
-}
-
-export interface Genre {
-  name: string;
-  subscribed?: boolean; // Defined for Users only.
-}
-
-export interface Book {
-  id: Id;
-  title: string;
-  description: string;
-  authors: Author[];
-  genre: Genre;
-  loan?: Loan; // Defined for librarians only.
-  loanStatus?: LoanStatus;
-  subscribed?: boolean; // Defined for Users only.
-  createdAt: Date;
-}
-
-export interface Loan {
-  id: Id;
-  createdAt: Date;
-  dueAt: Date;
-  returnedAt?: Date;
-  bookId: Id;
-}
-
-export type LoanStatus
-  = 'outstanding'
-  | 'overdue'
-  | 'returned';
-
-export function loanToLoanStatus(loan: Loan): LoanStatus {
-  if (loan.returnedAt) { return 'returned'; }
-  const isOverdue = compareDates(new Date(loan.dueAt), new Date()) <= 0;
-  if (isOverdue) { return 'overdue'; }
-  return 'outstanding';
+export enum MembershipTypes {
+  Owner = 'OWNER',
+  Member = 'MEMBER',
+  Pending = 'PENDING'
 }
