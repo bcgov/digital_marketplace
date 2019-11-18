@@ -31,7 +31,7 @@ export async function up(connection: Knex): Promise<void> {
     // Session
     await connection.schema.createTable('sessions', table => {
         table.uuid('id').primary().unique().notNullable();
-        table.string('keycloakToken').notNullable();
+        table.string('keycloakToken');
         table.timestamp('createdAt').notNullable();
         table.timestamp('updatedAt').notNullable();
         table.uuid('user').references('id').inTable('users');

@@ -60,6 +60,7 @@
     "express": "^4.16.4",
     "html-to-text": "^5.1.1",
     "immutable": "^4.0.0-rc.12",
+    "keycloak-connect": "^8.0.0",
     "knex": "^0.19.3",
     "lodash": "^4.17.14",
     "mime-types": "^2.1.22",
@@ -76,6 +77,7 @@
   },
   "devDependencies": {
     "@types/html-to-text": "^1.4.31",
+    "@types/keycloak-connect": "^4.5.1",
     "@types/mocha": "^5.2.6",
     "@types/moment-timezone": "^0.5.10",
     "@types/nodemailer": "^6.2.1",

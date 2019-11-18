@@ -1,0 +1,11 @@
+{
+  "realm": "p2zhow64",
+  "auth-server-url": "https://sso-dev.pathfinder.gov.bc.ca/auth",
+  "ssl-required": "external",
+  "resource": "dm-auth-web",
+  "credentials": {
+    "secret": "9713fef8-435c-4bce-9214-2b3cdacc3855"
+  },
+  "confidential-port": 0,
+  "bearer-only": true
+}

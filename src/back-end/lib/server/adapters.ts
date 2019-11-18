@@ -8,6 +8,7 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import expressLib from 'express';
 import { IncomingHttpHeaders } from 'http';
+import Keycloak from 'keycloak-connect';
 import { castArray } from 'lodash';
 
 const SESSION_COOKIE_NAME = 'sid';
@@ -143,6 +144,21 @@ export function express<Session>(): ExpressAdapter<Session> {
     }));
     // Sign and parse cookies.
     app.use(cookieParser(COOKIE_SECRET));
+
+    // Load keycloak middleware
+    const keycloak = new Keycloak({})
+    app.use(keycloak.middleware({
+      logout: '/logout',
+      admin: '/'
+    }));
+
+    app.get('/ping-unsecured', (req, res, next) => {
+      res.end('pong-unsecured');
+    });
+
+    app.get('/ping-secured', keycloak.protect(), (req, res, next) => {
+      res.end('pong-secured');
+    })
 
     // Mount each route to the Express application.
     router.forEach(route => {

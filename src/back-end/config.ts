@@ -30,16 +30,6 @@ export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
 export const FRONT_END_BUILD_DIR = resolve(REPOSITORY_ROOT_DIR, 'build/front-end');
 
-export const GOOGLE_OAUTH_CLIENT_ID = get('GOOGLE_OAUTH_CLIENT_ID', '');
-
-export const GOOGLE_OAUTH_CLIENT_SECRET = get('GOOGLE_OAUTH_CLIENT_SECRET', '');
-
-export const GOOGLE_OPENID_CONNECT_REDIRECT_URI = `${ORIGIN}/auth/callback`;
-
-export const LIBRARIAN_USER_EMAIL = get('LIBRARIAN_USER_EMAIL', '');
-
-export const LIBRARIAN_USER_PASSWORD_HASH = get('LIBRARIAN_USER_PASSWORD_HASH', '');
-
 export const MAILER_CONFIG = {
   service: 'gmail',
   auth: {
@@ -88,18 +78,6 @@ export function getConfigErrors(): string[] {
 
   if (!COOKIE_SECRET) {
     errors.push('COOKIE_SECRET must be specified.');
-  }
-
-  if (!GOOGLE_OAUTH_CLIENT_ID || !GOOGLE_OAUTH_CLIENT_SECRET) {
-    errors.push('GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET must be specified');
-  }
-
-  if (!LIBRARIAN_USER_EMAIL || !LIBRARIAN_USER_PASSWORD_HASH) {
-    errors.push('LIBRARIAN_USER_EMAIL and LIBRARIAN_USER_PASSWORD_HASH must be specified.');
-  }
-
-  if (!MAILER_CONFIG.auth.user || !MAILER_CONFIG.auth.pass) {
-    errors.push('MAILER_GMAIL_USER and MAILER_GMAIL_PASS must be specified.');
   }
 
   return errors;
