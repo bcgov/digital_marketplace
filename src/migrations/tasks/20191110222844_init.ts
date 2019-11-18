@@ -1,7 +1,7 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
-import { MembershipTypes, UserStatuses, UserTypes } from 'shared/lib/types'
+import { MembershipType, UserStatus, UserType } from 'shared/lib/types'
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
@@ -12,8 +12,8 @@ export async function up(connection: Knex): Promise<void> {
     await connection.schema.createTable('users', table => {
         table.uuid('id').primary().unique().notNullable();
         table.timestamp('createdAt').notNullable();
-        table.enu('type', Object.values(UserTypes)).notNullable();
-        table.enu('status', Object.values(UserStatuses)).notNullable();
+        table.enu('type', Object.values(UserType)).notNullable();
+        table.enu('status', Object.values(UserStatus)).notNullable();
         table.string('name').notNullable();
         table.string('email');
         table.string('avatarImageUrl');
@@ -80,7 +80,7 @@ export async function up(connection: Knex): Promise<void> {
         table.uuid('user').references('id').inTable('users');
         table.uuid('company').references('id').inTable('companies');
         table.timestamp('createdAt').notNullable();
-        table.enu('membershipType', Object.values(MembershipTypes));
+        table.enu('membershipType', Object.values(MembershipType));
         table.primary(['user', 'company']);
     });
     logger.info('Created affiliations table');
