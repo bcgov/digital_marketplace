@@ -90,7 +90,7 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Se
   });
 }
 
-export async function updateSessionWithTokem(connection: Connection, id: Id, token: string): Promise<Session> {
+export async function updateSessionWithToken(connection: Connection, id: Id, token: string): Promise<Session> {
   const [result] = await connection('sessions')
     .where({ id })
     .update({

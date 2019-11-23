@@ -1,7 +1,7 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
-import { MembershipType, UserStatus, UserType } from 'shared/lib/types'
+import { MembershipType, UserStatus, UserType } from 'shared/lib/types';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
@@ -17,14 +17,17 @@ export async function up(connection: Knex): Promise<void> {
         table.string('name').notNullable();
         table.string('email');
         table.string('avatarImageUrl');
+        table.string('title');
         table.boolean('notificationsOn').notNullable();
         table.boolean('acceptedTerms').notNullable();
         table.string('idpUsername').notNullable();
 
+        // Username, UserType pair should be unique
+        table.unique(['type', 'idpUsername']);
+
         // Indices
-        table.index(['name']);
-        table.index(['email']);
         table.index(['idpUsername']);
+        table.index(['notificationsOn']);
     });
     logger.info('Created users table');
 
@@ -61,7 +64,7 @@ export async function up(connection: Knex): Promise<void> {
     logger.info('Created contacts table');
 
     // Companies
-    await connection.schema.createTable('companies', table => {
+    await connection.schema.createTable('organizations', table => {
         table.uuid('id').primary().unique().notNullable();
         table.timestamp('createdAt').notNullable();
         table.string('legalName').notNullable();
@@ -73,22 +76,22 @@ export async function up(connection: Knex): Promise<void> {
         // Indices
         table.index(['legalName']);
     });
-    logger.info('Created companies table');
+    logger.info('Created organizations table');
 
     // Affiliations
     await connection.schema.createTable('affiliations', table => {
         table.uuid('user').references('id').inTable('users');
-        table.uuid('company').references('id').inTable('companies');
+        table.uuid('organization').references('id').inTable('organizations');
         table.timestamp('createdAt').notNullable();
         table.enu('membershipType', Object.values(MembershipType));
-        table.primary(['user', 'company']);
+        table.primary(['user', 'organization']);
     });
     logger.info('Created affiliations table');
 }
 
 export async function down(connection: Knex): Promise<void> {
     await connection.schema.dropTable('affiliations');
-    await connection.schema.dropTable('companies');
+    await connection.schema.dropTable('organizations');
     await connection.schema.dropTable('contacts');
     await connection.schema.dropTable('addresses');
     await connection.schema.dropTable('sessions');

@@ -48,18 +48,18 @@ export enum MembershipType {
 }
 
 export interface Session {
-  id: Id,
-  token?: string,
-  user?: User
+  id: Id;
+  token?: string;
+  user?: User;
 }
 
 export interface User {
-  id: Id,
-  type: UserType,
-  status: UserStatus,
-  name: string,
-  email?: string,
-  avatarImageUrl?: string,
-  notificationsOn: boolean,
-  idpUsername: string
+  id: Id;
+  type: UserType;
+  status: UserStatus;
+  name: string;
+  email?: string;
+  avatarImageUrl?: string;
+  notificationsOn: boolean;
+  idpUsername: string;
 }

@@ -14,7 +14,7 @@
     "object-literal-sort-keys": false,
     "arrow-parens": false,
     "interface-name": [false, "always-prefix"],
-    "semicolon": false,
+    "semicolon": true,
     "max-line-length": false,
     "object-literal-key-quotes": false,
     "no-shadowed-variable": false
