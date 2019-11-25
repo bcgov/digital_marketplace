@@ -61,5 +61,6 @@ export interface User {
   email?: string;
   avatarImageUrl?: string;
   notificationsOn: boolean;
+  acceptedTerms: boolean;
   idpUsername: string;
 }

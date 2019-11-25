@@ -1,6 +1,6 @@
 import { generateUuid } from 'back-end/lib';
 import Knex from 'knex';
-import { Id, Session, User } from 'shared/lib/types';
+import { Id, Session, User, UserType } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
 
@@ -34,9 +34,17 @@ export async function readManyUsers(connection: Connection): Promise<User[]> {
     name: raw.name,
     email: raw.email,
     notificationsOn: raw.notificationsOn,
+    acceptedTerms: raw.acceptedTerms,
     idpUsername: raw.idpUsername,
     avatarImageUrl: raw.avatarImageUrl
   }));
+}
+
+export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<User | null> {
+  const result = await connection('users')
+    .where({ type, idpUsername })
+    .first();
+  return result ? result : null;
 }
 
 interface RawSessionToSessionParams {
@@ -90,11 +98,11 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Se
   });
 }
 
-export async function updateSessionWithToken(connection: Connection, id: Id, token: string): Promise<Session> {
+export async function updateSessionWithToken(connection: Connection, id: Id, accessToken: string): Promise<Session> {
   const [result] = await connection('sessions')
     .where({ id })
     .update({
-      keycloakToken: token,
+      accessToken,
       updatedAt: new Date()
     }, ['*']);
   if (!result) {

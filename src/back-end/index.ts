@@ -4,6 +4,7 @@ import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib
 import loggerHook from 'back-end/lib/hooks/logger';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
+import authRouter from 'back-end/lib/routers/auth';
 import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
 import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, Router } from 'back-end/lib/server';
@@ -54,6 +55,8 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   let allRoutes = flow([
     // API routes.
     flippedConcat(crudRoutes),
+    // Authentication router for Google SSO with OpenID Connect.
+    flippedConcat(await authRouter(connection)),
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
     // Add global hooks to all routes.

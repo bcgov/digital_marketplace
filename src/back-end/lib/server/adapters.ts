@@ -8,7 +8,6 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import expressLib from 'express';
 import { IncomingHttpHeaders } from 'http';
-import Keycloak from 'keycloak-connect';
 import { castArray } from 'lodash';
 
 const SESSION_COOKIE_NAME = 'sid';
@@ -47,7 +46,7 @@ export function express<Session>(): ExpressAdapter<Session> {
         signed: true,
         httpOnly: true
       });
-      const sessionId = sessionToSessionId(response.session)
+      const sessionId = sessionToSessionId(response.session);
       setSessionId(sessionId.toString());
       // TODO make switch statement more type-safe.
       switch (response.body.tag) {
@@ -57,12 +56,12 @@ export function express<Session>(): ExpressAdapter<Session> {
           break;
         case 'file':
           const file = response.body.value;
-          expressRes.set('Content-Type', file.contentType)
+          expressRes.set('Content-Type', file.contentType);
           if (file.contentEncoding) {
-            expressRes.set('Content-Encoding', file.contentEncoding)
+            expressRes.set('Content-Encoding', file.contentEncoding);
           }
           if (file.contentDisposition) {
-            expressRes.set('Content-Disposition', file.contentDisposition)
+            expressRes.set('Content-Disposition', file.contentDisposition);
           }
           expressRes.send(response.body.value.buffer);
           break;
@@ -142,23 +141,9 @@ export function express<Session>(): ExpressAdapter<Session> {
     app.use(bodyParser.json({
       type: 'application/json'
     }));
+
     // Sign and parse cookies.
     app.use(cookieParser(COOKIE_SECRET));
-
-    // Load keycloak middleware
-    const keycloak = new Keycloak({})
-    app.use(keycloak.middleware({
-      logout: '/logout',
-      admin: '/'
-    }));
-
-    app.get('/ping-unsecured', (req, res, next) => {
-      res.end('pong-unsecured');
-    });
-
-    app.get('/ping-secured', keycloak.protect(), (req, res, next) => {
-      res.end('pong-secured');
-    })
 
     // Mount each route to the Express application.
     router.forEach(route => {
@@ -171,4 +156,4 @@ export function express<Session>(): ExpressAdapter<Session> {
     return app;
   };
 
-};
+}

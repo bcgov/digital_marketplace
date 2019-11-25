@@ -12,6 +12,7 @@ export async function up(connection: Knex): Promise<void> {
     await connection.schema.createTable('users', table => {
         table.uuid('id').primary().unique().notNullable();
         table.timestamp('createdAt').notNullable();
+        table.timestamp('updatedAt').notNullable();
         table.enu('type', Object.values(UserType)).notNullable();
         table.enu('status', Object.values(UserStatus)).notNullable();
         table.string('name').notNullable();
@@ -34,7 +35,7 @@ export async function up(connection: Knex): Promise<void> {
     // Session
     await connection.schema.createTable('sessions', table => {
         table.uuid('id').primary().unique().notNullable();
-        table.string('keycloakToken');
+        table.string('accessToken', 2500);
         table.timestamp('createdAt').notNullable();
         table.timestamp('updatedAt').notNullable();
         table.uuid('user').references('id').inTable('users');
