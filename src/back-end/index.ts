@@ -55,7 +55,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   let allRoutes = flow([
     // API routes.
     flippedConcat(crudRoutes),
-    // Authentication router for Google SSO with OpenID Connect.
+    // Authentication router for SSO with OpenID Connect.
     flippedConcat(await authRouter(connection)),
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
