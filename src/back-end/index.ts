@@ -13,7 +13,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
-import { Session } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end');
 

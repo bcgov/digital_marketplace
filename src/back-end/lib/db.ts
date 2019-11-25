@@ -1,6 +1,8 @@
 import { generateUuid } from 'back-end/lib';
 import Knex from 'knex';
-import { Id, Session, User, UserType } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
+import { User, UserType } from 'shared/lib/resources/user';
+import { Id } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
 
@@ -41,9 +43,19 @@ export async function readManyUsers(connection: Connection): Promise<User[]> {
 }
 
 export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<User | null> {
-  const result = await connection('users')
-    .where({ type, idpUsername })
-    .first();
+  let result: User;
+
+  // If Government, we want to search on Admin types as well.
+  if (type === UserType.Government) {
+    result = await connection('users')
+      .where({ type, idpUsername })
+      .orWhere({ type: UserType.Admin, idpUsername })
+      .first();
+  } else {
+    result = await connection('users')
+      .where ({type, idpUsername })
+      .first();
+  }
   return result ? result : null;
 }
 

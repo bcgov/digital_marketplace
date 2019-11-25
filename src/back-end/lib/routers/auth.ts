@@ -5,7 +5,7 @@ import { makeErrorResponseBody, makeTextResponseBody, Router, TextResponseBody }
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet } from 'openid-client';
 import qs from 'querystring';
-import { User, UserStatus, UserType  } from 'shared/lib/types';
+import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 
 async function makeRouter(connection: Connection): Promise<Router<any, TextResponseBody, any>> {
   return [
