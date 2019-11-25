@@ -1,7 +1,8 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
-import { MembershipType, UserStatus, UserType } from 'shared/lib/types';
+import { MembershipType } from 'shared/lib/resources/affiliation';
+import { UserStatus, UserType } from 'shared/lib/resources/user';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
@@ -12,6 +13,7 @@ export async function up(connection: Knex): Promise<void> {
     await connection.schema.createTable('users', table => {
         table.uuid('id').primary().unique().notNullable();
         table.timestamp('createdAt').notNullable();
+        table.timestamp('updatedAt').notNullable();
         table.enu('type', Object.values(UserType)).notNullable();
         table.enu('status', Object.values(UserStatus)).notNullable();
         table.string('name').notNullable();
@@ -34,7 +36,7 @@ export async function up(connection: Knex): Promise<void> {
     // Session
     await connection.schema.createTable('sessions', table => {
         table.uuid('id').primary().unique().notNullable();
-        table.string('keycloakToken');
+        table.string('accessToken', 2500);
         table.timestamp('createdAt').notNullable();
         table.timestamp('updatedAt').notNullable();
         table.uuid('user').references('id').inTable('users');

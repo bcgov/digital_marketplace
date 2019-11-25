@@ -18,7 +18,7 @@ export type SessionToSessionId<Session> = (session: Session) => SessionId;
 
 export interface Request<Body, Session>        {
   readonly id: string;
-  readonly path: string,
+  readonly path: string;
   readonly headers: IncomingHttpHeaders;
   readonly logger: DomainLogger;
   readonly method: ServerHttpMethod;
@@ -310,6 +310,6 @@ export const notFoundJsonRoute: Route<any, any, JsonResponseBody, any, any> = {
   method: ServerHttpMethod.Any,
   path: '*',
   handler: notFoundJsonHandler
-}
+};
 
 export type Router<ReqB, ResB, Session> = Array<Route<ReqB, any, ResB, any, Session>>;

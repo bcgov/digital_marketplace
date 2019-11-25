@@ -47,6 +47,15 @@ export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NORE
 
 export const MAILER_ROOT_URL = get('MAILER_ROOT_URL', ORIGIN).replace(/\/*$/, '');
 
+// Keycloak configuration
+export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://sso-dev.pathfinder.gov.bc.ca');
+
+export const KEYCLOAK_REALM = get('KEYCLOAK_REALM', 'p2zhow64');
+
+export const KEYCLOAK_CLIENT_ID = get('KEYCLOAK_CLIENT_ID', 'dm-auth-web');
+
+export const KEYCLOAK_CLIENT_SECRET = get('KEYCLOAK_CLIENT_SECRET', '');
+
 function isPositiveInteger(n: number): boolean {
   return !isNaN(n) && !!n && n >= 0 && Math.abs(n % 1) === 0;
 }

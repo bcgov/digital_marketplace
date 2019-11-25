@@ -1,6 +1,8 @@
 import { generateUuid } from 'back-end/lib';
 import Knex from 'knex';
-import { Id, Session, User } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
+import { User, UserType } from 'shared/lib/resources/user';
+import { Id } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
 
@@ -34,9 +36,27 @@ export async function readManyUsers(connection: Connection): Promise<User[]> {
     name: raw.name,
     email: raw.email,
     notificationsOn: raw.notificationsOn,
+    acceptedTerms: raw.acceptedTerms,
     idpUsername: raw.idpUsername,
     avatarImageUrl: raw.avatarImageUrl
   }));
+}
+
+export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<User | null> {
+  let result: User;
+
+  // If Government, we want to search on Admin types as well.
+  if (type === UserType.Government) {
+    result = await connection('users')
+      .where({ type, idpUsername })
+      .orWhere({ type: UserType.Admin, idpUsername })
+      .first();
+  } else {
+    result = await connection('users')
+      .where ({type, idpUsername })
+      .first();
+  }
+  return result ? result : null;
 }
 
 interface RawSessionToSessionParams {
@@ -90,11 +110,11 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Se
   });
 }
 
-export async function updateSessionWithToken(connection: Connection, id: Id, token: string): Promise<Session> {
+export async function updateSessionWithToken(connection: Connection, id: Id, accessToken: string): Promise<Session> {
   const [result] = await connection('sessions')
     .where({ id })
     .update({
-      keycloakToken: token,
+      accessToken,
       updatedAt: new Date()
     }, ['*']);
   if (!result) {
