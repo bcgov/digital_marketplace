@@ -22,7 +22,7 @@ export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
 export const ORIGIN = get('ORIGIN', 'http://digital-marketplace.bcgov.realfolk.io').replace(/\/*$/, '');
 
-export const POSTGRES_URL = get('POSTGRES_URL', '') || null;
+export const POSTGRES_URL = getPostGresUrl();
 
 export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 
@@ -58,6 +58,24 @@ export const KEYCLOAK_CLIENT_SECRET = get('KEYCLOAK_CLIENT_SECRET', '');
 
 function isPositiveInteger(n: number): boolean {
   return !isNaN(n) && !!n && n >= 0 && Math.abs(n % 1) === 0;
+}
+
+export function getPostGresUrl(): string | null {
+  // *SERVICE* variables are set automatically by OpenShift.
+  const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
+  const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
+  const port = get(`${databaseServiceName}_SERVICE_PORT`, '');
+  const user = get('DATABASE_USERNAME', '');
+  const password = get('DATABASE_PASSWORD', '');
+  const databaseName = get('DATABASE_NAME', '');
+  // Support OpenShift's environment variables.
+  if (host && port && user && password && databaseName) {
+    const postgresUrl = `postgresql://${user}:${password}@${host}:${port}/${databaseName}`;
+    return postgresUrl;
+  } else {
+    // Return standard POSTGRES_URL as fallback.
+    return get('POSTGRES_URL', '') || null;
+  }
 }
 
 export function getConfigErrors(): string[] {
