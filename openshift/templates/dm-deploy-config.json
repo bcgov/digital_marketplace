@@ -19,7 +19,7 @@
                 "NODE_ENV": "development",
                 "SERVER_HOST": "0.0.0.0",
                 "SERVER_PORT": "3000",
-                "DATABASE_SERVICE_NAME": "postgresql-dig-mkt",
+                "DATABASE_SERVICE_NAME": "postgresql-dig-mkt-dev",
                 "COOKIE_SECRET": "changeme",
                 "ORIGIN": "${NAME}-${TAG_NAME}.pathfinder.gov.bc.ca",
                 "KEYCLOAK_CLIENT_ID": "dm-auth-web",
@@ -51,9 +51,7 @@
                         "pre": {
                             "failurePolicy": "Abort",
                             "execNewPod": {
-                                "command": [
-                                    "npm run migrations:latest"
-                                ],
+                                "command": ["/usr/bin/npm", "run", "migrations:latest"],
                                 "env": [
                                     {
                                         "name": "DATABASE_ADMIN_PASSWORD",
@@ -275,6 +273,15 @@
                                             "configMapKeyRef": {
                                                 "name": "${NAME}-${TAG_NAME}-config",
                                                 "key": "SERVER_PORT"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "DATABASE_SERVICE_NAME",
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "${NAME}-${TAG_NAME}-config",
+                                                "key": "DATABASE_SERVICE_NAME"
                                             }
                                         }
                                     }
