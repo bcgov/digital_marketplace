@@ -1,7 +1,7 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
-import { UserType } from 'shared/lib/types';
+import { UserType } from 'shared/lib/resources/user';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
