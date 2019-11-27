@@ -1,4 +1,5 @@
-import { Session } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
+import { UserType } from 'shared/lib/resources/user';
 
 const CURRENT_SESSION_ID = 'current';
 
@@ -12,16 +13,12 @@ export function isSignedOut(session: Session): boolean {
   return !isSignedIn(session);
 }
 
-export function isLibrarian(session: Session): boolean {
-  return !!session.user && session.user.tag === 'librarian';
-}
-
 export function isUser(session: Session): boolean {
-  return !!session.user && session.user.tag === 'user';
+  return !!session.user;
 }
 
 export function isOwnAccount(session: Session, id: string): boolean {
-  return !!session.user && (isLibrarian(session) || (session.user.tag === 'user' && session.user.value.id === id));
+  return !!session.user && session.user.id === id;
 }
 
 export function isCurrentSession(id: string): boolean {
@@ -35,14 +32,10 @@ export function isOwnSession(session: Session, id: string): boolean {
 // Users.
 
 export function readManyUsers(session: Session): boolean {
-  return isLibrarian(session);
+  return !!session.user && session.user.type === UserType.Admin;
 }
 
 // Sessions.
-
-export function createLibrarianSession(session: Session): boolean {
-  return isSignedOut(session);
-}
 
 export function readOneSession(session: Session, id: string): boolean {
   return isCurrentSession(id) || isOwnSession(session, id);
@@ -50,60 +43,4 @@ export function readOneSession(session: Session, id: string): boolean {
 
 export function deleteSession(session: Session, id: string): boolean {
   return isCurrentSession(id) || isOwnSession(session, id);
-}
-
-// Authors.
-
-export function createAuthor(session: Session): boolean {
-  return isLibrarian(session);
-}
-
-export function readManyAuthors(session: Session): boolean {
-  return isLibrarian(session);
-}
-
-// Books.
-
-export function createBook(session: Session): boolean {
-  return isLibrarian(session);
-}
-
-export function readManyBooks(): boolean {
-  return true;
-}
-
-// Loans.
-
-export function createLoan(session: Session): boolean {
-  return isLibrarian(session);
-}
-
-export function deleteLoan(session: Session): boolean {
-  return isLibrarian(session);
-}
-
-// Genres.
-
-export function readManyGenres(): boolean {
-  return true;
-}
-
-// Book Availability Subscriptions.
-
-export function createBookAvailabilitySubscription(session: Session): boolean {
-  return isUser(session);
-}
-
-export function deleteBookAvailabilitySubscription(session: Session): boolean {
-  return isUser(session);
-}
-
-// Genre Subscriptions.
-
-export function createGenreSubscription(session: Session): boolean {
-  return isUser(session);
-}
-
-export function deleteGenreSubscription(session: Session): boolean {
-  return isUser(session);
 }

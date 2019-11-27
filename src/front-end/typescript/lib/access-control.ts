@@ -1,6 +1,6 @@
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { GlobalComponentMsg, PageInit } from 'front-end/lib/framework';
-import { SessionUser } from 'shared/lib/types';
+import { User } from 'shared/lib/resources/user';
 
 export interface AccessControlParams<RouteParams, PageState, PageMsg, SuccessSharedState = SharedState, FailSharedState = SharedState> {
   success: PageInit<RouteParams, SuccessSharedState, PageState, PageMsg>;
@@ -8,7 +8,7 @@ export interface AccessControlParams<RouteParams, PageState, PageMsg, SuccessSha
 }
 
 export interface SharedStateWithGuaranteedSessionUser {
-  sessionUser: SessionUser;
+  sessionUser: User;
   original: SharedState;
 }
 
@@ -33,40 +33,6 @@ export function isSignedIn<RouteParams, PageState, PageMsg>(params: AccessContro
   return async initParams => {
     const { shared } = initParams;
     if (shared.session && shared.session.user) {
-      return await params.success({
-        ...initParams,
-        shared: {
-          sessionUser: shared.session.user,
-          original: initParams.shared
-        }
-      });
-    } else {
-      return await params.fail(initParams);
-    }
-  };
-}
-
-export function isLibrarian<RouteParams, PageState, PageMsg>(params: AccessControlParams<RouteParams, PageState, GlobalComponentMsg<PageMsg, Route>, SharedStateWithGuaranteedSessionUser>): PageInit<RouteParams, SharedState, PageState, GlobalComponentMsg<PageMsg, Route>> {
-  return async initParams => {
-    const { shared } = initParams;
-    if (shared.session && shared.session.user && shared.session.user.tag === 'librarian') {
-      return await params.success({
-        ...initParams,
-        shared: {
-          sessionUser: shared.session.user,
-          original: initParams.shared
-        }
-      });
-    } else {
-      return await params.fail(initParams);
-    }
-  };
-}
-
-export function isUser<RouteParams, PageState, PageMsg>(params: AccessControlParams<RouteParams, PageState, GlobalComponentMsg<PageMsg, Route>, SharedStateWithGuaranteedSessionUser>): PageInit<RouteParams, SharedState, PageState, GlobalComponentMsg<PageMsg, Route>> {
-  return async initParams => {
-    const { shared } = initParams;
-    if (shared.session && shared.session.user && shared.session.user.tag === 'user') {
       return await params.success({
         ...initParams,
         shared: {
