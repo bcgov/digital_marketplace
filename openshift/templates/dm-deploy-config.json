@@ -47,70 +47,7 @@
                         "intervalSeconds": 1,
                         "timeoutSeconds": 600,
                         "maxUnavailable": "25%",
-                        "maxSurge": "25%",
-                        "pre": {
-                            "failurePolicy": "Abort",
-                            "execNewPod": {
-                                "command": ["/usr/local/bin/npm", "run", "migrations:latest"],
-                                "env": [
-                                    {
-                                        "name": "DATABASE_ADMIN_PASSWORD",
-                                        "valueFrom": {
-                                            "secretKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-secret",
-                                                "key": "DATABASE_ADMIN_PASSWORD"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_USERNAME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_USER"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_PASSWORD",
-                                        "valueFrom": {
-                                            "secretKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-secret",
-                                                "key": "DATABASE_PASSWORD"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_NAME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_NAME"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_HOST",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_HOST"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_PORT",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_PORT"
-                                            }
-                                        }
-                                    }
-                                ],
-                                "containerName": "${NAME}-${TAG_NAME}"
-                            }
-                        }
+                        "maxSurge": "25%"
                     }
                 },
                 "triggers": [
