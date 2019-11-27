@@ -18,7 +18,7 @@ const init: Init<null, State> = async () => {
     shared: {
       session: undefined
     },
-    activeRoute: { tag: 'bookList', value: null },
+    activeRoute: { tag: 'hello', value: null },
     pages: {}
   };
 };

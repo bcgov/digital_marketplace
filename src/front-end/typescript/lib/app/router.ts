@@ -26,61 +26,7 @@ const router: Router<Route> = {
       path: '/',
       makeRoute() {
         return {
-          tag: 'bookList',
-          value: null
-        };
-      }
-    },
-    {
-      path: '/books/create',
-      makeRoute() {
-        return {
-          tag: 'bookCreate',
-          value: null
-        };
-      }
-    },
-    {
-      path: '/books',
-      makeRoute() {
-        return {
-          tag: 'bookList',
-          value: null
-        };
-      }
-    },
-    {
-      path: '/genres',
-      makeRoute() {
-        return {
-          tag: 'genreList',
-          value: null
-        };
-      }
-    },
-    {
-      path: '/authors/create',
-      makeRoute() {
-        return {
-          tag: 'authorCreate',
-          value: null
-        };
-      }
-    },
-    {
-      path: '/authors',
-      makeRoute() {
-        return {
-          tag: 'authorList',
-          value: null
-        };
-      }
-    },
-    {
-      path: '/librarian-sign-in',
-      makeRoute() {
-        return {
-          tag: 'librarianSignIn',
+          tag: 'hello',
           value: null
         };
       }
@@ -109,34 +55,6 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/notice/new-author',
-      makeRoute() {
-        return {
-          tag: 'notice',
-          value: {
-            noticeId: {
-              tag: 'newAuthor',
-              value: undefined
-            }
-          }
-        };
-      }
-    },
-    {
-      path: '/notice/new-book',
-      makeRoute() {
-        return {
-          tag: 'notice',
-          value: {
-            noticeId: {
-              tag: 'newBook',
-              value: undefined
-            }
-          }
-        };
-      }
-    },
-    {
       path: '*',
       makeRoute() {
         return {
@@ -154,18 +72,8 @@ const router: Router<Route> = {
 
   routeToUrl(route) {
     switch (route.tag) {
-      case 'bookCreate':
-        return '/books/create';
-      case 'bookList':
-        return '/books';
-      case 'genreList':
-        return '/genres';
-      case 'authorCreate':
-        return '/authors/create';
-      case 'authorList':
-        return '/authors';
-      case 'librarianSignIn':
-        return '/librarian-sign-in';
+      case 'hello':
+        return '/';
       case 'signOut':
         return '/sign-out';
       case 'notice':
@@ -175,10 +83,6 @@ const router: Router<Route> = {
               return '/not-found';
             case 'authFailure':
               return '/notice/auth-failure';
-            case 'newAuthor':
-              return '/notice/new-author';
-            case 'newBook':
-              return '/notice/new-book';
           }
         })();
     }

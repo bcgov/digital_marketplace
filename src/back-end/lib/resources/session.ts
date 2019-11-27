@@ -3,7 +3,7 @@ import { Connection, deleteSession } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, makeJsonResponseBody } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { Session } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
 
 type Resource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, null, null, Session, Connection>;
 
@@ -37,7 +37,6 @@ const resource: Resource = {
       }
     };
   }
-
-}
+};
 
 export default resource;

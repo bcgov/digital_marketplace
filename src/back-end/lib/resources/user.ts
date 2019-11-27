@@ -3,7 +3,8 @@ import { Connection, readManyUsers } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, makeJsonResponseBody } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { Session, User } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
+import { User } from 'shared/lib/resources/user';
 
 type Resource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, null, null, Session, Connection>;
 
@@ -20,8 +21,8 @@ const resource: Resource = {
         const users = await readManyUsers(connection);
         return respond(200, users);
       }
-    }
+    };
   }
-}
+};
 
 export default resource;

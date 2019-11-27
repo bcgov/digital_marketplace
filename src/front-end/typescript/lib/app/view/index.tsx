@@ -3,12 +3,7 @@ import Footer from 'front-end/lib/app/view/footer';
 import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
-import * as PageAuthorCreate from 'front-end/lib/pages/author/create';
-import * as PageAuthorList from 'front-end/lib/pages/author/list';
-import * as PageBookCreate from 'front-end/lib/pages/book/create';
-import * as PageBookList from 'front-end/lib/pages/book/list';
-import * as PageGenreList from 'front-end/lib/pages/genre/list';
-import * as PageLibrarianSignIn from 'front-end/lib/pages/librarian-sign-in';
+import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import Icon from 'front-end/lib/views/icon';
@@ -53,58 +48,13 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
 const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   switch (state.activeRoute.tag) {
 
-    case 'bookCreate':
+    case 'hello':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.bookCreate}
-          mapPageMsg={value => ({ tag: 'pageBookCreate', value })}
-          component={PageBookCreate.component} />
-      );
-
-    case 'bookList':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.bookList}
-          mapPageMsg={value => ({ tag: 'pageBookList', value })}
-          component={PageBookList.component} />
-      );
-
-    case 'genreList':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.genreList}
-          mapPageMsg={value => ({ tag: 'pageGenreList', value })}
-          component={PageGenreList.component} />
-      );
-
-    case 'authorCreate':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.authorCreate}
-          mapPageMsg={value => ({ tag: 'pageAuthorCreate', value })}
-          component={PageAuthorCreate.component} />
-      );
-
-    case 'authorList':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.authorList}
-          mapPageMsg={value => ({ tag: 'pageAuthorList', value })}
-          component={PageAuthorList.component} />
-      );
-
-    case 'librarianSignIn':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.librarianSignIn}
-          mapPageMsg={value => ({ tag: 'pageLibrarianSignIn', value })}
-          component={PageLibrarianSignIn.component} />
+          pageState={state.pages.hello}
+          mapPageMsg={value => ({ tag: 'pageHello', value })}
+          component={PageHello.component} />
       );
 
     case 'signOut':
@@ -125,7 +75,7 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageNotice.component} />
       );
   }
-}
+};
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   if (!state.ready) {
