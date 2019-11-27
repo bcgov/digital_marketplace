@@ -3,8 +3,8 @@ import { Route } from 'front-end/lib/app/types';
 import { View } from 'front-end/lib/framework';
 import Link from 'front-end/lib/views/link';
 import React from 'react';
-import { Collapse, Container, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem, Spinner } from 'reactstrap'
-import { Session } from 'shared/lib/types';
+import { Collapse, Container, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem, Spinner } from 'reactstrap';
+import { Session } from 'shared/lib/resources/session';
 
 interface Props {
   isOpen: boolean;
@@ -18,45 +18,15 @@ const linkClassName = (isActive: boolean) => `o-75 ${activeClass(isActive)} text
 
 const ContextualLinks: View<Props & { className?: string }> = ({ activeRoute, session, toggleIsOpen, className = '' }) => {
   const onClick = () => toggleIsOpen(false);
-  const isBookListRoute = activeRoute.tag === 'bookList';
-  const isGenreListRoute = activeRoute.tag === 'genreList';
-  const isAuthorListRoute = activeRoute.tag === 'authorList';
-  const bookListRoute: Route = { tag: 'bookList', value: null };
-  const genreListRoute: Route = { tag: 'genreList', value: null };
-  const authorListRoute: Route = { tag: 'authorList', value: null };
-  if (!session || !session.user) {
-    return (
-      <Nav navbar className={className}>
-        <NavItem>
-          <Link nav route={bookListRoute} className={linkClassName(isBookListRoute)} onClick={onClick}>Books</Link>
-        </NavItem>
-      </Nav>
-    );
-  }
-  switch (session.user.tag) {
-    case 'user':
-      return (
-        <Nav navbar className={className}>
-          <NavItem>
-            <Link nav route={bookListRoute} className={linkClassName(isBookListRoute)} onClick={onClick}>Books</Link>
-          </NavItem>
-          <NavItem>
-            <Link nav route={genreListRoute} className={linkClassName(isGenreListRoute)} onClick={onClick}>Genres</Link>
-          </NavItem>
-        </Nav>
-      );
-    case 'librarian':
-      return (
-        <Nav navbar className={className}>
-          <NavItem>
-            <Link nav route={bookListRoute} className={linkClassName(isBookListRoute)} onClick={onClick}>Books</Link>
-          </NavItem>
-          <NavItem>
-            <Link nav route={authorListRoute} className={linkClassName(isAuthorListRoute)} onClick={onClick}>Authors</Link>
-          </NavItem>
-        </Nav>
-      );
-  }
+  const isHelloRoute = activeRoute.tag === 'hello';
+  const helloRoute: Route = { tag: 'hello', value: null };
+  return (
+    <Nav navbar className={className}>
+      <NavItem>
+        <Link nav route={helloRoute} className={linkClassName(isHelloRoute)} onClick={onClick}>Hello</Link>
+      </NavItem>
+    </Nav>
+  );
 };
 
 const AuthLinks: View<Props> = ({ activeRoute, session, toggleIsOpen }) => {
@@ -69,7 +39,7 @@ const AuthLinks: View<Props> = ({ activeRoute, session, toggleIsOpen }) => {
     return (
       <Nav navbar className='ml-md-auto'>
         <NavItem className='d-none d-md-block'>
-          <Link nav color='white' className='px-0 px-md-3' style={{ opacity: 0.35 }} disabled>{session.user.value.email}</Link>
+          <Link nav color='white' className='px-0 px-md-3' style={{ opacity: 0.35 }} disabled>{session.user.name}</Link>
         </NavItem>
         <NavItem>
           <Link nav route={signOutRoute} color='white' onClick={onClick} className='px-0 pl-md-3 o-75'>Sign Out</Link>
@@ -80,7 +50,7 @@ const AuthLinks: View<Props> = ({ activeRoute, session, toggleIsOpen }) => {
     return (
       <Nav navbar className='ml-md-auto'>
         <NavItem>
-          <Link button color='primary' onClick={() => redirect('auth/sign-in')} className='mt-2 mt-md-0'>Sign In With Google</Link>
+          <Link button color='primary' onClick={() => redirect('auth/sign-in')} className='mt-2 mt-md-0'>Sign In</Link>
         </NavItem>
       </Nav>
     );
@@ -96,8 +66,8 @@ const Navigation: View<Props> = props => {
     <div className='position-sticky' style={{ top: `-${MAIN_NAVBAR_HEIGHT}`, zIndex: 1000 }}>
       <Navbar expand='md' dark color='info' className='navbar border-bottom-gov'>
         <Container className='px-sm-3'>
-          <NavbarBrand href={router.routeToUrl({ tag: 'bookList', value: null })}>
-            Digital Marketplace Code Challenge
+          <NavbarBrand href={router.routeToUrl({ tag: 'hello', value: null })}>
+            Digital Marketplace
           </NavbarBrand>
           <Spinner size='sm' color='info-alt' className='transition-indicator d-md-none' />
           <NavbarToggler className='ml-auto' onClick={() => props.toggleIsOpen()} />

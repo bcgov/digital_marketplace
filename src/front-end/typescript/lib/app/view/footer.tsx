@@ -1,8 +1,7 @@
 import { View } from 'front-end/lib/framework';
-import Link from 'front-end/lib/views/link';
 import React from 'react';
-import { Col, Container, Row } from 'reactstrap'
-import { Session } from 'shared/lib/types';
+import { Col, Container, Row } from 'reactstrap';
+import { Session } from 'shared/lib/resources/session';
 
 export interface State {
   title: string;
@@ -24,11 +23,6 @@ const Footer: View<{ session?: Session }> = ({ session }) => {
         <Row>
           <Col xs='12' className='d-flex flex-row justify-content-between align-items-center'>
             <ProvinceLogo />
-            {session && session.user
-              ? null
-              : (<Link button outline size='sm' color='light' route={{ tag: 'librarianSignIn', value: null }}>
-                  Librarian Sign-In
-                </Link>)}
           </Col>
         </Row>
       </Container>

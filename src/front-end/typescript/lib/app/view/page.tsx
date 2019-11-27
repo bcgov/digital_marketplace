@@ -17,7 +17,7 @@ const ViewAlert: View<ViewAlertProps> = ({ messages, color, className }) => {
       {messages.map((text, i)  => (<div key={`alert-${color}-${i}`}>{text}</div>))}
     </Alert>
   );
-}
+};
 
 interface ViewAlertsProps {
   alerts: PageAlerts;
@@ -78,7 +78,7 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
       <ViewAlerts alerts={alerts} />
     </Container>
   );
-};
+}
 
 export interface Props<PageState, PageMsg> {
   dispatch: Dispatch<AppMsg<Msg, Route>>;
