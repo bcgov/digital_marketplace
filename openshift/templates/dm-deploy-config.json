@@ -51,7 +51,7 @@
                         "pre": {
                             "failurePolicy": "Abort",
                             "execNewPod": {
-                                "command": ["/usr/bin/npm", "run", "migrations:latest"],
+                                "command": ["/usr/local/bin/npm", "run", "migrations:latest"],
                                 "env": [
                                     {
                                         "name": "DATABASE_ADMIN_PASSWORD",
@@ -154,7 +154,7 @@
                                 "image": "docker-registry.default.svc:5000/${IMAGE_NAMESPACE}/${NAME}:${TAG_NAME}",
                                 "ports": [
                                     {
-                                        "containerPort": 8080,
+                                        "containerPort": 3000,
                                         "protocol": "TCP"
                                     }
                                 ],
@@ -284,6 +284,15 @@
                                                 "key": "DATABASE_SERVICE_NAME"
                                             }
                                         }
+                                    },
+                                    {
+                                        "name": "COOKIE_SECRET",
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "${NAME}-${TAG_NAME}-config",
+                                                "key": "COOKIE_SECRET"
+                                            }
+                                        }
                                     }
                                 ],
                                 "resources": {
@@ -298,23 +307,23 @@
                                 },
                                 "livenessProbe": {
                                     "httpGet": {
-                                        "path": "/main",
-                                        "port": 8080,
+                                        "path": "/",
+                                        "port": 3000,
                                         "scheme": "HTTP"
                                     },
-                                    "timeoutSeconds": 1,
-                                    "periodSeconds": 10,
+                                    "timeoutSeconds": 10,
+                                    "periodSeconds": 30,
                                     "successThreshold": 1,
                                     "failureThreshold": 3
                                 },
                                 "readinessProbe": {
                                     "httpGet": {
-                                        "path": "/main",
-                                        "port": 8080,
+                                        "path": "/",
+                                        "port": 3000,
                                         "scheme": "HTTP"
                                     },
-                                    "timeoutSeconds": 1,
-                                    "periodSeconds": 10,
+                                    "timeoutSeconds": 10,
+                                    "periodSeconds": 30,
                                     "successThreshold": 1,
                                     "failureThreshold": 3
                                 },
@@ -347,10 +356,10 @@
             "spec": {
                 "ports": [
                     {
-                        "name": "8080-tcp",
+                        "name": "3000-tcp",
                         "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
+                        "port": 3000,
+                        "targetPort": 3000
                     }
                 ],
                 "selector": {
@@ -382,7 +391,7 @@
                     "weight": 100
                 },
                 "port": {
-                    "targetPort": "8080-tcp"
+                    "targetPort": "3000-tcp"
                 },
                 "tls": {
                     "termination": "edge"
