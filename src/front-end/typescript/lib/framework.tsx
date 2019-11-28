@@ -36,7 +36,7 @@ export interface UpdateChildParams<ParentState, ParentMsg, ChildState, ChildMsg>
   childStatePath: string[];
   childUpdate: Update<ChildState, ChildMsg>;
   childMsg: ChildMsg;
-  mapChildMsg(msg: ChildMsg): ParentMsg,
+  mapChildMsg(msg: ChildMsg): ParentMsg;
 }
 
 export type ViewElement<Props = any> = null | ReactElement<Props>;
@@ -87,7 +87,7 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
       const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
       if (!newChildState) { return null; }
       return state.setIn(childStatePath, newChildState);
-    }
+    };
   }
   return [
     state,
@@ -176,7 +176,7 @@ export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: Update
       const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
       if (!newChildState) { return null; }
       return state.setIn(childStatePath, newChildState);
-    }
+    };
   }
   return [
     state,
@@ -417,7 +417,7 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
       const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
       if (!newChildState) { return null; }
       return state.setIn(childStatePath, newChildState);
-    }
+    };
   }
   return [
     state,
@@ -451,7 +451,7 @@ export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPag
     return params.setModal(parentState, parentModal);
   };
   setMetadata(newState);
-  const newStateWithModal = newState //setModal(newState); //TODO
+  const newStateWithModal = newState; //setModal(newState); //TODO
   const asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
     state = setModal(state, dispatch);
     let newState = null;
@@ -589,4 +589,4 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
   startRouter(app.router, stateManager);
   // Return StateManager.
   return stateManager;
-};
+}
