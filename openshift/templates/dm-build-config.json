@@ -34,17 +34,13 @@
               "uri": "${GIT_REPO_URL}",
               "ref": "${GIT_REF}"
             },
-            "contextDir": "${SOURCE_CONTEXT_DIR}"
+            "contextDir": "${SOURCE_CONTEXT_DIR}",
+            "dockerfile": "FROM node:10-jessie\nCOPY . /usr/app\nWORKDIR /usr/app\nRUN npm install && NODE_ENV=production npm run front-end:build\nEXPOSE 3000\nCMD npm start"
           },
           "strategy": {
             "type": "Source",
             "dockerStrategy": {
-              "from": {
-                "kind": "${SOURCE_IMAGE_KIND}",
-                "name": "${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}",
-                "namespace": "${SOURCE_IMAGE_NAME_SPACE}"
-              },
-              "env": []
+              "noCache": false
             }
           },
           "output": {

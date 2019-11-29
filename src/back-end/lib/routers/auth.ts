@@ -87,7 +87,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, TextRespo
             }
 
             let session = await updateSessionWithUser(connection, request.session.id, user.id);
-            session = await updateSessionWithToken(connection, session.id, tokens.access_token);
+            session = await updateSessionWithToken(connection, session.id, tokens.refresh_token);
 
             return {
               code: 302,

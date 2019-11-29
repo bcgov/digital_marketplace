@@ -3,6 +3,6 @@ import { Id } from 'shared/lib/types';
 
 export interface Session {
     id: Id;
-    token?: string;
+    accessToken?: string;
     user?: User;
 }

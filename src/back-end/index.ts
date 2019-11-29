@@ -4,6 +4,8 @@ import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib
 import loggerHook from 'back-end/lib/hooks/logger';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
+import sessionResource from 'back-end/lib/resources/session';
+import userResource from 'back-end/lib/resources/user';
 import authRouter from 'back-end/lib/routers/auth';
 import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
@@ -33,7 +35,10 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   ];
 
   // Add new resources to this array.
-  const resources: Array<crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, Session, Connection>> = [];
+  const resources: Array<crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, Session, Connection>> = [
+    sessionResource,
+    userResource
+  ];
 
   // Define CRUD routes.
   // We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.

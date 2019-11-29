@@ -28,7 +28,7 @@ export const request: RequestFunction = async (method, url, data) => {
       data: [error.message]
     };
   }
-}
+};
 
 export function prefixRequest(prefix: string): RequestFunction {
   const cleanSlashes = (v: string): string => v.replace(/^\/*/, '/').replace(/\/*$/, '');
