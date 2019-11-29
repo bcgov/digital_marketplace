@@ -4,7 +4,7 @@ import { DomainLogger } from 'back-end/lib/logger';
 import { Request } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { noop } from 'lodash';
-import { Session } from 'shared/lib/types';
+import { Session } from 'shared/lib/resources/session';
 
 type LogFunctionKind = keyof DomainLogger;
 
