@@ -126,28 +126,63 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
   const bottomBar = viewBottomBar ? viewBottomBar(viewProps) : null;
   // Handle full width pages.
   if (fullWidth) {
-    return (
-      <div className='d-flex flex-column flex-grow-1 page-container'>
-        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
-        <div className={containerClassName}>
-          <component.view {...viewProps} />
+    if (component.viewVerticalBar) {
+      //TODO
+      return (
+        <div className='d-flex flex-column flex-grow-1 page-container'>
+          <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+          <div className={containerClassName}>
+            <component.view {...viewProps} />
+          </div>
+          {bottomBar}
         </div>
-        {bottomBar}
-      </div>
-    );
+      );
+    } else {
+      return (
+        <div className='d-flex flex-column flex-grow-1 page-container'>
+          <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+          <div className={containerClassName}>
+            <component.view {...viewProps} />
+          </div>
+          {bottomBar}
+        </div>
+      );
+    }
+  } else {
+    // Handle pages within a container.
+    if (component.viewVerticalBar) {
+      return (
+        <div className='d-flex flex-column flex-grow-1 page-container'>
+          <div className='d-flex flex-column flex-grow-1'>
+            <Container className='flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
+              <Row className='flex-grow-1'>
+                <Col md='4' className={`bg-light px-md-4 d-flex flex-column align-items-stretch ${containerClassName}`}>
+                  <component.viewVerticalBar {...viewProps} />
+                </Col>
+                <Col md='8' className={`pl-md-4 ${containerClassName}`}>
+                  <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+                  <component.view {...viewProps} />
+                </Col>
+              </Row>
+            </Container>
+          </div>
+          {bottomBar}
+        </div>
+      );
+    } else {
+      return (
+        <div className='d-flex flex-column flex-grow-1 page-container'>
+          <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+          <div className={containerClassName}>
+            <Container>
+              <component.view {...viewProps} />
+            </Container>
+          </div>
+          {bottomBar}
+        </div>
+      );
+    }
   }
-  // Handle pages within a container.
-  return (
-    <div className='d-flex flex-column flex-grow-1 page-container'>
-      <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
-      <div className={containerClassName}>
-        <Container>
-          <component.view {...viewProps} />
-        </Container>
-      </div>
-      {bottomBar}
-    </div>
-  );
 }
 
 export default view;

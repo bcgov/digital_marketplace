@@ -1,6 +1,8 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import Link from 'front-end/lib/views/link';
+import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
@@ -14,7 +16,8 @@ export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  empty: true
+  empty: true,
+  hello: ''
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -37,6 +40,23 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+  viewVerticalBar: makeSignInVerticalBar<State, Msg>({
+    backMsg: { tag: 'noop', value: undefined },
+    getTitle: () => 'Vertical Bar',
+    getDescription: () => 'Foo',
+    getFooter: () => (
+      <span>
+        Already have an account?&nbsp;
+        <Link route={{ tag: 'hello', value: null }}>Sign in</Link>.
+      </span>
+    )
+  }),
+  getAlerts(state) {
+    return {
+      ...emptyPageAlerts(),
+      info: ['Test alert']
+    };
+  },
   getMetadata() {
     return makePageMetadata('Hello, World');
   }
