@@ -18,7 +18,7 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
   const session = await deleteSession();
   if (!get(session, 'user')) {
-    return { message: 'You have successfully signed out. Thank you for using the Digital Marketplace Code Challenge web app.' };
+    return { message: 'You have successfully signed out. Thank you for using the Digital Marketplace.' };
   } else {
     return { message: 'Signing out of the application failed.' };
   }

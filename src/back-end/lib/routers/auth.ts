@@ -1,11 +1,10 @@
 import axios from 'axios';
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
-import { Connection, createAnonymousSession, createUser, deleteSession, findOneUserByTypeAndUsername, readOneSession, updateSessionWithToken, updateSessionWithUser } from 'back-end/lib/db';
-import { makeErrorResponseBody, makeTextResponseBody, Request, Router, TextResponseBody,  } from 'back-end/lib/server';
+import { Connection, createUser, findOneUserByTypeAndUsername, updateSessionWithToken, updateSessionWithUser } from 'back-end/lib/db';
+import { makeErrorResponseBody, makeTextResponseBody, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet } from 'openid-client';
 import qs from 'querystring';
-import { Session } from 'shared/lib/resources/session';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 
 async function makeRouter(connection: Connection): Promise<Router<any, TextResponseBody, any>> {
@@ -107,58 +106,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, TextRespo
               },
               session: request.session,
               body: makeTextResponseBody('')
-            };
-          }
-        }
-      }
-    },
-    {
-      method: ServerHttpMethod.Get,
-      path: '/auth/logout',
-      handler: {
-        transformRequest: async () => null,
-        async respond(request: Request<Body, Session>) {
-          try {
-            // Retrieve the corresponding session, and keycloak token
-            let session = await readOneSession(connection, request.session.id);
-
-            const formData = qs.stringify({
-              client_id: KEYCLOAK_CLIENT_ID,
-              client_secret: KEYCLOAK_CLIENT_SECRET,
-              scope: 'openid',
-              refresh_token: session.accessToken
-            });
-
-            await axios({
-              method: ServerHttpMethod.Post,
-              url: `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/logout`,
-              data: formData,
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-              }
-            });
-
-            // Delete the current session and create a new anonymous one
-            await deleteSession(connection, session.id);
-            session = await createAnonymousSession(connection);
-
-            return {
-              code: 302,
-              headers: {
-                'Location': '/'
-              },
-              session,
-              body: makeTextResponseBody('')
-            };
-          } catch (error) {
-            request.logger.error('logout failed', makeErrorResponseBody(error));
-            return {
-              code: 302,
-              headers: {
-                'Location': `/error`
-              },
-              session: request.session,
-              body: makeTextResponseBody('An error occurred while logging out')
             };
           }
         }
