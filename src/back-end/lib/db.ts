@@ -61,14 +61,14 @@ export async function findOneUserByTypeAndUsername(connection: Connection, type:
 
 interface RawSessionToSessionParams {
   id: Id;
-  token?: string;
+  accessToken?: string;
   user?: Id;
 }
 
 async function rawSessionToSession(connection: Connection, params: RawSessionToSessionParams): Promise<Session> {
   const session = {
     id: params.id,
-    token: params.token
+    accessToken: params.accessToken
   };
   if (params.user) {
     const user = await readOneUser(connection, params.user);
@@ -105,7 +105,7 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Se
   if (!result) { return await createAnonymousSession(connection); }
   return await rawSessionToSession(connection, {
     id: result.id,
-    token: result.token,
+    accessToken: result.accessToken,
     user: result.user
   });
 }
@@ -122,7 +122,7 @@ export async function updateSessionWithToken(connection: Connection, id: Id, acc
   }
   return await rawSessionToSession(connection, {
     id: result.id,
-    token: result.token,
+    accessToken: result.accessToken,
     user: result.user
   });
 }
@@ -139,7 +139,7 @@ export async function updateSessionWithUser(connection: Connection, id: Id, user
   }
   return await rawSessionToSession(connection, {
     id: result.id,
-    token: result.token,
+    accessToken: result.accessToken,
     user: result.user
   });
 }
