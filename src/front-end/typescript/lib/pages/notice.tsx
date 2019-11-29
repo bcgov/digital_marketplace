@@ -1,6 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, noPageModal, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import Link from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Col, Row } from 'reactstrap';
@@ -98,8 +98,5 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata({ title }) {
     return makePageMetadata(title);
-  },
-  getAlerts: emptyPageAlerts,
-  getBreadcrumbs: emptyPageBreadcrumbs,
-  getModal: noPageModal
+  }
 };

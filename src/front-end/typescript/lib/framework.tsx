@@ -280,12 +280,13 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   init: PageInit<RouteParams, SharedState, State, Msg>;
   update: Update<State, Msg>;
   view: View<Props>;
-  viewBottomBar?: View<Props>;
+  viewBottomBar?: View<Props>; //TODO potentially remove
+  viewVerticalBar?: View<Props>;
   containerOptions?: PageContainerOptions;
   getMetadata: PageGetMetadata<State>;
-  getAlerts: PageGetAlerts<State>;
-  getBreadcrumbs: PageGetBreadcrumbs<State, Msg>;
-  getModal: PageGetModal<State, Msg>;
+  getAlerts?: PageGetAlerts<State>;
+  getBreadcrumbs?: PageGetBreadcrumbs<State, Msg>;
+  getModal?: PageGetModal<State, Msg>;
 }
 
 export function setPageMetadata(metadata: PageMetadata): void {
@@ -370,7 +371,7 @@ export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams
   childRouteParams: ChildRouteParams;
   childInit: PageInit<ChildRouteParams, SharedState, ChildState, ChildMsg>;
   childGetMetadata: PageGetMetadata<ChildState>;
-  childGetModal: PageGetModal<ChildState, ChildMsg>;
+  childGetModal?: PageGetModal<ChildState, ChildMsg>;
   getSharedState(state: Immutable<ParentState>): SharedState;
   mapChildMsg(msg: ChildMsg): ParentMsg;
   setModal(state: Immutable<ParentState>, modal: PageModal<ParentMsg> | null): Immutable<ParentState>;
@@ -389,7 +390,9 @@ export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams,
     dispatch: childDispatch
   }));
   setPageMetadata(params.childGetMetadata(childState));
-  const childModal = params.childGetModal(childState, childDispatch);
+  const childModal = params.childGetModal
+    ? params.childGetModal(childState, childDispatch)
+    : null;
   const parentModal = mapPageModalMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<ParentMsg, Route>);
   const parentState = params.state.setIn(params.childStatePath, childState);
   return params.setModal(parentState, parentModal);
@@ -427,7 +430,7 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
 
 export interface UpdateChildPageParams<PS, PM, CS, CM> extends UpdateChildParams<PS, PM, CS, CM> {
   childGetMetadata: PageGetMetadata<CS>;
-  childGetModal: PageGetModal<CS, CM>;
+  childGetModal?: PageGetModal<CS, CM>;
   setModal(state: Immutable<PS>, modal: PageModal<PM> | null): Immutable<PS>;
 }
 
@@ -446,7 +449,9 @@ export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPag
   const setModal = (parentState: Immutable<PS>, parentDispatch: Dispatch<AppMsg<PM, Route>>): Immutable<PS>  => {
     const pageState = parentState.getIn(params.childStatePath);
     const childDispatch = mapAppDispatch(parentDispatch, params.mapChildMsg);
-    const childModal = params.childGetModal(pageState, childDispatch);
+    const childModal = params.childGetModal
+      ? params.childGetModal(pageState, childDispatch)
+      : null;
     const parentModal = mapPageModalMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<PM, Route>);
     return params.setModal(parentState, parentModal);
   };

@@ -1,5 +1,5 @@
 import { Msg, Route, SharedState } from 'front-end/lib/app/types';
-import { AppMsg, Dispatch, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlerts, PageBreadcrumbs, PageComponent, View } from 'front-end/lib/framework';
+import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlerts, PageBreadcrumbs, PageComponent, View } from 'front-end/lib/framework';
 import Link from 'front-end/lib/views/link';
 import { default as React, ReactElement } from 'react';
 import { Alert, Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'reactstrap';
@@ -104,7 +104,12 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
     return null;
   }
   // pageState is defined, render page.
-  const { viewBottomBar, getBreadcrumbs, getAlerts, containerOptions = {} } = component;
+  const {
+    viewBottomBar,
+    getBreadcrumbs = emptyPageBreadcrumbs,
+    getAlerts = emptyPageAlerts,
+    containerOptions = {}
+  } = component;
   const { paddingTop = true, paddingBottom = true, fullWidth = false } = containerOptions;
   const containerClassName = `${paddingTop ? 'pt-5' : ''} ${paddingBottom ? 'pb-5' : ''} flex-grow-1`;
   const dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>> = mapAppDispatch(dispatch, mapPageMsg);
