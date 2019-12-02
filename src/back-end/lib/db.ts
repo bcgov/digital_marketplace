@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import Knex from 'knex';
 import { Session } from 'shared/lib/resources/session';
-import { User, UserType } from 'shared/lib/resources/user';
+import { UpdateRequestBody, User, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
@@ -17,6 +17,19 @@ export async function createUser(connection: Connection, user: Omit<User, 'id'>)
     }, ['*']);
   if (!result) {
     throw new Error('unable to create user');
+  }
+  return result;
+}
+
+export async function updateUser(connection: Connection, userInfo: UpdateRequestBody): Promise<User> {
+  const now = new Date();
+  const [result] = await connection('users')
+    .update({
+      ...userInfo,
+      updatedAt: now
+    }, ['*']);
+  if (!result) {
+    throw new Error('unable to update user');
   }
   return result;
 }

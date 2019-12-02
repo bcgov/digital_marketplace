@@ -1,3 +1,4 @@
+import { PublicFile } from 'shared/lib/resources/file';
 import { Id } from 'shared/lib/types';
 
 export enum UserType {
@@ -18,8 +19,18 @@ export interface User {
     status: UserStatus;
     name: string;
     email?: string;
-    avatarImageUrl?: string;
+    avatarImageFile?: PublicFile;
     notificationsOn: boolean;
     acceptedTerms: boolean;
     idpUsername: string;
+}
+
+export interface UpdateRequestBody {
+    id: Id;
+    status?: UserStatus;
+    name?: string;
+    email?: string;
+    avatarImageFile?: PublicFile;
+    notificationsOn?: boolean;
+    acceptedTerms?: boolean;
 }

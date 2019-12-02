@@ -35,6 +35,14 @@ export function readManyUsers(session: Session): boolean {
   return !!session.user && session.user.type === UserType.Admin;
 }
 
+export function updateUser(session: Session, id: string): boolean {
+  return isOwnAccount(session, id);
+}
+
+export function deleteUser(session: Session, id: string): boolean {
+  return isOwnAccount(session, id) || (!!session.user && session.user.type === UserType.Admin);
+}
+
 // Sessions.
 
 export function readOneSession(session: Session, id: string): boolean {
