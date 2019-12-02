@@ -15,25 +15,37 @@ async function makeRouter(connection: Connection): Promise<Router<any, TextRespo
       handler: {
         transformRequest: async () => null,
         async respond(request) {
-          const redirectUrl = qs.escape(`${ORIGIN}/auth/callback`);
-          const nonce = generators.codeVerifier();
-          const authUrl = `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth` +
-                          `?client_id=${KEYCLOAK_CLIENT_ID}` +
-                          `&client_secret=${KEYCLOAK_CLIENT_SECRET}` +
-                          `&redirect_uri=${redirectUrl}` +
-                          `&response_type=code` +
-                          `&response_mode=query` +
-                          `&scope=openid` +
-                          `&nonce=${nonce}`;
+          try {
+            const redirectUrl = qs.escape(`${ORIGIN}/auth/callback`);
+            const nonce = generators.codeVerifier();
+            const authUrl = `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth` +
+                            `?client_id=${KEYCLOAK_CLIENT_ID}` +
+                            `&client_secret=${KEYCLOAK_CLIENT_SECRET}` +
+                            `&redirect_uri=${redirectUrl}` +
+                            `&response_type=code` +
+                            `&response_mode=query` +
+                            `&scope=openid` +
+                            `&nonce=${nonce}`;
 
-          return {
-            code: 302,
-            headers: {
-              'Location': authUrl
-            },
-            session: request.session,
-            body: makeTextResponseBody('')
-          };
+            return {
+              code: 302,
+              headers: {
+                'Location': authUrl
+              },
+              session: request.session,
+              body: makeTextResponseBody('')
+            };
+          } catch (error) {
+            request.logger.error('authorization failed', makeErrorResponseBody(error));
+            return {
+              code: 302,
+              headers: {
+                'Location': `/error`
+              },
+              session: request.session,
+              body: makeTextResponseBody('')
+            };
+          }
         }
       }
     },
