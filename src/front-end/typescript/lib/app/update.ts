@@ -6,9 +6,9 @@ import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import { Session } from 'shared/lib/resources/session';
-import { ValidOrInvalid } from 'shared/lib/validators';
+import { Validation } from 'shared/lib/validation';
 
-function setSession(state: Immutable<State>, validated: ValidOrInvalid<Session, null>): Immutable<State> {
+function setSession(state: Immutable<State>, validated: Validation<Session, null>): Immutable<State> {
 return state.set('shared', {
   session: validated.tag === 'valid' ? validated.value : undefined
   });

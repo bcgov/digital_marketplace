@@ -95,7 +95,14 @@ async function start() {
   const adapter: ExpressAdapter<any, any, any, any, Session> = express();
   adapter({
     router,
-    sessionIdToSession: id => id ? readOneSession(connection, id) : createAnonymousSession(connection),
+    sessionIdToSession: async id => {
+      try {
+        if (!id) { throw new Error('session ID is undefined'); }
+        return await readOneSession(connection, id);
+      } catch (e) {
+        return await createAnonymousSession(connection);
+      }
+    },
     sessionToSessionId: ({ id }) => id,
     host: SERVER_HOST,
     port: SERVER_PORT
