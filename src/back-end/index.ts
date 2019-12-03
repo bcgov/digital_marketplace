@@ -17,6 +17,10 @@ import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 
+type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
+
+type BasicRoute = Route<SupportedRequestBodies, any, any, any, SupportedResponseBodies, any, Session>;
+
 const logger = makeDomainLogger(consoleAdapter, 'back-end');
 
 export function connectToDatabase(postgresUrl: string): Connection {
@@ -29,13 +33,13 @@ export function connectToDatabase(postgresUrl: string): Connection {
   });
 }
 
-export async function createRouter(connection: Connection): Promise<Router<SupportedRequestBodies, SupportedResponseBodies, Session>> {
+export async function createRouter(connection: Connection): Promise<Router<SupportedRequestBodies, any, any, any, SupportedResponseBodies, any, Session>> {
   const hooks = [
     loggerHook
   ];
 
   // Add new resources to this array.
-  const resources: Array<crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, Session, Connection>> = [
+  const resources: BasicCrudResource[] = [
     sessionResource,
     userResource
   ];
@@ -45,7 +49,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   const flippedConcat = flipCurried(concat);
   const crudRoutes = flow([
     // Create routers from resources.
-    map((resource: crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, Session, Connection>) => {
+    map((resource: BasicCrudResource) => {
       return crud.makeRouter(resource)(connection);
     }),
     // Make a flat list of routes.
@@ -53,7 +57,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
     // Respond with a standard 404 JSON response if API route is not handled.
     flippedConcat(notFoundJsonRoute),
     // Namespace all CRUD routes with '/api'.
-    map((route: Route<SupportedRequestBodies, any, SupportedResponseBodies, any, Session>) => namespaceRoute('/api', route))
+    map((route: BasicRoute) => namespaceRoute('/api', route))
   ])(resources);
 
   // Collect all routes.
@@ -65,7 +69,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
     // Add global hooks to all routes.
-    map((route: Route<SupportedRequestBodies, any, SupportedResponseBodies, any, Session>) => addHooksToRoute(hooks, route))
+    map((route: BasicRoute) => addHooksToRoute(hooks, route))
   ])([]);
 
   // Add the status router.
@@ -88,7 +92,7 @@ async function start() {
   const router = await createRouter(connection);
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
-  const adapter: ExpressAdapter<Session> = express();
+  const adapter: ExpressAdapter<any, any, any, any, Session> = express();
   adapter({
     router,
     sessionIdToSession: id => id ? readOneSession(connection, id) : createAnonymousSession(connection),
