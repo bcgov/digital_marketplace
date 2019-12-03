@@ -272,8 +272,6 @@ export function noPageModal<Msg>() {
 
 export interface PageContainerOptions {
   fullWidth?: boolean;
-  paddingTop?: boolean;
-  paddingBottom?: boolean;
 }
 
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {

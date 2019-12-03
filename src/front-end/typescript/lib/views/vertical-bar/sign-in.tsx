@@ -17,14 +17,14 @@ function makeVerticalBar<State, Msg, Props extends ComponentViewProps<State, Msg
     return (
       <div className='d-flex flex-column flex-grow-1 pt-5 position-relative'>
         <Link
-          color='body'
+          color='secondary'
           style={{ top: 0, left: 0 }}
           className={`font-size-small d-flex flex-row flex-nowrap align-items-center mt-n5 position-absolute ${backMsg ? '' : 'd-none'}`}
           onClick={() => backMsg && dispatch(backMsg)}>
           <Icon name='chevron-left' width={1} height={1.1} />Go Back
         </Link>
         <h1 className='mb-3'>{getTitle(state)}</h1>
-        <p className='mb-5'>{getDescription(state)}</p>
+        <p className='mb-4'>{getDescription(state)}</p>
         <div className='font-size-small mt-auto'>{getFooter(props)}</div>
       </div>
   );

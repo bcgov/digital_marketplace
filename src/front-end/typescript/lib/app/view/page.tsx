@@ -45,7 +45,7 @@ function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactEl
   const { dispatchPage, breadcrumbs } = props;
   if (!breadcrumbs.length) { return null; }
   return (
-    <Breadcrumb className='d-none d-md-block' listClassName='bg-transparent px-0'>
+    <Breadcrumb className='d-none d-md-block' listClassName='bg-transparent p-0'>
       {breadcrumbs.map(({ text, onClickMsg }, i) => {
         const onClick = () => {
           if (onClickMsg) { dispatchPage(onClickMsg); }
@@ -60,24 +60,28 @@ function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactEl
   );
 }
 
-type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps & ViewBreadcrumbsProps<PageMsg>;
+type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps & ViewBreadcrumbsProps<PageMsg> & { container?: boolean };
 
 function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<PageMsg>) {
-  const { dispatchPage, alerts, breadcrumbs } = props;
+  const { dispatchPage, alerts, breadcrumbs, container = false } = props;
   const hasAlerts = alerts.info.length || alerts.warnings.length || alerts.errors.length;
   const hasBreadcrumbs = !!breadcrumbs.length;
-  let className = hasBreadcrumbs
-    ? 'pt-md-3'
-    : hasAlerts
-    ? 'pt-5'
-    : '';
-  className = `${className} ${hasBreadcrumbs && hasAlerts ? 'pt-5' : ''} ${hasBreadcrumbs ? 'mb-md-n4' : ''} ${hasAlerts ? 'mb-n4' : ''}`;
-  return (
-    <Container className={className}>
-      <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
-      <ViewAlerts alerts={alerts} />
-    </Container>
-  );
+  const className = `${hasAlerts ? 'pb-5 mb-n4' : ''} ${hasBreadcrumbs ? 'pb-md-5 mb-md-n4' : ''}`;
+  if (container) {
+    return (
+      <Container className={`${className} pt-5`}>
+        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
+        <ViewAlerts alerts={alerts} />
+      </Container>
+    );
+  } else {
+    return (
+      <div className={className}>
+        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
+        <ViewAlerts alerts={alerts} />
+      </div>
+    );
+  }
 }
 
 export interface Props<PageState, PageMsg> {
@@ -110,8 +114,7 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
     getAlerts = emptyPageAlerts,
     containerOptions = {}
   } = component;
-  const { paddingTop = true, paddingBottom = true, fullWidth = false } = containerOptions;
-  const containerClassName = `${paddingTop ? 'pt-5' : ''} ${paddingBottom ? 'pb-5' : ''} flex-grow-1`;
+  const { fullWidth = false } = containerOptions;
   const dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>> = mapAppDispatch(dispatch, mapPageMsg);
   const viewProps = {
     dispatch: dispatchPage,
@@ -126,40 +129,31 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
   const bottomBar = viewBottomBar ? viewBottomBar(viewProps) : null;
   // Handle full width pages.
   if (fullWidth) {
-    if (component.viewVerticalBar) {
-      //TODO
-      return (
-        <div className='d-flex flex-column flex-grow-1 page-container'>
-          <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
-          <div className={containerClassName}>
-            <component.view {...viewProps} />
-          </div>
-          {bottomBar}
-        </div>
-      );
-    } else {
-      return (
-        <div className='d-flex flex-column flex-grow-1 page-container'>
-          <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
-          <div className={containerClassName}>
-            <component.view {...viewProps} />
-          </div>
-          {bottomBar}
-        </div>
-      );
-    }
+    // Do not show vertical bar on fullWidth pages.
+    // No vertical bar.
+    return (
+      <div className='d-flex flex-column flex-grow-1 page-container'>
+        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container />
+        <component.view {...viewProps} />
+        {bottomBar}
+      </div>
+    );
   } else {
     // Handle pages within a container.
     if (component.viewVerticalBar) {
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
           <div className='d-flex flex-column flex-grow-1'>
-            <Container className='flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
+            <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
+              <div className='d-none d-md-block position-absolute bg-light' style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col md='4' className={`bg-light px-md-4 d-flex flex-column align-items-stretch ${containerClassName}`}>
+                <Col xs='12' md='4' className='vertical-bar px-md-4 d-flex flex-column align-items-stretch py-5'>
                   <component.viewVerticalBar {...viewProps} />
                 </Col>
-                <Col md='8' className={`pl-md-4 ${containerClassName}`}>
+                <Col xs='12' className='d-block d-md-none'>
+                  <div className='w-100 border-bottom'></div>
+                </Col>
+                <Col xs='12' md='8' className={`pl-md-4 py-5`}>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
                   <component.view {...viewProps} />
                 </Col>
@@ -170,14 +164,13 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
         </div>
       );
     } else {
+      // No vertical bar.
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
-          <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
-          <div className={containerClassName}>
-            <Container>
-              <component.view {...viewProps} />
-            </Container>
-          </div>
+          <Container className='py-5'>
+            <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+            <component.view {...viewProps} />
+          </Container>
           {bottomBar}
         </div>
       );

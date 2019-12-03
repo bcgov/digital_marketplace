@@ -313,6 +313,12 @@ nav.navbar .nav-link:hover {
 
 // Custom components
 
+.vertical-bar {
+  @include media-breakpoint-up(md) {
+    background-color: $light;
+  }
+}
+
 .react-select-container {
   flex-grow: 1;
 

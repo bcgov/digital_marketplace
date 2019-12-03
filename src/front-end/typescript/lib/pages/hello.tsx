@@ -59,5 +59,12 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   },
   getMetadata() {
     return makePageMetadata('Hello, World');
+  },
+  getBreadcrumbs() {
+    return [
+      { text: 'One' },
+      { text: 'Two' },
+      { text: 'Three' }
+    ];
   }
 };
