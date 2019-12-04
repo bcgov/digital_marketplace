@@ -1,6 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageAlert, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import Link from 'front-end/lib/views/link';
 import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import React from 'react';
@@ -8,20 +8,41 @@ import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  infoAlerts: Array<PageAlert<Msg>>;
 }
 
-export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
+type InnerMsg
+  = ADT<'noop'>
+  | ADT<'dismissInfoAlert', number>;
+
+export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  empty: true,
+  infoAlerts: [
+    { text: 'LOREM ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.' },
+    { text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.', dismissMsg: { tag: 'dismissInfoAlert', value: 1 } }
+  ],
   hello: ''
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+  switch (msg.tag) {
+    case 'dismissInfoAlert':
+      const foo = state.update('infoAlerts', alerts => alerts.filter((a, i) => {
+        return i !== msg.value;
+      }));
+      //tslint:disable
+      console.log(foo);
+      return [
+        state.update('infoAlerts', alerts => alerts.filter((a, i) => {
+          return i !== msg.value;
+        }))
+      ];
+    default:
+      return [state];
+  }
 };
 
 const view: ComponentView<State, Msg> = ({ state }) => {
@@ -54,17 +75,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getAlerts(state) {
     return {
       ...emptyPageAlerts(),
-      info: ['Test alert']
+      info: state.infoAlerts
     };
   },
   getMetadata() {
     return makePageMetadata('Hello, World');
-  },
-  getBreadcrumbs() {
-    return [
-      { text: 'One' },
-      { text: 'Two' },
-      { text: 'Three' }
-    ];
   }
 };

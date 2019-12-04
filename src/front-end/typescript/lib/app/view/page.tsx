@@ -1,40 +1,62 @@
 import { Msg, Route, SharedState } from 'front-end/lib/app/types';
-import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlerts, PageBreadcrumbs, PageComponent, View } from 'front-end/lib/framework';
+import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import { default as React, ReactElement } from 'react';
 import { Alert, Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'reactstrap';
 
-interface ViewAlertProps {
-  messages: Array<string | ReactElement>;
+interface ViewAlertProps<PageMsg> {
+  messages: Array<PageAlert<GlobalComponentMsg<PageMsg, Route>>>;
+  dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>>;
   color: 'info' | 'warning' | 'danger';
   className?: string;
 }
 
-const ViewAlert: View<ViewAlertProps> = ({ messages, color, className }) => {
+function ViewAlert<PageMsg>({ messages, dispatchPage, color, className }: ViewAlertProps<PageMsg>) {
   if (!messages.length) { return null; }
   return (
-    <Alert color={color} className={className} fade={false}>
-      {messages.map((text, i)  => (<div key={`alert-${color}-${i}`}>{text}</div>))}
+    <Alert color={color} className={`${className} p-0`} fade={false}>
+      {messages.map(({ text, dismissMsg }, i)  => (
+        <div>
+          <div key={`alert-${color}-${i}`} className='d-flex align-items-start p-3'>
+            <div className='flex-grow-1 pr-3'>{text}</div>
+            {dismissMsg
+              ? (<Icon
+                  name='times'
+                  width={1}
+                  height={1}
+                  color={color}
+                  onClick={() => dispatchPage(dismissMsg)}
+                  style={{ cursor: 'pointer' }}
+                  className='mt-1 o-75 flex-grow-0 flex-shrink-0' />)
+              : null}
+          </div>
+          {i === messages.length - 1
+            ? null
+            : (<div className={`border-bottom border-${color} o-25 w-100`}></div>)}
+        </div>
+      ))}
     </Alert>
   );
-};
-
-interface ViewAlertsProps {
-  alerts: PageAlerts;
 }
 
-const ViewAlerts: View<ViewAlertsProps> = ({ alerts }) => {
+interface ViewAlertsProps<PageMsg> {
+  alerts: PageAlerts<GlobalComponentMsg<PageMsg, Route>>;
+  dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>>;
+}
+
+function ViewAlerts<PageMsg>({ alerts, dispatchPage }: ViewAlertsProps<PageMsg>) {
   const { info, warnings, errors } = alerts;
   return (
     <Row>
       <Col xs='12'>
-        <ViewAlert messages={info} color='info' />
-        <ViewAlert messages={warnings} color='warning' />
-        <ViewAlert messages={errors} color='danger' className='mb-0' />
+        <ViewAlert messages={info} dispatchPage={dispatchPage} color='info' />
+        <ViewAlert messages={warnings} dispatchPage={dispatchPage} color='warning' />
+        <ViewAlert messages={errors} dispatchPage={dispatchPage} color='danger' className='mb-0' />
       </Col>
     </Row>
   );
-};
+}
 
 interface ViewBreadcrumbsProps<PageMsg> {
   breadcrumbs: PageBreadcrumbs<GlobalComponentMsg<PageMsg, Route>>;
@@ -60,7 +82,7 @@ function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactEl
   );
 }
 
-type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps & ViewBreadcrumbsProps<PageMsg> & { container?: boolean };
+type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps<PageMsg> & ViewBreadcrumbsProps<PageMsg> & { container?: boolean };
 
 function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<PageMsg>) {
   const { dispatchPage, alerts, breadcrumbs, container = false } = props;
@@ -71,14 +93,14 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
     return (
       <Container className={`${className} pt-5`}>
         <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
-        <ViewAlerts alerts={alerts} />
+        <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
       </Container>
     );
   } else {
     return (
       <div className={className}>
         <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
-        <ViewAlerts alerts={alerts} />
+        <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
       </div>
     );
   }

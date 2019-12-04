@@ -150,7 +150,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return updateAppChildPage({
         ...defaultPageUpdateParams,
         mapChildMsg: value => ({ tag: 'pageHello', value }),
-        childStatePath: ['pages', 'notice'],
+        childStatePath: ['pages', 'hello'],
         childUpdate: PageHello.component.update,
         childGetMetadata: PageHello.component.getMetadata,
         childGetModal: PageHello.component.getModal,

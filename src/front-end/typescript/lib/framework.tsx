@@ -200,19 +200,33 @@ export interface PageMetadata {
 
 export type PageGetMetadata<State> = (state: Immutable<State>) => PageMetadata;
 
-export interface PageAlerts {
-  info: Array<string | ReactElement>;
-  warnings: Array<string | ReactElement>;
-  errors: Array<string | ReactElement>;
+export interface PageAlert<Msg> {
+  text: string | ReactElement;
+  dismissMsg?: Msg;
 }
 
-export type PageGetAlerts<State> = (state: Immutable<State>) => PageAlerts;
+export interface PageAlerts<Msg> {
+  info: Array<PageAlert<Msg>>;
+  warnings: Array<PageAlert<Msg>>;
+  errors: Array<PageAlert<Msg>>;
+}
 
-export function emptyPageAlerts(): PageAlerts {
+export type PageGetAlerts<State, Msg> = (state: Immutable<State>) => PageAlerts<Msg>;
+
+export function emptyPageAlerts<Msg>(): PageAlerts<Msg> {
   return {
     info: [],
     warnings: [],
     errors: []
+  };
+}
+
+export function mapPageAlerts<MsgA, MsgB, Route>(alerts: PageAlerts<GlobalComponentMsg<MsgA, Route>>, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageAlerts<GlobalComponentMsg<MsgB, Route>> {
+  const { info, warnings, errors } = alerts;
+  return {
+    info: info.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) })),
+    warnings: warnings.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) })),
+    errors: errors.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) }))
   };
 }
 
@@ -282,7 +296,7 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   viewVerticalBar?: View<Props>;
   containerOptions?: PageContainerOptions;
   getMetadata: PageGetMetadata<State>;
-  getAlerts?: PageGetAlerts<State>;
+  getAlerts?: PageGetAlerts<State, Msg>;
   getBreadcrumbs?: PageGetBreadcrumbs<State, Msg>;
   getModal?: PageGetModal<State, Msg>;
 }
