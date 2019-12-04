@@ -3,14 +3,12 @@ import Footer from 'front-end/lib/app/view/footer';
 import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
-
 // Note(Jesse): @add_new_page_location
-
+import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
-
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import { default as React } from 'react';
@@ -63,6 +61,16 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
       );
 
     // Note(Jesse): @add_new_page_location
+
+    case 'userList':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.userList}
+          mapPageMsg={value => ({ tag: 'pageUserList', value })}
+          component={PageUserList.component} />
+      );
+
 
     case 'signIn':
       return (

@@ -2,8 +2,8 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
-
 // Note(Jesse): @add_new_page_location
+import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -38,6 +38,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   switch (route.tag) {
 
     // Note(Jesse): @add_new_page_location
+
+    case 'userList':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'userList'],
+        childRouteParams: route.value,
+        childInit: PageUserList.component.init,
+        childGetMetadata: PageUserList.component.getMetadata,
+        childGetModal: PageUserList.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageUserList' as const, value };
+        }
+      });
 
     case 'hello':
       return await initAppChildPage({
@@ -156,6 +169,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
 
     // Note(Jesse): @add_new_page_location
+
+    case 'pageUserList':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageUserList', value }),
+        childStatePath: ['pages', 'userList'],
+        childUpdate: PageUserList.component.update,
+        childGetMetadata: PageUserList.component.getMetadata,
+        childGetModal: PageUserList.component.getModal,
+        childMsg: msg.value
+      });
 
     case 'pageSignOut':
       return updateAppChildPage({
