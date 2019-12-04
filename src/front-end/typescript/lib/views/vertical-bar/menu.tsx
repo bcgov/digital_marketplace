@@ -3,15 +3,17 @@ import { ComponentView, ComponentViewProps, View } from 'front-end/lib/framework
 // import Icon from 'front-end/lib/views/icon';
 import  React from 'react';
 
-interface Params<State, Msg> {
+interface SidebarParams<State, Msg> {
   footer?:       ComponentView<State, Msg>;
   backMsg?:      Msg;
   title?:        string;
   description?:  string;
-  links:        JSX.Element[];
+  links:         JSX.Element[];
 }
 
-function makeVerticalBar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> (params: Params<State, Msg>): View<Props>
+type Props = ComponentViewProps<State, Msg>;
+
+function makeVerticalBar<State, Msg, Props = ComponentViewProps<State, Msg>> (params: SidebarParams<State, Msg>): View<Props>
 {
   return props => {
     return (
