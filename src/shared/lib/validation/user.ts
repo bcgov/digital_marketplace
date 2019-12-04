@@ -12,3 +12,11 @@ export function validateEmail(email: string): Validation<string> {
 export function validateName(name: string): Validation<string> {
   return validateGenericString(name, 'Name');
 }
+
+export function validateNotificationsOn(notificationsOn: boolean): Validation<Date|null> {
+  return notificationsOn ? valid(new Date()) : valid(null);
+}
+
+export function validateAcceptedTerms(acceptedTerms: boolean): Validation<Date> {
+  return acceptedTerms ? valid(new Date()) : invalid(['You cannot unaccept the terms and conditions.']);
+}

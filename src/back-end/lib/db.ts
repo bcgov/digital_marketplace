@@ -1,7 +1,10 @@
 import { generateUuid } from 'back-end/lib';
+import { ValidatedUpdateRequestBody } from 'back-end/lib/resources/user';
 import Knex from 'knex';
+import { PublicFile } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
-import { UpdateRequestBody, User, UserType } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
+
 import { Id } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
@@ -21,9 +24,10 @@ export async function createUser(connection: Connection, user: Omit<User, 'id'>)
   return result;
 }
 
-export async function updateUser(connection: Connection, userInfo: UpdateRequestBody): Promise<User> {
+export async function updateUser(connection: Connection, userInfo: ValidatedUpdateRequestBody): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
+    .where({ id: userInfo.id })
     .update({
       ...userInfo,
       updatedAt: now
@@ -162,4 +166,12 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
     .where({ id })
     .delete();
   return null;
+}
+
+export async function readOneFile(connection: Connection, id: Id): Promise<PublicFile> {
+  const result = await connection('files')
+    .where({ id })
+    .first();
+
+  return result ? result : null;
 }
