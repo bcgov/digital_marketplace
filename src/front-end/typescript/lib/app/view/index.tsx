@@ -3,9 +3,14 @@ import Footer from 'front-end/lib/app/view/footer';
 import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
+
+// Note(Jesse): @add_new_page_location
+
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import { default as React } from 'react';
@@ -56,6 +61,18 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           mapPageMsg={value => ({ tag: 'pageHello', value })}
           component={PageHello.component} />
       );
+
+    // Note(Jesse): @add_new_page_location
+
+    case 'signIn':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.signIn}
+          mapPageMsg={value => ({ tag: 'pageSignIn', value })}
+          component={PageSignIn.component} />
+      );
+
 
     case 'signOut':
       return (

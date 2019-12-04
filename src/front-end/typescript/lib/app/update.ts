@@ -2,8 +2,11 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
+
+// Note(Jesse): @add_new_page_location
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import { Session } from 'shared/lib/resources/session';
 import { ValidOrInvalid } from 'shared/lib/validators';
@@ -34,6 +37,8 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
 
   switch (route.tag) {
 
+    // Note(Jesse): @add_new_page_location
+
     case 'hello':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -47,6 +52,20 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         }
       });
 
+    case 'signIn':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'signIn'],
+        childRouteParams: route.value,
+        childInit: PageSignIn.component.init,
+        childGetMetadata: PageSignIn.component.getMetadata,
+        childGetModal: PageSignIn.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageSignIn' as const, value };
+        }
+      });
+
+
     case 'signOut':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -59,6 +78,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return { tag: 'pageSignOut' as const, value };
         }
       });
+
     case 'notice':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -135,11 +155,24 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
 
+    // Note(Jesse): @add_new_page_location
+
     case 'pageSignOut':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
         mapChildMsg: value => ({ tag: 'pageSignOut', value }),
         childStatePath: ['pages', 'signOut'],
+        childUpdate: PageSignOut.component.update,
+        childGetMetadata: PageSignOut.component.getMetadata,
+        childGetModal: PageSignOut.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageSignIn':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageSignIn', value }),
+        childStatePath: ['pages', 'signIn'],
         childUpdate: PageSignOut.component.update,
         childGetMetadata: PageSignOut.component.getMetadata,
         childGetModal: PageSignOut.component.getModal,

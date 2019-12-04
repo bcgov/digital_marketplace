@@ -21,12 +21,23 @@ export function redirect(path: string) {
 
 const router: Router<Route> = {
 
+  // Note(Jesse): @add_new_page_location
+
   routes: [
     {
       path: '/',
       makeRoute() {
         return {
           tag: 'hello',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/sign-in',
+      makeRoute() {
+        return {
+          tag: 'signIn',
           value: null
         };
       }
@@ -70,10 +81,14 @@ const router: Router<Route> = {
     }
   ],
 
+  // Note(Jesse): @add_new_page_location
+
   routeToUrl(route) {
     switch (route.tag) {
       case 'hello':
         return '/';
+      case 'signIn':
+        return '/sign-in';
       case 'signOut':
         return '/sign-out';
       case 'notice':
