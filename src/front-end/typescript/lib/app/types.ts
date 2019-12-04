@@ -1,4 +1,5 @@
 import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
+import * as PageListSidebar from 'front-end/lib/pages/list-sidebar';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -7,6 +8,7 @@ import { ADT } from 'shared/lib/types';
 
 export type Route
   = ADT<'hello', PageHello.RouteParams>
+  | ADT<'list-sidebar', PageListSidebar.RouteParams>
   | ADT<'signOut', PageSignOut.RouteParams>
   | ADT<'notice', PageNotice.RouteParams>;
 
@@ -25,6 +27,7 @@ export interface State {
   shared: SharedState;
   activeRoute: Route;
   pages: {
+    listSidebar?: Immutable<PageListSidebar.State>;
     hello?: Immutable<PageHello.State>;
     signOut?: Immutable<PageSignOut.State>;
     notice?: Immutable<PageNotice.State>;
@@ -35,6 +38,7 @@ type InnerMsg
   = ADT<'noop'>
   | ADT<'toggleIsNavOpen', boolean | undefined>
   | ADT<'closeModal'>
+  | ADT<'pageListSidebar', PageListSidebar.Msg>
   | ADT<'pageHello', PageHello.Msg>
   | ADT<'pageSignOut', PageSignOut.Msg>
   | ADT<'pageNotice', PageNotice.Msg>;

@@ -2,6 +2,7 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
+import * as PageListSidebar from 'front-end/lib/pages/list-sidebar';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -33,6 +34,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   };
 
   switch (route.tag) {
+
+    case 'list-sidebar':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'hello'],
+        childRouteParams: route.value,
+        childInit: PageListSidebar.component.init,
+        childGetMetadata: PageListSidebar.component.getMetadata,
+        childGetModal: PageListSidebar.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageListSidebar' as const, value };
+        }
+      });
 
     case 'hello':
       return await initAppChildPage({
@@ -143,6 +157,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageSignOut.component.update,
         childGetMetadata: PageSignOut.component.getMetadata,
         childGetModal: PageSignOut.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageListSidebar':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageListSidebar', value }),
+        childStatePath: ['pages', 'notice'],
+        childUpdate: PageListSidebar.component.update,
+        childGetMetadata: PageListSidebar.component.getMetadata,
+        childGetModal: PageListSidebar.component.getModal,
         childMsg: msg.value
       });
 

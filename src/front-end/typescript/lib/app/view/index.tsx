@@ -3,6 +3,7 @@ import Footer from 'front-end/lib/app/view/footer';
 import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
+import * as PageListSidebar from 'front-end/lib/pages/list-sidebar';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -47,6 +48,15 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
 
 const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   switch (state.activeRoute.tag) {
+
+    case 'list-sidebar':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.hello}
+          mapPageMsg={value => ({ tag: 'pageListSidebar', value })}
+          component={PageListSidebar.component} />
+      );
 
     case 'hello':
       return (

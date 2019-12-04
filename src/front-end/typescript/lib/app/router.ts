@@ -23,6 +23,15 @@ const router: Router<Route> = {
 
   routes: [
     {
+      path: '/list-sidebar',
+      makeRoute() {
+        return {
+          tag: 'list-sidebar',
+          value: null
+        };
+      }
+    },
+    {
       path: '/',
       makeRoute() {
         return {
@@ -72,6 +81,8 @@ const router: Router<Route> = {
 
   routeToUrl(route) {
     switch (route.tag) {
+      case 'list-sidebar':
+        return '/list-sidebar';
       case 'hello':
         return '/';
       case 'signOut':
