@@ -25,6 +25,24 @@ const router: Router<Route> = {
 
   routes: [
     {
+      path: '/user/edit',
+      makeRoute() {
+        return {
+          tag: 'userEdit',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/user/detail',
+      makeRoute() {
+        return {
+          tag: 'userDetail',
+          value: null
+        };
+      }
+    },
+    {
       path: '/users',
       makeRoute() {
         return {
@@ -100,6 +118,10 @@ const router: Router<Route> = {
         return '/sign-in';
       case 'signOut':
         return '/sign-out';
+      case 'userEdit':
+        return '/user/edit';
+      case 'userDetail':
+        return '/user/detail';
       case 'userList':
         return '/users';
       case 'notice':

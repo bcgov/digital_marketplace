@@ -3,6 +3,8 @@ import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
+import * as PageUserEdit from 'front-end/lib/pages/user/edit';
+import * as PageUserDetail from 'front-end/lib/pages/user/detail';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -38,6 +40,32 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   switch (route.tag) {
 
     // Note(Jesse): @add_new_page_location
+
+    case 'userEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'userEdit'],
+        childRouteParams: route.value,
+        childInit: PageUserEdit.component.init,
+        childGetMetadata: PageUserEdit.component.getMetadata,
+        childGetModal: PageUserEdit.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageUserEdit' as const, value };
+        }
+      });
+
+    case 'userDetail':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'userDetail'],
+        childRouteParams: route.value,
+        childInit: PageUserDetail.component.init,
+        childGetMetadata: PageUserDetail.component.getMetadata,
+        childGetModal: PageUserDetail.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageUserDetail' as const, value };
+        }
+      });
 
     case 'userList':
       return await initAppChildPage({
@@ -169,6 +197,28 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
 
     // Note(Jesse): @add_new_page_location
+
+    case 'pageUserEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageUserEdit', value }),
+        childStatePath: ['pages', 'userEdit'],
+        childUpdate: PageUserEdit.component.update,
+        childGetMetadata: PageUserEdit.component.getMetadata,
+        childGetModal: PageUserEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageUserDetail':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageUserDetail', value }),
+        childStatePath: ['pages', 'userDetail'],
+        childUpdate: PageUserDetail.component.update,
+        childGetMetadata: PageUserDetail.component.getMetadata,
+        childGetModal: PageUserDetail.component.getModal,
+        childMsg: msg.value
+      });
 
     case 'pageUserList':
       return updateAppChildPage({

@@ -1,6 +1,8 @@
 import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
 
 // Note(Jesse): @add_new_page_location
+import * as PageUserEdit from 'front-end/lib/pages/user/edit';
+import * as PageUserDetail from 'front-end/lib/pages/user/detail';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -11,11 +13,13 @@ import { ADT } from 'shared/lib/types';
 
 // Note(Jesse): @add_new_page_location
 export type Route
-  = ADT<'hello',     PageHello.RouteParams>
-  | ADT<'signIn',    PageSignIn.RouteParams>
-  | ADT<'signOut',   PageSignOut.RouteParams>
-  | ADT<'notice',    PageNotice.RouteParams>
-  | ADT<'userList',  PageUserList.RouteParams>
+  = ADT<'hello',       PageHello.RouteParams>
+  | ADT<'signIn',      PageSignIn.RouteParams>
+  | ADT<'signOut',     PageSignOut.RouteParams>
+  | ADT<'notice',      PageNotice.RouteParams>
+  | ADT<'userList',    PageUserList.RouteParams>
+  | ADT<'userDetail',  PageUserDetail.RouteParams>
+  | ADT<'userEdit',    PageUserEdit.RouteParams>
   ;
 
 export interface SharedState {
@@ -40,6 +44,8 @@ export interface State {
     signIn?: Immutable<PageSignIn.State>;
     notice?: Immutable<PageNotice.State>;
     userList?: Immutable<PageUserList.State>;
+    userDetail?: Immutable<PageUserDetail.State>;
+    userEdit?: Immutable<PageUserEdit.State>;
   };
 }
 
@@ -53,6 +59,8 @@ type InnerMsg
   | ADT<'pageSignOut', PageSignOut.Msg>
   | ADT<'pageNotice', PageNotice.Msg>
   | ADT<'pageUserList', PageUserList.Msg>
+  | ADT<'pageUserDetail', PageUserDetail.Msg>
+  | ADT<'pageUserEdit', PageUserEdit.Msg>
   ;
 
 export type Msg = AppMsg<InnerMsg, Route>;
