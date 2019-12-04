@@ -3,6 +3,8 @@ import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
+import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
+import * as PageOrgView from 'front-end/lib/pages/org/view';
 import * as PageUserEdit from 'front-end/lib/pages/user/edit';
 import * as PageUserView from 'front-end/lib/pages/user/view';
 import * as PageUserList from 'front-end/lib/pages/user/list';
@@ -40,6 +42,33 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   switch (route.tag) {
 
     // Note(Jesse): @add_new_page_location
+
+    case 'orgEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'orgEdit'],
+        childRouteParams: route.value,
+        childInit: PageOrgEdit.component.init,
+        childGetMetadata: PageOrgEdit.component.getMetadata,
+        childGetModal: PageOrgEdit.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOrgEdit' as const, value };
+        }
+      });
+
+    case 'orgView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'orgView'],
+        childRouteParams: route.value,
+        childInit: PageOrgView.component.init,
+        childGetMetadata: PageOrgView.component.getMetadata,
+        childGetModal: PageOrgView.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOrgView' as const, value };
+        }
+      });
+
 
     case 'userEdit':
       return await initAppChildPage({
@@ -197,6 +226,28 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
 
     // Note(Jesse): @add_new_page_location
+
+    case 'pageOrgEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOrgEdit', value }),
+        childStatePath: ['pages', 'orgEdit'],
+        childUpdate: PageOrgEdit.component.update,
+        childGetMetadata: PageOrgEdit.component.getMetadata,
+        childGetModal: PageOrgEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOrgView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOrgView', value }),
+        childStatePath: ['pages', 'orgView'],
+        childUpdate: PageOrgView.component.update,
+        childGetMetadata: PageOrgView.component.getMetadata,
+        childGetModal: PageOrgView.component.getModal,
+        childMsg: msg.value
+      });
 
     case 'pageUserEdit':
       return updateAppChildPage({

@@ -25,6 +25,24 @@ const router: Router<Route> = {
 
   routes: [
     {
+      path: '/org/view',
+      makeRoute() {
+        return {
+          tag: 'orgView',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/org/edit',
+      makeRoute() {
+        return {
+          tag: 'orgEdit',
+          value: null
+        };
+      }
+    },
+    {
       path: '/user/edit',
       makeRoute() {
         return {
@@ -124,6 +142,10 @@ const router: Router<Route> = {
         return '/user/view';
       case 'userList':
         return '/users';
+      case 'orgEdit':
+        return '/org/edit';
+      case 'orgView':
+        return '/org/view';
       case 'notice':
         return (() => {
           switch (route.value.noticeId.tag) {
