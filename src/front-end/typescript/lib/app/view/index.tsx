@@ -5,7 +5,7 @@ import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
 // Note(Jesse): @add_new_page_location
 import * as PageUserEdit from 'front-end/lib/pages/user/edit';
-import * as PageUserDetail from 'front-end/lib/pages/user/detail';
+import * as PageUserView from 'front-end/lib/pages/user/view';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -73,13 +73,13 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageUserEdit.component} />
       );
 
-    case 'userDetail':
+    case 'userView':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.userDetail}
-          mapPageMsg={value => ({ tag: 'pageUserDetail', value })}
-          component={PageUserDetail.component} />
+          pageState={state.pages.userView}
+          mapPageMsg={value => ({ tag: 'pageUserView', value })}
+          component={PageUserView.component} />
       );
 
     case 'userList':

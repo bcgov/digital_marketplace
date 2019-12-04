@@ -4,7 +4,7 @@ import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChil
 import { readOneSession } from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
 import * as PageUserEdit from 'front-end/lib/pages/user/edit';
-import * as PageUserDetail from 'front-end/lib/pages/user/detail';
+import * as PageUserView from 'front-end/lib/pages/user/view';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -54,16 +54,16 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         }
       });
 
-    case 'userDetail':
+    case 'userView':
       return await initAppChildPage({
         ...defaultPageInitParams,
-        childStatePath: ['pages', 'userDetail'],
+        childStatePath: ['pages', 'userView'],
         childRouteParams: route.value,
-        childInit: PageUserDetail.component.init,
-        childGetMetadata: PageUserDetail.component.getMetadata,
-        childGetModal: PageUserDetail.component.getModal,
+        childInit: PageUserView.component.init,
+        childGetMetadata: PageUserView.component.getMetadata,
+        childGetModal: PageUserView.component.getModal,
         mapChildMsg(value) {
-          return { tag: 'pageUserDetail' as const, value };
+          return { tag: 'pageUserView' as const, value };
         }
       });
 
@@ -209,14 +209,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value
       });
 
-    case 'pageUserDetail':
+    case 'pageUserView':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
-        mapChildMsg: value => ({ tag: 'pageUserDetail', value }),
-        childStatePath: ['pages', 'userDetail'],
-        childUpdate: PageUserDetail.component.update,
-        childGetMetadata: PageUserDetail.component.getMetadata,
-        childGetModal: PageUserDetail.component.getModal,
+        mapChildMsg: value => ({ tag: 'pageUserView', value }),
+        childStatePath: ['pages', 'userView'],
+        childUpdate: PageUserView.component.update,
+        childGetMetadata: PageUserView.component.getMetadata,
+        childGetModal: PageUserView.component.getModal,
         childMsg: msg.value
       });
 

@@ -34,10 +34,10 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/user/detail',
+      path: '/user/view',
       makeRoute() {
         return {
-          tag: 'userDetail',
+          tag: 'userView',
           value: null
         };
       }
@@ -120,8 +120,8 @@ const router: Router<Route> = {
         return '/sign-out';
       case 'userEdit':
         return '/user/edit';
-      case 'userDetail':
-        return '/user/detail';
+      case 'userView':
+        return '/user/view';
       case 'userList':
         return '/users';
       case 'notice':
