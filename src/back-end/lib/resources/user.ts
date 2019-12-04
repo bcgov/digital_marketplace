@@ -13,7 +13,6 @@ import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation';
 import { validateAcceptedTerms, validateEmail, validateName, validateNotificationsOn } from 'shared/lib/validation/user';
 
-
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
   avatarImageFile?: PublicFile;
   notificationsOn?: Date;
