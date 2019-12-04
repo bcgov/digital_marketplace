@@ -1,6 +1,6 @@
 import { get, isArray, isBoolean } from 'lodash';
 import moment from 'moment-timezone';
-import { invalid, valid, ValidOrInvalid } from 'shared/lib/validators';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export function getString(obj: any, keyPath: string | string[], fallback = ''): string {
   const value = get(obj, keyPath);
@@ -57,7 +57,7 @@ export function formatTime(date: Date, withTimeZone = false): string {
 
 export function formatTermsAndConditionsAgreementDate(date?: Date, you = 'You', have = 'have'): string {
   if (date) {
-    return `${you} agreed to the Terms and Conditions on ${formatDate(date)} at ${formatTime(date, true)}.`
+    return `${you} agreed to the Terms and Conditions on ${formatDate(date)} at ${formatTime(date, true)}.`;
   } else {
     return `${you} ${have} not agreed to the Terms & Conditions.`;
   }
@@ -68,7 +68,7 @@ export function formatTermsAndConditionsAgreementDate(date?: Date, you = 'You', 
  * a run-time exception if the input is invalid.
  */
 
-export function parseJsonSafely(raw: string): ValidOrInvalid<any, undefined> {
+export function parseJsonSafely(raw: string): Validation<any, undefined> {
   try {
     return valid(JSON.parse(raw));
   } catch (error) {

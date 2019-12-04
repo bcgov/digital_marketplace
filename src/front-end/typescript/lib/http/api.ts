@@ -2,11 +2,11 @@ import { prefixRequest } from 'front-end/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { ClientHttpMethod } from 'shared/lib/types';
-import { invalid, valid, ValidOrInvalid } from 'shared/lib/validators';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 
 const request = prefixRequest('api');
 
-function withCurrentSession(method: ClientHttpMethod): () => Promise<ValidOrInvalid<Session, null>> {
+function withCurrentSession(method: ClientHttpMethod): () => Promise<Validation<Session, null>> {
   return async () => {
     const response = await request(method, 'sessions/current');
     switch (response.status) {

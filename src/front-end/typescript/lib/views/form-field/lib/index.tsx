@@ -2,7 +2,7 @@ import { Immutable, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import React, { ReactElement } from 'react';
 import { Alert, FormGroup, FormText, Label } from 'reactstrap';
-import { getInvalidValue, getValidValue, Validation } from 'shared/lib/validators';
+import { getInvalidValue, getValidValue, Validation } from 'shared/lib/validation';
 
 export interface State<Value> {
   value: Value;
@@ -13,7 +13,7 @@ export interface State<Value> {
   help?: {
     text: string | ReactElement;
     show: boolean;
-  }
+  };
 }
 
 export type OnChange<Value> = (value: Value) => void;
@@ -84,7 +84,7 @@ const ConditionalHelp: View<Props<any, any, any>> = ({ state, disabled }) => {
   } else {
     return null;
   }
-}
+};
 
 const ConditionalErrors: View<State<any>> = ({ errors }) => {
   if (errors.length) {
@@ -99,7 +99,7 @@ const ConditionalErrors: View<State<any>> = ({ errors }) => {
   } else {
     return null;
   }
-}
+};
 
 export function view<ChildState extends State<Value>, ChildExtraProps, Value>(props: Props<ChildState, ChildExtraProps, Value>) {
   const { state, disabled = false, Child, onChange, extraProps, className = '' } = props;
@@ -113,7 +113,7 @@ export function view<ChildState extends State<Value>, ChildExtraProps, Value>(pr
       <ConditionalErrors {...state} />
     </FormGroup>
   );
-};
+}
 
 export function validateAndUpdateField<State>(state: Immutable<State>, key: string, value: string, validate: (value: string) => Validation<string>): Immutable<State> {
   const validation = validate(value);

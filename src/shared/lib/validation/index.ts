@@ -1,31 +1,30 @@
 import * as immutable from 'immutable';
 import { isEmpty } from 'lodash';
 import moment from 'moment';
-import AVAILABLE_GENRES from 'shared/data/genres';
 import { compareDates, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
 import { ADT } from 'shared/lib/types';
 
-export type ValidOrInvalid<Valid, Invalid> = ADT<'valid', Valid> | ADT<'invalid', Invalid>;
+export type Validation<Valid, Invalid = string[]>
+  = ADT<'valid', Valid>
+  | ADT<'invalid', Invalid>;
 
-export type Validation<Value> = ValidOrInvalid<Value, string[]>;
+export type ArrayValidation<Value, Errors = string[]> = Validation<Value[], Errors[]>;
 
-export type ArrayValidation<Value, Errors = string[]> = ValidOrInvalid<Value[], Errors[]>;
-
-export function valid<Valid>(value: Valid): ValidOrInvalid<Valid, any> {
+export function valid<Valid>(value: Valid): Validation<Valid, any> {
   return {
     tag: 'valid',
     value
   } as ADT<'valid', Valid>;
 }
 
-export function invalid<Invalid>(value: Invalid): ValidOrInvalid<any, Invalid> {
+export function invalid<Invalid>(value: Invalid): Validation<any, Invalid> {
   return {
     tag: 'invalid',
     value
   } as ADT<'invalid', Invalid>;
 }
 
-export function allValid(results: Array<ValidOrInvalid<any, any>>): results is Array<ADT<'valid', any>> {
+export function allValid(results: Array<Validation<any, any>>): results is Array<ADT<'valid', any>> {
   for (const result of results) {
     if (result.tag === 'invalid') {
       return false;
@@ -34,7 +33,7 @@ export function allValid(results: Array<ValidOrInvalid<any, any>>): results is A
   return true;
 }
 
-export function allInvalid(results: Array<ValidOrInvalid<any, any>>): results is Array<ADT<'invalid', any>> {
+export function allInvalid(results: Array<Validation<any, any>>): results is Array<ADT<'invalid', any>> {
   for (const result of results) {
     if (result.tag === 'valid') {
       return false;
@@ -43,7 +42,7 @@ export function allInvalid(results: Array<ValidOrInvalid<any, any>>): results is
   return true;
 }
 
-export function getValidValue<Valid, Fallback>(result: ValidOrInvalid<Valid, any>, fallback: Fallback): Valid | Fallback {
+export function getValidValue<Valid, Fallback = Valid>(result: Validation<Valid, any>, fallback: Fallback): Valid | Fallback {
   switch (result.tag) {
     case 'valid':
       return result.value;
@@ -52,7 +51,7 @@ export function getValidValue<Valid, Fallback>(result: ValidOrInvalid<Valid, any
   }
 }
 
-export function getInvalidValue<Invalid, Fallback>(result: ValidOrInvalid<any, Invalid>, fallback: Fallback): Invalid | Fallback {
+export function getInvalidValue<Invalid, Fallback = Invalid>(result: Validation<any, Invalid>, fallback: Fallback): Invalid | Fallback {
   switch (result.tag) {
     case 'valid':
       return fallback;
@@ -61,7 +60,7 @@ export function getInvalidValue<Invalid, Fallback>(result: ValidOrInvalid<any, I
   }
 }
 
-export function mapValid<A, B, C>(value: ValidOrInvalid<A, C>, fn: (a: A) => B): ValidOrInvalid<B, C> {
+export function mapValid<A, B, C>(value: Validation<A, C>, fn: (a: A) => B): Validation<B, C> {
   switch (value.tag) {
     case 'valid':
       return valid(fn(value.value));
@@ -70,7 +69,18 @@ export function mapValid<A, B, C>(value: ValidOrInvalid<A, C>, fn: (a: A) => B):
   }
 }
 
-export function validateArrayCustom<A, B, C>(raw: A[], validate: (v: A) => ValidOrInvalid<B, C>, defaultInvalidValue: C): ArrayValidation<B, C> {
+export function mapInvalid<A, B, C>(value: Validation<A, B>, fn: (b: B) => C): Validation<A, C> {
+  switch (value.tag) {
+    case 'valid':
+      return value;
+    case 'invalid':
+      return invalid(fn(value.value));
+  }
+}
+
+// Array Validators.
+
+export function validateArrayCustom<A, B, C>(raw: A[], validate: (v: A) => Validation<B, C>, defaultInvalidValue: C): ArrayValidation<B, C> {
   const validations = raw.map(v => validate(v));
   if (allValid(validations)) {
     return valid(validations.map(({ value }) => value));
@@ -92,9 +102,11 @@ export async function validateArrayAsync<A, B>(raw: A[], validate: (v: A) => Pro
   }
 }
 
+// Single Value Validators.
+
 // Validate a field only if it is truthy.
-export function optional<Value, Valid, Invalid>(fn: (v: Value) => ValidOrInvalid<Valid, Invalid>, v: Value | undefined): ValidOrInvalid<Valid | undefined, Invalid> {
-  return isEmpty(v) ? valid(undefined) : fn(v as Value);
+export function optional<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Validation<Valid, Invalid>): Validation<Valid | undefined, Invalid> {
+  return isEmpty(v) ? valid(undefined) : validate(v as Value);
 }
 
 export function validateGenericString(value: string, name: string, min = 1, max = 100, characters = 'characters'): Validation<string> {
@@ -119,6 +131,8 @@ export function validateStringInArray(value: string, availableValues: immutable.
     return valid(value);
   }
 }
+
+// Date Validators.
 
 function parseDate(raw: string): Date | null {
   const parsed = moment(raw);
@@ -156,67 +170,4 @@ export function validateDate(raw: string, minDate?: Date, maxDate?: Date): Valid
 
 export function validateTime(raw: string, minDate?: Date, maxDate?: Date): Validation<Date> {
   return validateGenericDate(raw, 'time', 'at', formatTime, minDate, maxDate);
-}
-
-// Author.
-
-export function validateAuthorFirstName(value: string): Validation<string> {
-  return validateGenericString(value, 'First Name');
-}
-
-export function validateAuthorMiddleName(value?: string): Validation<string | undefined> {
-  return optional(v => validateGenericString(v, 'Last Name'), value);
-}
-
-export function validateAuthorLastName(value: string): Validation<string> {
-  return validateGenericString(value, 'Last Name');
-}
-
-// Loan.
-
-export function validateLoanDueAt(raw: string): Validation<Date> {
-  // Loans must be due at least one day after their check out date.
-  const minDate = moment(new Date()).add(1, 'days').toDate();
-  return validateDate(`${raw} 23:59`, minDate);
-}
-
-// Book.
-
-export function validateBookTitle(value: string): Validation<string> {
-  return validateGenericString(value, 'Title', 1, 250);
-}
-
-export function validateBookDescription(value: string): Validation<string> {
-  return validateGenericString(value, 'Description', 1, 250);
-}
-
-// Misc.
-
-export function validateEmail(email: string): Validation<string> {
-  email = email.toLowerCase();
-  if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/i)) {
-    return invalid([ 'Please enter a valid email.' ]);
-  } else {
-    return valid(email);
-  }
-}
-
-export function validatePassword(password: string): Validation<string> {
-  const hasNumber = !!password.match(/[0-9]/);
-  const hasLowercaseLetter = !!password.match(/[a-z]/);
-  const hasUppercaseLetter = !!password.match(/[A-Z]/);
-  const errors: string[] = [];
-  if (password.length < 8) { errors.push('Passwords must be at least 8 characters long.'); }
-  if (!hasLowercaseLetter) { errors.push('Passwords must contain at least one lowercase letter.'); }
-  if (!hasUppercaseLetter) { errors.push('Passwords must contain at least one uppercase letter.'); }
-  if (!hasNumber) { errors.push('Passwords must contain at least one number.'); }
-  if (errors.length) {
-    return invalid(errors);
-  } else {
-    return valid(password);
-  }
-}
-
-export function validateGenre(genre: string): Validation<string> {
-  return validateStringInArray(genre, AVAILABLE_GENRES, 'Genre', 'a', true);
 }
