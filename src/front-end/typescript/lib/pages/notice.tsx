@@ -20,7 +20,7 @@ function noticeIdToState(noticeId: NoticeId): State {
         button: {
           text: 'Back to Home',
           route: {
-            tag: 'hello',
+            tag: 'landing',
             value: null
           }
         }

@@ -18,13 +18,13 @@ const linkClassName = (isActive: boolean) => `o-75 ${activeClass(isActive)} text
 
 const ContextualLinks: View<Props & { className?: string }> = ({ activeRoute, session, toggleIsOpen, className = '' }) => {
   const onClick = () => toggleIsOpen(false);
-  const isHelloRoute = activeRoute.tag === 'hello';
-  const helloRoute: Route = { tag: 'hello', value: null };
+  const isLandingRoute = activeRoute.tag === 'landing';
+  const landingRoute: Route = { tag: 'landing', value: null };
 
   return (
     <Nav navbar className={className}>
       <NavItem>
-        <Link nav route={helloRoute} className={linkClassName(isHelloRoute)} onClick={onClick}>Hello</Link>
+        <Link nav route={landingRoute} className={linkClassName(isLandingRoute)} onClick={onClick}>Home</Link>
       </NavItem>
     </Nav>
   );
@@ -67,7 +67,7 @@ const Navigation: View<Props> = props => {
     <div className='position-sticky' style={{ top: `-${MAIN_NAVBAR_HEIGHT}`, zIndex: 1000 }}>
       <Navbar expand='md' dark color='info' className='navbar border-bottom-gov'>
         <Container className='px-sm-3'>
-          <NavbarBrand href={router.routeToUrl({ tag: 'hello', value: null })}>
+          <NavbarBrand href={router.routeToUrl({ tag: 'landing', value: null })}>
             Digital Marketplace
           </NavbarBrand>
           <Spinner size='sm' color='info-alt' className='transition-indicator d-md-none' />
