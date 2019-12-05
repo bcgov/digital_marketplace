@@ -99,7 +99,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/sign-up/step-one',
+      path: '/sign-up',
       makeRoute() {
         return {
           tag: 'signUpStepOne',
@@ -108,7 +108,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/sign-up/step-two',
+      path: '/sign-up/complete',
       makeRoute() {
         return {
           tag: 'signUpStepTwo',
@@ -155,9 +155,9 @@ const router: Router<Route> = {
       case 'signOut':
         return '/sign-out';
       case 'signUpStepOne':
-        return `/sign-up/step-one`;
+        return `/sign-up`;
       case 'signUpStepTwo':
-        return `/sign-up/step-two`;
+        return `/sign-up/complete`;
       case 'userProfile':
         return `/users/${route.value.userId}/profile`;
       case 'userList':
