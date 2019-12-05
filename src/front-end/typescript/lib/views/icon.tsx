@@ -44,7 +44,7 @@ interface SvgProps extends Props {
 const Feather: View<SvgProps> = props => {
   const { color, width = 1.25, height = 1.25, className = '', style = {}, children, onClick } = props;
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' style={{ ...style, width: `${width}rem`, height: `${height}rem` }} viewBox='0 0 24 24' fill='none' stroke='currentColor' className={`icon ${color ? `text-${color}` : ''} ${className}`} strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' onClick={onClick}>
+    <svg xmlns='http://www.w3.org/2000/svg' style={{ cursor: onClick && 'pointer', ...style, width: `${width}rem`, height: `${height}rem` }} viewBox='0 0 24 24' fill='none' stroke='currentColor' className={`icon ${color ? `text-${color}` : ''} ${onClick ? `text-hover-${color}` : ''} ${className}`} strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' onClick={onClick}>
       {children}
     </svg>
   );

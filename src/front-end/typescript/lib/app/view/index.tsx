@@ -3,9 +3,15 @@ import Footer from 'front-end/lib/app/view/footer';
 import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
-import * as PageListSidebar from 'front-end/lib/pages/list-sidebar';
+// Note(Jesse): @add_new_page_location
+import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
+import * as PageOrgView from 'front-end/lib/pages/org/view';
+import * as PageUserEdit from 'front-end/lib/pages/user/edit';
+import * as PageUserView from 'front-end/lib/pages/user/view';
+import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
@@ -49,15 +55,6 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
 const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   switch (state.activeRoute.tag) {
 
-    case 'list-sidebar':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.hello}
-          mapPageMsg={value => ({ tag: 'pageListSidebar', value })}
-          component={PageListSidebar.component} />
-      );
-
     case 'hello':
       return (
         <ViewPage
@@ -66,6 +63,64 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           mapPageMsg={value => ({ tag: 'pageHello', value })}
           component={PageHello.component} />
       );
+
+    // Note(Jesse): @add_new_page_location
+
+    case 'orgEdit':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.orgEdit}
+          mapPageMsg={value => ({ tag: 'pageOrgEdit', value })}
+          component={PageOrgEdit.component} />
+      );
+
+    case 'orgView':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.orgView}
+          mapPageMsg={value => ({ tag: 'pageOrgView', value })}
+          component={PageOrgView.component} />
+      );
+
+    case 'userEdit':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.userEdit}
+          mapPageMsg={value => ({ tag: 'pageUserEdit', value })}
+          component={PageUserEdit.component} />
+      );
+
+    case 'userView':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.userView}
+          mapPageMsg={value => ({ tag: 'pageUserView', value })}
+          component={PageUserView.component} />
+      );
+
+    case 'userList':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.userList}
+          mapPageMsg={value => ({ tag: 'pageUserList', value })}
+          component={PageUserList.component} />
+      );
+
+
+    case 'signIn':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.signIn}
+          mapPageMsg={value => ({ tag: 'pageSignIn', value })}
+          component={PageSignIn.component} />
+      );
+
 
     case 'signOut':
       return (

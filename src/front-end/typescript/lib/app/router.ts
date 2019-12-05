@@ -21,12 +21,50 @@ export function redirect(path: string) {
 
 const router: Router<Route> = {
 
+  // Note(Jesse): @add_new_page_location
+
   routes: [
     {
-      path: '/list-sidebar',
+      path: '/org/view',
       makeRoute() {
         return {
-          tag: 'list-sidebar',
+          tag: 'orgView',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/org/edit',
+      makeRoute() {
+        return {
+          tag: 'orgEdit',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/user/edit',
+      makeRoute() {
+        return {
+          tag: 'userEdit',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/user/view',
+      makeRoute() {
+        return {
+          tag: 'userView',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/users',
+      makeRoute() {
+        return {
+          tag: 'userList',
           value: null
         };
       }
@@ -36,6 +74,15 @@ const router: Router<Route> = {
       makeRoute() {
         return {
           tag: 'hello',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/sign-in',
+      makeRoute() {
+        return {
+          tag: 'signIn',
           value: null
         };
       }
@@ -79,14 +126,26 @@ const router: Router<Route> = {
     }
   ],
 
+  // Note(Jesse): @add_new_page_location
+
   routeToUrl(route) {
     switch (route.tag) {
-      case 'list-sidebar':
-        return '/list-sidebar';
       case 'hello':
         return '/';
+      case 'signIn':
+        return '/sign-in';
       case 'signOut':
         return '/sign-out';
+      case 'userEdit':
+        return '/user/edit';
+      case 'userView':
+        return '/user/view';
+      case 'userList':
+        return '/users';
+      case 'orgEdit':
+        return '/org/edit';
+      case 'orgView':
+        return '/org/view';
       case 'notice':
         return (() => {
           switch (route.value.noticeId.tag) {
