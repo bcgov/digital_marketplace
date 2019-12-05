@@ -2,16 +2,18 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
+
 // Note(Jesse): @add_new_page_location
-import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
-import * as PageOrgView from 'front-end/lib/pages/org/view';
-import * as PageUserEdit from 'front-end/lib/pages/user/edit';
-import * as PageUserView from 'front-end/lib/pages/user/view';
-import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
+import * as PageOrgView from 'front-end/lib/pages/org/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+import * as PageUserEdit from 'front-end/lib/pages/user/edit';
+import * as PageUserList from 'front-end/lib/pages/user/list';
+import * as PageUserView from 'front-end/lib/pages/user/view';
+
 import { Session } from 'shared/lib/resources/session';
 import { Validation } from 'shared/lib/validation';
 
@@ -68,7 +70,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return { tag: 'pageOrgView' as const, value };
         }
       });
-
 
     case 'userEdit':
       return await initAppChildPage({
@@ -134,7 +135,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return { tag: 'pageSignIn' as const, value };
         }
       });
-
 
     case 'signOut':
       return await initAppChildPage({

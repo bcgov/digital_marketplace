@@ -1,22 +1,22 @@
 import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
 
 // Note(Jesse): @add_new_page_location
-import * as PageUserEdit from 'front-end/lib/pages/user/edit';
-import * as PageUserView from 'front-end/lib/pages/user/view';
-import * as PageUserList from 'front-end/lib/pages/user/list';
-import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
-import * as PageOrgView from 'front-end/lib/pages/org/view';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
+import * as PageOrgView from 'front-end/lib/pages/org/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+import * as PageUserEdit from 'front-end/lib/pages/user/edit';
+import * as PageUserList from 'front-end/lib/pages/user/list';
+import * as PageUserView from 'front-end/lib/pages/user/view';
 import { Session } from 'shared/lib/resources/session';
 import { ADT } from 'shared/lib/types';
 
 // Note(Jesse): @add_new_page_location
 export type Route
   = ADT<'hello',     PageHello.RouteParams>
-  | ADT<'signOut', PageSignOut.RouteParams>
+  | ADT<'signOut',   PageSignOut.RouteParams>
   | ADT<'signIn',    PageSignIn.RouteParams>
   | ADT<'signOut',   PageSignOut.RouteParams>
   | ADT<'notice',    PageNotice.RouteParams>
@@ -24,8 +24,7 @@ export type Route
   | ADT<'userView',  PageUserView.RouteParams>
   | ADT<'userEdit',  PageUserEdit.RouteParams>
   | ADT<'orgView',   PageOrgView.RouteParams>
-  | ADT<'orgEdit',   PageOrgEdit.RouteParams>
-  ;
+  | ADT<'orgEdit',   PageOrgEdit.RouteParams>;
 
 export interface SharedState {
   session?: Session;
@@ -69,7 +68,6 @@ type InnerMsg
   | ADT<'pageUserView', PageUserView.Msg>
   | ADT<'pageUserEdit', PageUserEdit.Msg>
   | ADT<'pageOrgView', PageOrgView.Msg>
-  | ADT<'pageOrgEdit', PageOrgEdit.Msg>
-  ;
+  | ADT<'pageOrgEdit', PageOrgEdit.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;
