@@ -27,7 +27,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div>
       <Row className='mb-3 pb-3'>
         <Col xs='12'>
-          <h1>Org Edit</h1>
+          <h1>User List</h1>
         </Col>
       </Row>
     </div>
@@ -39,6 +39,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Org Edit');
+    return makePageMetadata('User List');
   }
 };

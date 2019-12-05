@@ -21,11 +21,18 @@ export function redirect(path: string) {
 
 const router: Router<Route> = {
 
-  // Note(Jesse): @add_new_page_location
-
   routes: [
     {
-      path: '/orgs/:id/view',
+      path: '/organizations',
+      makeRoute() {
+        return {
+          tag: 'orgList',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/organizations/:id/view',
       makeRoute({ params }) {
         return {
           tag: 'orgView',
@@ -36,29 +43,35 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/org/edit',
-      makeRoute() {
+      path: '/organizations/:id/edit',
+      makeRoute({ params }) {
         return {
           tag: 'orgEdit',
-          value: null
+          value: {
+            orgId: params.id || ''
+          }
         };
       }
     },
     {
-      path: '/user/edit',
-      makeRoute() {
+      path: '/users/:id/edit',
+      makeRoute({ params }) {
         return {
           tag: 'userEdit',
-          value: null
+          value: {
+            userId: params.id || ''
+          }
         };
       }
     },
     {
-      path: '/user/view',
-      makeRoute() {
+      path: '/users/:id/view',
+      makeRoute({ params }) {
         return {
           tag: 'userView',
-          value: null
+          value: {
+            userId: params.id || ''
+          }
         };
       }
     },
@@ -75,7 +88,7 @@ const router: Router<Route> = {
       path: '/',
       makeRoute() {
         return {
-          tag: 'hello',
+          tag: 'landing',
           value: null
         };
       }
@@ -94,6 +107,15 @@ const router: Router<Route> = {
       makeRoute() {
         return {
           tag: 'signOut',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/sign-up/step-one',
+      makeRoute() {
+        return {
+          tag: 'signUpStepOne',
           value: null
         };
       }
@@ -137,28 +159,30 @@ const router: Router<Route> = {
     }
   ],
 
-  // Note(Jesse): @add_new_page_location
-
   routeToUrl(route) {
     switch (route.tag) {
-      case 'hello':
+      case 'landing':
         return '/';
       case 'signIn':
         return '/sign-in';
       case 'signOut':
         return '/sign-out';
+      case 'signUpStepOne':
+        return `/sign-up/step-one`;
       case 'signUpStepTwo':
         return `/sign-up/step-two`;
       case 'userEdit':
-        return '/user/edit';
+        return `/users/${route.value.userId}/edit`;
       case 'userView':
-        return '/user/view';
+        return `/users/${route.value.userId}/view`;
       case 'userList':
         return '/users';
+      case 'orgList':
+        return '/organizations';
       case 'orgEdit':
-        return '/org/edit';
+        return `/organizations/${route.value.orgId}/edit`;
       case 'orgView':
-        return '/org/view';
+        return `/organizations/${route.value.orgId}/view`;
       case 'notice':
         return (() => {
           switch (route.value.noticeId.tag) {

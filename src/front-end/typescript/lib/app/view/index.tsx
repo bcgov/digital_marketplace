@@ -4,13 +4,14 @@ import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
 
-// Note(Jesse): @add_new_page_location
-import * as PageHello from 'front-end/lib/pages/hello';
+import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
-import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
-import * as PageOrgView from 'front-end/lib/pages/org/view';
+import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
+import * as PageOrgList from 'front-end/lib/pages/organization/list';
+import * as PageOrgView from 'front-end/lib/pages/organization/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserEdit from 'front-end/lib/pages/user/edit';
 import * as PageUserList from 'front-end/lib/pages/user/list';
@@ -57,16 +58,14 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
 const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   switch (state.activeRoute.tag) {
 
-    case 'hello':
+    case 'landing':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.hello}
-          mapPageMsg={value => ({ tag: 'pageHello', value })}
-          component={PageHello.component} />
+          pageState={state.pages.landing}
+          mapPageMsg={value => ({ tag: 'pageLanding', value })}
+          component={PageLanding.component} />
       );
-
-    // Note(Jesse): @add_new_page_location
 
     case 'orgEdit':
       return (
@@ -84,6 +83,15 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           pageState={state.pages.orgView}
           mapPageMsg={value => ({ tag: 'pageOrgView', value })}
           component={PageOrgView.component} />
+      );
+
+    case 'orgList':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.orgList}
+          mapPageMsg={value => ({ tag: 'pageOrgList', value })}
+          component={PageOrgList.component} />
       );
 
     case 'userEdit':
@@ -129,6 +137,15 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           pageState={state.pages.signOut}
           mapPageMsg={value => ({ tag: 'pageSignOut', value })}
           component={PageSignOut.component} />
+      );
+
+    case 'signUpStepOne':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.signUpStepOne}
+          mapPageMsg={value => ({ tag: 'pageSignUpStepOne', value })}
+          component={PageSignUpStepOne.component} />
       );
 
     case 'signUpStepTwo':

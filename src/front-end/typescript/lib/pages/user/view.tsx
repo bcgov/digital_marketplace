@@ -11,7 +11,9 @@ export interface State {
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export type RouteParams = null;
+export interface RouteParams {
+  userId: string;
+}
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   empty: true,
