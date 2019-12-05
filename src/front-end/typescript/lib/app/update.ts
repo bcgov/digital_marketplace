@@ -2,9 +2,15 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
-import * as PageListSidebar from 'front-end/lib/pages/list-sidebar';
+// Note(Jesse): @add_new_page_location
+import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
+import * as PageOrgView from 'front-end/lib/pages/org/view';
+import * as PageUserEdit from 'front-end/lib/pages/user/edit';
+import * as PageUserView from 'front-end/lib/pages/user/view';
+import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageHello from 'front-end/lib/pages/hello';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import { Session } from 'shared/lib/resources/session';
 import { Validation } from 'shared/lib/validation';
@@ -35,16 +41,71 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
 
   switch (route.tag) {
 
-    case 'list-sidebar':
+    // Note(Jesse): @add_new_page_location
+
+    case 'orgEdit':
       return await initAppChildPage({
         ...defaultPageInitParams,
-        childStatePath: ['pages', 'hello'],
+        childStatePath: ['pages', 'orgEdit'],
         childRouteParams: route.value,
-        childInit: PageListSidebar.component.init,
-        childGetMetadata: PageListSidebar.component.getMetadata,
-        childGetModal: PageListSidebar.component.getModal,
+        childInit: PageOrgEdit.component.init,
+        childGetMetadata: PageOrgEdit.component.getMetadata,
+        childGetModal: PageOrgEdit.component.getModal,
         mapChildMsg(value) {
-          return { tag: 'pageListSidebar' as const, value };
+          return { tag: 'pageOrgEdit' as const, value };
+        }
+      });
+
+    case 'orgView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'orgView'],
+        childRouteParams: route.value,
+        childInit: PageOrgView.component.init,
+        childGetMetadata: PageOrgView.component.getMetadata,
+        childGetModal: PageOrgView.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOrgView' as const, value };
+        }
+      });
+
+
+    case 'userEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'userEdit'],
+        childRouteParams: route.value,
+        childInit: PageUserEdit.component.init,
+        childGetMetadata: PageUserEdit.component.getMetadata,
+        childGetModal: PageUserEdit.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageUserEdit' as const, value };
+        }
+      });
+
+    case 'userView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'userView'],
+        childRouteParams: route.value,
+        childInit: PageUserView.component.init,
+        childGetMetadata: PageUserView.component.getMetadata,
+        childGetModal: PageUserView.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageUserView' as const, value };
+        }
+      });
+
+    case 'userList':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'userList'],
+        childRouteParams: route.value,
+        childInit: PageUserList.component.init,
+        childGetMetadata: PageUserList.component.getMetadata,
+        childGetModal: PageUserList.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageUserList' as const, value };
         }
       });
 
@@ -61,6 +122,20 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         }
       });
 
+    case 'signIn':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'signIn'],
+        childRouteParams: route.value,
+        childInit: PageSignIn.component.init,
+        childGetMetadata: PageSignIn.component.getMetadata,
+        childGetModal: PageSignIn.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageSignIn' as const, value };
+        }
+      });
+
+
     case 'signOut':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -73,6 +148,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return { tag: 'pageSignOut' as const, value };
         }
       });
+
     case 'notice':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -149,6 +225,63 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
 
+    // Note(Jesse): @add_new_page_location
+
+    case 'pageOrgEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOrgEdit', value }),
+        childStatePath: ['pages', 'orgEdit'],
+        childUpdate: PageOrgEdit.component.update,
+        childGetMetadata: PageOrgEdit.component.getMetadata,
+        childGetModal: PageOrgEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOrgView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOrgView', value }),
+        childStatePath: ['pages', 'orgView'],
+        childUpdate: PageOrgView.component.update,
+        childGetMetadata: PageOrgView.component.getMetadata,
+        childGetModal: PageOrgView.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageUserEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageUserEdit', value }),
+        childStatePath: ['pages', 'userEdit'],
+        childUpdate: PageUserEdit.component.update,
+        childGetMetadata: PageUserEdit.component.getMetadata,
+        childGetModal: PageUserEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageUserView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageUserView', value }),
+        childStatePath: ['pages', 'userView'],
+        childUpdate: PageUserView.component.update,
+        childGetMetadata: PageUserView.component.getMetadata,
+        childGetModal: PageUserView.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageUserList':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageUserList', value }),
+        childStatePath: ['pages', 'userList'],
+        childUpdate: PageUserList.component.update,
+        childGetMetadata: PageUserList.component.getMetadata,
+        childGetModal: PageUserList.component.getModal,
+        childMsg: msg.value
+      });
+
     case 'pageSignOut':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
@@ -160,14 +293,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value
       });
 
-    case 'pageListSidebar':
+    case 'pageSignIn':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
-        mapChildMsg: value => ({ tag: 'pageListSidebar', value }),
-        childStatePath: ['pages', 'notice'],
-        childUpdate: PageListSidebar.component.update,
-        childGetMetadata: PageListSidebar.component.getMetadata,
-        childGetModal: PageListSidebar.component.getModal,
+        mapChildMsg: value => ({ tag: 'pageSignIn', value }),
+        childStatePath: ['pages', 'signIn'],
+        childUpdate: PageSignOut.component.update,
+        childGetMetadata: PageSignOut.component.getMetadata,
+        childGetModal: PageSignOut.component.getModal,
         childMsg: msg.value
       });
 

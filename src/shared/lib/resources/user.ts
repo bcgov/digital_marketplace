@@ -35,7 +35,11 @@ export interface UpdateRequestBody {
   acceptedTerms?: boolean;
 }
 
-// TODO implement
 export interface UpdateValidationErrors {
-  todo: true;
+  id?: string[];
+  name?: string[];
+  email?: string[];
+  avatarImageFile?: string[];
+  notificationsOn?: string[];
+  acceptedTerms?: string[];
 }

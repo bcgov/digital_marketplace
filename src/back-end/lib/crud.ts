@@ -64,7 +64,7 @@ export function makeUpdateRoute<SupportedRequestBodies, SupportedResponseBodies,
 export function makeDeleteRoute<SupportedRequestBodies, SupportedResponseBodies, ValidatedReqBody, ReqBodyErrors, Session, Connection>(connection: Connection, deleteFn: Delete<SupportedResponseBodies, ValidatedReqBody, ReqBodyErrors, Session, Connection>): Route<SupportedRequestBodies, null, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, null, Session> {
   const handler = deleteFn(connection);
   return {
-    method: ServerHttpMethod.Get,
+    method: ServerHttpMethod.Delete,
     path: '/:id',
     handler: {
       ...handler,

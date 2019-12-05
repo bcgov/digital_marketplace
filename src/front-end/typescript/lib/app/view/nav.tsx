@@ -21,16 +21,10 @@ const ContextualLinks: View<Props & { className?: string }> = ({ activeRoute, se
   const isHelloRoute = activeRoute.tag === 'hello';
   const helloRoute: Route = { tag: 'hello', value: null };
 
-  const isListSidebarRoute = activeRoute.tag === 'list-sidebar';
-  const listSidebarRoute: Route = { tag: 'list-sidebar', value: null };
-
   return (
     <Nav navbar className={className}>
       <NavItem>
         <Link nav route={helloRoute} className={linkClassName(isHelloRoute)} onClick={onClick}>Hello</Link>
-      </NavItem>
-      <NavItem>
-        <Link nav route={listSidebarRoute} className={linkClassName(isListSidebarRoute)} onClick={onClick}>ListSidebar</Link>
       </NavItem>
     </Nav>
   );
