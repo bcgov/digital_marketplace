@@ -5,16 +5,15 @@ import { readOneSession } from 'front-end/lib/http/api';
 
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
-import * as PageOrgView from 'front-end/lib/pages/organization/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
-import * as PageUserEdit from 'front-end/lib/pages/user/edit';
 import * as PageUserList from 'front-end/lib/pages/user/list';
-import * as PageUserView from 'front-end/lib/pages/user/view';
+import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 
 import { Session } from 'shared/lib/resources/session';
 import { Validation } from 'shared/lib/validation';
@@ -58,16 +57,16 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         }
       });
 
-    case 'orgView':
+    case 'orgCreate':
       return await initAppChildPage({
         ...defaultPageInitParams,
-        childStatePath: ['pages', 'orgView'],
+        childStatePath: ['pages', 'orgCreate'],
         childRouteParams: route.value,
-        childInit: PageOrgView.component.init,
-        childGetMetadata: PageOrgView.component.getMetadata,
-        childGetModal: PageOrgView.component.getModal,
+        childInit: PageOrgCreate.component.init,
+        childGetMetadata: PageOrgCreate.component.getMetadata,
+        childGetModal: PageOrgCreate.component.getModal,
         mapChildMsg(value) {
-          return { tag: 'pageOrgView' as const, value };
+          return { tag: 'pageOrgCreate' as const, value };
         }
       });
 
@@ -84,29 +83,16 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         }
       });
 
-    case 'userEdit':
+    case 'userProfile':
       return await initAppChildPage({
         ...defaultPageInitParams,
-        childStatePath: ['pages', 'userEdit'],
+        childStatePath: ['pages', 'userProfile'],
         childRouteParams: route.value,
-        childInit: PageUserEdit.component.init,
-        childGetMetadata: PageUserEdit.component.getMetadata,
-        childGetModal: PageUserEdit.component.getModal,
+        childInit: PageUserProfile.component.init,
+        childGetMetadata: PageUserProfile.component.getMetadata,
+        childGetModal: PageUserProfile.component.getModal,
         mapChildMsg(value) {
-          return { tag: 'pageUserEdit' as const, value };
-        }
-      });
-
-    case 'userView':
-      return await initAppChildPage({
-        ...defaultPageInitParams,
-        childStatePath: ['pages', 'userView'],
-        childRouteParams: route.value,
-        childInit: PageUserView.component.init,
-        childGetMetadata: PageUserView.component.getMetadata,
-        childGetModal: PageUserView.component.getModal,
-        mapChildMsg(value) {
-          return { tag: 'pageUserView' as const, value };
+          return { tag: 'pageUserProfile' as const, value };
         }
       });
 
@@ -275,14 +261,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value
       });
 
-    case 'pageOrgView':
+    case 'pageOrgCreate':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
-        mapChildMsg: value => ({ tag: 'pageOrgView', value }),
-        childStatePath: ['pages', 'orgView'],
-        childUpdate: PageOrgView.component.update,
-        childGetMetadata: PageOrgView.component.getMetadata,
-        childGetModal: PageOrgView.component.getModal,
+        mapChildMsg: value => ({ tag: 'pageOrgCreate', value }),
+        childStatePath: ['pages', 'orgCreate'],
+        childUpdate: PageOrgCreate.component.update,
+        childGetMetadata: PageOrgCreate.component.getMetadata,
+        childGetModal: PageOrgCreate.component.getModal,
         childMsg: msg.value
       });
 
@@ -297,25 +283,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value
       });
 
-    case 'pageUserEdit':
+    case 'pageUserProfile':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
-        mapChildMsg: value => ({ tag: 'pageUserEdit', value }),
-        childStatePath: ['pages', 'userEdit'],
-        childUpdate: PageUserEdit.component.update,
-        childGetMetadata: PageUserEdit.component.getMetadata,
-        childGetModal: PageUserEdit.component.getModal,
-        childMsg: msg.value
-      });
-
-    case 'pageUserView':
-      return updateAppChildPage({
-        ...defaultPageUpdateParams,
-        mapChildMsg: value => ({ tag: 'pageUserView', value }),
-        childStatePath: ['pages', 'userView'],
-        childUpdate: PageUserView.component.update,
-        childGetMetadata: PageUserView.component.getMetadata,
-        childGetModal: PageUserView.component.getModal,
+        mapChildMsg: value => ({ tag: 'pageUserProfile', value }),
+        childStatePath: ['pages', 'userProfile'],
+        childUpdate: PageUserProfile.component.update,
+        childGetMetadata: PageUserProfile.component.getMetadata,
+        childGetModal: PageUserProfile.component.getModal,
         childMsg: msg.value
       });
 

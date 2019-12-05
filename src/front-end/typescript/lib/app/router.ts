@@ -32,13 +32,11 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/organizations/:id/view',
-      makeRoute({ params }) {
+      path: '/organizations/create',
+      makeRoute() {
         return {
-          tag: 'orgView',
-          value: {
-            orgId: params.id || ''
-          }
+          tag: 'orgCreate',
+          value: null
         };
       }
     },
@@ -54,21 +52,10 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/users/:id/edit',
+      path: '/users/:id/profile',
       makeRoute({ params }) {
         return {
-          tag: 'userEdit',
-          value: {
-            userId: params.id || ''
-          }
-        };
-      }
-    },
-    {
-      path: '/users/:id/view',
-      makeRoute({ params }) {
-        return {
-          tag: 'userView',
+          tag: 'userProfile',
           value: {
             userId: params.id || ''
           }
@@ -171,18 +158,16 @@ const router: Router<Route> = {
         return `/sign-up/step-one`;
       case 'signUpStepTwo':
         return `/sign-up/step-two`;
-      case 'userEdit':
-        return `/users/${route.value.userId}/edit`;
-      case 'userView':
-        return `/users/${route.value.userId}/view`;
+      case 'userProfile':
+        return `/users/${route.value.userId}/profile`;
       case 'userList':
         return '/users';
       case 'orgList':
         return '/organizations';
       case 'orgEdit':
         return `/organizations/${route.value.orgId}/edit`;
-      case 'orgView':
-        return `/organizations/${route.value.orgId}/view`;
+      case 'orgCreate':
+        return '/organizations/create';
       case 'notice':
         return (() => {
           switch (route.value.noticeId.tag) {

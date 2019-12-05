@@ -1,28 +1,22 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { deleteSession } from 'front-end/lib/http/api';
-import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
-  message: string;
+  empty: true;
 }
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const session = await deleteSession();
-  if (!get(session, 'user')) {
-    return { message: 'You have successfully signed out. Thank you for using the Digital Marketplace.' };
-  } else {
-    return { message: 'Signing out of the application failed.' };
-  }
-};
+const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
+  empty: true,
+  hello: ''
+});
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
@@ -31,9 +25,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <div>
-      <Row>
+      <Row className='mb-3 pb-3'>
         <Col xs='12'>
-          {state.message}
+          <h1>Org Edit</h1>
         </Col>
       </Row>
     </div>
@@ -45,6 +39,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Signed Out');
+    return makePageMetadata('Org Edit');
   }
 };

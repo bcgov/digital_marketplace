@@ -6,16 +6,15 @@ import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
 
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
-import * as PageOrgView from 'front-end/lib/pages/organization/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
-import * as PageUserEdit from 'front-end/lib/pages/user/edit';
 import * as PageUserList from 'front-end/lib/pages/user/list';
-import * as PageUserView from 'front-end/lib/pages/user/view';
+import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import { default as React } from 'react';
@@ -76,13 +75,13 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageOrgEdit.component} />
       );
 
-    case 'orgView':
+    case 'orgCreate':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.orgView}
-          mapPageMsg={value => ({ tag: 'pageOrgView', value })}
-          component={PageOrgView.component} />
+          pageState={state.pages.orgCreate}
+          mapPageMsg={value => ({ tag: 'pageOrgCreate', value })}
+          component={PageOrgCreate.component} />
       );
 
     case 'orgList':
@@ -94,22 +93,13 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageOrgList.component} />
       );
 
-    case 'userEdit':
+    case 'userProfile':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.userEdit}
-          mapPageMsg={value => ({ tag: 'pageUserEdit', value })}
-          component={PageUserEdit.component} />
-      );
-
-    case 'userView':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.userView}
-          mapPageMsg={value => ({ tag: 'pageUserView', value })}
-          component={PageUserView.component} />
+          pageState={state.pages.userProfile}
+          mapPageMsg={value => ({ tag: 'pageUserProfile', value })}
+          component={PageUserProfile.component} />
       );
 
     case 'userList':
