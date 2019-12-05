@@ -10,6 +10,7 @@ import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
 import * as PageOrgView from 'front-end/lib/pages/org/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserEdit from 'front-end/lib/pages/user/edit';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserView from 'front-end/lib/pages/user/view';
@@ -146,6 +147,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageSignOut.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageSignOut' as const, value };
+        }
+      });
+
+    case 'signUpStepTwo':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'signUpStepTwo'],
+        childRouteParams: route.value,
+        childInit: PageSignUpStepTwo.component.init,
+        childGetMetadata: PageSignUpStepTwo.component.getMetadata,
+        childGetModal: PageSignUpStepTwo.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageSignUpStepTwo' as const, value };
         }
       });
 
@@ -290,6 +304,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageSignOut.component.update,
         childGetMetadata: PageSignOut.component.getMetadata,
         childGetModal: PageSignOut.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageSignUpStepTwo':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageSignUpStepTwo', value }),
+        childStatePath: ['pages', 'signUpStepTwo'],
+        childUpdate: PageSignUpStepTwo.component.update,
+        childGetMetadata: PageSignUpStepTwo.component.getMetadata,
+        childGetModal: PageSignUpStepTwo.component.getModal,
         childMsg: msg.value
       });
 

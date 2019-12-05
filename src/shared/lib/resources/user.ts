@@ -7,6 +7,19 @@ export enum UserType {
   Admin = 'ADMIN'
 }
 
+export function parseUserType(raw: string): UserType | null {
+  switch (raw) {
+    case UserType.Vendor:
+      return UserType.Vendor;
+    case UserType.Government:
+      return UserType.Government;
+    case UserType.Admin:
+      return UserType.Admin;
+    default:
+      return null;
+  }
+}
+
 export enum UserStatus {
   Active = 'ACTIVE',
   InactiveByUser = 'INACTIVE_USER',

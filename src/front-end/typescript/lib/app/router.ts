@@ -99,6 +99,15 @@ const router: Router<Route> = {
       }
     },
     {
+      path: '/sign-up/step-two',
+      makeRoute() {
+        return {
+          tag: 'signUpStepTwo',
+          value: null
+        };
+      }
+    },
+    {
       path: '/notice/auth-failure',
       makeRoute() {
         return {
@@ -138,6 +147,8 @@ const router: Router<Route> = {
         return '/sign-in';
       case 'signOut':
         return '/sign-out';
+      case 'signUpStepTwo':
+        return `/sign-up/step-two`;
       case 'userEdit':
         return '/user/edit';
       case 'userView':

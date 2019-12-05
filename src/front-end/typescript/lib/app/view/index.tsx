@@ -11,6 +11,7 @@ import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
 import * as PageOrgView from 'front-end/lib/pages/org/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserEdit from 'front-end/lib/pages/user/edit';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserView from 'front-end/lib/pages/user/view';
@@ -128,6 +129,15 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           pageState={state.pages.signOut}
           mapPageMsg={value => ({ tag: 'pageSignOut', value })}
           component={PageSignOut.component} />
+      );
+
+    case 'signUpStepTwo':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.signUpStepTwo}
+          mapPageMsg={value => ({ tag: 'pageSignUpStepTwo', value })}
+          component={PageSignUpStepTwo.component} />
       );
 
     case 'notice':
