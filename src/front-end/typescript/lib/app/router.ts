@@ -25,11 +25,13 @@ const router: Router<Route> = {
 
   routes: [
     {
-      path: '/org/view',
-      makeRoute() {
+      path: '/orgs/:id/view',
+      makeRoute({ params }) {
         return {
           tag: 'orgView',
-          value: null
+          value: {
+            orgId: params.id || ''
+          }
         };
       }
     },
