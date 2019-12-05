@@ -5,6 +5,7 @@ import { IncomingHttpHeaders, OutgoingHttpHeaders } from 'http';
 import { assign } from 'lodash';
 import { lookup } from 'mime-types';
 import { ADT, Id } from 'shared/lib/types';
+import { valid, Validation } from 'shared/lib/validation';
 
 export type SessionId = Id;
 
@@ -214,38 +215,51 @@ export function mapRespond<ReqB, ResBA, ResBB, Session>(respond: Respond<ReqB, R
   };
 }
 
-export interface Handler<ReqBA, ReqBB, ResB, Session> {
-  readonly transformRequest: TransformRequest<ReqBA, ReqBB, Session>;
-  readonly respond: Respond<ReqBB, ResB, Session>;
+export type ParseRequestBody<IncomingReqBody, ParsedReqBody, Session> = (request: Request<IncomingReqBody, Session>) => ParsedReqBody;
+
+export type ValidateRequestBody<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, Session> = (request: Request<ParsedReqBody, Session>) => Promise<Validation<ValidatedReqBody, ReqBodyErrors>>;
+
+export interface Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session> {
+  readonly parseRequestBody: ParseRequestBody<IncomingReqBody, ParsedReqBody, Session>;
+  readonly validateRequestBody: ValidateRequestBody<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, Session>;
+  readonly respond: Respond<Validation<ValidatedReqBody, ReqBodyErrors>, ResBody, Session>;
 }
 
-export const notFoundJsonHandler: Handler<any, any, JsonResponseBody, any> = {
+export function passThroughRequestBodyHandler<IncomingReqBody, ResponseBody, Session>(respond: Respond<Validation<IncomingReqBody, any>, ResponseBody, Session>): Handler<IncomingReqBody, IncomingReqBody, IncomingReqBody, any, ResponseBody, Session> {
+  return {
+    parseRequestBody: request => request.body,
+    validateRequestBody: async request => valid(request.body),
+    respond
+  };
+}
 
-  async transformRequest(request) {
-    return request;
-  },
+export function nullRequestBodyHandler<ResponseBody, Session>(respond: Respond<Validation<null, any>, ResponseBody, Session>): Handler<unknown, null, null, any, ResponseBody, Session> {
+  return {
+    parseRequestBody: () => null,
+    validateRequestBody: async () => valid(null),
+    respond
+  };
+}
 
-  async respond(request) {
-    return {
-      code: 404,
-      headers: {},
-      session: request.session,
-      body: makeJsonResponseBody({})
-    };
-  }
-
-};
+export const notFoundJsonHandler  = nullRequestBodyHandler<JsonResponseBody, unknown>(async request => {
+  return {
+    code: 404,
+    headers: {},
+    session: request.session,
+    body: makeJsonResponseBody({})
+  };
+});
 
 type BeforeHook<ReqB, State, Session> = (request: Request<ReqB, Session>) => Promise<State>;
 
 type AfterHook<ReqB, ResB, State, Session> = (state: State, request: Request<ReqB, Session>, response: Response<ResB, Session>) => Promise<void>;
 
-export interface RouteHook<ReqB, ResB, State, Session> {
-  readonly before: BeforeHook<ReqB, State, Session>;
-  readonly after?: AfterHook<ReqB, ResB, State, Session>;
+export interface RouteHook<IncomingReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, State, Session> {
+  readonly before: BeforeHook<IncomingReqBody, State, Session>;
+  readonly after?: AfterHook<Validation<ValidatedReqBody, ReqBodyErrors>, ResBody, State, Session>;
 }
 
-export function combineHooks<Session>(hooks: Array<RouteHook<any, any, any, Session>>): RouteHook<any, any, any, Session> {
+export function combineHooks<Session>(hooks: Array<RouteHook<any, any, any, any, any, Session>>): RouteHook<any, any, any, any, any, Session> {
   return {
     async before(request) {
       const results = [];
@@ -267,19 +281,19 @@ export function combineHooks<Session>(hooks: Array<RouteHook<any, any, any, Sess
   };
 }
 
-export interface Route<IncomingReqBody, TransformedReqBody, ResBody, HookState, Session> {
+export interface Route<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, HookState, Session> {
   readonly method: ServerHttpMethod;
   readonly path: string;
-  readonly handler: Handler<IncomingReqBody, TransformedReqBody, ResBody, Session>;
-  readonly hook?: RouteHook<TransformedReqBody, ResBody, HookState, Session>;
+  readonly handler: Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session>;
+  readonly hook?: RouteHook<IncomingReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, HookState, Session>;
 }
 
-export function namespaceRoute(prefix: string, route: Route<any, any, any, any, any>) {
+export function namespaceRoute<A, B, C, D, E, F, G>(prefix: string, route: Route<A, B, C, D, E, F, G>): Route<A, B, C, D, E, F, G> {
   const path = `${prefix.replace(/\/*$/, '')}/${route.path.replace(/^\/*/, '')}`;
   return assign(route, { path });
 }
 
-export function addHooksToRoute<Session>(hooks: Array<RouteHook<any, any, any, Session>>, route: Route<any, any, any, any, Session>): Route<any, any, any, any, Session> {
+export function addHooksToRoute<Session>(hooks: Array<RouteHook<any, any, any, any, any, Session>>, route: Route<any, any, any, any, any, any, Session>): Route<any, any, any, any, any, any, Session> {
   const newHook = combineHooks(hooks);
   return {
     ...route,
@@ -287,18 +301,67 @@ export function addHooksToRoute<Session>(hooks: Array<RouteHook<any, any, any, S
   };
 }
 
-export type MapHandler<ReqBA, ReqBB, ReqBC, ResBA, ResBB, Session> = (oldHandler: Handler<ReqBA, ReqBB, ResBA, Session>) => Handler<ReqBA, ReqBC, ResBB, Session>;
+export type MapHandler<IncomingReqB, ParsedReqBA, ParsedReqBB, ValidatedReqBA, ValidatedReqBB, ReqBErrorsA, ReqBErrorsB, ResBA, ResBB, Session> = (oldHandler: Handler<IncomingReqB, ParsedReqBA, ValidatedReqBA, ReqBErrorsA, ResBA, Session>) => Handler<IncomingReqB, ParsedReqBB, ValidatedReqBB, ReqBErrorsB, ResBB, Session>;
 
-export type MapHook<ReqBA, ReqBB, ResBA, ResBB, StateA, StateB, Session> = (oldHook: RouteHook<ReqBA, ResBA, StateA, Session>) => RouteHook<ReqBB, ResBB, StateB, Session>;
+export type MapHook<IncomingReqB, ValidatedReqBA, ValidatedReqBB, ReqBErrorsA, ReqBErrorsB, ResBA, ResBB, StateA, StateB, Session> = (oldHook: RouteHook<IncomingReqB, ValidatedReqBA, ReqBErrorsA, ResBA, StateA, Session>) => RouteHook<IncomingReqB, ValidatedReqBB, ReqBErrorsB, ResBB, StateB, Session>;
 
-export type MapRoute<ReqBA, ReqBB, ReqBC, ResBA, ResBB, HookStateA, HookStateB, Session> = (oldRoute: Route<ReqBA, ReqBB, ResBA, HookStateA, Session>) => Route<ReqBA, ReqBC, ResBB, HookStateB, Session>;
+export type MapRoute<IncomingReqB, ParsedReqBA, ParsedReqBB, ValidatedReqBA, ValidatedReqBB, ReqBErrorsA, ReqBErrorsB, ResBA, ResBB, HookStateA, HookStateB, Session> = (oldRoute: Route<IncomingReqB, ParsedReqBA, ValidatedReqBA, ReqBErrorsA, ResBA, HookStateA, Session>) => Route<IncomingReqB, ParsedReqBB, ValidatedReqBB, ReqBErrorsB, ResBB, HookStateB, Session>;
 
 /**
  * Create a function that transforms a route's handler and hook
  * in a type-safe way.
  */
 
-export function createMapRoute<ReqBA, ReqBB, ReqBC, ResBA, ResBB, HookStateA, HookStateB, Session>(mapHandler: MapHandler<ReqBA, ReqBB, ReqBC, ResBA, ResBB, Session>, mapHook: MapHook<ReqBB, ReqBC, ResBA, ResBB, HookStateA, HookStateB, Session>): MapRoute<ReqBA, ReqBB, ReqBC, ResBA, ResBB, HookStateA, HookStateB, Session> {
+export function createMapRoute<
+  IncomingReqB,
+  ParsedReqBA,
+  ParsedReqBB,
+  ValidatedReqBA,
+  ValidatedReqBB,
+  ReqBErrorsA,
+  ReqBErrorsB,
+  ResBA,
+  ResBB,
+  HookStateA,
+  HookStateB,
+  Session
+>(
+  mapHandler: MapHandler<IncomingReqB,
+    ParsedReqBA,
+    ParsedReqBB,
+    ValidatedReqBA,
+    ValidatedReqBB,
+    ReqBErrorsA,
+    ReqBErrorsB,
+    ResBA,
+    ResBB,
+    Session
+  >,
+  mapHook: MapHook<
+    IncomingReqB,
+    ValidatedReqBA,
+    ValidatedReqBB,
+    ReqBErrorsA,
+    ReqBErrorsB,
+    ResBA,
+    ResBB,
+    HookStateA,
+    HookStateB,
+    Session
+  >): MapRoute<
+    IncomingReqB,
+    ParsedReqBA,
+    ParsedReqBB,
+    ValidatedReqBA,
+    ValidatedReqBB,
+    ReqBErrorsA,
+    ReqBErrorsB,
+    ResBA,
+    ResBB,
+    HookStateA,
+    HookStateB,
+    Session
+  > {
   return route => ({
     ...route,
     handler: mapHandler(route.handler),
@@ -306,10 +369,10 @@ export function createMapRoute<ReqBA, ReqBB, ReqBC, ResBA, ResBB, HookStateA, Ho
   });
 }
 
-export const notFoundJsonRoute: Route<any, any, JsonResponseBody, any, any> = {
+export const notFoundJsonRoute: Route<any, any, any, any, JsonResponseBody, any, any> = {
   method: ServerHttpMethod.Any,
   path: '*',
   handler: notFoundJsonHandler
 };
 
-export type Router<ReqB, ResB, Session> = Array<Route<ReqB, any, ResB, any, Session>>;
+export type Router<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, HookState, Session> = Array<Route<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, HookState, Session>>;

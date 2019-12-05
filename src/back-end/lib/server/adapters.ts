@@ -9,31 +9,32 @@ import cookieParser from 'cookie-parser';
 import expressLib from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { castArray } from 'lodash';
+import { Validation } from 'shared/lib/validation';
 
 const SESSION_COOKIE_NAME = 'sid';
 
-export interface AdapterRunParams<SupportedRequestBodies, SupportedResponseBodies, Session> {
-  router: Router<SupportedRequestBodies, SupportedResponseBodies, Session>;
+export interface AdapterRunParams<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session> {
+  router: Router<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session>;
   sessionIdToSession: SessionIdToSession<Session>;
   sessionToSessionId: SessionToSessionId<Session>;
   host: string;
   port: number;
 }
 
-export type Adapter<App, SupportedRequestBodies, SupportedResponseBodies, Session> = (params: AdapterRunParams<SupportedRequestBodies, SupportedResponseBodies, Session>) => App;
+export type Adapter<App, SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session> = (params: AdapterRunParams<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session>) => App;
 
 export type ExpressRequestBodies = JsonRequestBody;
 
 export type ExpressResponseBodies = JsonResponseBody | FileResponseBody | TextResponseBody | ErrorResponseBody;
 
-export type ExpressAdapter<Session> = Adapter<expressLib.Application, ExpressRequestBodies, ExpressResponseBodies, Session>;
+export type ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session> = Adapter<expressLib.Application, ExpressRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session>;
 
 function incomingHeaderMatches(headers: IncomingHttpHeaders, header: string, value: string): boolean {
   header = castArray(headers[header] || '').join(' ');
   return !!header.match(value);
 }
 
-export function express<Session>(): ExpressAdapter<Session> {
+export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session>(): ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session> {
   const logger = makeDomainLogger(consoleAdapter, 'adapter:express');
 
   return ({ router, sessionIdToSession, sessionToSessionId, host, port }) => {
@@ -73,7 +74,7 @@ export function express<Session>(): ExpressAdapter<Session> {
       }
     }
 
-    function makeExpressRequestHandler(route: Route<ExpressRequestBodies, any, ExpressResponseBodies, any, Session>): expressLib.RequestHandler {
+    function makeExpressRequestHandler(route: Route<ExpressRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session>): expressLib.RequestHandler {
       function asyncHandler(fn: (request: expressLib.Request, expressRes: expressLib.Response, next: expressLib.NextFunction) => Promise<void>): expressLib.RequestHandler {
         return (expressReq, expressRes, next) => {
           fn(expressReq, expressRes, next)
@@ -103,7 +104,7 @@ export function express<Session>(): ExpressAdapter<Session> {
         }
         // Create the initial request.
         const requestId = generateUuid();
-        let request: Request<ExpressRequestBodies, Session> = {
+        const initialRequest: Request<ExpressRequestBodies, Session> = {
           id: requestId,
           path: expressReq.path,
           method,
@@ -114,22 +115,24 @@ export function express<Session>(): ExpressAdapter<Session> {
           query: expressReq.query,
           body
         };
-        // Transform the request according to the route handler.
-        const transformRequest = route.handler.transformRequest;
-        if (transformRequest) {
-          request = {
-            ...request,
-            body: await transformRequest(request)
-          };
-        }
         // Run the before hook if specified.
-        const hookState = route.hook ? await route.hook.before(request) : null;
-        // Respond to the request using internal types.
-        const response = await route.handler.respond(request);
+        const hookState = route.hook ? await route.hook.before(initialRequest) : null;
+        // Parse the request according to the route handler.
+        const parsedRequest: Request<ParsedReqBody, Session> = {
+          ...initialRequest,
+          body: route.handler.parseRequestBody(initialRequest)
+        };
+        // Validate the request according to the route handler.
+        const validatedRequest: Request<Validation<ValidatedReqBody, ReqBodyErrors>, Session> = {
+          ...parsedRequest,
+          body: await route.handler.validateRequestBody(parsedRequest)
+        };
+        // Respond to the request.
+        const response = await route.handler.respond(validatedRequest);
         // Run the after hook if specified.
         // Note: we run the after hook after our business logic has completed,
         // not once the express framework sends the response.
-        if (route.hook && route.hook.after) { await route.hook.after(hookState, request, response); }
+        if (route.hook && route.hook.after) { await route.hook.after(hookState as HookState, validatedRequest, response); }
         // Respond over HTTP.
         respond(response, expressRes);
       });
