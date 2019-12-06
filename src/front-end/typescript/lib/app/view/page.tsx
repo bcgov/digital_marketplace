@@ -164,12 +164,12 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
     // Handle pages within a container.
     if (component.viewVerticalBar) {
       return (
-        <div className='d-flex flex-column flex-grow-1 page-container'>
+        <div className='d-flex flex-column flex-grow-1 page-container bg-light'>
           <div className='d-flex flex-column flex-grow-1'>
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
-              <div className='d-none d-md-block position-absolute bg-light' style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
+              <div className='d-none d-md-block position-absolute bg-vertical-bar' style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md='4' className='vertical-bar px-md-4 d-flex flex-column align-items-stretch py-5'>
+                <Col xs='12' md='4' className='vertical-bar bg-vertical-bar px-md-4 d-flex flex-column align-items-stretch py-5'>
                   <component.viewVerticalBar {...viewProps} />
                 </Col>
                 <Col xs='12' className='d-block d-md-none'>

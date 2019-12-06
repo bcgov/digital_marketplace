@@ -1,5 +1,8 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import Link from 'front-end/lib/views/link';
+import Icon from 'front-end/lib/views/icon';
+import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import { deleteSession } from 'front-end/lib/http/api';
 import { get } from 'lodash';
@@ -30,12 +33,43 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = ({ state }) => {
   return (
-    <div>
-      <Row>
-        <Col xs='12'>
-          Sign In
+    <div className='py-5'>
+
+      <Row className='pb-4'>
+        <Col xs='11' className='mx-auto'>
+          <h2>Choose Account Type</h2>
+          <p>Choose the account type that describes you best. Access to certain features of the app will be based on the account type that you select.</p>
         </Col>
       </Row>
+
+      <Row>
+        <Col xs='11' className='mx-auto sign-in-card'>
+          <h2>
+            <Icon name='paperclip' color='primary'/>
+            <span className="pl-1">Vendor</span>
+          </h2>
+          <p>Vendors will be required to have a GitHub account to sign up for the Digital Marketplace.  Don’t have an account? Creating one only takes a minute.</p>
+          <Link button className='btn-primary'>
+            Sign Up Using GitHub
+            <Icon name='chevron-right' color='white'/>
+          </Link>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col xs='11' className='mx-auto sign-in-card'>
+          <h2>
+            <Icon name='paperclip' color='primary'/>
+            <span className="pl-1">Public Sector Employee</span>
+          </h2>
+          <p>Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace. </p>
+          <Link button className='btn-primary'>
+            Sign Up Using IDIR
+            <Icon name='chevron-right' color='white'/>
+          </Link>
+        </Col>
+      </Row>
+
     </div>
   );
 };
@@ -44,6 +78,17 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+  viewVerticalBar: makeSignInVerticalBar<State, Msg>({
+    backMsg: { tag: 'noop', value: undefined },
+    getTitle: () => 'Create Your Digital Marketplace Account.',
+    getDescription: () => 'Join a community of developers, entrepreneurs and public service innovators who are making public services better.',
+    getFooter: () => (
+      <span>
+        Already have an account?&nbsp;
+        <Link route={{ tag: 'landing', value: null }}>Sign in</Link>.
+      </span>
+    )
+  }),
   getMetadata() {
     return makePageMetadata('Signed Out');
   }

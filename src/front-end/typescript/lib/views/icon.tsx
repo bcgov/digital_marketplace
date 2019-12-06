@@ -4,6 +4,7 @@ import { CSSProperties, default as React, MouseEventHandler, ReactElement } from
 
 export type AvailableIcons
   = 'chevron-left'
+  | 'chevron-right'
   | 'calendar'
   | 'clock'
   | 'map-marker'
@@ -66,6 +67,8 @@ const FontAwesome: View<FontAwesomeProps> = props => {
 const Icon: View<Props> = props => {
   const { name } = props;
   switch (name) {
+    case 'chevron-right':
+      return (<Feather {...props}><polyline points='9 18 15 12 9 6'></polyline></Feather>);
     case 'chevron-left':
       return (<Feather {...props}><polyline points='15 18 9 12 15 6'></polyline></Feather>);
     case 'calendar':

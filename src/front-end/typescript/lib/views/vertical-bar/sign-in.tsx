@@ -23,7 +23,7 @@ function makeVerticalBar<State, Msg, Props extends ComponentViewProps<State, Msg
           onClick={() => backMsg && dispatch(backMsg)}>
           <Icon name='chevron-left' width={1} height={1.1} />Go Back
         </Link>
-        <h1 className='mb-3'>{getTitle(state)}</h1>
+        <h1 className='mb-3 font-weight-bolder'>{getTitle(state)}</h1>
         <p className='mb-4'>{getDescription(state)}</p>
         <div className='font-size-small mt-auto'>{getFooter(props)}</div>
       </div>
