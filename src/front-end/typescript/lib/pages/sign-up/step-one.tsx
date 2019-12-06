@@ -37,12 +37,12 @@ const view: ComponentView<State, Msg> = ({ state }) => {
 
       <Row className='pb-4'>
         <Col xs='11' className='mx-auto'>
-          <h2>Sign In</h2>
-          <p>Select one of the options available below to sign in to your Digital Marketplace account.</p>
+          <h2>Choose Account Type</h2>
+          <p>Choose the account type that describes you best. Access to certain features of the app will be based on the account type that you select.</p>
         </Col>
       </Row>
-      <HorizontalCard title='Vendor' description='Use your GitHub account to sign in to the Digital Marketplace.' buttonText='Sign Up Using GitHub' />
-      <HorizontalCard title='Public Sector Employee' description='Use your IDIR to sign in to the Digital Marketplace.' buttonText='Sign Up Using IDIR' />
+      <HorizontalCard title='Vendor' description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace.  Don’t have an account? Creating one only takes a minute.' buttonText='Sign Up Using GitHub' />
+      <HorizontalCard title='Public Sector Employee' description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace. ' buttonText='Sign Up Using IDIR' />
     </div>
   );
 };
@@ -53,8 +53,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   viewVerticalBar: makeSignInVerticalBar<State, Msg>({
     backMsg: { tag: 'noop', value: undefined },
-    getTitle: () => 'Welcome Back to the Digital Marketplace',
-    getDescription: () => 'Pleas sign in to access your Digital Marketplace account.',
+    getTitle: () => 'Create Your Digital Marketplace Account.',
+    getDescription: () => 'Join a community of developers, entrepreneurs and public service innovators who are making public services better.',
     getFooter: () => (
       <span>
         Already have an account?&nbsp;

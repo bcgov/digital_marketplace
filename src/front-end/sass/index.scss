@@ -37,6 +37,7 @@ $info-alt-2: #0F4C8B;
 $warn: #FCBA19;
 $danger: #DC3545;
 $success: #28A745;
+$bg-vertical-bar: #E7EDF3;
 
 $theme-colors: (
   'primary-alt': $primary-alt,
@@ -313,9 +314,21 @@ nav.navbar .nav-link:hover {
 
 // Custom components
 
+.sign-in-card {
+  @extend .mb-4;
+  background-color: #FFFFFF;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 2px;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.15);
+  padding: 1.8rem;
+}
+
+.bg-vertical-bar {
+  background-color: $bg-vertical-bar;
+}
 .vertical-bar {
   @include media-breakpoint-up(md) {
-    background-color: $light;
   }
 }
 

@@ -24,7 +24,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
     { text: 'LOREM ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.' },
     { text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.', dismissMsg: { tag: 'dismissInfoAlert', value: 1 } }
   ],
-  hello: ''
+  landing: ''
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -50,7 +50,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div>
       <Row className='mb-3 pb-3'>
         <Col xs='12'>
-          Hello, world.
+          Landing, world.
         </Col>
       </Row>
     </div>
@@ -68,7 +68,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     getFooter: () => (
       <span>
         Already have an account?&nbsp;
-        <Link route={{ tag: 'hello', value: null }}>Sign in</Link>.
+        <Link route={{ tag: 'landing', value: null }}>Sign in</Link>.
       </span>
     )
   }),

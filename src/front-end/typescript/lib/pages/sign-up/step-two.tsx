@@ -33,7 +33,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div>
       <Row>
         <Col xs='12'>
-          {state.message}
+          Step 1
         </Col>
       </Row>
     </div>

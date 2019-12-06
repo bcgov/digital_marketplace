@@ -3,16 +3,18 @@ import Footer from 'front-end/lib/app/view/footer';
 import Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
-// Note(Jesse): @add_new_page_location
-import * as PageOrgEdit from 'front-end/lib/pages/org/edit';
-import * as PageOrgView from 'front-end/lib/pages/org/view';
-import * as PageUserEdit from 'front-end/lib/pages/user/edit';
-import * as PageUserView from 'front-end/lib/pages/user/view';
-import * as PageUserList from 'front-end/lib/pages/user/list';
-import * as PageHello from 'front-end/lib/pages/hello';
+
+import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
+import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
+import * as PageOrgList from 'front-end/lib/pages/organization/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
+import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
+import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
+import * as PageUserList from 'front-end/lib/pages/user/list';
+import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import { default as React } from 'react';
@@ -55,16 +57,14 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
 const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   switch (state.activeRoute.tag) {
 
-    case 'hello':
+    case 'landing':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.hello}
-          mapPageMsg={value => ({ tag: 'pageHello', value })}
-          component={PageHello.component} />
+          pageState={state.pages.landing}
+          mapPageMsg={value => ({ tag: 'pageLanding', value })}
+          component={PageLanding.component} />
       );
-
-    // Note(Jesse): @add_new_page_location
 
     case 'orgEdit':
       return (
@@ -75,31 +75,31 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageOrgEdit.component} />
       );
 
-    case 'orgView':
+    case 'orgCreate':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.orgView}
-          mapPageMsg={value => ({ tag: 'pageOrgView', value })}
-          component={PageOrgView.component} />
+          pageState={state.pages.orgCreate}
+          mapPageMsg={value => ({ tag: 'pageOrgCreate', value })}
+          component={PageOrgCreate.component} />
       );
 
-    case 'userEdit':
+    case 'orgList':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.userEdit}
-          mapPageMsg={value => ({ tag: 'pageUserEdit', value })}
-          component={PageUserEdit.component} />
+          pageState={state.pages.orgList}
+          mapPageMsg={value => ({ tag: 'pageOrgList', value })}
+          component={PageOrgList.component} />
       );
 
-    case 'userView':
+    case 'userProfile':
       return (
         <ViewPage
           dispatch={dispatch}
-          pageState={state.pages.userView}
-          mapPageMsg={value => ({ tag: 'pageUserView', value })}
-          component={PageUserView.component} />
+          pageState={state.pages.userProfile}
+          mapPageMsg={value => ({ tag: 'pageUserProfile', value })}
+          component={PageUserProfile.component} />
       );
 
     case 'userList':
@@ -111,7 +111,6 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageUserList.component} />
       );
 
-
     case 'signIn':
       return (
         <ViewPage
@@ -121,7 +120,6 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageSignIn.component} />
       );
 
-
     case 'signOut':
       return (
         <ViewPage
@@ -129,6 +127,24 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           pageState={state.pages.signOut}
           mapPageMsg={value => ({ tag: 'pageSignOut', value })}
           component={PageSignOut.component} />
+      );
+
+    case 'signUpStepOne':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.signUpStepOne}
+          mapPageMsg={value => ({ tag: 'pageSignUpStepOne', value })}
+          component={PageSignUpStepOne.component} />
+      );
+
+    case 'signUpStepTwo':
+      return (
+        <ViewPage
+          dispatch={dispatch}
+          pageState={state.pages.signUpStepTwo}
+          mapPageMsg={value => ({ tag: 'pageSignUpStepTwo', value })}
+          component={PageSignUpStepTwo.component} />
       );
 
     case 'notice':

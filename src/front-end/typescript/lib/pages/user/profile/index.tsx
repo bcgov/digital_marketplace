@@ -11,7 +11,9 @@ export interface State {
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export type RouteParams = null;
+export interface RouteParams {
+  userId: string;
+}
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   empty: true,
@@ -27,7 +29,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div>
       <Row className='mb-3 pb-3'>
         <Col xs='12'>
-          <h1>User View</h1>
+          <h1>User Edit</h1>
         </Col>
       </Row>
     </div>
@@ -39,6 +41,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('User View');
+    return makePageMetadata('User Edit');
   }
 };
