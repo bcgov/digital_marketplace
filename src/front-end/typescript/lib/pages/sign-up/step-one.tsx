@@ -31,6 +31,28 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
 
+
+export interface HorizontalCardParams {
+  title: string;
+  description: string;
+  buttonText: string;
+}
+
+function HorizontalCard(params: HorizontalCardParams) {
+  return (
+      <Row>
+        <Col xs='11' className='mx-auto sign-in-card'>
+          <h2>
+            <Icon name='paperclip' color='primary'/>
+            <span className="pl-1">{params.title}</span>
+          </h2>
+          <p>{params.description}</p>
+          <Link button className='btn-primary'>{params.buttonText}</Link>
+        </Col>
+      </Row>
+  );
+}
+
 const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <div className='py-5'>
@@ -41,35 +63,8 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <p>Choose the account type that describes you best. Access to certain features of the app will be based on the account type that you select.</p>
         </Col>
       </Row>
-
-      <Row>
-        <Col xs='11' className='mx-auto sign-in-card'>
-          <h2>
-            <Icon name='paperclip' color='primary'/>
-            <span className="pl-1">Vendor</span>
-          </h2>
-          <p>Vendors will be required to have a GitHub account to sign up for the Digital Marketplace.  Don’t have an account? Creating one only takes a minute.</p>
-          <Link button className='btn-primary'>
-            Sign Up Using GitHub
-            <Icon name='chevron-right' color='white'/>
-          </Link>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col xs='11' className='mx-auto sign-in-card'>
-          <h2>
-            <Icon name='paperclip' color='primary'/>
-            <span className="pl-1">Public Sector Employee</span>
-          </h2>
-          <p>Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace. </p>
-          <Link button className='btn-primary'>
-            Sign Up Using IDIR
-            <Icon name='chevron-right' color='white'/>
-          </Link>
-        </Col>
-      </Row>
-
+      <HorizontalCard title='Vendor' description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace.  Don’t have an account? Creating one only takes a minute.' buttonText='Sign Up Using GitHub' />
+      <HorizontalCard title='Public Sector Employee' description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace. ' buttonText='Sign Up Using IDIR' />
     </div>
   );
 };
