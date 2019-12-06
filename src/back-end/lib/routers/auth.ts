@@ -14,6 +14,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       path: '/auth/sign-in',
       handler: nullRequestBodyHandler(async request => {
         try {
+          const provider = request.query.provider;
           const redirectUrl = qs.escape(`${ORIGIN}/auth/callback`);
           const nonce = generators.codeVerifier();
           const authUrl = `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth` +
@@ -23,7 +24,8 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
                           `&response_type=code` +
                           `&response_mode=query` +
                           `&scope=openid` +
-                          `&nonce=${nonce}`;
+                          `&nonce=${nonce}` +
+                          `&kc_idp_hint=${provider}`;
 
           return {
             code: 302,
