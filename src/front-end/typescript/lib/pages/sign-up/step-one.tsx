@@ -1,7 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import Link from 'front-end/lib/views/link';
-import Icon from 'front-end/lib/views/icon';
 import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import { deleteSession } from 'front-end/lib/http/api';
@@ -9,6 +8,7 @@ import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
+import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
 
 export interface State {
   message: string;
@@ -30,28 +30,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
-
-
-export interface HorizontalCardParams {
-  title: string;
-  description: string;
-  buttonText: string;
-}
-
-function HorizontalCard(params: HorizontalCardParams) {
-  return (
-      <Row>
-        <Col xs='11' className='mx-auto sign-in-card'>
-          <h2>
-            <Icon name='paperclip' color='primary'/>
-            <span className="pl-1">{params.title}</span>
-          </h2>
-          <p>{params.description}</p>
-          <Link button className='btn-primary'>{params.buttonText}</Link>
-        </Col>
-      </Row>
-  );
-}
 
 const view: ComponentView<State, Msg> = ({ state }) => {
   return (
