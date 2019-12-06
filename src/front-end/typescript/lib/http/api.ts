@@ -1,4 +1,4 @@
-import { prefixRequest } from 'front-end/lib/http';
+import { prefixRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { ClientHttpMethod } from 'shared/lib/types';
