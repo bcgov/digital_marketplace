@@ -4,6 +4,7 @@ import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } fr
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
+import makeSidebar from 'front-end/lib/views/vertical-bar/menu';
 
 export interface State {
   empty: true;
@@ -29,7 +30,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div>
       <Row className='mb-3 pb-3'>
         <Col xs='12'>
-          <h1>User Edit</h1>
+          <h1>User Profile</h1>
         </Col>
       </Row>
     </div>
@@ -40,6 +41,27 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+  viewVerticalBar: makeSidebar(
+  [
+    {
+      target: '',
+      icon: 'paperclip',
+      text: 'Profile',
+      active: true
+    },
+    {
+      target: '',
+      icon: 'paperclip',
+      text: 'Notifications',
+      active: false
+    },
+    {
+      target: '',
+      icon: 'paperclip',
+      text: 'Accepted Policies, Terms & Agreements',
+      active: false
+    }
+  ]),
   getMetadata() {
     return makePageMetadata('User Edit');
   }

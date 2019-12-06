@@ -1,24 +1,35 @@
 import { ComponentViewProps, View } from 'front-end/lib/framework';
-// import Link from 'front-end/lib/views/link';
-// import Icon from 'front-end/lib/views/icon';
+import Link from 'front-end/lib/views/link';
+import Icon from 'front-end/lib/views/icon';
+import {AvailableIcons} from 'front-end/lib/views/icon';
 import React from 'react';
 
-interface SidebarParams<State, Msg> {
-  links:         JSX.Element[];
+interface SidebarLinkParams {
+  target: string;
+  text: string;
+  active: boolean;
+  icon: AvailableIcons;
 }
 
-function makeVerticalBar<State, Msg, Props = ComponentViewProps<State, Msg>> (params: SidebarParams<State, Msg>): View<Props>
+function SidebarLink(params: SidebarLinkParams) {
+  return (
+    <div>
+      <Link button className={`${params.active? 'btn-secondary' : ''} mb-2 p-2 ta-left`}>
+        <Icon name={params.icon}></Icon>
+        <span className="pl-2">{params.text}</span>
+      </Link>
+    </div>
+  );
+}
+
+function makeVerticalBar<State, Msg, Props = ComponentViewProps<State, Msg>> (links: SidebarLinkParams[]): View<Props>
 {
   return props => {
     return (
-      <div className='d-flex flex-column pt-5 position-relative'>
+      <div className=''>
         {
-          params.links.map( link => {
-            return(
-              <div>
-                {link}
-              </div>
-            );
+          links.map( linkParams => {
+            return( SidebarLink(linkParams) );
           })
         }
       </div>
