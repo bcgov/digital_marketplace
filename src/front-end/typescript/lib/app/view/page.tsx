@@ -167,15 +167,15 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
         <div className='d-flex flex-column flex-grow-1 page-container bg-light'>
           <div className='d-flex flex-column flex-grow-1'>
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
-              <div className='d-none d-md-block position-absolute bg-vertical-bar' style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
+              <div className='d-none d-md-block position-absolute bg-light-blue' style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md='4' className='vertical-bar bg-vertical-bar px-md-4 d-flex flex-column align-items-stretch py-5'>
+                <Col xs='12' md='4' className='vertical-bar bg-light-blue px-md-4 d-flex flex-column align-items-stretch py-5'>
                   <component.viewVerticalBar {...viewProps} />
                 </Col>
                 <Col xs='12' className='d-block d-md-none'>
                   <div className='w-100 border-bottom'></div>
                 </Col>
-                <Col xs='12' md='8' className={`pl-md-4 py-5`}>
+                <Col xs='12' md={{ size: 7, offset: 1 }} className={`pl-md-4 py-5`}>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
                   <component.view {...viewProps} />
                 </Col>

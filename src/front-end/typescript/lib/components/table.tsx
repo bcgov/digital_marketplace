@@ -1,5 +1,5 @@
 import { Component, ComponentViewProps, Dispatch, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
-import { CSSProperties, default as React, ReactElement } from 'react';
+import React, { CSSProperties, ReactElement } from 'react';
 import { Table, Tooltip } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
@@ -9,7 +9,7 @@ export interface State {
   TDView: View<TDProps>;
   activeTooltipThIndex: number | null;
   activeTooltipTdIndex: [number, number] | null; // [row, cell]
-};
+}
 
 export interface Params {
   idNamespace: string;
@@ -30,24 +30,24 @@ export const init: Init<Params, State> = async ({ idNamespace, THView = DefaultT
 });
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
-    switch (msg.tag) {
-      case 'toggleTooltipTh':
-        const currentThIndex = state.activeTooltipThIndex;
-        if (!currentThIndex) {
-          return [state.set('activeTooltipThIndex', msg.value)];
-        } else {
-          return [state.set('activeTooltipThIndex', null)];
-        }
-      case 'toggleTooltipTd':
-        const currentTdIndex = state.activeTooltipTdIndex;
-        if (!currentTdIndex) {
-          return [state.set('activeTooltipTdIndex', msg.value)];
-        } else {
-          return [state.set('activeTooltipTdIndex', null)];
-        }
-      default:
-        return [state];
-    }
+  switch (msg.tag) {
+    case 'toggleTooltipTh':
+      const currentThIndex = state.activeTooltipThIndex;
+      if (!currentThIndex) {
+        return [state.set('activeTooltipThIndex', msg.value)];
+      } else {
+        return [state.set('activeTooltipThIndex', null)];
+      }
+    case 'toggleTooltipTd':
+      const currentTdIndex = state.activeTooltipTdIndex;
+      if (!currentTdIndex) {
+        return [state.set('activeTooltipTdIndex', msg.value)];
+      } else {
+        return [state.set('activeTooltipTdIndex', null)];
+      }
+    default:
+      return [state];
+  }
 };
 
 interface TableTooltipProps {
@@ -151,7 +151,7 @@ export function DefaultTDView(props: TDProps): ReactElement {
         : children}
     </td>
   );
-};
+}
 
 export type RowSpec = TDSpec[];
 
@@ -184,9 +184,13 @@ const TBody: View<TBodyProps> = ({ id, rows, TDView, borderless }) => {
   );
 };
 
+export type HeadCells = THSpec[];
+
+export type BodyRows = RowsSpec;
+
 interface ViewProps extends ComponentViewProps<State, Msg> {
-  headCells: THSpec[];
-  bodyRows: RowsSpec;
+  headCells: HeadCells;
+  bodyRows: BodyRows;
   className?: string;
   style?: CSSProperties;
   borderless?: boolean;

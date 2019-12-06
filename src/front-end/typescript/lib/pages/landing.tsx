@@ -1,6 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageAlert, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import * as Table from 'front-end/lib/components/table';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageAlert, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import Link from 'front-end/lib/views/link';
 import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import React from 'react';
@@ -9,11 +10,13 @@ import { ADT } from 'shared/lib/types';
 
 export interface State {
   infoAlerts: Array<PageAlert<Msg>>;
+  table: Immutable<Table.State>;
 }
 
 type InnerMsg
   = ADT<'noop'>
-  | ADT<'dismissInfoAlert', number>;
+  | ADT<'dismissInfoAlert', number>
+  | ADT<'table', Table.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -24,7 +27,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
     { text: 'LOREM ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.' },
     { text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.', dismissMsg: { tag: 'dismissInfoAlert', value: 1 } }
   ],
-  landing: ''
+  landing: '',
+  table: immutable(await Table.init({
+    idNamespace: 'test-table'
+  }))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -40,17 +46,55 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return i !== msg.value;
         }))
       ];
+    case 'table':
+      return updateComponentChild({
+        state,
+        childStatePath: ['table'],
+        childUpdate: Table.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'table', value })
+      });
     default:
       return [state];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state }) => {
+function tableHeadCells(state: Immutable<State>): Table.HeadCells {
+  return [
+    { children: 'One' },
+    { children: 'Two' }
+  ];
+}
+
+function tableBodyRows(state: Immutable<State>): Table.BodyRows {
+  return [
+    [
+      { children: 'no tooltip' },
+      { children: 'yes tooltip', tooltipText: 'Foo' }
+    ],
+    [
+      { children: 'no tooltip' },
+      { children: 'yes tooltip', tooltipText: 'Foo' }
+    ]
+  ];
+}
+
+const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
   return (
     <div>
       <Row className='mb-3 pb-3'>
         <Col xs='12'>
           Landing, world.
+        </Col>
+      </Row>
+      <Row className='mb-3 pb-3'>
+        <Col xs='12'>
+          <Table.view
+            headCells={tableHeadCells(state)}
+            bodyRows={tableBodyRows(state)}
+            state={state.table}
+            dispatch={dispatchTable} />
         </Col>
       </Row>
     </div>

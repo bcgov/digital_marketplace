@@ -1,14 +1,14 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import Link from 'front-end/lib/views/link';
-import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import { deleteSession } from 'front-end/lib/http/api';
+import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
+import Link from 'front-end/lib/views/link';
+import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
-import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
 
 export interface State {
   message: string;
@@ -41,8 +41,8 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <p>Choose the account type that describes you best. Access to certain features of the app will be based on the account type that you select.</p>
         </Col>
       </Row>
-      <HorizontalCard title='Vendor' description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace.  Don’t have an account? Creating one only takes a minute.' buttonText='Sign Up Using GitHub' />
-      <HorizontalCard title='Public Sector Employee' description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace. ' buttonText='Sign Up Using IDIR' />
+      <HorizontalCard title='Vendor' description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace. Don’t have an account? Creating one only takes a minute.' buttonText='Sign Up Using GitHub' />
+      <HorizontalCard title='Public Sector Employee' description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace.' buttonText='Sign Up Using IDIR' />
     </div>
   );
 };

@@ -1,14 +1,14 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import Link from 'front-end/lib/views/link';
-import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import { deleteSession } from 'front-end/lib/http/api';
+import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
+import Link from 'front-end/lib/views/link';
+import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
-import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
 
 export interface State {
   message: string;
