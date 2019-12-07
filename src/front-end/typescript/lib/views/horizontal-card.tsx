@@ -12,7 +12,7 @@ export interface HorizontalCardParams {
 export function HorizontalCard(params: HorizontalCardParams) {
   return (
     <Row>
-      <Col xs='12' className='mx-auto sign-in-card'>
+      <Col xs='12' className='mx-auto bg-white p-4 shadow mb-4 border border-dark rounded-sm'>
         <h2>
           <Icon name='paperclip' color='primary'/>
           <span className='pl-1'>{params.title}</span>

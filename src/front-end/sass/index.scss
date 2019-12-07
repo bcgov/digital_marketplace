@@ -319,16 +319,6 @@ nav.navbar .nav-link:hover {
 
 // Custom components
 
-.sign-in-card {
-  @extend .mb-4;
-  @extend .bg-white;
-  box-sizing: border-box;
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 2px;
-  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.15);
-  padding: 1.8rem;
-}
-
 .react-select-container {
   flex-grow: 1;
 
