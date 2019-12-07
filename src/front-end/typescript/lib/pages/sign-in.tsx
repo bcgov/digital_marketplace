@@ -27,6 +27,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
   }
 };
 
+function getSignInUrl(signInType: 'idir' | 'github'): string   {
+  return `/auth/sign-in?provider=${signInType}`;
+}
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
