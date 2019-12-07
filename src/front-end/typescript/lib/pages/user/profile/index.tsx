@@ -47,19 +47,22 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       target: '',
       icon: 'paperclip',
       text: 'Profile',
-      active: true
+      active: true,
+      route: { tag: 'userProfile', value: {userId: '1'}} as Route
     },
     {
       target: '',
       icon: 'paperclip',
       text: 'Notifications',
-      active: false
+      active: false,
+      route: { tag: 'landing' } as Route
     },
     {
       target: '',
       icon: 'paperclip',
       text: 'Accepted Policies, Terms & Agreements',
-      active: false
+      active: false,
+      route: { tag: 'landing' } as Route
     }
   ]),
   getMetadata() {

@@ -1,3 +1,4 @@
+import { Route } from 'front-end/lib/app/types';
 import { ComponentViewProps, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import {AvailableIcons} from 'front-end/lib/views/icon';
@@ -9,12 +10,13 @@ interface SidebarLinkParams {
   text: string;
   active: boolean;
   icon: AvailableIcons;
+  route: Route;
 }
 
 function SidebarLink(params: SidebarLinkParams) {
   return (
     <div>
-      <Link button className={`${params.active ? 'btn-secondary' : ''} mb-2 p-2 ta-left`}>
+      <Link button route={params.route} className={`${params.active ? 'btn-secondary' : ''} mb-2 p-2 ta-left`}>
         <Icon name={params.icon}></Icon>
         <span className='pl-2'>{params.text}</span>
       </Link>
