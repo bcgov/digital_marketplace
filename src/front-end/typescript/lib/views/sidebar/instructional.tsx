@@ -10,7 +10,7 @@ interface Params<State, Msg> {
   getDescription(state: State): string;
 }
 
-function makeVerticalBar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>>(params: Params<State, Msg>): View<Props> {
+function makeSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>>(params: Params<State, Msg>): View<Props> {
   const { getFooter, backMsg, getTitle, getDescription } = params;
   return props => {
     const { state, dispatch } = props;
@@ -31,4 +31,4 @@ function makeVerticalBar<State, Msg, Props extends ComponentViewProps<State, Msg
   };
 }
 
-export default makeVerticalBar;
+export default makeSidebar;

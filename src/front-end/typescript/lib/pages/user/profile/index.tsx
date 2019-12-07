@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import makeSidebar from 'front-end/lib/views/vertical-bar/menu';
+import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
@@ -41,7 +41,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  viewVerticalBar: makeSidebar<State, Msg>(
+  viewSidebar: makeSidebar<State, Msg>(
   [
     {
       target: '',

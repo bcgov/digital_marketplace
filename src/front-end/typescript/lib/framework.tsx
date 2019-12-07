@@ -293,7 +293,7 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   update: Update<State, Msg>;
   view: View<Props>;
   viewBottomBar?: View<Props>; //TODO potentially remove
-  viewVerticalBar?: View<Props>;
+  viewSidebar?: View<Props>;
   containerOptions?: PageContainerOptions;
   getMetadata: PageGetMetadata<State>;
   getAlerts?: PageGetAlerts<State, Msg>;

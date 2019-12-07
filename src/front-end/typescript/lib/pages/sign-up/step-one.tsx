@@ -4,7 +4,7 @@ import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } fr
 import { deleteSession } from 'front-end/lib/http/api';
 import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
 import Link from 'front-end/lib/views/link';
-import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
+import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -51,7 +51,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  viewVerticalBar: makeSignInVerticalBar<State, Msg>({
+  viewSidebar: makeInstructionalSidebar<State, Msg>({
     backMsg: { tag: 'noop', value: undefined },
     getTitle: () => 'Create Your Digital Marketplace Account.',
     getDescription: () => 'Join a community of developers, entrepreneurs and public service innovators who are making public services better.',

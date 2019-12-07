@@ -2,8 +2,6 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageAlert, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
-import Link from 'front-end/lib/views/link';
-import makeSignInVerticalBar from 'front-end/lib/views/vertical-bar/sign-in';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
@@ -105,17 +103,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  viewVerticalBar: makeSignInVerticalBar<State, Msg>({
-    backMsg: { tag: 'noop', value: undefined },
-    getTitle: () => 'Vertical Bar',
-    getDescription: () => 'Foo',
-    getFooter: () => (
-      <span>
-        Already have an account?&nbsp;
-        <Link route={{ tag: 'landing', value: null }}>Sign in</Link>.
-      </span>
-    )
-  }),
   getAlerts(state) {
     return {
       ...emptyPageAlerts(),
