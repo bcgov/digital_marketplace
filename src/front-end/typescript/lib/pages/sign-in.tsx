@@ -16,7 +16,9 @@ export interface State {
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export type RouteParams = null;
+export interface RouteParams {
+  provider: 'idir' | 'github' | null;
+}
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
   const session = await deleteSession();
@@ -26,6 +28,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
     return { message: 'Signing out of the application failed.' };
   }
 };
+
+// function getSignInUrl(signInType: 'idir' | 'github'): string   {
+//   return `/auth/sign-in?provider=${signInType}`;
+// }
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
@@ -41,8 +47,17 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <p>Select one of the options available below to sign in to your Digital Marketplace account.</p>
         </Col>
       </Row>
-      <HorizontalCard title='Vendor' description='Use your GitHub account to sign in to the Digital Marketplace.' buttonText='Sign Up Using GitHub' />
-      <HorizontalCard title='Public Sector Employee' description='Use your IDIR to sign in to the Digital Marketplace.' buttonText='Sign Up Using IDIR' />
+      <HorizontalCard
+        route={{ tag: 'signIn', value: { provider: 'github'} }} // TODO(Jesse): Is this actually how to pass query params?
+        title='Vendor'
+        description='Use your GitHub account to sign in to the Digital Marketplace.'
+        buttonText='Sign Up Using GitHub' />
+
+      <HorizontalCard
+        route={{ tag: 'signIn', value: { provider: 'idir'} }} // TODO(Jesse): Is this actually how to pass query params?
+        title='Public Sector Employee'
+        description='Use your IDIR to sign in to the Digital Marketplace.'
+        buttonText='Sign Up Using IDIR' />
     </div>
   );
 };

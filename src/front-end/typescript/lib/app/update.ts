@@ -219,7 +219,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             .set('activeRoute', incomingRoute)
             // We switch this flag to true so the view function knows to display the page.
             .set('ready', true);
-          // Set the new active page's state.
+          // Set the new active pages' state.
           state = await initPage(state, dispatch, incomingRoute);
           // Refresh the front-end's view of the current session again
           // if the user has been signed out.
