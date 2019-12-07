@@ -276,7 +276,7 @@ const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props =
     }
   };
   return (
-    <div className={`${className} ${validityClassName} form-control p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
+    <div className={`${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
       <Controls {...props} />
       <textarea
         id={state.id}

@@ -46,7 +46,7 @@ function makeOnKeyUp(onEnter?: OnEnter): KeyboardEventHandler<HTMLInputElement> 
   return event => {
     if (event.key === 'Enter' && onEnter) { onEnter(); }
   };
-};
+}
 
 const Child: View<FormField.ChildProps<State, ExtraProps, Value>> = props => {
   const { state, disabled, className, onChange, extraProps } = props;

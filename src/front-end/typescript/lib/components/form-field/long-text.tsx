@@ -1,0 +1,61 @@
+import * as FormField from 'front-end/lib/components/form-field';
+import { Init, Update } from 'front-end/lib/framework';
+import React from 'react';
+import { ADT } from 'shared/lib/types';
+
+export type Value = string;
+
+type ChildState = FormField.ChildStateBase<Value>;
+
+type ChildParams = FormField.ChildParamsBase<Value>;
+
+export type State = FormField.State<Value, ChildState>;
+
+export type Params = FormField.Params<Value, ChildParams>;
+
+type InnerChildMsg
+  = ADT<'onChange', Value>;
+
+export type Msg = FormField.Msg<InnerChildMsg>;
+
+const childInit: Init<ChildParams, ChildState> = async params => params;
+
+const childUpdate: Update<ChildState, FormField.ChildMsg<InnerChildMsg>> = ({ state, msg }) => {
+  switch (msg.tag) {
+    case 'onChange':
+      return [state.set('value', msg.value)];
+    default:
+      return [state];
+  }
+};
+
+const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props => {
+  const { state, dispatch, className = '', validityClassName, disabled = false } = props;
+  return (
+    <textarea
+      id={state.id}
+      value={state.value}
+      className={`${className} ${validityClassName}`}
+      onChange={e => {
+        const value = e.currentTarget.value;
+        dispatch({ tag: 'onChange', value });
+        // Let the parent form field component know that the value has been updated.
+        props.onChange(value);
+      }}
+      disabled={disabled} />
+  );
+};
+
+export const component = FormField.makeComponent({
+  init: childInit,
+  update: childUpdate,
+  view: ChildView
+});
+
+export const init = component.init;
+
+export const update = component.update;
+
+export const view = component.view;
+
+export default component;

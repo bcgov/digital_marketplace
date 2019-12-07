@@ -187,7 +187,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
   return props => {
     const { state, dispatch, style } = props;
     const invalid = !!state.errors.length;
-    const childClassName = 'flex-grow-1 align-self-stretch';
+    const childClassName = 'form-control flex-grow-1 align-self-stretch';
     const validityClassName = invalid ? 'is-invalid' : '';
     return (
       <FormGroup className={`form-field-${state.child.id} d-flex flex-column ${props.className || ''}`} style={style}>

@@ -1,20 +1,24 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageAlert, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
+import { invalid } from 'shared/lib/validation';
 
 export interface State {
   infoAlerts: Array<PageAlert<Msg>>;
   table: Immutable<Table.State>;
+  shortText: Immutable<ShortText.State>;
 }
 
 type InnerMsg
   = ADT<'noop'>
   | ADT<'dismissInfoAlert', number>
-  | ADT<'table', Table.Msg>;
+  | ADT<'table', Table.Msg>
+  | ADT<'shortText', ShortText.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -28,6 +32,15 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   landing: '',
   table: immutable(await Table.init({
     idNamespace: 'test-table'
+  })),
+  shortText: immutable(await ShortText.init({
+    errors: [],
+    validate: v => invalid(['foo bar']),
+    child: {
+      value: '',
+      id: 'landing-short-text',
+      type: 'text'
+    }
   }))
 });
 
@@ -51,6 +64,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Table.update,
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'table', value })
+      });
+    case 'shortText':
+      return updateComponentChild({
+        state,
+        childStatePath: ['shortText'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'shortText', value })
       });
     default:
       return [state];
@@ -79,6 +100,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
+  const dispatchShortText = mapComponentDispatch<Msg, ShortText.Msg>(dispatch, value => ({ tag: 'shortText', value }));
   return (
     <div>
       <Row className='mb-3 pb-3'>
@@ -93,6 +115,16 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             bodyRows={tableBodyRows(state)}
             state={state.table}
             dispatch={dispatchTable} />
+        </Col>
+      </Row>
+      <Row className='mb-3 pb-3'>
+        <Col xs='12'>
+          <ShortText.view
+            label='A short text field'
+            help='This is help text'
+            required
+            state={state.shortText}
+            dispatch={dispatchShortText} />
         </Col>
       </Row>
     </div>
