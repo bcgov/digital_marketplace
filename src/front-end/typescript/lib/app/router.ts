@@ -85,7 +85,7 @@ const router: Router<Route> = {
       makeRoute() {
         return {
           tag: 'signIn',
-          value: null
+          value: {provider: null} // TODO(Jesse) How do we get this from the query string?
         };
       }
     },
@@ -116,6 +116,7 @@ const router: Router<Route> = {
         };
       }
     },
+
     {
       path: '/notice/auth-failure',
       makeRoute() {
