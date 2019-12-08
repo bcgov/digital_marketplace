@@ -28,3 +28,5 @@ export enum ClientHttpMethod {
   Delete = 'DELETE',
   Options = 'OPTIONS'
 }
+
+export type KeyCloakIdentityProvider = 'github' | 'idir';
