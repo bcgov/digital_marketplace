@@ -1,7 +1,6 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createAffiliation, createOrganization, readManyOrganizationsAsAdmin, readManyOrganizationsAsPublic } from 'back-end/lib/db';
+import { Connection, createAffiliation, createOrganization, isUserOwnerOfOrg, readManyOrganizationsAsAdmin, readManyOrganizationsAsPublic, readOneOrganization } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { ValidatedUpdateRequestBody } from 'back-end/lib/resources/user';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile } from 'back-end/lib/validation';
@@ -46,7 +45,7 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'orgs',
+  routeNamespace: 'organizations',
 
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[]>, Session>(async request => {
@@ -61,9 +60,18 @@ const resource: Resource = {
     });
   },
 
-  // readOne(connection) {
-
-  // },
+  readOne(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<Organization | string[]>, Session>(async request => {
+      const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      // Only admins or the org owner can read the full org details
+      if (permissions.readOneOrganization(request.session) ||
+          (request.session.user && await isUserOwnerOfOrg(connection, request.session.user!.id, request.params.id))) {
+            const organization = await readOneOrganization(connection, request.params.id);
+            return respond(200, organization);
+      }
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    });
+  },
 
   create(connection) {
     return {
@@ -85,18 +93,18 @@ const resource: Resource = {
                 contactEmail,
                 contactPhone } = request.body;
 
-        const validatedLegalName = validateGenericString(legalName, 'Legal Name');
+        const validatedLegalName = legalName ? validateGenericString(legalName, 'Legal Name') : invalid(['Legal name is required']);
         const validatedLogoImageFile = logoImageFile ? await validateImageFile(connection, logoImageFile) : valid(undefined);
-        const validatedWebsiteUrl = websiteUrl ? validateUrl('websiteUrl') : valid(undefined);
-        const validatedStreetAddress1 = validateGenericString(streetAddress1, 'Street Address');
+        const validatedWebsiteUrl = websiteUrl ? validateUrl(websiteUrl) : valid(undefined);
+        const validatedStreetAddress1 = streetAddress1 ? validateGenericString(streetAddress1, 'Street Address') : invalid(['Street Address is required']);
         const validatedStreetAddress2 = streetAddress2 ? validateGenericString(streetAddress2, 'Street Address') : valid(undefined);
-        const validatedCity = validateGenericString(city, 'City');
-        const validatedRegion = validateGenericString(region, 'Province/State');
-        const validatedMailCode = validateGenericString(mailCode, 'Postal / Zip Code');
-        const validatedCountry = validateGenericString(country, 'Country');
-        const validatedContactName = validateGenericString(contactName, 'Contact Name');
+        const validatedCity = city ? validateGenericString(city, 'City') : invalid(['City is required']);
+        const validatedRegion = region ? validateGenericString(region, 'Province/State') : invalid(['Region is required']);
+        const validatedMailCode = mailCode ? validateGenericString(mailCode, 'Postal / Zip Code') : invalid(['Zip/Postal Code is required']);
+        const validatedCountry = country ? validateGenericString(country, 'Country') : invalid(['Country is required']);
+        const validatedContactName = contactName ? validateGenericString(contactName, 'Contact Name') : invalid(['Contact name is required']);
         const validatedContactTitle = contactTitle ? validateGenericString(contactTitle, 'Contact Title') : valid(undefined);
-        const validatedContactEmail = validateEmail(contactEmail);
+        const validatedContactEmail = contactEmail ? validateEmail(contactEmail) : invalid(['Contact email is required']);
         const validatedContactPhone = contactPhone ? validatePhone(contactPhone) : valid(undefined);
 
         if (allValid([validatedLegalName,

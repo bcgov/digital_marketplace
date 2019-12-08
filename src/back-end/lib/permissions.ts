@@ -66,3 +66,7 @@ export function deleteSession(session: Session, id: string): boolean {
 export function createOrganization(session: Session): boolean {
   return isVendor(session);
 }
+
+export function readOneOrganization(session: Session): boolean {
+  return isAdmin(session);
+}

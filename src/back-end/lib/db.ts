@@ -215,12 +215,29 @@ export async function rawOrganizationToOrganizationSlim(connection: Connection, 
   return organization;
 }
 
+export async function rawOrganizationToOrganization(connection: Connection, params: RawOrganizationToOrganizationParams): Promise<Organization> {
+  const { logoImageFile: fileId, ...restOfRawOrg } = params;
+  if (fileId) {
+    const logoImageFile = await readOneFile(connection, fileId);
+    return {
+      ...restOfRawOrg,
+      logoImageFile
+    };
+  } else {
+    return restOfRawOrg;
+  }
+}
+
 interface RawOrganizationSlimToOrganizationSlimParams {
   org_id: Id;
   legalName: string;
   logoImageFileId?: Id;
   ownerId: Id;
   ownerName: string;
+}
+
+interface RawOrganizationToOrganizationParams extends Omit<Organization, 'logoImageFile'> {
+  logoImageFile?: Id;
 }
 
 export async function createOrganization(connection: Connection, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
@@ -238,13 +255,20 @@ export async function createOrganization(connection: Connection, organization: V
   return result;
 }
 
+export async function readOneOrganization(connection: Connection, id: Id): Promise<Organization> {
+  const result = await connection('organizations')
+    .where({ id })
+    .first();
+
+  return await rawOrganizationToOrganization(connection, result);
+}
+
 // TODO - update this to take a validated request body once the affiliation resource is created
 export async function createAffiliation(connection: Connection, affiliation: CreateAffilicationRequestBody): Promise<Affiliation> {
   const now = new Date();
   const [result] = await connection('affiliations')
     .insert({
       ...affiliation,
-      id: generateUuid(),
       createdAt: now,
       updatedAt: now
     }, ['*']);
@@ -254,4 +278,16 @@ export async function createAffiliation(connection: Connection, affiliation: Cre
   }
 
   return result;
+}
+
+// export async function readManyAffiliations(connection: Connection, userId: Id): Promise<Affiliation[]> {
+
+// }
+
+export async function isUserOwnerOfOrg(connection: Connection, userId: Id, orgId: Id): Promise<boolean> {
+  const [result] = await connection('affiliations')
+    .where ({ user: userId, org: orgId })
+    .first();
+
+  return !!result;
 }

@@ -4,6 +4,7 @@ import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib
 import loggerHook from 'back-end/lib/hooks/logger';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
+import organizationResource from 'back-end/lib/resources/organization';
 import sessionResource from 'back-end/lib/resources/session';
 import userResource from 'back-end/lib/resources/user';
 import authRouter from 'back-end/lib/routers/auth';
@@ -40,6 +41,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
 
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
+    organizationResource,
     sessionResource,
     userResource
   ];
