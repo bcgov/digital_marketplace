@@ -17,13 +17,13 @@ export async function validateUserId(connection: Connection, userId: Id): Promis
   }
 }
 
-export async function validateAvatarImageFile(connection: Connection, fileId: Id): Promise<Validation<PublicFile>> {
+export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<PublicFile>> {
   try {
     const file = await readOneFile(connection, fileId);
     if (file) {
       return valid(file);
     } else {
-      return invalid(['The specified avatar image was not found.']);
+      return invalid(['The specified image file was not found.']);
     }
   } catch (e) {
     return invalid(['Please specify a valid image file id.']);

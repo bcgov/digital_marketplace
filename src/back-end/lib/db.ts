@@ -1,10 +1,12 @@
 import { generateUuid } from 'back-end/lib';
-import { ValidatedUpdateRequestBody } from 'back-end/lib/resources/user';
+import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody } from 'back-end/lib/resources/organization';
+import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import Knex from 'knex';
+import { Affiliation, CreateRequestBody as CreateAffilicationRequestBody, MembershipType } from 'shared/lib/resources/affiliation';
 import { PublicFile } from 'shared/lib/resources/file';
+import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
-
 import { Id } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
@@ -24,7 +26,7 @@ export async function createUser(connection: Connection, user: Omit<User, 'id'>)
   return result;
 }
 
-export async function updateUser(connection: Connection, userInfo: ValidatedUpdateRequestBody): Promise<User> {
+export async function updateUser(connection: Connection, userInfo: ValidatedUserUpdateRequestBody): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
     .where({ id: userInfo.id })
@@ -174,4 +176,82 @@ export async function readOneFile(connection: Connection, id: Id): Promise<Publi
     .first();
 
   return result ? result : null;
+}
+
+export async function readManyOrganizationsAsAdmin(connection: Connection): Promise<OrganizationSlim[]> {
+  // Join on organizations, affiliations, users to get owner name
+  const results = (await connection('organizations')
+    .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId', 'users.id as ownerId', 'users.name as ownerName')
+    .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
+    .join('users', 'affiliations.user', '=', 'users.id')
+    .leftOuterJoin('files', 'organizations.file', '=', 'files.id')
+    .where({ 'affiliations.membershipType': MembershipType.Owner }));
+
+  return Promise.all(results.map(async raw => await rawOrganizationToOrganizationSlim(connection, raw)));
+}
+
+export async function readManyOrganizationsAsPublic(connection: Connection): Promise<OrganizationSlim[]> {
+  const results = (await connection('organizations')
+    .select('organizations.id', 'legalName', 'files.id as logoImageFileId')
+    .leftOuterJoin('files', 'organizations.file', '=', 'files.id'));
+
+  return Promise.all(results.map(async raw => await rawOrganizationToOrganizationSlim(connection, raw)));
+}
+
+export async function rawOrganizationToOrganizationSlim(connection: Connection, params: RawOrganizationSlimToOrganizationSlimParams): Promise<OrganizationSlim> {
+  const organization: OrganizationSlim = {
+    id: params.org_id,
+    legalName: params.legalName
+  };
+  if (params.logoImageFileId) {
+    organization.logoImageFile = await readOneFile(connection, params.logoImageFileId);
+  }
+  if (params.ownerId && params.ownerName) {
+    organization.owner = {
+      id: params.ownerId,
+      name: params.ownerName
+    };
+  }
+  return organization;
+}
+
+interface RawOrganizationSlimToOrganizationSlimParams {
+  org_id: Id;
+  legalName: string;
+  logoImageFileId?: Id;
+  ownerId: Id;
+  ownerName: string;
+}
+
+export async function createOrganization(connection: Connection, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
+  const now = new Date();
+  const [result] = await connection('organizations')
+    .insert({
+      ...organization,
+      id: generateUuid(),
+      createdAt: now,
+      updatedAt: now
+    }, ['*']);
+  if (!result) {
+    throw new Error('unable to create organization');
+  }
+  return result;
+}
+
+// TODO - update this to take a validated request body once the affiliation resource is created
+export async function createAffiliation(connection: Connection, affiliation: CreateAffilicationRequestBody): Promise<Affiliation> {
+  const now = new Date();
+  const [result] = await connection('affiliations')
+    .insert({
+      ...affiliation,
+      id: generateUuid(),
+      createdAt: now,
+      updatedAt: now
+    }, ['*']);
+
+  if (!result) {
+    throw new Error('unable to create affiliation');
+  }
+
+  return result;
 }

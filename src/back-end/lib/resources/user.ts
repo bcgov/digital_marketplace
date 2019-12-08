@@ -3,7 +3,7 @@ import { Connection, readManyUsers, readOneUser, updateUser } from 'back-end/lib
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAvatarImageFile, validateUserId } from 'back-end/lib/validation';
+import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { PublicFile } from 'shared/lib/resources/file';
@@ -74,7 +74,7 @@ const resource: Resource = {
         const validatedUserId = await validateUserId(connection, id);
         const validatedName = name ? validateName(name) : valid(undefined);
         const validatedEmail = email ? validateEmail(email) : valid(undefined);
-        const validatedAvatarImageFile = avatarImageFile ? await validateAvatarImageFile(connection, avatarImageFile) : valid(undefined);
+        const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
         const validatedNotificationsOn = notificationsOn !== undefined ? validateNotificationsOn(notificationsOn) : valid(undefined);
         const validatedAcceptedTerms = acceptedTerms !== undefined ? validateAcceptedTerms(acceptedTerms) : valid(undefined);
 

@@ -29,6 +29,14 @@ export function isOwnSession(session: Session, id: string): boolean {
   return session.id === id;
 }
 
+export function isVendor(session: Session): boolean {
+  return isUser(session) && session.user!.type === UserType.Vendor;
+}
+
+export function isAdmin(session: Session): boolean {
+  return isUser(session) && session.user!.type === UserType.Admin;
+}
+
 // Users.
 
 export function readManyUsers(session: Session): boolean {
@@ -51,4 +59,10 @@ export function readOneSession(session: Session, id: string): boolean {
 
 export function deleteSession(session: Session, id: string): boolean {
   return isCurrentSession(id) || isOwnSession(session, id);
+}
+
+// Organizations.
+
+export function createOrganization(session: Session): boolean {
+  return isVendor(session);
 }

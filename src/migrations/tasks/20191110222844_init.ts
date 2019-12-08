@@ -65,7 +65,7 @@ export async function up(connection: Knex): Promise<void> {
     });
     logger.info('Created contacts table');
 
-    // Companies
+    // Organizations
     await connection.schema.createTable('organizations', table => {
         table.uuid('id').primary().unique().notNullable();
         table.timestamp('createdAt').notNullable();
