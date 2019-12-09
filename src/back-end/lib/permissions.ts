@@ -70,3 +70,7 @@ export function createOrganization(session: Session): boolean {
 export function readOneOrganization(session: Session): boolean {
   return isAdmin(session);
 }
+
+export function deleteOrganization(session: Session): boolean {
+  return isAdmin(session);
+}

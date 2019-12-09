@@ -1,5 +1,5 @@
 import { generateUuid } from 'back-end/lib';
-import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody } from 'back-end/lib/resources/organization';
+import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
 import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import Knex from 'knex';
 import { Affiliation, CreateRequestBody as CreateAffilicationRequestBody, MembershipType } from 'shared/lib/resources/affiliation';
@@ -178,22 +178,29 @@ export async function readOneFile(connection: Connection, id: Id): Promise<Publi
   return result ? result : null;
 }
 
-export async function readManyOrganizationsAsAdmin(connection: Connection): Promise<OrganizationSlim[]> {
-  // Join on organizations, affiliations, users to get owner name
-  const results = (await connection('organizations')
-    .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId', 'users.id as ownerId', 'users.name as ownerName')
-    .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
-    .join('users', 'affiliations.user', '=', 'users.id')
-    .leftOuterJoin('files', 'organizations.file', '=', 'files.id')
-    .where({ 'affiliations.membershipType': MembershipType.Owner }));
+export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
+  const query = connection('organizations')
+    .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId')
+    .where({ active: true })
+    .leftOuterJoin('files', 'organizations.logoImageFile', '=', 'files.id');
 
-  return Promise.all(results.map(async raw => await rawOrganizationToOrganizationSlim(connection, raw)));
-}
+  // If a user is attached to this session, we need to add owner info to some or all of the orgs
+  if (session.user) {
+    if (session.user.type === UserType.Admin || session.user.type === UserType.Vendor) {
+      query
+        .select('users.id as ownerId', 'users.name as ownerName')
+        .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
+        .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
+        .andWhere({ 'affiliations.membershipType': MembershipType.Owner });
 
-export async function readManyOrganizationsAsPublic(connection: Connection): Promise<OrganizationSlim[]> {
-  const results = (await connection('organizations')
-    .select('organizations.id', 'legalName', 'files.id as logoImageFileId')
-    .leftOuterJoin('files', 'organizations.file', '=', 'files.id'));
+      if (session.user.type === UserType.Vendor) {
+        query
+          .andWhere({ 'affiliations.user': session.user.id });
+      }
+    }
+  }
+
+  const results = await query;
 
   return Promise.all(results.map(async raw => await rawOrganizationToOrganizationSlim(connection, raw)));
 }
@@ -246,6 +253,7 @@ export async function createOrganization(connection: Connection, organization: V
     .insert({
       ...organization,
       id: generateUuid(),
+      active: true,
       createdAt: now,
       updatedAt: now
     }, ['*']);
@@ -255,9 +263,23 @@ export async function createOrganization(connection: Connection, organization: V
   return result;
 }
 
+export async function updateOrganization(connection: Connection, organization: ValidatedOrgUpdateRequestBody): Promise<Organization> {
+  const now = new Date();
+  const [result] = await connection('organizations')
+    .where({ id: organization.id })
+    .update({
+      ...organization,
+      updatedAt: now
+    }, ['*']);
+  if (!result) {
+    throw new Error('unable to update organization');
+  }
+  return result;
+}
+
 export async function readOneOrganization(connection: Connection, id: Id): Promise<Organization> {
   const result = await connection('organizations')
-    .where({ id })
+    .where({ id, active: true })
     .first();
 
   return await rawOrganizationToOrganization(connection, result);
@@ -280,13 +302,9 @@ export async function createAffiliation(connection: Connection, affiliation: Cre
   return result;
 }
 
-// export async function readManyAffiliations(connection: Connection, userId: Id): Promise<Affiliation[]> {
-
-// }
-
 export async function isUserOwnerOfOrg(connection: Connection, userId: Id, orgId: Id): Promise<boolean> {
-  const [result] = await connection('affiliations')
-    .where ({ user: userId, org: orgId })
+  const result = await connection('affiliations')
+    .where ({ user: userId, organization: orgId })
     .first();
 
   return !!result;

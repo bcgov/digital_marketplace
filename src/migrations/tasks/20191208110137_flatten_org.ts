@@ -15,24 +15,29 @@ export async function up(connection: Knex): Promise<void> {
     table.dropColumn('contact');
 
     // Add updated timestamp for audit purposes
-    table.timestamp('updatedAt').notNullable();
+    const now = new Date().toDateString();
+    table.timestamp('updatedAt').defaultTo(now).notNullable();
 
     // Add contact and address columns to organizations table
-    table.string('streetAddress1').notNullable();
+    table.string('streetAddress1').defaultTo(' ').notNullable();
     table.string('streetAddress2');
-    table.string('city').notNullable();
-    table.string('region').notNullable();
-    table.string('mailCode').notNullable();
-    table.string('country').notNullable();
-    table.string('contactName').notNullable();
+    table.string('city').defaultTo(' ').notNullable();
+    table.string('region').defaultTo(' ').notNullable();
+    table.string('mailCode').defaultTo(' ').notNullable();
+    table.string('country').defaultTo(' ').notNullable();
+    table.string('contactName').defaultTo(' ').notNullable();
     table.string('contactTitle');
-    table.string('contactEmail').notNullable();
+    table.string('contactEmail').defaultTo(' ').notNullable();
     table.string('contactPhone');
+
+    // Add boolean column for organization active status
+    table.boolean('active').defaultTo(true).notNullable();
   });
   logger.info('Altered organizations table.');
 
   await connection.schema.alterTable('affiliations', table => {
-    table.timestamp('updatedAt').notNullable();
+    const now = new Date().toDateString();
+    table.timestamp('updatedAt').defaultTo(now).notNullable();
   });
   logger.info('Altered affiliations table.');
 
@@ -79,6 +84,7 @@ export async function down(connection: Knex): Promise<void> {
     table.dropColumn('contactTitle');
     table.dropColumn('contactEmail');
     table.dropColumn('contactPhone');
+    table.dropColumn('active');
     table.uuid('legalAddress').references('id').inTable('addresses');
     table.uuid('contact').references('id').inTable('contacts');
   });

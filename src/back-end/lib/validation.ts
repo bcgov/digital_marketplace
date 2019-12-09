@@ -1,5 +1,6 @@
-import { Connection, readOneFile, readOneUser } from 'back-end/lib/db';
+import { Connection, readOneFile, readOneOrganization, readOneUser } from 'back-end/lib/db';
 import { PublicFile } from 'shared/lib/resources/file';
+import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -27,5 +28,18 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
     }
   } catch (e) {
     return invalid(['Please specify a valid image file id.']);
+  }
+}
+
+export async function validateOrganizationId(connection: Connection, orgId: Id): Promise<Validation<Organization>> {
+  try {
+    const organization = await readOneOrganization(connection, orgId);
+    if (organization) {
+      return valid(organization);
+    } else {
+      return invalid(['The specified organization was not found.']);
+    }
+  } catch (e) {
+    return invalid(['Please select a valid organization.']);
   }
 }
