@@ -6,9 +6,9 @@ interface Response<Data> {
   data: Data;
 }
 
-export type RequestFunction = <Data>(method: ClientHttpMethod, path: string, data?: object) => Promise<Response<Data>>;
+export type RequestFunction = <Data>(method: ClientHttpMethod, path: string, data?: object | string, headers?: object) => Promise<Response<Data>>;
 
-export const request: RequestFunction = async (method, url, data) => {
+export const request: RequestFunction = async (method, url, data, headers) => {
   try {
     const axiosResponse = await axios({
       method,
@@ -16,7 +16,8 @@ export const request: RequestFunction = async (method, url, data) => {
       data,
       validateStatus() {
         return true;
-      }
+      },
+      headers
     });
     return {
       status: axiosResponse.status,
