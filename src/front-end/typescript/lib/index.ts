@@ -33,3 +33,7 @@ export function makePageMetadata(title: string): PageMetadata {
     title: `${title} — Real Folk — Digital Marketplace Code Challenge`
   };
 }
+
+export function getSignInUrl(signInType: 'idir' | 'github'): string   {
+  return `/auth/sign-in?provider=${signInType}`;
+}
