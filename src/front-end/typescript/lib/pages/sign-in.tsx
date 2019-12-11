@@ -38,7 +38,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div className='py-5'>
 
       <Row className='pb-4'>
-        <Col xs='11' className='mx-auto'>
+        <Col xs='12' className='mx-auto'>
           <h2>Sign In</h2>
           <p>Select one of the options available below to sign in to your Digital Marketplace account.</p>
         </Col>
