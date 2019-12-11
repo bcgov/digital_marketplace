@@ -16,7 +16,7 @@ export interface State {
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export type RouteParams  = null;
+export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
   const session = await deleteSession();
@@ -44,12 +44,16 @@ const view: ComponentView<State, Msg> = ({ state }) => {
       <HorizontalCard title='Vendor'
         description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace. Don’t have an account? Creating one only takes a minute.'
         buttonText='Sign Up Using GitHub'
-        route={{ tag: 'signIn', value: { provider: 'github'} }} />
+        // route={{ tag: 'signIn', value: { provider: 'github'} }}
+        signInTarget='github'
+      />
 
       <HorizontalCard title='Public Sector Employee'
         description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace.'
         buttonText='Sign Up Using IDIR'
-        route={{ tag: 'signIn', value: { provider: 'idir'} }} />
+        // route={{ tag: 'signIn', value: { provider: 'idir'} }}
+        signInTarget='idir'
+      />
     </div>
   );
 };

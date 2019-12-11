@@ -44,13 +44,15 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <HorizontalCard
-        route={{ tag: 'signIn', value: { provider: 'github'} }} // TODO(Jesse): Is this actually how to pass query params?
+        // route={{ tag: 'signIn', value: { provider: 'github'} }} // TODO(Jesse): Is this actually how to pass query params?
+        signInTarget='github'
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
         buttonText='Sign Up Using GitHub' />
 
       <HorizontalCard
-        route={{ tag: 'signIn', value: { provider: 'idir'} }} // TODO(Jesse): Is this actually how to pass query params?
+        // route={{ tag: 'authSignIn', value: { provider: 'idir'} }} // TODO(Jesse): Is this actually how to pass query params?
+        signInTarget='idir'
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
         buttonText='Sign Up Using IDIR' />
