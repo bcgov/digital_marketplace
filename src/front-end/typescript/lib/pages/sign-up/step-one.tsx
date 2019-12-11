@@ -33,7 +33,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = ({ state }) => {
   return (
-    <div className='pb-5 pt-md-5'>
+    <div>
       <Row className='pb-4'>
         <Col xs='11' className='mx-auto'>
           <h2>Choose Account Type</h2>

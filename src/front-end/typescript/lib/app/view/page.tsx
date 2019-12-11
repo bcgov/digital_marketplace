@@ -176,10 +176,10 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} px-md-4 d-flex flex-column align-items-stretch py-5`}>
+                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} px-md-4 d-flex flex-column align-items-stretch pt-8 pb-5`}>
                   <sidebar.view {...viewProps} />
                 </Col>
-                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pl-md-4 py-md-5'>
+                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pt-md-8 pb-5'>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
                   <component.view {...viewProps} />
                 </Col>
@@ -193,7 +193,7 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
       // No vertical bar.
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
-          <Container className='py-5'>
+          <Container className='pt-8 pb-5'>
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>
