@@ -2,7 +2,7 @@ import { generateUuid } from 'back-end/lib';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
 import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import Knex from 'knex';
-import { Affiliation, CreateRequestBody as CreateAffilicationRequestBody, MembershipType } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationSlim, CreateRequestBody as CreateAffilicationRequestBody, MembershipType } from 'shared/lib/resources/affiliation';
 import { PublicFile } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
@@ -300,6 +300,35 @@ export async function createAffiliation(connection: Connection, affiliation: Cre
   }
 
   return result;
+}
+
+export async function readManyAffiliations(connection: Connection, userId: Id): Promise<AffiliationSlim[]> {
+  const results = await connection('affiliations')
+    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+    .select('affiliations.*')
+    .where({
+      'affiliations.user': userId,
+      'organizations.active': true
+    });
+
+  return Promise.all(results.map(async raw => rawAffiliationToAffiliation(connection, raw)));
+}
+
+interface RawAffiliationToAffiliationParams {
+  user: Id;
+  organization: Id;
+  membershipType: MembershipType;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export async function rawAffiliationToAffiliation(connection: Connection, params: RawAffiliationToAffiliationParams): Promise<AffiliationSlim> {
+  const { organization: orgId, membershipType } = params;
+  const organization = await readOneOrganization(connection, orgId);
+  return {
+    organizationName: organization.legalName,
+    membershipType
+  };
 }
 
 export async function isUserOwnerOfOrg(connection: Connection, userId: Id, orgId: Id): Promise<boolean> {

@@ -74,3 +74,13 @@ export function readOneOrganization(session: Session): boolean {
 export function deleteOrganization(session: Session): boolean {
   return isAdmin(session);
 }
+
+// Affiliations.
+
+export function readManyAffiliations(session: Session): boolean {
+  return isVendor(session);
+}
+
+export function createAffiliation(session: Session, userId: string): boolean {
+  return (isVendor(session) && isOwnAccount(session, userId)) || isAdmin(session);
+}
