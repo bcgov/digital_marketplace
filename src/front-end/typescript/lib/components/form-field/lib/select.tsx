@@ -1,5 +1,4 @@
 import { View } from 'front-end/lib/framework';
-import { OnChange } from 'front-end/lib/views/form-field/lib';
 import React from 'react';
 import Select from 'react-select';
 import { Props as SelectProps } from 'react-select/base';
@@ -41,7 +40,7 @@ export interface Props {
   options: Options;
   formatGroupLabel?: View<OptionGroup>;
   className?: string;
-  onChange: OnChange<Value>;
+  onChange(value: Value): void;
 }
 
 export const view: View<Props> = props => {

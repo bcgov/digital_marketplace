@@ -1,10 +1,10 @@
+import { Props, Value } from 'front-end/lib/components/form-field/lib/select';
 import { View } from 'front-end/lib/framework';
-import { Props, Value } from 'front-end/lib/views/form-field/lib/select';
 import React from 'react';
 import Select, { Props as SelectProps } from 'react-select/creatable';
 import { OptionTypeBase } from 'react-select/src/types';
 
-export { Option, Props, Value } from 'front-end/lib/views/form-field/lib/select';
+export { Option, Props, Value } from 'front-end/lib/components/form-field/lib/select';
 
 export const view: View<Props> = props => {
   const { options, formatGroupLabel, disabled = false, className = '', onChange } = props;
