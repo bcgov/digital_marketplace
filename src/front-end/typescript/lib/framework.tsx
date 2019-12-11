@@ -1,3 +1,4 @@
+import { BootstrapColor } from 'front-end/lib/types';
 import * as Immutable from 'immutable';
 import { get, remove } from 'lodash';
 import page from 'page';
@@ -288,12 +289,18 @@ export interface PageContainerOptions {
   fullWidth?: boolean;
 }
 
+export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg>> {
+  size: 'medium' | 'large';
+  color: BootstrapColor;
+  view: View<Props>;
+}
+
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   init: PageInit<RouteParams, SharedState, State, Msg>;
   update: Update<State, Msg>;
   view: View<Props>;
   viewBottomBar?: View<Props>; //TODO potentially remove
-  viewSidebar?: View<Props>;
+  sidebar?: PageSidebar<State, Msg, Props>;
   containerOptions?: PageContainerOptions;
   getMetadata: PageGetMetadata<State>;
   getAlerts?: PageGetAlerts<State, Msg>;

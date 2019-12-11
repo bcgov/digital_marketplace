@@ -62,17 +62,21 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  viewSidebar: makeInstructionalSidebar<State, Msg>({
-    backMsg: { tag: 'noop', value: undefined },
-    getTitle: () => 'Welcome Back to the Digital Marketplace',
-    getDescription: () => 'Pleas sign in to access your Digital Marketplace account.',
-    getFooter: () => (
-      <span>
-        Already have an account?&nbsp;
-        <Link route={{ tag: 'landing', value: null }}>Sign in</Link>.
-      </span>
-    )
-  }),
+  sidebar: {
+    size: 'large',
+    color: 'light-blue',
+    view: makeInstructionalSidebar<State, Msg>({
+      backMsg: { tag: 'noop', value: undefined },
+      getTitle: () => 'Welcome Back to the Digital Marketplace',
+      getDescription: () => 'Pleas sign in to access your Digital Marketplace account.',
+      getFooter: () => (
+        <span>
+          Already have an account?&nbsp;
+          <Link route={{ tag: 'landing', value: null }}>Sign in</Link>.
+        </span>
+      )
+    })
+  },
   getMetadata() {
     return makePageMetadata('Signed Out');
   }

@@ -41,30 +41,34 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  viewSidebar: makeSidebar<State, Msg>(
-  [
-    {
-      target: '',
-      icon: 'paperclip',
-      text: 'Profile',
-      active: true,
-      route: { tag: 'userProfile', value: {userId: '1'}} as Route
-    },
-    {
-      target: '',
-      icon: 'paperclip',
-      text: 'Notifications',
-      active: false,
-      route: { tag: 'landing' } as Route
-    },
-    {
-      target: '',
-      icon: 'paperclip',
-      text: 'Accepted Policies, Terms & Agreements',
-      active: false,
-      route: { tag: 'landing' } as Route
-    }
-  ]),
+  sidebar: {
+    size: 'medium',
+    color: 'light',
+    view: makeSidebar<State, Msg>(
+    [
+      {
+        target: '',
+        icon: 'paperclip',
+        text: 'Profile',
+        active: true,
+        route: { tag: 'userProfile', value: {userId: '1'}} as Route
+      },
+      {
+        target: '',
+        icon: 'paperclip',
+        text: 'Notifications',
+        active: false,
+        route: { tag: 'landing' } as Route
+      },
+      {
+        target: '',
+        icon: 'paperclip',
+        text: 'Accepted Policies, Terms & Agreements',
+        active: false,
+        route: { tag: 'landing' } as Route
+      }
+    ])
+  },
   getMetadata() {
     return makePageMetadata('User Edit');
   }

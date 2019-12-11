@@ -52,7 +52,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/users/:id/profile',
+      path: '/users/:id',
       makeRoute({ params }) {
         return {
           tag: 'userProfile',
