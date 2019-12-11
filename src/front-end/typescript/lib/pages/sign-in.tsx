@@ -35,8 +35,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = ({ state }) => {
   return (
-    <div className='py-5'>
-
+    <div className='pb-5 pt-md-5'>
       <Row className='pb-4'>
         <Col xs='12' className='mx-auto'>
           <h2>Sign In</h2>

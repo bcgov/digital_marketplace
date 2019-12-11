@@ -10,6 +10,7 @@ interface BaseProps {
   disabled?: boolean;
   href?: string;
   route?: Route;
+  external?: boolean;
   onClick?(): void;
 }
 
@@ -42,7 +43,8 @@ function AnchorLink(props: AnchorProps) {
     route,
     onClick,
     newTab = false,
-    download = false
+    download = false,
+    external = false
   } = props;
   // Give precedence to the `route` prop over the `href` prop.
   const finalHref: string
@@ -60,7 +62,7 @@ function AnchorLink(props: AnchorProps) {
     if (!disabled) { onClick(); }
   });
   return (
-    <a href={finalHref} onClick={finalOnClick} className={finalClassName} target={newTab ? '_blank' : undefined} download={download}>
+    <a href={finalHref} onClick={finalOnClick} className={finalClassName} target={newTab ? '_blank' : undefined} download={download} rel={external ? 'external' : undefined}>
       {children}
     </a>
   );

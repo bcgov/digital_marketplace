@@ -179,7 +179,7 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
                 <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} px-md-4 d-flex flex-column align-items-stretch py-5`}>
                   <sidebar.view {...viewProps} />
                 </Col>
-                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className={`pl-md-4 py-md-5`}>
+                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pl-md-4 py-md-5'>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
                   <component.view {...viewProps} />
                 </Col>
