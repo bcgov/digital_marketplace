@@ -1,7 +1,7 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import Select, { coalesceOptions, Option, Options, Props as SelectProps, Value } from 'front-end/lib/components/form-field/lib/select';
 import SelectCreatable from 'front-end/lib/components/form-field/lib/select-creatable';
-import { Immutable, Init, Update } from 'front-end/lib/framework';
+import { Immutable } from 'front-end/lib/framework';
 import { find } from 'lodash';
 import React from 'react';
 import { ADT } from 'shared/lib/types';
@@ -16,18 +16,22 @@ interface ChildState extends FormField.ChildStateBase<Value> {
 
 type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'options' | 'creatable' | 'formatGroupLabel'>;
 
+type InnerChildMsg
+  = ADT<'onChange', Value>;
+
+type ExtraChildProps = {};
+
+type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
+
 export type State = FormField.State<Value, ChildState>;
 
 export type Params = FormField.Params<Value, ChildParams>;
 
-type InnerChildMsg
-  = ADT<'onChange', Value>;
-
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: Init<ChildParams, ChildState> = async params => params;
+const childInit: ChildComponent['init'] = async params => params;
 
-const childUpdate: Update<ChildState, FormField.ChildMsg<InnerChildMsg>> = ({ state, msg }) => {
+const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
   switch (msg.tag) {
     case 'onChange':
       return [state.set('value', msg.value)];
@@ -36,7 +40,7 @@ const childUpdate: Update<ChildState, FormField.ChildMsg<InnerChildMsg>> = ({ st
   }
 };
 
-const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props => {
+const ChildView: ChildComponent['view'] = props => {
   const { state, dispatch, placeholder = '', className = '', validityClassName, disabled = false } = props;
   const selectProps: SelectProps = {
     name: state.id,
@@ -56,7 +60,7 @@ const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props =
   return state.creatable ? (<SelectCreatable {...selectProps} />) : (<Select {...selectProps} />);
 };
 
-export const component = FormField.makeComponent({
+export const component = FormField.makeComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>({
   init: childInit,
   update: childUpdate,
   view: ChildView

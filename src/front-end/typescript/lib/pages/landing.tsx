@@ -1,5 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as Table from 'front-end/lib/components/table';
@@ -7,13 +8,14 @@ import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutabl
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
-import { invalid } from 'shared/lib/validation';
+import { invalid, valid } from 'shared/lib/validation';
 
 export interface State {
   infoAlerts: Array<PageAlert<Msg>>;
   table: Immutable<Table.State>;
   shortText: Immutable<ShortText.State>;
   select: Immutable<Select.State>;
+  checkbox: Immutable<Checkbox.State>;
 }
 
 type InnerMsg
@@ -21,7 +23,8 @@ type InnerMsg
   | ADT<'dismissInfoAlert', number>
   | ADT<'table', Table.Msg>
   | ADT<'shortText', ShortText.Msg>
-  | ADT<'select', Select.Msg>;
+  | ADT<'select', Select.Msg>
+  | ADT<'checkbox', Checkbox.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -61,6 +64,14 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
         ]
       }
     }
+  })),
+  checkbox: immutable(await Checkbox.init({
+    errors: [],
+    validate: v => valid(v),
+    child: {
+      value: false,
+      id: 'landing-checkbox'
+    }
   }))
 });
 
@@ -96,6 +107,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'select', value })
       });
+    case 'checkbox':
+      return updateComponentChild({
+        state,
+        childStatePath: ['checkbox'],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'checkbox', value })
+      });
     default:
       return [state];
   }
@@ -125,6 +144,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
   const dispatchShortText = mapComponentDispatch<Msg, ShortText.Msg>(dispatch, value => ({ tag: 'shortText', value }));
   const dispatchSelect = mapComponentDispatch<Msg, Select.Msg>(dispatch, value => ({ tag: 'select', value }));
+  const dispatchCheckbox = mapComponentDispatch<Msg, Checkbox.Msg>(dispatch, value => ({ tag: 'checkbox', value }));
   return (
     <div>
       <Row className='mb-3 pb-3'>
@@ -148,7 +168,8 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             help='This is help text'
             required
             state={state.shortText}
-            dispatch={dispatchShortText} />
+            dispatch={dispatchShortText}
+            extraChildProps={{}} />
         </Col>
       </Row>
       <Row className='mb-3 pb-3'>
@@ -157,7 +178,20 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             label='A select field'
             required
             state={state.select}
-            dispatch={dispatchSelect} />
+            dispatch={dispatchSelect}
+            extraChildProps={{}} />
+        </Col>
+      </Row>
+      <Row className='mb-3 pb-3'>
+        <Col xs='12'>
+          <Checkbox.view
+            label='A checkbox field'
+            required
+            state={state.checkbox}
+            dispatch={dispatchCheckbox}
+            extraChildProps={{
+              inlineLabel: 'This is a checkbox!'
+            }} />
         </Col>
       </Row>
     </div>

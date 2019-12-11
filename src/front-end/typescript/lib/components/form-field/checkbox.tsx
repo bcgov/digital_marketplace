@@ -1,19 +1,20 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import React from 'react';
+import { CustomInput } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
-export type Value = string;
+export type Value = boolean;
 
-interface ChildState extends FormField.ChildStateBase<Value> {
-  type: 'text' | 'email';
-}
+type ChildState = FormField.ChildStateBase<Value>;
 
-type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'type'>;
+type ChildParams = FormField.ChildParamsBase<Value>;
 
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+interface ExtraChildProps {
+  inlineLabel: string;
+}
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -35,21 +36,22 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, className = '', validityClassName, disabled = false, inlineLabel } = props;
   return (
-    <input
+    <CustomInput
       id={state.id}
-      type={state.type}
-      value={state.value}
-      placeholder={placeholder}
-      className={`form-control ${className} ${validityClassName}`}
+      name={state.id}
+      checked={state.value}
+      disabled={disabled}
+      type='checkbox'
+      label={inlineLabel}
+      className={`${className} ${validityClassName}`}
       onChange={e => {
-        const value = e.currentTarget.value;
+        const value = e.currentTarget.checked;
         dispatch({ tag: 'onChange', value });
         // Let the parent form field component know that the value has been updated.
         props.onChange(value);
-      }}
-      disabled={disabled} />
+      }} />
   );
 };
 

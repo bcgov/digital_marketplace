@@ -1,7 +1,7 @@
 import { MARKDOWN_HELP_URL } from 'front-end/config';
 import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
-import { Immutable, Init, Update, UpdateReturnValue, View, ViewElement } from 'front-end/lib/framework';
+import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import React, { ChangeEvent } from 'react';
@@ -24,10 +24,6 @@ export interface ChildParams extends FormField.ChildParamsBase<Value> {
   uploadFile: UploadFile;
 }
 
-export type State = FormField.State<Value, ChildState>;
-
-export type Params = FormField.Params<Value, ChildParams>;
-
 type InnerChildMsg
   = ADT<'onChangeTextArea', [string, number, number]> // [value, selectionStart, selectionEnd]
   | ADT<'onChangeSelection', [number, number]> // [selectionStart, selectionEnd]
@@ -41,9 +37,17 @@ type InnerChildMsg
   | ADT<'controlImage', File>
   | ADT<'focus'>;
 
+type ExtraChildProps = {};
+
+type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
+
+export type State = FormField.State<Value, ChildState>;
+
+export type Params = FormField.Params<Value, ChildParams>;
+
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: Init<ChildParams, ChildState> = async params => ({
+const childInit: ChildComponent['init'] = async params => ({
   ...params,
   loading: 0,
   selectionStart: 0,
@@ -84,7 +88,7 @@ function insert(state: Immutable<ChildState>, params: InsertParams): UpdateRetur
   ];
 }
 
-const childUpdate: Update<ChildState, FormField.ChildMsg<InnerChildMsg>> = ({ state, msg }) => {
+const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
   switch (msg.tag) {
     case 'onChangeTextArea':
       return [state
@@ -184,7 +188,7 @@ const ControlSeparator: View<{}> = () => {
   return (<div className='mr-3 border-left h-100'></div>);
 };
 
-const Controls: FormField.ChildView<Value, ChildState, InnerChildMsg> = ({ state, dispatch, disabled = false }) => {
+const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false }) => {
   const isLoading = state.loading > 0;
   const isDisabled = disabled || isLoading;
   const onSelectFile = (event: ChangeEvent<HTMLInputElement>) => {
@@ -263,7 +267,7 @@ const Controls: FormField.ChildView<Value, ChildState, InnerChildMsg> = ({ state
   );
 };
 
-const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props => {
+const ChildView: ChildComponent['view'] = props => {
   const { state, dispatch, className = '', validityClassName, disabled = false } = props;
   const isLoading = state.loading > 0;
   const isDisabled = disabled || isLoading;
@@ -311,7 +315,7 @@ const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props =
   );
 };
 
-export const component = FormField.makeComponent({
+export const component = FormField.makeComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>({
   init: childInit,
   update: childUpdate,
   view: ChildView

@@ -1,5 +1,5 @@
 import { FORM_FIELD_DEBOUNCE_DURATION } from 'front-end/config';
-import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
+import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
 import * as framework from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import { debounce } from 'lodash';
@@ -28,9 +28,7 @@ export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, Inn
   onChange(value: Value): void;
 }
 
-export type ChildView<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg> = View<ChildProps<Value, ChildState, InnerChildMsg>>;
-
-type ChildComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg> = framework.Component<ChildParams, ChildState, ChildMsg<InnerChildMsg>, ChildProps<Value, ChildState, InnerChildMsg>>;
+export type ChildComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<ChildParams, ChildState, ChildMsg<InnerChildMsg>, ChildProps<Value, ChildState, InnerChildMsg> & ExtraChildProps>;
 
 export interface State<Value, ChildState extends ChildStateBase<Value>> {
   errors: string[];
@@ -50,7 +48,21 @@ export type Msg<InnerChildMsg>
   | ADT<'validate'>
   | ADT<'child', ChildMsg<InnerChildMsg>>;
 
-function makeInit<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg>(childInit: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg>['init']): Init<Params<Value, ChildParams>, State<Value, ChildState>> {
+export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> extends ComponentViewProps<State<Value, ChildState>, Msg<InnerChildMsg>> {
+  className?: string;
+  labelClassName?: string;
+  style?: CSSProperties;
+  required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  label?: string;
+  help?: ViewElementChildren;
+  extraChildProps: ExtraChildProps;
+}
+
+export type Component<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<Params<Value, ChildParams>, State<Value, ChildState>, Msg<InnerChildMsg>, ViewProps<Value, ChildState, InnerChildMsg, ExtraChildProps>>;
+
+function makeInit<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(childInit: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['init']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['init'] {
   return async params => ({
     id: params.child.id,
     errors: params.errors,
@@ -66,7 +78,7 @@ function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immuta
     : state;
 }
 
-function makeUpdate<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg>(childUpdate: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg>['update']): Update<State<Value, ChildState>, Msg<InnerChildMsg>> {
+function makeUpdate<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(childUpdate: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['update']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['update'] {
   return ({ state, msg }) => {
     switch (msg.tag) {
       case 'toggleHelp':
@@ -100,17 +112,6 @@ function makeUpdate<Value, ChildParams extends ChildParamsBase<Value>, ChildStat
         return [state];
     }
   };
-}
-
-interface ViewProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg> extends ComponentViewProps<State<Value, ChildState>, Msg<InnerChildMsg>> {
-  className?: string;
-  labelClassName?: string;
-  style?: CSSProperties;
-  required?: boolean;
-  disabled?: boolean;
-  placeholder?: string;
-  label?: string;
-  help?: ViewElementChildren;
 }
 
 function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
@@ -181,13 +182,13 @@ function ConditionalErrors<Value, ChildState extends ChildStateBase<Value>, Inne
   }
 }
 
-function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg>(ChildView: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg>['view']): View<ViewProps<Value, ChildState, InnerChildMsg>> {
+function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(ChildView: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view'] {
   const debouncedValidate = debounce((dispatch: Dispatch<Msg<InnerChildMsg>>) => dispatch({
     tag: 'validate',
     value: undefined
   }), FORM_FIELD_DEBOUNCE_DURATION);
   return props => {
-    const { state, dispatch, style } = props;
+    const { state, dispatch, style, extraChildProps } = props;
     const invalid = !!state.errors.length;
     const childClassName = 'flex-grow-1 align-self-stretch';
     const validityClassName = invalid ? 'is-invalid' : '';
@@ -196,6 +197,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
         <ConditionalLabel {...props} />
         <ConditionalHelp {...props} />
         <ChildView
+          {...extraChildProps}
           state={state.child}
           className={childClassName}
           validityClassName={validityClassName}
@@ -209,13 +211,12 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
   };
 }
 
-export type Component<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg> = framework.Component<Params<Value, ChildParams>, State<Value, ChildState>, Msg<InnerChildMsg>, ViewProps<Value, ChildState, InnerChildMsg>>;
-
-export function makeComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg>(params: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg>): Component<Value, ChildParams, ChildState, InnerChildMsg> {
+export function makeComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}>(params: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps> {
   return {
     init: makeInit(params.init),
     update: makeUpdate(params.update),
-    view: makeView(params.view)
+    //Need to type cast here because the compiler's inference is failing.
+    view: makeView(params.view) as Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view']
   };
 }
 
