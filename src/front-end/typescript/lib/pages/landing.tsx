@@ -1,5 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageAlert, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -12,13 +13,15 @@ export interface State {
   infoAlerts: Array<PageAlert<Msg>>;
   table: Immutable<Table.State>;
   shortText: Immutable<ShortText.State>;
+  select: Immutable<Select.State>;
 }
 
 type InnerMsg
   = ADT<'noop'>
   | ADT<'dismissInfoAlert', number>
   | ADT<'table', Table.Msg>
-  | ADT<'shortText', ShortText.Msg>;
+  | ADT<'shortText', ShortText.Msg>
+  | ADT<'select', Select.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -41,17 +44,29 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
       id: 'landing-short-text',
       type: 'text'
     }
+  })),
+  select: immutable(await Select.init({
+    errors: [],
+    validate: v => invalid(['foo bar']),
+    child: {
+      creatable: true,
+      value: null,
+      id: 'landing-select',
+      options: {
+        tag: 'options',
+        value: [
+          { label: 'One', value: 'One' },
+          { label: 'Two', value: 'Two' },
+          { label: 'Three', value: 'Three' }
+        ]
+      }
+    }
   }))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'dismissInfoAlert':
-      const foo = state.update('infoAlerts', alerts => alerts.filter((a, i) => {
-        return i !== msg.value;
-      }));
-      //tslint:disable
-      console.log(foo);
       return [
         state.update('infoAlerts', alerts => alerts.filter((a, i) => {
           return i !== msg.value;
@@ -72,6 +87,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: ShortText.update,
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'shortText', value })
+      });
+    case 'select':
+      return updateComponentChild({
+        state,
+        childStatePath: ['select'],
+        childUpdate: Select.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'select', value })
       });
     default:
       return [state];
@@ -101,6 +124,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
   const dispatchShortText = mapComponentDispatch<Msg, ShortText.Msg>(dispatch, value => ({ tag: 'shortText', value }));
+  const dispatchSelect = mapComponentDispatch<Msg, Select.Msg>(dispatch, value => ({ tag: 'select', value }));
   return (
     <div>
       <Row className='mb-3 pb-3'>
@@ -125,6 +149,15 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             required
             state={state.shortText}
             dispatch={dispatchShortText} />
+        </Col>
+      </Row>
+      <Row className='mb-3 pb-3'>
+        <Col xs='12'>
+          <Select.view
+            label='A select field'
+            required
+            state={state.select}
+            dispatch={dispatchSelect} />
         </Col>
       </Row>
     </div>

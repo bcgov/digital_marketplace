@@ -35,7 +35,7 @@ const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props =
     <textarea
       id={state.id}
       value={state.value}
-      className={`${className} ${validityClassName}`}
+      className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = e.currentTarget.value;
         dispatch({ tag: 'onChange', value });

@@ -32,13 +32,14 @@ const childUpdate: Update<ChildState, FormField.ChildMsg<InnerChildMsg>> = ({ st
 };
 
 const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props => {
-  const { state, dispatch, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
   return (
     <input
       id={state.id}
       type={state.type}
       value={state.value}
-      className={`${className} ${validityClassName}`}
+      placeholder={placeholder}
+      className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = e.currentTarget.value;
         dispatch({ tag: 'onChange', value });

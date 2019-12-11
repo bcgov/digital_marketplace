@@ -57,7 +57,7 @@ const ChildView: FormField.ChildView<Value, ChildState, InnerChildMsg> = props =
       min={valueToString(state.min)}
       max={valueToString(state.max)}
       value={valueToString(state.value)}
-      className={`${className} ${validityClassName}`}
+      className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = stringToValue(e.currentTarget.value);
         dispatch({ tag: 'onChange', value });

@@ -23,6 +23,7 @@ export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, Inn
   className?: string;
   validityClassName: string;
   disabled?: boolean;
+  placeholder?: string;
   dispatch: Dispatch<ChildMsg<InnerChildMsg>>;
   onChange(value: Value): void;
 }
@@ -107,6 +108,7 @@ interface ViewProps<Value, ChildState extends ChildStateBase<Value>, InnerChildM
   style?: CSSProperties;
   required?: boolean;
   disabled?: boolean;
+  placeholder?: string;
   label?: string;
   help?: ViewElementChildren;
 }
@@ -187,7 +189,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
   return props => {
     const { state, dispatch, style } = props;
     const invalid = !!state.errors.length;
-    const childClassName = 'form-control flex-grow-1 align-self-stretch';
+    const childClassName = 'flex-grow-1 align-self-stretch';
     const validityClassName = invalid ? 'is-invalid' : '';
     return (
       <FormGroup className={`form-field-${state.child.id} d-flex flex-column ${props.className || ''}`} style={style}>
@@ -198,6 +200,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
           className={childClassName}
           validityClassName={validityClassName}
           disabled={props.disabled}
+          placeholder={props.placeholder}
           dispatch={mapComponentDispatch(dispatch, value => ({ tag: 'child' as const, value }))}
           onChange={() => debouncedValidate(dispatch)} />
         <ConditionalErrors {...props} />
@@ -221,8 +224,7 @@ export function getValue<Value, ChildState extends ChildStateBase<Value>>(state:
 }
 
 export function setValue<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>, value: Value): Immutable<State<Value, ChildState>> {
-  // Use updateIn because the compiler can't reconcile ChildState['value'] and Value
-  return state.updateIn(['child'], child => child.set('value', value));
+  return state.updateIn('child', child => child.set('value', value));
 }
 
 export function setErrors<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>, errors: string[]): Immutable<State<Value, ChildState>> {
