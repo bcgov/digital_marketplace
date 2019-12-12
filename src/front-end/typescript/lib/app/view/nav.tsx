@@ -1,6 +1,8 @@
+import { PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import router, { redirect } from 'front-end/lib/app/router';
 import { Route } from 'front-end/lib/app/types';
 import { View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Collapse, Container, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem, Spinner } from 'reactstrap';
@@ -70,7 +72,7 @@ const Navigation: View<Props> = props => {
           <NavbarBrand href={router.routeToUrl({ tag: 'landing', value: null })}>
             Digital Marketplace
           </NavbarBrand>
-          <Spinner size='sm' color='info-alt' className='transition-indicator d-md-none' />
+          <Spinner size='sm' color='info-alt' className='transition-indicator' />
           <NavbarToggler className='ml-auto' onClick={() => props.toggleIsOpen()} />
           <Collapse isOpen={props.isOpen} className='py-3 py-md-0' navbar>
             <ContextualLinks {...props} className='d-md-none' />
@@ -81,7 +83,10 @@ const Navigation: View<Props> = props => {
       <Navbar expand='sm' className='bg-info-alt d-none d-md-block shadow border-bottom-info-alt'>
         <Container className='pl-0 d-flex justify-content-between'>
           <ContextualLinks {...props} />
-          <Spinner size='sm' color='info' className='transition-indicator' />
+          <Link newTab external href={PROCUREMENT_CONCIERGE_URL} color='white' className='d-flex align-items-center flex-nowrap o-75'>
+            Procurement Concierge
+            <Icon name='external-link' className='ml-2' />
+          </Link>
         </Container>
       </Navbar>
     </div>

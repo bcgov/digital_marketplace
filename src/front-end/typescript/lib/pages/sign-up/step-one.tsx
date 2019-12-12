@@ -65,7 +65,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     size: 'large',
     color: 'light-blue',
     view: makeInstructionalSidebar<State, Msg>({
-      backMsg: { tag: 'noop', value: undefined },
+      showBackLink: true,
       getTitle: () => 'Create Your Digital Marketplace Account.',
       getDescription: () => 'Join a community of developers, entrepreneurs and public service innovators who are making public services better.',
       getFooter: () => (

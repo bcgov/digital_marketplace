@@ -3,7 +3,8 @@ import { BootstrapColor } from 'front-end/lib/types';
 import { CSSProperties, default as React, MouseEventHandler, ReactElement } from 'react';
 
 export type AvailableIcons
-  = 'chevron-left'
+  = 'external-link'
+  | 'chevron-left'
   | 'calendar'
   | 'clock'
   | 'map-marker'
@@ -52,7 +53,7 @@ interface SvgProps extends Props {
 }
 
 const Feather: View<SvgProps> = props => {
-  const { color, width = 1.25, height = 1.25, className = '', style = {}, children, onClick } = props;
+  const { color, width = 1, height = 1, className = '', style = {}, children, onClick } = props;
   return (
     <svg xmlns='http://www.w3.org/2000/svg' style={{ ...style, width: `${width}rem`, height: `${height}rem` }} viewBox='0 0 24 24' fill='none' stroke='currentColor' className={`icon ${color ? `text-${color}` : ''} ${className}`} strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' onClick={onClick}>
       {children}
@@ -65,7 +66,7 @@ interface FontAwesomeProps extends SvgProps {
 }
 
 const FontAwesome: View<FontAwesomeProps> = props => {
-  const { color, width = 1.25, height = 1.25, viewBox, className = '', style = {}, children, onClick } = props;
+  const { color, width = 1, height = 1, viewBox, className = '', style = {}, children, onClick } = props;
   return (
     <svg xmlns='http://www.w3.org/2000/svg' style={{ ...style, width: `${width}rem`, height: `${height}rem` }} viewBox={viewBox} fill='currentColor' stroke='currentColor' className={`icon ${color ? `text-${color}` : ''} ${className}`} onClick={onClick}>
       {children}
@@ -76,6 +77,8 @@ const FontAwesome: View<FontAwesomeProps> = props => {
 const Icon: View<Props> = props => {
   const { name } = props;
   switch (name) {
+    case 'external-link':
+      return (<FontAwesome viewBox='0 0 512 512' {...props}><path fill='currentColor' d='M497.6,0,334.4.17A14.4,14.4,0,0,0,320,14.57V47.88a14.4,14.4,0,0,0,14.69,14.4l73.63-2.72,2.06,2.06L131.52,340.49a12,12,0,0,0,0,17l23,23a12,12,0,0,0,17,0L450.38,101.62l2.06,2.06-2.72,73.63A14.4,14.4,0,0,0,464.12,192h33.31a14.4,14.4,0,0,0,14.4-14.4L512,14.4A14.4,14.4,0,0,0,497.6,0ZM432,288H416a16,16,0,0,0-16,16V458a6,6,0,0,1-6,6H54a6,6,0,0,1-6-6V118a6,6,0,0,1,6-6H208a16,16,0,0,0,16-16V80a16,16,0,0,0-16-16H48A48,48,0,0,0,0,112V464a48,48,0,0,0,48,48H400a48,48,0,0,0,48-48V304A16,16,0,0,0,432,288Z'></path></FontAwesome>);
     case 'chevron-left':
       return (<Feather {...props}><polyline points='15 18 9 12 15 6'></polyline></Feather>);
     case 'calendar':

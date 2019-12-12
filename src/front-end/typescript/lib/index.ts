@@ -30,7 +30,7 @@ export function makeStopLoading<State, Key extends keyof State>(key: Key): Updat
 
 export function makePageMetadata(title: string): PageMetadata {
   return {
-    title: `${title} — Real Folk — Digital Marketplace Code Challenge`
+    title: `${title} — Digital Marketplace`
   };
 }
 

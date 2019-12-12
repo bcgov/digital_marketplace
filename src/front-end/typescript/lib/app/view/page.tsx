@@ -12,13 +12,13 @@ interface ViewAlertProps<PageMsg> {
   className?: string;
 }
 
-function ViewAlert<PageMsg>({ messages, dispatchPage, color, className }: ViewAlertProps<PageMsg>) {
+function ViewAlert<PageMsg>({ messages, dispatchPage, color, className = '' }: ViewAlertProps<PageMsg>) {
   if (!messages.length) { return null; }
   return (
     <Alert color={color} className={`${className} p-0`} fade={false}>
       {messages.map(({ text, dismissMsg }, i)  => (
-        <div>
-          <div key={`alert-${color}-${i}`} className='d-flex align-items-start p-3'>
+        <div key={`alert-${color}-${i}`}>
+          <div className='d-flex align-items-start p-3'>
             <div className='flex-grow-1 pr-3'>{text}</div>
             {dismissMsg
               ? (<Icon
@@ -98,7 +98,7 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
     );
   } else {
     return (
-      <div className={className}>
+      <div className={`${className} ${hasAlerts || hasBreadcrumbs ? 'mt-n5' : ''}`}>
         <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
         <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
       </div>
@@ -119,14 +119,14 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
   // This shouldn't happen.
   if (!pageState) {
     dispatch(newRoute({
-      tag: 'notice' as 'notice',
+      tag: 'notice',
       value: {
         noticeId: {
-          tag: 'notFound' as 'notFound',
+          tag: 'notFound',
           value: undefined
         }
       }
-    }));
+    } as const));
     return null;
   }
   // pageState is defined, render page.

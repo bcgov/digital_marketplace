@@ -19,6 +19,12 @@ export function redirect(path: string) {
   window.location.href = `${window.location.origin}/${path}`;
 }
 
+export function back() {
+  if (window.history && window.history.back) {
+    window.history.back();
+  }
+}
+
 const router: Router<Route> = {
 
   routes: [

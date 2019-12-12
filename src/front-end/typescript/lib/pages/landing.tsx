@@ -176,7 +176,6 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Col xs='12'>
           <Select.view
             label='A select field'
-            required
             state={state.select}
             dispatch={dispatchSelect}
             extraChildProps={{}} />
@@ -186,7 +185,6 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Col xs='12'>
           <Checkbox.view
             label='A checkbox field'
-            required
             state={state.checkbox}
             dispatch={dispatchCheckbox}
             extraChildProps={{
