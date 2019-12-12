@@ -1,8 +1,9 @@
 import { generateUuid } from 'back-end/lib';
+import {ValidatedDeleteRequestBody as ValidatedAffiliationDeleteRequestBody, ValidatedUpdateRequestBody as ValidatedAffiliationUpdateRequestBody } from 'back-end/lib/resources/affiliation';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
 import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import Knex from 'knex';
-import { Affiliation, AffiliationSlim, CreateRequestBody as CreateAffilicationRequestBody, MembershipType } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationSlim, CreateRequestBody as CreateAffiliationRequestBody, MembershipType } from 'shared/lib/resources/affiliation';
 import { PublicFile } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
@@ -11,7 +12,7 @@ import { Id } from 'shared/lib/types';
 
 export type Connection = Knex<any, any>;
 
-export async function createUser(connection: Connection, user: Omit<User, 'id'>): Promise<User> {
+export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms'>): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
     .insert({
@@ -286,7 +287,7 @@ export async function readOneOrganization(connection: Connection, id: Id): Promi
 }
 
 // TODO - update this to take a validated request body once the affiliation resource is created
-export async function createAffiliation(connection: Connection, affiliation: CreateAffilicationRequestBody): Promise<Affiliation> {
+export async function createAffiliation(connection: Connection, affiliation: CreateAffiliationRequestBody): Promise<Affiliation> {
   const now = new Date();
   const [result] = await connection('affiliations')
     .insert({
@@ -331,9 +332,33 @@ export async function rawAffiliationToAffiliation(connection: Connection, params
   };
 }
 
+export async function updateAffiliation(connection: Connection, affiliation: ValidatedAffiliationUpdateRequestBody): Promise<Affiliation> {
+  const now = new Date();
+  const [result] = await connection('affiliations')
+    .where({ user: affiliation.user, organization: affiliation.organization })
+    .update({
+      ...affiliation,
+      updatedAt: now
+    }, ['*']);
+  if (!result) {
+    throw new Error('unable to update affiliation');
+  }
+  return result;
+}
+
+export async function deleteAffiliation(connection: Connection, affiliation: ValidatedAffiliationDeleteRequestBody): Promise<Affiliation> {
+  const result = await connection('affiliations')
+    .where({ user: affiliation.user, organization: affiliation.organization })
+    .delete<Affiliation>('*');
+  if (!result) {
+    throw new Error('unable to delete affiliation');
+  }
+  return result;
+}
+
 export async function isUserOwnerOfOrg(connection: Connection, userId: Id, orgId: Id): Promise<boolean> {
   const result = await connection('affiliations')
-    .where ({ user: userId, organization: orgId })
+    .where ({ user: userId, organization: orgId, membershipType: MembershipType.Owner })
     .first();
 
   return !!result;

@@ -25,13 +25,12 @@ export interface AffiliationSlim {
 export interface CreateRequestBody {
   user: Id;
   organization: Id;
-  membershipType: MembershipType;
+  membershipType?: MembershipType;
 }
 
 export interface CreateValidationErrors {
   user?: string[];
   organization?: string[];
-  membershipType?: string[];
 }
 
 export interface UpdateRequestBody {
@@ -40,4 +39,8 @@ export interface UpdateRequestBody {
   membershipType: MembershipType;
 }
 
-export type UpdateValidationErrors = CreateValidationErrors;
+export interface UpdateValidationErrors extends CreateValidationErrors {
+  membershipType?: string[];
+}
+
+export type DeleteValidationErrors = CreateValidationErrors;
