@@ -1,6 +1,6 @@
+import { Connection, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
-import { Connection, isUserOwnerOfOrg } from './db';
 
 const CURRENT_SESSION_ID = 'current';
 
