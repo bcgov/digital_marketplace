@@ -1,3 +1,4 @@
+import { Connection, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -73,4 +74,31 @@ export function readOneOrganization(session: Session): boolean {
 
 export function deleteOrganization(session: Session): boolean {
   return isAdmin(session);
+}
+
+// Affiliations.
+
+export function readManyAffiliations(session: Session): boolean {
+  return isVendor(session);
+}
+
+export function createAffiliation(session: Session, userId: string): boolean {
+  // New affiliations can be created by vendors for themselves, or by admins
+  return (isVendor(session) && isOwnAccount(session, userId)) || isAdmin(session);
+}
+
+export async function updateAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  // Updates can be performed by owners of the organization in question, or by admins
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user.id, orgId) || isAdmin(session);
+}
+
+export async function deleteAffiliation(connection: Connection, session: Session, userId: string, orgId: string): Promise<boolean> {
+  // Affiliations can be deleted by the user who owns them, an owner of the org, or an admin
+  if (!session.user) {
+    return false;
+  }
+  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user.id, orgId) || isAdmin(session);
 }
