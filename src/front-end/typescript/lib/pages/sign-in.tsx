@@ -1,33 +1,22 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { deleteSession } from 'front-end/lib/http/api';
 import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
-import Link from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
-import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
-  message: string;
+  empty: true;
 }
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export interface RouteParams {
-  provider: 'idir' | 'github' | null;
-}
+export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const session = await deleteSession();
-  if (!get(session, 'user')) {
-    return { message: 'You have successfully signed out. Thank you for using the Digital Marketplace.' };
-  } else {
-    return { message: 'Signing out of the application failed.' };
-  }
-};
+const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({ empty: true });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
@@ -43,14 +32,12 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <HorizontalCard
-        // route={{ tag: 'signIn', value: { provider: 'github'} }} // TODO(Jesse): Is this actually how to pass query params?
         signInTarget='github'
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
         buttonText='Sign Up Using GitHub' />
 
       <HorizontalCard
-        // route={{ tag: 'authSignIn', value: { provider: 'idir'} }} // TODO(Jesse): Is this actually how to pass query params?
         signInTarget='idir'
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
@@ -72,8 +59,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       getDescription: () => 'Pleas sign in to access your Digital Marketplace account.',
       getFooter: () => (
         <span>
-          Already have an account?&nbsp;
-          <Link route={{ tag: 'landing', value: null }}>Sign in</Link>.
+          Don't have an account?&nbsp;
+          <Link dest={routeDest(adt('signUpStepOne', null))}>Sign up</Link>.
         </span>
       )
     })

@@ -41,8 +41,10 @@ $warn: #FCBA19;
 $danger: #DC3545;
 $success: #28A745;
 $light-blue: #E7EDF3;
+$white: #ffffff;
 
 $theme-colors: (
+  'white': $white,
   'primary-alt': $primary-alt,
   'info-alt': $info-alt,
   'info-alt-2': $info-alt-2,

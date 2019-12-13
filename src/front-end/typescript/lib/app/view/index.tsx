@@ -1,8 +1,16 @@
+import { DEFAULT_USER_AVATAR_IMAGE_PATH, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import Footer from 'front-end/lib/app/view/footer';
-import Nav from 'front-end/lib/app/view/nav';
+import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
-import { AppMsg, ComponentView, Dispatch, View } from 'front-end/lib/framework';
+import { AppMsg, ComponentView, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
+import Link, { externalDest, routeDest } from 'front-end/lib/views/link';
+import { default as React } from 'react';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import { fileBlobPath } from 'shared/lib/resources/file';
+import { UserType } from 'shared/lib/resources/user';
+import { ADT, adt, adtCurried } from 'shared/lib/types';
 
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -15,10 +23,6 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
-import { default as React } from 'react';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
 interface ViewModalProps {
   modal: State['modal'];
@@ -158,13 +162,142 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   }
 };
 
+function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
+  // Return standard sign-in/up links if user is not signed in.
+  if (!state.shared.session || !state.shared.session.user) {
+    const unauthenticatedMenu = Nav.unauthenticatedAccountMenu([
+      Nav.linkAccountAction({
+        text: 'Sign In',
+        button: true,
+        outline: true,
+        color: 'white',
+        dest: routeDest(adt('signIn', null))
+      }),
+      Nav.linkAccountAction({
+        text: 'Sign Up',
+        button: true,
+        color: 'primary',
+        dest: routeDest(adt('signUpStepOne', null))
+      })
+    ]);
+    return { mobile: unauthenticatedMenu, desktop: unauthenticatedMenu };
+  }
+  // Return separate mobile and desktop authentication menus if the user is signed in.
+  const sessionUser = state.shared.session.user;
+  const userIdentifier = sessionUser.email || sessionUser.name;
+  const userAvatar = sessionUser.avatarImageFile ? fileBlobPath(sessionUser.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH;
+  return {
+    mobile: Nav.authenticatedMobileAccountMenu([
+      Nav.linkAccountAction({
+        text: userIdentifier,
+        dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
+        symbol_: Nav.leftPlacement(Nav.imageLinkSymbol(userAvatar))
+      }),
+      Nav.linkAccountAction({
+        text: 'Sign Out',
+        dest: routeDest(adt('signOut', null)),
+        symbol_: Nav.leftPlacement(Nav.iconLinkSymbol('sign-out'))
+      })
+    ]),
+    desktop: Nav.authenticatedDesktopAccountMenu({
+      email: userIdentifier,
+      dropdown: {
+        text: userIdentifier,
+        imageUrl: userAvatar,
+        linkGroups: [
+          {
+            label: `Signed in as ${sessionUser.name}`,
+            links: [
+              {
+                text: 'My Profile',
+                dest: routeDest(adt('userProfile', { userId: sessionUser.id }))
+              },
+              {
+                text: 'My Organizations',
+                dest: routeDest(adt('userProfile', { userId: sessionUser.id, activeTab: 'organizations' as const }))
+              }
+            ]
+          },
+          {
+            links: [
+              {
+                text: 'Sign Out',
+                dest: routeDest(adt('signOut', null)),
+                symbol_: Nav.leftPlacement(Nav.iconLinkSymbol('sign-out'))
+              }
+            ]
+          }
+        ]
+      }
+    })
+  };
+}
+
+function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks'] {
+  const sessionUser = state.shared.session && state.shared.session.user;
+  let left: Nav.NavLink[] = [];
+  const opporunitiesLink: Nav.NavLink = {
+    text: 'Opportunities',
+    // TODO add opportunities route when available.
+    dest: routeDest(adt('landing', null))
+  };
+  if (sessionUser) {
+    left = left.concat([
+      {
+        text: 'Dashboard',
+        // TODO add dashboard route when available.
+        dest: routeDest(adt('landing', null))
+      },
+      opporunitiesLink
+    ]);
+    if (sessionUser.type === UserType.Admin) {
+      left = left.concat([
+        {
+          text: 'Users',
+          dest: routeDest(adt('userList', null))
+        },
+        {
+          text: 'Organizations',
+          dest: routeDest(adt('orgList', null))
+        }
+      ]);
+    }
+  } else {
+    left = left.concat([
+      {
+        text: 'Home',
+        dest: routeDest(adt('landing', null))
+      },
+      opporunitiesLink
+    ]);
+  }
+  return {
+    left,
+    right: [{
+      text: 'Procurement Concierge',
+      dest: externalDest(PROCUREMENT_CONCIERGE_URL),
+      symbol_: Nav.rightPlacement(Nav.iconLinkSymbol('external-link'))
+    }]
+  };
+}
+
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   if (!state.ready) {
     return null;
   } else {
+    const dispatchNav = mapComponentDispatch(dispatch, adtCurried<ADT<'nav', Nav.Msg>>('nav'));
+    const navProps: Nav.Props = {
+      state: state.nav,
+      dispatch: dispatchNav,
+      isLoading: state.transitionLoading > 0,
+      logoImageUrl: '/images/bcgov_logo.svg',
+      title: 'Digital Marketplace',
+      accountMenus: navAccountMenus(state),
+      contextualLinks: navContextualLinks(state)
+    };
     return (
       <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
-        <Nav session={state.shared.session} activeRoute={state.activeRoute} isOpen={state.isNavOpen} toggleIsOpen={value => dispatch({ tag: 'toggleIsNavOpen', value })} />
+        <Nav.view {...navProps} />
         <ViewActiveRoute state={state} dispatch={dispatch} />
         <Footer session={state.shared.session} />
         <ViewModal dispatch={dispatch} modal={state.modal} />

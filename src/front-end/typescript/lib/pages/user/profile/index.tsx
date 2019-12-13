@@ -12,8 +12,14 @@ export interface State {
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
+type ActiveTab
+  = 'profile'
+  | 'legal'
+  | 'organizations';
+
 export interface RouteParams {
   userId: string;
+  activeTab?: ActiveTab;
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({

@@ -1,5 +1,6 @@
 import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
 
+import * as Nav from 'front-end/lib/app/view/nav';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
@@ -34,13 +35,13 @@ export interface SharedState {
 export interface State {
   ready: boolean;
   transitionLoading: number;
-  isNavOpen: boolean;
   modal: {
     open: boolean;
     content: PageModal<Msg>;
   };
   shared: SharedState;
   activeRoute: Route;
+  nav: Immutable<Nav.State>;
 
   pages: {
     landing?: Immutable<PageLanding.State>;
@@ -59,8 +60,8 @@ export interface State {
 
 type InnerMsg
   = ADT<'noop'>
-  | ADT<'toggleIsNavOpen', boolean | undefined>
   | ADT<'closeModal'>
+  | ADT<'nav', Nav.Msg>
   | ADT<'pageLanding', PageLanding.Msg>
   | ADT<'pageSignIn', PageSignIn.Msg>
   | ADT<'pageSignOut', PageSignOut.Msg>

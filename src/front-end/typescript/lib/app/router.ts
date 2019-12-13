@@ -91,7 +91,7 @@ const router: Router<Route> = {
       makeRoute() {
         return {
           tag: 'signIn',
-          value: {provider: null} // TODO(Jesse) How do we get this from the query string?
+          value: null
         };
       }
     },

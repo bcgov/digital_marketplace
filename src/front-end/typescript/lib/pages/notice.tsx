@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import Link from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
@@ -62,7 +62,7 @@ const ConditionalButton: ComponentView<State, Msg> = ({ state, dispatch }) => {
     return (
       <Row>
         <Col xs='12'>
-          <Link route={state.button.route} button color='primary'>{state.button.text}</Link>
+          <Link dest={routeDest(state.button.route)} button color='primary'>{state.button.text}</Link>
         </Col>
       </Row>
     );

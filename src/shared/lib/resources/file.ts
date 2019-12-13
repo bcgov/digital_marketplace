@@ -8,3 +8,7 @@ export interface PublicFile {
   fileBlob: string;
   name: string;
 }
+
+export function fileBlobPath(file: PublicFile) {
+  return `/api/fileBlobs/${file.fileBlob}`;
+}

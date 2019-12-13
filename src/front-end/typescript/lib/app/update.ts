@@ -1,7 +1,11 @@
 import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
-import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage } from 'front-end/lib/framework';
+import * as Nav from 'front-end/lib/app/view/nav';
+import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import { readOneSession } from 'front-end/lib/http/api';
+import { Session } from 'shared/lib/resources/session';
+import { ADT, adtCurried } from 'shared/lib/types';
+import { Validation } from 'shared/lib/validation';
 
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -14,9 +18,6 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-
-import { Session } from 'shared/lib/resources/session';
-import { Validation } from 'shared/lib/validation';
 
 function setSession(state: Immutable<State>, validated: Validation<Session, null>): Immutable<State> {
 return state.set('shared', {
@@ -232,9 +233,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
 
-    case 'toggleIsNavOpen':
-      return [state.set('isNavOpen', msg.value === undefined ? !state.isNavOpen : msg.value)];
-
     case 'closeModal':
       return [
         state,
@@ -249,6 +247,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return state.setIn(['modal', 'open'], false);
         }
       ];
+
+    case 'nav':
+      return updateComponentChild({
+        state,
+        childStatePath: ['nav'],
+        childUpdate: Nav.update,
+        childMsg: msg.value,
+        mapChildMsg: adtCurried<ADT<'nav', Nav.Msg>>('nav')
+      });
 
     case 'pageOrgEdit':
       return updateAppChildPage({

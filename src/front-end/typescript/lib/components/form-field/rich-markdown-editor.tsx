@@ -3,7 +3,7 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
+import Link, { externalDest } from 'front-end/lib/views/link';
 import React, { ChangeEvent } from 'react';
 import { Spinner } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
@@ -259,7 +259,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
           size='xs'
           color='secondary'
           className={`o-50 ${isLoading ? '' : 'd-none'}`} />
-        <Link newTab href={MARKDOWN_HELP_URL} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
+        <Link newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
           <Icon name='markdown' />
         </Link>
       </div>
