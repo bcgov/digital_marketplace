@@ -2,10 +2,10 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
-import Icon from 'front-end/lib/views/icon';
 
 export interface State {
   table: Immutable<Table.State>;
@@ -20,7 +20,7 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   table: immutable(await Table.init({
     idNamespace: 'user-list-table'
-  })),
+  }))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -43,7 +43,7 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
     { children: 'Status' },
     { children: 'Account Type' },
     { children: 'Name' },
-    { children: 'Admin?' },
+    { children: 'Admin?' }
   ];
 }
 
@@ -62,41 +62,41 @@ function getAllUsers(): User[] {
       name: 'John Doe',
       type: 'Public Sector Employee',
       admin: false,
-      active: true,
+      active: true
     },
     {
       name: 'Jon Blow',
       type: 'Vendor',
       admin: true,
-      active: false,
+      active: false
     },
     {
       name: 'Miss Wiss',
       type: 'Vendor',
       admin: true,
-      active: true,
+      active: true
     },
     {
       name: 'Miss Wass',
       type: 'Public Sector Employee',
       admin: false,
-      active: false,
-    },
-  ]
+      active: false
+    }
+  ];
 }
 
 function getBadgeColor(isActive: boolean): string {
-  return isActive? 'badge-success':'badge-danger';
+  return isActive ? 'badge-success' : 'badge-danger';
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return getAllUsers().map( (user) => {
     return [
-      { children: <span className={`badge ${getBadgeColor(user.active)}`}>{user.active? 'Active':'Inactive'}</span> },
+      { children: <span className={`badge ${getBadgeColor(user.active)}`}>{user.active ? 'Active' : 'Inactive'}</span> },
       { children: user.type },
       { children: user.name },
-      { children: user.admin ? <Icon name='check' /> : null },
-    ]
+      { children: user.admin ? <Icon name='check' /> : null }
+    ];
   });
 }
 

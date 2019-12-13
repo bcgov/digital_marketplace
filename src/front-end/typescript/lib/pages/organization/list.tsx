@@ -19,7 +19,7 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   table: immutable(await Table.init({
     idNamespace: 'org-list-table'
-  })),
+  }))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -40,7 +40,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     { children: 'Organization Name' },
-    { children: 'Owner' },
+    { children: 'Owner' }
   ];
 }
 
@@ -66,20 +66,20 @@ function getAllOrgs(): Organization[] {
     {
       name: 'Org4',
       ownerId: 4
-    },
-  ]
+    }
+  ];
 }
 
 function getOwner( ownerId: number ): string {
-  return "owner name";
+  return 'owner name';
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return getAllOrgs().map( (org) => {
     return [
       { children: org.name },
-      { children: getOwner(org.ownerId) },
-    ]
+      { children: getOwner(org.ownerId) }
+    ];
   });
 }
 
