@@ -5,6 +5,7 @@ import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDi
 import Icon from 'front-end/lib/views/icon';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import * as UserModule from 'shared/lib/resources/user';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
@@ -49,40 +50,22 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 type UserType = 'Public Sector Employee' | 'Vendor';
 
-interface User {
+interface DisplayUser {
   name: string;
   type: UserType;
   active: boolean;
   admin: boolean;
 }
 
-function getAllUsers(): User[] {
-  return [
-    {
-      name: 'John Doe',
-      type: 'Public Sector Employee',
-      admin: false,
-      active: true
-    },
-    {
-      name: 'Jon Blow',
-      type: 'Vendor',
-      admin: true,
-      active: false
-    },
-    {
-      name: 'Miss Wiss',
-      type: 'Vendor',
-      admin: true,
-      active: true
-    },
-    {
-      name: 'Miss Wass',
-      type: 'Public Sector Employee',
-      admin: false,
-      active: false
-    }
-  ];
+function mapUserTypeToDisplayType(users: UserModule.User[]): DisplayUser[] {
+  return users.map( (user) => {
+    return ({
+      name: user.name,
+      type: user.type === UserModule.UserType.Vendor ? 'Vendor' : 'Public Sector Employee',
+      admin: user.type === UserModule.UserType.Admin ? true : false,
+      active: user.status === UserModule.UserStatus.Active ? true : false
+    });
+  });
 }
 
 function getBadgeColor(isActive: boolean): string {
@@ -90,7 +73,7 @@ function getBadgeColor(isActive: boolean): string {
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return getAllUsers().map( (user) => {
+  return mapUserTypeToDisplayType(UserModule.getAllUsers()).map( (user) => {
     return [
       { children: <span className={`badge ${getBadgeColor(user.active)}`}>{user.active ? 'Active' : 'Inactive'}</span> },
       { children: user.type },
