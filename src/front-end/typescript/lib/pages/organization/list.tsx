@@ -4,6 +4,7 @@ import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
@@ -19,7 +20,7 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   table: immutable(await Table.init({
     idNamespace: 'org-list-table'
-  })),
+  }))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -40,46 +41,61 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     { children: 'Organization Name' },
-    { children: 'Owner' },
+    { children: 'Owner' }
   ];
 }
 
-interface Organization {
-  name: string;
-  ownerId: number;
-}
-
-function getAllOrgs(): Organization[] {
+function getAllOrgs(): OrganizationSlim[] {
   return [
     {
-      name: 'Org1',
-      ownerId: 1
+      id: '1',
+      legalName: 'Org1',
+      owner: {
+        id: '1',
+        name: 'Org Owner Nmae'
+      }
     },
     {
-      name: 'Org2',
-      ownerId: 2
+      id: '2',
+      legalName: 'Org2',
+      owner: {
+        id: '1',
+        name: 'Org Owner Nmae'
+      }
     },
     {
-      name: 'Org3',
-      ownerId: 3
+      id: '3',
+      legalName: 'Org3',
+      owner: {
+        id: '1',
+        name: 'Org Owner Nmae'
+      }
     },
     {
-      name: 'Org4',
-      ownerId: 4
+      id: '4',
+      legalName: 'Org4',
+      owner: {
+        id: '1',
+        name: 'Org Owner Nmae'
+      }
     },
-  ]
-}
-
-function getOwner( ownerId: number ): string {
-  return "owner name";
+    {
+      id: '5',
+      legalName: 'Org5',
+      owner: {
+        id: '1',
+        name: 'Org Owner Nmae'
+      }
+    }
+  ];
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return getAllOrgs().map( (org) => {
     return [
-      { children: org.name },
-      { children: getOwner(org.ownerId) },
-    ]
+      { children: org.legalName },
+      { children: org.owner ? org.owner.name : null }
+    ];
   });
 }
 

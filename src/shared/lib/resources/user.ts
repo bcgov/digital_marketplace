@@ -56,3 +56,53 @@ export interface UpdateValidationErrors {
   notificationsOn?: string[];
   acceptedTerms?: string[];
 }
+
+export function getAllUsers(): User[] {
+  return [
+    {
+      id: '1',
+      type: UserType.Government,
+      status: UserStatus.Active,
+      name: 'John Doe',
+      notificationsOn: true,
+      acceptedTerms: true,
+      idpUsername: 'john_doe'
+    },
+    {
+      id: '2',
+      type: UserType.Vendor,
+      status: UserStatus.Active,
+      name: 'John Blow',
+      notificationsOn: true,
+      acceptedTerms: true,
+      idpUsername: 'john_blow'
+    },
+    {
+      id: '3',
+      type: UserType.Vendor,
+      status: UserStatus.InactiveByAdmin,
+      name: 'Miss Wiss',
+      notificationsOn: true,
+      acceptedTerms: true,
+      idpUsername: 'miss_wiss'
+    },
+    {
+      id: '4',
+      type: UserType.Government,
+      status: UserStatus.InactiveByUser,
+      name: 'Tina Turner',
+      notificationsOn: true,
+      acceptedTerms: true,
+      idpUsername: 'tina_turner'
+    },
+    {
+      id: '5',
+      type: UserType.Admin,
+      status: UserStatus.InactiveByUser,
+      name: 'Biggie Smalls',
+      notificationsOn: true,
+      acceptedTerms: true,
+      idpUsername: 'biggie'
+    }
+  ];
+}
