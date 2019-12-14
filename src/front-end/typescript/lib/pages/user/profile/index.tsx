@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as GovProfileForm from 'front-end/lib/pages/user/components/gov';
+import * as GovProfileForm from 'front-end/lib/pages/user/components/profile';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
