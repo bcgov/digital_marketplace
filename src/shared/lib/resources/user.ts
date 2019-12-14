@@ -32,6 +32,7 @@ export interface User {
   status: UserStatus;
   name: string;
   email?: string;
+  jobTitle?: string;
   avatarImageFile?: PublicFile;
   notificationsOn: boolean;
   acceptedTerms: boolean;
