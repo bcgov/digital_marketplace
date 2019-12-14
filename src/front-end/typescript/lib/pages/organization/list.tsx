@@ -40,8 +40,18 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
-    { children: 'Organization Name' },
-    { children: 'Owner' }
+    {
+      children: 'Organization Name',
+      style: {
+        width: '60%'
+      }
+    },
+    {
+      children: 'Owner',
+      style: {
+        width: '40%'
+      }
+    }
   ];
 }
 

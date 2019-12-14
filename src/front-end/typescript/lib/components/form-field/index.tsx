@@ -20,11 +20,11 @@ export type ChildMsg<InnerChildMsg> = InnerChildMsg | ADT<'@validate'>;
 
 export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg> {
   state: Immutable<ChildState>;
-  className?: string;
+  dispatch: Dispatch<ChildMsg<InnerChildMsg>>;
   validityClassName: string;
+  className?: string;
   disabled?: boolean;
   placeholder?: string;
-  dispatch: Dispatch<ChildMsg<InnerChildMsg>>;
   onChange(value: Value): void;
 }
 
@@ -49,6 +49,7 @@ export type Msg<InnerChildMsg>
   | ADT<'child', ChildMsg<InnerChildMsg>>;
 
 export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> extends ComponentViewProps<State<Value, ChildState>, Msg<InnerChildMsg>> {
+  extraChildProps: ExtraChildProps;
   className?: string;
   labelClassName?: string;
   style?: CSSProperties;
@@ -57,7 +58,6 @@ export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, Inne
   placeholder?: string;
   label?: string;
   help?: ViewElementChildren;
-  extraChildProps: ExtraChildProps;
 }
 
 export type Component<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<Params<Value, ChildParams>, State<Value, ChildState>, Msg<InnerChildMsg>, ViewProps<Value, ChildState, InnerChildMsg, ExtraChildProps>>;
