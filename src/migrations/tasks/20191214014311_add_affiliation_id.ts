@@ -2,14 +2,17 @@ import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
+import { MembershipStatus } from 'shared/lib/resources/affiliation';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
 export async function up(connection: Knex): Promise<void> {
   // Add uuid as primary on affiliations, drop existing primary key
-  await connection.schema.alterTable('affiliations', table => {
+  // Add membership status enum field
+  await connection.schema.alterTable('affiliations', async table => {
     table.dropPrimary();
     table.uuid('id').primary().defaultTo(generateUuid()).unique().notNullable();
+    table.enu('membershipStatus', Object.values(MembershipStatus)).defaultTo(MembershipStatus.Pending).notNullable();
   });
   logger.info('Altered affiliations table.');
 
@@ -39,10 +42,11 @@ export async function down(connection: Knex): Promise<void> {
   });
   logger.info('Reverted organizations table.');
 
-  await connection.schema.alterTable('affiliations', table => {
+  await connection.schema.alterTable('affiliations', async table => {
     table.dropPrimary();
     table.dropColumn('id');
     table.primary(['user', 'organization']);
+    table.dropColumn('membershipStatus');
   });
   logger.info('Reverted affiliations table.');
 }
