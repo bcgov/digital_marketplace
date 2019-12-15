@@ -56,4 +56,5 @@ export interface UpdateValidationErrors {
   avatarImageFile?: string[];
   notificationsOn?: string[];
   acceptedTerms?: string[];
+  permissions?: string[];
 }

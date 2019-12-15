@@ -19,6 +19,7 @@ export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'ava
   acceptedTerms?: Date;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
+  status?: UserStatus;
 }
 
 type DeleteValidatedReqBody = User;
@@ -45,7 +46,6 @@ type Resource = crud.Resource<
 const resource: Resource = {
   routeNamespace: 'users',
 
-  // TODO - allow read of inactive users as well
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<User[] | string[]>, Session>(async request => {
       const respond = (code: number, body: User[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
@@ -57,7 +57,6 @@ const resource: Resource = {
     });
   },
 
-  // TODO - if admin, can do a PUT to only reactivate inactive user
   update(connection) {
     return {
       parseRequestBody(request) {
@@ -81,6 +80,21 @@ const resource: Resource = {
         const validatedAcceptedTerms = acceptedTerms !== undefined ? validateAcceptedTerms(acceptedTerms) : valid(undefined);
 
         if (allValid([validatedUserId, validatedName, validatedEmail, validatedAvatarImageFile, validatedNotificationsOn, validatedAcceptedTerms])) {
+
+          // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario)
+          // Admin shouldn't provide any other updates to profile
+          if (permissions.isAdmin(request.session) && !permissions.isOwnAccount(request.session, id)) {
+            if (validatedName.value || validatedEmail.value || validatedAvatarImageFile.value || validatedNotificationsOn.value || validatedAcceptedTerms.value) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            return valid({
+              id: (validatedUserId.value as User).id,
+              status: UserStatus.Active
+            });
+          }
+
           return valid({
             id: (validatedUserId.value as User).id,
             name: validatedName.value,
@@ -107,6 +121,9 @@ const resource: Resource = {
         }
         switch (request.body.tag) {
           case 'invalid':
+            if (request.body.value.permissions) {
+              return basicResponse(401, request.session, makeJsonResponseBody(request.body.value));
+            }
             return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
           case 'valid':
             const updatedUser = await updateUser(connection, request.body.value);
@@ -116,12 +133,17 @@ const resource: Resource = {
     };
   },
 
-  // TODO - don't deactivate inactive accounts
   delete(connection) {
     return {
       async validateRequestBody(request) {
         const user = await readOneUser(connection, request.params.id);
-        return user ? valid(user) : invalid(['User not found']);
+        if (!user) {
+          return invalid(['User not found.']);
+        }
+        if (user.status !== UserStatus.Active) {
+          return invalid(['User is already inactive.']);
+        }
+        return valid(user);
       },
       async respond(request) {
         const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
