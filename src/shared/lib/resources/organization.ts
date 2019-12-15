@@ -19,6 +19,7 @@ export interface Organization {
   contactTitle?: string;
   contactEmail: string;
   contactPhone?: string;
+  active: boolean;
 }
 
 export interface OrganizationSlim {

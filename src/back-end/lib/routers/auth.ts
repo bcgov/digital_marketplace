@@ -118,6 +118,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
 
           let user: User | null = await findOneUserByTypeAndUsername(connection, userType, idpUsername);
 
+          // TODO - add in check for inactive by user and reactivate if necessary (not inactive by admin)
           if (!user) {
             user = await createUser(connection, {
               type: userType,
@@ -134,7 +135,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           return {
             code: 302,
             headers: {
-              'Location': '/' // TODO: Redirect to proper landing page post-login.
+              'Location': '/sign-up/complete'
             },
             session,
             body: makeTextResponseBody('')

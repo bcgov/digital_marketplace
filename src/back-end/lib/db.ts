@@ -1,9 +1,9 @@
 import { generateUuid } from 'back-end/lib';
-import {ValidatedCreateRequestBody as ValidatedAffiliationCreateRequestBody, ValidatedDeleteRequestBody as ValidatedAffiliationDeleteRequestBody, ValidatedUpdateRequestBody as ValidatedAffiliationUpdateRequestBody } from 'back-end/lib/resources/affiliation';
+import {ValidatedCreateRequestBody as ValidatedAffiliationCreateRequestBody, ValidatedDeleteRequestBody as ValidatedAffiliationDeleteRequestBody } from 'back-end/lib/resources/affiliation';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
 import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import Knex from 'knex';
-import { Affiliation, AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { PublicFile } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
@@ -182,7 +182,6 @@ export async function readOneFile(connection: Connection, id: Id): Promise<Publi
 export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
   const query = connection('organizations')
     .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId')
-    .where({ active: true })
     .leftOuterJoin('files', 'organizations.logoImageFile', '=', 'files.id');
 
   // If a user is attached to this session, we need to add owner info to some or all of the orgs
@@ -248,7 +247,7 @@ interface RawOrganizationToOrganizationParams extends Omit<Organization, 'logoIm
   logoImageFile?: Id;
 }
 
-export async function createOrganization(connection: Connection, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
+export async function createOrganization(connection: Connection, user: Id, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
   const now = new Date();
   const [result] = await connection('organizations')
     .insert({
@@ -261,6 +260,12 @@ export async function createOrganization(connection: Connection, organization: V
   if (!result) {
     throw new Error('unable to create organization');
   }
+  // Create owner affiliation record for the new org
+  await createAffiliation(connection, {
+    user,
+    organization: result.id,
+    membershipType: MembershipType.Owner
+  });
   return result;
 }
 
@@ -280,7 +285,7 @@ export async function updateOrganization(connection: Connection, organization: V
 
 export async function readOneOrganization(connection: Connection, id: Id): Promise<Organization> {
   const result = await connection('organizations')
-    .where({ id, active: true })
+    .where({ id })
     .first();
 
   return await rawOrganizationToOrganization(connection, result);
@@ -314,6 +319,18 @@ export async function readManyAffiliations(connection: Connection, userId: Id): 
   return Promise.all(results.map(async raw => rawAffiliationToAffiliation(connection, raw)));
 }
 
+export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<Affiliation> {
+  const result = await connection('affiliations')
+    .where({
+      user,
+      organization
+    })
+    .orderBy('createdOn')
+    .first();
+
+  return result;
+}
+
 interface RawAffiliationToAffiliationParams {
   user: Id;
   organization: Id;
@@ -331,20 +348,6 @@ export async function rawAffiliationToAffiliation(connection: Connection, params
   };
 }
 
-export async function updateAffiliation(connection: Connection, affiliation: ValidatedAffiliationUpdateRequestBody): Promise<Affiliation> {
-  const now = new Date();
-  const [result] = await connection('affiliations')
-    .where({ user: affiliation.user, organization: affiliation.organization })
-    .update({
-      ...affiliation,
-      updatedAt: now
-    }, ['*']);
-  if (!result) {
-    throw new Error('unable to update affiliation');
-  }
-  return result;
-}
-
 export async function deleteAffiliation(connection: Connection, affiliation: ValidatedAffiliationDeleteRequestBody): Promise<Affiliation> {
   const result = await connection('affiliations')
     .where({ user: affiliation.user, organization: affiliation.organization })
@@ -355,10 +358,19 @@ export async function deleteAffiliation(connection: Connection, affiliation: Val
   return result;
 }
 
-export async function isUserOwnerOfOrg(connection: Connection, userId: Id, orgId: Id): Promise<boolean> {
+export async function isUserOwnerOfOrg(connection: Connection, user: User, orgId: Id): Promise<boolean> {
+  if (!user) {
+    return false;
+  }
   const result = await connection('affiliations')
-    .where ({ user: userId, organization: orgId, membershipType: MembershipType.Owner })
+    .where ({ user: user.id, organization: orgId, membershipType: MembershipType.Owner })
     .first();
 
   return !!result;
+}
+
+export async function readActiveOwnerCount(connection: Connection, orgId: Id): Promise<number> {
+  const result = await connection('affiliations')
+    .where({ organization: orgId, membershipType: MembershipType.Owner, membershipStatus: MembershipStatus.Active });
+  return result ? result.length : 0;
 }

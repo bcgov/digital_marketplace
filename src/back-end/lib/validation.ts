@@ -34,10 +34,12 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
 export async function validateOrganizationId(connection: Connection, orgId: Id): Promise<Validation<Organization>> {
   try {
     const organization = await readOneOrganization(connection, orgId);
-    if (organization) {
-      return valid(organization);
-    } else {
+    if (!organization) {
       return invalid(['The specified organization was not found.']);
+    } else if (!organization.active) {
+      return invalid(['The spcified organization is inactive.']);
+    } else {
+      return valid(organization);
     }
   } catch (e) {
     return invalid(['Please select a valid organization.']);

@@ -45,6 +45,7 @@ type Resource = crud.Resource<
 const resource: Resource = {
   routeNamespace: 'users',
 
+  // TODO - allow read of inactive users as well
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<User[] | string[]>, Session>(async request => {
       const respond = (code: number, body: User[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
@@ -56,6 +57,7 @@ const resource: Resource = {
     });
   },
 
+  // TODO - if admin, can do a PUT to only reactivate inactive user
   update(connection) {
     return {
       parseRequestBody(request) {
@@ -114,6 +116,7 @@ const resource: Resource = {
     };
   },
 
+  // TODO - don't deactivate inactive accounts
   delete(connection) {
     return {
       async validateRequestBody(request) {

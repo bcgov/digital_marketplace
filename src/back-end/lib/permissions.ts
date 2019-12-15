@@ -68,12 +68,25 @@ export function createOrganization(session: Session): boolean {
   return isVendor(session);
 }
 
-export function readOneOrganization(session: Session): boolean {
-  return isAdmin(session);
+export async function readOneOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
 
-export function deleteOrganization(session: Session): boolean {
-  return isAdmin(session);
+export async function updateOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+}
+
+export async function deleteOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
 
 // Affiliations.
@@ -87,12 +100,12 @@ export function createAffiliation(session: Session, userId: string): boolean {
   return (isVendor(session) && isOwnAccount(session, userId)) || isAdmin(session);
 }
 
-export async function updateAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+export async function changeAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   // Updates can be performed by owners of the organization in question, or by admins
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user.id, orgId) || isAdmin(session);
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
 
 export async function deleteAffiliation(connection: Connection, session: Session, userId: string, orgId: string): Promise<boolean> {
@@ -100,5 +113,5 @@ export async function deleteAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user.id, orgId) || isAdmin(session);
+  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
