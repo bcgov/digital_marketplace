@@ -6,7 +6,7 @@ import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { validateName } from 'shared/lib/validation/user';
+import { validateEmail, validateName } from 'shared/lib/validation/user';
 
 export interface Params {
   existingUser?: User;
@@ -14,10 +14,14 @@ export interface Params {
 
 export interface State {
   name: Immutable<ShortText.State>;
+  email: Immutable<ShortText.State>;
+  jobTitle: Immutable<ShortText.State>;
 }
 
-export type Msg
-  = ADT<'name', ShortText.Msg>;
+export type Msg =
+  ADT<'jobTitle', ShortText.Msg> |
+  ADT<'email', ShortText.Msg>    |
+  ADT<'name', ShortText.Msg> ;
 
 export interface Values {
   name: string;
@@ -55,6 +59,24 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
 
 export const init: Init<Params, State> = async ({ existingUser }) => {
   return {
+    jobTitle: immutable(await ShortText.init({
+      errors: [],
+      validate: validateName,
+      child: {
+        type: 'text',
+        value: getString(existingUser, 'job-title'),
+        id: 'user-gov-job-title'
+      }
+    })),
+    email: immutable(await ShortText.init({
+      errors: [],
+      validate: validateEmail,
+      child: {
+        type: 'text',
+        value: getString(existingUser, 'email'),
+        id: 'user-gov-email'
+      }
+    })),
     name: immutable(await ShortText.init({
       errors: [],
       validate: validateName,
@@ -69,6 +91,22 @@ export const init: Init<Params, State> = async ({ existingUser }) => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'jobTitle':
+      return updateComponentChild({
+        state,
+        childStatePath: ['jobTitle'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('jobTitle', value)
+      });
+    case 'email':
+      return updateComponentChild({
+        state,
+        childStatePath: ['email'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('email', value)
+      });
     case 'name':
       return updateComponentChild({
         state,
@@ -90,6 +128,7 @@ export const view: View<Props> = props => {
     <div>
       <Row>
         <Col xs='12'>
+
           <ShortText.view
             extraChildProps={{}}
             label='Name'
@@ -97,6 +136,23 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.name}
             dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value))} />
+
+          <ShortText.view
+            extraChildProps={{}}
+            label='Job Title'
+            required
+            disabled={disabled}
+            state={state.jobTitle}
+            dispatch={mapComponentDispatch(dispatch, value => adt('jobTitle' as const, value))} />
+
+          <ShortText.view
+            extraChildProps={{}}
+            label='Email Address'
+            required
+            disabled={disabled}
+            state={state.email}
+            dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
+
         </Col>
       </Row>
     </div>
