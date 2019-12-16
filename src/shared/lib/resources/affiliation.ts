@@ -14,6 +14,7 @@ export enum MembershipStatus {
 }
 
 export interface Affiliation {
+  id: Id;
   createdAt: Date;
   user: User;
   organization: Organization;
@@ -40,6 +41,12 @@ export interface CreateValidationErrors {
   permissions?: string[];
 }
 
-export interface DeleteValidationErrors extends Omit<CreateValidationErrors, 'membershipType'> {
+export interface UpdateValidationErrors {
+  membershipStatus?: string[];
+  permissions?: string[];
+}
+
+export interface DeleteValidationErrors {
+  affiliation?: string[];
   permissions?: string[];
 }

@@ -14,7 +14,6 @@ export async function up(connection: Knex): Promise<void> {
     table.dropPrimary();
     table.uuid('id').primary().defaultTo(generateUuid()).unique().notNullable();
     table.enu('membershipStatus', Object.values(MembershipStatus)).defaultTo(MembershipStatus.Pending).notNullable();
-    table.dropColumn('updatedAt');
   });
   logger.info('Altered affiliations table.');
 
@@ -43,6 +42,10 @@ export async function down(connection: Knex): Promise<void> {
     table.dropColumn('deactivatedBy');
   });
   logger.info('Reverted organizations table.');
+
+  // Downgrading at this point requires truncating the org and affiliations table
+  await connection('affiliations').delete();
+  await connection('organizations').delete();
 
   await connection.schema.alterTable('affiliations', async table => {
     table.dropPrimary();

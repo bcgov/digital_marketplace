@@ -100,7 +100,7 @@ export function createAffiliation(session: Session, userId: string): boolean {
   return (isVendor(session) && isOwnAccount(session, userId)) || isAdmin(session);
 }
 
-export async function changeAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+export async function updateAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   // Updates can be performed by owners of the organization in question, or by admins
   if (!session.user) {
     return false;

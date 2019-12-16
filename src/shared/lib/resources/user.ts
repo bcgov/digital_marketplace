@@ -37,6 +37,8 @@ export interface User {
   notificationsOn: boolean;
   acceptedTerms: boolean;
   idpUsername: string;
+  deactivatedOn?: Date;
+  deactivatedBy?: Id;
 }
 
 export interface UpdateRequestBody {
