@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
+import { SignInCard } from 'front-end/lib/views/horizontal-card';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -31,17 +31,18 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <p>Select one of the options available below to sign in to your Digital Marketplace account.</p>
         </Col>
       </Row>
-      <HorizontalCard
+      <SignInCard
         signInTarget='github'
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
         buttonText='Sign Up Using GitHub' />
 
-      <HorizontalCard
+      <SignInCard
         signInTarget='idir'
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
-        buttonText='Sign Up Using IDIR' />
+        buttonText='Sign Up Using IDIR'
+      />
     </div>
   );
 };

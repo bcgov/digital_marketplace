@@ -45,6 +45,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Signed Out');
+    return makePageMetadata('Sign Up - Step Two');
   }
 };

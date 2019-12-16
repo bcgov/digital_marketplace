@@ -57,6 +57,16 @@ export interface UpdateValidationErrors {
   acceptedTerms?: string[];
 }
 
+export function viewStringFor(type: UserType): string {
+  switch (type) {
+      case UserType.Government:
+      case UserType.Admin:
+        return 'Public Sector Employee';
+      case UserType.Vendor:
+        return 'Vendor';
+  }
+}
+
 export function getAllUsers(): User[] {
   return [
     {

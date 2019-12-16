@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { HorizontalCard } from 'front-end/lib/views/horizontal-card';
+import { SignInCard } from 'front-end/lib/views/horizontal-card';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -31,17 +31,19 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <p>Choose the account type that describes you best. Access to certain features of the app will be based on the account type that you select.</p>
         </Col>
       </Row>
-      <HorizontalCard title='Vendor'
+
+      <SignInCard title='Vendor'
         description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace. Don’t have an account? Creating one only takes a minute.'
         buttonText='Sign Up Using GitHub'
         signInTarget='github'
       />
 
-      <HorizontalCard title='Public Sector Employee'
+      <SignInCard title='Public Sector Employee'
         description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace.'
         buttonText='Sign Up Using IDIR'
         signInTarget='idir'
       />
+
     </div>
   );
 };
@@ -66,6 +68,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     })
   },
   getMetadata() {
-    return makePageMetadata('Signed Out');
+    return makePageMetadata('Sign Up - Step One');
   }
 };

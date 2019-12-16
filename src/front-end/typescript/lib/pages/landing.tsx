@@ -207,6 +207,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     };
   },
   getMetadata() {
-    return makePageMetadata('Hello, World');
+    return makePageMetadata('Landing');
   }
 };

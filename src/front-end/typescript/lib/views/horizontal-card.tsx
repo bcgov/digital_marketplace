@@ -12,7 +12,7 @@ export interface HorizontalCardParams {
   signInTarget: 'idir' | 'github';
 }
 
-export function HorizontalCard(params: HorizontalCardParams) {
+export function SignInCard(params: HorizontalCardParams) {
   return (
     <Row>
       <Col xs='12'>
