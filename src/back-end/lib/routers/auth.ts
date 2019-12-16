@@ -1,5 +1,5 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
-import { Connection, createUser, findOneUserByTypeAndUsername, updateSessionWithToken, updateSessionWithUser } from 'back-end/lib/db';
+import { Connection, createUser, findOneUserByTypeAndUsername, updateSessionWithToken, updateSessionWithUser, updateUser } from 'back-end/lib/db';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
@@ -117,7 +117,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           }
 
           let user: User | null = await findOneUserByTypeAndUsername(connection, userType, idpUsername);
-
           if (!user) {
             user = await createUser(connection, {
               type: userType,
@@ -126,6 +125,12 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
               email: claims.email,
               idpUsername
             });
+          } else if (user.status === UserStatus.InactiveByUser) {
+            const { id } = user;
+            await updateUser(connection, { id, status: UserStatus.Active });
+          } else if (user.status === UserStatus.InactiveByAdmin) {
+            // If deactivated by admin, reroute to error (separate route/page for this?)
+            return makeAuthErrorRedirect(request);
           }
 
           let session = await updateSessionWithUser(connection, request.session.id, user.id);
@@ -134,7 +139,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           return {
             code: 302,
             headers: {
-              'Location': '/' // TODO: Redirect to proper landing page post-login.
+              'Location': '/sign-up/complete'
             },
             session,
             body: makeTextResponseBody('')

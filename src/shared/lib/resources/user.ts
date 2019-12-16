@@ -37,6 +37,8 @@ export interface User {
   notificationsOn: boolean;
   acceptedTerms: boolean;
   idpUsername: string;
+  deactivatedOn?: Date;
+  deactivatedBy?: Id;
 }
 
 export interface UpdateRequestBody {
@@ -56,4 +58,5 @@ export interface UpdateValidationErrors {
   avatarImageFile?: string[];
   notificationsOn?: string[];
   acceptedTerms?: string[];
+  permissions?: string[];
 }

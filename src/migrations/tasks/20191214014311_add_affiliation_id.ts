@@ -9,6 +9,7 @@ const logger = makeDomainLogger(consoleAdapter, 'migrations');
 export async function up(connection: Knex): Promise<void> {
   // Add uuid as primary on affiliations, drop existing primary key
   // Add membership status enum field
+  // Drop updated field on affiliation
   await connection.schema.alterTable('affiliations', async table => {
     table.dropPrimary();
     table.uuid('id').primary().defaultTo(generateUuid()).unique().notNullable();
@@ -42,11 +43,16 @@ export async function down(connection: Knex): Promise<void> {
   });
   logger.info('Reverted organizations table.');
 
+  // Downgrading at this point requires truncating the org and affiliations table
+  await connection('affiliations').delete();
+  await connection('organizations').delete();
+
   await connection.schema.alterTable('affiliations', async table => {
     table.dropPrimary();
     table.dropColumn('id');
     table.primary(['user', 'organization']);
     table.dropColumn('membershipStatus');
+    table.timestamp('updatedAt').defaultTo(new Date().toDateString()).notNullable();
   });
   logger.info('Reverted affiliations table.');
 }
