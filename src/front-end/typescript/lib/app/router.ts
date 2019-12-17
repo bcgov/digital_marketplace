@@ -166,7 +166,7 @@ const router: Router<Route> = {
       case 'signUpStepTwo':
         return `/sign-up/complete`;
       case 'userProfile':
-        return `/users/${route.value.userId}/profile`;
+        return `/users/${route.value.userId}`;
       case 'userList':
         return '/users';
       case 'orgList':
