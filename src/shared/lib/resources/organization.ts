@@ -68,3 +68,21 @@ export interface CreateValidationErrors {
 export interface UpdateValidationErrors extends CreateValidationErrors {
   id?: string[];
 }
+
+export function GetAllOrganizations(): Organization[] {
+  return [
+    {
+      id: '1',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      legalName: 'Org1',
+      streetAddress1: 'address',
+      city: 'city',
+      region: 'region',
+      mailCode: 'mailCode',
+      country: 'country',
+      contactName: 'contactName',
+      contactEmail: 'contactEmail'
+    }
+  ];
+}
