@@ -491,7 +491,7 @@ export const view: View<Props> = props => {
       </Row>
 
       <Row>
-        <Col>
+        <Col className='d-flex justify-content-end pt-5'>
           <Link button className='mr-3'>Cancel</Link>
           <Link button className='btn-secondary'>
             <Icon name='plus'></Icon>
