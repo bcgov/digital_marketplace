@@ -1,9 +1,9 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { SignInCard } from 'front-end/lib/views/horizontal-card';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
+import { SignInCard } from 'front-end/lib/views/sign-in-card';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT, adt } from 'shared/lib/types';
