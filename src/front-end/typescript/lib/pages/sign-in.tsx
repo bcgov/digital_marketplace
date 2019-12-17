@@ -35,13 +35,13 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         signInTarget='github'
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
-        buttonText='Sign Up Using GitHub' />
+        buttonText='Sign In Using GitHub' />
 
       <SignInCard
         signInTarget='idir'
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
-        buttonText='Sign Up Using IDIR'
+        buttonText='Sign In Using IDIR'
       />
     </div>
   );

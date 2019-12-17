@@ -81,7 +81,46 @@ export function GetAllOrganizations(): Organization[] {
       region: 'region',
       mailCode: 'mailCode',
       country: 'country',
-      contactName: 'contactName',
+      contactName: 'Shangalong',
+      contactEmail: 'contactEmail'
+    },
+    {
+      id: '2',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      legalName: 'Org2',
+      streetAddress1: 'address',
+      city: 'city',
+      region: 'region',
+      mailCode: 'mailCode',
+      country: 'country',
+      contactName: 'Crackhead Paul',
+      contactEmail: 'contactEmail'
+    },
+    {
+      id: '3',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      legalName: 'Org3',
+      streetAddress1: 'address',
+      city: 'city',
+      region: 'region',
+      mailCode: 'mailCode',
+      country: 'country',
+      contactName: 'Jim Gordon',
+      contactEmail: 'contactEmail'
+    },
+    {
+      id: '4',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      legalName: 'Org4',
+      streetAddress1: 'address',
+      city: 'city',
+      region: 'region',
+      mailCode: 'mailCode',
+      country: 'country',
+      contactName: 'Barry Allen',
       contactEmail: 'contactEmail'
     }
   ];

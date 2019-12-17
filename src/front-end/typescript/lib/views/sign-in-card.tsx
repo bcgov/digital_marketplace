@@ -22,7 +22,13 @@ export function SignInCard(params: HorizontalCardParams) {
             <span className='pl-1'>{params.title}</span>
           </h2>
           <p>{params.description}</p>
-          <Link button dest={externalDest(getSignInUrl(params.signInTarget))} className='btn-primary'>{params.buttonText}</Link>
+          <Link
+            button
+            dest={externalDest(getSignInUrl(params.signInTarget))}
+            className='btn-primary'
+          >
+            {params.buttonText}
+          </Link>
         </div>
       </Col>
     </Row>
