@@ -28,25 +28,12 @@ export interface OrganizationSlim {
   owner?: Pick<User, 'id' | 'name'>;
 }
 
-export interface UpdateRequestBody {
-  id: Id;
-  legalName?: string;
-  logoImageFile?: Id;
-  websiteUrl?: string;
-  streetAddress1?: string;
-  streetAddress2?: string;
-  city?: string;
-  region?: string;
-  mailCode?: string;
-  country?: string;
-  contactName?: string;
-  contactTitle?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-}
-
 export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile'> {
   logoImageFile?: Id;
+}
+
+export interface UpdateRequestBody extends Partial<CreateRequestBody> {
+  id: Id;
 }
 
 export interface CreateValidationErrors {
