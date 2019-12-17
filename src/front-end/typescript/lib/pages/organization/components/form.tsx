@@ -1,6 +1,8 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
+import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
@@ -17,6 +19,7 @@ export interface State {
   legalName: Immutable<ShortText.State>;
   websiteUrl: Immutable<ShortText.State>;
   streetAddress1: Immutable<ShortText.State>;
+  streetAddress2: Immutable<ShortText.State>;
   city: Immutable<ShortText.State>;
   country: Immutable<ShortText.State>;
   mailCode: Immutable<ShortText.State>;
@@ -28,22 +31,24 @@ export interface State {
 }
 
 export type Msg =
-  ADT<'legalName', ShortText.Msg>     |
-  ADT<'websiteUrl', ShortText.Msg>    |
+  ADT<'legalName', ShortText.Msg>      |
+  ADT<'websiteUrl', ShortText.Msg>     |
   ADT<'streetAddress1', ShortText.Msg> |
-  ADT<'city', ShortText.Msg>          |
-  ADT<'country', ShortText.Msg>       |
-  ADT<'mailCode', ShortText.Msg>        |
-  ADT<'contactTitle', ShortText.Msg>  |
-  ADT<'contactName', ShortText.Msg>   |
-  ADT<'contactEmail', ShortText.Msg>  |
-  ADT<'contactPhone', ShortText.Msg>  |
+  ADT<'streetAddress2', ShortText.Msg> |
+  ADT<'city', ShortText.Msg>           |
+  ADT<'country', ShortText.Msg>        |
+  ADT<'mailCode', ShortText.Msg>       |
+  ADT<'contactTitle', ShortText.Msg>   |
+  ADT<'contactName', ShortText.Msg>    |
+  ADT<'contactEmail', ShortText.Msg>   |
+  ADT<'contactPhone', ShortText.Msg>   |
   ADT<'region', ShortText.Msg>
   ;
 
 export interface Values {
   legalName: string;
   streetAddress1: string;
+  streetAddress2: string;
   city: string;
   country: string;
   mailCode: string;
@@ -58,6 +63,7 @@ export interface Values {
 export interface Errors {
   legalName?: string[];
   streetAddress1?: string[];
+  streetAddress2?: string[];
   city?: string[];
   country?: string[];
   mailCode?: string[];
@@ -74,6 +80,7 @@ export function isValid(state: Immutable<State>): boolean {
     FormField.isValid(state.legalName) &&
     FormField.isValid(state.websiteUrl) &&
     FormField.isValid(state.streetAddress1) &&
+    FormField.isValid(state.streetAddress2) &&
     FormField.isValid(state.city) &&
     FormField.isValid(state.country) &&
     FormField.isValid(state.mailCode) &&
@@ -89,6 +96,7 @@ export function getValues(state: Immutable<State>): Values {
   return {
     legalName: FormField.getValue(state.legalName),
     streetAddress1: FormField.getValue(state.streetAddress1),
+    streetAddress2: FormField.getValue(state.streetAddress2),
     city: FormField.getValue(state.city),
     country: FormField.getValue(state.country),
     mailCode: FormField.getValue(state.mailCode),
@@ -105,6 +113,7 @@ export function setValues(state: Immutable<State>, values: Values): Immutable<St
   return state
     .update('legalName', s => FormField.setValue(s, values.legalName))
     .update('streetAddress1', s => FormField.setValue(s, values.streetAddress1))
+    .update('streetAddress2', s => FormField.setValue(s, values.streetAddress2))
     .update('city', s => FormField.setValue(s, values.city))
     .update('country', s => FormField.setValue(s, values.country))
     .update('mailCode', s => FormField.setValue(s, values.mailCode))
@@ -120,6 +129,7 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
   return state
     .update('legalName', s => FormField.setErrors(s, errors.legalName || []))
     .update('streetAddress1', s => FormField.setErrors(s, errors.streetAddress1 || []))
+    .update('streetAddress2', s => FormField.setErrors(s, errors.streetAddress2 || []))
     .update('city', s => FormField.setErrors(s, errors.city || []))
     .update('country', s => FormField.setErrors(s, errors.country || []))
     .update('mailCode', s => FormField.setErrors(s, errors.mailCode || []))
@@ -157,7 +167,16 @@ export const init: Init<Params, State> = async (params) => {
       child: {
         type: 'text',
         value: getString(params.organization, 'streetAddress1'),
-        id: 'organization-gov-street-address'
+        id: 'organization-gov-street-address-one'
+      }
+    })),
+    streetAddress2: immutable(await ShortText.init({
+      errors: [],
+      validate: validateName,
+      child: {
+        type: 'text',
+        value: getString(params.organization, 'streetAddress2'),
+        id: 'organization-gov-street-address-two'
       }
     })),
     city: immutable(await ShortText.init({
@@ -261,6 +280,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('streetAddress1', value)
       });
+    case 'streetAddress2':
+      return updateComponentChild({
+        state,
+        childStatePath: ['streetAddress2'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('streetAddress2', value)
+      });
     case 'city':
       return updateComponentChild({
         state,
@@ -352,7 +379,6 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Website Url (Optional)'
-            required
             disabled={disabled}
             state={state.websiteUrl}
             dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
@@ -370,6 +396,15 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.streetAddress1}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
+        </Col>
+
+        <Col xs='12'>
+          <ShortText.view
+            extraChildProps={{}}
+            label='Street Address'
+            disabled={disabled}
+            state={state.streetAddress2}
+            dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
         </Col>
 
         <Col xs='8'>
@@ -392,27 +427,27 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
         </Col>
 
-        <Col xs='5'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='mailCode / ZIP Code'
-            required
-            disabled={disabled}
-            state={state.mailCode}
-            dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
-        </Col>
+          <Col xs='5' className='pb-4'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Postal / ZIP Code'
+              required
+              disabled={disabled}
+              state={state.mailCode}
+              dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
+          </Col>
 
-        <Col xs='7'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Country'
-            required
-            disabled={disabled}
-            state={state.country}
-            dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
-        </Col>
+          <Col xs='7' className='pb-4'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Country'
+              required
+              disabled={disabled}
+              state={state.country}
+              dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
+          </Col>
 
-        <Col xs='12'>
+        <Col xs='12' className='pt-5 border-top'>
           <h2>Contact Information</h2>
         </Col >
 
@@ -432,7 +467,6 @@ export const view: View<Props> = props => {
             label='Job Title (Optional)'
             disabled={disabled}
             state={state.contactTitle}
-            required
             dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
         </Col>
 
@@ -450,13 +484,22 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Phone Number (Optional)'
-            required
             disabled={disabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
         </Col>
-
       </Row>
+
+      <Row>
+        <Col>
+          <Link button className='mr-3'>Cancel</Link>
+          <Link button className='btn-secondary'>
+            <Icon name='plus'></Icon>
+            <span className='pl-2'>Create Organization</span>
+          </Link>
+        </Col>
+      </Row>
+
     </div>
   );
 };
