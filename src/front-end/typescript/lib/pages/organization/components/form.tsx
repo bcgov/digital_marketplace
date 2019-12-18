@@ -1,8 +1,6 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
@@ -487,16 +485,6 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
-        </Col>
-      </Row>
-
-      <Row>
-        <Col className='d-flex justify-content-end pt-5'>
-          <Link button className='mr-3'>Cancel</Link>
-          <Link button className='btn-secondary'>
-            <Icon name='plus'></Icon>
-            <span className='pl-2'>Create Organization</span>
-          </Link>
         </Col>
       </Row>
 
