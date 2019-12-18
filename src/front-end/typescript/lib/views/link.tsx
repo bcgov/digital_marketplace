@@ -63,10 +63,9 @@ function AnchorLink(props: AnchorProps) {
   finalClassName += nav ? ' nav-link' : '';
   finalClassName += disabled ? ' disabled' : '';
   finalClassName += color ? ` text-${color}` : '';
-  const finalOnClick = ((e: MouseEvent<HTMLAnchorElement>) => {
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) { e.preventDefault(); }
-    if (!disabled && onClick) { onClick(); }
-  });
+  const finalOnClick = !disabled && onClick
+    ? ((e: MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); onClick(); })
+    : undefined;
   return (
     <a href={href} onClick={finalOnClick} className={finalClassName} target={newTab ? '_blank' : undefined} download={download} rel={dest && dest.tag === 'external' ? 'external' : undefined}>
       {children}

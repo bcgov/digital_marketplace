@@ -36,7 +36,6 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
         buttonText='Sign In Using GitHub' />
-
       <SignInCard
         signInTarget='idir'
         title='Public Sector Employee'

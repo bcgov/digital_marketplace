@@ -43,6 +43,9 @@ $success: #28A745;
 $light-blue: #E7EDF3;
 $white: #ffffff;
 
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+
 $theme-colors: (
   'white': $white,
   'primary-alt': $primary-alt,
@@ -53,6 +56,9 @@ $theme-colors: (
 
 $component-active-bg: $primary;
 $link-color: $primary;
+
+$dropdown-link-hover-bg: $gray-100;
+$dropdown-link-active-bg: $gray-200;
 
 $font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 $font-weight-bold: 500;

@@ -3,7 +3,7 @@ import { ComponentViewProps, Init, Update, View } from 'front-end/lib/framework'
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { Props as LinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
-import { Col, Container, Row } from 'reactstrap';
+import { Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
 
@@ -53,9 +53,9 @@ interface LinkSymbolProps {
 const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className }) => {
   switch (symbol_.tag) {
     case 'icon':
-      return (<Icon name={symbol_.value} />);
+      return (<Icon name={symbol_.value} className={className} />);
     case 'image':
-      return (<img src={symbol_.value} style={{ width: '1.5rem', height: '1.5rem', objectFit: 'cover', borderRadius: '50%' }} />);
+      return (<img src={symbol_.value} className={className} style={{ width: '1.5rem', height: '1.5rem', objectFit: 'cover', borderRadius: '50%' }} />);
   }
 };
 
@@ -100,19 +100,38 @@ const NavLink: View<NavLink> = props => {
   );
 };
 
-interface DropdownLinkGroup {
+interface NavDropdownLinkGroup {
   label?: string;
   links: NavLink[];
 }
 
-interface Dropdown {
+interface NavDropdown {
   imageUrl: string;
-  text: string;
-  linkGroups: DropdownLinkGroup[];
+  linkGroups: NavDropdownLinkGroup[];
 }
 
-const Dropdown: View<Dropdown & { open: boolean; toggleOpen(): void; }> = props => {
-  return (<div></div>);
+const NavDropdown: View<NavDropdown & { open: boolean; toggleOpen(): void; }> = props => {
+  const { imageUrl, linkGroups, open, toggleOpen } = props;
+  return (
+    <Dropdown isOpen={open} toggle={toggleOpen}>
+      <DropdownToggle caret tag='div' className='text-white' style={{ cursor: 'pointer' }}>
+        <img src={imageUrl} className='rounded-circle' style={{ width: '2rem', height: '2rem', objectFit: 'cover' }} />
+      </DropdownToggle>
+      <DropdownMenu right>
+        {linkGroups.map((group, i) => (
+          <Fragment key={`nav-dropdown-group-${i}`}>
+            {group.label ? (<DropdownItem header>{group.label}</DropdownItem>) : null}
+            {group.links.map((link, j) => (
+              <DropdownItem key={`nav-dropdown-link-${i}-${j}`}>
+                <NavLink {...link} />
+              </DropdownItem>
+            ))}
+            {i < linkGroups.length - 1 ? (<DropdownItem divider />) : null}
+          </Fragment>
+        ))}
+      </DropdownMenu>
+    </Dropdown>
+  );
 };
 
 type TextAccountAction = ADT<'text', string>;
@@ -123,19 +142,19 @@ export const linkAccountAction = adtCurried<LinkAccountAction>('link');
 
 type AccountAction = TextAccountAction | LinkAccountAction;
 
-const AccountAction: View<{ action: AccountAction }> = ({ action }) => {
+const AccountAction: View<{ className?: string; action: AccountAction }> = ({ className = '', action }) => {
   switch (action.tag) {
     case 'text':
-      return (<div className='o-50'>{action.value}</div>);
+      return (<div className={`${className} o-50 text-white`}>{action.value}</div>);
     case 'link':
-      return (<NavLink {...action.value} />);
+      return (<NavLink className={className} {...action.value} />);
   }
 };
 
 type UnauthenticatedAccountMenu = ADT<'unauthenticated', AccountAction[]>;
 export const unauthenticatedAccountMenu = adtCurried<UnauthenticatedAccountMenu>('unauthenticated');
 
-type AuthenticatedDesktopAccountMenu = ADT<'authenticated', { email: string; dropdown: Dropdown; }>;
+type AuthenticatedDesktopAccountMenu = ADT<'authenticated', { email: string; dropdown: NavDropdown; }>;
 export const authenticatedDesktopAccountMenu = adtCurried<AuthenticatedDesktopAccountMenu>('authenticated');
 
 type AuthenticatedMobileAccountMenu = ADT<'authenticated', AccountAction[]>;
@@ -166,35 +185,49 @@ const DesktopAccountMenu: View<Props> = props => {
     case 'unauthenticated':
       return (
         <Fragment>
-          {menu.value.map((action, i) => (<AccountAction action={action} key={`desktop-account-menu-action-${i}`} />))}
+          {menu.value.map((action, i) => (
+            <AccountAction
+              action={action}
+              className={i !== menu.value.length - 1 ? 'mr-3' : ''}
+              key={`desktop-account-menu-action-${i}`} />
+            ))}
         </Fragment>
       );
     case 'authenticated':
       return (
         <Fragment>
-          <div className='o-50 mr-3'>{menu.value.email}</div>
-          <Dropdown {...menu.value.dropdown} open={state.isDesktopAccountDropdownOpen} toggleOpen={() => dispatch(adt('toggleDesktopAccountDropdown'))} />
+          <div className='text-white o-50 mr-3'>{menu.value.email}</div>
+          <NavDropdown {...menu.value.dropdown} open={state.isDesktopAccountDropdownOpen} toggleOpen={() => dispatch(adt('toggleDesktopAccountDropdown'))} />
         </Fragment>
       );
   }
 };
 
 const TopNavbar: View<Props> = props => {
-  const { state, dispatch } = props;
+  const { state, dispatch, isLoading } = props;
   return (
     <div style={{ height: `${TOP_NAVBAR_HEIGHT}px` }} className='bg-info border-bottom-gov w-100'>
       <Container className='h-100'>
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
-            <div className='d-flex align-items-center'>
+            <div className='d-flex align-items-center flex-grow-1'>
               <img src={props.logoImageUrl} style={{ height: `${TOP_NAVBAR_HEIGHT - 22}px` }} />
-              <div className='font-weight-bolder font-size-large text-white ml-n2'>{props.title}</div>
+              <div className='font-weight-bolder font-size-large text-white ml-n2 mr-3'>{props.title}</div>
+              {isLoading
+                ? (<Spinner size='sm' color='info-alt' className='transition-indicator' />)
+                : null}
             </div>
-            <div className='d-none d-md-flex align-items-center'>
+            <div className='d-none d-md-flex align-items-center flex-shrink-0'>
               <DesktopAccountMenu {...props} />
             </div>
             <div className='d-md-none'>
-              <Icon name={state.isMobileMenuOpen ? 'times' : 'bars'} color='white' onClick={() => dispatch(adt('toggleMobileMenu'))} />
+              <Icon
+                width={1.25}
+                height={1.25}
+                name={state.isMobileMenuOpen ? 'times' : 'bars'}
+                className='cursor-pointer'
+                color='white'
+                onClick={() => dispatch(adt('toggleMobileMenu'))} />
             </div>
           </Col>
         </Row>
@@ -205,7 +238,32 @@ const TopNavbar: View<Props> = props => {
 
 const DesktopBottomNavbar: View<Props> = props => {
   return (
-    <div></div>
+    <div className='bg-info-alt py-3 d-none d-md-block'>
+      <Container className='h-100'>
+        <Row className='h-100'>
+          <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
+            <div className='d-flex flex-nowrap'>
+              {props.contextualLinks.left.map((link, i) => (
+                <NavLink
+                  {...link}
+                  color='white'
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} mr-3`}
+                  key={`contextual-link-left-${i}`} />
+              ))}
+            </div>
+            <div className='d-flex flex-nowrap'>
+              {props.contextualLinks.right.map((link, i) => (
+                <NavLink
+                  {...link}
+                  color='white'
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ml-3`}
+                  key={`contextual-link-left-${i}`} />
+              ))}
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </div>
   );
 };
 

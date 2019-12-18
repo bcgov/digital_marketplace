@@ -25,8 +25,7 @@ export function SignInCard(params: HorizontalCardParams) {
           <Link
             button
             dest={externalDest(getSignInUrl(params.signInTarget))}
-            className='btn-primary'
-          >
+            className='btn-primary'>
             {params.buttonText}
           </Link>
         </div>

@@ -6,6 +6,7 @@ import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link, { externalDest, routeDest } from 'front-end/lib/views/link';
+import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { fileBlobPath } from 'shared/lib/resources/file';
@@ -32,7 +33,6 @@ interface ViewModalProps {
 const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   const { open, content } = modal;
   const closeModal = () => dispatch({ tag: 'closeModal', value: undefined });
-  // TODO custom X icon
   return (
     <Modal isOpen={open} toggle={closeModal}>
       <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon name='times' color='secondary' onClick={closeModal} style={{ cursor: 'pointer' }}/>)}>{content.title}</ModalHeader>
@@ -162,28 +162,35 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   }
 };
 
+const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
+  Nav.linkAccountAction({
+    text: 'Sign In',
+    button: true,
+    outline: true,
+    color: 'white',
+    dest: routeDest(adt('signIn', null))
+  }),
+  Nav.linkAccountAction({
+    text: 'Sign Up',
+    button: true,
+    color: 'primary',
+    dest: routeDest(adt('signUpStepOne', null))
+  })
+]);
+
+const signOutLink: Nav.NavLink = {
+  text: 'Sign Out',
+  dest: routeDest(adt('signOut', null)),
+  symbol_: Nav.leftPlacement(Nav.iconLinkSymbol('sign-out'))
+};
+
 function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
+  const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
-  if (!state.shared.session || !state.shared.session.user) {
-    const unauthenticatedMenu = Nav.unauthenticatedAccountMenu([
-      Nav.linkAccountAction({
-        text: 'Sign In',
-        button: true,
-        outline: true,
-        color: 'white',
-        dest: routeDest(adt('signIn', null))
-      }),
-      Nav.linkAccountAction({
-        text: 'Sign Up',
-        button: true,
-        color: 'primary',
-        dest: routeDest(adt('signUpStepOne', null))
-      })
-    ]);
-    return { mobile: unauthenticatedMenu, desktop: unauthenticatedMenu };
+  if (!sessionUser) {
+    return { mobile: navUnauthenticatedMenu, desktop: navUnauthenticatedMenu };
   }
   // Return separate mobile and desktop authentication menus if the user is signed in.
-  const sessionUser = state.shared.session.user;
   const userIdentifier = sessionUser.email || sessionUser.name;
   const userAvatar = sessionUser.avatarImageFile ? fileBlobPath(sessionUser.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH;
   return {
@@ -193,39 +200,30 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
         dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
         symbol_: Nav.leftPlacement(Nav.imageLinkSymbol(userAvatar))
       }),
-      Nav.linkAccountAction({
-        text: 'Sign Out',
-        dest: routeDest(adt('signOut', null)),
-        symbol_: Nav.leftPlacement(Nav.iconLinkSymbol('sign-out'))
-      })
+      Nav.linkAccountAction(signOutLink)
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       email: userIdentifier,
       dropdown: {
-        text: userIdentifier,
         imageUrl: userAvatar,
         linkGroups: [
           {
             label: `Signed in as ${sessionUser.name}`,
-            links: [
+            links: compact([
               {
                 text: 'My Profile',
                 dest: routeDest(adt('userProfile', { userId: sessionUser.id }))
               },
-              {
-                text: 'My Organizations',
-                dest: routeDest(adt('userProfile', { userId: sessionUser.id, activeTab: 'organizations' as const }))
-              }
-            ]
+              sessionUser.type === UserType.Vendor
+                ? {
+                    text: 'My Organizations',
+                    dest: routeDest(adt('userProfile', { userId: sessionUser.id, activeTab: 'organizations' as const }))
+                  }
+                : undefined
+            ])
           },
           {
-            links: [
-              {
-                text: 'Sign Out',
-                dest: routeDest(adt('signOut', null)),
-                symbol_: Nav.leftPlacement(Nav.iconLinkSymbol('sign-out'))
-              }
-            ]
+            links: [signOutLink]
           }
         ]
       }
@@ -239,33 +237,41 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
   const opporunitiesLink: Nav.NavLink = {
     text: 'Opportunities',
     // TODO add opportunities route when available.
+    active: state.activeRoute.tag === 'landing',
     dest: routeDest(adt('landing', null))
   };
   if (sessionUser) {
+    // User has signed in.
     left = left.concat([
       {
         text: 'Dashboard',
         // TODO add dashboard route when available.
+        active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
-      opporunitiesLink
+      opporunitiesLink,
+      {
+        text: 'Organizations',
+        active: state.activeRoute.tag === 'orgList',
+        dest: routeDest(adt('orgList', null))
+      }
     ]);
     if (sessionUser.type === UserType.Admin) {
+      // User is an admin.
       left = left.concat([
         {
           text: 'Users',
+          active: state.activeRoute.tag === 'userList',
           dest: routeDest(adt('userList', null))
-        },
-        {
-          text: 'Organizations',
-          dest: routeDest(adt('orgList', null))
         }
       ]);
     }
   } else {
+    // User has not signed in.
     left = left.concat([
       {
         text: 'Home',
+        active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
       opporunitiesLink
@@ -276,6 +282,7 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
     right: [{
       text: 'Procurement Concierge',
       dest: externalDest(PROCUREMENT_CONCIERGE_URL),
+      newTab: true,
       symbol_: Nav.rightPlacement(Nav.iconLinkSymbol('external-link'))
     }]
   };
