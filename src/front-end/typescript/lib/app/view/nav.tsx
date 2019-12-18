@@ -1,6 +1,6 @@
 import { ComponentViewProps, Dispatch, Init, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { Props as LinkProps } from 'front-end/lib/views/link';
+import Link, { Dest, Props as LinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
 import { Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
@@ -57,7 +57,7 @@ const NavLink: View<NavLinkProps> = props => {
     <Link
       {...linkProps}
       onClick={onClick}
-      className={`${props.className || ''} d-flex flex-nowrap align-items-center ${active ? 'font-weight-bold' : ''}`}>
+      className={`d-block ${props.className || ''} ${active ? 'font-weight-bold' : ''}`}>
       {text}
     </Link>
   );
@@ -87,7 +87,7 @@ const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; 
             {group.label ? (<DropdownItem header>{group.label}</DropdownItem>) : null}
             {group.links.map((link, j) => (
               <DropdownItem key={`nav-dropdown-link-${i}-${j}`}>
-                <NavLink {...link} dispatch={dispatch} />
+                <NavLink {...link} button={false} color='body' dispatch={dispatch} />
               </DropdownItem>
             ))}
             {i < linkGroups.length - 1 ? (<DropdownItem divider />) : null}
@@ -137,6 +137,7 @@ type MobileAccountMenu = AuthenticatedMobileAccountMenu | UnauthenticatedAccount
 export interface Props extends ComponentViewProps<State, Msg> {
   logoImageUrl: string;
   title: string;
+  homeDest: Dest;
   isLoading: boolean;
   accountMenus: {
     mobile: MobileAccountMenu;
@@ -179,12 +180,13 @@ const MobileAccountMenu: View<Props> = props => {
   const actions = (marginClassName: string) => (
     <Fragment>
       {menu.value.map((action, i) => {
-        if (action.tag === 'link' && action.value.button) {
-          action.value.size = 'sm';
+        const clonedAction = { ...action };
+        if (clonedAction.tag === 'link' && clonedAction.value.button) {
+          clonedAction.value = { ...clonedAction.value, size: 'sm' };
         }
         return (
           <AccountAction
-            action={action}
+            action={clonedAction}
             className={i !== menu.value.length - 1 ? marginClassName : ''}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`} />);
@@ -195,9 +197,25 @@ const MobileAccountMenu: View<Props> = props => {
     case 'unauthenticated':
       return (<div className='d-flex'>{actions('mr-3')}</div>);
     case 'authenticated':
-      return (<div>{actions('mb-3')}</div>);
+      return (<div className='d-flex flex-column align-items-start'>{actions('mb-3')}</div>);
   }
 };
+
+interface TitleProps extends Pick<Props, 'title' | 'homeDest'> {
+  dispatch: Dispatch<Msg>;
+  className?: string;
+}
+
+const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) => (
+  <div className={className}>
+    <NavLink
+      dispatch={dispatch}
+      text={title}
+      color='white'
+      dest={homeDest}
+      className='font-weight-bolder font-size-large' />
+  </div>
+);
 
 const TopNavbar: View<Props> = props => {
   const { state, dispatch, isLoading } = props;
@@ -211,8 +229,10 @@ const TopNavbar: View<Props> = props => {
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex align-items-center flex-grow-1'>
-              <img src={props.logoImageUrl} style={{ height: `${TOP_NAVBAR_HEIGHT - 22}px` }} />
-              <div className='font-weight-bolder font-size-large text-white ml-n2 mr-3'>{props.title}</div>
+              <Link dest={props.homeDest}>
+                <img src={props.logoImageUrl} style={{ height: `${TOP_NAVBAR_HEIGHT - 22}px` }} />
+              </Link>
+              <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
               {isLoading
                 ? (<Spinner size='sm' color='info-alt' className='transition-indicator' />)
                 : null}
@@ -238,7 +258,7 @@ const TopNavbar: View<Props> = props => {
 
 const DesktopBottomNavbar: View<Props> = props => {
   return (
-    <div className='bg-info-alt py-3 d-none d-md-block'>
+    <div className='bg-info-alt py-3 d-none d-md-block shadow'>
       <Container className='h-100'>
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
@@ -248,7 +268,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                   {...link}
                   dispatch={props.dispatch}
                   color='white'
-                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'}`}
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.left.length - 1 ? 'mr-3' : ''}`}
                   key={`contextual-link-left-${i}`} />
               ))}
             </div>
@@ -258,7 +278,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                   {...link}
                   dispatch={props.dispatch}
                   color='white'
-                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'}`}
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.right.length - 1 ? 'mr-3' : ''}`}
                   key={`contextual-link-left-${i}`} />
               ))}
             </div>
@@ -270,14 +290,24 @@ const DesktopBottomNavbar: View<Props> = props => {
 };
 
 const MobileBottomNavbar: View<Props> = props => {
-  if (!props.state.isMobileMenuOpen) { return null; }
+  const isMobileMenuOpen = props.state.isMobileMenuOpen;
   return (
-    <div className='bg-info-alt py-4'>
+    <div
+      className={`bg-info-alt ${isMobileMenuOpen ? 'py-4' : 'py-0'} d-md-none overflow-hidden`}
+      style={{
+        transition: 'max-height linear 240ms, padding linear 240ms',
+        maxHeight: isMobileMenuOpen ? '1000px' : 0
+      }}>
       <Container>
+        <Row>
+          <Col xs='12'>
+            <Title title={props.title} homeDest={props.homeDest} dispatch={props.dispatch} className='d-inline-block mb-4' />
+          </Col>
+        </Row>
         {props.contextualLinks.left.length
           ? (<Row>
               <Col xs='12'>
-                <div className='pb-4 border-bottom mb-4'>
+                <div className='pb-4 border-bottom mb-4 d-flex flex-column align-items-start'>
                   {props.contextualLinks.left.map((link, i) => (
                     <NavLink
                       {...link}
@@ -298,7 +328,7 @@ const MobileBottomNavbar: View<Props> = props => {
         {props.contextualLinks.right.length
           ? (<Row>
               <Col xs='12'>
-                <div className='pt-4 border-top mt-4'>
+                <div className='pt-4 border-top mt-4 d-flex flex-column align-items-start'>
                   {props.contextualLinks.right.map((link, i) => (
                     <NavLink
                       {...link}
@@ -330,87 +360,3 @@ export const view: View<Props> = props => {
     </nav>
   );
 };
-
-/*interface OldProps {
-  isOpen: boolean;
-  activeRoute: Route;
-  session?: Session;
-  toggleIsOpen(open?: boolean): void;
-}
-
-const ContextualLinks: View<Props & { className?: string }> = ({ activeRoute, session, toggleIsOpen, className = '' }) => {
-  const onClick = () => toggleIsOpen(false);
-  const isLandingRoute = activeRoute.tag === 'landing';
-  const landingRoute: Route = { tag: 'landing', value: null };
-
-  return (
-    <Nav navbar className={className}>
-      <NavItem>
-        <Link nav route={landingRoute} className={linkClassName(isLandingRoute)} onClick={onClick}>Home</Link>
-      </NavItem>
-    </Nav>
-  );
-};
-
-const AuthLinks: View<Props> = ({ activeRoute, session, toggleIsOpen }) => {
-  const onClick = () => toggleIsOpen(false);
-  if (session && session.user) {
-    const signOutRoute: Route = {
-      tag: 'signOut',
-      value: null
-    };
-    return (
-      <Nav navbar className='ml-md-auto'>
-        <NavItem className='d-none d-md-block'>
-          <Link nav color='white' className='px-0 px-md-3' style={{ opacity: 0.35 }} disabled>{session.user.name}</Link>
-        </NavItem>
-        <NavItem>
-          <Link nav route={signOutRoute} color='white' onClick={onClick} className='px-0 pl-md-3 o-75'>Sign Out</Link>
-        </NavItem>
-      </Nav>
-    );
-  } else {
-    return (
-      <Nav navbar className='ml-md-auto'>
-        <NavItem>
-          <Link button color='primary' onClick={() => redirect('auth/sign-in')} className='mt-2 mt-md-0'>Sign In</Link>
-        </NavItem>
-      </Nav>
-    );
-  }
-};
-
-// Computed height of main nav.
-// May need to be updated if the main nav height changes.
-const MAIN_NAVBAR_HEIGHT = '64px';
-
-const Navigation: View<Props> = props => {
-  return (
-    <div className='position-sticky' style={{ top: `-${MAIN_NAVBAR_HEIGHT}`, zIndex: 1000 }}>
-      <Navbar expand='md' dark color='info' className='navbar border-bottom-gov'>
-        <Container className='px-sm-3'>
-          <NavbarBrand href={router.routeToUrl({ tag: 'landing', value: null })}>
-            Digital Marketplace
-          </NavbarBrand>
-          <Spinner size='sm' color='info-alt' className='transition-indicator' />
-          <NavbarToggler className='ml-auto' onClick={() => props.toggleIsOpen()} />
-          <Collapse isOpen={props.isOpen} className='py-3 py-md-0' navbar>
-            <ContextualLinks {...props} className='d-md-none' />
-            <AuthLinks {...props} />
-          </Collapse>
-        </Container>
-      </Navbar>
-      <Navbar expand='sm' className='bg-info-alt d-none d-md-block shadow border-bottom-info-alt'>
-        <Container className='pl-0 d-flex justify-content-between'>
-          <ContextualLinks {...props} />
-          <Link newTab external href={PROCUREMENT_CONCIERGE_URL} color='white' className='d-flex align-items-center flex-nowrap o-75'>
-            Procurement Concierge
-            <Icon name='external-link' className='ml-2' />
-          </Link>
-        </Container>
-      </Navbar>
-    </div>
-  );
-};
-
-export default Navigation;*/

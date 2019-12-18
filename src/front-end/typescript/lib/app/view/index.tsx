@@ -299,6 +299,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       isLoading: state.transitionLoading > 0,
       logoImageUrl: '/images/bcgov_logo.svg',
       title: 'Digital Marketplace',
+      homeDest: routeDest(adt('landing', null)),
       accountMenus: navAccountMenus(state),
       contextualLinks: navContextualLinks(state)
     };
