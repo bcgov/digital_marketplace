@@ -1,34 +1,27 @@
 import { View } from 'front-end/lib/framework';
-import { ButtonColor } from 'front-end/lib/types';
-import { noop } from 'lodash';
-import { default as React, MouseEventHandler, ReactElement } from 'react';
-import { Button, Spinner } from 'reactstrap';
+import Link, { ButtonProps } from 'front-end/lib/views/link';
+import React from 'react';
+import { Spinner } from 'reactstrap';
 
-export interface Props {
-  children: Array<ReactElement<any>> | string;
-  color: ButtonColor;
-  size?: 'sm' | 'md' | 'lg';
-  spinnerColor?: string;
+export interface Props extends Omit<ButtonProps, 'button' | 'dest' | 'onClick'> {
   loading: boolean;
-  disabled: boolean;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
-  className?: string;
+  onClick(): void;
 }
 
-const Children: View<Props> = ({ loading, children, spinnerColor = 'light' }) => {
+const Children: View<Props> = ({ loading, children }) => {
   if (loading) {
-    return (<Spinner color={spinnerColor} size='sm' />);
+    return (<Spinner color='light' size='sm' />);
   } else {
     return (<div>{children || ''}</div>);
   }
 };
 
 const LoadingButton: View<Props> = props => {
-  const className = `${props.className || ''} text-nowrap`;
+  const className = props.className || '';
   return (
-    <Button color={props.color} size={props.size || 'md'} onClick={props.onClick || noop} disabled={props.disabled} className={className}>
+    <Link button {...props} className={className} symbol_={props.loading ? undefined : props.symbol_} disabled={props.disabled !== undefined ? props.disabled : props.loading}>
       <Children {...props} />
-    </Button>
+    </Link>
   );
 };
 

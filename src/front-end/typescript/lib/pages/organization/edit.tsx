@@ -1,9 +1,10 @@
-import { makePageMetadata } from 'front-end/lib';
+import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import LoadingButton from 'front-end/lib/views/loading-button';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -16,13 +17,17 @@ import { invalid, valid, Validation } from 'shared/lib/validation';
 export const apiRequest = prefixRequest('api');
 
 export interface State {
+  isEditing: boolean;
+  editingLoading: number;
   organization: Organization;
   govProfile: Immutable<OrgForm.State>;
 }
 
-type InnerMsg =
-   ADT<'govProfile', OrgForm.Msg> |
-   ADT<'submit'>;
+type InnerMsg
+  = ADT<'govProfile', OrgForm.Msg>
+  | ADT<'startEditing'>
+  | ADT<'cancelEditing'>
+  | ADT<'submit'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -31,6 +36,8 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
+  isEditing: false,
+  editingLoading: 0,
   organization: GetAllOrganizations()[0],
   govProfile: immutable(await OrgForm.init({organization: GetAllOrganizations()[0]}))
 });
@@ -68,11 +75,28 @@ export function getUpdateParams(id: string, org: OrgForm.Values): UpdateRequestB
   };
 }
 
+const startEditingLoading = makeStartLoading<State>('editingLoading');
+const stopEditingLoading = makeStopLoading<State>('editingLoading');
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'startEditing':
+    return [
+      startEditingLoading(state),
+      async state => {
+        // TODO GET org data, and set form values
+        state = state.set('isEditing', true);
+        state = stopEditingLoading(state);
+        await (new Promise(resolve => setTimeout(resolve, 3000)));
+        return state;
+      }
+    ];
+    case 'cancelEditing':
+      return [state.set('isEditing', false)];
     case 'submit':
       return [state, async (state, dispatch) => {
         createOrganization(getCreateParams(OrgForm.getValues(state.govProfile)));
+        state = state.set('isEditing', false);
         return state;
       }];
     case 'govProfile':
@@ -89,12 +113,21 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const isEditing = state.isEditing;
+  const isEditingLoading = state.editingLoading > 0;
+  const isLoading = isEditingLoading;
+  const isDisabled = !isEditing || isLoading;
   return (
     <div>
 
       <Row className='mb-3 pb-3'>
-        <Col xs='12'>
+        <Col xs='12' className='d-flex flex-nowrap align-items-center'>
           <h1>Edit {state.organization.legalName}</h1>
+          {isEditing
+            ? null
+            : (<LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('paperclip'))} className='ml-3' onClick={() => dispatch(adt('startEditing'))}>
+                Edit Organization
+              </LoadingButton>)}
         </Col>
       </Row>
 
@@ -110,6 +143,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Col xs='12'>
           <OrgForm.view
+            disabled={isDisabled}
             state={state.govProfile}
             dispatch={mapComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
         </Col>

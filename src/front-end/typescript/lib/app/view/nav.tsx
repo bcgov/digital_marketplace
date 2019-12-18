@@ -1,6 +1,5 @@
-//import { PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
-import { ComponentViewProps, Init, Update, View } from 'front-end/lib/framework';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import { ComponentViewProps, Dispatch, Init, Update, View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import Link, { Props as LinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
 import { Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
@@ -37,65 +36,27 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-type IconLinkSymbol = ADT<'icon', AvailableIcons>;
-export const iconLinkSymbol = adtCurried<IconLinkSymbol>('icon');
-
-type ImageLinkSymbol = ADT<'image', string>;
-export const imageLinkSymbol = adtCurried<ImageLinkSymbol>('image');
-
-type LinkSymbol = IconLinkSymbol | ImageLinkSymbol;
-
-interface LinkSymbolProps {
-  symbol_: LinkSymbol;
-  className?: string;
-}
-
-const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className }) => {
-  switch (symbol_.tag) {
-    case 'icon':
-      return (<Icon name={symbol_.value} className={className} />);
-    case 'image':
-      return (<img src={symbol_.value} className={className} style={{ width: '1.5rem', height: '1.5rem', objectFit: 'cover', borderRadius: '50%' }} />);
-  }
-};
-
-type LeftPlacement<Value> = ADT<'left', Value>;
-
-export function leftPlacement<Value>(value: Value): LeftPlacement<Value> {
-  return adt('left', value);
-}
-
-type RightPlacement<Value> = ADT<'right', Value>;
-
-export function rightPlacement<Value>(value: Value): RightPlacement<Value> {
-  return adt('right', value);
-}
-
-type Placement<Value>
-  = LeftPlacement<Value>
-  | RightPlacement<Value>;
-
 interface NavLinkInfo {
   text: string;
-  symbol_?: Placement<LinkSymbol>;
   active?: boolean;
 }
 
 export type NavLink = LinkProps & NavLinkInfo;
 
-const NavLink: View<NavLink> = props => {
-  const { text, symbol_, active = false } = props;
+type NavLinkProps = NavLink & { dispatch: Dispatch<Msg>; };
+
+const NavLink: View<NavLinkProps> = props => {
+  const { text, active = false } = props;
+  const onClick = () => {
+    props.dispatch(adt('toggleMobileMenu', false));
+    if (props.onClick) { return props.onClick(); }
+  };
   return (
     <Link
       {...props}
+      onClick={onClick}
       className={`${props.className || ''} d-flex flex-nowrap align-items-center ${active ? 'font-weight-bold' : ''}`}>
-      {symbol_ && symbol_.tag === 'left'
-        ? (<LinkSymbol symbol_={symbol_.value} className='mr-2' />)
-        : null}
       {text}
-      {symbol_ && symbol_.tag === 'right'
-        ? (<LinkSymbol symbol_={symbol_.value} className='ml-2' />)
-        : null}
     </Link>
   );
 };
@@ -110,8 +71,9 @@ interface NavDropdown {
   linkGroups: NavDropdownLinkGroup[];
 }
 
-const NavDropdown: View<NavDropdown & { open: boolean; toggleOpen(): void; }> = props => {
-  const { imageUrl, linkGroups, open, toggleOpen } = props;
+const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; }> = props => {
+  const { imageUrl, linkGroups, open, dispatch } = props;
+  const toggleOpen = () => dispatch(adt('toggleDesktopAccountDropdown'));
   return (
     <Dropdown isOpen={open} toggle={toggleOpen}>
       <DropdownToggle caret tag='div' className='text-white' style={{ cursor: 'pointer' }}>
@@ -123,7 +85,7 @@ const NavDropdown: View<NavDropdown & { open: boolean; toggleOpen(): void; }> = 
             {group.label ? (<DropdownItem header>{group.label}</DropdownItem>) : null}
             {group.links.map((link, j) => (
               <DropdownItem key={`nav-dropdown-link-${i}-${j}`}>
-                <NavLink {...link} />
+                <NavLink {...link} dispatch={dispatch} />
               </DropdownItem>
             ))}
             {i < linkGroups.length - 1 ? (<DropdownItem divider />) : null}
@@ -142,12 +104,23 @@ export const linkAccountAction = adtCurried<LinkAccountAction>('link');
 
 type AccountAction = TextAccountAction | LinkAccountAction;
 
-const AccountAction: View<{ className?: string; action: AccountAction }> = ({ className = '', action }) => {
+interface AccountActionProps {
+  className?: string;
+  action: AccountAction;
+  dispatch: Dispatch<Msg>;
+}
+
+const AccountAction: View<AccountActionProps> = ({ className = '', action, dispatch }) => {
   switch (action.tag) {
     case 'text':
       return (<div className={`${className} o-50 text-white`}>{action.value}</div>);
     case 'link':
-      return (<NavLink className={className} {...action.value} />);
+      action.value.color = action.value.color || 'white';
+      action.value.onClick = () => {
+        dispatch(adt('toggleMobileMenu', false));
+        if (action.value.onClick) { return action.value.onClick(); }
+      };
+      return (<NavLink className={className} {...action.value} dispatch={dispatch} />);
   }
 };
 
@@ -189,6 +162,7 @@ const DesktopAccountMenu: View<Props> = props => {
             <AccountAction
               action={action}
               className={i !== menu.value.length - 1 ? 'mr-3' : ''}
+              dispatch={dispatch}
               key={`desktop-account-menu-action-${i}`} />
             ))}
         </Fragment>
@@ -197,9 +171,34 @@ const DesktopAccountMenu: View<Props> = props => {
       return (
         <Fragment>
           <div className='text-white o-50 mr-3'>{menu.value.email}</div>
-          <NavDropdown {...menu.value.dropdown} open={state.isDesktopAccountDropdownOpen} toggleOpen={() => dispatch(adt('toggleDesktopAccountDropdown'))} />
+          <NavDropdown {...menu.value.dropdown} open={state.isDesktopAccountDropdownOpen} dispatch={dispatch} />
         </Fragment>
       );
+  }
+};
+
+const MobileAccountMenu: View<Props> = props => {
+  const menu = props.accountMenus.mobile;
+  const actions = (marginClassName: string) => (
+    <Fragment>
+      {menu.value.map((action, i) => {
+        if (action.tag === 'link' && action.value.button) {
+          action.value.size = 'sm';
+        }
+        return (
+          <AccountAction
+            action={action}
+            className={i !== menu.value.length - 1 ? marginClassName : ''}
+            dispatch={props.dispatch}
+            key={`mobile-account-menu-action-${i}`} />);
+        })}
+    </Fragment>
+  );
+  switch (menu.tag) {
+    case 'unauthenticated':
+      return (<div className='d-flex'>{actions('mr-3')}</div>);
+    case 'authenticated':
+      return (<div>{actions('mb-3')}</div>);
   }
 };
 
@@ -226,11 +225,11 @@ const TopNavbar: View<Props> = props => {
             </div>
             <div className='d-md-none'>
               <Icon
-                width={1.25}
-                height={1.25}
+                width={1.4}
+                height={1.4}
                 name={state.isMobileMenuOpen ? 'times' : 'bars'}
-                className='cursor-pointer'
                 color='white'
+                style={{ cursor: 'pointer' }}
                 onClick={() => dispatch(adt('toggleMobileMenu'))} />
             </div>
           </Col>
@@ -250,8 +249,9 @@ const DesktopBottomNavbar: View<Props> = props => {
               {props.contextualLinks.left.map((link, i) => (
                 <NavLink
                   {...link}
+                  dispatch={props.dispatch}
                   color='white'
-                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} mr-3`}
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'}`}
                   key={`contextual-link-left-${i}`} />
               ))}
             </div>
@@ -259,8 +259,9 @@ const DesktopBottomNavbar: View<Props> = props => {
               {props.contextualLinks.right.map((link, i) => (
                 <NavLink
                   {...link}
+                  dispatch={props.dispatch}
                   color='white'
-                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ml-3`}
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'}`}
                   key={`contextual-link-left-${i}`} />
               ))}
             </div>
@@ -272,8 +273,49 @@ const DesktopBottomNavbar: View<Props> = props => {
 };
 
 const MobileBottomNavbar: View<Props> = props => {
+  if (!props.state.isMobileMenuOpen) { return null; }
   return (
-    <div></div>
+    <div className='bg-info-alt py-4'>
+      <Container>
+        {props.contextualLinks.left.length
+          ? (<Row>
+              <Col xs='12'>
+                <div className='pb-4 border-bottom mb-4'>
+                  {props.contextualLinks.left.map((link, i) => (
+                    <NavLink
+                      {...link}
+                      dispatch={props.dispatch}
+                      color='white'
+                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.left.length - 1 ? 'mb-3' : ''}`}
+                      key={`mobile-contextual-link-left-${i}`} />
+                  ))}
+                </div>
+              </Col>
+            </Row>)
+          : null}
+        <Row>
+          <Col xs='12'>
+            <MobileAccountMenu {...props} />
+          </Col>
+        </Row>
+        {props.contextualLinks.right.length
+          ? (<Row>
+              <Col xs='12'>
+                <div className='pt-4 border-top mt-4'>
+                  {props.contextualLinks.right.map((link, i) => (
+                    <NavLink
+                      {...link}
+                      dispatch={props.dispatch}
+                      color='white'
+                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.right.length - 1 ? 'mb-3' : ''}`}
+                      key={`mobile-contextual-link-right-${i}`} />
+                  ))}
+                </div>
+              </Col>
+            </Row>)
+          : null}
+      </Container>
+    </div>
   );
 };
 

@@ -2,7 +2,7 @@ import { Immutable, PageMetadata } from 'front-end/lib/framework';
 
 export type UpdateState<State> = (state: Immutable<State>) => Immutable<State>;
 
-export function makeStartLoading<State, Key extends keyof State>(key: Key): UpdateState<State> {
+export function makeStartLoading<State>(key: keyof State): UpdateState<State> {
   return state => {
     const value = state.get(key);
     if (typeof value === 'number') {
@@ -15,7 +15,7 @@ export function makeStartLoading<State, Key extends keyof State>(key: Key): Upda
   };
 }
 
-export function makeStopLoading<State, Key extends keyof State>(key: Key): UpdateState<State> {
+export function makeStopLoading<State>(key: keyof State): UpdateState<State> {
   return state => {
     const value = state.get(key);
     if (typeof value === 'number') {

@@ -5,7 +5,7 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { externalDest, routeDest } from 'front-end/lib/views/link';
+import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
@@ -181,7 +181,7 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
 const signOutLink: Nav.NavLink = {
   text: 'Sign Out',
   dest: routeDest(adt('signOut', null)),
-  symbol_: Nav.leftPlacement(Nav.iconLinkSymbol('sign-out'))
+  symbol_: leftPlacement(iconLinkSymbol('sign-out'))
 };
 
 function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
@@ -198,7 +198,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
       Nav.linkAccountAction({
         text: userIdentifier,
         dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
-        symbol_: Nav.leftPlacement(Nav.imageLinkSymbol(userAvatar))
+        symbol_: leftPlacement(imageLinkSymbol(userAvatar))
       }),
       Nav.linkAccountAction(signOutLink)
     ]),
@@ -283,7 +283,7 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
       text: 'Procurement Concierge',
       dest: externalDest(PROCUREMENT_CONCIERGE_URL),
       newTab: true,
-      symbol_: Nav.rightPlacement(Nav.iconLinkSymbol('external-link'))
+      symbol_: rightPlacement(iconLinkSymbol('external-link'))
     }]
   };
 }
