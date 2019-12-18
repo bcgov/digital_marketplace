@@ -206,7 +206,11 @@ const DesktopAccountMenu: View<Props> = props => {
 const TopNavbar: View<Props> = props => {
   const { state, dispatch, isLoading } = props;
   return (
-    <div style={{ height: `${TOP_NAVBAR_HEIGHT}px` }} className='bg-info border-bottom-gov w-100'>
+    <div
+      style={{
+        height: `${TOP_NAVBAR_HEIGHT}px`
+      }}
+      className='bg-info border-bottom-gov w-100'>
       <Container className='h-100'>
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
@@ -275,7 +279,12 @@ const MobileBottomNavbar: View<Props> = props => {
 
 export const view: View<Props> = props => {
   return (
-    <nav>
+    <nav
+      style={{
+        position: 'sticky',
+        top: `-${TOP_NAVBAR_HEIGHT}px`,
+        zIndex: 9999
+      }}>
       <TopNavbar {...props} />
       <DesktopBottomNavbar {...props} />
       <MobileBottomNavbar {...props} />
