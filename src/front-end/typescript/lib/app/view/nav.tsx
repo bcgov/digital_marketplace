@@ -51,9 +51,11 @@ const NavLink: View<NavLinkProps> = props => {
     props.dispatch(adt('toggleMobileMenu', false));
     if (props.onClick) { return props.onClick(); }
   };
+  const linkProps = { ...props };
+  linkProps.color = linkProps.color || 'white';
   return (
     <Link
-      {...props}
+      {...linkProps}
       onClick={onClick}
       className={`${props.className || ''} d-flex flex-nowrap align-items-center ${active ? 'font-weight-bold' : ''}`}>
       {text}
@@ -115,11 +117,6 @@ const AccountAction: View<AccountActionProps> = ({ className = '', action, dispa
     case 'text':
       return (<div className={`${className} o-50 text-white`}>{action.value}</div>);
     case 'link':
-      action.value.color = action.value.color || 'white';
-      action.value.onClick = () => {
-        dispatch(adt('toggleMobileMenu', false));
-        if (action.value.onClick) { return action.value.onClick(); }
-      };
       return (<NavLink className={className} {...action.value} dispatch={dispatch} />);
   }
 };

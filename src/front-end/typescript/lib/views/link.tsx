@@ -131,7 +131,7 @@ function ButtonLink(props: ButtonProps) {
     ...props,
     button: false,
     color: undefined,
-    className: `${className} d-flex flex-nowrap align-items-center btn btn-${size} ${color ? `btn-${outline ? 'outline-' : ''}${color}` : ''}`
+    className: `${className} d-inline-flex flex-nowrap align-items-center btn btn-${size} ${color ? `btn-${outline ? 'outline-' : ''}${color}` : ''}`
   };
   return (
     <AnchorLink {...anchorProps} />
