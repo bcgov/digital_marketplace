@@ -1,6 +1,6 @@
 import { prefixRequest } from 'shared/lib/http';
 import { PublicFile } from 'shared/lib/resources/file';
-import { Organization, UpdateRequestBody } from 'shared/lib/resources/organization';
+import * as OrgResource from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { ClientHttpMethod, Id } from 'shared/lib/types';
@@ -8,11 +8,11 @@ import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export const apiRequest = prefixRequest('api');
 
-export async function updateOrganization(org: UpdateRequestBody): Promise<Validation<Organization, null>> {
-    const response = await apiRequest(ClientHttpMethod.Put, 'organizations', org);
+export async function updateOrganization(id: Id, body: OrgResource.UpdateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
+    const response = await apiRequest(ClientHttpMethod.Put, `organizations/${id}`, body);
     switch (response.status) {
       case 200:
-        return valid(response.data as Organization); // TODO(Jesse): Does this actually pass the result back?
+        return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
       default:
         return invalid(null);
     }
