@@ -120,7 +120,7 @@ function AnchorLink(props: AnchorProps) {
   );
 }
 
-function ButtonLink(props: ButtonProps) {
+export function ButtonLink(props: ButtonProps) {
   const {
     color,
     size = 'md',
