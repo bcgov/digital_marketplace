@@ -91,6 +91,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
     ];
     case 'cancelEditing':
+    OrgForm.setValues(state.govProfile, state.organization);
     return [ state.set('isEditing', false) ];
     case 'submit':
       return [state, async (state, dispatch) => {
