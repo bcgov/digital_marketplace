@@ -4,6 +4,10 @@ import moment from 'moment';
 import { compareDates, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
 import { ADT } from 'shared/lib/types';
 
+export type ErrorTypeFrom<T> = {
+  [p in keyof T]: string[];
+};
+
 export type Validation<Valid, Invalid = string[]>
   = ADT<'valid', Valid>
   | ADT<'invalid', Invalid>;

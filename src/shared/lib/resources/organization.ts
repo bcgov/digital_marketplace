@@ -1,6 +1,7 @@
 import { PublicFile } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export interface Organization {
   id: Id;
@@ -36,21 +37,7 @@ export interface UpdateRequestBody extends Partial<CreateRequestBody> {
   id: Id;
 }
 
-export interface CreateValidationErrors {
-  legalName?: string[];
-  logoImageFile?: string[];
-  websiteUrl?: string[];
-  contactName?: string[];
-  contactTitle?: string[];
-  contactEmail?: string[];
-  contactPhone?: string[];
-  streetAddress1?: string[];
-  streetAddress2?: string[];
-  city?: string[];
-  region?: string[];
-  mailCode?: string[];
-  country?: string[];
-}
+export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody>;
 
 export interface UpdateValidationErrors extends CreateValidationErrors {
   id?: string[];

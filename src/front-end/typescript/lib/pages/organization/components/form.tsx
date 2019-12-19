@@ -6,6 +6,7 @@ import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation/index';
 import { validateUrl } from 'shared/lib/validation/organization';
 import { validateName } from 'shared/lib/validation/user';
 
@@ -58,11 +59,7 @@ export interface Values {
   websiteUrl: string;
 }
 
-type ErrorTypeFrom<T> = {
-  [p in keyof T]: string[];
-};
-
-export type Errors = ErrorTypeFrom<Values>;
+type Errors = ErrorTypeFrom<Values>;
 
 export function isValid(state: Immutable<State>): boolean {
   return (
