@@ -4,11 +4,12 @@ import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { GetAllOrganizations, Organization, OrganizationSlim } from 'shared/lib/resources/organization';
+import { Organization, OrganizationSlim, readAllOrganizations } from 'shared/lib/resources/organization';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
   table: Immutable<Table.State>;
+  organizations: Organization[];
 }
 
 type InnerMsg = ADT<'table', Table.Msg>;
@@ -20,7 +21,8 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   table: immutable(await Table.init({
     idNamespace: 'org-list-table'
-  }))
+  })),
+  organizations: await readAllOrganizations()
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -67,7 +69,7 @@ function ToSlim(org: Organization): OrganizationSlim {
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return GetAllOrganizations().map( org => ToSlim(org) ).map( (org) => {
+  return state.organizations.map( org => ToSlim(org) ).map( (org) => {
     return [
       { children: org.legalName },
       { children: org.owner ? org.owner.name : null }

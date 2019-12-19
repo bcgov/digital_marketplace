@@ -9,7 +9,7 @@ import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { prefixRequest } from 'shared/lib/http';
-import { CreateRequestBody, GetAllOrganizations, Organization, UpdateRequestBody } from 'shared/lib/resources/organization';
+import * as OrgResource from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
 import { ClientHttpMethod } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -19,7 +19,7 @@ export const apiRequest = prefixRequest('api');
 export interface State {
   isEditing: boolean;
   editingLoading: number;
-  organization: Organization;
+  organization: OrgResource.Organization;
   govProfile: Immutable<OrgForm.State>;
 }
 
@@ -35,40 +35,40 @@ export interface RouteParams {
   orgId: string;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
+const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => ({
   isEditing: false,
   editingLoading: 0,
-  organization: GetAllOrganizations()[0],
-  govProfile: immutable(await OrgForm.init({organization: GetAllOrganizations()[0]}))
+  organization: await OrgResource.readOneOrganization(params.routeParams.orgId),
+  govProfile: immutable(await OrgForm.init({organization: await OrgResource.readOneOrganization(params.routeParams.orgId)}))
 });
 
-export async function createOrganization(org: CreateRequestBody): Promise<Validation<Organization, null>> {
+export async function createOrganization(org: OrgResource.CreateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
     const response = await apiRequest(ClientHttpMethod.Post, 'organizations', org);
     switch (response.status) {
       case 200:
-        return valid(response.data as Organization); // TODO(Jesse): Does this actually pass the result back?
+        return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
       default:
         return invalid(null);
     }
 }
 
-export async function updateOrganization(org: UpdateRequestBody): Promise<Validation<Organization, null>> {
+export async function updateOrganization(org: OrgResource.UpdateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
     const response = await apiRequest(ClientHttpMethod.Put, 'organizations', org);
     switch (response.status) {
       case 200:
-        return valid(response.data as Organization); // TODO(Jesse): Does this actually pass the result back?
+        return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
       default:
         return invalid(null);
     }
 }
 
-export function getCreateParams(org: OrgForm.Values): CreateRequestBody {
+export function getCreateParams(org: OrgForm.Values): OrgResource.CreateRequestBody {
   return {
     ...org
   };
 }
 
-export function getUpdateParams(id: string, org: OrgForm.Values): UpdateRequestBody {
+export function getUpdateParams(id: string, org: OrgForm.Values): OrgResource.UpdateRequestBody {
   return {
     id,
     ...org
@@ -84,10 +84,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     return [
       startEditingLoading(state),
       async state => {
-        // TODO GET org data, and set form values
         state = state.set('isEditing', true);
         state = stopEditingLoading(state);
-        await (new Promise(resolve => setTimeout(resolve, 3000)));
+        state.set('organization', await OrgResource.readOneOrganization(state.organization.id) );
         return state;
       }
     ];
