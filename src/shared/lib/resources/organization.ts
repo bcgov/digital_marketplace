@@ -3,23 +3,11 @@ import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
-export interface Organization {
+export interface Organization extends Omit<CreateRequestBody, 'logoImageFile'> {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
-  legalName: string;
   logoImageFile?: PublicFile;
-  websiteUrl?: string;
-  streetAddress1: string;
-  streetAddress2?: string;
-  city: string;
-  region: string;
-  mailCode: string;
-  country: string;
-  contactName: string;
-  contactTitle?: string;
-  contactEmail: string;
-  contactPhone?: string;
 }
 
 export interface OrganizationSlim {
@@ -29,19 +17,27 @@ export interface OrganizationSlim {
   owner?: Pick<User, 'id' | 'name'>;
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile'> {
-  logoImageFile?: Id;
-}
+export interface CreateRequestBody {
+  legalName: string;
+  streetAddress1: string;
+  city: string;
+  region: string;
+  mailCode: string;
+  country: string;
+  contactName: string;
+  contactEmail: string;
 
-export interface UpdateRequestBody extends Partial<CreateRequestBody> {
-  id: Id;
+  contactTitle?: string;
+  contactPhone?: string;
+  logoImageFile?: string;
+  streetAddress2?: string;
+  websiteUrl?: string;
 }
 
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody>;
 
-export interface UpdateValidationErrors extends CreateValidationErrors {
-  id?: string[];
-}
+export type UpdateRequestBody      = Partial<CreateRequestBody> & { id: Id; };
+export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody>;
 
 export async function readOneOrganization(id: string): Promise<Organization> {
   const orgs: Organization[] = await readAllOrganizations();
