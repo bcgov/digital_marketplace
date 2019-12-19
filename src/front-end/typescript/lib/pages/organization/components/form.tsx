@@ -4,7 +4,7 @@ import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, U
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
-import { Organization } from 'shared/lib/resources/organization';
+import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 import { validateUrl } from 'shared/lib/validation/organization';
@@ -30,101 +30,89 @@ export interface State {
 }
 
 export type Msg =
-  ADT<'legalName', ShortText.Msg>      |
-  ADT<'websiteUrl', ShortText.Msg>     |
-  ADT<'streetAddress1', ShortText.Msg> |
-  ADT<'streetAddress2', ShortText.Msg> |
-  ADT<'city', ShortText.Msg>           |
-  ADT<'country', ShortText.Msg>        |
-  ADT<'mailCode', ShortText.Msg>       |
-  ADT<'contactTitle', ShortText.Msg>   |
-  ADT<'contactName', ShortText.Msg>    |
-  ADT<'contactEmail', ShortText.Msg>   |
-  ADT<'contactPhone', ShortText.Msg>   |
-  ADT<'region', ShortText.Msg>
+  ADT<'legalName',       ShortText.Msg> |
+  ADT<'websiteUrl',      ShortText.Msg> |
+  ADT<'streetAddress1',  ShortText.Msg> |
+  ADT<'streetAddress2',  ShortText.Msg> |
+  ADT<'city',            ShortText.Msg> |
+  ADT<'country',         ShortText.Msg> |
+  ADT<'mailCode',        ShortText.Msg> |
+  ADT<'contactTitle',    ShortText.Msg> |
+  ADT<'contactName',     ShortText.Msg> |
+  ADT<'contactEmail',    ShortText.Msg> |
+  ADT<'contactPhone',    ShortText.Msg> |
+  ADT<'region',          ShortText.Msg>
   ;
 
-export interface Values {
-  legalName: string;
-  streetAddress1: string;
-  streetAddress2: string;
-  city: string;
-  country: string;
-  mailCode: string;
-  contactTitle: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  region: string;
-  websiteUrl: string;
-}
+export type Values = Required<CreateRequestBody>;
 
 type Errors = ErrorTypeFrom<Values>;
 
 export function isValid(state: Immutable<State>): boolean {
   return (
-    FormField.isValid(state.legalName) &&
-    FormField.isValid(state.websiteUrl) &&
+    FormField.isValid(state.legalName)      &&
+    FormField.isValid(state.websiteUrl)     &&
     FormField.isValid(state.streetAddress1) &&
     FormField.isValid(state.streetAddress2) &&
-    FormField.isValid(state.city) &&
-    FormField.isValid(state.country) &&
-    FormField.isValid(state.mailCode) &&
-    FormField.isValid(state.contactTitle) &&
-    FormField.isValid(state.contactName) &&
-    FormField.isValid(state.contactEmail) &&
-    FormField.isValid(state.contactPhone) &&
+    FormField.isValid(state.city)           &&
+    FormField.isValid(state.country)        &&
+    FormField.isValid(state.mailCode)       &&
+    FormField.isValid(state.contactTitle)   &&
+    FormField.isValid(state.contactName)    &&
+    FormField.isValid(state.contactEmail)   &&
+    FormField.isValid(state.contactPhone)   &&
     FormField.isValid(state.region)
   );
 }
 
 export function getValues(state: Immutable<State>): Values {
   return {
-    legalName: FormField.getValue(state.legalName),
-    streetAddress1: FormField.getValue(state.streetAddress1),
-    streetAddress2: FormField.getValue(state.streetAddress2),
-    city: FormField.getValue(state.city),
-    country: FormField.getValue(state.country),
-    mailCode: FormField.getValue(state.mailCode),
-    contactTitle: FormField.getValue(state.contactTitle),
-    contactName: FormField.getValue(state.contactName),
-    contactEmail: FormField.getValue(state.contactEmail),
-    contactPhone: FormField.getValue(state.contactPhone),
-    region: FormField.getValue(state.region),
-    websiteUrl: FormField.getValue(state.websiteUrl)
+    legalName:       FormField.getValue(state.legalName),
+    logoImageFile:   '', // TODO(Jesse):  Implement this!
+    streetAddress1:  FormField.getValue(state.streetAddress1),
+    streetAddress2:  FormField.getValue(state.streetAddress2),
+    city:            FormField.getValue(state.city),
+    country:         FormField.getValue(state.country),
+    mailCode:        FormField.getValue(state.mailCode),
+    contactTitle:    FormField.getValue(state.contactTitle),
+    contactName:     FormField.getValue(state.contactName),
+    contactEmail:    FormField.getValue(state.contactEmail),
+    contactPhone:    FormField.getValue(state.contactPhone),
+    region:          FormField.getValue(state.region),
+    websiteUrl:      FormField.getValue(state.websiteUrl)
   };
 }
 
-export function setValues(state: Immutable<State>, values: Values): Immutable<State> {
+export function setValues(state: Immutable<State>, org: Organization): Immutable<State> {
   return state
-    .update('legalName', s => FormField.setValue(s, values.legalName))
-    .update('streetAddress1', s => FormField.setValue(s, values.streetAddress1))
-    .update('streetAddress2', s => FormField.setValue(s, values.streetAddress2))
-    .update('city', s => FormField.setValue(s, values.city))
-    .update('country', s => FormField.setValue(s, values.country))
-    .update('mailCode', s => FormField.setValue(s, values.mailCode))
-    .update('contactTitle', s => FormField.setValue(s, values.contactTitle))
-    .update('contactName', s => FormField.setValue(s, values.contactName))
-    .update('contactEmail', s => FormField.setValue(s, values.contactEmail))
-    .update('contactPhone', s => FormField.setValue(s, values.contactPhone))
-    .update('region', s => FormField.setValue(s, values.region))
-    .update('websiteUrl', s => FormField.setValue(s, values.websiteUrl));
+    .update('legalName',       s => FormField.setValue(s, org.legalName))
+    .update('streetAddress1',  s => FormField.setValue(s, org.streetAddress1))
+    .update('city',            s => FormField.setValue(s, org.city))
+    .update('country',         s => FormField.setValue(s, org.country))
+    .update('mailCode',        s => FormField.setValue(s, org.mailCode))
+    .update('contactName',     s => FormField.setValue(s, org.contactName))
+    .update('contactEmail',    s => FormField.setValue(s, org.contactEmail))
+    .update('region',          s => FormField.setValue(s, org.region))
+    .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || ''))
+    .update('contactTitle',    s => FormField.setValue(s, org.contactTitle || ''))
+    .update('contactPhone',    s => FormField.setValue(s, org.contactPhone || ''))
+    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl || ''));
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
   return state
-    .update('legalName', s => FormField.setErrors(s, errors.legalName || []))
-    .update('streetAddress1', s => FormField.setErrors(s, errors.streetAddress1 || []))
-    .update('streetAddress2', s => FormField.setErrors(s, errors.streetAddress2 || []))
-    .update('city', s => FormField.setErrors(s, errors.city || []))
-    .update('country', s => FormField.setErrors(s, errors.country || []))
-    .update('mailCode', s => FormField.setErrors(s, errors.mailCode || []))
-    .update('contactTitle', s => FormField.setErrors(s, errors.contactTitle || []))
-    .update('contactName', s => FormField.setErrors(s, errors.contactName || []))
-    .update('contactEmail', s => FormField.setErrors(s, errors.contactEmail || []))
-    .update('contactPhone', s => FormField.setErrors(s, errors.contactPhone || []))
-    .update('region', s => FormField.setErrors(s, errors.region || []))
-    .update('websiteUrl', s => FormField.setErrors(s, errors.websiteUrl || []));
+    .update('legalName',       s => FormField.setErrors(s, errors.legalName || []))
+    .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
+    .update('streetAddress2',  s => FormField.setErrors(s, errors.streetAddress2 || []))
+    .update('city',            s => FormField.setErrors(s, errors.city || []))
+    .update('country',         s => FormField.setErrors(s, errors.country || []))
+    .update('mailCode',        s => FormField.setErrors(s, errors.mailCode || []))
+    .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle || []))
+    .update('contactName',     s => FormField.setErrors(s, errors.contactName || []))
+    .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail || []))
+    .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone || []))
+    .update('region',          s => FormField.setErrors(s, errors.region || []))
+    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl || []));
 }
 
 export const init: Init<Params, State> = async (params) => {

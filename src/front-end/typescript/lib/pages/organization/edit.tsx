@@ -91,7 +91,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
     ];
     case 'cancelEditing':
-      return [state.set('isEditing', false)];
+    return [ state.set('isEditing', false) ];
     case 'submit':
       return [state, async (state, dispatch) => {
         createOrganization(getCreateParams(OrgForm.getValues(state.govProfile)));
@@ -127,7 +127,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             isEditing
             ?
             <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing'))}>
-              Cancel Editing
+              Discard Changes
             </Link>
             :
             <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('paperclip'))} onClick={() => dispatch(adt('startEditing'))}>
