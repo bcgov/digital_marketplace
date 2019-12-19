@@ -58,20 +58,11 @@ export interface Values {
   websiteUrl: string;
 }
 
-export interface Errors {
-  legalName?: string[];
-  streetAddress1?: string[];
-  streetAddress2?: string[];
-  city?: string[];
-  country?: string[];
-  mailCode?: string[];
-  contactTitle?: string[];
-  contactName?: string[];
-  contactEmail?: string[];
-  contactPhone?: string[];
-  region?: string[];
-  websiteUrl?: string[];
-}
+type ErrorTypeFrom<T> = {
+  [p in keyof T]: string[];
+};
+
+export type Errors = ErrorTypeFrom<Values>;
 
 export function isValid(state: Immutable<State>): boolean {
   return (
