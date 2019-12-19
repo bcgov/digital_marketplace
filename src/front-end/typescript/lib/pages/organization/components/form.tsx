@@ -94,25 +94,25 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .update('contactEmail',    s => FormField.setValue(s, org.contactEmail))
     .update('region',          s => FormField.setValue(s, org.region))
     .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || ''))
-    .update('contactTitle',    s => FormField.setValue(s, org.contactTitle || ''))
-    .update('contactPhone',    s => FormField.setValue(s, org.contactPhone || ''))
-    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl || ''));
+    .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || ''))
+    .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || ''))
+    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || ''));
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
   return state
-    .update('legalName',       s => FormField.setErrors(s, errors.legalName || []))
+    .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
     .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
     .update('streetAddress2',  s => FormField.setErrors(s, errors.streetAddress2 || []))
-    .update('city',            s => FormField.setErrors(s, errors.city || []))
-    .update('country',         s => FormField.setErrors(s, errors.country || []))
-    .update('mailCode',        s => FormField.setErrors(s, errors.mailCode || []))
-    .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle || []))
-    .update('contactName',     s => FormField.setErrors(s, errors.contactName || []))
-    .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail || []))
-    .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone || []))
-    .update('region',          s => FormField.setErrors(s, errors.region || []))
-    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl || []));
+    .update('city',            s => FormField.setErrors(s, errors.city           || []))
+    .update('country',         s => FormField.setErrors(s, errors.country        || []))
+    .update('mailCode',        s => FormField.setErrors(s, errors.mailCode       || []))
+    .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle   || []))
+    .update('contactName',     s => FormField.setErrors(s, errors.contactName    || []))
+    .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
+    .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
+    .update('region',          s => FormField.setErrors(s, errors.region         || []))
+    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []));
 }
 
 export const init: Init<Params, State> = async (params) => {

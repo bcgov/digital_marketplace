@@ -91,8 +91,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
     ];
     case 'cancelEditing':
-    OrgForm.setValues(state.govProfile, state.organization);
-    return [ state.set('isEditing', false) ];
+    return [
+      state.set('govProfile', OrgForm.setValues(state.govProfile, state.organization))
+           .set('isEditing', false)
+      ];
     case 'submit':
       return [state, async (state, dispatch) => {
         createOrganization(getCreateParams(OrgForm.getValues(state.govProfile)));
