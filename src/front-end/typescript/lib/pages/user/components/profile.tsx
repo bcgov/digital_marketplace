@@ -1,10 +1,11 @@
 import * as FormField from 'front-end/lib/components/form-field';
+import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { getString } from 'shared/lib';
-import { User } from 'shared/lib/resources/user';
+import { getBoolean, getString} from 'shared/lib';
+import { parseUserStatus, UpdateRequestBody, User, UserStatus } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { validateEmail, validateName } from 'shared/lib/validation/user';
 
@@ -16,22 +17,29 @@ export interface State {
   name: Immutable<ShortText.State>;
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
+  userStatus: Immutable<ShortText.State>;
+  notificationsOn: Immutable<Checkbox.State>;
 }
 
 export type Msg =
-  ADT<'jobTitle', ShortText.Msg> |
-  ADT<'email', ShortText.Msg>    |
-  ADT<'name', ShortText.Msg> ;
+  ADT<'jobTitle',        ShortText.Msg> |
+  ADT<'email',           ShortText.Msg> |
+  ADT<'userStatus',      ShortText.Msg> |
+  ADT<'name',            ShortText.Msg> |
+  ADT<'notificationsOn', Checkbox.Msg>
+  ;
 
-export interface Values {
-  name: string;
-  email: string;
-}
+export type Values = Required<UpdateRequestBody>;
 
 export function getValues(state: Immutable<State>): Values {
   return {
+    id: FormField.getValue(state.name),
+    status: parseUserStatus(FormField.getValue(state.userStatus)) || UserStatus.Active,
     name: FormField.getValue(state.name),
-    email: FormField.getValue(state.name) // TODO change to email
+    email: FormField.getValue(state.email),
+    avatarImageFile: FormField.getValue(state.name),
+    notificationsOn: FormField.getValue(state.notificationsOn),
+    acceptedTerms: false // TODO(Jesse): Implement
   };
 }
 
@@ -59,12 +67,19 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
 
 export const init: Init<Params, State> = async ({ existingUser }) => {
   return {
+    notificationsOn: immutable(await Checkbox.init({
+      errors: [],
+      child: {
+        value: getBoolean(existingUser, 'notificationsOn'),
+        id: 'user-gov-notifications-on'
+      }
+    })),
     jobTitle: immutable(await ShortText.init({
       errors: [],
       validate: validateName,
       child: {
         type: 'text',
-        value: getString(existingUser, 'job-title'),
+        value: getString(existingUser, 'jobTitle'),
         id: 'user-gov-job-title'
       }
     })),
@@ -85,12 +100,29 @@ export const init: Init<Params, State> = async ({ existingUser }) => {
         value: getString(existingUser, 'name'),
         id: 'user-gov-name'
       }
+    })),
+    userStatus: immutable(await ShortText.init({
+      errors: [],
+      validate: validateName,
+      child: {
+        type: 'text',
+        value: getString(existingUser, 'userStatus'),
+        id: 'user-gov-user-status'
+      }
     }))
   };
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'notificationsOn':
+      return updateComponentChild({
+        state,
+        childStatePath: ['notificationsOn'],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('notificationsOn', value)
+      });
     case 'jobTitle':
       return updateComponentChild({
         state,
@@ -114,6 +146,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: ShortText.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('name', value)
+      });
+    case 'userStatus':
+      return updateComponentChild({
+        state,
+        childStatePath: ['userStatus'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('userStatus', value)
       });
   }
 };
@@ -152,6 +192,13 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.email}
             dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
+
+          <Checkbox.view
+            extraChildProps={{inlineLabel: ''}}
+            label='Recieve Notifications?'
+            disabled={disabled}
+            state={state.notificationsOn}
+            dispatch={mapComponentDispatch(dispatch, value => adt('notificationsOn' as const, value))} />
 
         </Col>
       </Row>
