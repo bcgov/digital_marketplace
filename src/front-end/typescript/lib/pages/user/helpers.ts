@@ -1,4 +1,3 @@
-
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import * as UserModule from 'shared/lib/resources/user';
 
@@ -9,7 +8,7 @@ export function isPublic(user: User | undefined): boolean {
 
 type DisplayUserType = 'Public Sector Employee' | 'Vendor';
 
-interface DisplayUser {
+export interface DisplayUser {
   name: string;
   type: DisplayUserType;
   active: boolean;
@@ -20,15 +19,17 @@ export function getBadgeColor(isActive: boolean): string {
   return isActive ? 'badge-success' : 'badge-danger';
 }
 
-export function mapUserTypeToDisplayType(users: UserModule.User[]): DisplayUser[] {
-  return users.map( (user) => {
-    return ({
-      name: user.name,
-      type: user.type === UserModule.UserType.Vendor ? 'Vendor' : 'Public Sector Employee',
-      admin: user.type === UserModule.UserType.Admin ? true : false,
-      active: user.status === UserModule.UserStatus.Active ? true : false
-    });
+export function toDisplayUser(user: UserModule.User): DisplayUser {
+  return ({
+    name: user.name,
+    type: user.type === UserModule.UserType.Vendor ? 'Vendor' : 'Public Sector Employee',
+    admin: user.type === UserModule.UserType.Admin ? true : false,
+    active: user.status === UserModule.UserStatus.Active ? true : false
   });
+}
+
+export function mapUserTypeToDisplayType(users: UserModule.User[]): DisplayUser[] {
+  return users.map( user => toDisplayUser(user) );
 }
 
 export function viewStringForUserStatus(type: UserStatus): string {
