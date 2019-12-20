@@ -7,13 +7,11 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { prefixRequest } from 'shared/lib/http';
+import { request } from 'shared/lib/http';
 import * as OrgResource from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
 import { ClientHttpMethod } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
-
-export const apiRequest = prefixRequest('api');
 
 export interface State {
   isEditing: boolean;
@@ -48,23 +46,23 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
 };
 
 export async function createOrganization(org: OrgResource.CreateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
-    const response = await apiRequest(ClientHttpMethod.Post, 'organizations', org);
-    switch (response.status) {
-      case 200:
-        return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
-      default:
-        return invalid(null);
-    }
+  const response = await request(ClientHttpMethod.Post, 'api/organizations', org);
+  switch (response.status) {
+    case 200:
+      return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
+    default:
+      return invalid(null);
+  }
 }
 
 export async function updateOrganization(org: OrgResource.UpdateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
-    const response = await apiRequest(ClientHttpMethod.Put, 'organizations', org);
-    switch (response.status) {
-      case 200:
-        return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
-      default:
-        return invalid(null);
-    }
+  const response = await request(ClientHttpMethod.Put, 'api/organizations', org);
+  switch (response.status) {
+    case 200:
+      return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
+    default:
+      return invalid(null);
+  }
 }
 
 export function getUpdateParams(id: string, org: OrgForm.Values): OrgResource.UpdateRequestBody {

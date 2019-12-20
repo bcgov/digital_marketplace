@@ -7,10 +7,12 @@ import Icon from 'front-end/lib/views/icon';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as UserModule from 'shared/lib/resources/user';
+import { readAllUsers } from 'shared/lib/resources/user';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
   table: Immutable<Table.State>;
+  users: UserModule.User[];
 }
 
 type InnerMsg = ADT<'table', Table.Msg>;
@@ -20,6 +22,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
+  users: await readAllUsers(),
   table: immutable(await Table.init({
     idNamespace: 'user-list-table'
   }))
@@ -48,8 +51,9 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
     { children: 'Admin?' }
   ];
 }
+
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return UserHelpers.mapUserTypeToDisplayType(UserModule.getAllUsers()).map( (user) => {
+  return UserHelpers.mapUserTypeToDisplayType(state.users).map( (user) => {
     return [
       { children: <span className={`badge ${UserHelpers.getBadgeColor(user.active)}`}>{user.active ? 'Active' : 'Inactive'}</span> },
       { children: user.type },

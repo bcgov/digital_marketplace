@@ -9,7 +9,7 @@ import Link from 'front-end/lib/views/link';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { getAllUsers, User } from 'shared/lib/resources/user';
+import { readOneUser, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -39,7 +39,7 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const user: User = getAllUsers()[0];
+  const user: User = await readOneUser('1');
   const displayUser: UserHelpers.DisplayUser = UserHelpers.toDisplayUser(user);
 
   return ({
@@ -53,7 +53,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
     })),
     user,
     govProfile: immutable(await GovProfileForm.init({
-      existingUser: getAllUsers()[0]
+      existingUser: user
     }))
   });
 };
