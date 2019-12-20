@@ -111,25 +111,33 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
         <Col xs='12' className='mb-4'>
 
-          <Checkbox.view
-            className='d-inline'
-            extraChildProps={{inlineLabel: ''}}
-            label='Permission(s)'
-            disabled={!state.editingAdminCheckbox}
-            state={state.adminCheckbox}
-            dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
+          <div className='pb-2'>
+            <span className='pr-4'><strong>Permission(s)</strong></span>
+            { state.editingAdminCheckbox ?
+              <span>
+                { /* TODO(Jesse): Change to loading-button */ }
+                <Icon
+                  name='check'
+                  onClick={() => dispatch(adt('finishEditingAdminCheckbox'))}
+                />
+              </span>
+            :
+              <span>
+                { /* TODO(Jesse): Change to loading-button */ }
+                <Icon
+                  name='paperclip'
+                  onClick={() => dispatch(adt('editingAdminCheckbox'))}
+                />
+              </span>
+            }
+          </div>
 
-          { state.editingAdminCheckbox ?
-            <Icon
-              name='check'
-              onClick={() => dispatch(adt('finishEditingAdminCheckbox'))}
-            />
-          :
-            <Icon
-              name='paperclip'
-              onClick={() => dispatch(adt('editingAdminCheckbox'))}
-            />
-          }
+            <Checkbox.view
+              extraChildProps={{inlineLabel: 'Admin'}}
+              label=''
+              disabled={!state.editingAdminCheckbox}
+              state={state.adminCheckbox}
+              dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
 
         </Col>
 
