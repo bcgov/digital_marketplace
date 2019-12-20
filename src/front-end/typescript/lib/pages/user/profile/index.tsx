@@ -2,11 +2,12 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as GovProfileForm from 'front-end/lib/pages/user/components/profile';
+import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import Link from 'front-end/lib/views/link';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { getAllUsers, User, viewStringFor } from 'shared/lib/resources/user';
+import { getAllUsers, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -61,7 +62,12 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       </Row>
       <Row>
         <Col xs='12' className='my-3 py-3'>
-          <span className='pr-4'><strong>Account Type</strong></span> <span>{`${viewStringFor(state.user.type)}`}</span>
+          <span className='pr-4'><strong>Status</strong></span>
+          <span>{`${UserHelpers.viewStringForUserStatus(state.user.status)}`}</span>
+        </Col>
+        <Col xs='12' className='my-3 py-3'>
+          <span className='pr-4'><strong>Account Type</strong></span>
+          <span>{`${UserHelpers.viewStringForUserType(state.user.type)}`}</span>
         </Col>
       </Row>
 

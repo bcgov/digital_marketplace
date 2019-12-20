@@ -1,12 +1,14 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
-import { parseUserStatus, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { parseUserStatus, User, UserStatus } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { adt, ADT } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation/index';
 import { validateEmail, validateName } from 'shared/lib/validation/user';
 
 export interface Params {
@@ -38,6 +40,8 @@ export interface Values {
     idpUsername: string;
 }
 
+export type Errors = ErrorTypeFrom<State>;
+
 export function getValues(state: Immutable<State>): Values {
   return {
     id: FormField.getValue(state.name),
@@ -58,11 +62,6 @@ export function setValues(state: Immutable<State>, values: Values): Immutable<St
 export function isValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.name);
   // TODO email
-}
-
-export interface Errors {
-  name?: string[];
-  email?: string[];
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
@@ -170,11 +169,6 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-function isPublic(user: User | undefined): boolean {
-  const result = (user !== undefined) && (user.type === UserType.Government || user.type === UserType.Admin);
-  return result;
-}
-
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
   return (
@@ -182,7 +176,7 @@ export const view: View<Props> = props => {
       <Row>
         <Col xs='12'>
 
-          { isPublic(state.existingUser) ?
+          { UserHelpers.isPublic(state.existingUser) ?
             <ShortText.view
               extraChildProps={{} /* TODO(Jesse): How do we add the ? helptext icon to this element? */ }
               label='IDIR'

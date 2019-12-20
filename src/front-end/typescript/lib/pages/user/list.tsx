@@ -2,6 +2,7 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import Icon from 'front-end/lib/views/icon';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -47,35 +48,10 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
     { children: 'Admin?' }
   ];
 }
-
-type UserType = 'Public Sector Employee' | 'Vendor';
-
-interface DisplayUser {
-  name: string;
-  type: UserType;
-  active: boolean;
-  admin: boolean;
-}
-
-function mapUserTypeToDisplayType(users: UserModule.User[]): DisplayUser[] {
-  return users.map( (user) => {
-    return ({
-      name: user.name,
-      type: user.type === UserModule.UserType.Vendor ? 'Vendor' : 'Public Sector Employee',
-      admin: user.type === UserModule.UserType.Admin ? true : false,
-      active: user.status === UserModule.UserStatus.Active ? true : false
-    });
-  });
-}
-
-function getBadgeColor(isActive: boolean): string {
-  return isActive ? 'badge-success' : 'badge-danger';
-}
-
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return mapUserTypeToDisplayType(UserModule.getAllUsers()).map( (user) => {
+  return UserHelpers.mapUserTypeToDisplayType(UserModule.getAllUsers()).map( (user) => {
     return [
-      { children: <span className={`badge ${getBadgeColor(user.active)}`}>{user.active ? 'Active' : 'Inactive'}</span> },
+      { children: <span className={`badge ${UserHelpers.getBadgeColor(user.active)}`}>{user.active ? 'Active' : 'Inactive'}</span> },
       { children: user.type },
       { children: user.name },
       { children: user.admin ? <Icon name='check' /> : null }
