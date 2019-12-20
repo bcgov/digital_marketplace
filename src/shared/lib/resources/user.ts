@@ -1,23 +1,11 @@
 import { PublicFile } from 'shared/lib/resources/file';
 import { Id } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export enum UserType {
   Vendor = 'VENDOR',
   Government = 'GOV',
   Admin = 'ADMIN'
-}
-
-export function parseUserType(raw: string): UserType | null {
-  switch (raw) {
-    case UserType.Vendor:
-      return UserType.Vendor;
-    case UserType.Government:
-      return UserType.Government;
-    case UserType.Admin:
-      return UserType.Admin;
-    default:
-      return null;
-  }
 }
 
 export enum UserStatus {
@@ -48,24 +36,7 @@ export interface UpdateRequestBody {
   acceptedTerms?: boolean;
 }
 
-export interface UpdateValidationErrors {
-  id?: string[];
-  name?: string[];
-  email?: string[];
-  avatarImageFile?: string[];
-  notificationsOn?: string[];
-  acceptedTerms?: string[];
-}
-
-export function viewStringFor(type: UserType): string {
-  switch (type) {
-      case UserType.Government:
-      case UserType.Admin:
-        return 'Public Sector Employee';
-      case UserType.Vendor:
-        return 'Vendor';
-  }
-}
+export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody>;
 
 export function getAllUsers(): User[] {
   return [
@@ -115,4 +86,40 @@ export function getAllUsers(): User[] {
       idpUsername: 'biggie'
     }
   ];
+}
+
+export function parseUserStatus(raw: string): UserStatus | null {
+  switch (raw) {
+    case UserStatus.Active:
+      return UserStatus.Active;
+    case UserStatus.InactiveByUser:
+      return UserStatus.InactiveByUser;
+    case UserStatus.InactiveByAdmin:
+      return UserStatus.InactiveByAdmin;
+    default:
+      return null;
+  }
+}
+
+export function parseUserType(raw: string): UserType | null {
+  switch (raw) {
+    case UserType.Vendor:
+      return UserType.Vendor;
+    case UserType.Government:
+      return UserType.Government;
+    case UserType.Admin:
+      return UserType.Admin;
+    default:
+      return null;
+  }
+}
+
+export function viewStringFor(type: UserType): string {
+  switch (type) {
+      case UserType.Government:
+      case UserType.Admin:
+        return 'Public Sector Employee';
+      case UserType.Vendor:
+        return 'Vendor';
+  }
 }
