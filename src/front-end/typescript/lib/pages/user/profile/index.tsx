@@ -4,6 +4,7 @@ import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as GovProfileForm from 'front-end/lib/pages/user/components/profile';
 import * as UserHelpers from 'front-end/lib/pages/user/helpers';
+import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
@@ -15,11 +16,15 @@ export interface State {
   user: User;
   govProfile: Immutable<GovProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>;
+  editingAdminCheckbox: boolean;
 }
 
 type InnerMsg
   = ADT<'govProfile', GovProfileForm.Msg>
-  | ADT<'adminCheckbox', Checkbox.Msg>;
+  | ADT<'adminCheckbox', Checkbox.Msg>
+  | ADT<'finishEditingAdminCheckbox', undefined>
+  | ADT<'editingAdminCheckbox', undefined>
+  ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -38,6 +43,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
   const displayUser: UserHelpers.DisplayUser = UserHelpers.toDisplayUser(user);
 
   return ({
+    editingAdminCheckbox: false,
     adminCheckbox: immutable(await Checkbox.init({
       errors: [],
       child: {
@@ -54,6 +60,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'finishEditingAdminCheckbox':
+      return [state.set('editingAdminCheckbox', false)];
+    case 'editingAdminCheckbox':
+      return [state.set('editingAdminCheckbox', true)];
     case 'adminCheckbox':
       return updateComponentChild({
         state,
@@ -102,15 +112,24 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Col xs='12' className='mb-4'>
 
           <Checkbox.view
+            className='d-inline'
             extraChildProps={{inlineLabel: ''}}
-            label='Permissions'
-            disabled={true}
+            label='Permission(s)'
+            disabled={!state.editingAdminCheckbox}
             state={state.adminCheckbox}
             dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
 
-          <span>
-            {``}
-          </span>
+          { state.editingAdminCheckbox ?
+            <Icon
+              name='check'
+              onClick={() => dispatch(adt('finishEditingAdminCheckbox'))}
+            />
+          :
+            <Icon
+              name='paperclip'
+              onClick={() => dispatch(adt('editingAdminCheckbox'))}
+            />
+          }
 
         </Col>
 
