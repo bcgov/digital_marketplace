@@ -2,7 +2,6 @@ import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/l
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
-import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import makeSidebar from 'front-end/lib/views/sidebar/menu';
@@ -19,8 +18,10 @@ export const apiRequest = prefixRequest('api');
 export interface State {
   isEditing: boolean;
   editingLoading: number;
+  submitLoading: number;
   organization: OrgResource.Organization;
   govProfile: Immutable<OrgForm.State>;
+  submitErrors?: string[];
 }
 
 type InnerMsg
@@ -35,12 +36,16 @@ export interface RouteParams {
   orgId: string;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => ({
-  isEditing: false,
-  editingLoading: 0,
-  organization: await OrgResource.readOneOrganization(params.routeParams.orgId),
-  govProfile: immutable(await OrgForm.init({organization: await OrgResource.readOneOrganization(params.routeParams.orgId)}))
-});
+const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
+  const organization: OrgResource.Organization = await OrgResource.readOneOrganization(params.routeParams.orgId);
+  return ({
+    isEditing: false,
+    editingLoading: 0,
+    submitLoading: 0,
+    organization,
+    govProfile: immutable(await OrgForm.init({organization}))
+  });
+};
 
 export async function createOrganization(org: OrgResource.CreateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
     const response = await apiRequest(ClientHttpMethod.Post, 'organizations', org);
@@ -60,12 +65,6 @@ export async function updateOrganization(org: OrgResource.UpdateRequestBody): Pr
       default:
         return invalid(null);
     }
-}
-
-export function getCreateParams(org: OrgForm.Values): OrgResource.CreateRequestBody {
-  return {
-    ...org
-  };
 }
 
 export function getUpdateParams(id: string, org: OrgForm.Values): OrgResource.UpdateRequestBody {
@@ -97,8 +96,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'submit':
       return [state, async (state, dispatch) => {
-        createOrganization(getCreateParams(OrgForm.getValues(state.govProfile)));
-        state = state.set('isEditing', false);
+        const resp = await createOrganization(OrgForm.getValues(state.govProfile));
+        if (resp) {
+          state = state.set('isEditing', false);
+        } else {
+          state = state.set('submitErrors', ['Unexpected error updating organization data']);
+        }
+
         return state;
       }];
     case 'govProfile':
@@ -117,7 +121,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isEditing = state.isEditing;
   const isEditingLoading = state.editingLoading > 0;
-  const isLoading = isEditingLoading;
+  const isSubmitLoading = state.submitLoading > 0;
+  const isLoading = isEditingLoading || isSubmitLoading;
   const isDisabled = !isEditing || isLoading;
   return (
     <div>
@@ -162,10 +167,13 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Col className='d-flex justify-content-end pt-5'>
           <Link button className='mr-3'>Cancel</Link>
-          <Link button onClick={() => dispatch(adt('submit'))} className='btn-secondary'>
-            <Icon name='plus'></Icon>
-            <span className='pl-2'>Save</span>
-          </Link>
+          <LoadingButton loading={isLoading}
+            color='primary'
+            symbol_={leftPlacement(iconLinkSymbol('plus'))}
+            onClick={() => dispatch(adt('submit'))}
+          >
+            Save
+          </LoadingButton>
         </Col>
       </Row>
 
