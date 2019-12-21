@@ -45,7 +45,8 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       // Manage the session ID cookie.
       const setSessionId = (id: string) => expressRes.cookie(SESSION_COOKIE_NAME, id, {
         signed: true,
-        httpOnly: true
+        httpOnly: true,
+        sameSite: 'Lax'
       });
       const sessionId = sessionToSessionId(response.session);
       setSessionId(sessionId.toString());
