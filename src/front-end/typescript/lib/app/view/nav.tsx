@@ -9,7 +9,6 @@ export type Params = null;
 // TODO support minimal nav for sign up step two.
 
 const TOP_NAVBAR_HEIGHT = 67; //px
-//const DESKTOP_BOTTOM_NAVBAR_HEIGHT = 52; //px
 
 export interface State {
   isDesktopAccountDropdownOpen: boolean;
@@ -137,13 +136,13 @@ type MobileAccountMenu = AuthenticatedMobileAccountMenu | UnauthenticatedAccount
 export interface Props extends ComponentViewProps<State, Msg> {
   logoImageUrl: string;
   title: string;
-  homeDest: Dest;
+  homeDest?: Dest;
   isLoading: boolean;
   accountMenus: {
     mobile: MobileAccountMenu;
     desktop: DesktopAccountMenu;
   };
-  contextualLinks: {
+  contextualLinks?: {
     left: NavLink[];
     right: NavLink[];
   };
@@ -213,6 +212,7 @@ const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) 
       text={title}
       color='white'
       dest={homeDest}
+      style={{ pointerEvents: homeDest ? undefined : 'none' }}
       className='font-weight-bolder font-size-large' />
   </div>
 );
@@ -229,7 +229,7 @@ const TopNavbar: View<Props> = props => {
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex align-items-center flex-grow-1'>
-              <Link dest={props.homeDest}>
+              <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }}>
                 <img src={props.logoImageUrl} style={{ height: `${TOP_NAVBAR_HEIGHT - 22}px` }} />
               </Link>
               <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
@@ -257,28 +257,30 @@ const TopNavbar: View<Props> = props => {
 };
 
 const DesktopBottomNavbar: View<Props> = props => {
+  const { contextualLinks } = props;
+  if (!contextualLinks) { return null; }
   return (
     <div className='bg-info-alt py-3 d-none d-md-block shadow'>
       <Container className='h-100'>
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex flex-nowrap'>
-              {props.contextualLinks.left.map((link, i) => (
+              {contextualLinks.left.map((link, i) => (
                 <NavLink
                   {...link}
                   dispatch={props.dispatch}
                   color='white'
-                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.left.length - 1 ? 'mr-3' : ''}`}
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < contextualLinks.left.length - 1 ? 'mr-3' : ''}`}
                   key={`contextual-link-left-${i}`} />
               ))}
             </div>
             <div className='d-flex flex-nowrap'>
-              {props.contextualLinks.right.map((link, i) => (
+              {contextualLinks.right.map((link, i) => (
                 <NavLink
                   {...link}
                   dispatch={props.dispatch}
                   color='white'
-                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.right.length - 1 ? 'mr-3' : ''}`}
+                  className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < contextualLinks.right.length - 1 ? 'mr-3' : ''}`}
                   key={`contextual-link-left-${i}`} />
               ))}
             </div>
@@ -291,6 +293,7 @@ const DesktopBottomNavbar: View<Props> = props => {
 
 const MobileBottomNavbar: View<Props> = props => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
+  const { contextualLinks } = props;
   return (
     <div
       className={`bg-info-alt ${isMobileMenuOpen ? 'py-4' : 'py-0'} d-md-none overflow-hidden`}
@@ -304,16 +307,16 @@ const MobileBottomNavbar: View<Props> = props => {
             <Title title={props.title} homeDest={props.homeDest} dispatch={props.dispatch} className='d-inline-block mb-4' />
           </Col>
         </Row>
-        {props.contextualLinks.left.length
+        {contextualLinks && contextualLinks.left.length
           ? (<Row>
               <Col xs='12'>
                 <div className='pb-4 border-bottom mb-4 d-flex flex-column align-items-start'>
-                  {props.contextualLinks.left.map((link, i) => (
+                  {contextualLinks.left.map((link, i) => (
                     <NavLink
                       {...link}
                       dispatch={props.dispatch}
                       color='white'
-                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.left.length - 1 ? 'mb-3' : ''}`}
+                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < contextualLinks.left.length - 1 ? 'mb-3' : ''}`}
                       key={`mobile-contextual-link-left-${i}`} />
                   ))}
                 </div>
@@ -325,16 +328,16 @@ const MobileBottomNavbar: View<Props> = props => {
             <MobileAccountMenu {...props} />
           </Col>
         </Row>
-        {props.contextualLinks.right.length
+        {contextualLinks && contextualLinks.right.length
           ? (<Row>
               <Col xs='12'>
                 <div className='pt-4 border-top mt-4 d-flex flex-column align-items-start'>
-                  {props.contextualLinks.right.map((link, i) => (
+                  {contextualLinks.right.map((link, i) => (
                     <NavLink
                       {...link}
                       dispatch={props.dispatch}
                       color='white'
-                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < props.contextualLinks.right.length - 1 ? 'mb-3' : ''}`}
+                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < contextualLinks.right.length - 1 ? 'mb-3' : ''}`}
                       key={`mobile-contextual-link-right-${i}`} />
                   ))}
                 </div>

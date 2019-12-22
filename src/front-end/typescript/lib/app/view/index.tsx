@@ -2,8 +2,8 @@ import { DEFAULT_USER_AVATAR_IMAGE_PATH, PROCUREMENT_CONCIERGE_URL } from 'front
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
-import ViewPage from 'front-end/lib/app/view/page';
-import { AppMsg, ComponentView, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
+import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
+import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
@@ -24,6 +24,113 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
+
+function makeViewPageProps<RouteParams, PageState, PageMsg>(
+  props: ComponentViewProps<State, Msg>,
+  component: ViewPageProps<RouteParams, PageState, PageMsg>['component'],
+  getPageState: ((state: Immutable<State>) => Immutable<PageState> | undefined),
+  mapPageMsg: ViewPageProps<RouteParams, PageState, PageMsg>['mapPageMsg']
+): ViewPageProps<RouteParams, PageState, PageMsg> {
+  return {
+    dispatch: props.dispatch,
+    pageState: getPageState(props.state),
+    mapPageMsg,
+    component
+  };
+}
+
+function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPageProps<any, any, any> {
+  switch (props.state.activeRoute.tag) {
+
+    case 'landing':
+      return makeViewPageProps(
+        props,
+        PageLanding.component,
+        state => state.pages.landing,
+        value => ({ tag: 'pageLanding', value })
+      );
+
+    case 'orgEdit':
+      return makeViewPageProps(
+        props,
+        PageOrgEdit.component,
+        state => state.pages.orgEdit,
+        value => ({ tag: 'pageOrgEdit', value })
+      );
+
+    case 'orgCreate':
+      return makeViewPageProps(
+        props,
+        PageOrgCreate.component,
+        state => state.pages.orgCreate,
+        value => ({ tag: 'pageOrgCreate', value })
+      );
+
+    case 'orgList':
+      return makeViewPageProps(
+        props,
+        PageOrgList.component,
+        state => state.pages.orgList,
+        value => ({ tag: 'pageOrgList', value })
+      );
+
+    case 'userList':
+      return makeViewPageProps(
+        props,
+        PageUserList.component,
+        state => state.pages.userList,
+        value => ({ tag: 'pageUserList', value })
+      );
+
+    case 'userProfile':
+      return makeViewPageProps(
+        props,
+        PageUserProfile.component,
+        state => state.pages.userProfile,
+        value => ({ tag: 'pageUserProfile', value })
+      );
+
+    case 'signIn':
+      return makeViewPageProps(
+        props,
+        PageSignIn.component,
+        state => state.pages.signIn,
+        value => ({ tag: 'pageSignIn', value })
+      );
+
+    case 'signOut':
+      return makeViewPageProps(
+        props,
+        PageSignOut.component,
+        state => state.pages.signOut,
+        value => ({ tag: 'pageSignOut', value })
+      );
+
+    case 'signUpStepOne':
+      return makeViewPageProps(
+        props,
+        PageSignUpStepOne.component,
+        state => state.pages.signUpStepOne,
+        value => ({ tag: 'pageSignUpStepOne', value })
+      );
+
+    case 'signUpStepTwo':
+      return makeViewPageProps(
+        props,
+        PageSignUpStepTwo.component,
+        state => state.pages.signUpStepTwo,
+        value => ({ tag: 'pageSignUpStepTwo', value })
+      );
+
+    case 'notice':
+      return makeViewPageProps(
+        props,
+        PageNotice.component,
+        state => state.pages.notice,
+        value => ({ tag: 'pageNotice', value })
+      );
+  }
+}
 
 interface ViewModalProps {
   modal: State['modal'];
@@ -58,7 +165,7 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   );
 };
 
-const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
+/*const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
   switch (state.activeRoute.tag) {
 
     case 'landing':
@@ -160,7 +267,7 @@ const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
           component={PageNotice.component} />
       );
   }
-};
+};*/
 
 const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
@@ -288,25 +395,51 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
   };
 }
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+function regularNavProps({ state, dispatch }: ComponentViewProps<State, Msg>): Nav.Props {
+  const dispatchNav = mapComponentDispatch(dispatch, adtCurried<ADT<'nav', Nav.Msg>>('nav'));
+  return {
+    state: state.nav,
+    dispatch: dispatchNav,
+    isLoading: state.transitionLoading > 0,
+    logoImageUrl: '/images/bcgov_logo.svg',
+    title: 'Digital Marketplace',
+    homeDest: routeDest(adt('landing', null)),
+    accountMenus: navAccountMenus(state),
+    contextualLinks: navContextualLinks(state)
+  };
+}
+
+function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
+  const accountMenu = Nav.unauthenticatedAccountMenu([Nav.linkAccountAction({
+    ...signOutLink,
+    button: true,
+    outline: true,
+    color: 'white'
+  })]);
+  return {
+    ...regularNavProps(props),
+    contextualLinks: undefined,
+    homeDest: undefined,
+    accountMenus: {
+      desktop: accountMenu,
+      mobile: accountMenu
+    }
+  };
+}
+
+const view: ComponentView<State, Msg> = props => {
+  const { state, dispatch } = props;
   if (!state.ready) {
     return null;
   } else {
-    const dispatchNav = mapComponentDispatch(dispatch, adtCurried<ADT<'nav', Nav.Msg>>('nav'));
-    const navProps: Nav.Props = {
-      state: state.nav,
-      dispatch: dispatchNav,
-      isLoading: state.transitionLoading > 0,
-      logoImageUrl: '/images/bcgov_logo.svg',
-      title: 'Digital Marketplace',
-      homeDest: routeDest(adt('landing', null)),
-      accountMenus: navAccountMenus(state),
-      contextualLinks: navContextualLinks(state)
-    };
+    const viewPageProps = pageToViewPageProps(props);
+    const navProps = viewPageProps.component.simpleNav
+      ? simpleNavProps(props)
+      : regularNavProps(props);
     return (
       <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
         <Nav.view {...navProps} />
-        <ViewActiveRoute state={state} dispatch={dispatch} />
+        <ViewPage {...viewPageProps} />
         <Footer session={state.shared.session} />
         <ViewModal dispatch={dispatch} modal={state.modal} />
       </div>

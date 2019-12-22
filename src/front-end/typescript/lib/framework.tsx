@@ -285,10 +285,6 @@ export function noPageModal<Msg>() {
   return null;
 }
 
-export interface PageContainerOptions {
-  fullWidth?: boolean;
-}
-
 export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg>> {
   size: 'medium' | 'large';
   color: BootstrapColor;
@@ -296,12 +292,13 @@ export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State,
 }
 
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
+  fullWidth?: boolean;
+  simpleNav?: boolean;
   init: PageInit<RouteParams, SharedState, State, Msg>;
   update: Update<State, Msg>;
   view: View<Props>;
   viewBottomBar?: View<Props>; //TODO potentially remove
   sidebar?: PageSidebar<State, Msg, Props>;
-  containerOptions?: PageContainerOptions;
   getMetadata: PageGetMetadata<State>;
   getAlerts?: PageGetAlerts<State, Msg>;
   getBreadcrumbs?: PageGetBreadcrumbs<State, Msg>;

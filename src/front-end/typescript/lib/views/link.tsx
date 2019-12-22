@@ -86,6 +86,7 @@ function AnchorLink(props: AnchorProps) {
     color,
     nav = false,
     className = '',
+    style,
     disabled = false,
     children,
     onClick,
@@ -108,7 +109,7 @@ function AnchorLink(props: AnchorProps) {
     ? ((e: MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); onClick(); })
     : undefined;
   return (
-    <a href={href} onClick={finalOnClick} className={finalClassName} target={newTab ? '_blank' : undefined} download={download} rel={dest && dest.tag === 'external' ? 'external' : undefined}>
+    <a href={href} onClick={finalOnClick} style={style} className={finalClassName} target={newTab ? '_blank' : undefined} download={download} rel={dest && dest.tag === 'external' ? 'external' : undefined}>
       {symbol_ && symbol_.tag === 'left'
         ? (<LinkSymbol symbol_={symbol_.value} className='mr-2' />)
         : null}

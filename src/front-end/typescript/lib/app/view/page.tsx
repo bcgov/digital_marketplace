@@ -106,14 +106,14 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
   }
 }
 
-export interface Props<PageState, PageMsg> {
+export interface Props<RouteParams, PageState, PageMsg> {
   dispatch: Dispatch<AppMsg<Msg, Route>>;
-  component: PageComponent<never, SharedState, PageState, GlobalComponentMsg<PageMsg, Route>>;
+  component: PageComponent<RouteParams, SharedState, PageState, GlobalComponentMsg<PageMsg, Route>>;
   pageState?: Immutable<PageState>;
   mapPageMsg(msg: GlobalComponentMsg<PageMsg, Route>): Msg;
 }
 
-export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
+export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, PageState, PageMsg>) {
   const { dispatch, mapPageMsg, component, pageState } = props;
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
@@ -135,9 +135,8 @@ export function view<PageState, PageMsg>(props: Props<PageState, PageMsg>) {
     sidebar,
     getBreadcrumbs = emptyPageBreadcrumbs,
     getAlerts = emptyPageAlerts,
-    containerOptions = {}
+    fullWidth = false
   } = component;
-  const { fullWidth = false } = containerOptions;
   const dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>> = mapAppDispatch(dispatch, mapPageMsg);
   const viewProps = {
     dispatch: dispatchPage,

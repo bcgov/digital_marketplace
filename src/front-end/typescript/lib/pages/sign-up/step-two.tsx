@@ -41,6 +41,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
 };
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+  simpleNav: true,
   init,
   update,
   view,
