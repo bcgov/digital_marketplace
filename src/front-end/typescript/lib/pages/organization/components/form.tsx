@@ -93,10 +93,10 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .update('contactName',     s => FormField.setValue(s, org.contactName))
     .update('contactEmail',    s => FormField.setValue(s, org.contactEmail))
     .update('region',          s => FormField.setValue(s, org.region))
-    .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || ''))
-    .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || ''))
-    .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || ''))
-    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || ''));
+    .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || '' ))
+    .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || '' ))
+    .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || '' ))
+    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ));
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {

@@ -2,10 +2,11 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { Organization, OrganizationSlim, readAllOrganizations } from 'shared/lib/resources/organization';
-import { ADT } from 'shared/lib/types';
+import { Organization, readAllOrganizations } from 'shared/lib/resources/organization';
+import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
   table: Immutable<Table.State>;
@@ -57,22 +58,11 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-function ToSlim(org: Organization): OrganizationSlim {
-  return ({
-    id: org.id,
-    legalName: org.legalName,
-    owner: {
-      id: '???', // TODO(Jesse): where does this information come from??
-      name: org.contactName
-    }
-  });
-}
-
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return state.organizations.map( org => ToSlim(org) ).map( (org) => {
+  return state.organizations.map( (org) => {
     return [
-      { children: org.legalName },
-      { children: org.owner ? org.owner.name : null }
+      { children: <Link dest={routeDest(adt('orgEdit', { orgId: org.id})) }>{org.legalName}</Link> },
+      { children: org.contactName ? org.contactName : null }
     ];
   });
 }

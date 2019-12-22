@@ -1,5 +1,8 @@
+import { request } from 'shared/lib/http';
 import { PublicFile } from 'shared/lib/resources/file';
+import * as OrgResource from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
+import { ClientHttpMethod } from 'shared/lib/types';
 import { Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
@@ -39,67 +42,62 @@ export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody>;
 export type UpdateRequestBody      = Partial<CreateRequestBody> & { id: Id; };
 export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody>;
 
-export async function readOneOrganization(id: string): Promise<Organization> {
-  const orgs: Organization[] = await readAllOrganizations();
-  return orgs[0];
+export async function readOneOrganization(id: string): Promise<Organization | null> {
+  const response = await request(ClientHttpMethod.Get, `/api/organizations/${id}`);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as Organization;
+    default:
+      return null;
+  }
 }
 
 export async function readAllOrganizations(): Promise<Organization[]> {
-  return new Promise( (resolve) => {
-    return resolve([
-      {
-        id: '1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        legalName: 'Org1',
-        streetAddress1: 'address',
-        city: 'city',
-        region: 'region',
-        mailCode: 'mailCode',
-        country: 'country',
-        contactName: 'Shangalong',
-        contactEmail: 'contactEmail'
-      },
-      {
-        id: '2',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        legalName: 'Org2',
-        streetAddress1: 'address',
-        city: 'city',
-        region: 'region',
-        mailCode: 'mailCode',
-        country: 'country',
-        contactName: 'Crackhead Paul',
-        contactEmail: 'contactEmail'
-      },
-      {
-        id: '3',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        legalName: 'Org3',
-        streetAddress1: 'address',
-        city: 'city',
-        region: 'region',
-        mailCode: 'mailCode',
-        country: 'country',
-        contactName: 'Jim Gordon',
-        contactEmail: 'contactEmail'
-      },
-      {
-        id: '4',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        legalName: 'Org4',
-        streetAddress1: 'address',
-        city: 'city',
-        region: 'region',
-        mailCode: 'mailCode',
-        country: 'country',
-        contactName: 'Barry Allen',
-        contactEmail: 'contactEmail'
-      }
-    ]);
-  });
+  const response = await request(ClientHttpMethod.Get, '/api/organizations');
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as Organization[];
+    default:
+      return [];
+  }
+}
 
+export async function createOrganization(org: OrgResource.CreateRequestBody): Promise<OrgResource.Organization | null> {
+  const response = await request(ClientHttpMethod.Post, '/api/organizations', org);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as OrgResource.Organization;
+    default:
+      return null;
+  }
+}
+
+export async function updateOrganization(org: OrgResource.UpdateRequestBody): Promise<OrgResource.Organization | null> {
+  const response = await request(ClientHttpMethod.Put, `/api/organizations/${org.id}`, org);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as OrgResource.Organization;
+    default:
+      return null;
+  }
+}
+
+export function Empty(): Organization {
+  return ({
+    id: '',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    legalName: '',
+    streetAddress1: '',
+    city: '',
+    region: '',
+    mailCode: '',
+    country: '',
+    contactName: '',
+    contactEmail: ''
+  });
 }

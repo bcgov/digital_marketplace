@@ -16,17 +16,17 @@ import { Session } from 'shared/lib/resources/session';
 import { ADT } from 'shared/lib/types';
 
 export type Route
-  = ADT<'landing',     PageLanding.RouteParams>
-  | ADT<'signOut',   PageSignOut.RouteParams>
-  | ADT<'signIn',    PageSignIn.RouteParams>
-  | ADT<'signUpStepOne', PageSignUpStepOne.RouteParams>
-  | ADT<'signUpStepTwo', PageSignUpStepTwo.RouteParams>
-  | ADT<'notice',    PageNotice.RouteParams>
-  | ADT<'userList',  PageUserList.RouteParams>
-  | ADT<'userProfile',  PageUserProfile.RouteParams>
-  | ADT<'orgCreate',   PageOrgCreate.RouteParams>
-  | ADT<'orgList',   PageOrgList.RouteParams>
-  | ADT<'orgEdit',   PageOrgEdit.RouteParams>;
+  = ADT<'landing',        PageLanding.RouteParams>
+  | ADT<'signOut',        PageSignOut.RouteParams>
+  | ADT<'signIn',         PageSignIn.RouteParams>
+  | ADT<'signUpStepOne',  PageSignUpStepOne.RouteParams>
+  | ADT<'signUpStepTwo',  PageSignUpStepTwo.RouteParams>
+  | ADT<'notice',         PageNotice.RouteParams>
+  | ADT<'userList',       PageUserList.RouteParams>
+  | ADT<'userProfile',    PageUserProfile.RouteParams>
+  | ADT<'orgCreate',      PageOrgCreate.RouteParams>
+  | ADT<'orgList',        PageOrgList.RouteParams>
+  | ADT<'orgEdit',        PageOrgEdit.RouteParams>;
 
 export interface SharedState {
   session?: Session;

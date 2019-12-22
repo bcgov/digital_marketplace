@@ -9,7 +9,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { readOneUser, User } from 'shared/lib/resources/user';
+import { readOneUser, updateUser, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -84,7 +84,16 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'finishEditingAdminCheckbox':
-      return [state.set('editingAdminCheckbox', false)];
+
+    return [state.set('editingAdminCheckbox', false),
+      async state => {
+        const newUser = await updateUser({id: state.user.id });
+        if (newUser.tag === 'valid') {
+          state.set('user', newUser.value);
+        }
+        return state;
+      }
+    ];
     case 'editingAdminCheckbox':
       return [state.set('editingAdminCheckbox', true)];
     case 'adminCheckbox':
@@ -188,6 +197,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Col xs='12'>
           <GovProfileForm.view
+            disabled={true}
             state={state.govProfile}
             dispatch={mapComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
         </Col>

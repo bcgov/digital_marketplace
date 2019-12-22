@@ -7,13 +7,11 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { request } from 'shared/lib/http';
 import * as OrgResource from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
-import { ClientHttpMethod } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export interface State {
+  orgId: string;
   isEditing: boolean;
   editingLoading: number;
   submitLoading: number;
@@ -37,8 +35,14 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
-  const organization: OrgResource.Organization = await OrgResource.readOneOrganization(params.routeParams.orgId);
+  let organization = await OrgResource.readOneOrganization(params.routeParams.orgId);
+  if (!organization) {
+    // TODO(Jesse): Handle error
+    organization = OrgResource.Empty();
+  }
+
   return ({
+    orgId: params.routeParams.orgId,
     isEditing: false,
     editingLoading: 0,
     submitLoading: 0,
@@ -69,26 +73,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
   });
 };
 
-export async function createOrganization(org: OrgResource.CreateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
-  const response = await request(ClientHttpMethod.Post, 'api/organizations', org);
-  switch (response.status) {
-    case 200:
-      return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
-    default:
-      return invalid(null);
-  }
-}
-
-export async function updateOrganization(org: OrgResource.UpdateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
-  const response = await request(ClientHttpMethod.Put, 'api/organizations', org);
-  switch (response.status) {
-    case 200:
-      return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
-    default:
-      return invalid(null);
-  }
-}
-
 export function getUpdateParams(id: string, org: OrgForm.Values): OrgResource.UpdateRequestBody {
   return {
     id,
@@ -105,9 +89,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     return [
       startEditingLoading(state),
       async state => {
-        state = state.set('isEditing', true);
+        let organization = await OrgResource.readOneOrganization(state.orgId);
+        if (!organization) {
+          // TODO(Jesse): Handle error
+          organization = OrgResource.Empty();
+        }
+        state = state.set('organization', organization)
+                     .set('govProfile', OrgForm.setValues(state.govProfile, organization))
+                     .set('isEditing', true);
         state = stopEditingLoading(state);
-        state.set('organization', await OrgResource.readOneOrganization(state.organization.id) );
         return state;
       }
     ];
@@ -118,13 +108,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'submit':
       return [state, async (state, dispatch) => {
-        const resp = await createOrganization(OrgForm.getValues(state.govProfile));
-        if (resp) {
-          state = state.set('isEditing', false);
-        } else {
-          state = state.set('submitErrors', ['Unexpected error updating organization data']);
+        let organization = await OrgResource.updateOrganization( getUpdateParams(state.organization.id, OrgForm.getValues(state.govProfile)) );
+        if (!organization) {
+          // TODO(Jesse): Handle error
+          organization = OrgResource.Empty();
         }
-
+        state = state.set('isEditing', false)
+                     .set('organization', organization);
         return state;
       }];
     case 'govProfile':

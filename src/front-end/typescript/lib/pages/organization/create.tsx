@@ -22,8 +22,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  govProfile: immutable(await OrgForm.init({
-  })),
+  govProfile: immutable(await OrgForm.init({})),
   sidebar: immutable(await MenuSidebar.init({
     links: [
       {
