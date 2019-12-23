@@ -1,32 +1,46 @@
 // import { Route } from 'front-end/lib/app/types';
 import { getSignInUrl } from 'front-end/lib/index';
-import Icon from 'front-end/lib/views/icon';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { UserType } from 'shared/lib/resources/user';
 
-export interface HorizontalCardParams {
+export interface SignInCardProps {
   title: string;
   description: string;
   buttonText: string;
-  signInTarget: 'idir' | 'github';
+  userType: UserType.Vendor | UserType.Government;
 }
 
-export function SignInCard(params: HorizontalCardParams) {
+function userTypeToIcon(userType: SignInCardProps['userType']): AvailableIcons {
+  switch (userType) {
+    case UserType.Vendor:
+      return 'vendor';
+    case UserType.Government:
+      return 'government';
+  }
+}
+
+export function SignInCard(props: SignInCardProps) {
   return (
     <Row>
       <Col xs='12'>
         <div className='mx-auto bg-white p-4 shadow mb-4 border rounded-sm'>
           <h2>
-            <Icon name='paperclip' color='primary'/>
-            <span className='pl-1'>{params.title}</span>
+            <Icon
+              name={userTypeToIcon(props.userType)}
+              width={1.5}
+              height={1.5}
+              color='primary' />
+            <span className='pl-1'>{props.title}</span>
           </h2>
-          <p>{params.description}</p>
+          <p>{props.description}</p>
           <Link
             button
-            dest={externalDest(getSignInUrl(params.signInTarget))}
+            dest={externalDest(getSignInUrl(props.userType))}
             className='btn-primary'>
-            {params.buttonText}
+            {props.buttonText}
           </Link>
         </div>
       </Col>

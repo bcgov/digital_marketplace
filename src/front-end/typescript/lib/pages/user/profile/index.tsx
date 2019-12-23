@@ -59,19 +59,19 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
     sidebar: immutable(await MenuSidebar.init({
       links: [
         {
-          icon: 'paperclip',
+          icon: 'user',
           text: 'Profile',
           active: true,
           dest: routeDest(adt('userProfile', {userId: '1'}))
         },
         {
-          icon: 'paperclip',
+          icon: 'bell',
           text: 'Notifications',
           active: false,
           dest: routeDest(adt('landing', null))
         },
         {
-          icon: 'paperclip',
+          icon: 'balance-scale',
           text: 'Accepted Policies, Terms & Agreements',
           active: false,
           dest: routeDest(adt('landing', null))
@@ -156,7 +156,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
               <span>
                 { /* TODO(Jesse): Change to loading-button */ }
                 <Icon
-                  name='paperclip'
+                  name='edit'
                   onClick={() => dispatch(adt('editingAdminCheckbox'))}
                 />
               </span>

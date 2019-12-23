@@ -47,19 +47,19 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
     sidebar: immutable(await MenuSidebar.init({
       links: [
         {
-          icon: 'paperclip',
+          icon: 'user',
           text: 'Profile',
           active: true,
           dest: routeDest(adt('userProfile', {userId: '1'}))
         },
         {
-          icon: 'paperclip',
+          icon: 'bell',
           text: 'Notifications',
           active: false,
           dest: routeDest(adt('landing', null))
         },
         {
-          icon: 'paperclip',
+          icon: 'balance-scale',
           text: 'Accepted Policies, Terms & Agreements',
           active: false,
           dest: routeDest(adt('landing', null))
@@ -168,7 +168,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
               Discard Changes
             </Link>
             :
-            <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('paperclip'))} onClick={() => dispatch(adt('startEditing'))}>
+            <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
               Edit Organization
             </LoadingButton>
           }
@@ -199,7 +199,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <Link button className='mr-3'>Cancel</Link>
           <LoadingButton loading={isLoading}
             color='primary'
-            symbol_={leftPlacement(iconLinkSymbol('plus'))}
+            symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
             onClick={() => dispatch(adt('submit'))}
           >
             Save

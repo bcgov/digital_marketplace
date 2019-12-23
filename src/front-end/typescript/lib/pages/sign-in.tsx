@@ -6,6 +6,7 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import { SignInCard } from 'front-end/lib/views/sign-in-card';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
@@ -32,12 +33,12 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <SignInCard
-        signInTarget='github'
+        userType={UserType.Vendor}
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
         buttonText='Sign In Using GitHub' />
       <SignInCard
-        signInTarget='idir'
+        userType={UserType.Government}
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
         buttonText='Sign In Using IDIR'

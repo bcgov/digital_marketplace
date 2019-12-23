@@ -6,8 +6,8 @@ import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
 import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
-import { User, UserStatus, UserType } from 'shared/lib/resources/user';
-import { ClientHttpMethod, KeyCloakIdentityProvider } from 'shared/lib/types';
+import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { ClientHttpMethod } from 'shared/lib/types';
 
 interface KeyCloakAuthQuery {
   client_id: string;

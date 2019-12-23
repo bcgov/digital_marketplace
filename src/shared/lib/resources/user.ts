@@ -5,10 +5,22 @@ import { ClientHttpMethod } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
+export type KeyCloakIdentityProvider = 'github' | 'idir';
+
 export enum UserType {
   Vendor = 'VENDOR',
   Government = 'GOV',
   Admin = 'ADMIN'
+}
+
+export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloakIdentityProvider {
+  switch (userType) {
+    case UserType.Vendor:
+      return 'github';
+    case UserType.Government:
+    case UserType.Admin:
+      return 'idir';
+  }
 }
 
 export enum UserStatus {

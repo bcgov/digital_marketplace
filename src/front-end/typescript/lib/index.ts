@@ -1,4 +1,5 @@
 import { Immutable, PageMetadata } from 'front-end/lib/framework';
+import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 
 export type UpdateState<State> = (state: Immutable<State>) => Immutable<State>;
 
@@ -34,6 +35,6 @@ export function makePageMetadata(title: string): PageMetadata {
   };
 }
 
-export function getSignInUrl(signInType: 'idir' | 'github'): string   {
-  return `/auth/sign-in?provider=${signInType}`;
+export function getSignInUrl(userType: UserType): string   {
+  return `/auth/sign-in?provider=${userTypeToKeycloakIdentityProvider(userType)}`;
 }

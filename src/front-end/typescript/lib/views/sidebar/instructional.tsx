@@ -1,7 +1,6 @@
 import * as router from 'front-end/lib/app/router';
 import { ComponentView, ComponentViewProps, View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 
@@ -23,8 +22,9 @@ function makeSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = 
             ? (<Link
                 color='secondary'
                 className='font-size-small d-flex flex-row flex-nowrap align-items-center mt-md-n5 mb-4'
+                symbol_={leftPlacement(iconLinkSymbol('arrow-left'))}
                 onClick={() => router.back()}>
-                  <Icon name='chevron-left' width={1} height={1.1} />Go Back
+                  Go Back
                 </Link>)
             : null}
           <h1 className='mb-3 font-weight-bolder'>{getTitle(state)}</h1>
