@@ -45,6 +45,21 @@ type Resource = crud.Resource<
 const resource: Resource = {
   routeNamespace: 'users',
 
+  readOne(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<User | string[]>, Session>(async request => {
+      const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      if (!permissions.readManyUsers(request.session)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const user = await readOneUser(connection, request.params.id);
+      if (user) {
+        return respond(200, user);
+      } else {
+        return respond(404, ['User Not Found']);
+      }
+    });
+  },
+
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<User[] | string[]>, Session>(async request => {
       const respond = (code: number, body: User[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
