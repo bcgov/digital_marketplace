@@ -1,4 +1,4 @@
-import { Connection, readOneAffiliationById, readOneFile, readOneOrganization, readOneUser } from 'back-end/lib/db';
+import { Connection, readOneAffiliationById, readOneFileById, readOneOrganization, readOneUser } from 'back-end/lib/db';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
@@ -21,7 +21,7 @@ export async function validateUserId(connection: Connection, userId: Id): Promis
 
 export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
-    const file = await readOneFile(connection, fileId);
+    const file = await readOneFileById(connection, fileId);
     if (file) {
       return valid(file);
     } else {

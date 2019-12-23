@@ -62,7 +62,7 @@ interface RawUserToUserParams extends Omit<User, 'avatarImageFile'> {
 export async function rawUserToUser(connection: Connection, params: RawUserToUserParams): Promise<User> {
   const { avatarImageFile: fileId, ...restOfRawUser } = params;
   if (fileId) {
-    const avatarImageFile = await readOneFile(connection, fileId);
+    const avatarImageFile = await readOneFileById(connection, fileId);
     return {
       ...restOfRawUser,
       avatarImageFile
@@ -213,7 +213,7 @@ export async function rawOrganizationToOrganizationSlim(connection: Connection, 
     legalName: params.legalName
   };
   if (params.logoImageFileId) {
-    organization.logoImageFile = await readOneFile(connection, params.logoImageFileId);
+    organization.logoImageFile = await readOneFileByHash(connection, params.logoImageFileId);
   }
   if (params.ownerId && params.ownerName) {
     organization.owner = {
@@ -227,7 +227,7 @@ export async function rawOrganizationToOrganizationSlim(connection: Connection, 
 export async function rawOrganizationToOrganization(connection: Connection, params: RawOrganizationToOrganizationParams): Promise<Organization> {
   const { logoImageFile: fileId, ...restOfRawOrg } = params;
   if (fileId) {
-    const logoImageFile = await readOneFile(connection, fileId);
+    const logoImageFile = await readOneFileByHash(connection, fileId);
     return {
       ...restOfRawOrg,
       logoImageFile
@@ -428,7 +428,15 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
   return result ? result.length : 0;
 }
 
-export async function readOneFile(connection: Connection, hash: string): Promise<FileRecord> {
+export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord> {
+  const result = await connection('files')
+    .where({ id })
+    .first();
+
+  return result ? result : null;
+}
+
+export async function readOneFileByHash(connection: Connection, hash: string): Promise<FileRecord> {
   const result = await connection('files')
     .where({ fileBlob: hash })
     .first();
@@ -499,4 +507,24 @@ export async function createFile(connection: Connection, fileRecord: ValidatedFi
 
     return file;
   });
+}
+
+export async function hasFilePermission(connection: Connection, session: Session, id: string): Promise<boolean> {
+  const query = connection('files')
+    .where({ id });
+
+  if (!session.user) {
+    query
+      .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
+  } else {
+    query
+      .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
+      .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
+      .where({ 'u.user': session.user.id })
+      .orWhere({ 'ut.userType': session.user.type })
+      .orWhere({ 'files.createdBy': session.user.id });
+  }
+
+  const results = await query;
+  return results.length > 0;
 }

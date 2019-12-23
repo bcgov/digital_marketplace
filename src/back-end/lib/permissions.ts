@@ -1,4 +1,4 @@
-import { Connection, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Connection, hasFilePermission, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -120,4 +120,8 @@ export async function deleteAffiliation(connection: Connection, session: Session
 
 export function createFile(session: Session): boolean {
   return isUser(session);
+}
+
+export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {
+  return await hasFilePermission(connection, session, fileId);
 }
