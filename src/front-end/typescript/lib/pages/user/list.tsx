@@ -4,11 +4,12 @@ import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import Icon from 'front-end/lib/views/icon';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as UserModule from 'shared/lib/resources/user';
 import { readAllUsers } from 'shared/lib/resources/user';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
   table: Immutable<Table.State>;
@@ -53,11 +54,12 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return UserHelpers.mapUserTypeToDisplayType(state.users).map( (user) => {
+  return state.users.map( fullUser => {
+    const user = UserHelpers.toDisplayUser(fullUser);
     return [
       { children: <span className={`badge ${UserHelpers.getBadgeColor(user.active)}`}>{user.active ? 'Active' : 'Inactive'}</span> },
       { children: user.type },
-      { children: user.name },
+      { children: <Link dest={routeDest( adt('userProfile', {userId: fullUser.id}) )}>{user.name}</Link> },
       { children: user.admin ? <Icon name='check' /> : null }
     ];
   });

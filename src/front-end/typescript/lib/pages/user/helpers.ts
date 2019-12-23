@@ -28,10 +28,6 @@ export function toDisplayUser(user: UserModule.User): DisplayUser {
   });
 }
 
-export function mapUserTypeToDisplayType(users: UserModule.User[]): DisplayUser[] {
-  return users.map( user => toDisplayUser(user) );
-}
-
 export function viewStringForUserStatus(type: UserStatus): string {
   switch (type) {
       case UserStatus.InactiveByAdmin:

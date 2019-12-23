@@ -56,7 +56,7 @@ export async function updateUser(requestBody: UpdateRequestBody): Promise<User |
 }
 
 export async function readOneUser(id: string): Promise<User | null> {
-  return readOne<User>('/api/users');
+  return readOne<User>(`/api/users/${id}`);
 }
 
 export async function readAllUsers(): Promise<User[]> {

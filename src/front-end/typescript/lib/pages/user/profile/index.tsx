@@ -29,14 +29,8 @@ type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-type ActiveTab
-  = 'profile'
-  | 'legal'
-  | 'organizations';
-
 export interface RouteParams {
   userId: string;
-  activeTab?: ActiveTab;
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
@@ -67,7 +61,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
           icon: 'user',
           text: 'Profile',
           active: true,
-          dest: routeDest(adt('userProfile', {userId: '1'}))
+          dest: routeDest(adt('userProfile', {userId: user.id}))
         },
         {
           icon: 'bell',
@@ -89,16 +83,15 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'finishEditingAdminCheckbox':
-
-    return [state.set('editingAdminCheckbox', false),
-      async state => {
-        const newUser = await updateUser({id: state.user.id });
-        if (newUser) {
-          state.set('user', newUser);
+      return [state.set('editingAdminCheckbox', false),
+        async state => {
+          const newUser = await updateUser({id: state.user.id });
+          if (newUser) {
+            state.set('user', newUser);
+          }
+          return state;
         }
-        return state;
-      }
-    ];
+      ];
     case 'editingAdminCheckbox':
       return [state.set('editingAdminCheckbox', true)];
     case 'adminCheckbox':
