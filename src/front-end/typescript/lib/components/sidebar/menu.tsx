@@ -1,5 +1,5 @@
 import { ComponentView, Init, Update, View } from 'front-end/lib/framework';
-import { AvailableIcons } from 'front-end/lib/views/icon';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { Dest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
@@ -37,10 +37,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
 interface SidebarLinkProps extends SidebarLink {
   className?: string;
+  caret?: 'up' | 'down';
 }
 
 const SidebarLink: View<SidebarLinkProps> = props => {
-  const { className = '', dest, onClick, icon, text, active } = props;
+  const { caret, className = '', dest, onClick, icon, text, active } = props;
   return (
     <Link
       button
@@ -51,6 +52,9 @@ const SidebarLink: View<SidebarLinkProps> = props => {
       color={active ? 'info' : 'light'}
       className={`${className} ta-left ${active ? '' : 'text-primary'}`}>
       {text}
+      {caret
+        ? (<Icon name='caret-down' color='white' className='ml-auto' style={{ transform: caret === 'up' ? 'rotate(180deg)' : undefined }}/>)
+        : null}
     </Link>
   );
 };
@@ -69,6 +73,7 @@ export const view: ComponentView<State, Msg> = props => {
       <div className='d-flex flex-column flex-nowrap align-items-stretch d-md-none position-relative'>
         <SidebarLink
           {...activeLink}
+          caret={state.isOpen ? 'up' : 'down'}
           dest={undefined}
           onClick={() => {
             dispatch(adt('toggleOpen'));
