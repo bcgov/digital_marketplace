@@ -317,8 +317,17 @@ nav.navbar .nav-link:hover {
 }
 
 .sidebar {
+
   @include media-breakpoint-down(sm) {
     background-color: $white !important;
+  }
+
+  .sticky {
+
+    @include media-breakpoint-up(md) {
+      position: sticky;
+      top: 5rem;
+    }
   }
 }
 

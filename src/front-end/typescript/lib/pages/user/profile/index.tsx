@@ -1,12 +1,12 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
+import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as GovProfileForm from 'front-end/lib/pages/user/components/profile';
 import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
-import makeSidebar from 'front-end/lib/views/sidebar/menu';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { readOneUser, User } from 'shared/lib/resources/user';
@@ -17,6 +17,7 @@ export interface State {
   govProfile: Immutable<GovProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>;
   editingAdminCheckbox: boolean;
+  sidebar: Immutable<MenuSidebar.State>;
 }
 
 type InnerMsg
@@ -24,7 +25,7 @@ type InnerMsg
   | ADT<'adminCheckbox', Checkbox.Msg>
   | ADT<'finishEditingAdminCheckbox', undefined>
   | ADT<'editingAdminCheckbox', undefined>
-  ;
+  | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -54,6 +55,28 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
     user,
     govProfile: immutable(await GovProfileForm.init({
       existingUser: user
+    })),
+    sidebar: immutable(await MenuSidebar.init({
+      links: [
+        {
+          icon: 'paperclip',
+          text: 'Profile',
+          active: true,
+          dest: routeDest(adt('userProfile', {userId: '1'}))
+        },
+        {
+          icon: 'paperclip',
+          text: 'Notifications',
+          active: false,
+          dest: routeDest(adt('landing', null))
+        },
+        {
+          icon: 'paperclip',
+          text: 'Accepted Policies, Terms & Agreements',
+          active: false,
+          dest: routeDest(adt('landing', null))
+        }
+      ]
     }))
   });
 };
@@ -79,6 +102,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: GovProfileForm.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('govProfile', value)
+      });
+    case 'sidebar':
+      return updateComponentChild({
+        state,
+        childStatePath: ['sidebar'],
+        childUpdate: MenuSidebar.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('sidebar', value)
       });
     default:
       return [state];
@@ -173,30 +204,11 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   sidebar: {
     size: 'medium',
     color: 'light',
-    view: makeSidebar<State, Msg>(
-    [
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Profile',
-        active: true,
-        route: { tag: 'userProfile', value: {userId: '1'}} as Route
-      },
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Notifications',
-        active: false,
-        route: { tag: 'landing' } as Route
-      },
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Accepted Policies, Terms & Agreements',
-        active: false,
-        route: { tag: 'landing' } as Route
-      }
-    ])
+    view({ state, dispatch }) {
+      return (<MenuSidebar.view
+        state={state.sidebar}
+        dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
+    }
   },
   getMetadata() {
     return makePageMetadata('User Profile');

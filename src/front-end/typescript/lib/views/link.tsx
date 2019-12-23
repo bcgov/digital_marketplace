@@ -27,7 +27,8 @@ interface LinkSymbolProps {
   className?: string;
 }
 
-const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className }) => {
+const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className = '' }) => {
+  className = `${className} flex-shrink-0 flex-grow-0`;
   switch (symbol_.tag) {
     case 'icon':
       return (<Icon name={symbol_.value} className={className} />);
@@ -55,6 +56,7 @@ type Placement<Value>
 interface BaseProps {
   dest?: Dest;
   symbol_?: Placement<LinkSymbol>;
+  symbolClassName?: string;
   children?: ViewElementChildren;
   className?: string;
   style?: CSSProperties;
@@ -92,7 +94,8 @@ function AnchorLink(props: AnchorProps) {
     onClick,
     newTab = false,
     download = false,
-    symbol_
+    symbol_,
+    symbolClassName = ''
   } = props;
   const href: string = (() => {
     if (!dest) { return '#'; }
@@ -106,16 +109,19 @@ function AnchorLink(props: AnchorProps) {
   finalClassName += disabled ? ' disabled' : '';
   finalClassName += color ? ` text-${color}` : '';
   const finalOnClick = !disabled && onClick
-    ? ((e: MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); onClick(); })
+    ? ((e: MouseEvent<HTMLAnchorElement>) => {
+        if (!dest || (!e.ctrlKey && !e.metaKey)) { e.preventDefault(); }
+        onClick();
+      })
     : undefined;
   return (
     <a href={href} onClick={finalOnClick} style={style} className={finalClassName} target={newTab ? '_blank' : undefined} download={download} rel={dest && dest.tag === 'external' ? 'external' : undefined}>
       {symbol_ && symbol_.tag === 'left'
-        ? (<LinkSymbol symbol_={symbol_.value} className='mr-2' />)
+        ? (<LinkSymbol symbol_={symbol_.value} className={`mr-2 ${symbolClassName}`} />)
         : null}
       {children}
       {symbol_ && symbol_.tag === 'right'
-        ? (<LinkSymbol symbol_={symbol_.value} className='ml-2' />)
+        ? (<LinkSymbol symbol_={symbol_.value} className={`ml-2 ${symbolClassName}`} />)
         : null}
     </a>
   );

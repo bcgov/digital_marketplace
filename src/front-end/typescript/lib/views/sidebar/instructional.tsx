@@ -2,7 +2,7 @@ import * as router from 'front-end/lib/app/router';
 import { ComponentView, ComponentViewProps, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
-import Sticky from 'front-end/lib/views/sidebar/lib/sticky';
+import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 
 interface Params<State, Msg> {

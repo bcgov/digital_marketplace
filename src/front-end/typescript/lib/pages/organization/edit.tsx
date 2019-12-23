@@ -1,10 +1,10 @@
 import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
-import makeSidebar from 'front-end/lib/views/sidebar/menu';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { request } from 'shared/lib/http';
@@ -20,13 +20,15 @@ export interface State {
   organization: OrgResource.Organization;
   govProfile: Immutable<OrgForm.State>;
   submitErrors?: string[];
+  sidebar: Immutable<MenuSidebar.State>;
 }
 
 type InnerMsg
   = ADT<'govProfile', OrgForm.Msg>
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
-  | ADT<'submit'>;
+  | ADT<'submit'>
+  | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -41,7 +43,29 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
     editingLoading: 0,
     submitLoading: 0,
     organization,
-    govProfile: immutable(await OrgForm.init({organization}))
+    govProfile: immutable(await OrgForm.init({organization})),
+    sidebar: immutable(await MenuSidebar.init({
+      links: [
+        {
+          icon: 'paperclip',
+          text: 'Profile',
+          active: true,
+          dest: routeDest(adt('userProfile', {userId: '1'}))
+        },
+        {
+          icon: 'paperclip',
+          text: 'Notifications',
+          active: false,
+          dest: routeDest(adt('landing', null))
+        },
+        {
+          icon: 'paperclip',
+          text: 'Accepted Policies, Terms & Agreements',
+          active: false,
+          dest: routeDest(adt('landing', null))
+        }
+      ]
+    }))
   });
 };
 
@@ -110,6 +134,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: OrgForm.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('govProfile', value)
+      });
+    case 'sidebar':
+      return updateComponentChild({
+        state,
+        childStatePath: ['sidebar'],
+        childUpdate: MenuSidebar.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('sidebar', value)
       });
     default:
       return [state];
@@ -186,37 +218,11 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   sidebar: {
     size: 'medium',
     color: 'light',
-    view: makeSidebar<State, Msg>(
-    [
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Profile',
-        active: false,
-        route: { tag: 'userProfile', value: {userId: '1'}} as Route
-      },
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Organizations',
-        active: true,
-        route: { tag: 'landing' } as Route
-      },
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Notifications',
-        active: false,
-        route: { tag: 'landing' } as Route
-      },
-      {
-        target: '',
-        icon: 'paperclip',
-        text: 'Accepted Policies, Terms & Agreements',
-        active: false,
-        route: { tag: 'landing' } as Route
-      }
-    ])
+    view({ state, dispatch }) {
+      return (<MenuSidebar.view
+        state={state.sidebar}
+        dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
+    }
   },
   getMetadata() {
     return makePageMetadata('Create Organization');

@@ -82,13 +82,13 @@ function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactEl
   );
 }
 
-type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps<PageMsg> & ViewBreadcrumbsProps<PageMsg> & { container?: boolean };
+type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps<PageMsg> & ViewBreadcrumbsProps<PageMsg> & { container?: boolean; className?: string; };
 
 function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<PageMsg>) {
   const { dispatchPage, alerts, breadcrumbs, container = false } = props;
   const hasAlerts = alerts.info.length || alerts.warnings.length || alerts.errors.length;
   const hasBreadcrumbs = !!breadcrumbs.length;
-  const className = `${hasAlerts ? 'pb-5 mb-n4' : ''} ${hasBreadcrumbs ? 'pb-md-5 mb-md-n4' : ''}`;
+  const className = `${hasAlerts ? 'pb-5 mb-n4' : ''} ${hasBreadcrumbs ? 'pb-md-5 mb-md-n4' : ''} ${props.className || ''}`;
   if (container) {
     return (
       <Container className={`${className} pt-5`}>
@@ -98,7 +98,7 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
     );
   } else {
     return (
-      <div className={`${className} ${hasAlerts || hasBreadcrumbs ? 'mt-n5' : ''}`}>
+      <div className={`${className} ${hasAlerts || hasBreadcrumbs ? 'mt-md-n5' : ''}`}>
         <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
         <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
       </div>
@@ -151,8 +151,8 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
   const bottomBar = viewBottomBar ? viewBottomBar(viewProps) : null;
   // Handle full width pages.
   if (fullWidth) {
-    // Do not show vertical bar on fullWidth pages.
-    // No vertical bar.
+    // Do not show sidebar on fullWidth pages.
+    // No sidebar.
     return (
       <div className='d-flex flex-column flex-grow-1 page-container'>
         <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container />
@@ -175,11 +175,12 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-4 d-flex flex-column align-items-stretch pt-8 pb-5`}>
+                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-4 d-flex flex-column align-items-stretch pt-5 pt-md-8 pb-5`}>
+                  <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-md-none' />
                   <sidebar.view {...viewProps} />
                 </Col>
                 <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pt-md-8 pb-5'>
-                  <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+                  <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-none d-md-block' />
                   <component.view {...viewProps} />
                 </Col>
               </Row>
@@ -189,7 +190,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
         </div>
       );
     } else {
-      // No vertical bar.
+      // No sidebar.
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
           <Container className='pt-8 pb-5'>

@@ -7,3 +7,7 @@ export const FORM_FIELD_DEBOUNCE_DURATION = 500;
 export const PROCUREMENT_CONCIERGE_URL = 'https://procurementconcierge.gov.bc.ca';
 
 export const DEFAULT_USER_AVATAR_IMAGE_PATH = '/images/default_user_avatar.svg';
+
+export const TRANSITION_DURATION = 240; //ms
+
+export const TOP_NAVBAR_HEIGHT = 67; //px

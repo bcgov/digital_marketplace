@@ -1,3 +1,4 @@
+import { TOP_NAVBAR_HEIGHT, TRANSITION_DURATION } from 'front-end/config';
 import { ComponentViewProps, Dispatch, Init, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, Props as LinkProps } from 'front-end/lib/views/link';
@@ -5,10 +6,6 @@ import React, { Fragment } from 'react';
 import { Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
-
-// TODO support minimal nav for sign up step two.
-
-const TOP_NAVBAR_HEIGHT = 67; //px
 
 export interface State {
   isDesktopAccountDropdownOpen: boolean;
@@ -298,7 +295,7 @@ const MobileBottomNavbar: View<Props> = props => {
     <div
       className={`bg-info-alt ${isMobileMenuOpen ? 'py-4' : 'py-0'} d-md-none overflow-hidden`}
       style={{
-        transition: 'max-height linear 240ms, padding linear 240ms',
+        transition: `max-height linear ${TRANSITION_DURATION}ms, padding linear ${TRANSITION_DURATION}ms`,
         maxHeight: isMobileMenuOpen ? '1000px' : 0
       }}>
       <Container>
