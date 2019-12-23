@@ -1,5 +1,6 @@
 *.swp
 *.tmp
+*.tmp.*
 *.pem
 *.map
 *.DS_Store
