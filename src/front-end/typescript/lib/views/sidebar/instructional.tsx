@@ -19,13 +19,14 @@ function makeSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = 
     return (
       <div className='flex-grow-1 position-relative'>
         <Sticky>
-          <Link
-            color='secondary'
-            style={{ top: 0, left: 0 }}
-            className={`font-size-small d-flex flex-row flex-nowrap align-items-center mt-n5 position-absolute ${showBackLink ? '' : 'd-none'}`}
-            onClick={() => router.back()}>
-            <Icon name='chevron-left' width={1} height={1.1} />Go Back
-          </Link>
+          {showBackLink
+            ? (<Link
+                color='secondary'
+                className='font-size-small d-flex flex-row flex-nowrap align-items-center mt-md-n5 mb-4'
+                onClick={() => router.back()}>
+                  <Icon name='chevron-left' width={1} height={1.1} />Go Back
+                </Link>)
+            : null}
           <h1 className='mb-3 font-weight-bolder'>{getTitle(state)}</h1>
           <p className='mb-3'>{getDescription(state)}</p>
           <div className='font-size-small'>{getFooter(props)}</div>

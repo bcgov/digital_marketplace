@@ -138,11 +138,28 @@ input[type="time"] {
   }
 }
 
-.navbar .transition-indicator {
-  display: none;
+nav {
 
-  .in-transition & {
-    display: block;
+  $main-nav-top-height: 67px;
+  &.main-nav {
+
+    .main-nav-top {
+      height: $main-nav-top-height;
+    }
+
+    @include media-breakpoint-up(md) {
+      position: sticky;
+      top: -1 * $main-nav-top-height;
+      z-index: 9999;
+    }
+  }
+
+  .transition-indicator {
+    display: none;
+
+    .in-transition & {
+      display: block;
+    }
   }
 }
 

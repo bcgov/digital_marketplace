@@ -1,4 +1,4 @@
-import { TOP_NAVBAR_HEIGHT, TRANSITION_DURATION } from 'front-end/config';
+import { TRANSITION_DURATION } from 'front-end/config';
 import { ComponentViewProps, Dispatch, Init, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, Props as LinkProps } from 'front-end/lib/views/link';
@@ -218,16 +218,13 @@ const TopNavbar: View<Props> = props => {
   const { state, dispatch, isLoading } = props;
   return (
     <div
-      style={{
-        height: `${TOP_NAVBAR_HEIGHT}px`
-      }}
-      className='bg-info border-bottom-gov w-100'>
+      className='main-nav-top bg-info border-bottom-gov w-100'>
       <Container className='h-100'>
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex align-items-center flex-grow-1'>
-              <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }}>
-                <img src={props.logoImageUrl} style={{ height: `${TOP_NAVBAR_HEIGHT - 22}px` }} />
+              <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
+                <img src={props.logoImageUrl} style={{ height: '60%' }} />
               </Link>
               <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
               {isLoading
@@ -293,7 +290,7 @@ const MobileBottomNavbar: View<Props> = props => {
   const { contextualLinks } = props;
   return (
     <div
-      className={`bg-info-alt ${isMobileMenuOpen ? 'py-4' : 'py-0'} d-md-none overflow-hidden`}
+      className={`bg-info-alt ${isMobileMenuOpen ? 'py-4 shadow' : 'py-0'} d-md-none overflow-hidden`}
       style={{
         transition: `max-height linear ${TRANSITION_DURATION}ms, padding linear ${TRANSITION_DURATION}ms`,
         maxHeight: isMobileMenuOpen ? '1000px' : 0
@@ -348,12 +345,7 @@ const MobileBottomNavbar: View<Props> = props => {
 
 export const view: View<Props> = props => {
   return (
-    <nav
-      style={{
-        position: 'sticky',
-        top: `-${TOP_NAVBAR_HEIGHT}px`,
-        zIndex: 9999
-      }}>
+    <nav className='main-nav'>
       <TopNavbar {...props} />
       <DesktopBottomNavbar {...props} />
       <MobileBottomNavbar {...props} />

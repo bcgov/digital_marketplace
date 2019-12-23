@@ -110,7 +110,7 @@ function AnchorLink(props: AnchorProps) {
   finalClassName += color ? ` text-${color}` : '';
   const finalOnClick = !disabled && onClick
     ? ((e: MouseEvent<HTMLAnchorElement>) => {
-        if (!dest || (!e.ctrlKey && !e.metaKey)) { e.preventDefault(); }
+        if (!dest || (!newTab && !e.ctrlKey && !e.metaKey)) { e.preventDefault(); }
         onClick();
       })
     : undefined;
