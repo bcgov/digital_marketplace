@@ -1,4 +1,4 @@
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Id } from 'shared/lib/types';
 
 export enum UserType {
@@ -33,7 +33,7 @@ export interface User {
   name: string;
   email?: string;
   jobTitle?: string;
-  avatarImageFile?: PublicFile;
+  avatarImageFile?: FileRecord;
   notificationsOn: boolean;
   acceptedTerms: boolean;
   idpUsername: string;

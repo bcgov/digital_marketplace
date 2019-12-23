@@ -5,7 +5,7 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
@@ -14,14 +14,14 @@ import { validatePhone, validateUrl } from 'shared/lib/validation/organization';
 import { validateEmail } from 'shared/lib/validation/user';
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'logoImageFile'> {
-  logoImageFile?: PublicFile;
+  logoImageFile?: FileRecord;
   active?: boolean;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
 }
 
 export interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'logoImageFile'> {
-  logoImageFile?: PublicFile;
+  logoImageFile?: FileRecord;
 }
 
 type DeleteValidatedReqBody = Organization;

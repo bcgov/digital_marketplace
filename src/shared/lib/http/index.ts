@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ClientHttpMethod } from 'shared/lib/types';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface Response<Data> {
   status: number;
@@ -30,6 +31,18 @@ export const request: RequestFunction = async (method, url, data, headers) => {
     };
   }
 };
+
+/**
+ * This function tries to parse JSON safely without throwing
+ * a run-time exception if the input is invalid.
+ */
+export function parseJsonSafely(raw: string): Validation<any, undefined> {
+  try {
+    return valid(JSON.parse(raw));
+  } catch (error) {
+    return invalid(undefined);
+  }
+}
 
 export function prefixRequest(prefix: string): RequestFunction {
   const cleanSlashes = (v: string): string => v.replace(/^\/*/, '/').replace(/\/*$/, '');

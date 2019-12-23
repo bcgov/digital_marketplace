@@ -115,3 +115,9 @@ export async function deleteAffiliation(connection: Connection, session: Session
   }
   return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
+
+// Files.
+
+export function createFile(session: Session): boolean {
+  return isUser(session);
+}

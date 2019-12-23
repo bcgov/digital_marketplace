@@ -1,4 +1,4 @@
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 
@@ -7,7 +7,7 @@ export interface Organization {
   createdAt: Date;
   updatedAt: Date;
   legalName: string;
-  logoImageFile?: PublicFile;
+  logoImageFile?: FileRecord;
   websiteUrl?: string;
   streetAddress1: string;
   streetAddress2?: string;
@@ -25,7 +25,7 @@ export interface Organization {
 export interface OrganizationSlim {
   id: Id;
   legalName: string;
-  logoImageFile?: PublicFile;
+  logoImageFile?: FileRecord;
   owner?: Pick<User, 'id' | 'name'>;
 }
 
