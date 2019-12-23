@@ -34,9 +34,7 @@ function noticeIdToState(noticeId: NoticeId): State {
   }
 }
 
-export interface RouteParams {
-  noticeId: NoticeId;
-}
+export type RouteParams = NoticeId;
 
 export interface State {
   title: string;
@@ -50,7 +48,7 @@ export interface State {
 export type Msg = GlobalComponentMsg<null, Route>;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams }) => {
-  return noticeIdToState(routeParams.noticeId);
+  return noticeIdToState(routeParams);
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {

@@ -1,5 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
 import { Router } from 'front-end/lib/framework';
+import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
   if (window.history && window.history.pushState) {
@@ -128,12 +129,7 @@ const router: Router<Route> = {
       makeRoute() {
         return {
           tag: 'notice',
-          value: {
-            noticeId: {
-              tag: 'authFailure',
-              value: undefined
-            }
-          }
+          value: adt('authFailure')
         };
       }
     },
@@ -142,12 +138,7 @@ const router: Router<Route> = {
       makeRoute() {
         return {
           tag: 'notice',
-          value: {
-            noticeId: {
-              tag: 'notFound',
-              value: undefined
-            }
-          }
+          value: adt('notFound')
         };
       }
     }
@@ -177,7 +168,7 @@ const router: Router<Route> = {
         return '/organizations/create';
       case 'notice':
         return (() => {
-          switch (route.value.noticeId.tag) {
+          switch (route.value.tag) {
             case 'notFound':
               return '/not-found';
             case 'authFailure':

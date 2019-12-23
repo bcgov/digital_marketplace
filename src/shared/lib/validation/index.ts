@@ -28,6 +28,14 @@ export function invalid<Invalid>(value: Invalid): Validation<any, Invalid> {
   } as ADT<'invalid', Invalid>;
 }
 
+export function isValid<Valid>(value: Validation<Valid, any>): value is ADT<'valid', Valid> {
+  return value.tag === 'valid';
+}
+
+export function isInvalid<Invalid>(value: Validation<any, Invalid>): value is ADT<'invalid', Invalid> {
+  return value.tag === 'invalid';
+}
+
 export function allValid(results: Array<Validation<any, any>>): results is Array<ADT<'valid', any>> {
   for (const result of results) {
     if (result.tag === 'invalid') {
