@@ -1,10 +1,12 @@
 import { generateUuid } from 'back-end/lib';
 import { ValidatedCreateRequestBody as ValidatedAffiliationCreateRequestBody } from 'back-end/lib/resources/affiliation';
+import { ValidatedCreateRequestBody as ValidatedFileCreateRequestBody } from 'back-end/lib/resources/file';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
 import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
+import { readFile } from 'fs';
 import Knex from 'knex';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -177,14 +179,6 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
     .where({ id })
     .delete();
   return null;
-}
-
-export async function readOneFile(connection: Connection, id: Id): Promise<PublicFile> {
-  const result = await connection('files')
-    .where({ id })
-    .first();
-
-  return result ? result : null;
 }
 
 export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
@@ -432,4 +426,77 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
   const result = await connection('affiliations')
     .where({ organization: orgId, membershipType: MembershipType.Owner, membershipStatus: MembershipStatus.Active });
   return result ? result.length : 0;
+}
+
+export async function readOneFile(connection: Connection, hash: string): Promise<FileRecord> {
+  const result = await connection('files')
+    .where({ fileBlob: hash })
+    .first();
+
+  return result ? result : null;
+}
+
+export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody, userId: Id): Promise<FileRecord> {
+  const now = new Date();
+  return await connection.transaction(async trx => {
+
+    const fileHexData = await new Promise((resolve, reject) => {
+      readFile(fileRecord.path, 'hex', (err, data) => {
+        if (err) {
+          reject(new Error('error reading file'));
+        }
+        resolve(data);
+      });
+    });
+
+    const [fileBlob] = await connection('fileBlobs')
+      .transacting(trx)
+      .insert({
+        hash: fileRecord.fileHash,
+        blob: fileHexData
+      }, ['*']);
+
+    const [file] = await connection('files')
+      .transacting(trx)
+      .insert({
+        name: fileRecord.name,
+        id: generateUuid(),
+        createdAt: now,
+        createdBy: userId,
+        fileBlob: fileBlob.hash
+      }, ['*']);
+
+    // Insert values for permissions defined in metadata
+    for (const permission of fileRecord.permissions) {
+      switch (permission.tag) {
+        case 'any':
+          await connection('filePermissionsPublic')
+            .transacting(trx)
+            .insert({
+              file: file.id
+            });
+          break;
+
+        case 'user':
+          await connection('filePermissionsUser')
+            .transacting(trx)
+            .insert({
+              user: permission.value,
+              file: file.id
+            });
+          break;
+
+        case 'userType':
+          await connection('filePermissionsUserType')
+            .transacting(trx)
+            .insert({
+              userType: permission.value,
+              file: file.id
+            });
+          break;
+      }
+    }
+
+    return file;
+  });
 }

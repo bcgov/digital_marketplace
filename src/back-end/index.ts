@@ -5,6 +5,7 @@ import loggerHook from 'back-end/lib/hooks/logger';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import affiliationResource from 'back-end/lib/resources/affiliation';
+import fileResource from 'back-end/lib/resources/file';
 import organizationResource from 'back-end/lib/resources/organization';
 import sessionResource from 'back-end/lib/resources/session';
 import userResource from 'back-end/lib/resources/user';
@@ -13,11 +14,13 @@ import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
 import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, Router } from 'back-end/lib/server';
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
-import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
+import { MAX_MULTIPART_FILES_SIZE } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
+import { parseFilePermissions, parseUserType } from '../shared/lib/resources/file';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 
@@ -43,6 +46,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
     affiliationResource,
+    fileResource,
     organizationResource,
     sessionResource,
     userResource
@@ -96,7 +100,7 @@ async function start() {
   const router = await createRouter(connection);
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
-  const adapter: ExpressAdapter<any, any, any, any, Session> = express();
+  const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata> = express();
   adapter({
     router,
     sessionIdToSession: async id => {
@@ -109,7 +113,11 @@ async function start() {
     },
     sessionToSessionId: ({ id }) => id,
     host: SERVER_HOST,
-    port: SERVER_PORT
+    port: SERVER_PORT,
+    maxMultipartFilesSize: MAX_MULTIPART_FILES_SIZE,
+    parseFileUploadMetadata(raw) {
+      return parseFilePermissions(raw, parseUserType);
+    }
   });
   logger.info('server started', { host: SERVER_HOST, port: String(SERVER_PORT) });
 }

@@ -1,6 +1,6 @@
 import { Connection, readOneAffiliationById, readOneFile, readOneOrganization, readOneUser } from 'back-end/lib/db';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -19,7 +19,7 @@ export async function validateUserId(connection: Connection, userId: Id): Promis
   }
 }
 
-export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<PublicFile>> {
+export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
     const file = await readOneFile(connection, fileId);
     if (file) {

@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 
 // export the root directory of the repository.
 export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../');
@@ -55,6 +55,11 @@ export const KEYCLOAK_REALM = get('KEYCLOAK_REALM', 'p2zhow64');
 export const KEYCLOAK_CLIENT_ID = get('KEYCLOAK_CLIENT_ID', 'dm-auth-web');
 
 export const KEYCLOAK_CLIENT_SECRET = get('KEYCLOAK_CLIENT_SECRET', '');
+
+// Temp storage for file uploads
+const fileStorageDir = get('FILE_STORAGE_DIR', '.');
+export const FILE_STORAGE_DIR = fileStorageDir && resolve(REPOSITORY_ROOT_DIR, fileStorageDir);
+export const TMP_DIR = join(FILE_STORAGE_DIR, '__tmp');
 
 function isPositiveInteger(n: number): boolean {
   return !isNaN(n) && !!n && n >= 0 && Math.abs(n % 1) === 0;

@@ -1,43 +1,129 @@
-import { COOKIE_SECRET } from 'back-end/config';
+import { COOKIE_SECRET, TMP_DIR } from 'back-end/config';
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { ErrorResponseBody, FileResponseBody, JsonRequestBody, JsonResponseBody, makeErrorResponseBody, makeJsonRequestBody, parseSessionId, Request, Response, Route, Router, SessionIdToSession, SessionToSessionId, TextResponseBody } from 'back-end/lib/server';
-import { parseServerHttpMethod, ServerHttpMethod } from 'back-end/lib/types';
+import { ErrorResponseBody, FileRequestBody, FileResponseBody, JsonRequestBody, JsonResponseBody, makeErrorResponseBody, makeFileRequestBody, makeJsonRequestBody, parseSessionId, Request, Response, Route, Router, SessionIdToSession, SessionToSessionId, TextResponseBody } from 'back-end/lib/server';
+import { parseServerHttpMethod, ServerHttpMethod,  } from 'back-end/lib/types';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import expressLib from 'express';
+import { createWriteStream, existsSync, unlinkSync } from 'fs';
 import { IncomingHttpHeaders } from 'http';
 import { castArray } from 'lodash';
+import multiparty from 'multiparty';
+import * as path from 'path';
+import { parseJsonSafely } from 'shared/lib';
 import { Validation } from 'shared/lib/validation';
 
 const SESSION_COOKIE_NAME = 'sid';
 
-export interface AdapterRunParams<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session> {
+export interface AdapterRunParams<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session, FileUploadMetaData> {
   router: Router<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session>;
   sessionIdToSession: SessionIdToSession<Session>;
   sessionToSessionId: SessionToSessionId<Session>;
   host: string;
   port: number;
+  maxMultipartFilesSize: number;
+  parseFileUploadMetadata(raw: any): FileUploadMetaData;
 }
 
-export type Adapter<App, SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session> = (params: AdapterRunParams<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session>) => App;
+export type Adapter<App, SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session, FileUploadMetaData> = (params: AdapterRunParams<SupportedRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, SupportedResponseBodies, HookState, Session, FileUploadMetaData>) => App;
 
-export type ExpressRequestBodies = JsonRequestBody;
+export type ExpressRequestBodies<FileUploadMetaData> = JsonRequestBody | FileRequestBody<FileUploadMetaData>;
 
 export type ExpressResponseBodies = JsonResponseBody | FileResponseBody | TextResponseBody | ErrorResponseBody;
 
-export type ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session> = Adapter<expressLib.Application, ExpressRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session>;
+export type ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session, FileUploadMetaData> = Adapter<expressLib.Application, ExpressRequestBodies<FileUploadMetaData>, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session, FileUploadMetaData>;
 
 function incomingHeaderMatches(headers: IncomingHttpHeaders, header: string, value: string): boolean {
   header = castArray(headers[header] || '').join(' ');
   return !!header.match(value);
 }
 
-export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session>(): ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session> {
+/**
+ * Use `multiparty` to parse a HTTP request with a multipart body.
+ * It currently only supports multipart bodies with these fields:
+ *
+ * `file` must be the file you want to upload.
+ *
+ * `name` must be the user-defined name of the file.
+ *
+ * `metadata` is an optional field containing a JSON string
+ */
+function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUploadMetadata: (raw: any) => FileUploadMetadata, expressReq: expressLib.Request): Promise<FileRequestBody<FileUploadMetadata>> {
+  return new Promise((resolve, reject) => {
+    // Reject the promise if the content length is too large.
+    const contentLength = expressReq.get('content-length') || maxSize + 1;
+    if (contentLength > maxSize) {
+      return reject(new Error('Content-Length is too large.'));
+    }
+    // Parse the request.
+    let filePath: string | undefined;
+    let metadata = '';
+    let fileName = '';
+    const form = new multiparty.Form();
+    // Listen for files and fields.
+    // We only want to receive one file, so we disregard all other files.
+    // We only want the (optional) metadata field, so we disregard all other fields.
+    form.on('part', part => {
+      part.on('error', error => reject(error));
+      // We expect the file's field to have the name `file`.
+      if (part.name === 'file' && part.filename && !filePath) {
+        // We only want to receive one file.
+        const tmpPath = path.join(TMP_DIR, generateUuid());
+        part.pipe(createWriteStream(tmpPath));
+        filePath = tmpPath;
+      } else if (part.name === 'metadata' && !part.filename && !metadata) {
+        part.setEncoding('utf8');
+        part.on('data', chunk => metadata += chunk);
+        // No need to listen to 'end' event as the multiparty form won't end until the
+        // entire request body has been processed.
+      } else if (part.name === 'name' && !part.filename && !metadata) {
+        part.setEncoding('utf8');
+        part.on('data', chunk => fileName += chunk);
+        // No need to listen to 'end' event as the multiparty form won't end until the
+        // entire request body has been processed.
+      } else {
+        // Ignore all other files and fields.
+        part.resume();
+      }
+    });
+    // Handle errors.
+    form.on('error', error => reject(error));
+    // Resolve the promise once the request has finished parsing.
+    form.on('close', () => {
+      if (filePath && metadata && fileName) {
+        const jsonMetadata = parseJsonSafely(metadata);
+        switch (jsonMetadata.tag) {
+          case 'valid':
+            resolve(makeFileRequestBody({
+              name: fileName,
+              path: filePath,
+              metadata: parseFileUploadMetadata(jsonMetadata.value)
+            }));
+            break;
+          case 'invalid':
+            reject(new Error('Invalid `metadata` field.'));
+            break;
+        }
+      } else if (filePath && fileName) {
+        resolve(makeFileRequestBody({
+          name: fileName,
+          path: filePath
+        }));
+      } else {
+        reject(new Error('No file uploaded'));
+      }
+    });
+    // Parse the form.
+    form.parse(expressReq);
+  });
+}
+
+export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session, FileUploadMetaData>(): ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session, FileUploadMetaData> {
   const logger = makeDomainLogger(consoleAdapter, 'adapter:express');
 
-  return ({ router, sessionIdToSession, sessionToSessionId, host, port }) => {
+  return ({ router, sessionIdToSession, sessionToSessionId, host, port, maxMultipartFilesSize, parseFileUploadMetadata }) => {
     function respond(response: Response<ExpressResponseBodies, Session>, expressRes: expressLib.Response): void {
       expressRes
         .status(response.code)
@@ -75,7 +161,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       }
     }
 
-    function makeExpressRequestHandler(route: Route<ExpressRequestBodies, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session>): expressLib.RequestHandler {
+    function makeExpressRequestHandler(route: Route<ExpressRequestBodies<FileUploadMetaData>, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session>): expressLib.RequestHandler {
       function asyncHandler(fn: (request: expressLib.Request, expressRes: expressLib.Response, next: expressLib.NextFunction) => Promise<void>): expressLib.RequestHandler {
         return (expressReq, expressRes, next) => {
           fn(expressReq, expressRes, next)
@@ -99,13 +185,15 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         const session = await sessionIdToSession(sessionId);
         // Set up the request body.
         const headers = expressReq.headers;
-        let body: ExpressRequestBodies = makeJsonRequestBody(null);
+        let body: ExpressRequestBodies<FileUploadMetaData> = makeJsonRequestBody(null);
         if (method !== ServerHttpMethod.Get && incomingHeaderMatches(headers, 'content-type', 'application/json')) {
           body = makeJsonRequestBody(expressReq.body);
+        } else if (method !== ServerHttpMethod.Get && incomingHeaderMatches(headers, 'content-type', 'multipart')) {
+          body = await parseMultipartRequest(maxMultipartFilesSize, parseFileUploadMetadata, expressReq);
         }
         // Create the initial request.
         const requestId = generateUuid();
-        const initialRequest: Request<ExpressRequestBodies, Session> = {
+        const initialRequest: Request<ExpressRequestBodies<FileUploadMetaData>, Session> = {
           id: requestId,
           path: expressReq.path,
           method,
@@ -130,6 +218,10 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         };
         // Respond to the request.
         const response = await route.handler.respond(validatedRequest);
+        // Delete temporary file if it exists.
+        if (body.tag === 'file' && existsSync(body.value.path)) {
+          unlinkSync(body.value.path);
+        }
         // Run the after hook if specified.
         // Note: we run the after hook after our business logic has completed,
         // not once the express framework sends the response.

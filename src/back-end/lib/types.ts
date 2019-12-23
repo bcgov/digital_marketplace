@@ -1,4 +1,7 @@
-import { ErrorResponseBody, FileResponseBody, JsonRequestBody, JsonResponseBody, TextResponseBody } from 'back-end/lib/server';
+import { ErrorResponseBody, FileRequestBody, FileResponseBody, JsonRequestBody, JsonResponseBody, TextResponseBody } from 'back-end/lib/server';
+import { FilePermissions } from 'shared/lib/resources/file';
+import { UserType } from 'shared/lib/resources/user';
+import { Id } from 'shared/lib/types';
 
 export enum ServerHttpMethod {
   Any = '*',
@@ -29,10 +32,12 @@ export function parseServerHttpMethod(raw: string): ServerHttpMethod | null {
   }
 }
 
-export type SupportedRequestBodies = JsonRequestBody;
+export type SupportedRequestBodies = JsonRequestBody | FileRequestBody<FileUploadMetadata>;
 
 export type SupportedResponseBodies
   = JsonResponseBody
   | FileResponseBody
   | TextResponseBody
   | ErrorResponseBody;
+
+export type FileUploadMetadata = Array<FilePermissions<Id, UserType>> | null;

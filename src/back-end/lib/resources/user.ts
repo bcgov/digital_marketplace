@@ -6,7 +6,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { UpdateRequestBody, UpdateValidationErrors, User, UserStatus } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -14,7 +14,7 @@ import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation
 import { validateAcceptedTerms, validateEmail, validateName, validateNotificationsOn } from 'shared/lib/validation/user';
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
-  avatarImageFile?: PublicFile;
+  avatarImageFile?: FileRecord;
   notificationsOn?: Date;
   acceptedTerms?: Date;
   deactivatedOn?: Date;
