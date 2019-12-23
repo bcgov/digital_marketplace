@@ -9,7 +9,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { readOneUser, updateUser, User } from 'shared/lib/resources/user';
+import { readOneUser, updateUser, User, emptyUser } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -39,8 +39,13 @@ export interface RouteParams {
   activeTab?: ActiveTab;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const user: User = await readOneUser('1');
+const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
+  let user = await readOneUser(params.routeParams.userId);
+  if (!user) {
+    // TODO(Jesse): Handle error
+    user = emptyUser();
+  }
+
   const displayUser: UserHelpers.DisplayUser = UserHelpers.toDisplayUser(user);
 
   return ({
@@ -88,8 +93,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     return [state.set('editingAdminCheckbox', false),
       async state => {
         const newUser = await updateUser({id: state.user.id });
-        if (newUser.tag === 'valid') {
-          state.set('user', newUser.value);
+        if (newUser) {
+          state.set('user', newUser);
         }
         return state;
       }

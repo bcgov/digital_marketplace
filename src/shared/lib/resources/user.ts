@@ -1,9 +1,7 @@
-import { request } from 'shared/lib/http';
 import { PublicFile } from 'shared/lib/resources/file';
 import { Id } from 'shared/lib/types';
-import { ClientHttpMethod } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
+import { readOne, readMany, update } from 'shared/lib/http';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
 
@@ -53,71 +51,16 @@ export interface UpdateRequestBody {
 
 export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody>;
 
-export async function updateUser(user: UpdateRequestBody): Promise<Validation<User, null>> {
-  const response = await request(ClientHttpMethod.Put, 'api/users', user);
-  switch (response.status) {
-    case 200:
-      return valid(response.data as User); // TODO(Jesse): Does this actually pass the result back?
-    default:
-      return invalid(null);
-  }
+export async function updateUser(requestBody: UpdateRequestBody): Promise<User | null> {
+  return update<User, UpdateRequestBody>(`/api/users/${requestBody.id}`, requestBody);
 }
 
-export async function readOneUser(id: string): Promise<User> {
-  const users: User[] = await readAllUsers();
-  return users[0];
+export async function readOneUser(id: string): Promise<User | null> {
+  return readOne<User>('/api/users');
 }
 
 export async function readAllUsers(): Promise<User[]> {
-  return new Promise( (resolve) => {
-    return resolve([
-      {
-        id: '1',
-        type: UserType.Government,
-        status: UserStatus.Active,
-        name: 'John Doe',
-        notificationsOn: true,
-        acceptedTerms: true,
-        idpUsername: 'john_doe'
-      },
-      {
-        id: '2',
-        type: UserType.Vendor,
-        status: UserStatus.Active,
-        name: 'John Blow',
-        notificationsOn: true,
-        acceptedTerms: true,
-        idpUsername: 'john_blow'
-      },
-      {
-        id: '3',
-        type: UserType.Vendor,
-        status: UserStatus.InactiveByAdmin,
-        name: 'Miss Wiss',
-        notificationsOn: true,
-        acceptedTerms: true,
-        idpUsername: 'miss_wiss'
-      },
-      {
-        id: '4',
-        type: UserType.Government,
-        status: UserStatus.InactiveByUser,
-        name: 'Tina Turner',
-        notificationsOn: true,
-        acceptedTerms: true,
-        idpUsername: 'tina_turner'
-      },
-      {
-        id: '5',
-        type: UserType.Admin,
-        status: UserStatus.InactiveByUser,
-        name: 'Biggie Smalls',
-        notificationsOn: true,
-        acceptedTerms: true,
-        idpUsername: 'biggie'
-      }
-    ]);
-  });
+  return readMany<User>('/api/users');
 }
 
 export function parseUserStatus(raw: string): UserStatus | null {
@@ -143,5 +86,17 @@ export function parseUserType(raw: string): UserType | null {
       return UserType.Admin;
     default:
       return null;
+  }
+}
+
+export function emptyUser(): User {
+  return {
+    id: '',
+    type: UserType.Government,
+    status: UserStatus.Active,
+    name: '',
+    notificationsOn: false,
+    acceptedTerms: false,
+    idpUsername: '',
   }
 }

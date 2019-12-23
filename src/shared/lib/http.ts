@@ -37,3 +37,51 @@ export function prefixRequest(prefix: string): RequestFunction {
     return request(method, `${cleanSlashes(prefix)}${cleanSlashes(path)}`, data);
   };
 }
+
+
+export async function readOne<T>(endpoint: string): Promise<T | null> {
+  const response = await request(ClientHttpMethod.Get, endpoint);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as T;
+    default:
+      return null;
+  }
+}
+
+export async function readMany<T>(endpoint: string): Promise<T[]> {
+  const response = await request(ClientHttpMethod.Get, endpoint);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as T[];
+    default:
+      return [];
+  }
+}
+
+export async function create<T, RequestType>(endpoint: string, requestObject: RequestType): Promise<T | null> {
+  // TODO(Jesse): Can we avoid this casting situation somehow?
+  const response = await request(ClientHttpMethod.Post, endpoint, requestObject as unknown as object);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as T;
+    default:
+      return null;
+  }
+}
+
+export async function update<T, RequestType>(endpoint: string, requestObject: RequestType): Promise<T | null> {
+  // TODO(Jesse): Can we avoid this casting situation somehow?
+  const response = await request(ClientHttpMethod.Put, endpoint, requestObject as unknown as object);
+  switch (response.status) {
+    case 304:
+    case 200:
+      return response.data as T;
+    default:
+      return null;
+  }
+}
+
