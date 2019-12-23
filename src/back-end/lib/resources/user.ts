@@ -57,6 +57,21 @@ const resource: Resource = {
     });
   },
 
+  readOne(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<User | string[]>, Session>(async request => {
+      const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      const validatedUserId = await validateUserId(connection, request.params.id);
+      if (validatedUserId.tag === 'invalid') {
+        return respond(400, validatedUserId.value);
+      }
+      if (!permissions.readOneUser(request.session, validatedUserId.value.id)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const user = await readOneUser(connection, validatedUserId.value.id);
+      return respond(200, user!);
+    });
+  },
+
   update(connection) {
     return {
       parseRequestBody(request) {
