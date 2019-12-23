@@ -1,8 +1,8 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createFile, readOneFile } from 'back-end/lib/db';
+import { Connection, createFile, readOneFileByHash, readOneFileById } from 'back-end/lib/db';
 import { hashFile } from 'back-end/lib/fileUtils';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, makeJsonResponseBody } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { CreateRequestBody, CreateValidationErrors, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
@@ -35,6 +35,17 @@ type Resource = crud.Resource<
 
 const resource: Resource = {
   routeNamespace: 'files',
+
+  readOne(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<FileRecord | string[]>, Session>(async request => {
+      const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      if (await permissions.readOneFile(connection, request.session, request.params.id)) {
+        const file = await readOneFileById(connection, request.params.id);
+        return respond(200, file);
+      }
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    });
+  },
 
   create(connection) {
     return {
@@ -76,7 +87,7 @@ const resource: Resource = {
             return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
           case 'valid':
             const fileHash = await hashFile(request.body.value.name, request.body.value.path, request.body.value.permissions);
-            const existingFile = await readOneFile(connection, fileHash);
+            const existingFile = await readOneFileByHash(connection, fileHash);
             if (existingFile) {
               return respond(200, existingFile);
             }
