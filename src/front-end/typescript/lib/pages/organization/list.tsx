@@ -2,10 +2,11 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as HTTP from 'front-end/lib/http/api';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { Organization, readAllOrganizations } from 'shared/lib/resources/organization';
+import { Organization } from 'shared/lib/resources/organization';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
@@ -23,7 +24,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
   table: immutable(await Table.init({
     idNamespace: 'org-list-table'
   })),
-  organizations: await readAllOrganizations()
+  organizations: await HTTP.OrgApi.readMany()
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {

@@ -2,6 +2,7 @@ import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/l
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as HTTP from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
@@ -35,7 +36,7 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
-  let organization = await OrgResource.readOneOrganization(params.routeParams.orgId);
+  let organization = await HTTP.OrgApi.readOne(params.routeParams.orgId);
   if (!organization) {
     // TODO(Jesse): Handle error
     organization = OrgResource.Empty();
@@ -82,7 +83,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     return [
       startEditingLoading(state),
       async state => {
-        let organization = await OrgResource.readOneOrganization(state.orgId);
+        let organization = await HTTP.OrgApi.readOne(state.orgId);
         if (!organization) {
           // TODO(Jesse): Handle error
           organization = OrgResource.Empty();
@@ -101,7 +102,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'submit':
       return [state, async (state, dispatch) => {
-        let organization = await OrgResource.updateOrganization(state.organization.id, OrgForm.getValues(state.govProfile));
+        let organization = await HTTP.OrgApi.update(state.organization.id, OrgForm.getValues(state.govProfile) );
         if (!organization) {
           // TODO(Jesse): Handle error
           organization = OrgResource.Empty();
