@@ -8,6 +8,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { Organization } from 'shared/lib/resources/organization';
 import { ADT, adt } from 'shared/lib/types';
+import { isValid } from 'shared/lib/validation';
 
 export interface State {
   table: Immutable<Table.State>;
@@ -28,8 +29,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
   };
 
   const result = await HTTP.OrgApi.readMany();
-  if (result.valid) {
-    return { ...defaultParams, organizations: result.valid };
+  if (isValid(result)) {
+    return { ...defaultParams, organizations: result.value };
   } else {
     // TODO(Jesse): Handle Errors
     return { ...defaultParams, organizations: [] };

@@ -1,11 +1,16 @@
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as HTTP from 'front-end/lib/http/api';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
+import { isValid } from 'shared/lib/validation';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 import { validateUrl } from 'shared/lib/validation/organization';
 import { validateName } from 'shared/lib/validation/user';
@@ -27,6 +32,12 @@ export interface State {
   contactTitle: Immutable<ShortText.State>;
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
+
+  isEditing: boolean;
+  editingLoading: number;
+  submitLoading: number;
+
+  organization?: Organization;
 }
 
 export type Msg =
@@ -41,6 +52,9 @@ export type Msg =
   ADT<'contactName',     ShortText.Msg> |
   ADT<'contactEmail',    ShortText.Msg> |
   ADT<'contactPhone',    ShortText.Msg> |
+  ADT<'startEditing'>                   |
+  ADT<'cancelEditing'>                  |
+  ADT<'submit'>                         |
   ADT<'region',          ShortText.Msg>
   ;
 
@@ -48,7 +62,7 @@ export type Values = Required<CreateRequestBody>;
 
 type Errors = ErrorTypeFrom<Values>;
 
-export function isValid(state: Immutable<State>): boolean {
+export function isFormValid(state: Immutable<State>): boolean {
   return (
     FormField.isValid(state.legalName)      &&
     FormField.isValid(state.websiteUrl)     &&
@@ -115,8 +129,17 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []));
 }
 
+const startEditingLoading = makeStartLoading<State>('editingLoading');
+const stopEditingLoading = makeStopLoading<State>('editingLoading');
+
 export const init: Init<Params, State> = async (params) => {
   return {
+    organization: params.organization,
+
+    isEditing: false,
+    editingLoading: 0,
+    submitLoading: 0,
+
     legalName: immutable(await ShortText.init({
       errors: [],
       validate: validateName,
@@ -230,6 +253,45 @@ export const init: Init<Params, State> = async (params) => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'startEditing':
+    return [
+      startEditingLoading(state),
+      async state => {
+        if (state.organization) {
+          const result = await HTTP.OrgApi.readOne(state.organization.id);
+          if ( isValid(result) ) {
+            state = state.set('organization', result.value)
+                         .set('isEditing', true);
+
+            state = setValues(state, result.value);
+            state = stopEditingLoading(state);
+          } else {
+            // TODO(Jesse): Handle errors
+          }
+        }
+        return state;
+      }
+    ];
+    case 'cancelEditing': {
+      if (state.organization) {
+        state = setValues(state, state.organization);
+      }
+      state = state.set('isEditing', false);
+      return [ state ];
+    }
+    case 'submit':
+      return [state, async (state, dispatch) => {
+        if (state.organization) {
+          const result = await HTTP.OrgApi.update(state.organization.id, getValues(state) );
+          if (isValid(result)) {
+            state = state.set('isEditing', false)
+                         .set('organization', result.value);
+          } else {
+            // TODO(Jesse): Handle errors
+          }
+        }
+        return state;
+      }];
     case 'legalName':
       return updateComponentChild({
         state,
@@ -335,9 +397,48 @@ export interface Props extends ComponentViewProps<State, Msg> {
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
+
+  const isEditing = state.isEditing;
+  const isEditingLoading = state.editingLoading > 0;
+  const isSubmitLoading = state.submitLoading > 0;
+  const isLoading = isEditingLoading || isSubmitLoading;
+
   return (
     <div>
       <Row>
+
+        <Row className='mb-3 pb-3'>
+          <Col xs='12' className='d-flex flex-nowrap align-items-center'>
+            {
+              state.organization ?
+                <h1>Edit {state.organization.legalName}</h1>
+              : <h1>Create Organization</h1>
+            }
+
+            <div className='ml-3'>
+            {
+              isEditing
+              ?
+              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing'))}>
+                Discard Changes
+              </Link>
+              :
+              <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
+                Edit Organization
+              </LoadingButton>
+            }
+            </div>
+          </Col>
+        </Row>
+
+        <Row className='my-3 py-3'>
+          <Col xs='2'>
+          </Col>
+          <Col xs='10'>
+            <div className='pb-3'><strong>Logo (Optional)</strong></div>
+            <Link button className='btn-secondary'>Choose Image</Link>
+          </Col>
+        </Row>
 
         <Col xs='12'>
           <ShortText.view
@@ -461,6 +562,19 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
+        </Col>
+      </Row>
+
+      <Row>
+        <Col className='d-flex justify-content-end pt-5'>
+          <Link button className='mr-3'>Cancel</Link>
+          <LoadingButton loading={isLoading}
+            color='primary'
+            symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
+            onClick={() => dispatch(adt('submit'))}
+          >
+            Save
+          </LoadingButton>
         </Col>
       </Row>
 

@@ -8,18 +8,6 @@ export type ErrorTypeFrom<T> = {
   [p in keyof T]?: string[];
 };
 
-export interface Invalid<ErrorType> {
-  invalid: ErrorType;
-  valid: undefined;
-}
-
-export interface Valid<ValidT> {
-  valid: ValidT;
-  invalid: undefined;
-}
-
-export type Validation_<ValidT, ErrorT> = Valid<ValidT> | Invalid<ErrorT>;
-
 export type Validation<Valid, Invalid = string[]>
   = ADT<'valid', Valid>
   | ADT<'invalid', Invalid>;

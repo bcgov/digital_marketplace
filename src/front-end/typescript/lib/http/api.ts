@@ -4,7 +4,7 @@ import * as OrgResource from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
 import { ClientHttpMethod, Id } from 'shared/lib/types';
-import { invalid, Invalid, valid, Valid, Validation, Validation_ } from 'shared/lib/validation';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export const apiRequest = prefixRequest('api');
 
@@ -45,61 +45,61 @@ export async function readOneFile(id: Id): Promise<Validation<FileRecord>> {
   }
 }
 
-function readOne<T>(endpoint: string): (id: Id ) => ReadOneReturnType<T> {
-  return (async (id: Id) => {
+function readOne<ResourceType>(endpoint: string): (id: Id ) => ReadOneReturnType<ResourceType> {
+  return ( async (id: Id) => {
     const response = await apiRequest(ClientHttpMethod.Get, `${endpoint}/${id}`);
     switch (response.status) {
       case 304:
       case 200:
-        return { valid: response.data as T } as Valid<T>;
+        return valid(response.data);
       default:
-        return { invalid: response.data as string[] } as Invalid<string[]>;
+        return invalid(response.data);
     }
   });
 }
 
-function readMany<T>(endpoint: string): () => ReadManyReturnType<T> {
-  return (async () => {
+function readMany<ResourceType>(endpoint: string): () => ReadManyReturnType<ResourceType> {
+  return ( async () => {
     const response = await apiRequest(ClientHttpMethod.Get, endpoint);
     switch (response.status) {
       case 304:
       case 200:
-        return { valid: response.data as T[] } as Valid<T[]>;
+        return valid(response.data);
       default:
-        return { invalid: response.data as string[] } as Invalid<string[]>;
+        return invalid(response.data);
     }
   });
 }
 
-function create<T, RequestType>(endpoint: string): (requestObject: RequestType) => CreateReturnType<T> {
+function create<ResourceType, RequestType>(endpoint: string): (requestObject: RequestType) => CreateReturnType<ResourceType> {
   return ( async (requestObject: RequestType) => {
     // TODO(Jesse): Can we avoid this casting situation somehow?
     const response = await apiRequest(ClientHttpMethod.Post, endpoint, requestObject as unknown as object);
     switch (response.status) {
       case 304:
       case 200:
-        return { valid: response.data as T } as Valid<T>;
+        return valid(response.data);
       default:
-        return { invalid: response.data as string[] } as Invalid<string[]>;
+        return invalid(response.data);
     }
   });
 }
 
-function update<T, RequestType>(endpoint: string): (id: Id, requestObject: RequestType) => UpdateReturnType<T> {
+function update<ResourceType, RequestType>(endpoint: string): (id: Id, requestObject: RequestType) => UpdateReturnType<ResourceType> {
   return ( async (id: Id, requestObject: RequestType) => {
     // TODO(Jesse): Can we avoid this casting situation somehow?
     const response = await apiRequest(ClientHttpMethod.Put, `${endpoint}/${id}`, requestObject as unknown as object);
     switch (response.status) {
       case 304:
       case 200:
-        return { valid: response.data as T } as Valid<T>;
+        return valid(response.data);
       default:
-        return { invalid: response.data as string[]} as Invalid<string[]>;
+        return invalid(response.data);
     }
   });
 }
 
-function destroy<T>(endpoint: string): (id: Id) => Promise<boolean> {
+function destroy<ResourceType>(endpoint: string): (id: Id) => Promise<boolean> {
   return ( async (id: Id) => {
     // TODO(Jesse): Can we avoid this casting situation somehow?
     const response = await apiRequest(ClientHttpMethod.Delete, `${endpoint}/${id}`);
@@ -113,11 +113,11 @@ function destroy<T>(endpoint: string): (id: Id) => Promise<boolean> {
   });
 }
 
-type ReadOneReturnType<T>  = Promise<Validation_<T, string[]>>;
-type ReadManyReturnType<T> = Promise<Validation_<T[], string[]>>;
-type UpdateReturnType<T>   = ReadOneReturnType<T>;
-type CreateReturnType<T>   = ReadOneReturnType<T>;
-type DestroyReturnType     = Promise<boolean>;
+type ReadOneReturnType<ResourceType>  = Promise<Validation<ResourceType, string[]>>;
+type ReadManyReturnType<ResourceType> = Promise<Validation<ResourceType[], string[]>>;
+type UpdateReturnType<ResourceType>   = Promise<Validation<ResourceType, string[]>>;
+type CreateReturnType<ResourceType>   = Promise<Validation<ResourceType, string[]>>;
+type DestroyReturnType                = Promise<boolean>;
 
 interface CrudResource<ResourceType, CreateRequest, UpdateRequest> {
     create: (req: CreateRequest)         => CreateReturnType<ResourceType>;

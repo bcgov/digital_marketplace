@@ -12,6 +12,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { emptyUser, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
+import { isValid } from 'shared/lib/validation';
 
 export interface State {
   user: User;
@@ -37,8 +38,8 @@ export interface RouteParams {
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
   const result = await UserApi.readOne(params.routeParams.userId);
   let user = emptyUser();
-  if (result.valid) {
-    user = result.valid;
+  if ( isValid(result) ) {
+    user = result.value;
   }
 
   const displayUser: UserHelpers.DisplayUser = UserHelpers.toDisplayUser(user);
@@ -87,8 +88,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [state.set('editingAdminCheckbox', false),
         async state => {
           const result = await UserApi.update(state.user.id, {});  // TODO(Jesse): Serialize form and pass to backend
-          if (result.valid) {
-            state.set('user', result.valid);
+          if (isValid(result)) {
+            state.set('user', result.value);
           }
           return state;
         }
