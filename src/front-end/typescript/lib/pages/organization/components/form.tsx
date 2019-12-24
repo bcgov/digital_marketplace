@@ -1,4 +1,3 @@
-import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
@@ -33,10 +32,7 @@ export interface State {
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
 
-  isEditing: boolean;
-  editingLoading: number;
   submitLoading: number;
-
   organization?: Organization;
 }
 
@@ -52,8 +48,6 @@ export type Msg =
   ADT<'contactName',     ShortText.Msg> |
   ADT<'contactEmail',    ShortText.Msg> |
   ADT<'contactPhone',    ShortText.Msg> |
-  ADT<'startEditing'>                   |
-  ADT<'cancelEditing'>                  |
   ADT<'submit'>                         |
   ADT<'region',          ShortText.Msg>
   ;
@@ -129,17 +123,10 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []));
 }
 
-const startEditingLoading = makeStartLoading<State>('editingLoading');
-const stopEditingLoading = makeStopLoading<State>('editingLoading');
-
 export const init: Init<Params, State> = async (params) => {
   return {
     organization: params.organization,
-
-    isEditing: false,
-    editingLoading: 0,
     submitLoading: 0,
-
     legalName: immutable(await ShortText.init({
       errors: [],
       validate: validateName,
@@ -253,42 +240,20 @@ export const init: Init<Params, State> = async (params) => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'startEditing':
-    return [
-      startEditingLoading(state),
-      async state => {
-        if (state.organization) {
-          const result = await HTTP.OrgApi.readOne(state.organization.id);
-          if ( isValid(result) ) {
-            state = state.set('organization', result.value)
-                         .set('isEditing', true);
-
-            state = setValues(state, result.value);
-            state = stopEditingLoading(state);
-          } else {
-            // TODO(Jesse): Handle errors
-          }
-        }
-        return state;
-      }
-    ];
-    case 'cancelEditing': {
-      if (state.organization) {
-        state = setValues(state, state.organization);
-      }
-      state = state.set('isEditing', false);
-      return [ state ];
-    }
     case 'submit':
       return [state, async (state, dispatch) => {
-        if (state.organization) {
-          const result = await HTTP.OrgApi.update(state.organization.id, getValues(state) );
-          if (isValid(result)) {
-            state = state.set('isEditing', false)
-                         .set('organization', result.value);
+        const result = state.organization ?
+           await HTTP.OrgApi.update(state.organization.id, getValues(state) )
+         : await HTTP.OrgApi.create( getValues(state) );
+
+        if (isValid(result)) {
+          if (state.organization) {
+           state.set('organization', result.value);
           } else {
-            // TODO(Jesse): Handle errors
+            // TODO(Jesse): redirect to edit
           }
+        } else {
+          // TODO(Jesse): Handle errors
         }
         return state;
       }];
@@ -392,44 +357,16 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 export interface Props extends ComponentViewProps<State, Msg> {
-  disabled?: boolean;
+  disabled: boolean;
 }
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
-
-  const isEditing = state.isEditing;
-  const isEditingLoading = state.editingLoading > 0;
   const isSubmitLoading = state.submitLoading > 0;
-  const isLoading = isEditingLoading || isSubmitLoading;
 
   return (
     <div>
       <Row>
-
-        <Row className='mb-3 pb-3'>
-          <Col xs='12' className='d-flex flex-nowrap align-items-center'>
-            {
-              state.organization ?
-                <h1>Edit {state.organization.legalName}</h1>
-              : <h1>Create Organization</h1>
-            }
-
-            <div className='ml-3'>
-            {
-              isEditing
-              ?
-              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing'))}>
-                Discard Changes
-              </Link>
-              :
-              <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
-                Edit Organization
-              </LoadingButton>
-            }
-            </div>
-          </Col>
-        </Row>
 
         <Row className='my-3 py-3'>
           <Col xs='2'>
@@ -568,7 +505,7 @@ export const view: View<Props> = props => {
       <Row>
         <Col className='d-flex justify-content-end pt-5'>
           <Link button className='mr-3'>Cancel</Link>
-          <LoadingButton loading={isLoading}
+          <LoadingButton loading={isSubmitLoading}
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
             onClick={() => dispatch(adt('submit'))}
