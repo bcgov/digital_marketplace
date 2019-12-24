@@ -1,6 +1,8 @@
+import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { replaceRoute } from 'front-end/lib/framework';
 import * as HTTP from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
@@ -36,7 +38,7 @@ export interface State {
   organization?: Organization;
 }
 
-export type Msg =
+export type InnerMsg =
   ADT<'legalName',       ShortText.Msg> |
   ADT<'websiteUrl',      ShortText.Msg> |
   ADT<'streetAddress1',  ShortText.Msg> |
@@ -51,6 +53,8 @@ export type Msg =
   ADT<'submit',          SubmitHook>    |
   ADT<'region',          ShortText.Msg>
   ;
+
+export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type Values = Required<CreateRequestBody>;
 
@@ -246,14 +250,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
            await HTTP.OrgApi.update(state.organization.id, getValues(state))
          : await HTTP.OrgApi.create( getValues(state));
 
-        const submitHook: SubmitHook = msg.value;
-        if (submitHook) { submitHook(); }
-
         if (isValid(result)) {
           if (state.organization) {
-           state.set('organization', result.value);
+            const submitHook: SubmitHook = msg.value;
+            if (submitHook) { submitHook(result.value); }
+            state.set('organization', result.value);
           } else {
-            // TODO(Jesse): redirect to edit
+            // FIXME(Jesse): This compiles, but doesn't actually work..
+            dispatch(replaceRoute( adt('orgEdit', {orgId: result.value.id})));
           }
         } else {
           // TODO(Jesse): Handle errors
@@ -356,10 +360,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('region', value)
       });
+
+      default: return [state];
   }
 };
 
-type SubmitHook = () => void | undefined;
+type SubmitHook = (org: Organization) => void | undefined;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
   submitHook: SubmitHook;

@@ -2,7 +2,7 @@ import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as HTTP from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -26,7 +26,7 @@ export interface State {
 type InnerMsg
   = ADT<'orgForm', OrgForm.Msg>
   | ADT<'startEditing'>
-  | ADT<'cancelEditing'>
+  | ADT<'cancelEditing', OrgResource.Organization>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -101,27 +101,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
     ];
     case 'cancelEditing': {
-      state = state.set('isEditing', false);
-
-      //
-      // BUG(Dhruv): Passing nothing for the second return parameter results in
-      // the state getting overwritten with the old state
-      //
-      // ie: state.isEditing == true
-      //
-      // Passing a closure that returns the modified state produces the
-      // expected result of `state.isEditing == false` after the async update
-      //
-      // To reproduce, remove the async closure and uncomment the console.log
-      // in the view function.
-      //
-      // @async-update-bug
-      //
-
-      return [ state, async () => state ];
+      return [ state, async (state) => {
+        state = state.set('orgForm', OrgForm.setValues(state.orgForm, msg.value) );
+        state = state.set('isEditing', false);
+        return state;
+      }];
     }
     case 'orgForm':
-      return updateComponentChild({
+      return updateGlobalComponentChild({
         state,
         childStatePath: ['orgForm'],
         childUpdate: OrgForm.update,
@@ -144,8 +131,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isLoading = state.editingLoading > 0;
 
-  // console.log(state.isEditing); // @async-update-bug
-
   return (
     <div>
       <Row>
@@ -156,7 +141,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             {
               state.isEditing
               ?
-              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing'))}>
+              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing', state.organization))}>
                 Discard Changes
               </Link>
               :
@@ -173,7 +158,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             state={state.orgForm}
             disabled={!state.isEditing}
             dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
-            submitHook={() => { dispatch(adt('cancelEditing')); }}
+            submitHook={(org: OrgResource.Organization) => { dispatch(adt('cancelEditing', org)); }}
           />
         </Col>
       </Row>
