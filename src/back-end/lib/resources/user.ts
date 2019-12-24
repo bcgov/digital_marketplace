@@ -6,7 +6,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { UpdateRequestBody, UpdateValidationErrors, User, UserStatus } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -14,11 +14,13 @@ import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation
 import { validateAcceptedTerms, validateEmail, validateName, validateNotificationsOn } from 'shared/lib/validation/user';
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
-  avatarImageFile?: PublicFile;
+  id: Id;
+  avatarImageFile?: FileRecord;
   notificationsOn?: Date;
   acceptedTerms?: Date;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
+  status?: UserStatus;
 }
 
 type DeleteValidatedReqBody = User;
@@ -76,7 +78,6 @@ const resource: Resource = {
       parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
-          id: request.params.id,
           name: getString(body, 'name') || undefined,
           email: getString(body, 'email') || undefined,
           avatarImageFile: getString(body, 'avatarImageFile') || undefined,
@@ -85,8 +86,8 @@ const resource: Resource = {
         };
       },
       async validateRequestBody(request) {
-        const { id, name, email, avatarImageFile, notificationsOn, acceptedTerms } = request.body;
-        const validatedUserId = await validateUserId(connection, id);
+        const { name, email, avatarImageFile, notificationsOn, acceptedTerms } = request.body;
+        const validatedUserId = await validateUserId(connection, request.params.id);
         const validatedName = name ? validateName(name) : valid(undefined);
         const validatedEmail = email ? validateEmail(email) : valid(undefined);
         const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
@@ -94,6 +95,21 @@ const resource: Resource = {
         const validatedAcceptedTerms = acceptedTerms !== undefined ? validateAcceptedTerms(acceptedTerms) : valid(undefined);
 
         if (allValid([validatedUserId, validatedName, validatedEmail, validatedAvatarImageFile, validatedNotificationsOn, validatedAcceptedTerms])) {
+
+          // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario)
+          // Admin shouldn't provide any other updates to profile
+          if (permissions.isAdmin(request.session) && !permissions.isOwnAccount(request.session, request.params.id)) {
+            if (validatedName.value || validatedEmail.value || validatedAvatarImageFile.value || validatedNotificationsOn.value || validatedAcceptedTerms.value) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            return valid({
+              id: (validatedUserId.value as User).id,
+              status: UserStatus.Active
+            });
+          }
+
           return valid({
             id: (validatedUserId.value as User).id,
             name: validatedName.value,
@@ -114,13 +130,18 @@ const resource: Resource = {
         }
       },
       async respond(request) {
-        const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+        const respond = (code: number, body: User | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (!permissions.updateUser(request.session, request.params.id)) {
-          return respond(401, [permissions.ERROR_MESSAGE]);
+          return respond(401, {
+            permissions: [permissions.ERROR_MESSAGE]
+          });
         }
         switch (request.body.tag) {
           case 'invalid':
-            return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
+            if (request.body.value.permissions) {
+              return respond(401, request.body.value);
+            }
+            return respond(400, request.body.value);
           case 'valid':
             const updatedUser = await updateUser(connection, request.body.value);
             return respond(200, updatedUser);
@@ -133,7 +154,13 @@ const resource: Resource = {
     return {
       async validateRequestBody(request) {
         const user = await readOneUser(connection, request.params.id);
-        return user ? valid(user) : invalid(['User not found']);
+        if (!user) {
+          return invalid(['User not found.']);
+        }
+        if (user.status !== UserStatus.Active) {
+          return invalid(['User is already inactive.']);
+        }
+        return valid(user);
       },
       async respond(request) {
         const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));

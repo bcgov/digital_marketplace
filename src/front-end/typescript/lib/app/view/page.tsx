@@ -2,8 +2,9 @@ import { Msg, Route, SharedState } from 'front-end/lib/app/types';
 import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
-import { default as React, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { Alert, Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'reactstrap';
+import { adt } from 'shared/lib/types';
 
 interface ViewAlertProps<PageMsg> {
   messages: Array<PageAlert<GlobalComponentMsg<PageMsg, Route>>>;
@@ -118,15 +119,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
   if (!pageState) {
-    dispatch(newRoute({
-      tag: 'notice',
-      value: {
-        noticeId: {
-          tag: 'notFound',
-          value: undefined
-        }
-      }
-    } as const));
+    dispatch(newRoute(adt('notice' as const, adt('notFound' as const))));
     return null;
   }
   // pageState is defined, render page.

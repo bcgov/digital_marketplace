@@ -1,4 +1,4 @@
-import { Connection, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Connection, hasFilePermission, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -45,7 +45,7 @@ export function readManyUsers(session: Session): boolean {
 }
 
 export function updateUser(session: Session, id: string): boolean {
-  return isOwnAccount(session, id);
+  return isOwnAccount(session, id) || isAdmin(session);
 }
 
 export function deleteUser(session: Session, id: string): boolean {
@@ -68,12 +68,25 @@ export function createOrganization(session: Session): boolean {
   return isVendor(session);
 }
 
-export function readOneOrganization(session: Session): boolean {
-  return isAdmin(session);
+export async function readOneOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
 
-export function deleteOrganization(session: Session): boolean {
-  return isAdmin(session);
+export async function updateOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+}
+
+export async function deleteOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  if (!session.user) {
+    return false;
+  }
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
 
 // Affiliations.
@@ -92,7 +105,7 @@ export async function updateAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user.id, orgId) || isAdmin(session);
+  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
 }
 
 export async function deleteAffiliation(connection: Connection, session: Session, userId: string, orgId: string): Promise<boolean> {
@@ -100,5 +113,15 @@ export async function deleteAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user.id, orgId) || isAdmin(session);
+  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+}
+
+// Files.
+
+export function createFile(session: Session): boolean {
+  return isUser(session);
+}
+
+export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {
+  return await hasFilePermission(connection, session, fileId);
 }

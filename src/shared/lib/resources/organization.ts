@@ -1,45 +1,50 @@
-import { create, readOne, readMany, update } from 'shared/lib/http';
-import { PublicFile } from 'shared/lib/resources/file';
+import { create, readMany, readOne, update } from 'shared/lib/http';
+import { FileRecord } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
-export interface Organization extends Omit<CreateRequestBody, 'logoImageFile'> {
+export interface Organization {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
-  logoImageFile?: PublicFile;
-}
-
-export interface OrganizationSlim {
-  id: Id;
-  legalName: string;
-  logoImageFile?: PublicFile;
-  owner?: Pick<User, 'id' | 'name'>;
-}
-
-export interface CreateRequestBody {
+  logoImageFile?: FileRecord;
   legalName: string;
   streetAddress1: string;
+  streetAddress2?: string;
   city: string;
   region: string;
   mailCode: string;
   country: string;
   contactName: string;
   contactEmail: string;
-
   contactTitle?: string;
   contactPhone?: string;
-  logoImageFile?: string;
-  streetAddress2?: string;
   websiteUrl?: string;
+  active: boolean;
 }
 
-export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody>;
+export interface OrganizationSlim {
+  id: Id;
+  legalName: string;
+  logoImageFile?: FileRecord;
+  owner?: Pick<User, 'id' | 'name'>;
+}
 
-export type UpdateRequestBody      = Partial<CreateRequestBody> & { id: Id; };
-export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody>;
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active'> {
+  logoImageFile?: string;
+}
 
+export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
+  permissions?: string[];
+}
+
+export type UpdateRequestBody = Partial<CreateRequestBody>;
+
+export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody> {
+  id?: string[];
+  permissions?: string[];
+}
 
 export async function readOneOrganization(id: string): Promise<Organization | null> {
   return readOne<Organization>(`/api/organizations/${id}`);
@@ -53,8 +58,8 @@ export async function createOrganization(requestBody: CreateRequestBody): Promis
   return create<Organization, CreateRequestBody>('/api/organizations', requestBody);
 }
 
-export async function updateOrganization(requestBody: UpdateRequestBody): Promise<Organization | null> {
-  return update<Organization, UpdateRequestBody>(`/api/organizations/${requestBody.id}`, requestBody);
+export async function updateOrganization(id: Id, requestBody: UpdateRequestBody): Promise<Organization | null> {
+  return update<Organization, UpdateRequestBody>(`/api/organizations/${id}`, requestBody);
 }
 
 export function Empty(): Organization {
@@ -69,6 +74,7 @@ export function Empty(): Organization {
     mailCode: '',
     country: '',
     contactName: '',
-    contactEmail: ''
+    contactEmail: '',
+    active: true
   });
 }

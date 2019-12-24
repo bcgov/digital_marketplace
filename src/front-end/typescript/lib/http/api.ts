@@ -1,5 +1,5 @@
 import { prefixRequest } from 'shared/lib/http';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
@@ -44,22 +44,22 @@ export async function readManyUsers(): Promise<Validation<User[]>> {
   }
 }
 
-interface RawPublicFile extends Omit<PublicFile, 'createdAt'> {
+interface RawFileRecord extends Omit<FileRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawPublicFileToPublicFile(raw: RawPublicFile): PublicFile {
+function rawFileRecordToFileRecord(raw: RawFileRecord): FileRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-export async function readOneFile(id: Id): Promise<Validation<PublicFile>> {
+export async function readOneFile(id: Id): Promise<Validation<FileRecord>> {
   const response = await apiRequest(ClientHttpMethod.Get, `files/${id}`);
   switch (response.status) {
     case 200:
-      return valid(rawPublicFileToPublicFile(response.data as RawPublicFile));
+      return valid(rawFileRecordToFileRecord(response.data as RawFileRecord));
     default:
       return invalid([]);
   }

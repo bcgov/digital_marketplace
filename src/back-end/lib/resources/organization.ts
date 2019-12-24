@@ -1,25 +1,28 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createAffiliation, createOrganization, isUserOwnerOfOrg, readManyOrganizations, readOneOrganization, updateOrganization } from 'back-end/lib/db';
+import { Connection, createOrganization, readManyOrganizations, readOneOrganization, updateOrganization } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { MembershipType } from 'shared/lib/resources/affiliation';
-import { PublicFile } from 'shared/lib/resources/file';
+import { FileRecord } from 'shared/lib/resources/file';
 import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
+import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, valid, validateGenericString } from 'shared/lib/validation';
 import { validatePhone, validateUrl } from 'shared/lib/validation/organization';
 import { validateEmail } from 'shared/lib/validation/user';
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'logoImageFile'> {
-  logoImageFile?: PublicFile;
+  id: Id;
+  logoImageFile?: FileRecord;
   active?: boolean;
+  deactivatedOn?: Date;
+  deactivatedBy?: Id;
 }
 
 export interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'logoImageFile'> {
-  logoImageFile?: PublicFile;
+  logoImageFile?: FileRecord;
 }
 
 type DeleteValidatedReqBody = Organization;
@@ -59,10 +62,9 @@ const resource: Resource = {
     return nullRequestBodyHandler<JsonResponseBody<Organization | string[]>, Session>(async request => {
       const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       // Only admins or the org owner can read the full org details
-      if (permissions.readOneOrganization(request.session) ||
-          (request.session.user && await isUserOwnerOfOrg(connection, request.session.user!.id, request.params.id))) {
-            const organization = await readOneOrganization(connection, request.params.id);
-            return respond(200, organization);
+      if (await permissions.readOneOrganization(connection, request.session, request.params.id)) {
+        const organization = await readOneOrganization(connection, request.params.id);
+        return respond(200, organization);
       }
       return respond(401, [permissions.ERROR_MESSAGE]);
     });
@@ -150,24 +152,17 @@ const resource: Resource = {
                     }
       },
       async respond(request) {
-        const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+        const respond = (code: number, body: Organization | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (!permissions.createOrganization(request.session)) {
-          return respond(401, [permissions.ERROR_MESSAGE]);
+          return respond(401, {
+            permissions: [permissions.ERROR_MESSAGE]
+          });
         }
         switch (request.body.tag) {
           case 'invalid':
-            return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
+            return respond(400, request.body.value);
           case 'valid':
-            // Create organization
-            const organization = await createOrganization(connection, request.body.value);
-
-            // Create affiliation for this user as owner
-            await createAffiliation(connection, {
-              user: request.session.user!.id,
-              organization: organization.id,
-              membershipType: MembershipType.Owner
-            });
-
+            const organization = await createOrganization(connection, request.session.user!.id, request.body.value);
             return respond(200, organization);
         }
       }
@@ -179,7 +174,6 @@ const resource: Resource = {
       parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
-          id: request.params.id,
           legalName: getString(body, 'legalName') || undefined,
           logoImageFile: getString(body, 'logoImageFile') || undefined,
           websiteUrl: getString(body, 'websiteUrl') || undefined,
@@ -196,7 +190,7 @@ const resource: Resource = {
         };
       },
       async validateRequestBody(request) {
-        const { id,
+        const {
           legalName,
           logoImageFile,
           websiteUrl,
@@ -211,7 +205,7 @@ const resource: Resource = {
           contactEmail,
           contactPhone } = request.body;
 
-        const validatedOrganizationId = await validateOrganizationId(connection, id);
+        const validatedOrganization = await validateOrganizationId(connection, request.params.id);
         const validatedLegalName = legalName ? validateGenericString(legalName, 'Legal Name') : valid(undefined);
         const validatedLogoImageFile = logoImageFile ? await validateImageFile(connection, logoImageFile) : valid(undefined);
         const validatedWebsiteUrl = websiteUrl ? validateUrl(websiteUrl) : valid(undefined);
@@ -226,7 +220,7 @@ const resource: Resource = {
         const validatedContactEmail = contactEmail ? validateEmail(contactEmail) : valid(undefined);
         const validatedContactPhone = contactPhone ? validatePhone(contactPhone) : valid(undefined);
 
-        if (allValid([validatedOrganizationId,
+        if (allValid([validatedOrganization,
           validatedLegalName,
           validatedLogoImageFile,
           validatedWebsiteUrl,
@@ -242,7 +236,7 @@ const resource: Resource = {
           validatedContactPhone
         ])) {
           return valid({
-            id: (validatedOrganizationId.value as Organization).id,
+            id: (validatedOrganization.value as Organization).id,
             legalName: validatedLegalName.value,
             logoImageFile: validatedLogoImageFile.value,
             websiteUrl: validatedWebsiteUrl.value,
@@ -259,7 +253,7 @@ const resource: Resource = {
           });
         } else {
           return invalid({
-            id: getInvalidValue(validatedOrganizationId, undefined),
+            id: getInvalidValue(validatedOrganization, undefined),
             legalName: getInvalidValue(validatedLegalName, undefined),
             logoImageFile: getInvalidValue(validatedLogoImageFile, undefined),
             websiteUrl: getInvalidValue(validatedWebsiteUrl, undefined),
@@ -277,13 +271,15 @@ const resource: Resource = {
         }
       },
       async respond(request) {
-        const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (!request.session.user || !await isUserOwnerOfOrg(connection, request.session.user!.id, request.params.id)) {
-          return respond(401, [permissions.ERROR_MESSAGE]);
+        const respond = (code: number, body: Organization | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
+        if (!await permissions.updateOrganization(connection, request.session, request.params.id)) {
+          return respond(401, {
+            permissions: [permissions.ERROR_MESSAGE]
+          });
         }
         switch (request.body.tag) {
           case 'invalid':
-            return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
+            return respond(400, request.body.value);
           case 'valid':
             const updatedOrganization = await updateOrganization(connection, request.body.value);
             return respond(200, updatedOrganization);
@@ -296,7 +292,13 @@ const resource: Resource = {
     return {
       async validateRequestBody(request) {
         const organization = await readOneOrganization(connection, request.params.id);
-        return organization ? valid(organization) : invalid(['Organization not found']);
+        if (!organization) {
+          return invalid(['Organization not found.']);
+        }
+        if (!organization.active) {
+          return invalid(['Organization is already inactive.']);
+        }
+        return valid(organization);
       },
       async respond(request) {
         const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
@@ -304,17 +306,17 @@ const resource: Resource = {
           return respond(404, request.body.value);
         }
         const id = request.body.value.id;
-        if (permissions.deleteOrganization(request.session) ||
-            (request.session.user && await isUserOwnerOfOrg(connection, request.session.user!.id, request.params.id))) {
-          // Mark the organization as inactive
-          const updatedOrganization = await updateOrganization(connection, {
-            id,
-            active: false
-          });
-          return respond(200, updatedOrganization);
+        if (!(await permissions.deleteOrganization(connection, request.session, request.params.id))) {
+          return respond(401, [permissions.ERROR_MESSAGE]);
         }
-
-        return respond(401, [permissions.ERROR_MESSAGE]);
+        // Mark the organization as inactive
+        const updatedOrganization = await updateOrganization(connection, {
+          id,
+          active: false,
+          deactivatedOn: new Date(),
+          deactivatedBy: request.session.user!.id
+        });
+        return respond(200, updatedOrganization);
       }
     };
   }

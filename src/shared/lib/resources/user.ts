@@ -1,7 +1,7 @@
-import { PublicFile } from 'shared/lib/resources/file';
+import { readMany, readOne, update } from 'shared/lib/http';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
-import { readOne, readMany, update } from 'shared/lib/http';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
 
@@ -33,14 +33,16 @@ export interface User {
   status: UserStatus;
   name: string;
   email?: string;
-  avatarImageFile?: PublicFile;
+  jobTitle?: string;
+  avatarImageFile?: FileRecord;
   notificationsOn: boolean;
   acceptedTerms: boolean;
   idpUsername: string;
+  deactivatedOn?: Date;
+  deactivatedBy?: Id;
 }
 
 export interface UpdateRequestBody {
-  id: Id;
   status?: UserStatus;
   name?: string;
   email?: string;
@@ -49,10 +51,13 @@ export interface UpdateRequestBody {
   acceptedTerms?: boolean;
 }
 
-export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody>;
+export interface UpdateValidationErrors extends ErrorTypeFrom<Omit<UpdateRequestBody, 'status'>> {
+  id?: string[];
+  permissions?: string[];
+}
 
-export async function updateUser(requestBody: UpdateRequestBody): Promise<User | null> {
-  return update<User, UpdateRequestBody>(`/api/users/${requestBody.id}`, requestBody);
+export async function updateUser(id: Id, requestBody: UpdateRequestBody): Promise<User | null> {
+  return update<User, UpdateRequestBody>(`/api/users/${id}`, requestBody);
 }
 
 export async function readOneUser(id: string): Promise<User | null> {
@@ -97,6 +102,6 @@ export function emptyUser(): User {
     name: '',
     notificationsOn: false,
     acceptedTerms: false,
-    idpUsername: '',
-  }
+    idpUsername: ''
+  };
 }

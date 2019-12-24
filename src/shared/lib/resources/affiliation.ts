@@ -4,16 +4,22 @@ import { Id } from 'shared/lib/types';
 
 export enum MembershipType {
   Owner = 'OWNER',
-  Member = 'MEMBER',
+  Member = 'MEMBER'
+}
+
+export enum MembershipStatus {
+  Active = 'ACTIVE',
+  Inactive = 'INACTIVE',
   Pending = 'PENDING'
 }
 
 export interface Affiliation {
+  id: Id;
   createdAt: Date;
-  updatedAt: Date;
   user: User;
   organization: Organization;
   membershipType: MembershipType;
+  membershipStatus: MembershipStatus;
 }
 
 // Used when returning a list of the current user's affiliations
@@ -25,22 +31,22 @@ export interface AffiliationSlim {
 export interface CreateRequestBody {
   user: Id;
   organization: Id;
-  membershipType?: MembershipType;
+  membershipType: MembershipType;
 }
 
 export interface CreateValidationErrors {
   user?: string[];
   organization?: string[];
-}
-
-export interface UpdateRequestBody {
-  user: Id;
-  organization: Id;
-  membershipType: MembershipType;
-}
-
-export interface UpdateValidationErrors extends CreateValidationErrors {
   membershipType?: string[];
+  permissions?: string[];
 }
 
-export type DeleteValidationErrors = CreateValidationErrors;
+export interface UpdateValidationErrors {
+  membershipStatus?: string[];
+  permissions?: string[];
+}
+
+export interface DeleteValidationErrors {
+  affiliation?: string[];
+  permissions?: string[];
+}

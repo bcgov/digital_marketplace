@@ -5,7 +5,7 @@ import { compareDates, formatDate, formatDateAndTime, formatTime } from 'shared/
 import { ADT } from 'shared/lib/types';
 
 export type ErrorTypeFrom<T> = {
-  [p in keyof T]: string[];
+  [p in keyof T]?: string[];
 };
 
 export type Validation<Valid, Invalid = string[]>

@@ -9,7 +9,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { readOneUser, updateUser, User, emptyUser } from 'shared/lib/resources/user';
+import { emptyUser, readOneUser, updateUser, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -85,7 +85,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'finishEditingAdminCheckbox':
       return [state.set('editingAdminCheckbox', false),
         async state => {
-          const newUser = await updateUser({id: state.user.id });
+          const newUser = await updateUser(state.user.id, {});
           if (newUser) {
             state.set('user', newUser);
           }

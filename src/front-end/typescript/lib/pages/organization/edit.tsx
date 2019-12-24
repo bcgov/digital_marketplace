@@ -73,13 +73,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
   });
 };
 
-export function getUpdateParams(id: string, org: OrgForm.Values): OrgResource.UpdateRequestBody {
-  return {
-    id,
-    ...org
-  };
-}
-
 const startEditingLoading = makeStartLoading<State>('editingLoading');
 const stopEditingLoading = makeStopLoading<State>('editingLoading');
 
@@ -108,7 +101,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'submit':
       return [state, async (state, dispatch) => {
-        let organization = await OrgResource.updateOrganization( getUpdateParams(state.organization.id, OrgForm.getValues(state.govProfile)) );
+        let organization = await OrgResource.updateOrganization(state.organization.id, OrgForm.getValues(state.govProfile));
         if (!organization) {
           // TODO(Jesse): Handle error
           organization = OrgResource.Empty();
