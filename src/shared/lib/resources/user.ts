@@ -49,6 +49,7 @@ export interface UpdateRequestBody {
   avatarImageFile?: Id;
   notificationsOn?: boolean;
   acceptedTerms?: boolean;
+  type?: UserType;
 }
 
 export interface UpdateValidationErrors extends ErrorTypeFrom<Omit<UpdateRequestBody, 'status'>> {

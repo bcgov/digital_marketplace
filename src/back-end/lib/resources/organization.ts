@@ -3,7 +3,7 @@ import { Connection, createOrganization, readManyOrganizations, readOneOrganizat
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
+import { validateImageFile, validateOrganizationId, validateUUID } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
@@ -61,9 +61,14 @@ const resource: Resource = {
   readOne(connection) {
     return nullRequestBodyHandler<JsonResponseBody<Organization | string[]>, Session>(async request => {
       const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      // Validate the provided id
+      const validatedId = validateUUID(request.params.id);
+      if (validatedId.tag === 'invalid') {
+        return respond(400, validatedId.value);
+      }
       // Only admins or the org owner can read the full org details
-      if (await permissions.readOneOrganization(connection, request.session, request.params.id)) {
-        const organization = await readOneOrganization(connection, request.params.id);
+      if (await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
+        const organization = await readOneOrganization(connection, validatedId.value);
         return respond(200, organization);
       }
       return respond(401, [permissions.ERROR_MESSAGE]);
@@ -220,7 +225,8 @@ const resource: Resource = {
         const validatedContactEmail = contactEmail ? validateEmail(contactEmail) : valid(undefined);
         const validatedContactPhone = contactPhone ? validatePhone(contactPhone) : valid(undefined);
 
-        if (allValid([validatedOrganization,
+        if (allValid([
+          validatedOrganization,
           validatedLegalName,
           validatedLogoImageFile,
           validatedWebsiteUrl,
@@ -281,6 +287,11 @@ const resource: Resource = {
           case 'invalid':
             return respond(400, request.body.value);
           case 'valid':
+            if (!await permissions.updateOrganization(connection, request.session, request.params.id)) {
+              return respond(401, {
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
             const updatedOrganization = await updateOrganization(connection, request.body.value);
             return respond(200, updatedOrganization);
         }
@@ -291,6 +302,11 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request) {
+        // Validate the provided id
+        const validatedId = validateUUID(request.params.id);
+        if (validatedId.tag === 'invalid') {
+          return validatedId;
+        }
         const organization = await readOneOrganization(connection, request.params.id);
         if (!organization) {
           return invalid(['Organization not found.']);

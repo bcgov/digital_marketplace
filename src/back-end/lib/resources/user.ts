@@ -8,10 +8,10 @@ import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
-import { UpdateRequestBody, UpdateValidationErrors, User, UserStatus } from 'shared/lib/resources/user';
+import { parseUserType, UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation';
-import { validateAcceptedTerms, validateEmail, validateName, validateNotificationsOn } from 'shared/lib/validation/user';
+import { validateAcceptedTerms, validateEmail, validateName, validateNotificationsOn, validateUserType } from 'shared/lib/validation/user';
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
   id: Id;
@@ -21,6 +21,7 @@ export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'ava
   deactivatedOn?: Date;
   deactivatedBy?: Id;
   status?: UserStatus;
+  type?: UserType;
 }
 
 type DeleteValidatedReqBody = User;
@@ -47,21 +48,6 @@ type Resource = crud.Resource<
 const resource: Resource = {
   routeNamespace: 'users',
 
-  readOne(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<User | string[]>, Session>(async request => {
-      const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-      if (!permissions.readManyUsers(request.session)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      const user = await readOneUser(connection, request.params.id);
-      if (user) {
-        return respond(200, user);
-      } else {
-        return respond(404, ['User Not Found']);
-      }
-    });
-  },
-
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<User[] | string[]>, Session>(async request => {
       const respond = (code: number, body: User[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
@@ -70,6 +56,20 @@ const resource: Resource = {
       }
       const users = await readManyUsers(connection);
       return respond(200, users);
+    });
+  },
+
+  readOne(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<User | string[]>, Session>(async request => {
+      const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      const validatedUser = await validateUserId(connection, request.params.id);
+      if (validatedUser.tag === 'invalid') {
+        return respond(400, validatedUser.value);
+      }
+      if (!permissions.readOneUser(request.session, validatedUser.value.id)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      return respond(200, validatedUser.value);
     });
   },
 
@@ -82,21 +82,23 @@ const resource: Resource = {
           email: getString(body, 'email') || undefined,
           avatarImageFile: getString(body, 'avatarImageFile') || undefined,
           notificationsOn: isBoolean(body.notificationsOn) ? body.notificationsOn : undefined,
-          acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined
+          acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined,
+          type: parseUserType(body.type) || undefined
         };
       },
       async validateRequestBody(request) {
-        const { name, email, avatarImageFile, notificationsOn, acceptedTerms } = request.body;
+        const { type, name, email, avatarImageFile, notificationsOn, acceptedTerms } = request.body;
         const validatedUserId = await validateUserId(connection, request.params.id);
         const validatedName = name ? validateName(name) : valid(undefined);
         const validatedEmail = email ? validateEmail(email) : valid(undefined);
         const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
         const validatedNotificationsOn = notificationsOn !== undefined ? validateNotificationsOn(notificationsOn) : valid(undefined);
         const validatedAcceptedTerms = acceptedTerms !== undefined ? validateAcceptedTerms(acceptedTerms) : valid(undefined);
+        const validatedUserType = type !== undefined ? validateUserType(type) : valid(undefined);
 
-        if (allValid([validatedUserId, validatedName, validatedEmail, validatedAvatarImageFile, validatedNotificationsOn, validatedAcceptedTerms])) {
+        if (allValid([validatedUserId, validatedName, validatedEmail, validatedAvatarImageFile, validatedNotificationsOn, validatedAcceptedTerms, validatedUserType])) {
 
-          // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario)
+          // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario) OR that the user type is being changed
           // Admin shouldn't provide any other updates to profile
           if (permissions.isAdmin(request.session) && !permissions.isOwnAccount(request.session, request.params.id)) {
             if (validatedName.value || validatedEmail.value || validatedAvatarImageFile.value || validatedNotificationsOn.value || validatedAcceptedTerms.value) {
@@ -104,6 +106,23 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
+
+            // Admins can grant/revoke admin privileges for govt users (but not their own)
+            if (validatedUserType.value) {
+              if (validatedUserType.value !== UserType.Vendor &&
+                  validatedUserId.tag === 'valid' &&
+                  validatedUserId.value.type !== UserType.Vendor) {
+                    return valid({
+                      id: validatedUserId.value.id,
+                      type: validatedUserType.value
+                    });
+                  } else {
+                    return invalid({
+                      permissions: [permissions.ERROR_MESSAGE]
+                    });
+                  }
+            }
+
             return valid({
               id: (validatedUserId.value as User).id,
               status: UserStatus.Active

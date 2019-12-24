@@ -6,8 +6,22 @@ import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
+// Validates a v4 UUID
+export function validateUUID(id: Id): Validation<Id> {
+  if (!id.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    return invalid(['Invalid identifier provided.']);
+  } else {
+    return valid(id);
+  }
+}
+
 export async function validateUserId(connection: Connection, userId: Id): Promise<Validation<User>> {
   try {
+    // Validate the provided id
+    const validatedId = validateUUID(userId);
+    if (validatedId.tag === 'invalid') {
+      return validatedId;
+    }
     const user = await readOneUser(connection, userId);
     if (user) {
       return valid(user);
@@ -21,6 +35,11 @@ export async function validateUserId(connection: Connection, userId: Id): Promis
 
 export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
+    // Validate the provided id
+    const validatedId = validateUUID(fileId);
+    if (validatedId.tag === 'invalid') {
+      return validatedId;
+    }
     const file = await readOneFileById(connection, fileId);
     if (file) {
       return valid(file);
@@ -34,6 +53,11 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
 
 export async function validateOrganizationId(connection: Connection, orgId: Id): Promise<Validation<Organization>> {
   try {
+    // Validate the provided id
+    const validatedId = validateUUID(orgId);
+    if (validatedId.tag === 'invalid') {
+      return validatedId;
+    }
     const organization = await readOneOrganization(connection, orgId);
     if (!organization) {
       return invalid(['The specified organization was not found.']);
@@ -49,6 +73,11 @@ export async function validateOrganizationId(connection: Connection, orgId: Id):
 
 export async function validateAffiliationId(connection: Connection, affiliationId: Id): Promise<Validation<Affiliation>> {
   try {
+    // Validate the provided id
+    const validatedId = validateUUID(affiliationId);
+    if (validatedId.tag === 'invalid') {
+      return validatedId;
+    }
     const affiliation = await readOneAffiliationById(connection, affiliationId);
     if (!affiliation) {
       return invalid(['The specified affiliation was not found.']);
