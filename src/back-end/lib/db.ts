@@ -444,7 +444,7 @@ export async function readOneFileByHash(connection: Connection, hash: string): P
   return result ? result : null;
 }
 
-export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody, userId: Id): Promise<FileRecord> {
+export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody & { fileHash: string }, userId: Id): Promise<FileRecord> {
   const now = new Date();
   return await connection.transaction(async trx => {
 

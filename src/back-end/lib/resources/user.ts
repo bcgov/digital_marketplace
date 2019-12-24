@@ -109,8 +109,8 @@ const resource: Resource = {
 
             // Admins can grant/revoke admin privileges for govt users (but not their own)
             if (validatedUserType.value) {
-              if (validatedUserType.value !== UserType.Vendor &&
-                  validatedUserId.tag === 'valid' &&
+              if (validatedUserId.tag === 'valid' &&
+                  validatedUserType.value !== UserType.Vendor &&
                   validatedUserId.value.type !== UserType.Vendor) {
                     return valid({
                       id: validatedUserId.value.id,

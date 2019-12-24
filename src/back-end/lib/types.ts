@@ -1,7 +1,5 @@
 import { ErrorResponseBody, FileRequestBody, FileResponseBody, JsonRequestBody, JsonResponseBody, TextResponseBody } from 'back-end/lib/server';
-import { FilePermissions } from 'shared/lib/resources/file';
-import { UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { FileUploadMetadata } from 'shared/lib/resources/file';
 
 export enum ServerHttpMethod {
   Any = '*',
@@ -39,5 +37,3 @@ export type SupportedResponseBodies
   | FileResponseBody
   | TextResponseBody
   | ErrorResponseBody;
-
-export type FileUploadMetadata = Array<FilePermissions<Id, UserType>> | null;

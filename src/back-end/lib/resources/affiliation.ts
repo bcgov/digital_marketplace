@@ -132,7 +132,7 @@ const resource: Resource = {
   update(connection) {
     return {
       parseRequestBody(request) {
-        return request.body.tag === 'json' ? request.body.value : {};
+        return null;
       },
       async validateRequestBody(request) {
         const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);

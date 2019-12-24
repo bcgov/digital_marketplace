@@ -14,13 +14,14 @@ import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
 import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, Router } from 'back-end/lib/server';
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
-import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
+import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { MAX_MULTIPART_FILES_SIZE } from 'shared/lib/resources/file';
+import { parseFilePermissions, parseUserType } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
-import { parseFilePermissions, parseUserType } from '../shared/lib/resources/file';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 

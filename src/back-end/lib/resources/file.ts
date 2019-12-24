@@ -2,17 +2,18 @@ import * as crud from 'back-end/lib/crud';
 import { Connection, createFile, readOneFileByHash, readOneFileById } from 'back-end/lib/db';
 import { hashFile } from 'back-end/lib/fileUtils';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
+import { basicResponse, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { CreateRequestBody, CreateValidationErrors, FilePermissions, FileRecord } from 'shared/lib/resources/file';
+import { CreateValidationErrors, FilePermissions, FileRecord, FileUploadMetadata } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation';
 import { validateFileName } from 'shared/lib/validation/file';
 
-export interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'id' | 'createdAt' | 'createdBy' | 'metadata'> {
-  fileHash: string;
+export type CreateRequestBody = FileUpload<FileUploadMetadata> | null;
+
+export interface ValidatedCreateRequestBody extends Pick<FileUpload<FileUploadMetadata>, 'name' | 'path'> {
   permissions: Array<FilePermissions<Id, UserType>>;
 }
 
@@ -50,11 +51,15 @@ const resource: Resource = {
   create(connection) {
     return {
       parseRequestBody(request) {
-        return request.body.value;
+        return request.body.tag === 'file' ? request.body.value : null;
       },
       async validateRequestBody(request) {
+        if (!request.body) {
+          return invalid({
+            requestBodyType: ['You need to submit a valid multipart request to create a file.']
+          });
+        }
         const { name, metadata, path } = request.body;
-
         const validatedOriginalFileName = name ? validateFileName(name) : invalid(['File name must be provided']);
         let validatedFilePermissions;
         const filePerms: Array<FilePermissions<Id, UserType>> | null  = metadata || null;
@@ -78,13 +83,15 @@ const resource: Resource = {
         }
       },
       async respond(request) {
-        const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+        const respond = (code: number, body: FileRecord | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (!permissions.createFile(request.session)) {
-          return respond(401, [permissions.ERROR_MESSAGE]);
+          return respond(401, {
+            permissions: [permissions.ERROR_MESSAGE]
+          });
         }
         switch (request.body.tag) {
           case 'invalid':
-            return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
+            return respond(400, request.body.value);
           case 'valid':
             const fileHash = await hashFile(request.body.value.name, request.body.value.path, request.body.value.permissions);
             const existingFile = await readOneFileByHash(connection, fileHash);

@@ -20,15 +20,13 @@ export interface FileBlob {
   blob: any;
 }
 
-export interface CreateRequestBody {
-  name: string;
-  path: string;
-  metadata: Array<FilePermissions<Id, UserType>>;
-}
+export type FileUploadMetadata = Array<FilePermissions<Id, UserType>> | null;
 
 export interface CreateValidationErrors {
   name?: string[];
   metadata?: string[];
+  permissions?: string[];
+  requestBodyType?: string[];
 }
 
 export type FilePermissions<Id, UserType>
@@ -40,10 +38,12 @@ export type FilePermissions<Id, UserType>
  * Parses a `FilePermissions` from a plain object.
  * Returns `null` if the parse fails or no permissions are supplied in the metadata.
  */
+// TODO this needs to be converted to a validation function using array combinators
 export function parseFilePermissions<Id, UserType>(raw: any, parseOneUserType: (raw: string) => UserType | null): Array<FilePermissions<Id, UserType>> | null {
   const rawFilePermissions = isArray(raw) ? raw : [];
   const filePermissions: Array<FilePermissions<Id, UserType>> = [];
   rawFilePermissions.forEach(rawFilePermission => {
+    // TODO split this out into a validateFilePermission function
     switch (get(rawFilePermission, 'tag')) {
       case 'any':
         filePermissions.push({ tag: 'any', value: undefined });
@@ -59,8 +59,10 @@ export function parseFilePermissions<Id, UserType>(raw: any, parseOneUserType: (
           filePermissions.push({ tag: 'userType', value: userType });
         }
         break;
+      //TODO not an exhaustive switch statement... what if the user passes invalid permissions?
     }
   });
+  // TODO what if the user passes an empty array? Technically that is valid.
   return filePermissions && filePermissions.length > 0 ? filePermissions : null;
 }
 
