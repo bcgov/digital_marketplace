@@ -138,4 +138,4 @@ function makeCrudApi<ResourceType, CreateReq, UpdateReq>(endpoint: string): Crud
 }
 
 export const OrgApi = makeCrudApi<OrgResource.Organization, OrgResource.CreateRequestBody, OrgResource.UpdateRequestBody>('organizations');
-export const UserApi = makeCrudApi<UserResource.User, null, UserResource.UpdateRequestBody>('users');
+export const UserApi: Pick<CrudResource <UserResource.User, null, UserResource.UpdateRequestBody>, 'readOne'|'readMany'|'update'|'destroy'> = makeCrudApi('users');
