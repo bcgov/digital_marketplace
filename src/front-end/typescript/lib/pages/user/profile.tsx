@@ -35,10 +35,10 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
-  let user = await UserApi.readOne(params.routeParams.userId);
-  if (!user) {
-    // TODO(Jesse): Handle error
-    user = emptyUser();
+  const result = await UserApi.readOne(params.routeParams.userId);
+  let user = emptyUser();
+  if (result.valid) {
+    user = result.valid;
   }
 
   const displayUser: UserHelpers.DisplayUser = UserHelpers.toDisplayUser(user);
@@ -86,9 +86,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'finishEditingAdminCheckbox':
       return [state.set('editingAdminCheckbox', false),
         async state => {
-          const newUser = await UserApi.update(state.user.id, {});
-          if (newUser) {
-            state.set('user', newUser);
+          const result = await UserApi.update(state.user.id, {});  // TODO(Jesse): Serialize form and pass to backend
+          if (result.valid) {
+            state.set('user', result.valid);
           }
           return state;
         }

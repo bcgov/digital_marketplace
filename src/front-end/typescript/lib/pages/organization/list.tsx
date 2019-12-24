@@ -20,12 +20,21 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  table: immutable(await Table.init({
-    idNamespace: 'org-list-table'
-  })),
-  organizations: await HTTP.OrgApi.readMany()
-});
+const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
+  const defaultParams = {
+      table: immutable(await Table.init({
+      idNamespace: 'org-list-table'
+    }))
+  };
+
+  const result = await HTTP.OrgApi.readMany();
+  if (result.valid) {
+    return { ...defaultParams, organizations: result.valid };
+  } else {
+    // TODO(Jesse): Handle Errors
+    return { ...defaultParams, organizations: [] };
+  }
+};
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {

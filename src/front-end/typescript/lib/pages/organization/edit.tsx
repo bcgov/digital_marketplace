@@ -36,19 +36,11 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
-  let organization = await HTTP.OrgApi.readOne(params.routeParams.orgId);
-  if (!organization) {
-    // TODO(Jesse): Handle error
-    organization = OrgResource.Empty();
-  }
-
-  return ({
+  const defaultState = {
     orgId: params.routeParams.orgId,
     isEditing: false,
     editingLoading: 0,
     submitLoading: 0,
-    organization,
-    govProfile: immutable(await OrgForm.init({organization})),
     sidebar: immutable(await MenuSidebar.init({
       links: [
         {
@@ -71,7 +63,22 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
         }
       ]
     }))
-  });
+  };
+
+  const result = await HTTP.OrgApi.readOne(params.routeParams.orgId);
+  if (result.valid) {
+    return ({
+      ...defaultState,
+      organization: result.valid,
+      govProfile: immutable(await OrgForm.init({organization: result.valid }))
+    });
+  } else {
+    return ({
+      ...defaultState,
+      organization: OrgResource.Empty(),
+      govProfile: immutable(await OrgForm.init({}))
+    });
+  }
 };
 
 const startEditingLoading = makeStartLoading<State>('editingLoading');
@@ -83,15 +90,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     return [
       startEditingLoading(state),
       async state => {
-        let organization = await HTTP.OrgApi.readOne(state.orgId);
-        if (!organization) {
-          // TODO(Jesse): Handle error
-          organization = OrgResource.Empty();
+        const result = await HTTP.OrgApi.readOne(state.orgId);
+        if (result.valid) {
+          state = state.set('organization', result.valid)
+            .set('govProfile', OrgForm.setValues(state.govProfile, result.valid))
+            .set('isEditing', true);
+          state = stopEditingLoading(state);
+        } else {
+          // TODO(Jesse): Handle errors
         }
-        state = state.set('organization', organization)
-                     .set('govProfile', OrgForm.setValues(state.govProfile, organization))
-                     .set('isEditing', true);
-        state = stopEditingLoading(state);
         return state;
       }
     ];
@@ -102,13 +109,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'submit':
       return [state, async (state, dispatch) => {
-        let organization = await HTTP.OrgApi.update(state.organization.id, OrgForm.getValues(state.govProfile) );
-        if (!organization) {
-          // TODO(Jesse): Handle error
-          organization = OrgResource.Empty();
+        const result = await HTTP.OrgApi.update(state.organization.id, OrgForm.getValues(state.govProfile) );
+        if (result.valid) {
+          state = state.set('isEditing', false)
+                       .set('organization', result.valid);
+        } else {
+          // TODO(Jesse): Handle errors
         }
-        state = state.set('isEditing', false)
-                     .set('organization', organization);
         return state;
       }];
     case 'govProfile':
