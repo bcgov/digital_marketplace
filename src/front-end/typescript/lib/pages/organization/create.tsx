@@ -83,6 +83,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Col xs='12'>
           <OrgForm.view
+            submitHook={() => {}}
             state={state.govProfile}
             disabled={false}
             dispatch={mapComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />

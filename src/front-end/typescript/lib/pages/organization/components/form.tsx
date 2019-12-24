@@ -48,7 +48,7 @@ export type Msg =
   ADT<'contactName',     ShortText.Msg> |
   ADT<'contactEmail',    ShortText.Msg> |
   ADT<'contactPhone',    ShortText.Msg> |
-  ADT<'submit'>                         |
+  ADT<'submit',          SubmitHook>    |
   ADT<'region',          ShortText.Msg>
   ;
 
@@ -243,8 +243,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'submit':
       return [state, async (state, dispatch) => {
         const result = state.organization ?
-           await HTTP.OrgApi.update(state.organization.id, getValues(state) )
-         : await HTTP.OrgApi.create( getValues(state) );
+           await HTTP.OrgApi.update(state.organization.id, getValues(state))
+         : await HTTP.OrgApi.create( getValues(state));
+
+        const submitHook: SubmitHook = msg.value;
+        if (submitHook) { submitHook(); }
 
         if (isValid(result)) {
           if (state.organization) {
@@ -356,8 +359,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+type SubmitHook = () => void | undefined;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
+  submitHook: SubmitHook;
 }
 
 export const view: View<Props> = props => {
@@ -508,7 +513,7 @@ export const view: View<Props> = props => {
           <LoadingButton loading={isSubmitLoading}
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-            onClick={() => dispatch(adt('submit'))}
+            onClick={() => dispatch(adt('submit', props.submitHook ))}
           >
             Save
           </LoadingButton>

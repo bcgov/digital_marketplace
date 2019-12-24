@@ -101,9 +101,24 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
     ];
     case 'cancelEditing': {
-      state = state.set('orgForm', OrgForm.setValues(state.orgForm, state.organization) );
       state = state.set('isEditing', false);
-      return [ state ];
+
+      //
+      // BUG(Dhruv): Passing nothing for the second return parameter results in
+      // the state getting overwritten with the old state
+      //
+      // ie: state.isEditing == true
+      //
+      // Passing a closure that returns the modified state produces the
+      // expected result of `state.isEditing == false` after the async update
+      //
+      // To reproduce, remove the async closure and uncomment the console.log
+      // in the view function.
+      //
+      // @async-update-bug
+      //
+
+      return [ state, async () => state ];
     }
     case 'orgForm':
       return updateComponentChild({
@@ -127,18 +142,19 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const isEditing = state.isEditing;
   const isLoading = state.editingLoading > 0;
+
+  // console.log(state.isEditing); // @async-update-bug
+
   return (
     <div>
-
       <Row>
-
         <Row className='mb-3 pb-3'>
           <Col xs='12' className='d-flex flex-nowrap align-items-center'>
+            <h1>Edit {state.organization.legalName}</h1>
             <div className='ml-3'>
             {
-              isEditing
+              state.isEditing
               ?
               <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing'))}>
                 Discard Changes
@@ -155,8 +171,10 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Col xs='12'>
           <OrgForm.view
             state={state.orgForm}
-            disabled={!isEditing}
-            dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))} />
+            disabled={!state.isEditing}
+            dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
+            submitHook={() => { dispatch(adt('cancelEditing')); }}
+          />
         </Col>
       </Row>
 
