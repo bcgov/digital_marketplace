@@ -1,3 +1,6 @@
+export type Id = string;
+
+export type Defined<T> = Exclude<T, undefined>;
 /**
  * "ADT" stands for "Algebraic Data Type".
  *
@@ -12,8 +15,6 @@
  * const rgb: Color = { tag: 'rgb', value: [123, 255, 7] };
  * ```
  */
-
-export type Id = string;
 
 export interface ADT<Tag, Value = undefined> {
   readonly tag: Tag;

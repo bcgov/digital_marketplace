@@ -1,141 +1,233 @@
 import { prefixRequest } from 'shared/lib/http';
-import { FileRecord } from 'shared/lib/resources/file';
+import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
-import { Session } from 'shared/lib/resources/session';
+import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
-import { ClientHttpMethod, Id } from 'shared/lib/types';
+import { ADT, adt, ClientHttpMethod, Defined, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
+
+// Response Validation
+
+export { invalid, valid, isInvalid, isValid } from 'shared/lib/validation';
+
+type ResponseValidation<Valid, Invalid>
+  = Validation<Valid, Invalid>
+  | ADT<'unhandled'>;
+
+export const unhandled = () => adt('unhandled' as const);
+
+export function isUnhandled(v: ResponseValidation<any, any>): v is ADT<'unhandled'> {
+  return v.tag === 'unhandled';
+}
+
+// Types
+
+interface ActionTypes {
+  rawResponse: unknown;
+  validResponse: unknown;
+  invalidResponse: unknown;
+}
+
+interface ActionWithBodyTypes extends ActionTypes {
+  request: unknown;
+}
+
+interface BaseResourceTypes {
+  create?: ActionWithBodyTypes;
+  readMany?: ActionTypes;
+  readOne?: ActionTypes;
+  update?: ActionWithBodyTypes;
+  delete?: ActionTypes;
+}
+
+type CrudClientAction<T extends ActionTypes> = () => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+
+type CrudClientActionWithBody<T extends ActionWithBodyTypes> = (body: T['request']) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+
+type CrudClientActionWithId<T extends ActionTypes> = (id: Id) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+
+type CrudClientActionWithIdAndBody<T extends ActionWithBodyTypes> = (id: Id, body: T['request']) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+
+interface CrudApi<ResourceTypes extends BaseResourceTypes> {
+  create: ResourceTypes['create'] extends undefined
+    ? undefined
+    : CrudClientActionWithBody<Defined<ResourceTypes['create']>>;
+  readMany: ResourceTypes['readMany'] extends undefined
+    ? undefined
+    : CrudClientAction<Defined<ResourceTypes['readMany']>>;
+  readOne: ResourceTypes['readOne'] extends undefined
+    ? undefined
+    : CrudClientActionWithId<Defined<ResourceTypes['readOne']>>;
+  update: ResourceTypes['update'] extends undefined
+    ? undefined
+    : CrudClientActionWithBody<Defined<ResourceTypes['update']>>;
+  delete: ResourceTypes['delete'] extends undefined
+    ? undefined
+    : CrudClientActionWithId<Defined<ResourceTypes['delete']>>;
+}
+
+// Run-Time Implementation
 
 export const apiRequest = prefixRequest('api');
 
-function withCurrentSession(method: ClientHttpMethod): () => Promise<Validation<Session, null>> {
-  return async () => {
-    const response = await apiRequest(method, 'sessions/current');
-    switch (response.status) {
-      case 200:
-        return valid(response.data as Session);
-      default:
-        return invalid(null);
-    }
-  };
+type TransformValid<T extends ActionTypes> = (raw: T['rawResponse']) => T['validResponse'];
+
+interface MakeRequestParams<T extends ActionWithBodyTypes> {
+  method: ClientHttpMethod;
+  url: string;
+  body: T['request'];
+  transformValid?: TransformValid<T>;
 }
 
-export const readOneSession = withCurrentSession(ClientHttpMethod.Get);
-
-export const deleteSession = withCurrentSession(ClientHttpMethod.Delete);
-
-interface RawFileRecord extends Omit<FileRecord, 'createdAt'> {
-  createdAt: string;
-}
-
-function rawFileRecordToFileRecord(raw: RawFileRecord): FileRecord {
-  return {
-    ...raw,
-    createdAt: new Date(raw.createdAt)
-  };
-}
-
-export async function readOneFile(id: Id): Promise<Validation<FileRecord>> {
-  const response = await apiRequest(ClientHttpMethod.Get, `files/${id}`);
+async function makeRequest<T extends ActionWithBodyTypes>(params: MakeRequestParams<T>): Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>> {
+  const response = await apiRequest(params.method, params.url);
   switch (response.status) {
     case 200:
-      return valid(rawFileRecordToFileRecord(response.data as RawFileRecord));
+    case 201:
+      return valid(params.transformValid ? params.transformValid(response.data as T['rawResponse']) : response.data as T['validResponse']);
+    case 400:
+    case 401:
+    case 404:
+      return invalid(response.data as T['invalidResponse']);
     default:
-      return invalid([]);
+      return unhandled();
   }
 }
 
-function readOne<ResourceType>(endpoint: string): (id: Id ) => ReadOneReturnType<ResourceType> {
-  return ( async (id: Id) => {
-    const response = await apiRequest(ClientHttpMethod.Get, `${endpoint}/${id}`);
-    switch (response.status) {
-      case 304:
-      case 200:
-        return valid(response.data);
-      default:
-        return invalid(response.data);
-    }
+interface MakeActionParams<T extends ActionWithBodyTypes> extends Pick<MakeRequestParams<T>, 'transformValid'> {
+  routeNamespace: string;
+}
+
+export function makeCreate<T extends ActionWithBodyTypes>(params: MakeActionParams<T>): CrudClientActionWithBody<T> {
+  return async body => makeRequest({
+    body,
+    method: ClientHttpMethod.Post,
+    url: params.routeNamespace,
+    transformValid: params.transformValid
   });
 }
 
-function readMany<ResourceType>(endpoint: string): () => ReadManyReturnType<ResourceType> {
-  return ( async () => {
-    const response = await apiRequest(ClientHttpMethod.Get, endpoint);
-    switch (response.status) {
-      case 304:
-      case 200:
-        return valid(response.data);
-      default:
-        return invalid(response.data);
-    }
+export function makeReadMany<T extends ActionTypes>(params: MakeActionParams<T & { request: any }>): CrudClientAction<T> {
+  return async () => makeRequest({
+    body: undefined,
+    method: ClientHttpMethod.Get,
+    url: params.routeNamespace,
+    transformValid: params.transformValid
   });
 }
 
-function create<ResourceType, RequestType>(endpoint: string): (requestObject: RequestType) => CreateReturnType<ResourceType> {
-  return ( async (requestObject: RequestType) => {
-    // TODO(Jesse): Can we avoid this casting situation somehow?
-    const response = await apiRequest(ClientHttpMethod.Post, endpoint, requestObject as unknown as object);
-    switch (response.status) {
-      case 304:
-      case 200:
-        return valid(response.data);
-      default:
-        return invalid(response.data);
-    }
+export function makeReadOne<T extends ActionTypes>(params: MakeActionParams<T & { request: any }>): CrudClientActionWithId<T> {
+  return async id => makeRequest({
+    body: undefined,
+    method: ClientHttpMethod.Get,
+    url: `${params.routeNamespace}/${id}`,
+    transformValid: params.transformValid
   });
 }
 
-function update<ResourceType, RequestType>(endpoint: string): (id: Id, requestObject: RequestType) => UpdateReturnType<ResourceType> {
-  return ( async (id: Id, requestObject: RequestType) => {
-    // TODO(Jesse): Can we avoid this casting situation somehow?
-    const response = await apiRequest(ClientHttpMethod.Put, `${endpoint}/${id}`, requestObject as unknown as object);
-    switch (response.status) {
-      case 304:
-      case 200:
-        return valid(response.data);
-      default:
-        return invalid(response.data);
-    }
+export function makeUpdate<T extends ActionWithBodyTypes>(params: MakeActionParams<T>): CrudClientActionWithIdAndBody<T> {
+  return async (id, body) => makeRequest({
+    body,
+    method: ClientHttpMethod.Put,
+    url: `${params.routeNamespace}/${id}`,
+    transformValid: params.transformValid
   });
 }
 
-function destroy<ResourceType>(endpoint: string): (id: Id) => Promise<boolean> {
-  return ( async (id: Id) => {
-    // TODO(Jesse): Can we avoid this casting situation somehow?
-    const response = await apiRequest(ClientHttpMethod.Delete, `${endpoint}/${id}`);
-    switch (response.status) {
-      case 304:
-      case 200:
-        return true;
-      default:
-        return false;
-    }
+export function makeDelete<T extends ActionTypes>(params: MakeActionParams<T & { request: any }>): CrudClientActionWithId<T> {
+  return async id => makeRequest({
+    body: undefined,
+    method: ClientHttpMethod.Delete,
+    url: `${params.routeNamespace}/${id}`,
+    transformValid: params.transformValid
   });
 }
 
-type ReadOneReturnType<ResourceType>  = Promise<Validation<ResourceType, string[]>>;
-type ReadManyReturnType<ResourceType> = Promise<Validation<ResourceType[], string[]>>;
-type UpdateReturnType<ResourceType>   = Promise<Validation<ResourceType, string[]>>;
-type CreateReturnType<ResourceType>   = Promise<Validation<ResourceType, string[]>>;
-type DestroyReturnType                = Promise<boolean>;
+type CrudActionParams<ResourceTypes extends BaseResourceTypes, Action extends keyof BaseResourceTypes>
+  = ResourceTypes[Action] extends undefined
+      ? undefined
+      : TransformValid<ResourceTypes[Action]>;
 
-interface CrudResource<ResourceType, CreateRequest, UpdateRequest> {
-    create: (req: CreateRequest)         => CreateReturnType<ResourceType>;
-   readOne: (id: Id)                     => ReadOneReturnType<ResourceType>;
-  readMany: ()                           => ReadManyReturnType<ResourceType>;
-    update: (id: Id, req: UpdateRequest) => UpdateReturnType<ResourceType>;
-   destroy: (id: Id)                     => DestroyReturnType;
+interface MakeCrudApiParams<ResourceTypes extends BaseResourceTypes> {
+  routeNamespace: string;
+  create: ResourceTypes['create'] extends undefined
+    ? false
+    : true;
+  readMany: ResourceTypes['readMany'] extends undefined
+    ? false
+    : true;
+  readOne: ResourceTypes['readOne'] extends undefined
+    ? false
+    : true;
+  update: ResourceTypes['update'] extends undefined
+    ? false
+    : true;
+  delete: ResourceTypes['delete'] extends undefined
+    ? false
+    : true;
 }
 
-function makeCrudApi<ResourceType, CreateReq, UpdateReq>(endpoint: string): CrudResource<ResourceType, CreateReq, UpdateReq> {
-  return({
-    create:    create<ResourceType, CreateReq>(endpoint),
-    readOne:   readOne<ResourceType>(endpoint),
-    readMany:  readMany<ResourceType>(endpoint),
-    update:    update<ResourceType, UpdateReq>(endpoint),
-    destroy:   destroy<ResourceType>(endpoint)
-  });
+export function makeCrudApi<ResourceTypes extends BaseResourceTypes>(params: MakeCrudApiParams<ResourceTypes>): CrudApi<ResourceTypes> {
+  const { routeNamespace } = params;
+  return {
+    create: (params.create ? makeCreate({ routeNamespace }) : undefined) as CrudApi<ResourceTypes>['create'],
+    readMany: (params.readMany ? makeCreate({ routeNamespace }) : undefined) as CrudApi<ResourceTypes>['readMany'],
+    readOne: (params.readOne ? makeCreate({ routeNamespace }) : undefined) as CrudApi<ResourceTypes>['readOne'],
+    update: (params.update ? makeCreate({ routeNamespace }) : undefined) as CrudApi<ResourceTypes>['update'],
+    delete: (params.delete ? makeCreate({ routeNamespace }) : undefined) as CrudApi<ResourceTypes>['delete']
+  };
 }
 
-export const OrgApi = makeCrudApi<OrgResource.Organization, OrgResource.CreateRequestBody, OrgResource.UpdateRequestBody>('organizations');
-export const UserApi: Pick<CrudResource <UserResource.User, null, UserResource.UpdateRequestBody>, 'readOne'|'readMany'|'update'|'destroy'> = makeCrudApi('users');
+interface OrgResourceTypes {
+  create: {
+    request: OrgResource.CreateRequestBody;
+    rawResponse: OrgResource.Organization;
+    validResponse: OrgResource.Organization;
+    invalidResponse: OrgResource.CreateValidationErrors;
+  };
+  readMany: undefined;
+  readOne: undefined;
+  update: undefined;
+  delete: undefined;
+}
+
+const noActions = {
+  create: false,
+  readMany: false,
+  readOne: false,
+  update: false,
+  delete: false
+} as const;
+
+export const orgApi: CrudApi<OrgResourceTypes> = makeCrudApi({
+  ...noActions,
+  routeNamespace: 'organizations',
+  create: true
+});
+
+orgApi.create(5 as any);
+
+//interface CrudResource<
+  //CreateRequestBody,
+  //CreateValidResponseBody,
+  //CreateInvalidResponseBody,
+  //UpdateRequestBody,
+  //UpdateValidResponseBody,
+  //UpdateInvalidResponseBody
+//> {
+  //create: CrudClientActionWithBody<>;
+//}
+
+//function makeCrudApi<ResourceType, CreateReq, UpdateReq>(endpoint: string): CrudResource<ResourceType, CreateReq, UpdateReq> {
+  //return({
+    //create:    create<ResourceType, CreateReq>(endpoint),
+    //readOne:   readOne<ResourceType>(endpoint),
+    //readMany:  readMany<ResourceType>(endpoint),
+    //update:    update<ResourceType, UpdateReq>(endpoint),
+    //destroy:   destroy<ResourceType>(endpoint)
+  //});
+//}
+
+//export const OrgApi = makeCrudApi<OrgResource.Organization, OrgResource.CreateRequestBody, OrgResource.UpdateRequestBody>('organizations');
+
+//export const UserApi: Omit<CrudResource <UserResource.User, null, UserResource.UpdateRequestBody>, 'create'> = makeCrudApi('users');
