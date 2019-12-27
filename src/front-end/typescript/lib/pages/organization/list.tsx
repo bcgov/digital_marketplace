@@ -2,13 +2,12 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as HTTP from 'front-end/lib/http/api';
+import * as api from 'front-end/lib/http/api';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { Organization } from 'shared/lib/resources/organization';
 import { ADT, adt } from 'shared/lib/types';
-import { isValid } from 'shared/lib/validation';
 
 export interface State {
   table: Immutable<Table.State>;
@@ -28,8 +27,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
     }))
   };
 
-  const result = await HTTP.OrgApi.readMany();
-  if (isValid(result)) {
+  const result = await api.organizations.readMany();
+  if (api.isValid(result)) {
     return { ...defaultParams, organizations: result.value };
   } else {
     // TODO(Jesse): Handle Errors

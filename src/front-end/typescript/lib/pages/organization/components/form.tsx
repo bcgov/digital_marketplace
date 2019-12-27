@@ -3,7 +3,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { replaceRoute } from 'front-end/lib/framework';
-import * as HTTP from 'front-end/lib/http/api';
+import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
@@ -11,7 +11,6 @@ import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
-import { isValid } from 'shared/lib/validation';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 import { validateUrl } from 'shared/lib/validation/organization';
 import { validateName } from 'shared/lib/validation/user';
@@ -246,18 +245,18 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'submit':
       return [state, async (state, dispatch) => {
-        const result = state.organization ?
-           await HTTP.OrgApi.update(state.organization.id, getValues(state))
-         : await HTTP.OrgApi.create( getValues(state));
+        const result = state.organization
+         ? await api.organizations.update(state.organization.id, getValues(state))
+         : await api.organizations.create(getValues(state));
 
-        if (isValid(result)) {
+        if (api.isValid(result)) {
           if (state.organization) {
             const submitHook: SubmitHook = msg.value;
             if (submitHook) { submitHook(result.value); }
             state.set('organization', result.value);
           } else {
             // FIXME(Jesse): This compiles, but doesn't actually work..
-            dispatch(replaceRoute( adt('orgEdit', {orgId: result.value.id})));
+            dispatch(replaceRoute(adt('orgEdit' as const, {orgId: result.value.id})));
           }
         } else {
           // TODO(Jesse): Handle errors

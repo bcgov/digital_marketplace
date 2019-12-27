@@ -1,13 +1,35 @@
-import { CrudApi, makeCrudApi, makeSimpleCrudApi, OmitCrudApi, SimpleResourceTypes, SimpleResourceTypesParams, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, makeCrudApi, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
 
+export { getValid, getInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
+
 // Sessions
 
-export const sessions: Pick<CrudApi, 'readOne' | 'delete'>
-  = makeSimpleCrudApi<SimpleResourceTypesParams<SessionResource.Session>>('sessions');
+interface SessionSimpleResourceTypesParams {
+  record: SessionResource.Session;
+  create: {
+    request: null;
+    invalid: null;
+  };
+  update: {
+    request: null;
+    invalid: null;
+  };
+}
+
+type SessionSimpleResourceTypes = SimpleResourceTypes<SessionSimpleResourceTypesParams>;
+
+type SessionResourceTypes = PickCrudApi<SessionSimpleResourceTypes, 'readOne' | 'delete'>;
+
+export const sessions: CrudApi<SessionResourceTypes> = {
+  ...makeSimpleCrudApi<SessionSimpleResourceTypesParams>('sessions'),
+  create: undefined,
+  readMany: undefined,
+  update: undefined
+};
 
 // Users
 

@@ -1,20 +1,5 @@
-import { request } from 'shared/lib/http';
-import { ADT, adt, ClientHttpMethod, Defined, Id, IfDefined } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
-
-// Response Validation
-
-export { invalid, valid, isInvalid, isValid } from 'shared/lib/validation';
-
-type ResponseValidation<Valid, Invalid>
-  = Validation<Valid, Invalid>
-  | ADT<'unhandled'>;
-
-export const unhandled = () => adt('unhandled' as const);
-
-export function isUnhandled(v: ResponseValidation<any, any>): v is ADT<'unhandled'> {
-  return v.tag === 'unhandled';
-}
+import { invalid, request, ResponseValidation, unhandled, valid } from 'shared/lib/http';
+import { ClientHttpMethod, Defined, Id, IfDefined } from 'shared/lib/types';
 
 // Types
 
@@ -26,6 +11,12 @@ interface ActionTypes {
 
 interface ActionWithBodyTypes extends ActionTypes {
   request: unknown;
+}
+
+interface ReadManyActionTypes<T extends ActionTypes> {
+  rawResponse: Array<T['rawResponse']>;
+  validResponse: Array<T['validResponse']>;
+  invalidResponse: T['invalidResponse'];
 }
 
 export interface BaseResourceTypes {
@@ -46,9 +37,9 @@ type CrudClientActionWithIdAndBody<T extends ActionWithBodyTypes> = (id: Id, bod
 
 export interface CrudApi<ResourceTypes extends BaseResourceTypes = BaseResourceTypes> {
   create: IfDefined<ResourceTypes['create'], CrudClientActionWithBody<Defined<ResourceTypes['create']>>>;
-  readMany: IfDefined<ResourceTypes['readMany'], CrudClientAction<Defined<ResourceTypes['readMany']>>>;
+  readMany: IfDefined<ResourceTypes['readMany'], CrudClientAction<ReadManyActionTypes<Defined<ResourceTypes['readMany']>>>>;
   readOne: IfDefined<ResourceTypes['readOne'], CrudClientActionWithId<Defined<ResourceTypes['readOne']>>>;
-  update: IfDefined<ResourceTypes['update'], CrudClientActionWithBody<Defined<ResourceTypes['update']>>>;
+  update: IfDefined<ResourceTypes['update'], CrudClientActionWithIdAndBody<Defined<ResourceTypes['update']>>>;
   delete: IfDefined<ResourceTypes['delete'], CrudClientActionWithId<Defined<ResourceTypes['delete']>>>;
 }
 
@@ -92,12 +83,13 @@ export function makeCreate<T extends ActionWithBodyTypes>(params: MakeActionPara
   });
 }
 
-export function makeReadMany<T extends ActionTypes>(params: MakeActionParams<T & { request: any }>): CrudClientAction<T> {
-  return async () => makeRequest({
+export function makeReadMany<T extends ActionTypes>(params: MakeActionParams<T>): CrudClientAction<ReadManyActionTypes<T>> {
+  const { transformValid } = params;
+  return async () => makeRequest<ReadManyActionTypes<T> & { request: any }>({
     body: undefined,
     method: ClientHttpMethod.Get,
     url: params.routeNamespace,
-    transformValid: params.transformValid
+    transformValid: transformValid && (v => v.map(w => transformValid(w)))
   });
 }
 

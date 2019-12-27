@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { deleteSession } from 'front-end/lib/http/api';
+import * as api from 'front-end/lib/http/api';
 import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -16,7 +16,7 @@ export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const session = await deleteSession();
+  const session = await api.sessions.delete('current');
   if (!get(session, 'user')) {
     return { message: 'You have successfully signed out. Thank you for using the Digital Marketplace.' };
   } else {

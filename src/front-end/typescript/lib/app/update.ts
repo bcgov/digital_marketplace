@@ -2,10 +2,9 @@ import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
 import { Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
-import { readOneSession } from 'front-end/lib/http/api';
+import * as api from 'front-end/lib/http/api';
 import { Session } from 'shared/lib/resources/session';
 import { ADT, adtCurried } from 'shared/lib/types';
-import { Validation } from 'shared/lib/validation';
 
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -19,7 +18,7 @@ import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 
-function setSession(state: Immutable<State>, validated: Validation<Session, null>): Immutable<State> {
+function setSession(state: Immutable<State>, validated: api.ResponseValidation<Session, string[]>): Immutable<State> {
 return state.set('shared', {
   session: validated.tag === 'valid' ? validated.value : undefined
   });
@@ -215,7 +214,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // Unset the previous page's state.
           state = state.setIn(['pages', state.activeRoute.tag], undefined);
           // Refresh the front-end's view of the current session.
-          state = setSession(state, await readOneSession());
+          state = setSession(state, await api.sessions.readOne('current'));
           state = state
             .set('activeRoute', incomingRoute)
             // We switch this flag to true so the view function knows to display the page.
@@ -225,7 +224,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // Refresh the front-end's view of the current session again
           // if the user has been signed out.
           if (incomingRoute.tag === 'signOut') {
-            state = setSession(state, await readOneSession());
+            state = setSession(state, await api.sessions.readOne('current'));
           }
           const html = document.documentElement;
           if (html.scrollTo) { html.scrollTo(0, 0); }

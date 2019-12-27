@@ -3,7 +3,7 @@ import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
-import * as HTTP from 'front-end/lib/http/api';
+import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { routeDest } from 'front-end/lib/views/link';
@@ -12,7 +12,6 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
-import { isValid } from 'shared/lib/validation';
 
 export interface State {
   organization: OrgResource.Organization;
@@ -35,7 +34,7 @@ export interface RouteParams {
   orgId: string;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
+const init: PageInit<RouteParams, SharedState, State, Msg> = async params => {
   const defaultState = {
     isEditing: false,
     editingLoading: 0,
@@ -63,8 +62,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
     }))
   };
 
-  const result = await HTTP.OrgApi.readOne(params.routeParams.orgId);
-  if ( isValid(result) ) {
+  const result = await api.organizations.readOne(params.routeParams.orgId);
+  if (api.isValid(result)) {
     return ({
       ...defaultState,
       organization: result.value,
@@ -88,8 +87,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     return [
       startEditingLoading(state),
       async state => {
-        const result = await HTTP.OrgApi.readOne(state.organization.id);
-        if ( isValid(result) ) {
+        const result = await api.organizations.readOne(state.organization.id);
+        if (api.isValid(result)) {
           state = state.set('organization', result.value);
           state = state.set('isEditing', true);
           state = state.set('orgForm', OrgForm.setValues(state.orgForm, result.value) );
