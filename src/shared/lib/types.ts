@@ -1,3 +1,11 @@
+export type Id = string;
+
+export type Defined<T> = Exclude<T, undefined>;
+
+export type IfElse<T, Extends, Yes, No> = T extends Extends ? Yes : No;
+
+export type IfDefined<T, IsDefined, IsUndefined = undefined> = IfElse<T, undefined, IsUndefined, IsDefined>;
+
 /**
  * "ADT" stands for "Algebraic Data Type".
  *
@@ -12,8 +20,6 @@
  * const rgb: Color = { tag: 'rgb', value: [123, 255, 7] };
  * ```
  */
-
-export type Id = string;
 
 export interface ADT<Tag, Value = undefined> {
   readonly tag: Tag;

@@ -3,13 +3,14 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import * as GovProfileForm from 'front-end/lib/pages/user/components/profile';
 import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { emptyUser, readOneUser, updateUser, User } from 'shared/lib/resources/user';
+import { emptyUser, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -34,10 +35,10 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async (params) => {
-  let user = await readOneUser(params.routeParams.userId);
-  if (!user) {
-    // TODO(Jesse): Handle error
-    user = emptyUser();
+  const result = await api.users.readOne(params.routeParams.userId);
+  let user = emptyUser();
+  if (api.isValid(result)) {
+    user = result.value;
   }
 
   const displayUser: UserHelpers.DisplayUser = UserHelpers.toDisplayUser(user);
@@ -85,9 +86,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'finishEditingAdminCheckbox':
       return [state.set('editingAdminCheckbox', false),
         async state => {
-          const newUser = await updateUser(state.user.id, {});
-          if (newUser) {
-            state.set('user', newUser);
+          const result = await api.users.update(state.user.id, {});  // TODO(Jesse): Serialize form and pass to backend
+          if (api.isValid(result)) {
+            state.set('user', result.value);
           }
           return state;
         }

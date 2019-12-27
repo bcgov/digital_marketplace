@@ -2,6 +2,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as UserHelpers from 'front-end/lib/pages/user/helpers';
+import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
@@ -210,6 +211,10 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.email}
             dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
+
+          <Link button
+            onClick={() => {}}
+          >Deactivate Account</Link>
 
         </Col>
       </Row>

@@ -2,14 +2,16 @@ import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { replaceRoute } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+// import { UserApi } from 'front-end/lib/http/api';
 import * as UserHelpers from 'front-end/lib/pages/user/helpers';
 import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as UserModule from 'shared/lib/resources/user';
-import { readAllUsers, UserType } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -23,28 +25,20 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-// Is user admin?
-// Success: business as usual.
-// Failure: redirect to not found page.
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Admin],
-
   success: async ({ shared }) => {
-    // TODO(Jesse): add validation
-    const result = await readAllUsers();
-    const users = result;
     return {
-      users,
+      users: [] as User[], // TODO(Jesse): Actually make an API call here
       table: immutable(await Table.init({
         idNamespace: 'user-list-table'
       }))
     };
   },
-
   fail: async ({ dispatch }) => {
     dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
     return {
-      users: [],
+      users: [] as User[],
       table: immutable(await Table.init({
         idNamespace: 'user-list-table'
       }))

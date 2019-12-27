@@ -1,4 +1,3 @@
-import { readMany, readOne, update } from 'shared/lib/http';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
@@ -55,18 +54,6 @@ export interface UpdateRequestBody {
 export interface UpdateValidationErrors extends ErrorTypeFrom<Omit<UpdateRequestBody, 'status'>> {
   id?: string[];
   permissions?: string[];
-}
-
-export async function updateUser(id: Id, requestBody: UpdateRequestBody): Promise<User | null> {
-  return update<User, UpdateRequestBody>(`/api/users/${id}`, requestBody);
-}
-
-export async function readOneUser(id: string): Promise<User | null> {
-  return readOne<User>(`/api/users/${id}`);
-}
-
-export async function readAllUsers(): Promise<User[]> {
-  return readMany<User>('/api/users');
 }
 
 export function parseUserStatus(raw: string): UserStatus | null {

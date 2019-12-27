@@ -1,66 +1,98 @@
-import { prefixRequest } from 'shared/lib/http';
-import { FileRecord } from 'shared/lib/resources/file';
+import { CrudApi, makeCrudApi, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
-import { Session } from 'shared/lib/resources/session';
-import { User } from 'shared/lib/resources/user';
-import { ClientHttpMethod, Id } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
+import * as SessionResource from 'shared/lib/resources/session';
+import * as UserResource from 'shared/lib/resources/user';
 
-export const apiRequest = prefixRequest('api');
+export { getValid, getInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
-export async function updateOrganization(id: Id, body: OrgResource.UpdateRequestBody): Promise<Validation<OrgResource.Organization, null>> {
-    const response = await apiRequest(ClientHttpMethod.Put, `organizations/${id}`, body);
-    switch (response.status) {
-      case 200:
-        return valid(response.data as OrgResource.Organization); // TODO(Jesse): Does this actually pass the result back?
-      default:
-        return invalid(null);
-    }
-}
+// Sessions
 
-function withCurrentSession(method: ClientHttpMethod): () => Promise<Validation<Session, null>> {
-  return async () => {
-    const response = await apiRequest(method, 'sessions/current');
-    switch (response.status) {
-      case 200:
-        return valid(response.data as Session);
-      default:
-        return invalid(null);
-    }
+interface SessionSimpleResourceTypesParams {
+  record: SessionResource.Session;
+  create: {
+    request: null;
+    invalid: null;
+  };
+  update: {
+    request: null;
+    invalid: null;
   };
 }
 
-export const readOneSession = withCurrentSession(ClientHttpMethod.Get);
+type SessionSimpleResourceTypes = SimpleResourceTypes<SessionSimpleResourceTypesParams>;
 
-export const deleteSession = withCurrentSession(ClientHttpMethod.Delete);
+type SessionResourceTypes = PickCrudApi<SessionSimpleResourceTypes, 'readOne' | 'delete'>;
 
-export async function readManyUsers(): Promise<Validation<User[]>> {
-  const response = await apiRequest(ClientHttpMethod.Get, 'users');
-  switch (response.status) {
-    case 200:
-      return valid(response.data as User[]);
-    default:
-      return invalid([]);
-  }
+export const sessions: CrudApi<SessionResourceTypes> = {
+  ...makeSimpleCrudApi<SessionSimpleResourceTypesParams>('sessions'),
+  create: undefined,
+  readMany: undefined,
+  update: undefined
+};
+
+// Users
+
+interface UserSimpleResourceTypesParams {
+  record: UserResource.User;
+  create: {
+    request: null;
+    invalid: null;
+  };
+  update: {
+    request: UserResource.UpdateRequestBody;
+    invalid: UserResource.UpdateValidationErrors;
+  };
 }
 
-interface RawFileRecord extends Omit<FileRecord, 'createdAt'> {
+type UserSimpleResourceTypes = SimpleResourceTypes<UserSimpleResourceTypesParams>;
+
+type UserResourceTypes = OmitCrudApi<UserSimpleResourceTypes, 'create'>;
+
+export const users: CrudApi<UserResourceTypes> = {
+  ...makeSimpleCrudApi<UserSimpleResourceTypesParams>('users'),
+  create: undefined
+};
+
+// Organizations
+
+export const organizations = makeSimpleCrudApi<{
+  record: OrgResource.Organization;
+  create: {
+    request: OrgResource.CreateRequestBody;
+    invalid: OrgResource.CreateValidationErrors;
+  };
+  update: {
+    request: OrgResource.UpdateRequestBody;
+    invalid: OrgResource.UpdateValidationErrors;
+  };
+}>('organizations');
+
+// Files
+
+interface RawFileRecord extends Omit<FileResource.FileRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawFileRecordToFileRecord(raw: RawFileRecord): FileRecord {
+function rawFileRecordToFileRecord(raw: RawFileRecord): FileResource.FileRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-export async function readOneFile(id: Id): Promise<Validation<FileRecord>> {
-  const response = await apiRequest(ClientHttpMethod.Get, `files/${id}`);
-  switch (response.status) {
-    case 200:
-      return valid(rawFileRecordToFileRecord(response.data as RawFileRecord));
-    default:
-      return invalid([]);
-  }
+interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'readOne'> {
+  readOne: {
+    rawResponse: RawFileRecord;
+    validResponse: FileResource.FileRecord;
+    invalidResponse: string[];
+  };
 }
+
+export const files = makeCrudApi<FileResourceTypes>({
+  ...undefinedActions,
+  routeNamespace: 'files',
+  readOne: {
+    transformValid: rawFileRecordToFileRecord
+  }
+});

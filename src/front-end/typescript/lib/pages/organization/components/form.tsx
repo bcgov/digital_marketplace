@@ -1,6 +1,11 @@
+import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { replaceRoute } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
@@ -27,9 +32,12 @@ export interface State {
   contactTitle: Immutable<ShortText.State>;
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
+
+  submitLoading: number;
+  organization?: Organization;
 }
 
-export type Msg =
+export type InnerMsg =
   ADT<'legalName',       ShortText.Msg> |
   ADT<'websiteUrl',      ShortText.Msg> |
   ADT<'streetAddress1',  ShortText.Msg> |
@@ -41,14 +49,17 @@ export type Msg =
   ADT<'contactName',     ShortText.Msg> |
   ADT<'contactEmail',    ShortText.Msg> |
   ADT<'contactPhone',    ShortText.Msg> |
+  ADT<'submit',          SubmitHook>    |
   ADT<'region',          ShortText.Msg>
   ;
+
+export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type Values = Required<CreateRequestBody>;
 
 type Errors = ErrorTypeFrom<Values>;
 
-export function isValid(state: Immutable<State>): boolean {
+export function isFormValid(state: Immutable<State>): boolean {
   return (
     FormField.isValid(state.legalName)      &&
     FormField.isValid(state.websiteUrl)     &&
@@ -117,6 +128,8 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
 
 export const init: Init<Params, State> = async (params) => {
   return {
+    organization: params.organization,
+    submitLoading: 0,
     legalName: immutable(await ShortText.init({
       errors: [],
       validate: validateName,
@@ -230,6 +243,26 @@ export const init: Init<Params, State> = async (params) => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'submit':
+      return [state, async (state, dispatch) => {
+        const result = state.organization
+         ? await api.organizations.update(state.organization.id, getValues(state))
+         : await api.organizations.create(getValues(state));
+
+        if (api.isValid(result)) {
+          if (state.organization) {
+            const submitHook: SubmitHook = msg.value;
+            if (submitHook) { submitHook(result.value); }
+            state.set('organization', result.value);
+          } else {
+            // FIXME(Jesse): This compiles, but doesn't actually work..
+            dispatch(replaceRoute(adt('orgEdit' as const, {orgId: result.value.id})));
+          }
+        } else {
+          // TODO(Jesse): Handle errors
+        }
+        return state;
+      }];
     case 'legalName':
       return updateComponentChild({
         state,
@@ -326,18 +359,33 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('region', value)
       });
+
+      default: return [state];
   }
 };
 
+type SubmitHook = (org: Organization) => void | undefined;
 export interface Props extends ComponentViewProps<State, Msg> {
-  disabled?: boolean;
+  disabled: boolean;
+  submitHook: SubmitHook;
 }
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
+  const isSubmitLoading = state.submitLoading > 0;
+
   return (
     <div>
       <Row>
+
+        <Row className='my-3 py-3'>
+          <Col xs='2'>
+          </Col>
+          <Col xs='10'>
+            <div className='pb-3'><strong>Logo (Optional)</strong></div>
+            <Link button className='btn-secondary'>Choose Image</Link>
+          </Col>
+        </Row>
 
         <Col xs='12'>
           <ShortText.view
@@ -461,6 +509,19 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
+        </Col>
+      </Row>
+
+      <Row>
+        <Col className='d-flex justify-content-end pt-5'>
+          <Link button className='mr-3'>Cancel</Link>
+          <LoadingButton loading={isSubmitLoading}
+            color='primary'
+            symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
+            onClick={() => dispatch(adt('submit', props.submitHook ))}
+          >
+            Save
+          </LoadingButton>
         </Col>
       </Row>
 
