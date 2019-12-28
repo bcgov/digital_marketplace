@@ -3,7 +3,7 @@ import { Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { Session } from 'shared/lib/resources/session';
+import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { ADT, adtCurried } from 'shared/lib/types';
 
 import * as PageLanding from 'front-end/lib/pages/landing';
@@ -214,7 +214,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // Unset the previous page's state.
           state = state.setIn(['pages', state.activeRoute.tag], undefined);
           // Refresh the front-end's view of the current session.
-          state = setSession(state, await api.sessions.readOne('current'));
+          state = setSession(state, await api.sessions.readOne(CURRENT_SESSION_ID));
           state = state
             .set('activeRoute', incomingRoute)
             // We switch this flag to true so the view function knows to display the page.
@@ -224,7 +224,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // Refresh the front-end's view of the current session again
           // if the user has been signed out.
           if (incomingRoute.tag === 'signOut') {
-            state = setSession(state, await api.sessions.readOne('current'));
+            state = setSession(state, await api.sessions.readOne(CURRENT_SESSION_ID));
           }
           const html = document.documentElement;
           if (html.scrollTo) { html.scrollTo(0, 0); }

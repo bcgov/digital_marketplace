@@ -1,8 +1,6 @@
 import { Connection, hasFilePermission, isUserOwnerOfOrg } from 'back-end/lib/db';
-import { Session } from 'shared/lib/resources/session';
+import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
-
-const CURRENT_SESSION_ID = 'current';
 
 export const ERROR_MESSAGE = 'You do not have permission to perform this action.';
 

@@ -5,6 +5,7 @@ import * as api from 'front-end/lib/http/api';
 import { get } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { CURRENT_SESSION_ID } from 'shared/lib/resources/session';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
@@ -16,7 +17,7 @@ export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const session = await api.sessions.delete('current');
+  const session = await api.sessions.delete(CURRENT_SESSION_ID);
   if (!get(session, 'user')) {
     return { message: 'You have successfully signed out. Thank you for using the Digital Marketplace.' };
   } else {
