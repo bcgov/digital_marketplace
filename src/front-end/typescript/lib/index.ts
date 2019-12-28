@@ -1,5 +1,6 @@
-import { Immutable, PageMetadata } from 'front-end/lib/framework';
+import { ComponentView, Immutable, PageMetadata, Update } from 'front-end/lib/framework';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
+import { isInvalid, Validation } from 'shared/lib/validation';
 
 export type UpdateState<State> = (state: Immutable<State>) => Immutable<State>;
 
@@ -26,6 +27,36 @@ export function makeStopLoading<State>(key: keyof State): UpdateState<State> {
     } else {
       return state;
     }
+  };
+}
+
+export type ValidatedState<ValidState> = Validation<Immutable<ValidState>, null>;
+
+export function updateValid<ValidState, Msg>(update: Update<ValidState, Msg>): Update<ValidatedState<ValidState>, Msg> {
+  return ({ state, msg }) => {
+    if (isInvalid(state)) { return [state]; }
+    const result = update({
+      state: state.value,
+      msg
+    });
+    return [
+      state.update('value', v => v && result[0]),
+      result[1] && (async (state, dispatch) => {
+        if (isInvalid(state) || !result[1]) { return state; }
+        const newValidState = await result[1](state.value, dispatch);
+        return newValidState && state.update('value', v => v && newValidState);
+      })
+    ];
+  };
+}
+
+export function viewValid<ValidState, Msg>(view: ComponentView<ValidState, Msg>): ComponentView<ValidatedState<ValidState>, Msg> {
+  return ({ state, dispatch }) => {
+    if (isInvalid(state)) { return null; }
+    return view({
+      dispatch,
+      state: state.value
+    });
   };
 }
 

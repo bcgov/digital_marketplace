@@ -41,6 +41,10 @@ export interface User {
   deactivatedBy?: Id;
 }
 
+export function isAdmin(user: User): boolean {
+  return user.type === UserType.Admin;
+}
+
 export interface UpdateRequestBody {
   status?: UserStatus;
   name?: string;

@@ -44,14 +44,14 @@ export type ViewElement<Props = any> = null | ReactElement<Props>;
 
 export type ViewElementChildren<Props = any> = ViewElement<Props> | string | Array<ReactElement<Props> | null | string>;
 
-export type View<Props, ReturnValue = ViewElement<Props>> = (props: Props) => ReturnValue;
+export type View<Props, ReturnValue = ViewElement> = (props: Props) => ReturnValue;
 
 export interface ComponentViewProps<State, Msg> {
   state: Immutable<State>;
   dispatch: Dispatch<Msg>;
 }
 
-export type ComponentView<State, Msg> = View<ComponentViewProps<State, Msg>>;
+export type ComponentView<State, Msg, ReturnValue = ViewElement> = View<ComponentViewProps<State, Msg>, ReturnValue>;
 
 /**
  * The optional `Props` type parameter enables you
