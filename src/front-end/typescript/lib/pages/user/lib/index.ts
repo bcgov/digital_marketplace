@@ -1,3 +1,5 @@
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
+import { fileBlobPath } from 'shared/lib/resources/file';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import * as UserModule from 'shared/lib/resources/user';
 
@@ -46,4 +48,10 @@ export function viewStringForUserType(type: UserType): string {
       case UserType.Vendor:
         return 'Vendor';
   }
+}
+
+export function userAvatarPath(user?: User): string {
+  return user && user.avatarImageFile
+    ? fileBlobPath(user.avatarImageFile)
+    : DEFAULT_USER_AVATAR_IMAGE_PATH;
 }

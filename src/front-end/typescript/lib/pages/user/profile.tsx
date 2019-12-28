@@ -8,7 +8,7 @@ import * as api from 'front-end/lib/http/api';
 import * as UserHelpers from 'front-end/lib/pages/user/lib';
 import * as ProfileFormForm from 'front-end/lib/pages/user/lib/components/profile';
 import Icon from 'front-end/lib/views/icon';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { isAdmin, User } from 'shared/lib/resources/user';
@@ -44,18 +44,20 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
   async success({ routeParams, shared, dispatch }) {
     const viewerUser = shared.sessionUser;
     const profileUserResult = await api.users.readOne(routeParams.userId);
+    // If the request failed, then show the "Not Found" page.
     if (!api.isValid(profileUserResult)) {
-      dispatch(replaceRoute(adt('notice', adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
       return invalid(null);
     }
     const profileUser = profileUserResult.value;
-    // Viewer is not owner or admin.
     const isOwner = viewerUser.id === profileUser.id;
     const viewerIsAdmin = isAdmin(viewerUser);
+    // If the viewer isn't the owner or an admin, then show the "Not Found" page.
     if (!isOwner && !viewerIsAdmin) {
-      // TODO redirect;
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
       return invalid(null);
     }
+    // Everything checks out, return valid state.
     return valid(immutable({
       viewerUser,
       profileUser,
@@ -96,7 +98,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
   },
 
   async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice', adt('notFound' as const))));
+    // Viewer isn't signed, so show "Not Found" page.
+    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
     return invalid(null);
   }
 
@@ -156,25 +159,25 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
         </Col>
       </Row>
 
-      <Row>
-        <Col xs='12' className='mt-4'>
+      <Row className='pb-5 mb-5 border-bottom'>
+        <Col xs='12' className='mb-3'>
           <span className='pr-4'><strong>Status</strong></span>
           <span className={`badge ${UserHelpers.getBadgeColor(displayUser.active)}`}>
             {`${UserHelpers.viewStringForUserStatus(profileUser.status)}`}
           </span>
         </Col>
 
-        <Col xs='12' className='my-4'>
+        <Col xs='12' className='mb-3'>
           <span className='pr-4'><strong>Account Type</strong></span>
           <span>
             {`${UserHelpers.viewStringForUserType(profileUser.type)}`}
           </span>
         </Col>
 
-        <Col xs='12' className='mb-4'>
-          <div className='pb-2'>
+        <Col xs='12'>
+          <div>
             <span className='pr-4'><strong>Permission(s)</strong></span>
-            { state.editingAdminCheckbox
+            {state.editingAdminCheckbox
               ? (<span>
                   { /* TODO(Jesse): Change to loading-button */ }
                   <Icon
@@ -192,6 +195,7 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
           </div>
           <Checkbox.view
             extraChildProps={{inlineLabel: 'Admin'}}
+            className='mb-0'
             label=''
             disabled={!state.editingAdminCheckbox}
             state={state.adminCheckbox}
@@ -199,23 +203,10 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
         </Col>
       </Row>
 
-      <Row className='border-top my-3 py-3'>
-        <Col xs='2'>
-        </Col>
-        <Col xs='10'>
-          <div className='pb-3'><strong>Profile Picture</strong></div>
-          <Link button className='btn-secondary'>Choose Image</Link>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col xs='12'>
-          <ProfileFormForm.view
-            disabled={true}
-            state={state.profileForm}
-            dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
-        </Col>
-      </Row>
+      <ProfileFormForm.view
+        disabled={true}
+        state={state.profileForm}
+        dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
     </div>
   );
 });

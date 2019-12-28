@@ -1,7 +1,8 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as UserHelpers from 'front-end/lib/pages/user/helpers';
+import * as UserHelpers from 'front-end/lib/pages/user/lib';
+import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -176,17 +177,30 @@ export const view: View<Props> = props => {
     <div>
       <Row>
         <Col xs='12'>
+          <Row>
+            <Col xs='12' className='mb-3 d-flex align-items-center flex-nowrap'>
+              <img
+                style={{
+                  width: '5rem',
+                  height: '5rem',
+                  objectFit: 'cover'
+                }}
+                src={userAvatarPath(state.existingUser)} />
+              <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
+                <div className='mb-2'><strong>Profile Picture</strong></div>
+                <Link button outline size='sm' color='primary'>Choose Image</Link>
+              </div>
+            </Col>
+          </Row>
 
-          { UserHelpers.isPublic(state.existingUser) ?
-            <ShortText.view
-              extraChildProps={{} /* TODO(Jesse): How do we add the ? helptext icon to this element? */ }
-              label='IDIR'
-              disabled={true}
-              state={state.idpUsername}
-              dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />
-          :
-            null
-          }
+          {UserHelpers.isPublic(state.existingUser)
+            ? (<ShortText.view
+                extraChildProps={{} /* TODO(Jesse): How do we add the ? helptext icon to this element? */ }
+                label='IDIR'
+                disabled={true}
+                state={state.idpUsername}
+                dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />)
+            : null}
 
           <ShortText.view
             extraChildProps={{}}
@@ -213,9 +227,9 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
 
           <Link button
-            onClick={() => {}}
-          >Deactivate Account</Link>
-
+            onClick={() => {}}>
+            Deactivate Account
+        </Link>
         </Col>
       </Row>
     </div>
