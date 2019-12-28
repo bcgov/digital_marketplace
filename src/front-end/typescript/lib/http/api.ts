@@ -6,6 +6,10 @@ import * as UserResource from 'shared/lib/resources/user';
 
 export { getValid, getInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
+const deslash = (s: string) => s.replace(/^\/*/, '').replace(/\/*$/, '');
+const prefix = (a: string) => (b: string) => `/${deslash(a)}/${deslash(b)}`;
+const apiNamespace = prefix('api');
+
 // Sessions
 
 interface SessionSimpleResourceTypesParams {
@@ -25,7 +29,7 @@ type SessionSimpleResourceTypes = SimpleResourceTypes<SessionSimpleResourceTypes
 type SessionResourceTypes = PickCrudApi<SessionSimpleResourceTypes, 'readOne' | 'delete'>;
 
 export const sessions: CrudApi<SessionResourceTypes> = {
-  ...makeSimpleCrudApi<SessionSimpleResourceTypesParams>('sessions'),
+  ...makeSimpleCrudApi<SessionSimpleResourceTypesParams>(apiNamespace('sessions')),
   create: undefined,
   readMany: undefined,
   update: undefined
@@ -50,7 +54,7 @@ type UserSimpleResourceTypes = SimpleResourceTypes<UserSimpleResourceTypesParams
 type UserResourceTypes = OmitCrudApi<UserSimpleResourceTypes, 'create'>;
 
 export const users: CrudApi<UserResourceTypes> = {
-  ...makeSimpleCrudApi<UserSimpleResourceTypesParams>('users'),
+  ...makeSimpleCrudApi<UserSimpleResourceTypesParams>(apiNamespace('users')),
   create: undefined
 };
 
@@ -66,7 +70,7 @@ export const organizations = makeSimpleCrudApi<{
     request: OrgResource.UpdateRequestBody;
     invalid: OrgResource.UpdateValidationErrors;
   };
-}>('organizations');
+}>(apiNamespace('organizations'));
 
 // Files
 
@@ -91,7 +95,7 @@ interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'readOne'> {
 
 export const files = makeCrudApi<FileResourceTypes>({
   ...undefinedActions,
-  routeNamespace: 'files',
+  routeNamespace: apiNamespace('files'),
   readOne: {
     transformValid: rawFileRecordToFileRecord
   }
