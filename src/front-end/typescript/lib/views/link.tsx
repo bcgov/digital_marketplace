@@ -104,10 +104,11 @@ function AnchorLink(props: AnchorProps) {
       case 'external': return dest.value;
     }
   })();
-  let finalClassName = className;
+  let finalClassName = 'text-nowrap';
   finalClassName += nav ? ' nav-link' : '';
   finalClassName += disabled ? ' disabled' : '';
   finalClassName += color ? ` text-${color}` : '';
+  finalClassName += ` ${className}`;
   const finalOnClick = !disabled && onClick
     ? ((e: MouseEvent<HTMLAnchorElement>) => {
         if (!dest || (!newTab && !e.ctrlKey && !e.metaKey)) { e.preventDefault(); }

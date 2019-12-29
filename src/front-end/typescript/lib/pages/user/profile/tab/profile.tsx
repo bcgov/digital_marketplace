@@ -1,3 +1,4 @@
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
@@ -8,6 +9,7 @@ import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
@@ -19,8 +21,8 @@ export interface Params {
 }
 
 export interface State extends Params {
-  profileUser: User;
-  viewerUser: User;
+  startEditingFormLoading: 0;
+  isEditingForm: boolean;
   profileForm: Immutable<ProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>; //TODO
   editingAdminCheckbox: boolean; //TODO
@@ -28,6 +30,8 @@ export interface State extends Params {
 
 type InnerMsg
   = ADT<'profileForm', ProfileForm.Msg>
+  | ADT<'startEditingForm'>
+  | ADT<'cancelEditingForm'>
   | ADT<'adminCheckbox', Checkbox.Msg> //TODO
   | ADT<'finishEditingAdminCheckbox', undefined> //TODO
   | ADT<'editingAdminCheckbox', undefined>; //TODO
@@ -38,6 +42,8 @@ const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
   return {
     viewerUser,
     profileUser,
+    startEditingFormLoading: 0,
+    isEditingForm: false,
     profileForm: immutable(await ProfileForm.init(adt('update', profileUser))),
     editingAdminCheckbox: false,
     adminCheckbox: immutable(await Checkbox.init({
@@ -50,6 +56,9 @@ const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
   };
 };
 
+const startStartEditingFormLoading = makeStartLoading<State>('startEditingFormLoading');
+const stopStartEditingFormLoading = makeStopLoading<State>('startEditingFormLoading');
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'profileForm':
@@ -60,6 +69,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('profileForm', value)
       });
+    case 'startEditingForm':
+      return [
+        startStartEditingFormLoading(state),
+        async state => {
+          //TODO reload profile
+          state = state.set('isEditingForm', true);
+          return stopStartEditingFormLoading(state);
+        }
+      ];
+    case 'cancelEditingForm':
+      return [state.set('isEditingForm', false)];
     case 'finishEditingAdminCheckbox':
       return [state.set('editingAdminCheckbox', false),
         async state => {
@@ -157,19 +177,21 @@ const ViewPermissions: ComponentView<State, Msg> = props => {
 const ViewDetails: ComponentView<State, Msg> = props => {
   const profileUser = props.state.profileUser;
   return (
-    <Row className='pb-5 mb-5 border-bottom'>
+    <Row>
       <Col xs='12' className='mb-3'>
-        <ViewDetail name='Status' className='mb-3'>
-          <Badge
-            text={userStatusToTitleCase(profileUser.status)}
-            color={userStatusToColor(profileUser.status)} />
-        </ViewDetail>
-
-        <ViewDetail name='Account Type'>
-          {userTypeToTitleCase(profileUser.type)}
-        </ViewDetail>
-
-        <ViewPermissions {...props} />
+        <div className='pb-5 mb-5 border-bottom'>
+          {isAdmin(props.state.viewerUser)
+            ? (<ViewDetail name='Status' className='mb-3'>
+                <Badge
+                  text={userStatusToTitleCase(profileUser.status)}
+                  color={userStatusToColor(profileUser.status)} />
+              </ViewDetail>)
+            : null}
+          <ViewDetail name='Account Type'>
+            {userTypeToTitleCase(profileUser.type)}
+          </ViewDetail>
+          <ViewPermissions {...props} />
+        </div>
       </Col>
     </Row>
   );
@@ -179,17 +201,19 @@ const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state }) => {
   // Admins can't deactivate their own accounts
   if (isAdmin(state.profileUser) && state.profileUser.id === state.viewerUser.id) { return null; }
   return (
-    <Row className='mt-5 pt-5 border-top'>
+    <Row>
       <Col xs='12'>
-        <h3>Deactivate Account</h3>
-        <p>Deactivating your account means that you will no longer have access to the Digital Marketplace.</p>
-        <Link
-          button
-          symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
-          className='mt-3'
-          color='danger'>
-          Deactivate Account
-        </Link>
+        <div className='mt-5 pt-5 border-top'>
+          <h3>Deactivate Account</h3>
+          <p>Deactivating your account means that you will no longer have access to the Digital Marketplace.</p>
+          <Link
+            button
+            symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
+            className='mt-3'
+            color='danger'>
+            Deactivate Account
+          </Link>
+        </div>
       </Col>
     </Row>
   );
@@ -198,16 +222,30 @@ const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state }) => {
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   const profileUser = state.profileUser;
+  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isEditingForm = state.isEditingForm;
+  const isDisabled = !isEditingForm || isStartEditingFormLoading;
   return (
     <div>
       <Row className='mb-3 pb-3'>
-        <Col xs='12'>
+        <Col xs='12' className='d-flex flex-column flex-md-row align-items-start align-items-md-center'>
           <h1>{`${profileUser.name}`}</h1>
+          {isEditingForm
+            ? null
+            : (<LoadingButton
+                onClick={() => dispatch(adt('startEditingForm'))}
+                loading={isStartEditingFormLoading}
+                size='sm'
+                symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
+                className='mt-2 mt-md-0 ml-md-3'
+                color='primary'>
+                Edit Profile
+              </LoadingButton>)}
         </Col>
     </Row>
     <ViewDetails {...props} />
     <ProfileForm.view
-      disabled={true}
+      disabled={isDisabled}
       state={state.profileForm}
       dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
     <ViewDeactivateAccount {...props} />

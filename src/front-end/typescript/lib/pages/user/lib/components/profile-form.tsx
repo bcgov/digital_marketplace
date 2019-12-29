@@ -177,7 +177,7 @@ export const view: View<Props> = props => {
       <Row>
         <Col xs='12'>
           <Row>
-            <Col xs='12' className='mb-3 d-flex align-items-center flex-nowrap'>
+            <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
               <img
                 style={{
                   width: '5rem',

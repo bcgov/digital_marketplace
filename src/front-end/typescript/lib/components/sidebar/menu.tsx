@@ -50,7 +50,7 @@ const SidebarLink: View<SidebarLinkProps> = props => {
       symbol_={leftPlacement(iconLinkSymbol(icon))}
       symbolClassName={`align-self-start mt-1 text-${active ? 'primary' : 'info'}`}
       color={active ? 'info' : 'light'}
-      className={`${className} ta-left ${active ? '' : 'text-primary'}`}>
+      className={`${className} ta-left text-wrap ${active ? '' : 'text-primary'}`}>
       {text}
       {caret
         ? (<Icon name='caret-down' color='white' className='ml-auto' style={{ transform: caret === 'up' ? 'rotate(180deg)' : undefined }}/>)
