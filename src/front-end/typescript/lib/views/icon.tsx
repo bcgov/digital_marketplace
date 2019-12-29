@@ -43,6 +43,7 @@ export type AvailableIcons
 interface Props {
   name: AvailableIcons;
   color?: BootstrapColor;
+  hover?: boolean;
   width?: number | 'auto';
   height?: number | 'auto';
   className?: string;
@@ -68,9 +69,9 @@ interface FontAwesomeProps extends SvgProps {
 }
 
 const FontAwesome: View<FontAwesomeProps> = props => {
-  const { color, width = 1, height = 1, viewBox, className = '', style = {}, children, onClick } = props;
+  const { color, hover, width = 1, height = 1, viewBox, className = '', style = {}, children, onClick } = props;
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' style={{ ...style, width: `${width}rem`, height: `${height}rem` }} viewBox={viewBox} fill='currentColor' stroke='currentColor' className={`icon ${color ? `text-${color}` : ''} ${className}`} onClick={onClick}>
+    <svg xmlns='http://www.w3.org/2000/svg' style={{ ...style, cursor: hover ? 'pointer' : undefined, width: `${width}rem`, height: `${height}rem` }} viewBox={viewBox} fill='currentColor' stroke='currentColor' className={`icon ${color ? `text-${color} ${hover ? `text-hover-${color}` : ''}` : ''} ${className}`} onClick={onClick}>
       {children}
     </svg>
   );

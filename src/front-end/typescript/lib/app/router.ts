@@ -1,5 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
 import { Router } from 'front-end/lib/framework';
+import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
@@ -60,11 +61,12 @@ const router: Router<Route> = {
     },
     {
       path: '/users/:id',
-      makeRoute({ params }) {
+      makeRoute({ params, query }) {
         return {
           tag: 'userProfile',
           value: {
-            userId: params.id || ''
+            userId: params.id || '',
+            tab: PageUserProfile.parseTabId(query.tab)
           }
         };
       }
@@ -157,7 +159,7 @@ const router: Router<Route> = {
       case 'signUpStepTwo':
         return `/sign-up/complete`;
       case 'userProfile':
-        return `/users/${route.value.userId}`;
+        return `/users/${route.value.userId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'userList':
         return '/users';
       case 'orgList':

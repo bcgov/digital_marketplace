@@ -19,6 +19,7 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   const [result] = await connection('users')
     .insert({
       ...user,
+      notificationsOn: false,
       id: generateUuid(),
       createdAt: now,
       updatedAt: now

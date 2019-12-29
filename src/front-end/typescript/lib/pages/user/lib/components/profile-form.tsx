@@ -1,95 +1,100 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as UserHelpers from 'front-end/lib/pages/user/lib';
-import { userAvatarPath } from 'front-end/lib/pages/user/lib';
+import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
 import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
-import { parseUserStatus, User, UserStatus } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { isPublicSectorUserType, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation/index';
-import { validateEmail, validateName } from 'shared/lib/validation/user';
+import { ErrorTypeFrom, mapValid } from 'shared/lib/validation';
+import { validateEmail, validateJobTitle, validateName } from 'shared/lib/validation/user';
 
-export interface Params {
-  existingUser?: User;
+type FormType
+  = ADT<'create', UserType>
+  | ADT<'update', User>;
+
+function formTypeToUserType(v: FormType): UserType {
+  switch (v.tag) {
+    case 'create': return v.value;
+    case 'update': return v.value.type;
+  }
 }
 
-export interface State extends Params {
+function formTypeToUser(v: FormType): User | undefined {
+  switch (v.tag) {
+    case 'create': return undefined;
+    case 'update': return v.value;
+  }
+}
+
+export type Params = FormType;
+
+export interface State {
+  formType: FormType;
   name: Immutable<ShortText.State>;
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
-  userStatus: Immutable<ShortText.State>;
   idpUsername: Immutable<ShortText.State>;
 }
 
-export type Msg =
-  ADT<'jobTitle',     ShortText.Msg> |
-  ADT<'email',        ShortText.Msg> |
-  ADT<'userStatus',   ShortText.Msg> |
-  ADT<'name',         ShortText.Msg> |
-  ADT<'idpUsername',  ShortText.Msg>
-  ;
+export type Msg
+  = ADT<'jobTitle',    ShortText.Msg>
+  | ADT<'email',       ShortText.Msg>
+  | ADT<'name',        ShortText.Msg>
+  | ADT<'idpUsername', ShortText.Msg>;
 
 export interface Values {
-    id: Id;
-    status: UserStatus;
-    name: string;
-    email: string;
-    avatarImageFile: string;
-    idpUsername: string;
+  name: string;
+  email: string;
+  jobTitle: string;
+  avatarImageFile: string;
 }
 
 export type Errors = ErrorTypeFrom<State>;
 
 export function getValues(state: Immutable<State>): Values {
   return {
-    id: FormField.getValue(state.name),
-    status: parseUserStatus(FormField.getValue(state.userStatus)) || UserStatus.Active, // TODO(Jesse): This seems a bit janky..
     name: FormField.getValue(state.name),
     email: FormField.getValue(state.email),
-    avatarImageFile: FormField.getValue(state.name),
-    idpUsername: FormField.getValue(state.idpUsername)
+    jobTitle: FormField.getValue(state.jobTitle),
+    avatarImageFile: FormField.getValue(state.name)
   };
 }
 
 export function setValues(state: Immutable<State>, values: Values): Immutable<State> {
   return state
-    .update('name', s => FormField.setValue(s, values.name));
-  //TODO email
+    .update('name', s => FormField.setValue(s, values.name))
+    .update('email', s => FormField.setValue(s, values.email))
+    .update('jobTitle', s => FormField.setValue(s, values.jobTitle));
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.name);
-  // TODO email
+  return !!state.name.child.value
+      && !!state.email.child.value
+      && FormField.isValid(state.name)
+      && FormField.isValid(state.email)
+      && FormField.isValid(state.jobTitle);
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
   return state
-    .update('name', s => FormField.setErrors(s, errors.name || []));
-  // TODO email
+    .update('name', s => FormField.setErrors(s, errors.name || []))
+    .update('email', s => FormField.setErrors(s, errors.email || []))
+    .update('jobTitle', s => FormField.setErrors(s, errors.jobTitle || []));
 }
 
-export const init: Init<Params, State> = async ({ existingUser }) => {
+export const init: Init<Params, State> = async formType => {
+  const existingUser = formTypeToUser(formType);
   return {
-    existingUser,
+    formType,
     idpUsername: immutable(await ShortText.init({
       errors: [],
       child: {
         type: 'text',
         value: getString(existingUser, 'idpUsername'),
-        id: 'user-gov-idir-username'
-      }
-    })),
-    jobTitle: immutable(await ShortText.init({
-      errors: [],
-      validate: validateName,
-      child: {
-        type: 'text',
-        value: getString(existingUser, 'jobTitle'),
-        id: 'user-gov-job-title'
+        id: 'user-profile-idir-username'
       }
     })),
     email: immutable(await ShortText.init({
@@ -98,7 +103,7 @@ export const init: Init<Params, State> = async ({ existingUser }) => {
       child: {
         type: 'text',
         value: getString(existingUser, 'email'),
-        id: 'user-gov-email'
+        id: 'user-profile-email'
       }
     })),
     name: immutable(await ShortText.init({
@@ -107,16 +112,16 @@ export const init: Init<Params, State> = async ({ existingUser }) => {
       child: {
         type: 'text',
         value: getString(existingUser, 'name'),
-        id: 'user-gov-name'
+        id: 'user-profile-name'
       }
     })),
-    userStatus: immutable(await ShortText.init({
+    jobTitle: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: v => mapValid(validateJobTitle(v), w => w || ''),
       child: {
         type: 'text',
-        value: getString(existingUser, 'userStatus'),
-        id: 'user-gov-user-status'
+        value: getString(existingUser, 'jobTitle'),
+        id: 'user-profile-job-title'
       }
     }))
   };
@@ -156,14 +161,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('name', value)
       });
-    case 'userStatus':
-      return updateComponentChild({
-        state,
-        childStatePath: ['userStatus'],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt('userStatus', value)
-      });
   }
 };
 
@@ -173,6 +170,8 @@ export interface Props extends ComponentViewProps<State, Msg> {
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
+  const formType = state.formType;
+  const existingUser = formTypeToUser(formType);
   return (
     <div>
       <Row>
@@ -185,19 +184,28 @@ export const view: View<Props> = props => {
                   height: '5rem',
                   objectFit: 'cover'
                 }}
-                src={userAvatarPath(state.existingUser)} />
+                src={userAvatarPath(existingUser)} />
               <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
                 <div className='mb-2'><strong>Profile Picture</strong></div>
-                <Link button outline size='sm' color='primary'>Choose Image</Link>
+                <Link
+                  button
+                  disabled={disabled}
+                  outline
+                  size='sm'
+                  style={{ visibility: disabled ? 'hidden' : undefined }}
+                  color='primary'>
+                  Choose Image
+                </Link>
               </div>
             </Col>
           </Row>
 
-          {UserHelpers.isPublic(state.existingUser)
+          {formType.tag === 'update'
             ? (<ShortText.view
-                extraChildProps={{} /* TODO(Jesse): How do we add the ? helptext icon to this element? */ }
-                label='IDIR'
-                disabled={true}
+                extraChildProps={{}}
+                help='TODO'
+                label={userToKeyClockIdentityProviderTitleCase(formType.value)}
+                disabled
                 state={state.idpUsername}
                 dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />)
             : null}
@@ -210,13 +218,15 @@ export const view: View<Props> = props => {
             state={state.name}
             dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value))} />
 
-          <ShortText.view
-            extraChildProps={{}}
-            label='Job Title'
-            required
-            disabled={disabled}
-            state={state.jobTitle}
-            dispatch={mapComponentDispatch(dispatch, value => adt('jobTitle' as const, value))} />
+          {isPublicSectorUserType(formTypeToUserType(formType))
+            ? (<ShortText.view
+                extraChildProps={{}}
+                label='Job Title'
+                required
+                disabled={disabled}
+                state={state.jobTitle}
+                dispatch={mapComponentDispatch(dispatch, value => adt('jobTitle' as const, value))} />)
+            : null}
 
           <ShortText.view
             extraChildProps={{}}
@@ -225,11 +235,6 @@ export const view: View<Props> = props => {
             disabled={disabled}
             state={state.email}
             dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
-
-          <Link button
-            onClick={() => {}}>
-            Deactivate Account
-        </Link>
         </Col>
       </Row>
     </div>

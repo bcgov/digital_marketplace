@@ -10,6 +10,10 @@ export enum UserType {
   Admin = 'ADMIN'
 }
 
+export function isPublicSectorUserType(userType: UserType): boolean {
+  return userType === UserType.Admin || userType === UserType.Government;
+}
+
 export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloakIdentityProvider {
   switch (userType) {
     case UserType.Vendor:
@@ -45,10 +49,15 @@ export function isAdmin(user: User): boolean {
   return user.type === UserType.Admin;
 }
 
+export function isPublicSectorEmployee(user: User): boolean {
+  return isPublicSectorUserType(user.type);
+}
+
 export interface UpdateRequestBody {
   status?: UserStatus;
   name?: string;
   email?: string;
+  jobTitle?: string;
   avatarImageFile?: Id;
   notificationsOn?: boolean;
   acceptedTerms?: boolean;

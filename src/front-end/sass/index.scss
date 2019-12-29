@@ -118,23 +118,17 @@ input[type="time"] {
 
 .app {
   $page-transition-duration: 240ms;
+  transition-property: filter/*opacity/*, transform*/;
+  transition-duration: $page-transition-duration;
+  transition-timing-function: ease-out;
 
   .page-container {
-    opacity: 1;
-    transform: translateY(0);
-    transition-property: opacity, transform;
-    transition-duration: $page-transition-duration;
-    transition-timing-function: ease-out;
     z-index: 2;
   }
 
   &.in-transition {
-    pointer-events: none;
-
-    .page-container {
-      opacity: 0;
-      transform: translateY($spacer / 2);
-    }
+    pointer-events: none !important;
+    filter: grayscale(30%);
   }
 }
 
@@ -297,21 +291,21 @@ nav.navbar .nav-link:hover {
 @each $color, $value in $theme-colors {
   .text-hover-#{$color} {
     @include hover {
-      color: $value !important;
+      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
     }
   }
 }
 @each $color, $value in $colors {
   .text-hover-#{$color} {
     @include hover {
-      color: $value !important;
+      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
     }
   }
 }
 @each $color, $value in $grays {
   .text-hover-gray-#{$color} {
     @include hover {
-      color: $value !important;
+      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
     }
   }
 }

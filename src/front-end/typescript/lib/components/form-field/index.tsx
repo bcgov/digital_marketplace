@@ -136,14 +136,14 @@ function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, 
 }
 
 function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
-  const { state, label, required, labelClassName } = props;
-  const className = `${required ? 'font-weight-bold' : ''} ${labelClassName || ''}`;
+  const { state, label, required, disabled, labelClassName } = props;
+  const className = `font-weight-bold ${labelClassName || ''}`;
   if (label) {
     return (
       <Label for={state.child.id} className={className}>
         <span>
           {label}
-          {required ? (<span className='text-info ml-1'>*</span>) : null}
+          {required && !disabled ? (<span className='text-warning ml-1'>*</span>) : null}
           <ConditionalHelpToggle {...props} />
         </span>
       </Label>

@@ -1,4 +1,4 @@
-import { invalid, valid, validateGenericString, Validation } from 'shared/lib/validation';
+import { invalid, optional, valid, validateGenericString, Validation } from 'shared/lib/validation';
 import { UserType } from '../resources/user';
 
 export function validateEmail(email: string): Validation<string> {
@@ -12,6 +12,10 @@ export function validateEmail(email: string): Validation<string> {
 
 export function validateName(name: string): Validation<string> {
   return validateGenericString(name, 'Name');
+}
+
+export function validateJobTitle(v: string | undefined): Validation<string | undefined> {
+  return optional(v, w => validateGenericString(w, 'Job Title'));
 }
 
 export function validateNotificationsOn(notificationsOn: boolean): Validation<Date|null> {

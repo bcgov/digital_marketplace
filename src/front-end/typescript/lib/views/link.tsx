@@ -132,13 +132,14 @@ export function ButtonLink(props: ButtonProps) {
     color,
     size = 'md',
     className = '',
-    outline = false
+    outline = false,
+    disabled
   } = props;
   const anchorProps: AnchorProps = {
     ...props,
     button: false,
     color: undefined,
-    className: `${className} d-inline-flex flex-nowrap align-items-center btn btn-${size} ${color ? `btn-${outline ? 'outline-' : ''}${color}` : ''}`
+    className: `${className} d-inline-flex flex-nowrap align-items-center btn btn-${size} ${color ? `btn-${!disabled && outline ? 'outline-' : ''}${color}` : ''}`
   };
   return (
     <AnchorLink {...anchorProps} />

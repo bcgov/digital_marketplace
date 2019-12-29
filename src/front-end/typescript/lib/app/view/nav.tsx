@@ -224,7 +224,7 @@ const TopNavbar: View<Props> = props => {
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex align-items-center flex-grow-1'>
               <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
-                <img src={props.logoImageUrl} style={{ height: '60%' }} />
+                <img src={props.logoImageUrl} style={{ height: '44px' }} />
               </Link>
               <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
               {isLoading
