@@ -243,7 +243,7 @@ const ViewDetails: ComponentView<State, Msg> = props => {
   const profileUser = props.state.profileUser;
   return (
     <Row>
-      <Col xs='12' className='mb-3'>
+      <Col xs='12'>
         <div className='pb-5 mb-5 border-bottom'>
           {isAdmin(props.state.viewerUser)
             ? (<ViewDetail name='Status' className='mb-3'>
