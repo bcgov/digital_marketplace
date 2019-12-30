@@ -170,6 +170,7 @@ button {
   &:disabled:not(.btn-link):not(.dropdown-item) {
     background-color: $secondary;
     border-color: $secondary;
+    box-shadow: none;
   }
 }
 

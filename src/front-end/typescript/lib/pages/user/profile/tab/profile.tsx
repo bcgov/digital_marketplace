@@ -1,7 +1,7 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { userStatusToColor, userStatusToTitleCase, userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
@@ -12,6 +12,7 @@ import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React, { Fragment } from 'react';
 import { Col, Row } from 'reactstrap';
+//import { sleep } from 'shared/lib';
 import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 
@@ -22,6 +23,7 @@ export interface Params {
 
 export interface State extends Params {
   saveChangesLoading: number;
+  deactivateAccountLoading: number;
   startEditingFormLoading: number;
   isEditingForm: boolean;
   profileForm: Immutable<ProfileForm.State>;
@@ -34,6 +36,7 @@ type InnerMsg
   | ADT<'startEditingForm'>
   | ADT<'cancelEditingForm'>
   | ADT<'saveChanges'>
+  | ADT<'deactivateAccount'>
   | ADT<'adminCheckbox', Checkbox.Msg> //TODO
   | ADT<'finishEditingAdminCheckbox', undefined> //TODO
   | ADT<'editingAdminCheckbox', undefined>; //TODO
@@ -49,6 +52,7 @@ const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
     viewerUser,
     profileUser,
     saveChangesLoading: 0,
+    deactivateAccountLoading: 0,
     startEditingFormLoading: 0,
     isEditingForm: false,
     profileForm: await resetProfileForm(profileUser),
@@ -63,10 +67,12 @@ const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
   };
 };
 
-const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
-const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
 const startStartEditingFormLoading = makeStartLoading<State>('startEditingFormLoading');
 const stopStartEditingFormLoading = makeStopLoading<State>('startEditingFormLoading');
+const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
+const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
+const startDeactivateAccountLoading = makeStartLoading<State>('deactivateAccountLoading');
+const stopDeactivateAccountLoading = makeStopLoading<State>('deactivateAccountLoading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -142,6 +148,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
                 .set('isEditingForm', false)
                 .set('profileUser', result.value)
                 .set('profileForm', await resetProfileForm(result.value));
+          }
+        }
+      ];
+    case 'deactivateAccount':
+      return [
+        startDeactivateAccountLoading(state),
+        async (state, dispatch) => {
+          state = stopDeactivateAccountLoading(state);
+          const result = await api.users.delete(state.profileUser.id);
+          switch (result.tag) {
+            case 'valid':
+              dispatch(newRoute(adt('signOut', null)));
+              return state;
+            case 'invalid':
+            case 'unhandled':
+              return state;
           }
         }
       ];
@@ -272,55 +294,56 @@ const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) 
   const isValid = ProfileForm.isValid(state.profileForm);
   return (
     <Row className='mt-4'>
-      <Col xs='12'>
-        <div className='d-flex flex-row flex-md-row-reverse align-items-center overflow-auto'>
-          {isEditingForm
-            ? (<Fragment>
-                <LoadingButton
-                  disabled={!isValid || isDisabled}
-                  onClick={() => dispatch(adt('saveChanges'))}
-                  loading={isSaveChangesLoading}
-                  symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-                  color='primary'>
-                  Save Changes
-                </LoadingButton>
-                <Link
-                  disabled={isDisabled}
-                  onClick={() => dispatch(adt('cancelEditingForm'))}
-                  color='secondary'
-                  className='mx-3'>
-                  Cancel
-                </Link>
-              </Fragment>)
-            : (<LoadingButton
-                onClick={() => dispatch(adt('startEditingForm'))}
-                loading={isStartEditingFormLoading}
-                symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
+      <Col xs='12' className='py-1 d-flex flex-nowrap flex-row flex-md-row-reverse align-items-center overflow-auto'>
+        {isEditingForm
+          ? (<Fragment>
+              <LoadingButton
+                disabled={!isValid || isDisabled}
+                onClick={() => dispatch(adt('saveChanges'))}
+                loading={isSaveChangesLoading}
+                symbol_={leftPlacement(iconLinkSymbol('user-check'))}
                 color='primary'>
-                Edit Profile
-              </LoadingButton>)}
-        </div>
+                Save Changes
+              </LoadingButton>
+              <Link
+                disabled={isDisabled}
+                onClick={() => dispatch(adt('cancelEditingForm'))}
+                color='secondary'
+                className='px-3'>
+                Cancel
+              </Link>
+            </Fragment>)
+          : (<LoadingButton
+              onClick={() => dispatch(adt('startEditingForm'))}
+              loading={isStartEditingFormLoading}
+              symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
+              color='primary'>
+              Edit Profile
+            </LoadingButton>)}
       </Col>
     </Row>
   );
 };
 
-const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state }) => {
+const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state, dispatch }) => {
   // Admins can't deactivate their own accounts
   if (isAdmin(state.profileUser) && state.profileUser.id === state.viewerUser.id) { return null; }
+  const isDeactivateAccountLoading = state.deactivateAccountLoading > 0;
   return (
     <Row>
       <Col xs='12'>
         <div className='mt-5 pt-5 border-top d-flex flex-column align-items-start'>
           <h3>Deactivate Account</h3>
           <p>Deactivating your account means that you will no longer have access to the Digital Marketplace.</p>
-          <Link
-            button
+          <LoadingButton
+            loading={isDeactivateAccountLoading}
+            disabled={isDeactivateAccountLoading}
+            onClick={() => dispatch(adt('deactivateAccount'))}
             symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
             className='mt-4 align-self-md-end'
             color='danger'>
             Deactivate Account
-          </Link>
+          </LoadingButton>
         </div>
       </Col>
     </Row>

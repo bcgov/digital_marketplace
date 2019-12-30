@@ -2,7 +2,7 @@ import { makePageMetadata, updateValid, viewValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import * as ProfileTab from 'front-end/lib/pages/user/profile/tab/profile';
@@ -138,7 +138,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return (() => {
         switch (state.tab.tag) {
           case 'profile':
-            return updateComponentChild({
+            return updateGlobalComponentChild({
               state,
               childStatePath: ['tab', 'value'],
               childUpdate: ProfileTab.component.update,
@@ -146,7 +146,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               mapChildMsg: value => adt('tab' as const, adt('profile' as const, value))
             });
           case 'notifications':
-            return updateComponentChild({
+            return updateGlobalComponentChild({
               state,
               childStatePath: ['tab', 'value'],
               childUpdate: ProfileTab.component.update,
@@ -154,7 +154,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               mapChildMsg: value => adt('tab' as const, adt('notifications' as const, value))
             });
           case 'legal':
-            return updateComponentChild({
+            return updateGlobalComponentChild({
               state,
               childStatePath: ['tab', 'value'],
               childUpdate: ProfileTab.component.update,

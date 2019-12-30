@@ -1,6 +1,7 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, readManyUsers, readOneUser, updateUser } from 'back-end/lib/db';
+import { Connection, createAnonymousSession, readManyUsers, readOneUser, updateUser } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
+import { signOut } from 'back-end/lib/resources/session';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
@@ -190,19 +191,30 @@ const resource: Resource = {
           return respond(404, request.body.value);
         }
         const id = request.body.value.id;
-        if (!permissions.deleteUser(request.session, id)) {
+        if (!permissions.deleteUser(request.session, id) || !request.session.user) {
           return respond(401, [permissions.ERROR_MESSAGE]);
         }
         // If this own account, then mark as deactivated by user, otherwise by admin
         // Track the date the user was made inactive, and the user id of the user that made them inactive
-        const status = permissions.isOwnAccount(request.session, id) ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
+        const isOwnAccount = permissions.isOwnAccount(request.session, id);
+        const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
         const updatedUser = await updateUser(connection, {
           id,
           status,
           deactivatedOn: new Date(),
-          deactivatedBy: request.session.user!.id
+          deactivatedBy: request.session.user.id
         });
-        return respond(200, updatedUser);
+        // Sign the user out of the current session if they are deactivating their own account.
+        let session = request.session;
+        if (isOwnAccount) {
+          const result = await signOut(connection, session);
+          if (result.tag === 'invalid') {
+            session = await createAnonymousSession(connection);
+          } else {
+            session = result.value;
+          }
+        }
+        return basicResponse(200, session, makeJsonResponseBody(updatedUser));
       }
     };
   }
