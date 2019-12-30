@@ -262,19 +262,62 @@ const ViewDetails: ComponentView<State, Msg> = props => {
   );
 };
 
+const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  // Admins can't edit user profiles.
+  if (isAdmin(state.viewerUser)) { return null; }
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
+  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isEditingForm = state.isEditingForm;
+  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
+  const isValid = ProfileForm.isValid(state.profileForm);
+  return (
+    <Row className='mt-4'>
+      <Col xs='12'>
+        <div className='d-flex flex-row flex-md-row-reverse align-items-center overflow-auto'>
+          {isEditingForm
+            ? (<Fragment>
+                <LoadingButton
+                  disabled={!isValid || isDisabled}
+                  onClick={() => dispatch(adt('saveChanges'))}
+                  loading={isSaveChangesLoading}
+                  symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+                  color='primary'>
+                  Save Changes
+                </LoadingButton>
+                <Link
+                  disabled={isDisabled}
+                  onClick={() => dispatch(adt('cancelEditingForm'))}
+                  color='secondary'
+                  className='mx-3'>
+                  Cancel
+                </Link>
+              </Fragment>)
+            : (<LoadingButton
+                onClick={() => dispatch(adt('startEditingForm'))}
+                loading={isStartEditingFormLoading}
+                symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
+                color='primary'>
+                Edit Profile
+              </LoadingButton>)}
+        </div>
+      </Col>
+    </Row>
+  );
+};
+
 const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state }) => {
   // Admins can't deactivate their own accounts
   if (isAdmin(state.profileUser) && state.profileUser.id === state.viewerUser.id) { return null; }
   return (
     <Row>
       <Col xs='12'>
-        <div className='mt-5 pt-5 border-top'>
+        <div className='mt-5 pt-5 border-top d-flex flex-column align-items-start'>
           <h3>Deactivate Account</h3>
           <p>Deactivating your account means that you will no longer have access to the Digital Marketplace.</p>
           <Link
             button
             symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
-            className='mt-3'
+            className='mt-4 align-self-md-end'
             color='danger'>
             Deactivate Account
           </Link>
@@ -291,7 +334,6 @@ const view: ComponentView<State, Msg> = props => {
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
   const isEditingForm = state.isEditingForm;
   const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
-  const isValid = ProfileForm.isValid(state.profileForm);
   return (
     <div>
       <Row className='mb-3 pb-3'>
@@ -304,35 +346,7 @@ const view: ComponentView<State, Msg> = props => {
       disabled={isDisabled}
       state={state.profileForm}
       dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
-    <Row className='mt-4'>
-      <Col xs='12' className='d-flex flex-row flex-md-row-reverse align-items-center'>
-        {isEditingForm
-          ? (<Fragment>
-              <LoadingButton
-                disabled={!isValid || isDisabled}
-                onClick={() => dispatch(adt('saveChanges'))}
-                loading={isSaveChangesLoading}
-                symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-                color='primary'>
-                Save Changes
-              </LoadingButton>
-              <Link
-                disabled={isDisabled}
-                onClick={() => dispatch(adt('cancelEditingForm'))}
-                color='secondary'
-                className='mx-3'>
-                Cancel
-              </Link>
-            </Fragment>)
-          : (<LoadingButton
-              onClick={() => dispatch(adt('startEditingForm'))}
-              loading={isStartEditingFormLoading}
-              symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
-              color='primary'>
-              Edit Profile
-            </LoadingButton>)}
-      </Col>
-    </Row>
+    <ViewProfileFormButtons {...props} />
     <ViewDeactivateAccount {...props} />
   </div>
   );

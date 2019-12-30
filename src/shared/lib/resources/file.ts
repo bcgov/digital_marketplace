@@ -6,6 +6,8 @@ import { isString } from 'util';
 
 export const MAX_MULTIPART_FILES_SIZE = megabytesToBytes(10);
 
+export const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
+
 export interface FileRecord {
   id: Id;
   createdAt: Date;

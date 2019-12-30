@@ -305,7 +305,8 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
       Nav.linkAccountAction({
         text: userIdentifier,
         dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
-        symbol_: leftPlacement(imageLinkSymbol(userAvatar))
+        symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
+        active: state.activeRoute.tag === 'userProfile'
       }),
       Nav.linkAccountAction(signOutLink)
     ]),

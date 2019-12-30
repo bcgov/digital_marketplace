@@ -115,16 +115,16 @@ function makeUpdate<Value, ChildParams extends ChildParamsBase<Value>, ChildStat
 }
 
 function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
-  const { dispatch, disabled, help } = props;
-  if (help && !disabled) {
+  const { dispatch, help } = props;
+  if (help) {
     return (
       <Icon
+        hover
         name='question-circle'
-        color='secondary'
+        color='info'
         width={1}
         height={1}
-        className='mt-n1 ml-2 text-hover-dark flex-shrink-0 d-inline'
-        style={{ cursor: 'pointer' }}
+        className='mt-n1 ml-2 flex-shrink-0 d-inline'
         onClick={e => {
           dispatch({ tag: 'toggleHelp', value: undefined });
           e.preventDefault();
@@ -154,8 +154,8 @@ function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, Inner
 }
 
 function ConditionalHelp<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
-  const { state, help, disabled } = props;
-  if (help && state.showHelp && !disabled) {
+  const { state, help } = props;
+  if (help && state.showHelp) {
     return (
       <Alert color='info' style={{ whiteSpace: 'pre-line' }}>
         {help}

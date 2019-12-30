@@ -6,6 +6,7 @@ import FileButton from 'front-end/lib/views/file-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
+import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { isPublicSectorUserType, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { ErrorTypeFrom, mapValid } from 'shared/lib/validation';
@@ -200,7 +201,7 @@ export const view: View<Props> = props => {
                 }}
                 src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(existingUser)} />
               <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
-                <div className='mb-2'><strong>Profile Picture</strong></div>
+                <div className='mb-2'><b>Profile Picture (Optional)</b></div>
                 <FileButton
                   outline
                   size='sm'
@@ -209,6 +210,7 @@ export const view: View<Props> = props => {
                     pointerEvents: disabled ? 'none' : undefined
                   }}
                   onChange={file => dispatch(adt('onChangeAvatar', file))}
+                  accept={SUPPORTED_IMAGE_EXTENSIONS}
                   color='primary'>
                   Choose Image
                 </FileButton>

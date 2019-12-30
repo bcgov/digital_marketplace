@@ -38,7 +38,7 @@ const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className = '' }) => {
     case 'image':
       return (<img src={symbol_.value} className={className} style={{ width: '1.75rem', height: '1.75rem', objectFit: 'cover', borderRadius: '50%' }} />);
     case 'emptyIcon':
-      return (<div style={{ width: '1rem', height: '1rem' }}></div>);
+      return (<div style={{ width: '1rem', height: '1rem' }} className={className}></div>);
   }
 };
 

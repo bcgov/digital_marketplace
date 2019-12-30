@@ -102,6 +102,15 @@ export const linkAccountAction = adtCurried<LinkAccountAction>('link');
 
 type AccountAction = TextAccountAction | LinkAccountAction;
 
+function isAccountActionActive(action: AccountAction): boolean {
+  switch (action.tag) {
+    case 'text':
+      return false;
+    case 'link':
+      return !!action.value.active;
+  }
+}
+
 interface AccountActionProps {
   className?: string;
   action: AccountAction;
@@ -183,7 +192,7 @@ const MobileAccountMenu: View<Props> = props => {
         return (
           <AccountAction
             action={clonedAction}
-            className={i !== menu.value.length - 1 ? marginClassName : ''}
+            className={`${i !== menu.value.length - 1 ? marginClassName : ''} ${isAccountActionActive(action) ? 'o-100 font-weight-bold' : 'o-75'}`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`} />);
         })}
@@ -236,11 +245,11 @@ const TopNavbar: View<Props> = props => {
             </div>
             <div className='d-md-none'>
               <Icon
+                hover
                 width={1.4}
                 height={1.4}
                 name={state.isMobileMenuOpen ? 'times' : 'bars'}
                 color='white'
-                style={{ cursor: 'pointer' }}
                 onClick={() => dispatch(adt('toggleMobileMenu'))} />
             </div>
           </Col>

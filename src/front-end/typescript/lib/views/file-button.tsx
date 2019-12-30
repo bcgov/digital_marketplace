@@ -3,6 +3,7 @@ import Link, { ButtonProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
 
 export interface Props extends Omit<ButtonProps, 'button' | 'dest' | 'onClick'> {
+  accept?: string[];
   onChange(file: File): void;
 }
 
@@ -13,6 +14,7 @@ const FileButton: View<Props> = props => {
       button
       className={`${props.className || ''} position-relative overflow-hidden`}>
       <input
+        accept={props.accept && props.accept.join(',')}
         type='file'
         className='position-absolute w-100 h-100 o-0'
         style={{
