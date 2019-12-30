@@ -79,6 +79,16 @@ export function userTypeToTitleCase(v: UserType): string {
   }
 }
 
+export function userTypeToPermissions(v: UserType): string[] {
+  switch (v) {
+      case UserType.Admin:
+        return ['Admin'];
+      case UserType.Government:
+      case UserType.Vendor:
+        return [];
+  }
+}
+
 export function userStatusToTitleCase(v: UserStatus): string {
   switch (v) {
       case UserStatus.InactiveByAdmin:

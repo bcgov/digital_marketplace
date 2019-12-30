@@ -3,7 +3,7 @@ import { Route } from 'front-end/lib/app/types';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { userStatusToColor, userStatusToTitleCase, userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
+import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
@@ -45,6 +45,10 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 async function resetProfileForm(user: User): Promise<Immutable<ProfileForm.State>> {
   return immutable(await ProfileForm.init(adt('update', user)));
+}
+
+function usersAreEquivalent(a: User, b: User): boolean {
+  return a.id === b.id;
 }
 
 const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
@@ -159,7 +163,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const result = await api.users.delete(state.profileUser.id);
           switch (result.tag) {
             case 'valid':
-              dispatch(newRoute(adt('signOut', null)));
+              dispatch(newRoute(adt('signOut' as const, null)));
               return state;
             case 'invalid':
             case 'unhandled':
@@ -200,22 +204,26 @@ interface ViewDetailProps {
 
 const ViewDetail: View<ViewDetailProps> = ({ className = '', name, children }) => {
   return (
-    <div className={`d-flex flex-row flex-nowrap align-items-start ${className}`}>
-      <b>{name}:</b>
-      <div className='ml-3'>{children}</div>
+    <div className={`d-flex flex-row flex-nowrap align-items-stretch ${className}`}>
+      <div className='font-weight-bold align-self-start'>{name}:</div>
+      <div className='ml-3 d-flex align-items-center'>{children}</div>
     </div>
   );
 };
 
 const ViewPermissionsAsGovernment: ComponentView<State, Msg> = ({ state }) => {
-  const profileUser = state.profileUser;
-  if (!isAdmin(profileUser)) { return null; }
+  const permissions = userTypeToPermissions(state.profileUser.type);
+  if (!permissions.length) { return null; }
   return (
     <ViewDetail name='Permission(s)'>
-      <Badge
-        pill
-        text={userStatusToTitleCase(profileUser.status)}
-        color={userStatusToColor(profileUser.status)} />
+      {permissions.map((p, i) => (
+        <Badge
+          pill
+          className={i === permissions.length ? '' : 'mr-2'}
+          key={`user-permission-pill-${i}`}
+          text={p}
+          color='permissions' />
+      ))}
     </ViewDetail>
   );
 };
@@ -250,7 +258,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
 const ViewPermissions: ComponentView<State, Msg> = props => {
   const { state } = props;
   const profileUser = state.profileUser;
-  const isOwner = profileUser.id === state.viewerUser.id;
+  const isOwner = usersAreEquivalent(profileUser, state.viewerUser);
   const isPSE = isPublicSectorEmployee(profileUser);
   if (isPSE && isOwner) {
     return (<div className='mt-3'><ViewPermissionsAsGovernment {...props} /></div>);
@@ -284,37 +292,21 @@ const ViewDetails: ComponentView<State, Msg> = props => {
   );
 };
 
-const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  // Admins can't edit user profiles.
-  if (isAdmin(state.viewerUser)) { return null; }
-  const isSaveChangesLoading = state.saveChangesLoading > 0;
+const ViewProfileFormHeading: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  // Admins can't edit other user profiles.
+  if (isAdmin(state.viewerUser) && !usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
   const isEditingForm = state.isEditingForm;
-  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
-  const isValid = ProfileForm.isValid(state.profileForm);
   return (
-    <Row className='mt-4'>
-      <Col xs='12' className='py-1 d-flex flex-nowrap flex-row flex-md-row-reverse align-items-center overflow-auto'>
+    <Row>
+      <Col xs='12' className='mb-4 d-flex flex-nowrap flex-column flex-md-row align-items-start align-items-md-center'>
+        <h3 className='mb-0'>Profile Information</h3>
         {isEditingForm
-          ? (<Fragment>
-              <LoadingButton
-                disabled={!isValid || isDisabled}
-                onClick={() => dispatch(adt('saveChanges'))}
-                loading={isSaveChangesLoading}
-                symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-                color='primary'>
-                Save Changes
-              </LoadingButton>
-              <Link
-                disabled={isDisabled}
-                onClick={() => dispatch(adt('cancelEditingForm'))}
-                color='secondary'
-                className='px-3'>
-                Cancel
-              </Link>
-            </Fragment>)
+          ? null
           : (<LoadingButton
               onClick={() => dispatch(adt('startEditingForm'))}
+              className='mt-2 mt-md-0 ml-md-3'
+              size='sm'
               loading={isStartEditingFormLoading}
               symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
               color='primary'>
@@ -325,14 +317,66 @@ const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) 
   );
 };
 
+const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const isEditingForm = state.isEditingForm;
+  // Admins can't edit other user profiles.
+  if (isAdmin(state.viewerUser) && !usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
+  if (!isEditingForm) { return null; }
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
+  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
+  const isValid = ProfileForm.isValid(state.profileForm);
+  return (
+    <Row className='mt-4'>
+      <Col xs='12' className='py-1 d-flex flex-nowrap flex-row flex-md-row-reverse align-items-center overflow-auto'>
+          <Fragment>
+            <LoadingButton
+              disabled={!isValid || isDisabled}
+              onClick={() => dispatch(adt('saveChanges'))}
+              loading={isSaveChangesLoading}
+              symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+              color='primary'>
+              Save Changes
+            </LoadingButton>
+            <Link
+              disabled={isDisabled}
+              onClick={() => dispatch(adt('cancelEditingForm'))}
+              color='secondary'
+              className='px-3'>
+              Cancel
+            </Link>
+          </Fragment>
+      </Col>
+    </Row>
+  );
+};
+
+const ViewProfileForm: ComponentView<State, Msg> = props => {
+  const { state, dispatch } = props;
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
+  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isEditingForm = state.isEditingForm;
+  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
+  return (
+    <div>
+      <ViewProfileFormHeading {...props} />
+      <ProfileForm.view
+        disabled={isDisabled}
+        state={state.profileForm}
+        dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
+      <ViewProfileFormButtons {...props} />
+    </div>
+  );
+};
+
 const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state, dispatch }) => {
   // Admins can't deactivate their own accounts
-  if (isAdmin(state.profileUser) && state.profileUser.id === state.viewerUser.id) { return null; }
+  if (isAdmin(state.profileUser) && usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
   const isDeactivateAccountLoading = state.deactivateAccountLoading > 0;
   return (
     <Row>
       <Col xs='12'>
-        <div className='mt-5 pt-5 border-top d-flex flex-column align-items-start'>
+        <div className='mt-5 pt-5 border-top'>
           <h3>Deactivate Account</h3>
           <p>Deactivating your account means that you will no longer have access to the Digital Marketplace.</p>
           <LoadingButton
@@ -340,7 +384,7 @@ const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state, dispatch }) =
             disabled={isDeactivateAccountLoading}
             onClick={() => dispatch(adt('deactivateAccount'))}
             symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
-            className='mt-4 align-self-md-end'
+            className='mt-4'
             color='danger'>
             Deactivate Account
           </LoadingButton>
@@ -351,25 +395,17 @@ const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state, dispatch }) =
 };
 
 const view: ComponentView<State, Msg> = props => {
-  const { state, dispatch } = props;
+  const { state } = props;
   const profileUser = state.profileUser;
-  const isSaveChangesLoading = state.saveChangesLoading > 0;
-  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
-  const isEditingForm = state.isEditingForm;
-  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
   return (
     <div>
-      <Row className='mb-3 pb-3'>
+      <Row className='mb-4'>
         <Col xs='12'>
           <h1>{profileUser.name}</h1>
         </Col>
     </Row>
     <ViewDetails {...props} />
-    <ProfileForm.view
-      disabled={isDisabled}
-      state={state.profileForm}
-      dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
-    <ViewProfileFormButtons {...props} />
+    <ViewProfileForm {...props} />
     <ViewDeactivateAccount {...props} />
   </div>
   );

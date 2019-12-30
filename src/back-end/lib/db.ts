@@ -1,12 +1,12 @@
 import { generateUuid } from 'back-end/lib';
 import { ValidatedCreateRequestBody as ValidatedAffiliationCreateRequestBody } from 'back-end/lib/resources/affiliation';
-import { ValidatedCreateRequestBody as ValidatedFileCreateRequestBody } from 'back-end/lib/resources/file';
+import { hashFile, ValidatedCreateRequestBody as ValidatedFileCreateRequestBody } from 'back-end/lib/resources/file';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
 import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import { readFile } from 'fs';
 import Knex from 'knex';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
-import { FileRecord } from 'shared/lib/resources/file';
+import { FileBlob, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -213,7 +213,7 @@ export async function rawOrganizationToOrganizationSlim(connection: Connection, 
     legalName: params.legalName
   };
   if (params.logoImageFileId) {
-    organization.logoImageFile = await readOneFileByHash(connection, params.logoImageFileId);
+    organization.logoImageFile = await readOneFileById(connection, params.logoImageFileId);
   }
   if (params.ownerId && params.ownerName) {
     organization.owner = {
@@ -227,7 +227,7 @@ export async function rawOrganizationToOrganizationSlim(connection: Connection, 
 export async function rawOrganizationToOrganization(connection: Connection, params: RawOrganizationToOrganizationParams): Promise<Organization> {
   const { logoImageFile: fileId, ...restOfRawOrg } = params;
   if (fileId) {
-    const logoImageFile = await readOneFileByHash(connection, fileId);
+    const logoImageFile = await readOneFileById(connection, fileId);
     return {
       ...restOfRawOrg,
       logoImageFile
@@ -436,26 +436,17 @@ export async function readOneFileById(connection: Connection, id: Id): Promise<F
   return result ? result : null;
 }
 
-export async function readOneFileByHash(connection: Connection, hash: string): Promise<FileRecord> {
-  const result = await connection('files')
-    .where({ fileBlob: hash })
-    .first();
-
-  return result ? result : null;
-}
-
-export async function readOneFileBlob(connection: Connection, hash: string): Promise<Buffer> {
+export async function readOneFileBlob(connection: Connection, hash: string): Promise<FileBlob> {
   const result = await connection('fileBlobs')
     .where({ hash })
     .first();
-  return result ? result.blob : null;
+  return result || null;
 }
 
-export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody & { fileHash: string }, userId: Id): Promise<FileRecord> {
+export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody, userId: Id): Promise<FileRecord> {
   const now = new Date();
   return await connection.transaction(async trx => {
-
-    const fileData = await new Promise((resolve, reject) => {
+    const fileData: Buffer = await new Promise((resolve, reject) => {
       readFile(fileRecord.path, (err, data) => {
         if (err) {
           reject(new Error('error reading file'));
@@ -463,14 +454,18 @@ export async function createFile(connection: Connection, fileRecord: ValidatedFi
         resolve(data);
       });
     });
-
-    const [fileBlob] = await connection('fileBlobs')
-      .transacting(trx)
-      .insert({
-        hash: fileRecord.fileHash,
-        blob: fileData
-      }, ['*']);
-
+    const fileHash = await hashFile(fileRecord.name, fileData);
+    let fileBlob = await readOneFileBlob(connection, fileHash);
+    // Create a new blob if it doesn't already exist.
+    if (!fileBlob) {
+      [fileBlob] = await connection('fileBlobs')
+        .transacting(trx)
+        .insert({
+          hash: fileHash,
+          blob: fileData
+        }, ['*']);
+    }
+    // Insert the file record.
     const [file] = await connection('files')
       .transacting(trx)
       .insert({
@@ -482,6 +477,7 @@ export async function createFile(connection: Connection, fileRecord: ValidatedFi
       }, ['*']);
 
     // Insert values for permissions defined in metadata
+    // TODO this will fail if permissions aren't experessed as a set (may have duplicate perms)
     for (const permission of fileRecord.permissions) {
       switch (permission.tag) {
         case 'any':
@@ -525,6 +521,7 @@ export async function hasFilePermission(connection: Connection, session: Session
       .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
   } else {
     query
+      .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id')
       .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
       .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
       .where({ 'u.user': session.user.id })

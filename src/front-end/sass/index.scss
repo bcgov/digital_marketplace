@@ -42,6 +42,8 @@ $danger: #DC3545;
 $success: #28A745;
 $light-blue: #E7EDF3;
 $white: #ffffff;
+$purple: #6610F2;
+$permissions: $purple;
 
 $gray-100: #f8f9fa;
 $gray-200: #e9ecef;
@@ -51,7 +53,8 @@ $theme-colors: (
   'primary-alt': $primary-alt,
   'info-alt': $info-alt,
   'info-alt-2': $info-alt-2,
-  'light-blue': $light-blue
+  'light-blue': $light-blue,
+  'permissions': $permissions
 );
 
 $component-active-bg: $primary;
@@ -65,6 +68,7 @@ $font-weight-bold: 500;
 $font-weight-bolder: 700;
 
 $font-size-base: 1rem;
+$font-size-sm: 0.75rem;
 $h1-font-size: $font-size-base * 2.25;
 
 $input-btn-padding-x: 1rem;

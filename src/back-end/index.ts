@@ -105,9 +105,10 @@ async function start() {
   adapter({
     router,
     sessionIdToSession: async id => {
+      return await readOneSession(connection, 'a1c94c1b-b692-4447-b0b4-41974ae9d3d8');
       try {
         if (!id) { throw new Error('session ID is undefined'); }
-        return await readOneSession(connection, id);
+        //return await readOneSession(connection, id);
       } catch (e) {
         return await createAnonymousSession(connection);
       }

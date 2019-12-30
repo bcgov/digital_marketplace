@@ -1,10 +1,10 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createFile, readOneFileBlob, readOneFileByHash, readOneFileById } from 'back-end/lib/db';
-import { hashFile } from 'back-end/lib/fileUtils';
+import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { lookup } from 'mime-types';
+import shajs from 'sha.js';
 import { getString } from 'shared/lib';
 import { CreateValidationErrors, FilePermissions, FileRecord, FileUploadMetadata } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
@@ -12,6 +12,12 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation';
 import { validateFileName } from 'shared/lib/validation/file';
+
+export function hashFile(originalName: string, data: Buffer): string {
+  const hash = shajs('sha1');
+  hash.update(data);
+  return hash.digest('base64');
+}
 
 export type CreateRequestBody = FileUpload<FileUploadMetadata> | null;
 
@@ -46,10 +52,10 @@ const resource: Resource = {
       if (await permissions.readOneFile(connection, request.session, request.params.id)) {
         const file = await readOneFileById(connection, request.params.id);
         if (!getBlob) { return respond(200, file); }
-        const buffer = await readOneFileBlob(connection, file.fileBlob);
-        if (buffer) {
+        const blob = await readOneFileBlob(connection, file.fileBlob);
+        if (blob) {
           return basicResponse(200, request.session, adt('file', {
-            buffer,
+            buffer: blob.blob,
             contentType: lookup(file.name) || 'application/octet-stream',
             contentDisposition: `attachment; filename="${file.name}"`
           }));
@@ -95,7 +101,7 @@ const resource: Resource = {
       },
       async respond(request) {
         const respond = (code: number, body: FileRecord | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (!permissions.createFile(request.session)) {
+        if (!permissions.createFile(request.session) || !request.session.user) {
           return respond(401, {
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -104,13 +110,8 @@ const resource: Resource = {
           case 'invalid':
             return respond(400, request.body.value);
           case 'valid':
-            const fileHash = await hashFile(request.body.value.name, request.body.value.path, request.body.value.permissions);
-            const existingFile = await readOneFileByHash(connection, fileHash);
-            if (existingFile) {
-              return respond(200, existingFile);
-            }
-            const fileRecord = await createFile(connection, { ...request.body.value, fileHash }, request.session.user!.id);
-            return respond(200, fileRecord);
+            const fileRecord = await createFile(connection, request.body.value, request.session.user.id);
+            return respond(201, fileRecord);
         }
       }
     };

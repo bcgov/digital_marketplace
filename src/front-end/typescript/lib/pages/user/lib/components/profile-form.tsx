@@ -187,77 +187,74 @@ export const view: View<Props> = props => {
   const formType = state.formType;
   const existingUser = formTypeToUser(formType);
   return (
-    <div>
-      <Row>
-        <Col xs='12'>
-          <Row>
-            <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
-              <img
-                className='rounded-circle'
+    <Row>
+      <Col xs='12'>
+        <Row>
+          <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+            <img
+              className='rounded-circle'
+              style={{
+                width: '5rem',
+                height: '5rem',
+                objectFit: 'cover'
+              }}
+              src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(existingUser)} />
+            <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
+              <div className='mb-2'><b>Profile Picture (Optional)</b></div>
+              <FileButton
+                outline
+                size='sm'
                 style={{
-                  width: '5rem',
-                  height: '5rem',
-                  objectFit: 'cover'
+                  visibility: disabled ? 'hidden' : undefined,
+                  pointerEvents: disabled ? 'none' : undefined
                 }}
-                src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(existingUser)} />
-              <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
-                <div className='mb-2'><b>Profile Picture (Optional)</b></div>
-                <FileButton
-                  outline
-                  size='sm'
-                  style={{
-                    visibility: disabled ? 'hidden' : undefined,
-                    pointerEvents: disabled ? 'none' : undefined
-                  }}
-                  onChange={file => dispatch(adt('onChangeAvatar', file))}
-                  accept={SUPPORTED_IMAGE_EXTENSIONS}
-                  color='primary'>
-                  Choose Image
-                </FileButton>
-                {state.newAvatarImage && state.newAvatarImage.errors.length
-                  ? (<div className='mt-2 small text-danger'>{state.newAvatarImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
-                  : null}
-              </div>
-            </Col>
-          </Row>
+                onChange={file => dispatch(adt('onChangeAvatar', file))}
+                accept={SUPPORTED_IMAGE_EXTENSIONS}
+                color='primary'>
+                Choose Image
+              </FileButton>
+              {state.newAvatarImage && state.newAvatarImage.errors.length
+                ? (<div className='mt-2 small text-danger'>{state.newAvatarImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+                : null}
+            </div>
+          </Col>
+        </Row>
 
-          {formType.tag === 'update'
-            ? (<ShortText.view
-                extraChildProps={{}}
-                help='TODO'
-                label={userToKeyClockIdentityProviderTitleCase(formType.value)}
-                disabled
-                state={state.idpUsername}
-                dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />)
-            : null}
+        {formType.tag === 'update'
+          ? (<ShortText.view
+              extraChildProps={{}}
+              help='TODO'
+              label={userToKeyClockIdentityProviderTitleCase(formType.value)}
+              disabled
+              state={state.idpUsername}
+              dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />)
+          : null}
 
-          <ShortText.view
-            extraChildProps={{}}
-            label='Name'
-            required
-            disabled={disabled}
-            state={state.name}
-            dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value))} />
+        <ShortText.view
+          extraChildProps={{}}
+          label='Name'
+          required
+          disabled={disabled}
+          state={state.name}
+          dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value))} />
 
-          {isPublicSectorUserType(formTypeToUserType(formType))
-            ? (<ShortText.view
-                extraChildProps={{}}
-                label='Job Title'
-                required
-                disabled={disabled}
-                state={state.jobTitle}
-                dispatch={mapComponentDispatch(dispatch, value => adt('jobTitle' as const, value))} />)
-            : null}
+        {isPublicSectorUserType(formTypeToUserType(formType))
+          ? (<ShortText.view
+              extraChildProps={{}}
+              label='Job Title'
+              disabled={disabled}
+              state={state.jobTitle}
+              dispatch={mapComponentDispatch(dispatch, value => adt('jobTitle' as const, value))} />)
+          : null}
 
-          <ShortText.view
-            extraChildProps={{}}
-            label='Email Address'
-            required
-            disabled={disabled}
-            state={state.email}
-            dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
-        </Col>
-      </Row>
-    </div>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Email Address'
+          required
+          disabled={disabled}
+          state={state.email}
+          dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
+      </Col>
+    </Row>
   );
 };

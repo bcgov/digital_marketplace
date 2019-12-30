@@ -5,7 +5,7 @@ import { signOut } from 'back-end/lib/resources/session';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
-import { get, isBoolean } from 'lodash';
+import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 import { parseUserType, UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -80,7 +80,7 @@ const resource: Resource = {
         return {
           name: getString(body, 'name') || undefined,
           email: getString(body, 'email') || undefined,
-          jobTitle: get(body, 'jobTitle'), // undefined means no change to job title, empty string means remove
+          jobTitle: getString(body, 'jobTitle'), // undefined means no change to job title, empty string means remove
           avatarImageFile: getString(body, 'avatarImageFile') || undefined,
           notificationsOn: isBoolean(body.notificationsOn) ? body.notificationsOn : undefined,
           acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined,
@@ -92,7 +92,7 @@ const resource: Resource = {
         const validatedUserId = await validateUserId(connection, request.params.id);
         const validatedName = name ? validateName(name) : valid(undefined);
         const validatedEmail = email ? validateEmail(email) : valid(undefined);
-        const validatedJobTitle = validateJobTitle(jobTitle);
+        const validatedJobTitle = validateJobTitle(jobTitle || '');
         const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
         const validatedNotificationsOn = notificationsOn !== undefined ? validateNotificationsOn(notificationsOn) : valid(undefined);
         const validatedAcceptedTerms = acceptedTerms !== undefined ? validateAcceptedTerms(acceptedTerms) : valid(undefined);
