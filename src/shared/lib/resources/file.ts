@@ -1,7 +1,7 @@
 import { get, isArray } from 'lodash';
 import { megabytesToBytes } from 'shared/lib';
 import { User, UserType } from 'shared/lib/resources/user';
-import { ADT, Id } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { isString } from 'util';
 
 export const MAX_MULTIPART_FILES_SIZE = megabytesToBytes(10);
@@ -39,31 +39,32 @@ export type FilePermissions<Id, UserType>
  * Returns `null` if the parse fails or no permissions are supplied in the metadata.
  */
 // TODO this needs to be converted to a validation function using array combinators
-export function parseFilePermissions<Id, UserType>(raw: any, parseOneUserType: (raw: string) => UserType | null): Array<FilePermissions<Id, UserType>> | null {
+// TODO need to reduce the raw permissions into a "set" of permissions that prevents duplicates.
+export function parseFilePermissions(raw: any, parseOneUserType: (raw: string) => UserType | null): FileUploadMetadata {
   const rawFilePermissions = isArray(raw) ? raw : [];
   const filePermissions: Array<FilePermissions<Id, UserType>> = [];
   rawFilePermissions.forEach(rawFilePermission => {
     // TODO split this out into a validateFilePermission function
     switch (get(rawFilePermission, 'tag')) {
       case 'any':
-        filePermissions.push({ tag: 'any', value: undefined });
+        filePermissions.push(adt('any' as const));
         break;
       case 'user':
         if (isString(rawFilePermission.value)) {
-          filePermissions.push({ tag: 'user', value: rawFilePermission.value });
+          filePermissions.push(adt('user' as const, rawFilePermission.value));
         }
         break;
       case 'userType':
         const userType = parseOneUserType(rawFilePermission.value);
         if (userType) {
-          filePermissions.push({ tag: 'userType', value: userType });
+          filePermissions.push(adt('userType' as const, userType));
         }
         break;
       //TODO not an exhaustive switch statement... what if the user passes invalid permissions?
     }
   });
   // TODO what if the user passes an empty array? Technically that is valid.
-  return filePermissions && filePermissions.length > 0 ? filePermissions : null;
+  return filePermissions.length > 0 ? filePermissions : null;
 }
 
 export function parseUserType(raw: string): UserType | null {
@@ -92,5 +93,5 @@ export function parseUserTypeList<UserType>(list: string[], parseOneUserType: (r
 }
 
 export function fileBlobPath(file: FileRecord) {
-  return `/api/fileBlobs/${file.fileBlob}`;
+  return `/api/files/${file.id}?type=blob`;
 }

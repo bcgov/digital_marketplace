@@ -1,5 +1,5 @@
 import { View } from 'front-end/lib/framework';
-import Link, { ButtonProps } from 'front-end/lib/views/link';
+import Link, { ButtonProps, emptyIconLinkSymbol, LinkSymbol, Placement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Spinner } from 'reactstrap';
 
@@ -8,18 +8,36 @@ export interface Props extends Omit<ButtonProps, 'button' | 'dest' | 'onClick'> 
   onClick(): void;
 }
 
-const Children: View<Props> = ({ loading, children }) => {
+const Children: View<Props> = ({ loading, children = '' }) => {
   if (loading) {
-    return (<Spinner color='light' size='sm' />);
+    return (
+      <div>
+        <div className='position-absolute d-flex' style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+          <Spinner color='light' size='sm' />
+        </div>
+        <div className='o-0'>{children}</div>
+      </div>
+    );
   } else {
-    return (<div>{children || ''}</div>);
+    return (<div>{children}</div>);
   }
 };
 
+function makeEmptyLinkSymbol(s?: Placement<LinkSymbol>): Placement<LinkSymbol> | undefined {
+  if (s && s.value.tag === 'icon') {
+    return {
+      tag: s.tag,
+      value: emptyIconLinkSymbol()
+    };
+  } else {
+    return undefined;
+  }
+}
+
 const LoadingButton: View<Props> = props => {
-  const className = props.className || '';
+  const className = `${props.className || ''} position-relative`;
   return (
-    <Link button {...props} className={className} symbol_={props.loading ? undefined : props.symbol_} disabled={props.disabled !== undefined ? props.disabled : props.loading}>
+    <Link button {...props} className={className} symbol_={props.loading ? makeEmptyLinkSymbol(props.symbol_) : props.symbol_} disabled={props.disabled !== undefined ? props.disabled : props.loading}>
       <Children {...props} />
     </Link>
   );

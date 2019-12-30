@@ -10,10 +10,10 @@ import Badge from 'front-end/lib/views/badge';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
-import React from 'react';
+import React, { Fragment } from 'react';
 import { Col, Row } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 
 export interface Params {
   profileUser: User;
@@ -21,7 +21,8 @@ export interface Params {
 }
 
 export interface State extends Params {
-  startEditingFormLoading: 0;
+  saveChangesLoading: number;
+  startEditingFormLoading: number;
   isEditingForm: boolean;
   profileForm: Immutable<ProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>; //TODO
@@ -32,19 +33,25 @@ type InnerMsg
   = ADT<'profileForm', ProfileForm.Msg>
   | ADT<'startEditingForm'>
   | ADT<'cancelEditingForm'>
+  | ADT<'saveChanges'>
   | ADT<'adminCheckbox', Checkbox.Msg> //TODO
   | ADT<'finishEditingAdminCheckbox', undefined> //TODO
   | ADT<'editingAdminCheckbox', undefined>; //TODO
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
+async function resetProfileForm(user: User): Promise<Immutable<ProfileForm.State>> {
+  return immutable(await ProfileForm.init(adt('update', user)));
+}
+
 const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
   return {
     viewerUser,
     profileUser,
+    saveChangesLoading: 0,
     startEditingFormLoading: 0,
     isEditingForm: false,
-    profileForm: immutable(await ProfileForm.init(adt('update', profileUser))),
+    profileForm: await resetProfileForm(profileUser),
     editingAdminCheckbox: false,
     adminCheckbox: immutable(await Checkbox.init({
       errors: [],
@@ -56,6 +63,8 @@ const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
   };
 };
 
+const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
+const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
 const startStartEditingFormLoading = makeStartLoading<State>('startEditingFormLoading');
 const stopStartEditingFormLoading = makeStopLoading<State>('startEditingFormLoading');
 
@@ -73,13 +82,69 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         startStartEditingFormLoading(state),
         async state => {
-          //TODO reload profile
-          state = state.set('isEditingForm', true);
-          return stopStartEditingFormLoading(state);
+          state = stopStartEditingFormLoading(state);
+          // Reload the profile user before editing.
+          const result = await api.users.readOne(state.profileUser.id);
+          if (!api.isValid(result)) { return state; } // Do not allow editing if fetching the user failed.
+          state = state
+            .set('isEditingForm', true)
+            .set('profileUser', result.value)
+            .set('profileForm', await resetProfileForm(result.value));
+          return state;
         }
       ];
     case 'cancelEditingForm':
-      return [state.set('isEditingForm', false)];
+      return [
+        state,
+        async state => {
+          return state
+            .set('isEditingForm', false)
+            .set('profileForm', await resetProfileForm(state.profileUser));
+        }
+      ];
+    case 'saveChanges':
+      return [
+        startSaveChangesLoading(state),
+        async state => {
+          state = stopSaveChangesLoading(state);
+          const values = ProfileForm.getValues(state.profileForm);
+          let avatarImageFile: Id | undefined = state.profileUser.avatarImageFile && state.profileUser.avatarImageFile.id;
+          if (values.newAvatarImage) {
+            const fileResult = await api.files.create({
+              name: values.newAvatarImage.name,
+              file: values.newAvatarImage,
+              metadata: [adt('any')]
+            });
+            switch (fileResult.tag) {
+              case 'valid':
+                avatarImageFile = fileResult.value.id;
+                break;
+              case 'unhandled':
+              case 'invalid':
+                return state.update('profileForm', v => ProfileForm.setErrors(v, {
+                  newAvatarImage: ['Please select a different avatar image.']
+                }));
+            }
+          }
+          const result = await api.users.update(state.profileUser.id, {
+            name: values.name,
+            email: values.email,
+            jobTitle: values.jobTitle,
+            avatarImageFile
+          });
+          switch (result.tag) {
+            case 'invalid':
+              return state.update('profileForm', v => ProfileForm.setErrors(v, result.value));
+            case 'unhandled':
+              return state;
+            case 'valid':
+              return state
+                .set('isEditingForm', false)
+                .set('profileUser', result.value)
+                .set('profileForm', await resetProfileForm(result.value));
+          }
+        }
+      ];
     case 'finishEditingAdminCheckbox':
       return [state.set('editingAdminCheckbox', false),
         async state => {
@@ -113,9 +178,9 @@ interface ViewDetailProps {
 
 const ViewDetail: View<ViewDetailProps> = ({ className = '', name, children }) => {
   return (
-    <div className={`d-flex flex-column flex-md-row flex-nowrap align-items-start ${className}`}>
-      <b>{name}</b>
-      <div className='mt-2 mt-md-0 ml-md-4'>{children}</div>
+    <div className={`d-flex flex-row flex-nowrap align-items-start ${className}`}>
+      <b>{name}:</b>
+      <div className='ml-3'>{children}</div>
     </div>
   );
 };
@@ -222,25 +287,16 @@ const ViewDeactivateAccount: ComponentView<State, Msg> = ({ state }) => {
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   const profileUser = state.profileUser;
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
   const isEditingForm = state.isEditingForm;
-  const isDisabled = !isEditingForm || isStartEditingFormLoading;
+  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
+  const isValid = ProfileForm.isValid(state.profileForm);
   return (
     <div>
       <Row className='mb-3 pb-3'>
-        <Col xs='12' className='d-flex flex-column flex-md-row align-items-start align-items-md-center'>
-          <h1>{`${profileUser.name}`}</h1>
-          {isEditingForm
-            ? null
-            : (<LoadingButton
-                onClick={() => dispatch(adt('startEditingForm'))}
-                loading={isStartEditingFormLoading}
-                size='sm'
-                symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
-                className='mt-2 mt-md-0 ml-md-3'
-                color='primary'>
-                Edit Profile
-              </LoadingButton>)}
+        <Col xs='12'>
+          <h1>{profileUser.name}</h1>
         </Col>
     </Row>
     <ViewDetails {...props} />
@@ -248,6 +304,35 @@ const view: ComponentView<State, Msg> = props => {
       disabled={isDisabled}
       state={state.profileForm}
       dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
+    <Row className='mt-4'>
+      <Col xs='12' className='d-flex flex-row flex-md-row-reverse align-items-center'>
+        {isEditingForm
+          ? (<Fragment>
+              <LoadingButton
+                disabled={!isValid || isDisabled}
+                onClick={() => dispatch(adt('saveChanges'))}
+                loading={isSaveChangesLoading}
+                symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+                color='primary'>
+                Save Changes
+              </LoadingButton>
+              <Link
+                disabled={isDisabled}
+                onClick={() => dispatch(adt('cancelEditingForm'))}
+                color='secondary'
+                className='mx-3'>
+                Cancel
+              </Link>
+            </Fragment>)
+          : (<LoadingButton
+              onClick={() => dispatch(adt('startEditingForm'))}
+              loading={isStartEditingFormLoading}
+              symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
+              color='primary'>
+              Edit Profile
+            </LoadingButton>)}
+      </Col>
+    </Row>
     <ViewDeactivateAccount {...props} />
   </div>
   );

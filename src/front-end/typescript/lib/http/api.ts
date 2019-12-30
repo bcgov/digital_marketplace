@@ -1,4 +1,4 @@
-import { CrudApi, makeCrudApi, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, makeCreate, makeCrudApi, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
@@ -16,11 +16,11 @@ interface SessionSimpleResourceTypesParams {
   record: SessionResource.Session;
   create: {
     request: null;
-    invalid: null;
+    invalidResponse: null;
   };
   update: {
     request: null;
-    invalid: null;
+    invalidResponse: null;
   };
 }
 
@@ -41,11 +41,11 @@ interface UserSimpleResourceTypesParams {
   record: UserResource.User;
   create: {
     request: null;
-    invalid: null;
+    invalidResponse: null;
   };
   update: {
     request: UserResource.UpdateRequestBody;
-    invalid: UserResource.UpdateValidationErrors;
+    invalidResponse: UserResource.UpdateValidationErrors;
   };
 }
 
@@ -64,11 +64,11 @@ export const organizations = makeSimpleCrudApi<{
   record: OrgResource.Organization;
   create: {
     request: OrgResource.CreateRequestBody;
-    invalid: OrgResource.CreateValidationErrors;
+    invalidResponse: OrgResource.CreateValidationErrors;
   };
   update: {
     request: OrgResource.UpdateRequestBody;
-    invalid: OrgResource.UpdateValidationErrors;
+    invalidResponse: OrgResource.UpdateValidationErrors;
   };
 }>(apiNamespace('organizations'));
 
@@ -85,7 +85,19 @@ function rawFileRecordToFileRecord(raw: RawFileRecord): FileResource.FileRecord 
   };
 }
 
-interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'readOne'> {
+interface CreateFileRequestBody {
+  name: string;
+  file: File;
+  metadata: FileResource.FileUploadMetadata;
+}
+
+interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'readOne'> {
+  create: {
+    request: CreateFileRequestBody;
+    rawResponse: RawFileRecord;
+    validResponse: FileResource.FileRecord;
+    invalidResponse: FileResource.CreateValidationErrors;
+  };
   readOne: {
     rawResponse: RawFileRecord;
     validResponse: FileResource.FileRecord;
@@ -93,10 +105,26 @@ interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'readOne'> {
   };
 }
 
-export const files = makeCrudApi<FileResourceTypes>({
+const FILES_ROUTE_NAMESPACE = 'files';
+
+const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
   ...undefinedActions,
-  routeNamespace: apiNamespace('files'),
+  routeNamespace: apiNamespace(FILES_ROUTE_NAMESPACE),
   readOne: {
     transformValid: rawFileRecordToFileRecord
   }
 });
+
+export const files: CrudApi<FileResourceTypes> = {
+  ...fileCrudApi,
+  create: body => {
+    const multipartBody = new FormData();
+    multipartBody.append('name', body.name);
+    multipartBody.append('file', body.file);
+    multipartBody.append('metadata', JSON.stringify(body.metadata));
+    return makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
+      routeNamespace: apiNamespace(FILES_ROUTE_NAMESPACE),
+      transformValid: rawFileRecordToFileRecord
+    })(multipartBody);
+  }
+};

@@ -2,7 +2,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
-import Link from 'front-end/lib/views/link';
+import FileButton from 'front-end/lib/views/file-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
@@ -37,19 +37,21 @@ export interface State {
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
   idpUsername: Immutable<ShortText.State>;
+  newAvatarImage: { file: File; path: string; errors: string[]; } | null;
 }
 
 export type Msg
-  = ADT<'jobTitle',    ShortText.Msg>
-  | ADT<'email',       ShortText.Msg>
-  | ADT<'name',        ShortText.Msg>
-  | ADT<'idpUsername', ShortText.Msg>;
+  = ADT<'jobTitle',       ShortText.Msg>
+  | ADT<'email',          ShortText.Msg>
+  | ADT<'name',           ShortText.Msg>
+  | ADT<'onChangeAvatar', File>
+  | ADT<'idpUsername',    ShortText.Msg>;
 
 export interface Values {
   name: string;
   email: string;
   jobTitle: string;
-  avatarImageFile: string;
+  newAvatarImage?: File;
 }
 
 export type Errors = ErrorTypeFrom<State>;
@@ -59,20 +61,22 @@ export function getValues(state: Immutable<State>): Values {
     name: FormField.getValue(state.name),
     email: FormField.getValue(state.email),
     jobTitle: FormField.getValue(state.jobTitle),
-    avatarImageFile: FormField.getValue(state.name)
+    newAvatarImage: state.newAvatarImage ? state.newAvatarImage.file : undefined
   };
 }
 
-export function setValues(state: Immutable<State>, values: Values): Immutable<State> {
+export function setValues(state: Immutable<State>, values: Omit<Values, 'newAvatarImage'>): Immutable<State> {
   return state
     .update('name', s => FormField.setValue(s, values.name))
     .update('email', s => FormField.setValue(s, values.email))
-    .update('jobTitle', s => FormField.setValue(s, values.jobTitle));
+    .update('jobTitle', s => FormField.setValue(s, values.jobTitle))
+    .set('newAvatarImage', null);
 }
 
 export function isValid(state: Immutable<State>): boolean {
   return !!state.name.child.value
       && !!state.email.child.value
+      && (!state.newAvatarImage || !state.newAvatarImage.errors.length)
       && FormField.isValid(state.name)
       && FormField.isValid(state.email)
       && FormField.isValid(state.jobTitle);
@@ -82,13 +86,16 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
   return state
     .update('name', s => FormField.setErrors(s, errors.name || []))
     .update('email', s => FormField.setErrors(s, errors.email || []))
-    .update('jobTitle', s => FormField.setErrors(s, errors.jobTitle || []));
+    .update('jobTitle', s => FormField.setErrors(s, errors.jobTitle || []))
+    .update('newAvatarImage', v => v && ({ ...v, errors: errors.newAvatarImage || [] }));
 }
 
 export const init: Init<Params, State> = async formType => {
   const existingUser = formTypeToUser(formType);
   return {
     formType,
+    newAvatarImage: null,
+    newAvatarImageErrors: [],
     idpUsername: immutable(await ShortText.init({
       errors: [],
       child: {
@@ -161,6 +168,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('name', value)
       });
+    case 'onChangeAvatar':
+      return [state.set('newAvatarImage', {
+        file: msg.value,
+        path: URL.createObjectURL(msg.value),
+        errors: []
+      })];
   }
 };
 
@@ -179,23 +192,29 @@ export const view: View<Props> = props => {
           <Row>
             <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
               <img
+                className='rounded-circle'
                 style={{
                   width: '5rem',
                   height: '5rem',
                   objectFit: 'cover'
                 }}
-                src={userAvatarPath(existingUser)} />
+                src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(existingUser)} />
               <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
                 <div className='mb-2'><strong>Profile Picture</strong></div>
-                <Link
-                  button
-                  disabled={disabled}
+                <FileButton
                   outline
                   size='sm'
-                  style={{ visibility: disabled ? 'hidden' : undefined }}
+                  style={{
+                    visibility: disabled ? 'hidden' : undefined,
+                    pointerEvents: disabled ? 'none' : undefined
+                  }}
+                  onChange={file => dispatch(adt('onChangeAvatar', file))}
                   color='primary'>
                   Choose Image
-                </Link>
+                </FileButton>
+                {state.newAvatarImage && state.newAvatarImage.errors.length
+                  ? (<div className='mt-2 small text-danger'>{state.newAvatarImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+                  : null}
               </div>
             </Col>
           </Row>

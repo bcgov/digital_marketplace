@@ -123,8 +123,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
               status: UserStatus.Active,
               name: claims.name || '',
               email: claims.email,
-              //TODO Andrew, is the jobTitle provided on the claim for gov?
-              jobTitle: claims.jobTitle as string | undefined,
               idpUsername
             });
           } else if (user.status === UserStatus.InactiveByUser) {

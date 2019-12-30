@@ -6,7 +6,6 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
-import { FileRecord } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { parseUserType, UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -15,7 +14,7 @@ import { validateAcceptedTerms, validateEmail, validateJobTitle, validateName, v
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
   id: Id;
-  avatarImageFile?: FileRecord;
+  avatarImageFile?: Id;
   notificationsOn?: Date;
   acceptedTerms?: Date;
   deactivatedOn?: Date;
@@ -136,7 +135,7 @@ const resource: Resource = {
             name: validatedName.value,
             email: validatedEmail.value,
             jobTitle: validatedJobTitle.value,
-            avatarImageFile: validatedAvatarImageFile.value,
+            avatarImageFile: validatedAvatarImageFile.value.id,
             notificationsOn: validatedNotificationsOn.value,
             acceptedTerms: validatedAcceptedTerms.value
           });

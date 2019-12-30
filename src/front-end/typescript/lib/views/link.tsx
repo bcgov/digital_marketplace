@@ -20,7 +20,10 @@ export const iconLinkSymbol = adtCurried<IconLinkSymbol>('icon');
 type ImageLinkSymbol = ADT<'image', string>;
 export const imageLinkSymbol = adtCurried<ImageLinkSymbol>('image');
 
-export type LinkSymbol = IconLinkSymbol | ImageLinkSymbol;
+type EmptyIconLinkSymbol = ADT<'emptyIcon'>;
+export const emptyIconLinkSymbol = () => adt('emptyIcon' as const);
+
+export type LinkSymbol = IconLinkSymbol | ImageLinkSymbol | EmptyIconLinkSymbol;
 
 interface LinkSymbolProps {
   symbol_: LinkSymbol;
@@ -31,9 +34,11 @@ const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className = '' }) => {
   className = `${className} flex-shrink-0 flex-grow-0`;
   switch (symbol_.tag) {
     case 'icon':
-      return (<Icon name={symbol_.value} className={className} />);
+      return (<Icon name={symbol_.value} className={className} width={1} height={1} />);
     case 'image':
       return (<img src={symbol_.value} className={className} style={{ width: '1.75rem', height: '1.75rem', objectFit: 'cover', borderRadius: '50%' }} />);
+    case 'emptyIcon':
+      return (<div style={{ width: '1rem', height: '1rem' }}></div>);
   }
 };
 
@@ -49,7 +54,7 @@ export function rightPlacement<Value>(value: Value): RightPlacement<Value> {
   return adt('right', value);
 }
 
-type Placement<Value>
+export type Placement<Value>
   = LeftPlacement<Value>
   | RightPlacement<Value>;
 

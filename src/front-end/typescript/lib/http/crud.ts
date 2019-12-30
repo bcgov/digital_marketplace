@@ -55,7 +55,7 @@ interface MakeRequestParams<T extends ActionWithBodyTypes> {
 }
 
 async function makeRequest<T extends ActionWithBodyTypes>(params: MakeRequestParams<T>): Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>> {
-  const response = await request(params.method, params.url);
+  const response = await request(params.method, params.url, params.body as object);
   switch (response.status) {
     case 200:
     case 201:
@@ -151,11 +151,11 @@ export interface SimpleResourceTypesParams<Record = unknown> {
   record: Record;
   create: {
     request: unknown;
-    invalid: unknown;
+    invalidResponse: unknown;
   };
   update: {
     request: unknown;
-    invalid: unknown;
+    invalidResponse: unknown;
   };
 }
 
@@ -164,7 +164,7 @@ export interface SimpleResourceTypes<T extends SimpleResourceTypesParams> extend
     request: T['create']['request'];
     rawResponse: T['record'];
     validResponse: T['record'];
-    invalidResponse: T['create']['invalid'];
+    invalidResponse: T['create']['invalidResponse'];
   };
   readMany: {
     rawResponse: T['record'];
@@ -180,7 +180,7 @@ export interface SimpleResourceTypes<T extends SimpleResourceTypesParams> extend
     request: T['update']['request'];
     rawResponse: T['record'];
     validResponse: T['record'];
-    invalidResponse: T['update']['invalid'];
+    invalidResponse: T['update']['invalidResponse'];
   };
   delete: {
     rawResponse: null;

@@ -99,3 +99,7 @@ export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
 export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): number {
   return moment(a).diff(moment(b), unit, true);
 }
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(() => resolve(), ms));
+}

@@ -19,7 +19,6 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   const [result] = await connection('users')
     .insert({
       ...user,
-      notificationsOn: false,
       id: generateUuid(),
       createdAt: now,
       updatedAt: now
@@ -445,12 +444,19 @@ export async function readOneFileByHash(connection: Connection, hash: string): P
   return result ? result : null;
 }
 
+export async function readOneFileBlob(connection: Connection, hash: string): Promise<Buffer> {
+  const result = await connection('fileBlobs')
+    .where({ hash })
+    .first();
+  return result ? result.blob : null;
+}
+
 export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody & { fileHash: string }, userId: Id): Promise<FileRecord> {
   const now = new Date();
   return await connection.transaction(async trx => {
 
-    const fileHexData = await new Promise((resolve, reject) => {
-      readFile(fileRecord.path, 'hex', (err, data) => {
+    const fileData = await new Promise((resolve, reject) => {
+      readFile(fileRecord.path, (err, data) => {
         if (err) {
           reject(new Error('error reading file'));
         }
@@ -462,7 +468,7 @@ export async function createFile(connection: Connection, fileRecord: ValidatedFi
       .transacting(trx)
       .insert({
         hash: fileRecord.fileHash,
-        blob: fileHexData
+        blob: fileData
       }, ['*']);
 
     const [file] = await connection('files')
