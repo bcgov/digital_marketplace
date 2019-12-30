@@ -4,11 +4,24 @@ import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } fr
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 
 export type NoticeId
   = ADT<'notFound'>
+  | ADT<'deactivatedOwnAccount'>
   | ADT<'authFailure'>;
+
+export function parseNoticeId(tag: any, value: any): NoticeId {
+  switch (tag) {
+    case 'deactivatedOwnAccount':
+      return adt('deactivatedOwnAccount');
+    case 'authFailure':
+      return adt('authFailure');
+    case 'notFound':
+    default:
+      return adt('notFound');
+  }
+}
 
 function noticeIdToState(noticeId: NoticeId): State {
   switch (noticeId.tag) {
@@ -17,6 +30,19 @@ function noticeIdToState(noticeId: NoticeId): State {
       return {
         title: 'Page Not Found',
         body: 'The page you are looking for does not exist.',
+        button: {
+          text: 'Back to Home',
+          route: {
+            tag: 'landing',
+            value: null
+          }
+        }
+      };
+
+    case 'deactivatedOwnAccount':
+      return {
+        title: 'Account Deactivation Successful',
+        body: 'You have successfully deactivated your account.',
         button: {
           text: 'Back to Home',
           route: {

@@ -1,5 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
 import { Router } from 'front-end/lib/framework';
+import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import { adt } from 'shared/lib/types';
 
@@ -127,11 +128,11 @@ const router: Router<Route> = {
     },
 
     {
-      path: '/notice/auth-failure',
-      makeRoute() {
+      path: '/notice/:noticeId',
+      makeRoute({ params, query }) {
         return {
           tag: 'notice',
-          value: adt('authFailure')
+          value: PageNotice.parseNoticeId(params.noticeId, query)
         };
       }
     },
@@ -172,9 +173,9 @@ const router: Router<Route> = {
         return (() => {
           switch (route.value.tag) {
             case 'notFound':
-              return '/not-found';
+            case 'deactivatedOwnAccount':
             case 'authFailure':
-              return '/notice/auth-failure';
+              return `/notice/${route.value.value}`;
           }
         })();
     }

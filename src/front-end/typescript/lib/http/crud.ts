@@ -183,8 +183,8 @@ export interface SimpleResourceTypes<T extends SimpleResourceTypesParams> extend
     invalidResponse: T['update']['invalidResponse'];
   };
   delete: {
-    rawResponse: null;
-    validResponse: null;
+    rawResponse: T['record'];
+    validResponse: T['record'];
     invalidResponse: string[];
   };
 }

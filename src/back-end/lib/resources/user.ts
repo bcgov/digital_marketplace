@@ -103,7 +103,7 @@ const resource: Resource = {
           // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario) OR that the user type is being changed
           // Admin shouldn't provide any other updates to profile
           if (permissions.isAdmin(request.session) && !permissions.isOwnAccount(request.session, request.params.id)) {
-            if (validatedName.value || validatedEmail.value || validatedJobTitle.value !== undefined || validatedAvatarImageFile.value || validatedNotificationsOn.value || validatedAcceptedTerms.value) {
+            if (validatedName.value || validatedEmail.value || validatedJobTitle.value || validatedAvatarImageFile.value || validatedNotificationsOn.value || validatedAcceptedTerms.value) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
