@@ -198,7 +198,7 @@ const router: Router<Route> = {
             case 'notFound':
             case 'deactivatedOwnAccount':
             case 'authFailure':
-              return `/notice/${route.value.value}`;
+              return `/notice/${route.value.tag}`;
           }
         })();
     }
