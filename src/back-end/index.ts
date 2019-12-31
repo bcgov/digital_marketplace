@@ -19,10 +19,8 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
-import { FileUploadMetadata } from 'shared/lib/resources/file';
-import { MAX_MULTIPART_FILES_SIZE } from 'shared/lib/resources/file';
-import { parseFilePermissions, parseUserType } from 'shared/lib/resources/file';
-import { Session } from 'shared/lib/resources/session';
+import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions, parseUserType } from 'shared/lib/resources/file';
+import { emptySession, Session } from 'shared/lib/resources/session';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 
@@ -128,6 +126,9 @@ async function start() {
   adapter({
     router,
     sessionIdToSession: async id => {
+      if (SCHEDULED_DOWNTIME) {
+        return emptySession(id || '');
+      }
       try {
         if (!id) { throw new Error('session ID is undefined'); }
         return await readOneSession(connection, id);

@@ -14,3 +14,7 @@ export function hasAcceptedTermsOrIsAnonymous(session?: Session): boolean {
     ? !!session.user.acceptedTerms
     : true;
 }
+
+export function emptySession(id: Id): Session {
+  return { id };
+}
