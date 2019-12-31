@@ -13,6 +13,7 @@ import { fileBlobPath } from 'shared/lib/resources/file';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 
+import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
@@ -48,6 +49,14 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageLanding.component,
         state => state.pages.landing,
         value => ({ tag: 'pageLanding', value })
+      );
+
+    case 'content':
+      return makeViewPageProps(
+        props,
+        PageContent.component,
+        state => state.pages.content,
+        value => ({ tag: 'pageContent', value })
       );
 
     case 'orgEdit':

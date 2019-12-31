@@ -1,5 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
 import { Router } from 'front-end/lib/framework';
+import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import { adt } from 'shared/lib/types';
@@ -91,6 +92,15 @@ const router: Router<Route> = {
       }
     },
     {
+      path: '/content/:contentId',
+      makeRoute({ params }) {
+        return {
+          tag: 'content',
+          value: PageContent.parseContentId(params.contentId)
+        };
+      }
+    },
+    {
       path: '/sign-in',
       makeRoute() {
         return {
@@ -151,6 +161,8 @@ const router: Router<Route> = {
     switch (route.tag) {
       case 'landing':
         return '/';
+      case 'content':
+        return `/content/${route.value}`;
       case 'signIn':
         return '/sign-in';
       case 'signOut':

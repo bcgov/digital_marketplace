@@ -38,8 +38,8 @@ export interface User {
   email?: string;
   jobTitle?: string;
   avatarImageFile?: FileRecord;
-  notificationsOn: boolean;
-  acceptedTerms: boolean;
+  notificationsOn?: Date;
+  acceptedTerms?: Date;
   idpUsername: string;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
@@ -105,8 +105,6 @@ export function emptyUser(): User {
     type: UserType.Government,
     status: UserStatus.Active,
     name: '',
-    notificationsOn: false,
-    acceptedTerms: false,
     idpUsername: ''
   };
 }

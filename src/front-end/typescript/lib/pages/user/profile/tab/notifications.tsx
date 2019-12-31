@@ -27,7 +27,7 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
     newOpportunities: immutable(await Checkbox.init({
       errors: [],
       child: {
-        value: profileUser.notificationsOn,
+        value: !!profileUser.notificationsOn,
         id: 'user-notifications-new-opportunities'
       }
     }))
@@ -89,21 +89,21 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <h1>Notifications</h1>
           <p>Email notifications will be sent to {state.profileUser.email} for the options selected below. If this email address is incorrect please update your profile.</p>
         </Col>
-    </Row>
-    <Row>
-      <Col xs='12'>
-        <Checkbox.view
-          extraChildProps={{
-            inlineLabel: 'New opportunities.',
-            loading: isNewOpportunitiesLoading
-          }}
-          label='Notify me about...'
-          disabled={isLoading}
-          state={state.newOpportunities}
-          dispatch={mapComponentDispatch(dispatch, value => adt('newOpportunities' as const, value))} />
-      </Col>
-    </Row>
-  </div>
+      </Row>
+      <Row>
+        <Col xs='12'>
+          <Checkbox.view
+            extraChildProps={{
+              inlineLabel: 'New opportunities.',
+              loading: isNewOpportunitiesLoading
+            }}
+            label='Notify me about...'
+            disabled={isLoading}
+            state={state.newOpportunities}
+            dispatch={mapComponentDispatch(dispatch, value => adt('newOpportunities' as const, value))} />
+        </Col>
+      </Row>
+    </div>
   );
 };
 

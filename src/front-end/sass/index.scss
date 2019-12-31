@@ -122,7 +122,7 @@ input[type="time"] {
 
 .app {
   $page-transition-duration: 240ms;
-  transition-property: filter/*opacity/*, transform*/;
+  transition-property: filter, opacity;
   transition-duration: $page-transition-duration;
   transition-timing-function: ease-out;
 
@@ -133,6 +133,7 @@ input[type="time"] {
   &.in-transition {
     pointer-events: none !important;
     filter: grayscale(30%);
+    opacity: 0.9;
   }
 }
 

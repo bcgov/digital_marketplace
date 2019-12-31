@@ -12,8 +12,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React, { Fragment } from 'react';
-import { Spinner } from 'reactstrap';
-import { Col, Row } from 'reactstrap';
+import { Col, Row, Spinner } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 

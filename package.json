@@ -116,6 +116,7 @@
     "nodemon": "^1.19.0",
     "page": "^1.11.3",
     "pathmodify": "^0.5.0",
+    "react-markdown": "^4.2.2",
     "react-select": "^3.0.8",
     "reactstrap": "^7.1.0",
     "require-dir": "^1.2.0",

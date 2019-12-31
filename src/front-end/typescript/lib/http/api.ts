@@ -1,14 +1,30 @@
-import { CrudApi, makeCreate, makeCrudApi, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
+import { ClientHttpMethod } from 'shared/lib/types';
 
 export { getValid, getInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
 const deslash = (s: string) => s.replace(/^\/*/, '').replace(/\/*$/, '');
 const prefix = (a: string) => (b: string) => `/${deslash(a)}/${deslash(b)}`;
 const apiNamespace = prefix('api');
+
+// Markdown files.
+
+interface GetMarkdownFileActionTypes {
+  request: undefined;
+  rawResponse: never;
+  validResponse: string;
+  invalidResponse: null;
+}
+
+export const getMarkdownFile = (id: string) => makeRequest<GetMarkdownFileActionTypes>({
+  method: ClientHttpMethod.Get,
+  url: `/markdown/${id}.md`,
+  body: undefined
+});
 
 // Sessions
 

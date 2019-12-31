@@ -1,6 +1,6 @@
-import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
-
 import * as Nav from 'front-end/lib/app/view/nav';
+import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
+import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
@@ -16,17 +16,18 @@ import { Session } from 'shared/lib/resources/session';
 import { ADT } from 'shared/lib/types';
 
 export type Route
-  = ADT<'landing',        PageLanding.RouteParams>
-  | ADT<'signOut',        PageSignOut.RouteParams>
-  | ADT<'signIn',         PageSignIn.RouteParams>
-  | ADT<'signUpStepOne',  PageSignUpStepOne.RouteParams>
-  | ADT<'signUpStepTwo',  PageSignUpStepTwo.RouteParams>
-  | ADT<'notice',         PageNotice.RouteParams>
-  | ADT<'userList',       PageUserList.RouteParams>
-  | ADT<'userProfile',    PageUserProfile.RouteParams>
-  | ADT<'orgCreate',      PageOrgCreate.RouteParams>
-  | ADT<'orgList',        PageOrgList.RouteParams>
-  | ADT<'orgEdit',        PageOrgEdit.RouteParams>;
+  = ADT<'landing',       PageLanding.RouteParams>
+  | ADT<'content',       PageContent.RouteParams>
+  | ADT<'signOut',       PageSignOut.RouteParams>
+  | ADT<'signIn',        PageSignIn.RouteParams>
+  | ADT<'signUpStepOne', PageSignUpStepOne.RouteParams>
+  | ADT<'signUpStepTwo', PageSignUpStepTwo.RouteParams>
+  | ADT<'notice',        PageNotice.RouteParams>
+  | ADT<'userList',      PageUserList.RouteParams>
+  | ADT<'userProfile',   PageUserProfile.RouteParams>
+  | ADT<'orgCreate',     PageOrgCreate.RouteParams>
+  | ADT<'orgList',       PageOrgList.RouteParams>
+  | ADT<'orgEdit',       PageOrgEdit.RouteParams>;
 
 export interface SharedState {
   session?: Session;
@@ -45,6 +46,7 @@ export interface State {
 
   pages: {
     landing?: Immutable<PageLanding.State>;
+    content?: Immutable<PageContent.State>;
     signOut?: Immutable<PageSignOut.State>;
     signUpStepOne?: Immutable<PageSignUpStepOne.State>;
     signUpStepTwo?: Immutable<PageSignUpStepTwo.State>;
@@ -63,6 +65,7 @@ type InnerMsg
   | ADT<'closeModal'>
   | ADT<'nav', Nav.Msg>
   | ADT<'pageLanding', PageLanding.Msg>
+  | ADT<'pageContent', PageContent.Msg>
   | ADT<'pageSignIn', PageSignIn.Msg>
   | ADT<'pageSignOut', PageSignOut.Msg>
   | ADT<'pageSignUpStepOne', PageSignUpStepOne.Msg>

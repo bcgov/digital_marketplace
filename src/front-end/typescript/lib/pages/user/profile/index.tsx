@@ -64,7 +64,7 @@ function tabIdToTabDefinition<K extends TabId>(id: K): TabDefinition<K> {
       return {
         component: LegalTab.component,
         icon: 'balance-scale',
-        title: 'Accepted Agreements'
+        title: 'Accepted Policies, Terms & Agreements'
       } as TabDefinition<K>;
     case 'organizations':
       return {

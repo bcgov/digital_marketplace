@@ -54,7 +54,7 @@ interface MakeRequestParams<T extends ActionWithBodyTypes> {
   transformValid?: TransformValid<T>;
 }
 
-async function makeRequest<T extends ActionWithBodyTypes>(params: MakeRequestParams<T>): Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>> {
+export async function makeRequest<T extends ActionWithBodyTypes>(params: MakeRequestParams<T>): Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>> {
   const response = await request(params.method, params.url, params.body as object);
   switch (response.status) {
     case 200:

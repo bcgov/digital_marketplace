@@ -6,6 +6,7 @@ import * as api from 'front-end/lib/http/api';
 import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { ADT, adtCurried } from 'shared/lib/types';
 
+import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
@@ -119,6 +120,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageLanding.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageLanding' as const, value };
+        }
+      });
+
+    case 'content':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'content'],
+        childRouteParams: route.value,
+        childInit: PageContent.component.init,
+        childGetMetadata: PageContent.component.getMetadata,
+        childGetModal: PageContent.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageContent' as const, value };
         }
       });
 
@@ -363,6 +377,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageLanding.component.update,
         childGetMetadata: PageLanding.component.getMetadata,
         childGetModal: PageLanding.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageContent':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageContent', value }),
+        childStatePath: ['pages', 'content'],
+        childUpdate: PageContent.component.update,
+        childGetMetadata: PageContent.component.getMetadata,
+        childGetModal: PageContent.component.getModal,
         childMsg: msg.value
       });
 
