@@ -36,7 +36,7 @@ const view: ComponentView<State, Msg> = props => {
     <div>
       <Row className='mb-4'>
         <Col xs='12'>
-          <h3>Coming Soon</h3>
+          <h2>Coming Soon</h2>
         </Col>
     </Row>
   </div>

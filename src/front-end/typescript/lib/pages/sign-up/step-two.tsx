@@ -38,7 +38,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
   async success({ shared, dispatch }) {
     const user = shared.sessionUser;
     if (user.acceptedTerms) {
-      dispatch(replaceRoute(adt('userProfile', {
+      dispatch(replaceRoute(adt('userProfile' as const, {
         userId: user.id
       })));
       return invalid(null);
@@ -206,7 +206,6 @@ const view: ComponentView<State, Msg> = viewValid(props => {
 });
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
-  simpleNav: true,
   init,
   update,
   view,

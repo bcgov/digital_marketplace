@@ -1,7 +1,7 @@
 import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
-import { Msg, Route, State } from 'front-end/lib/app/types';
+import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
-import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
+import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
@@ -16,8 +16,8 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
-import { ADT, adtCurried } from 'shared/lib/types';
+import { CURRENT_SESSION_ID, hasUserAcceptedTerms, Session } from 'shared/lib/resources/session';
+import { adt, ADT, adtCurried } from 'shared/lib/types';
 
 function setSession(state: Immutable<State>, validated: api.ResponseValidation<Session, string[]>): Immutable<State> {
 return state.set('shared', {
@@ -238,10 +238,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         startTransition(state),
         async (state, dispatch) => {
           state = stopTransition(state);
-          // Unset the previous page's state.
-          state = state.setIn(['pages', state.activeRoute.tag], undefined);
           // Refresh the front-end's view of the current session.
           state = setSession(state, await api.sessions.readOne(CURRENT_SESSION_ID));
+          // Override the incoming route if the user has not accepted terms.
+          if (!hasUserAcceptedTerms(state.shared.session) && !isAllowedRouteForUsersWithUnacceptedTerms(incomingRoute)) {
+            dispatch(newRoute(adt('signUpStepTwo' as const, null)));
+            return state;
+          }
+          // Unset the previous page's state.
+          state = state.setIn(['pages', state.activeRoute.tag], undefined);
           state = state
             .set('activeRoute', incomingRoute)
             // We switch this flag to true so the view function knows to display the page.

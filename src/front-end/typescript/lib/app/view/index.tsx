@@ -1,5 +1,5 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
-import { Msg, Route, State } from 'front-end/lib/app/types';
+import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
@@ -23,6 +23,7 @@ import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { fileBlobPath } from 'shared/lib/resources/file';
+import { hasUserAcceptedTerms } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 
@@ -36,7 +37,10 @@ function makeViewPageProps<RouteParams, PageState, PageMsg>(
     dispatch: props.dispatch,
     pageState: getPageState(props.state),
     mapPageMsg,
-    component
+    component: {
+      ...component,
+      simpleNav: !hasUserAcceptedTerms(props.state.shared.session) && isAllowedRouteForUsersWithUnacceptedTerms(props.state.activeRoute)
+    }
   };
 }
 

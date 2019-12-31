@@ -8,3 +8,9 @@ export interface Session {
   accessToken?: string;
   user?: User;
 }
+
+export function hasUserAcceptedTerms(session?: Session): boolean {
+  return !!(session
+      && session.user
+      && session.user.acceptedTerms);
+}

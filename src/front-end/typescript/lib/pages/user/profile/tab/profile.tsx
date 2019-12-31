@@ -397,7 +397,7 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({ state, dispatch }) =
     <Row>
       <Col xs='12'>
         <div className='mt-5 pt-5 border-top'>
-          <h3>{title}</h3>
+          <h4>{title}</h4>
           <p>
             {isActive
               ? `Deactivating ${your} account means that ${you} will no longer have access to the Digital Marketplace.`
@@ -425,7 +425,7 @@ const view: ComponentView<State, Msg> = props => {
     <div>
       <Row className='mb-4'>
         <Col xs='12'>
-          <h1>{profileUser.name}</h1>
+          <h2>{profileUser.name}</h2>
         </Col>
     </Row>
     <ViewDetails {...props} />

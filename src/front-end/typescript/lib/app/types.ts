@@ -31,6 +31,11 @@ export type Route
   | ADT<'orgList',       PageOrgList.RouteParams>
   | ADT<'orgEdit',       PageOrgEdit.RouteParams>;
 
+export function isAllowedRouteForUsersWithUnacceptedTerms(route: Route): boolean {
+  return route.tag === 'signUpStepTwo'
+      || route.tag === 'content';
+}
+
 export interface SharedState {
   session?: Session;
 }
