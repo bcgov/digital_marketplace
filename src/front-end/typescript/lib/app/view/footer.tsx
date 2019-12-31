@@ -41,10 +41,10 @@ const Footer: View<{}> = () => {
     <footer className='w-100 bg-info text-light border-top-gov'>
       <Container>
         <Row>
-          <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3 o-75'>
+          <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3'>
             {links.map((link, i) => (
-              <div key={`footer-link-${i}`} className={`mb-3 ${i < links.length - 1 ? 'pr-3 mr-3 border-right' : ''}`}>
-                <Link {...link} color='white' button={false} />
+              <div key={`footer-link-${i}`} className={`mb-3 ${i < links.length - 1 ? 'pr-3 mr-3 border-right border-info-alt' : ''}`}>
+                <Link {...link} className='o-75' color='white' button={false} />
               </div>
             ))}
           </Col>
