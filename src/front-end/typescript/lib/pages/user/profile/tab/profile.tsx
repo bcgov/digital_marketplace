@@ -246,7 +246,11 @@ const ViewPermissionsAsGovernment: ComponentView<State, Msg> = ({ state }) => {
 };
 
 const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
+  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
   const isSavePermissionsLoading = state.savePermissionsLoading > 0;
+  const isAccountActivationLoading = state.accountActivationLoading > 0;
+  const isLoading = isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   const icon = () => {
     if (state.isEditingAdminCheckbox && isSavePermissionsLoading) {
       return (
@@ -257,17 +261,17 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
         <Icon
           name='check'
           color='success'
-          hover
-          onClick={() => dispatch(adt('savePermissions'))} />
+          hover={!isLoading}
+          onClick={() => !isLoading && dispatch(adt('savePermissions'))} />
       );
     } else {
       return (
         <Icon
           name='edit'
           color='primary'
-          hover
+          hover={!isLoading}
           style={{ cursor: 'pointer' }}
-          onClick={() => dispatch(adt('startEditingPermissions'))} />
+          onClick={() => !isLoading && dispatch(adt('startEditingPermissions'))} />
       );
     }
   };
@@ -277,7 +281,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
         <Checkbox.view
           extraChildProps={{inlineLabel: 'Admin'}}
           className='mb-0 mr-3'
-          disabled={!state.isEditingAdminCheckbox || isSavePermissionsLoading}
+          disabled={!state.isEditingAdminCheckbox || isLoading}
           state={state.adminCheckbox}
           dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
         {icon()}
@@ -327,7 +331,10 @@ const ViewProfileFormHeading: ComponentView<State, Msg> = ({ state, dispatch }) 
   // Admins can't edit other user profiles.
   if (isAdmin(state.viewerUser) && !usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isSavePermissionsLoading = state.savePermissionsLoading > 0;
+  const isAccountActivationLoading = state.accountActivationLoading > 0;
   const isEditingForm = state.isEditingForm;
+  const isDisabled = isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   return (
     <Row>
       <Col xs='12' className='mb-4 d-flex flex-nowrap flex-column flex-md-row align-items-start align-items-md-center'>
@@ -339,6 +346,7 @@ const ViewProfileFormHeading: ComponentView<State, Msg> = ({ state, dispatch }) 
               className='mt-2 mt-md-0 ml-md-3'
               size='sm'
               loading={isStartEditingFormLoading}
+              disabled={isDisabled}
               symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
               color='primary'>
               Edit Profile
@@ -355,7 +363,9 @@ const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) 
   if (!isEditingForm) { return null; }
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
-  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
+  const isSavePermissionsLoading = state.savePermissionsLoading > 0;
+  const isAccountActivationLoading = state.accountActivationLoading > 0;
+  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   const isValid = ProfileForm.isValid(state.profileForm);
   return (
     <Row className='mt-4'>
@@ -386,8 +396,9 @@ const ViewProfileForm: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isSavePermissionsLoading = state.savePermissionsLoading > 0;
   const isEditingForm = state.isEditingForm;
-  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading;
+  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading;
   return (
     <div>
       <ViewProfileFormHeading {...props} />
@@ -409,7 +420,11 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({ state, dispatch }) =
   const your = isOwner ? 'your' : 'their';
   const you = isOwner ? 'you' : 'they';
   const title = isActive ? 'Deactivate Account' : 'Reactivate Account';
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
+  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+  const isSavePermissionsLoading = state.savePermissionsLoading > 0;
   const isAccountActivationLoading = state.accountActivationLoading > 0;
+  const isLoading = isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   return (
     <Row>
       <Col xs='12'>
@@ -422,7 +437,7 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({ state, dispatch }) =
           </p>
           <LoadingButton
             loading={isAccountActivationLoading}
-            disabled={isAccountActivationLoading}
+            disabled={isLoading}
             onClick={() => dispatch(adt('toggleAccountActivation'))}
             symbol_={leftPlacement(iconLinkSymbol(isActive ? 'user-minus' : 'user-plus'))}
             className='mt-4'
