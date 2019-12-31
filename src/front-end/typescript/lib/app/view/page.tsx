@@ -23,12 +23,12 @@ function ViewAlert<PageMsg>({ messages, dispatchPage, color, className = '' }: V
             <div className='flex-grow-1 pr-3'>{text}</div>
             {dismissMsg
               ? (<Icon
+                  hover
                   name='times'
                   width={1}
                   height={1}
                   color={color}
                   onClick={() => dispatchPage(dismissMsg)}
-                  style={{ cursor: 'pointer' }}
                   className='mt-1 o-75 flex-grow-0 flex-shrink-0' />)
               : null}
           </div>

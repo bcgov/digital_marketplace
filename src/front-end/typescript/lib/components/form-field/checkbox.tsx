@@ -1,5 +1,6 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import React from 'react';
+import { Spinner } from 'reactstrap';
 import { CustomInput } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
@@ -14,6 +15,7 @@ type InnerChildMsg
 
 interface ExtraChildProps {
   inlineLabel: string;
+  loading?: boolean;
 }
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
@@ -36,7 +38,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, className = '', validityClassName, disabled = false, inlineLabel } = props;
+  const { state, dispatch, className = '', validityClassName, disabled = false, inlineLabel, loading = false } = props;
   return (
     <CustomInput
       id={state.id}
@@ -45,13 +47,17 @@ const ChildView: ChildComponent['view'] = props => {
       disabled={disabled}
       type='checkbox'
       label={inlineLabel}
-      className={`${className} ${validityClassName}`}
+      className={`d-flex align-items-center ${className} ${validityClassName}`}
       onChange={e => {
         const value = e.currentTarget.checked;
         dispatch({ tag: 'onChange', value });
         // Let the parent form field component know that the value has been updated.
         props.onChange(value);
-      }} />
+      }}>
+      {loading
+        ? (<Spinner size='sm' color='secondary' className='ml-2' />)
+        : null}
+    </CustomInput>
   );
 };
 

@@ -10,7 +10,7 @@ import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 import { parseUserType, UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, mapValid, valid } from 'shared/lib/validation';
 import { validateAcceptedTerms, validateEmail, validateJobTitle, validateName, validateNotificationsOn, validateUserType } from 'shared/lib/validation/user';
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
@@ -136,7 +136,7 @@ const resource: Resource = {
             name: validatedName.value,
             email: validatedEmail.value,
             jobTitle: validatedJobTitle.value,
-            avatarImageFile: validatedAvatarImageFile.value.id,
+            avatarImageFile: getValidValue(mapValid(validatedAvatarImageFile, v => v && v.id), undefined),
             notificationsOn: validatedNotificationsOn.value,
             acceptedTerms: validatedAcceptedTerms.value
           });
