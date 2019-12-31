@@ -67,7 +67,7 @@ const resource: Resource = {
 
   create(connection) {
     return {
-      parseRequestBody(request) {
+      async parseRequestBody(request) {
         return request.body.tag === 'file' ? request.body.value : null;
       },
       async validateRequestBody(request) {

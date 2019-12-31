@@ -75,7 +75,7 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      parseRequestBody(request) {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           name: getString(body, 'name') || undefined,

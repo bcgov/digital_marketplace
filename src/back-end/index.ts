@@ -1,9 +1,10 @@
-import { DB_MIGRATIONS_TABLE_NAME, getConfigErrors, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
+import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, getConfigErrors, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib/db';
 import loggerHook from 'back-end/lib/hooks/logger';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
+import basicAuth from 'back-end/lib/map-routes/basic-auth';
 import affiliationResource from 'back-end/lib/resources/affiliation';
 import fileResource from 'back-end/lib/resources/file';
 import organizationResource from 'back-end/lib/resources/organization';
@@ -86,9 +87,13 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     addHooks
   ])([]);
 
-  // Add the status router.
-  // This should not be behind basic auth.
-  allRoutes = statusRouter.concat(allRoutes);
+  if (BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD_HASH) {
+    allRoutes = allRoutes.map(basicAuth({
+      username: BASIC_AUTH_USERNAME,
+      passwordHash: BASIC_AUTH_PASSWORD_HASH,
+      mapHook: a => a
+    }));
+  }
 
   return allRoutes;
 }

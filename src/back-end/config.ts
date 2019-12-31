@@ -22,6 +22,10 @@ export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
 export const SCHEDULED_DOWNTIME = get('SCHEDULED_DOWNTIME', '') === '1';
 
+export const BASIC_AUTH_USERNAME = get('BASIC_AUTH_USERNAME', '');
+
+export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
+
 export const ORIGIN = get('ORIGIN', 'http://digital-marketplace.bcgov.realfolk.io').replace(/\/*$/, '');
 
 export const POSTGRES_URL = getPostGresUrl();
@@ -93,6 +97,14 @@ export function getConfigErrors(): string[] {
 
   if (!SERVER_HOST.match(/^\d+\.\d+\.\d+\.\d+/)) {
     errors.push('SERVER_HOST must be a valid IP address.');
+  }
+
+  if (BASIC_AUTH_USERNAME && !BASIC_AUTH_PASSWORD_HASH) {
+    errors.push('BASIC_AUTH_PASSWORD_HASH must be defined if BASIC_AUTH_USERNAME is non-empty.');
+  }
+
+  if (!BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD_HASH) {
+    errors.push('BASIC_AUTH_USERNAME must be defined if BASIC_AUTH_PASSWORD_HASH is non-empty.');
   }
 
   if (!ORIGIN) {

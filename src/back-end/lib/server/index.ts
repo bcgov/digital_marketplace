@@ -215,7 +215,7 @@ export function mapRespond<ReqB, ResBA, ResBB, Session>(respond: Respond<ReqB, R
   };
 }
 
-export type ParseRequestBody<IncomingReqBody, ParsedReqBody, Session> = (request: Request<IncomingReqBody, Session>) => ParsedReqBody;
+export type ParseRequestBody<IncomingReqBody, ParsedReqBody, Session> = (request: Request<IncomingReqBody, Session>) => Promise<ParsedReqBody>;
 
 export type ValidateRequestBody<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, Session> = (request: Request<ParsedReqBody, Session>) => Promise<Validation<ValidatedReqBody, ReqBodyErrors>>;
 
@@ -227,7 +227,7 @@ export interface Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBo
 
 export function passThroughRequestBodyHandler<IncomingReqBody, ResponseBody, Session>(respond: Respond<Validation<IncomingReqBody, any>, ResponseBody, Session>): Handler<IncomingReqBody, IncomingReqBody, IncomingReqBody, any, ResponseBody, Session> {
   return {
-    parseRequestBody: request => request.body,
+    parseRequestBody: async request => request.body,
     validateRequestBody: async request => valid(request.body),
     respond
   };
@@ -235,7 +235,7 @@ export function passThroughRequestBodyHandler<IncomingReqBody, ResponseBody, Ses
 
 export function nullRequestBodyHandler<ResponseBody, Session>(respond: Respond<Validation<null, any>, ResponseBody, Session>): Handler<unknown, null, null, any, ResponseBody, Session> {
   return {
-    parseRequestBody: () => null,
+    parseRequestBody: async () => null,
     validateRequestBody: async () => valid(null),
     respond
   };

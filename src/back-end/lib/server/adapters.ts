@@ -209,7 +209,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         // Parse the request according to the route handler.
         const parsedRequest: Request<ParsedReqBody, Session> = {
           ...initialRequest,
-          body: route.handler.parseRequestBody(initialRequest)
+          body: await route.handler.parseRequestBody(initialRequest)
         };
         // Validate the request according to the route handler.
         const validatedRequest: Request<Validation<ValidatedReqBody, ReqBodyErrors>, Session> = {

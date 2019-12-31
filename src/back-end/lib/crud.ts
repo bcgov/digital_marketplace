@@ -38,7 +38,7 @@ export function makeReadOneRoute<SupportedRequestBodies, SupportedResponseBodies
     path: '/:id',
     handler: {
       ...handler,
-      parseRequestBody: () => null
+      parseRequestBody: async () => null
     }
   };
 }
@@ -68,7 +68,7 @@ export function makeDeleteRoute<SupportedRequestBodies, SupportedResponseBodies,
     path: '/:id',
     handler: {
       ...handler,
-      parseRequestBody: () => null
+      parseRequestBody: async () => null
     }
   };
 }

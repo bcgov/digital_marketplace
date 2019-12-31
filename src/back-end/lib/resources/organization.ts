@@ -77,7 +77,7 @@ const resource: Resource = {
 
   create(connection) {
     return {
-      parseRequestBody(request) {
+      async parseRequestBody(request) {
         return request.body.tag === 'json' ? request.body.value : {};
       },
       async validateRequestBody(request) {
@@ -176,7 +176,7 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      parseRequestBody(request) {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           legalName: getString(body, 'legalName') || undefined,
