@@ -165,110 +165,6 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   );
 };
 
-/*const ViewActiveRoute: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  switch (state.activeRoute.tag) {
-
-    case 'landing':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.landing}
-          mapPageMsg={value => ({ tag: 'pageLanding', value })}
-          component={PageLanding.component} />
-      );
-
-    case 'orgEdit':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.orgEdit}
-          mapPageMsg={value => ({ tag: 'pageOrgEdit', value })}
-          component={PageOrgEdit.component} />
-      );
-
-    case 'orgCreate':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.orgCreate}
-          mapPageMsg={value => ({ tag: 'pageOrgCreate', value })}
-          component={PageOrgCreate.component} />
-      );
-
-    case 'orgList':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.orgList}
-          mapPageMsg={value => ({ tag: 'pageOrgList', value })}
-          component={PageOrgList.component} />
-      );
-
-    case 'userProfile':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.userProfile}
-          mapPageMsg={value => ({ tag: 'pageUserProfile', value })}
-          component={PageUserProfile.component} />
-      );
-
-    case 'userList':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.userList}
-          mapPageMsg={value => ({ tag: 'pageUserList', value })}
-          component={PageUserList.component} />
-      );
-
-    case 'signIn':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.signIn}
-          mapPageMsg={value => ({ tag: 'pageSignIn', value })}
-          component={PageSignIn.component} />
-      );
-
-    case 'signOut':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.signOut}
-          mapPageMsg={value => ({ tag: 'pageSignOut', value })}
-          component={PageSignOut.component} />
-      );
-
-    case 'signUpStepOne':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.signUpStepOne}
-          mapPageMsg={value => ({ tag: 'pageSignUpStepOne', value })}
-          component={PageSignUpStepOne.component} />
-      );
-
-    case 'signUpStepTwo':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.signUpStepTwo}
-          mapPageMsg={value => ({ tag: 'pageSignUpStepTwo', value })}
-          component={PageSignUpStepTwo.component} />
-      );
-
-    case 'notice':
-      return (
-        <ViewPage
-          dispatch={dispatch}
-          pageState={state.pages.notice}
-          mapPageMsg={value => ({ tag: 'pageNotice', value })}
-          component={PageNotice.component} />
-      );
-  }
-};*/
-
 const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
     text: 'Sign In',
@@ -306,7 +202,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
         text: userIdentifier,
         dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
         symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
-        active: state.activeRoute.tag === 'userProfile'
+        active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
       }),
       Nav.linkAccountAction(signOutLink)
     ]),

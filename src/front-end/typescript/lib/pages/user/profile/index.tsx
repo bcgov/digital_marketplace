@@ -5,6 +5,9 @@ import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
+import * as LegalTab from 'front-end/lib/pages/user/profile/tab/legal';
+import * as NotificationsTab from 'front-end/lib/pages/user/profile/tab/notifications';
+import * as OrganizationsTab from 'front-end/lib/pages/user/profile/tab/organizations';
 import * as ProfileTab from 'front-end/lib/pages/user/profile/tab/profile';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import { routeDest } from 'front-end/lib/views/link';
@@ -13,19 +16,23 @@ import { isAdmin, User, usersAreEquivalent, UserType } from 'shared/lib/resource
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
-type TabState
-  = ADT<'profile', Immutable<ProfileTab.State>>
-  | ADT<'notifications', Immutable<ProfileTab.State>>
-  | ADT<'legal', Immutable<ProfileTab.State>>
-  | ADT<'organizations', Immutable<ProfileTab.State>>;
+interface Tab<State, InnerMsg> {
+  state: State;
+  innerMsg: InnerMsg;
+}
 
-type TabMsg
-  = ADT<'profile', ProfileTab.Msg>
-  | ADT<'notifications', ProfileTab.Msg>
-  | ADT<'legal', ProfileTab.Msg>
-  | ADT<'organizations', ProfileTab.Msg>;
+interface Tabs {
+  profile: Tab<ProfileTab.State, ProfileTab.InnerMsg>;
+  notifications: Tab<NotificationsTab.State, NotificationsTab.InnerMsg>;
+  legal: Tab<LegalTab.State, LegalTab.InnerMsg>;
+  organizations: Tab<OrganizationsTab.State, OrganizationsTab.InnerMsg>;
+}
 
-type TabId = 'profile' | 'notifications' | 'legal' | 'organizations';
+type TabId = keyof Tabs;
+
+type TabState<K extends TabId> = [K, Immutable<Tabs[K]['state']>];
+
+type TabMsg<K extends TabId> = GlobalComponentMsg<Tabs[K]['innerMsg'], Route>;
 
 export function parseTabId(raw: any): TabId | undefined {
   switch (raw) {
@@ -39,41 +46,47 @@ export function parseTabId(raw: any): TabId | undefined {
   }
 }
 
-function tabIdToTitleCase(id: TabId): string {
-  switch (id) {
-    case 'profile': return 'Profile';
-    case 'notifications': return 'Notifications';
-    case 'legal': return 'Accepted Agreements';
-    case 'organizations': return 'Organizations';
-  }
+interface TabDefinition<K extends TabId> {
+  component: Tab.Component<Tabs[K]['state'], GlobalComponentMsg<Tabs[K]['innerMsg'], Route>>;
+  icon: AvailableIcons;
+  title: string;
 }
 
-async function tabIdToTabState(id: TabId, params: Tab.Params): Promise<TabState> {
+function tabIdToTabDefinition<K extends TabId>(id: K): TabDefinition<K> {
   switch (id) {
-    case 'profile':
-      return adt('profile', immutable(await ProfileTab.component.init(params)));
     case 'notifications':
-      return adt('profile', immutable(await ProfileTab.component.init(params)));
+      return {
+        component: NotificationsTab.component,
+        icon: 'bell',
+        title: 'Notifications'
+      } as TabDefinition<K>;
     case 'legal':
-      return adt('profile', immutable(await ProfileTab.component.init(params)));
+      return {
+        component: LegalTab.component,
+        icon: 'balance-scale',
+        title: 'Accepted Agreements'
+      } as TabDefinition<K>;
     case 'organizations':
-      return adt('profile', immutable(await ProfileTab.component.init(params)));
-  }
-}
-
-function tabIdToIcon(tab: TabId): AvailableIcons {
-  switch (tab) {
-    case 'profile': return 'user';
-    case 'notifications': return 'bell';
-    case 'legal': return 'balance-scale';
-    case 'organizations': return 'building';
+      return {
+        component: OrganizationsTab.component,
+        icon: 'building',
+        title: 'Organizations'
+      } as TabDefinition<K>;
+    case 'profile':
+    default:
+      return {
+        component: ProfileTab.component,
+        icon: 'user',
+        title: 'Profile'
+      } as TabDefinition<K>;
   }
 }
 
 function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+  const definition = tabIdToTabDefinition(tab);
   return {
-    icon: tabIdToIcon(tab),
-    text: tabIdToTitleCase(tab),
+    icon: definition.icon,
+    text: definition.title,
     active: activeTab === tab,
     dest: routeDest(adt('userProfile', { userId, tab }))
   };
@@ -110,163 +123,140 @@ export async function makeSidebar(profileUser: User, viewerUser: User, activeTab
   return immutable(await MenuSidebar.init({ links }));
 }
 
-interface ValidState {
+interface ValidState<K extends TabId> {
   profileUser: User;
   viewerUser: User;
-  tab: TabState;
+  tab: TabState<K>;
   sidebar: Immutable<MenuSidebar.State>;
 }
 
-export type State = Validation<Immutable<ValidState>, null>;
+type State_<K extends TabId> = Validation<Immutable<ValidState<K>>, null>;
 
-type InnerMsg
-  = ADT<'tab', TabMsg>
+export type State = State_<TabId>;
+
+type InnerMsg<K extends TabId>
+  = ADT<'tab', TabMsg<K>>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+type Msg_<K extends TabId> = GlobalComponentMsg<InnerMsg<K>, Route>;
+
+export type Msg = Msg_<TabId>;
 
 export interface RouteParams {
   userId: string;
   tab?: TabId;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
+function makeInit<K extends TabId>(): PageInit<RouteParams, SharedState, State_<K>, Msg_<K>> {
+  return isSignedIn({
 
-  async success({ routeParams, shared, dispatch }) {
-    const viewerUser = shared.sessionUser;
-    const profileUserResult = await api.users.readOne(routeParams.userId);
-    // If the request failed, then show the "Not Found" page.
-    if (!api.isValid(profileUserResult)) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
-      return invalid(null);
-    }
-    const profileUser = profileUserResult.value;
-    const isOwner = viewerUser.id === profileUser.id;
-    const viewerIsAdmin = isAdmin(viewerUser);
-    // If the viewer isn't the owner or an admin, then show the "Not Found" page.
-    if (!isOwner && !viewerIsAdmin) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
-      return invalid(null);
-    }
-    // Set up the visible tab state.
-    const tab = await tabIdToTabState(routeParams.tab || 'profile', { profileUser, viewerUser });
-    // Everything checks out, return valid state.
-    return valid(immutable({
-      viewerUser,
-      profileUser,
-      tab,
-      sidebar: await makeSidebar(profileUser, viewerUser, tab.tag)
-    }));
-  },
-
-  async fail({ dispatch }) {
-    // Viewer isn't signed in, so show "Not Found" page.
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
-    return invalid(null);
-  }
-
-});
-
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case 'tab':
-      return (() => {
-        switch (state.tab.tag) {
-          case 'profile':
-            return updateGlobalComponentChild({
-              state,
-              childStatePath: ['tab', 'value'],
-              childUpdate: ProfileTab.component.update,
-              childMsg: msg.value.value,
-              mapChildMsg: value => adt('tab' as const, adt('profile' as const, value))
-            });
-          case 'notifications':
-            return updateGlobalComponentChild({
-              state,
-              childStatePath: ['tab', 'value'],
-              childUpdate: ProfileTab.component.update,
-              childMsg: msg.value.value,
-              mapChildMsg: value => adt('tab' as const, adt('notifications' as const, value))
-            });
-          case 'legal':
-            return updateGlobalComponentChild({
-              state,
-              childStatePath: ['tab', 'value'],
-              childUpdate: ProfileTab.component.update,
-              childMsg: msg.value.value,
-              mapChildMsg: value => adt('tab' as const, adt('legal' as const, value))
-            });
-          case 'organizations':
-            return updateGlobalComponentChild({
-              state,
-              childStatePath: ['tab', 'value'],
-              childUpdate: ProfileTab.component.update,
-              childMsg: msg.value.value,
-              mapChildMsg: value => adt('tab' as const, adt('organizations' as const, value))
-            });
-        }
-      })();
-    case 'sidebar':
-      return updateComponentChild({
-        state,
-        childStatePath: ['sidebar'],
-        childUpdate: MenuSidebar.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('sidebar', value)
-      });
-    default:
-      return [state];
-  }
-});
-
-const ViewTab: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
-  const tab = state.tab;
-  switch (tab.tag) {
-    case 'profile':
-      return (<ProfileTab.component.view
-        state={tab.value}
-        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, adt('profile' as const, v)))} />);
-    case 'notifications':
-      return (<ProfileTab.component.view
-        state={tab.value}
-        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, adt('notifications' as const, v)))} />);
-    case 'legal':
-      return (<ProfileTab.component.view
-        state={tab.value}
-        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, adt('legal' as const, v)))} />);
-    case 'organizations':
-      return (<ProfileTab.component.view
-        state={tab.value}
-        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, adt('organizations' as const, v)))} />);
-  }
-};
-
-const view: ComponentView<State, Msg> = viewValid(props => (<ViewTab {...props} />));
-
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
-  init,
-  update,
-  view,
-  sidebar: {
-    size: 'medium',
-    color: 'light',
-    isEmpty(state) {
-      if (state.tag !== 'valid') { return false; }
-      return !state.value.sidebar.links.length;
+    async success({ routeParams, shared, dispatch }) {
+      const viewerUser = shared.sessionUser;
+      const profileUserResult = await api.users.readOne(routeParams.userId);
+      // If the request failed, then show the "Not Found" page.
+      if (!api.isValid(profileUserResult)) {
+        dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+        return invalid(null);
+      }
+      const profileUser = profileUserResult.value;
+      const isOwner = viewerUser.id === profileUser.id;
+      const viewerIsAdmin = isAdmin(viewerUser);
+      // If the viewer isn't the owner or an admin, then show the "Not Found" page.
+      if (!isOwner && !viewerIsAdmin) {
+        dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+        return invalid(null);
+      }
+      // Set up the visible tab state.
+      // Admins can only view the profile tab of non-owned profiles.
+      const tabId = viewerIsAdmin && !isOwner
+        ? 'profile'
+        : (routeParams.tab || 'profile');
+      const tabState = immutable(await tabIdToTabDefinition(tabId).component.init({ profileUser, viewerUser }));
+      // Everything checks out, return valid state.
+      return valid(immutable({
+        viewerUser,
+        profileUser,
+        tab: [tabId, tabState],
+        sidebar: await makeSidebar(profileUser, viewerUser, tabId)
+      }));
     },
-    view: viewValid(({ state, dispatch }) => {
-      return (<MenuSidebar.view
-        state={state.sidebar}
-        dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
-    })
-  },
-  //TODO getModal
-  //TODO getAlerts
-  getMetadata(state) {
-    if (isValid(state)) {
-      return makePageMetadata(`${tabIdToTitleCase(state.value.tab.tag)} — ${state.value.profileUser.name}`);
-    } else {
-      return makePageMetadata('Profile');
+
+    async fail({ dispatch }) {
+      // Viewer isn't signed in, so show "Not Found" page.
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      return invalid(null);
     }
-  }
-};
+
+  });
+}
+
+function makeUpdate<K extends TabId>(): Update<State_<K>, Msg_<K>> {
+  return updateValid(({ state, msg }) => {
+    switch (msg.tag) {
+      case 'tab':
+        const tabId = state.tab[0];
+        const definition = tabIdToTabDefinition(tabId);
+        return updateGlobalComponentChild({
+          state,
+          childStatePath: ['tab', '1'],
+          childUpdate: definition.component.update,
+          childMsg: msg.value,
+          mapChildMsg: value => adt('tab' as const, value as TabMsg<K>)
+        });
+      case 'sidebar':
+        return updateComponentChild({
+          state,
+          childStatePath: ['sidebar'],
+          childUpdate: MenuSidebar.update,
+          childMsg: msg.value,
+          mapChildMsg: value => adt('sidebar', value)
+        });
+      default:
+        return [state];
+    }
+  });
+}
+
+function makeView<K extends TabId>(): ComponentView<State_<K>, Msg_<K>> {
+  return viewValid(({ state, dispatch }) => {
+    const [tabId, tabState] = state.tab;
+    const definition = tabIdToTabDefinition(tabId);
+    return (
+      <definition.component.view
+        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, v))}
+        state={tabState} />
+    );
+  });
+}
+
+function makeComponent<K extends TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
+  return {
+    init: makeInit(),
+    update: makeUpdate(),
+    view: makeView(),
+    sidebar: {
+      size: 'medium',
+      color: 'light',
+      isEmpty(state) {
+        if (state.tag !== 'valid') { return false; }
+        return !state.value.sidebar.links.length;
+      },
+      view: viewValid(({ state, dispatch }) => {
+        return (<MenuSidebar.view
+          state={state.sidebar}
+          dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
+      })
+    },
+    //TODO getModal
+    //TODO getAlerts
+    getMetadata(state) {
+      if (isValid(state)) {
+        return makePageMetadata(`${tabIdToTabDefinition(state.value.tab[0]).title} — ${state.value.profileUser.name}`);
+      } else {
+        return makePageMetadata('Profile');
+      }
+    }
+  };
+}
+
+export const component: PageComponent<RouteParams, SharedState, State, Msg> = makeComponent();

@@ -17,12 +17,7 @@ import { Col, Row } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 
-export interface Params {
-  profileUser: User;
-  viewerUser: User;
-}
-
-export interface State extends Params {
+export interface State extends Tab.Params {
   saveChangesLoading: number;
   accountActivationLoading: number;
   savePermissionsLoading: number;
@@ -33,7 +28,7 @@ export interface State extends Params {
   isEditingAdminCheckbox: boolean;
 }
 
-type InnerMsg
+export type InnerMsg
   = ADT<'profileForm', ProfileForm.Msg>
   | ADT<'startEditingForm'>
   | ADT<'cancelEditingForm'>
@@ -49,7 +44,7 @@ async function resetProfileForm(user: User): Promise<Immutable<ProfileForm.State
   return immutable(await ProfileForm.init(adt('update', user)));
 }
 
-const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {
+const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
   return {
     viewerUser,
     profileUser,
@@ -463,7 +458,7 @@ const view: ComponentView<State, Msg> = props => {
   );
 };
 
-export const component: Tab.Component<Params, State, Msg> = {
+export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view
