@@ -25,7 +25,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        Opportunities Page Coming Soon
+        Opportunities page coming soon.
       </Col>
     </Row>
   );
