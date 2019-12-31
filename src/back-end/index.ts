@@ -1,4 +1,4 @@
-import { DB_MIGRATIONS_TABLE_NAME, getConfigErrors, POSTGRES_URL, SERVER_HOST, SERVER_PORT } from 'back-end/config';
+import { DB_MIGRATIONS_TABLE_NAME, getConfigErrors, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib/db';
 import loggerHook from 'back-end/lib/hooks/logger';
@@ -27,6 +27,8 @@ type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponse
 
 type BasicRoute = Route<SupportedRequestBodies, any, any, any, SupportedResponseBodies, any, Session>;
 
+type AppRouter = Router<SupportedRequestBodies, any, any, any, SupportedResponseBodies, any, Session>;
+
 const logger = makeDomainLogger(consoleAdapter, 'back-end');
 
 export function connectToDatabase(postgresUrl: string): Connection {
@@ -39,11 +41,16 @@ export function connectToDatabase(postgresUrl: string): Connection {
   });
 }
 
-export async function createRouter(connection: Connection): Promise<Router<SupportedRequestBodies, any, any, any, SupportedResponseBodies, any, Session>> {
-  const hooks = [
-    loggerHook
-  ];
+const hooks = [
+  loggerHook
+];
 
+const addHooks: (_: BasicRoute[]) => BasicRoute[] = map((route: BasicRoute) => addHooksToRoute(hooks, route));
+
+// We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.
+const flippedConcat = flipCurried(concat);
+
+export async function createRouter(connection: Connection): Promise<AppRouter> {
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
     affiliationResource,
@@ -54,8 +61,6 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   ];
 
   // Define CRUD routes.
-  // We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.
-  const flippedConcat = flipCurried(concat);
   const crudRoutes = flow([
     // Create routers from resources.
     map((resource: BasicCrudResource) => {
@@ -78,7 +83,7 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
     // Add global hooks to all routes.
-    map((route: BasicRoute) => addHooksToRoute(hooks, route))
+    addHooks
   ])([]);
 
   // Add the status router.
@@ -86,6 +91,15 @@ export async function createRouter(connection: Connection): Promise<Router<Suppo
   allRoutes = statusRouter.concat(allRoutes);
 
   return allRoutes;
+}
+
+export async function createDowntimeRouter(): Promise<AppRouter> {
+  return flow([
+    // Front-end router.
+    flippedConcat(frontEndRouter('downtime.html')),
+    // Add global hooks to all routes.
+    addHooks
+  ])([]);
 }
 
 async function start() {
@@ -98,7 +112,11 @@ async function start() {
   // Connect to Postgres.
   const connection = connectToDatabase(POSTGRES_URL);
   logger.info('connected to the database');
-  const router = await createRouter(connection);
+  // Create the router.
+  let router: AppRouter = await (SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter)(connection);
+  // Add the status router.
+  // This should not be behind basic auth.
+  router = [...statusRouter as AppRouter, ...router];
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
   const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata> = express();

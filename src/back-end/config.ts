@@ -20,6 +20,8 @@ export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
 
 export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
+export const SCHEDULED_DOWNTIME = get('SCHEDULED_DOWNTIME', '') === '1';
+
 export const ORIGIN = get('ORIGIN', 'http://digital-marketplace.bcgov.realfolk.io').replace(/\/*$/, '');
 
 export const POSTGRES_URL = getPostGresUrl();
