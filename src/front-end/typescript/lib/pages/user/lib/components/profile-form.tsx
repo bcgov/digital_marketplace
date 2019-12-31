@@ -1,39 +1,23 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
 import FileButton from 'front-end/lib/views/file-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { isPublicSectorUserType, User, UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
-import { ErrorTypeFrom, mapValid } from 'shared/lib/validation';
+import { isPublicSectorUserType, UpdateRequestBody, User } from 'shared/lib/resources/user';
+import { adt, ADT, Id } from 'shared/lib/types';
+import { ErrorTypeFrom, invalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import { validateEmail, validateJobTitle, validateName } from 'shared/lib/validation/user';
 
-type FormType
-  = ADT<'create', UserType>
-  | ADT<'update', User>;
-
-function formTypeToUserType(v: FormType): UserType {
-  switch (v.tag) {
-    case 'create': return v.value;
-    case 'update': return v.value.type;
-  }
+export interface Params {
+  user: User;
 }
 
-function formTypeToUser(v: FormType): User | undefined {
-  switch (v.tag) {
-    case 'create': return undefined;
-    case 'update': return v.value;
-  }
-}
-
-export type Params = FormType;
-
-export interface State {
-  formType: FormType;
+export interface State extends Params {
   name: Immutable<ShortText.State>;
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
@@ -91,17 +75,16 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('newAvatarImage', v => v && ({ ...v, errors: errors.newAvatarImage || [] }));
 }
 
-export const init: Init<Params, State> = async formType => {
-  const existingUser = formTypeToUser(formType);
+export const init: Init<Params, State> = async ({ user }) => {
   return {
-    formType,
+    user,
     newAvatarImage: null,
     newAvatarImageErrors: [],
     idpUsername: immutable(await ShortText.init({
       errors: [],
       child: {
         type: 'text',
-        value: getString(existingUser, 'idpUsername'),
+        value: getString(user, 'idpUsername'),
         id: 'user-profile-idir-username'
       }
     })),
@@ -110,7 +93,7 @@ export const init: Init<Params, State> = async formType => {
       validate: validateEmail,
       child: {
         type: 'text',
-        value: getString(existingUser, 'email'),
+        value: getString(user, 'email'),
         id: 'user-profile-email'
       }
     })),
@@ -119,7 +102,7 @@ export const init: Init<Params, State> = async formType => {
       validate: validateName,
       child: {
         type: 'text',
-        value: getString(existingUser, 'name'),
+        value: getString(user, 'name'),
         id: 'user-profile-name'
       }
     })),
@@ -128,7 +111,7 @@ export const init: Init<Params, State> = async formType => {
       validate: v => mapValid(validateJobTitle(v), w => w || ''),
       child: {
         type: 'text',
-        value: getString(existingUser, 'jobTitle'),
+        value: getString(user, 'jobTitle'),
         id: 'user-profile-job-title'
       }
     }))
@@ -184,8 +167,6 @@ export interface Props extends ComponentViewProps<State, Msg> {
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
-  const formType = state.formType;
-  const existingUser = formTypeToUser(formType);
   return (
     <Row>
       <Col xs='12'>
@@ -198,7 +179,7 @@ export const view: View<Props> = props => {
                 height: '5rem',
                 objectFit: 'cover'
               }}
-              src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(existingUser)} />
+              src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(state.user)} />
             <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
               <div className='mb-2'><b>Profile Picture (Optional)</b></div>
               <FileButton
@@ -220,15 +201,13 @@ export const view: View<Props> = props => {
           </Col>
         </Row>
 
-        {formType.tag === 'update'
-          ? (<ShortText.view
-              extraChildProps={{}}
-              help='TODO'
-              label={userToKeyClockIdentityProviderTitleCase(formType.value)}
-              disabled
-              state={state.idpUsername}
-              dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />)
-          : null}
+        <ShortText.view
+          extraChildProps={{}}
+          help='TODO'
+          label={userToKeyClockIdentityProviderTitleCase(state.user)}
+          disabled
+          state={state.idpUsername}
+          dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />
 
         <ShortText.view
           extraChildProps={{}}
@@ -238,7 +217,7 @@ export const view: View<Props> = props => {
           state={state.name}
           dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value))} />
 
-        {isPublicSectorUserType(formTypeToUserType(formType))
+        {isPublicSectorUserType(state.user.type)
           ? (<ShortText.view
               extraChildProps={{}}
               label='Job Title'
@@ -258,3 +237,52 @@ export const view: View<Props> = props => {
     </Row>
   );
 };
+
+interface PersistParams {
+  state: Immutable<State>;
+  extraUpdateBody: Omit<UpdateRequestBody, keyof Values>;
+  userId: Id;
+}
+
+type PersistReturnValue = Validation<[Immutable<State>, User], Immutable<State>>;
+
+export async function persist(params: PersistParams): Promise<PersistReturnValue> {
+  const { state, extraUpdateBody, userId } = params;
+  const values = getValues(state);
+  let avatarImageFile: Id | undefined = extraUpdateBody.avatarImageFile;
+  if (values.newAvatarImage) {
+    const fileResult = await api.files.create({
+      name: values.newAvatarImage.name,
+      file: values.newAvatarImage,
+      metadata: [adt('any')]
+    });
+    switch (fileResult.tag) {
+      case 'valid':
+        avatarImageFile = fileResult.value.id;
+        break;
+      case 'unhandled':
+      case 'invalid':
+        return invalid(setErrors(state, {
+          newAvatarImage: ['Please select a different avatar image.']
+        }));
+    }
+  }
+  const result = await api.users.update(userId, {
+    ...extraUpdateBody,
+    name: values.name,
+    email: values.email,
+    jobTitle: values.jobTitle,
+    avatarImageFile
+  });
+  switch (result.tag) {
+    case 'invalid':
+      return invalid(setErrors(state, result.value));
+    case 'unhandled':
+      return invalid(state);
+    case 'valid':
+      return valid([
+        immutable(await init({ user: result.value })),
+        result.value
+      ]);
+  }
+}

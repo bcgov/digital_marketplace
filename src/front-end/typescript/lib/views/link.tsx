@@ -33,15 +33,17 @@ interface LinkSymbolProps {
   className?: string;
 }
 
+const ICON_SIZE = 1; //rem
+
 const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className = '' }) => {
   className = `${className} flex-shrink-0 flex-grow-0`;
   switch (symbol_.tag) {
     case 'icon':
-      return (<Icon name={symbol_.value} className={className} width={1} height={1} />);
+      return (<Icon name={symbol_.value} className={className} width={ICON_SIZE} height={ICON_SIZE} />);
     case 'image':
       return (<img src={symbol_.value} className={className} style={{ width: '1.75rem', height: '1.75rem', objectFit: 'cover', borderRadius: '50%' }} />);
     case 'emptyIcon':
-      return (<div style={{ width: '1rem', height: '1rem' }} className={className}></div>);
+      return (<div style={{ width: `${ICON_SIZE}rem`, height: `${ICON_SIZE}rem` }} className={className}></div>);
   }
 };
 

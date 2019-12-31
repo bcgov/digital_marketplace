@@ -1,4 +1,5 @@
 import * as FormField from 'front-end/lib/components/form-field';
+import { ViewElement } from 'front-end/lib/framework';
 import React from 'react';
 import { Spinner } from 'reactstrap';
 import { CustomInput } from 'reactstrap';
@@ -14,7 +15,7 @@ type InnerChildMsg
   = ADT<'onChange', Value>;
 
 interface ExtraChildProps {
-  inlineLabel: string;
+  inlineLabel: string | ViewElement;
   loading?: boolean;
 }
 

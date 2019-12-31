@@ -42,8 +42,8 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <h1>Accepted Policies, Terms & Agreements</h1>
           <p>
             {acceptedTerms
-              ? `You agreed to the following on ${formatDate(acceptedTerms)} at ${formatTime(acceptedTerms, true)}:`
-              : 'You have not yet agreed to the following:'}
+              ? `You agreed to the following on ${formatDate(acceptedTerms)} at ${formatTime(acceptedTerms, true)}.`
+              : 'You have not yet agreed to the following.'}
           </p>
         </Col>
       </Row>

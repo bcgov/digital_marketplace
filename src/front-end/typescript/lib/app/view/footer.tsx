@@ -43,7 +43,7 @@ const Footer: View<{}> = () => {
         <Row>
           <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3 o-75'>
             {links.map((link, i) => (
-              <div key={`footer-link-${i}`} className={`mb-3 ${i < links.length - 1 ? 'pr-2 mr-2 border-right' : ''}`}>
+              <div key={`footer-link-${i}`} className={`mb-3 ${i < links.length - 1 ? 'pr-3 mr-3 border-right' : ''}`}>
                 <Link {...link} color='white' button={false} />
               </div>
             ))}

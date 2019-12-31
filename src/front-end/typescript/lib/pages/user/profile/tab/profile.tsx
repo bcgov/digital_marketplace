@@ -11,10 +11,10 @@ import Badge from 'front-end/lib/views/badge';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
-import React, { Fragment } from 'react';
+import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
-import { adt, ADT, Id } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
   saveChangesLoading: number;
@@ -33,14 +33,14 @@ export type InnerMsg
   | ADT<'cancelEditingForm'>
   | ADT<'saveChanges'>
   | ADT<'toggleAccountActivation'>
-  | ADT<'adminCheckbox', Checkbox.Msg> //TODO
+  | ADT<'adminCheckbox', Checkbox.Msg>
   | ADT<'savePermissions'>
   | ADT<'startEditingPermissions'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 async function resetProfileForm(user: User): Promise<Immutable<ProfileForm.State>> {
-  return immutable(await ProfileForm.init(adt('update', user)));
+  return immutable(await ProfileForm.init({ user }));
 }
 
 const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
@@ -111,42 +111,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         startSaveChangesLoading(state),
         async state => {
-          state = stopSaveChangesLoading(state);
-          const values = ProfileForm.getValues(state.profileForm);
-          let avatarImageFile: Id | undefined = state.profileUser.avatarImageFile && state.profileUser.avatarImageFile.id;
-          if (values.newAvatarImage) {
-            const fileResult = await api.files.create({
-              name: values.newAvatarImage.name,
-              file: values.newAvatarImage,
-              metadata: [adt('any')]
-            });
-            switch (fileResult.tag) {
-              case 'valid':
-                avatarImageFile = fileResult.value.id;
-                break;
-              case 'unhandled':
-              case 'invalid':
-                return state.update('profileForm', v => ProfileForm.setErrors(v, {
-                  newAvatarImage: ['Please select a different avatar image.']
-                }));
+          state = stopSaveChangesLoading(state)
+            .set('isEditingForm', false);
+          const result = await ProfileForm.persist({
+            state: state.profileForm,
+            userId: state.profileUser.id,
+            extraUpdateBody: {
+              avatarImageFile: state.profileUser.avatarImageFile && state.profileUser.avatarImageFile.id
             }
-          }
-          const result = await api.users.update(state.profileUser.id, {
-            name: values.name,
-            email: values.email,
-            jobTitle: values.jobTitle,
-            avatarImageFile
           });
           switch (result.tag) {
-            case 'invalid':
-              return state.update('profileForm', v => ProfileForm.setErrors(v, result.value));
-            case 'unhandled':
-              return state;
             case 'valid':
-              return state
-                .set('isEditingForm', false)
-                .set('profileUser', result.value)
-                .set('profileForm', await resetProfileForm(result.value));
+              return state = state
+                .set('profileUser', result.value[1])
+                .set('profileForm', result.value[0]);
+            case 'invalid':
+              return state.set('profileForm', result.value);
           }
         }
       ];
@@ -269,7 +249,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
     <ViewDetail name='Permission(s)'>
       <div className='d-flex align-items-center'>
         <Checkbox.view
-          extraChildProps={{inlineLabel: 'Admin'}}
+          extraChildProps={{ inlineLabel: 'Admin' }}
           className='mb-0 mr-3'
           disabled={!state.isEditingAdminCheckbox || isLoading}
           state={state.adminCheckbox}
@@ -360,23 +340,21 @@ const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) 
   return (
     <Row className='mt-4'>
       <Col xs='12' className='py-1 d-flex flex-nowrap flex-row flex-md-row-reverse align-items-center overflow-auto'>
-          <Fragment>
-            <LoadingButton
-              disabled={!isValid || isDisabled}
-              onClick={() => dispatch(adt('saveChanges'))}
-              loading={isSaveChangesLoading}
-              symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-              color='primary'>
-              Save Changes
-            </LoadingButton>
-            <Link
-              disabled={isDisabled}
-              onClick={() => dispatch(adt('cancelEditingForm'))}
-              color='secondary'
-              className='px-3'>
-              Cancel
-            </Link>
-          </Fragment>
+          <LoadingButton
+            disabled={!isValid || isDisabled}
+            onClick={() => dispatch(adt('saveChanges'))}
+            loading={isSaveChangesLoading}
+            symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+            color='primary'>
+            Save Changes
+          </LoadingButton>
+          <Link
+            disabled={isDisabled}
+            onClick={() => dispatch(adt('cancelEditingForm'))}
+            color='secondary'
+            className='px-3'>
+            Cancel
+          </Link>
       </Col>
     </Row>
   );
