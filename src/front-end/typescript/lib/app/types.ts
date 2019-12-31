@@ -3,6 +3,7 @@ import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOpportunities from 'front-end/lib/pages/opportunities';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
@@ -17,6 +18,7 @@ import { ADT } from 'shared/lib/types';
 
 export type Route
   = ADT<'landing',       PageLanding.RouteParams>
+  | ADT<'opportunities', PageOpportunities.RouteParams>
   | ADT<'content',       PageContent.RouteParams>
   | ADT<'signOut',       PageSignOut.RouteParams>
   | ADT<'signIn',        PageSignIn.RouteParams>
@@ -46,6 +48,7 @@ export interface State {
 
   pages: {
     landing?: Immutable<PageLanding.State>;
+    opportunities?: Immutable<PageOpportunities.State>;
     content?: Immutable<PageContent.State>;
     signOut?: Immutable<PageSignOut.State>;
     signUpStepOne?: Immutable<PageSignUpStepOne.State>;
@@ -65,6 +68,7 @@ type InnerMsg
   | ADT<'closeModal'>
   | ADT<'nav', Nav.Msg>
   | ADT<'pageLanding', PageLanding.Msg>
+  | ADT<'pageOpportunities', PageOpportunities.Msg>
   | ADT<'pageContent', PageContent.Msg>
   | ADT<'pageSignIn', PageSignIn.Msg>
   | ADT<'pageSignOut', PageSignOut.Msg>

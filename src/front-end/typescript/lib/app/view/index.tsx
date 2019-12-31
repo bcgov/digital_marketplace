@@ -4,18 +4,10 @@ import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import { compact } from 'lodash';
-import { default as React } from 'react';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import { fileBlobPath } from 'shared/lib/resources/file';
-import { UserType } from 'shared/lib/resources/user';
-import { ADT, adt, adtCurried } from 'shared/lib/types';
-
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOpportunities from 'front-end/lib/pages/opportunities';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
@@ -25,6 +17,14 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
+import Icon from 'front-end/lib/views/icon';
+import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import { compact } from 'lodash';
+import { default as React } from 'react';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import { fileBlobPath } from 'shared/lib/resources/file';
+import { UserType } from 'shared/lib/resources/user';
+import { ADT, adt, adtCurried } from 'shared/lib/types';
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: ComponentViewProps<State, Msg>,
@@ -49,6 +49,14 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageLanding.component,
         state => state.pages.landing,
         value => ({ tag: 'pageLanding', value })
+      );
+
+    case 'opportunities':
+      return makeViewPageProps(
+        props,
+        PageOpportunities.component,
+        state => state.pages.opportunities,
+        value => ({ tag: 'pageOpportunities', value })
       );
 
     case 'content':
@@ -249,9 +257,8 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
   let left: Nav.NavLink[] = [];
   const opporunitiesLink: Nav.NavLink = {
     text: 'Opportunities',
-    // TODO add opportunities route when available.
-    active: state.activeRoute.tag === 'landing',
-    dest: routeDest(adt('landing', null))
+    active: state.activeRoute.tag === 'opportunities',
+    dest: routeDest(adt('opportunities', null))
   };
   if (sessionUser) {
     // User has signed in.

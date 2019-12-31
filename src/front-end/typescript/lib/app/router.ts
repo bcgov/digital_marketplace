@@ -92,6 +92,15 @@ const router: Router<Route> = {
       }
     },
     {
+      path: '/opportunities',
+      makeRoute() {
+        return {
+          tag: 'opportunities',
+          value: null
+        };
+      }
+    },
+    {
       path: '/content/:contentId',
       makeRoute({ params }) {
         return {
@@ -161,6 +170,8 @@ const router: Router<Route> = {
     switch (route.tag) {
       case 'landing':
         return '/';
+      case 'opportunities':
+        return '/opportunities';
       case 'content':
         return `/content/${route.value}`;
       case 'signIn':

@@ -9,26 +9,23 @@ export interface State {
   empty: true;
 }
 
-type InnerMsg
-  = ADT<'noop'>;
-
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  empty: true
-});
+const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
+  return { empty: true };
+};
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        Landing page coming soon.
+        Opportunities Page Coming Soon
       </Col>
     </Row>
   );
@@ -39,6 +36,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Welcome');
+    return makePageMetadata('Opportunities');
   }
 };

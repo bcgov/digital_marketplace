@@ -3,12 +3,10 @@ import { Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
-import { ADT, adtCurried } from 'shared/lib/types';
-
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as PageOpportunities from 'front-end/lib/pages/opportunities';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
@@ -18,6 +16,8 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
+import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
+import { ADT, adtCurried } from 'shared/lib/types';
 
 function setSession(state: Immutable<State>, validated: api.ResponseValidation<Session, string[]>): Immutable<State> {
 return state.set('shared', {
@@ -120,6 +120,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageLanding.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageLanding' as const, value };
+        }
+      });
+
+    case 'opportunities':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunities'],
+        childRouteParams: route.value,
+        childInit: PageOpportunities.component.init,
+        childGetMetadata: PageOpportunities.component.getMetadata,
+        childGetModal: PageOpportunities.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOpportunities' as const, value };
         }
       });
 
@@ -377,6 +390,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageLanding.component.update,
         childGetMetadata: PageLanding.component.getMetadata,
         childGetModal: PageLanding.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOpportunities':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunities', value }),
+        childStatePath: ['pages', 'opportunities'],
+        childUpdate: PageOpportunities.component.update,
+        childGetMetadata: PageOpportunities.component.getMetadata,
+        childGetModal: PageOpportunities.component.getModal,
         childMsg: msg.value
       });
 
