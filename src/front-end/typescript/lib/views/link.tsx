@@ -12,7 +12,10 @@ export const routeDest = adtCurried<RouteDest>('route');
 type ExternalDest = ADT<'external', string>;
 export const externalDest = adtCurried<ExternalDest>('external');
 
-export type Dest = RouteDest | ExternalDest;
+type EmailDest = ADT<'email', string>;
+export const emailDest = adtCurried<EmailDest>('email');
+
+export type Dest = RouteDest | ExternalDest | EmailDest;
 
 type IconLinkSymbol = ADT<'icon', AvailableIcons>;
 export const iconLinkSymbol = adtCurried<IconLinkSymbol>('icon');
@@ -107,6 +110,7 @@ function AnchorLink(props: AnchorProps) {
     switch (dest.tag) {
       case 'route': return router.routeToUrl(dest.value);
       case 'external': return dest.value;
+      case 'email': return `mailto:${dest.value}`;
     }
   })();
   let finalClassName = 'text-nowrap';

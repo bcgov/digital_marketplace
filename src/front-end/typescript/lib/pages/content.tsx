@@ -9,7 +9,12 @@ import { adt, ADT } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
 export type ContentId
-  = 'terms-and-conditions';
+  = 'terms-and-conditions'
+  | 'about'
+  | 'disclaimer'
+  | 'privacy'
+  | 'accessibility'
+  | 'copyright';
 
 export function parseContentId(id: any): ContentId | null {
   switch (id) {
@@ -31,6 +36,21 @@ type ContentDefinitions = {
 const DEFINITIONS: ContentDefinitions = {
   'terms-and-conditions': {
     title: 'Terms & Conditions'
+  },
+  'about': {
+    title: 'About'
+  },
+  'disclaimer': {
+    title: 'Disclaimer'
+  },
+  'privacy': {
+    title: 'Privacy'
+  },
+  'accessibility': {
+    title: 'Accessibility'
+  },
+  'copyright': {
+    title: 'Copyright'
   }
 };
 

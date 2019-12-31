@@ -353,7 +353,7 @@ const view: ComponentView<State, Msg> = props => {
       <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
-        <Footer session={state.shared.session} />
+        {viewPageProps.component.simpleNav ? null : (<Footer />)}
         <ViewModal dispatch={dispatch} modal={state.modal} />
       </div>
     );

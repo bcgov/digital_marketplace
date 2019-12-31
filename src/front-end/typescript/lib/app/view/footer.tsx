@@ -1,28 +1,52 @@
+import { CONTACT_EMAIL } from 'front-end/config';
 import { View } from 'front-end/lib/framework';
+import Link, { AnchorProps, emailDest, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { Session } from 'shared/lib/resources/session';
+import { adt } from 'shared/lib/types';
 
-export interface State {
-  title: string;
-}
+const links: AnchorProps[] = [
+  {
+    children: 'Home',
+    dest: routeDest(adt('landing', null))
+  },
+  {
+    children: 'About',
+    dest: routeDest(adt('content', 'about'))
+  },
+  {
+    children: 'Disclaimer',
+    dest: routeDest(adt('content', 'disclaimer'))
+  },
+  {
+    children: 'Privacy',
+    dest: routeDest(adt('content', 'privacy'))
+  },
+  {
+    children: 'Accessibility',
+    dest: routeDest(adt('content', 'accessibility'))
+  },
+  {
+    children: 'Copyright',
+    dest: routeDest(adt('content', 'copyright'))
+  },
+  {
+    children: 'Contact Us',
+    dest: emailDest(CONTACT_EMAIL)
+  }
+];
 
-const ProvinceLogo: View<{}> = () => {
-  return (
-    <img
-      src='/images/bcgov_logo.svg'
-      alt='The Province of British Columbia'
-      style={{ width: '165px' }} />
-  );
-};
-
-const Footer: View<{ session?: Session }> = ({ session }) => {
+const Footer: View<{}> = () => {
   return (
     <footer className='w-100 bg-info text-light border-top-gov'>
-      <Container className='py-4'>
+      <Container>
         <Row>
-          <Col xs='12' className='d-flex flex-row justify-content-between align-items-center'>
-            <ProvinceLogo />
+          <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3 o-75'>
+            {links.map((link, i) => (
+              <div key={`footer-link-${i}`} className={`mb-3 ${i < links.length - 1 ? 'pr-2 mr-2 border-right' : ''}`}>
+                <Link {...link} color='white' button={false} />
+              </div>
+            ))}
           </Col>
         </Row>
       </Container>
