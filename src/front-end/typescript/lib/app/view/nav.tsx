@@ -75,7 +75,14 @@ const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; 
   return (
     <Dropdown isOpen={open} toggle={toggleOpen}>
       <DropdownToggle caret tag='div' className='text-white' style={{ cursor: 'pointer' }}>
-        <img src={imageUrl} className='rounded-circle' style={{ width: '2rem', height: '2rem', objectFit: 'cover' }} />
+        <img
+          src={imageUrl}
+          className='rounded-circle'
+          style={{
+            width: '2.75rem',
+            height: '2.75rem',
+            objectFit: 'cover'
+          }} />
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (
