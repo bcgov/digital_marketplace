@@ -4,7 +4,6 @@ import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/f
 //import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import React from 'react';
-//import { Spinner } from 'reactstrap';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
@@ -37,8 +36,7 @@ const view: ComponentView<State, Msg> = props => {
     <div>
       <Row className='mb-4'>
         <Col xs='12'>
-          <h1>Title</h1>
-          <p>Description</p>
+          <h3>Coming Soon</h3>
         </Col>
     </Row>
   </div>
