@@ -9,8 +9,8 @@ export interface Session {
   user?: User;
 }
 
-export function hasUserAcceptedTerms(session?: Session): boolean {
-  return !!(session
-      && session.user
-      && session.user.acceptedTerms);
+export function hasAcceptedTermsOrIsAnonymous(session?: Session): boolean {
+  return session && session.user
+    ? !!session.user.acceptedTerms
+    : true;
 }

@@ -117,6 +117,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           }
 
           let user: User | null = await findOneUserByTypeAndUsername(connection, userType, idpUsername);
+          const existingUser = !!user;
           if (!user) {
             user = await createUser(connection, {
               type: userType,
@@ -139,7 +140,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           return {
             code: 302,
             headers: {
-              'Location': '/sign-up/complete'
+              'Location': existingUser ? '/' : '/sign-up/complete'
             },
             session,
             body: makeTextResponseBody('')

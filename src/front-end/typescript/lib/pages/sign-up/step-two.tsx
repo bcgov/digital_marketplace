@@ -64,7 +64,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
     }));
   },
   async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('signIn', null)));
+    dispatch(replaceRoute(adt('signIn' as const, null)));
     return invalid(null);
   }
 });
@@ -113,7 +113,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           });
           switch (result.tag) {
             case 'valid':
-              dispatch(replaceRoute(adt('landing', null)));
+              dispatch(replaceRoute(adt('landing' as const, null)));
               return state = state
                 .set('user', result.value[1])
                 .set('profileForm', result.value[0]);

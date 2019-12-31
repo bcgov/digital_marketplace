@@ -23,7 +23,7 @@ import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { fileBlobPath } from 'shared/lib/resources/file';
-import { hasUserAcceptedTerms } from 'shared/lib/resources/session';
+import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 
@@ -39,7 +39,7 @@ function makeViewPageProps<RouteParams, PageState, PageMsg>(
     mapPageMsg,
     component: {
       ...component,
-      simpleNav: !hasUserAcceptedTerms(props.state.shared.session) && isAllowedRouteForUsersWithUnacceptedTerms(props.state.activeRoute)
+      simpleNav: !hasAcceptedTermsOrIsAnonymous(props.state.shared.session) && isAllowedRouteForUsersWithUnacceptedTerms(props.state.activeRoute)
     }
   };
 }

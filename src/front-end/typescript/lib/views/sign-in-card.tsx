@@ -27,14 +27,15 @@ export function SignInCard(props: SignInCardProps) {
     <Row>
       <Col xs='12'>
         <div className='mx-auto bg-white p-4 shadow mb-4 border rounded-sm'>
-          <h2>
+          <h3 className='d-flex align-items-start flex-nowrap'>
             <Icon
               name={userTypeToIcon(props.userType)}
-              width={1.5}
-              height={1.5}
-              color='primary' />
-            <span className='pl-1'>{props.title}</span>
-          </h2>
+              width={1.75}
+              height={1.75}
+              className='mt-1'
+              color='info' />
+            <span className='pl-2'>{props.title}</span>
+          </h3>
           <p>{props.description}</p>
           <Link
             button

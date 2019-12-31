@@ -16,7 +16,7 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-import { CURRENT_SESSION_ID, hasUserAcceptedTerms, Session } from 'shared/lib/resources/session';
+import { CURRENT_SESSION_ID, hasAcceptedTermsOrIsAnonymous, Session } from 'shared/lib/resources/session';
 import { adt, ADT, adtCurried } from 'shared/lib/types';
 
 function setSession(state: Immutable<State>, validated: api.ResponseValidation<Session, string[]>): Immutable<State> {
@@ -241,7 +241,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // Refresh the front-end's view of the current session.
           state = setSession(state, await api.sessions.readOne(CURRENT_SESSION_ID));
           // Override the incoming route if the user has not accepted terms.
-          if (!hasUserAcceptedTerms(state.shared.session) && !isAllowedRouteForUsersWithUnacceptedTerms(incomingRoute)) {
+          if (!hasAcceptedTermsOrIsAnonymous(state.shared.session) && !isAllowedRouteForUsersWithUnacceptedTerms(incomingRoute)) {
             dispatch(newRoute(adt('signUpStepTwo' as const, null)));
             return state;
           }
