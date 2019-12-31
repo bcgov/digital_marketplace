@@ -1,10 +1,10 @@
 import { ComponentView, Immutable, PageMetadata, Update } from 'front-end/lib/framework';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
-import { isInvalid, Validation } from 'shared/lib/validation';
+import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
-export type UpdateState<State> = (state: Immutable<State>) => Immutable<State>;
+export type WithState<State, Result = Immutable<State>> = (state: Immutable<State>) => Result;
 
-export function makeStartLoading<State>(key: keyof State): UpdateState<State> {
+export function makeStartLoading<State>(key: keyof State): WithState<State> {
   return state => {
     const value = state.get(key);
     if (typeof value === 'number') {
@@ -17,7 +17,7 @@ export function makeStartLoading<State>(key: keyof State): UpdateState<State> {
   };
 }
 
-export function makeStopLoading<State>(key: keyof State): UpdateState<State> {
+export function makeStopLoading<State>(key: keyof State): WithState<State> {
   return state => {
     const value = state.get(key);
     if (typeof value === 'number') {
@@ -31,6 +31,10 @@ export function makeStopLoading<State>(key: keyof State): UpdateState<State> {
 }
 
 export type ValidatedState<ValidState> = Validation<Immutable<ValidState>, null>;
+
+export function withValid<ValidState, Result>(fn: WithState<ValidState, Result>, defaultResult: Result): WithState<ValidatedState<ValidState>, Result> {
+  return state => getValidValue(mapValid(state, fn), defaultResult);
+}
 
 export function updateValid<ValidState, Msg>(update: Update<ValidState, Msg>): Update<ValidatedState<ValidState>, Msg> {
   return ({ state, msg }) => {

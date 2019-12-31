@@ -1,4 +1,4 @@
-import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -8,6 +8,7 @@ import { userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
+import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { User } from 'shared/lib/resources/user';
@@ -176,7 +177,7 @@ const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({ state, dispatc
   );
 };
 
-const ViewProfileForm: ComponentView<ValidState, Msg> = props => {
+const view: ComponentView<State, Msg> = viewValid(props => {
   const { state, dispatch } = props;
   const isDisabled = state.completeProfileLoading > 0;
   return (
@@ -189,26 +190,21 @@ const ViewProfileForm: ComponentView<ValidState, Msg> = props => {
       <ViewProfileFormButtons {...props} />
     </div>
   );
-};
-
-const view: ComponentView<State, Msg> = viewValid(props => {
-  return (
-    <div>
-      <Row>
-        <Col xs='12'>
-          <h2>You're almost done!</h2>
-          <p className='mb-5'>Your {userTypeToTitleCase(props.state.user.type)} account for the Digital Marketplace is almost ready. Please confirm your information below to complete your profile.</p>
-        </Col>
-      </Row>
-      <ViewProfileForm {...props} />
-    </div>
-  );
 });
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+  sidebar: {
+    size: 'large',
+    color: 'light-blue',
+    view: makeInstructionalSidebar<State, Msg>({
+      getTitle: () => 'You\'re almost done!',
+      getDescription: withValid(state => `Your ${userTypeToTitleCase(state.user.type)} account for the Digital Marketplace is almost ready. Please confirm your information below to complete your profile.`, ''),
+      getFooter: () => (<span></span>)
+    })
+  },
   getMetadata() {
     return makePageMetadata('Complete Your Profile');
   }

@@ -11,7 +11,6 @@ export interface Props {
 }
 
 const Badge: View<Props> = ({ text, color, className = '', pill }) => {
-  className = `py-1 px-2 font-size-small ${className}`;
   return (
     <reactstrap.Badge color={color} className={className} pill={pill}>
       {text}

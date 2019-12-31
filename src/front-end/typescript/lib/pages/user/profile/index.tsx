@@ -237,7 +237,7 @@ function makeComponent<K extends TabId>(): PageComponent<RouteParams, SharedStat
     sidebar: {
       size: 'medium',
       color: 'light',
-      isEmpty(state) {
+      isEmptyOnMobile(state) {
         if (state.tag !== 'valid') { return false; }
         return !state.value.sidebar.links.length;
       },

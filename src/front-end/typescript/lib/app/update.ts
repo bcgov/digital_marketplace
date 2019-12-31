@@ -1,4 +1,4 @@
-import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
@@ -25,8 +25,8 @@ return state.set('shared', {
   });
 }
 
-const startTransition: UpdateState<State> = makeStartLoading('transitionLoading');
-const stopTransition: UpdateState<State> = makeStopLoading('transitionLoading');
+const startTransition = makeStartLoading<State>('transitionLoading');
+const stopTransition = makeStopLoading<State>('transitionLoading');
 
 async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route: Route): Promise<Immutable<State>> {
   const defaultPageInitParams = {

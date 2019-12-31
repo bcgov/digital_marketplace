@@ -87,7 +87,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row className='mb-4'>
         <Col xs='12'>
           <h2>Notifications</h2>
-          <p>Email notifications will be sent to {state.profileUser.email} for the options selected below. If this email address is incorrect please update your profile.</p>
+          <p>Email notifications will be sent to <b>{state.profileUser.email}</b> for the options selected below. If this email address is incorrect please update your profile.</p>
         </Col>
       </Row>
       <Row>

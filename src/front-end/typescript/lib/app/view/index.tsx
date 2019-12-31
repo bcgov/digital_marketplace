@@ -326,13 +326,24 @@ function regularNavProps({ state, dispatch }: ComponentViewProps<State, Msg>): N
   };
 }
 
+const completeProfileAction = Nav.linkAccountAction({
+  text: 'Complete Your Profile',
+  symbol_: leftPlacement(iconLinkSymbol('arrow-left')),
+  button: true,
+  color: 'primary',
+  dest: routeDest(adt('signUpStepTwo', null))
+});
+
 function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
-  const accountMenu = Nav.unauthenticatedAccountMenu([Nav.linkAccountAction({
-    ...signOutLink,
-    button: true,
-    outline: true,
-    color: 'white'
-  })]);
+  const accountMenu = Nav.unauthenticatedAccountMenu([
+    ...(props.state.activeRoute.tag !== 'signUpStepTwo' ? [completeProfileAction] : []),
+    Nav.linkAccountAction({
+      ...signOutLink,
+      button: true,
+      outline: true,
+      color: 'white'
+    })
+  ]);
   return {
     ...regularNavProps(props),
     contextualLinks: undefined,

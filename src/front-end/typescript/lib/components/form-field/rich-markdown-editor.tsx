@@ -1,5 +1,5 @@
 import { MARKDOWN_HELP_URL } from 'front-end/config';
-import { makeStartLoading, makeStopLoading, UpdateState } from 'front-end/lib';
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
@@ -54,8 +54,8 @@ const childInit: ChildComponent['init'] = async params => ({
   selectionEnd: 0
 });
 
-const startLoading: UpdateState<ChildState> = makeStartLoading('loading');
-const stopLoading: UpdateState<ChildState>  = makeStopLoading('loading');
+const startLoading = makeStartLoading<ChildState>('loading');
+const stopLoading = makeStopLoading<ChildState>('loading');
 
 interface InsertParams {
   separateLine?: boolean;
