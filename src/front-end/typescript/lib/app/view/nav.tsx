@@ -276,25 +276,23 @@ const DesktopBottomNavbar: View<Props> = props => {
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex flex-nowrap'>
               {contextualLinks.left.map((link, i) => (
-                <div className={`${i < contextualLinks.left.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`}>
+                <div className={`${i < contextualLinks.left.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`} key={`contextual-link-left-${i}`}>
                   <NavLink
                     {...link}
                     dispatch={props.dispatch}
                     color='white'
-                    className={link.active ? 'o-100 font-weight-bold' : 'o-75'}
-                    key={`contextual-link-left-${i}`} />
+                    className={link.active ? 'o-100 font-weight-bold' : 'o-75'} />
                 </div>
               ))}
             </div>
             <div className='d-flex flex-nowrap'>
               {contextualLinks.right.map((link, i) => (
-                <div className={`${i < contextualLinks.right.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`}>
+                <div className={`${i < contextualLinks.right.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`} key={`contextual-link-right-${i}`}>
                   <NavLink
                     {...link}
                     dispatch={props.dispatch}
                     color='white'
-                    className={link.active ? 'o-100 font-weight-bold' : 'o-75'}
-                    key={`contextual-link-left-${i}`} />
+                    className={link.active ? 'o-100 font-weight-bold' : 'o-75'} />
                 </div>
               ))}
             </div>
