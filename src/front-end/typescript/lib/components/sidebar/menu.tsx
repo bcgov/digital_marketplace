@@ -5,7 +5,7 @@ import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 import { ADT, adt } from 'shared/lib/types';
 
-interface SidebarLink {
+export interface SidebarLink {
   text: string;
   icon: AvailableIcons;
   active: boolean;
@@ -63,6 +63,7 @@ const linksByActive = (links: SidebarLink[], activePredicate: boolean) => links.
 
 export const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
+  if (!state.links.length) { return null; }
   const [activeLink, ...otherActiveLinks] = linksByActive(state.links, true);
   const inactiveLinks = linksByActive(state.links, false);
   return (

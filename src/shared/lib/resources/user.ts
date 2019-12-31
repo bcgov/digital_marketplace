@@ -45,6 +45,10 @@ export interface User {
   deactivatedBy?: Id;
 }
 
+export function usersAreEquivalent(a: User, b: User): boolean {
+  return a.id === b.id;
+}
+
 export function isAdmin(user: User): boolean {
   return user.type === UserType.Admin;
 }

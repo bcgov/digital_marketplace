@@ -289,6 +289,9 @@ export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State,
   size: 'medium' | 'large';
   color: BootstrapColor;
   view: View<Props>;
+  // isEmpty tells the framework whether the sidebar is empty and should
+  // adjust its padding for mobile viewports accordingly.
+  isEmpty?(state: Immutable<State>): boolean;
 }
 
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {

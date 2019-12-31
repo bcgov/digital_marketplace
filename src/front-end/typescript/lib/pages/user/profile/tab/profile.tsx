@@ -14,7 +14,7 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import React, { Fragment } from 'react';
 import { Spinner } from 'reactstrap';
 import { Col, Row } from 'reactstrap';
-import { isAdmin, isPublicSectorEmployee, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 
 export interface Params {
@@ -47,10 +47,6 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 async function resetProfileForm(user: User): Promise<Immutable<ProfileForm.State>> {
   return immutable(await ProfileForm.init(adt('update', user)));
-}
-
-function usersAreEquivalent(a: User, b: User): boolean {
-  return a.id === b.id;
 }
 
 const init: Init<Params, State> = async ({ viewerUser, profileUser }) => {

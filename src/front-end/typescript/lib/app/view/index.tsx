@@ -325,7 +325,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
               sessionUser.type === UserType.Vendor
                 ? {
                     text: 'My Organizations',
-                    dest: routeDest(adt('userProfile', { userId: sessionUser.id, activeTab: 'organizations' as const }))
+                    dest: routeDest(adt('userProfile', { userId: sessionUser.id, tab: 'organizations' as const }))
                   }
                 : undefined
             ])

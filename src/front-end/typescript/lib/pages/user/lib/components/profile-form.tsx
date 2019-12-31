@@ -192,7 +192,7 @@ export const view: View<Props> = props => {
         <Row>
           <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
             <img
-              className='rounded-circle'
+              className='rounded-circle border'
               style={{
                 width: '5rem',
                 height: '5rem',

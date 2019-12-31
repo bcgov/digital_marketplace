@@ -6,29 +6,33 @@ import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDi
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import * as ProfileTab from 'front-end/lib/pages/user/profile/tab/profile';
+import { AvailableIcons } from 'front-end/lib/views/icon';
 import { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
-import { isAdmin, User } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { isAdmin, User, usersAreEquivalent, UserType } from 'shared/lib/resources/user';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
 type TabState
   = ADT<'profile', Immutable<ProfileTab.State>>
   | ADT<'notifications', Immutable<ProfileTab.State>>
-  | ADT<'legal', Immutable<ProfileTab.State>>;
+  | ADT<'legal', Immutable<ProfileTab.State>>
+  | ADT<'organizations', Immutable<ProfileTab.State>>;
 
 type TabMsg
   = ADT<'profile', ProfileTab.Msg>
   | ADT<'notifications', ProfileTab.Msg>
-  | ADT<'legal', ProfileTab.Msg>;
+  | ADT<'legal', ProfileTab.Msg>
+  | ADT<'organizations', ProfileTab.Msg>;
 
-type TabId = 'profile' | 'notifications' | 'legal';
+type TabId = 'profile' | 'notifications' | 'legal' | 'organizations';
 
 export function parseTabId(raw: any): TabId | undefined {
   switch (raw) {
     case 'profile':
     case 'notifications':
     case 'legal':
+    case 'organizations':
       return raw;
     default:
       return undefined;
@@ -40,6 +44,7 @@ function tabIdToTitleCase(id: TabId): string {
     case 'profile': return 'Profile';
     case 'notifications': return 'Notifications';
     case 'legal': return 'Accepted Agreements';
+    case 'organizations': return 'Organizations';
   }
 }
 
@@ -51,7 +56,58 @@ async function tabIdToTabState(id: TabId, params: Tab.Params): Promise<TabState>
       return adt('profile', immutable(await ProfileTab.component.init(params)));
     case 'legal':
       return adt('profile', immutable(await ProfileTab.component.init(params)));
+    case 'organizations':
+      return adt('profile', immutable(await ProfileTab.component.init(params)));
   }
+}
+
+function tabIdToIcon(tab: TabId): AvailableIcons {
+  switch (tab) {
+    case 'profile': return 'user';
+    case 'notifications': return 'bell';
+    case 'legal': return 'balance-scale';
+    case 'organizations': return 'building';
+  }
+}
+
+function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+  return {
+    icon: tabIdToIcon(tab),
+    text: tabIdToTitleCase(tab),
+    active: activeTab === tab,
+    dest: routeDest(adt('userProfile', { userId, tab }))
+  };
+}
+
+export async function makeSidebar(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+  const links = (() => {
+    switch (viewerUser.type) {
+      case UserType.Admin:
+        if (usersAreEquivalent(profileUser, viewerUser)) {
+          return [
+            makeSidebarLink('profile', profileUser.id, activeTab),
+            makeSidebarLink('notifications', profileUser.id, activeTab),
+            makeSidebarLink('legal', profileUser.id, activeTab)
+          ];
+        } else {
+          return [];
+        }
+      case UserType.Government:
+        return [
+          makeSidebarLink('profile', profileUser.id, activeTab),
+          makeSidebarLink('notifications', profileUser.id, activeTab),
+          makeSidebarLink('legal', profileUser.id, activeTab)
+        ];
+      case UserType.Vendor:
+        return [
+          makeSidebarLink('profile', profileUser.id, activeTab),
+          makeSidebarLink('organizations', profileUser.id, activeTab),
+          makeSidebarLink('notifications', profileUser.id, activeTab),
+          makeSidebarLink('legal', profileUser.id, activeTab)
+        ];
+    }
+  })();
+  return immutable(await MenuSidebar.init({ links }));
 }
 
 interface ValidState {
@@ -99,28 +155,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
       viewerUser,
       profileUser,
       tab,
-      sidebar: immutable(await MenuSidebar.init({
-        links: [
-          {
-            icon: 'user',
-            text: 'Profile',
-            active: tab.tag === 'profile',
-            dest: routeDest(adt('userProfile', { userId: profileUser.id, tab: 'profile' as const }))
-          },
-          {
-            icon: 'bell',
-            text: 'Notifications',
-            active: tab.tag === 'notifications',
-            dest: routeDest(adt('userProfile', { userId: profileUser.id, tab: 'notifications' as const }))
-          },
-          {
-            icon: 'balance-scale',
-            text: 'Accepted Policies, Terms & Agreements',
-            active: tab.tag === 'legal',
-            dest: routeDest(adt('userProfile', { userId: profileUser.id, tab: 'legal' as const }))
-          }
-        ]
-      }))
+      sidebar: await makeSidebar(profileUser, viewerUser, tab.tag)
     }));
   },
 
@@ -161,6 +196,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               childMsg: msg.value.value,
               mapChildMsg: value => adt('tab' as const, adt('legal' as const, value))
             });
+          case 'organizations':
+            return updateGlobalComponentChild({
+              state,
+              childStatePath: ['tab', 'value'],
+              childUpdate: ProfileTab.component.update,
+              childMsg: msg.value.value,
+              mapChildMsg: value => adt('tab' as const, adt('organizations' as const, value))
+            });
         }
       })();
     case 'sidebar':
@@ -191,6 +234,10 @@ const ViewTab: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
       return (<ProfileTab.component.view
         state={tab.value}
         dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, adt('legal' as const, v)))} />);
+    case 'organizations':
+      return (<ProfileTab.component.view
+        state={tab.value}
+        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, adt('organizations' as const, v)))} />);
   }
 };
 
@@ -203,6 +250,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   sidebar: {
     size: 'medium',
     color: 'light',
+    isEmpty(state) {
+      if (state.tag !== 'valid') { return false; }
+      return !state.value.sidebar.links.length;
+    },
     view: viewValid(({ state, dispatch }) => {
       return (<MenuSidebar.view
         state={state.sidebar}
