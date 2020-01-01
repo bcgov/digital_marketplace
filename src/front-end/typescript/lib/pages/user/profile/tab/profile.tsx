@@ -111,8 +111,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         startSaveChangesLoading(state),
         async state => {
-          state = stopSaveChangesLoading(state)
-            .set('isEditingForm', false);
+          state = stopSaveChangesLoading(state);
           const result = await ProfileForm.persist({
             state: state.profileForm,
             userId: state.profileUser.id,
@@ -123,6 +122,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           switch (result.tag) {
             case 'valid':
               return state = state
+                .set('isEditingForm', false)
                 .set('profileUser', result.value[1])
                 .set('profileForm', result.value[0]);
             case 'invalid':
