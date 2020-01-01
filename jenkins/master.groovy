@@ -1,9 +1,13 @@
 // define constants
 def BUILDCFG_NAME ='dig-mkt-app'
-def IMAGE_NAME = 'dig-mkt-app'
-def DEV_DEPLOYMENT_NAME = 'dig-mkt-app-dev'
-def DEV_TAG_NAME = 'dev'
-def DEV_NS = 'xzyxml-dev'
+def IMAGE_NAME = 'dig-mkt-app-master'
+def TST_DEPLOYMENT_NAME = 'dig-mkt-app-test'
+def TST_TAG_NAME = 'test'
+def TST_NS = 'xzyxml-test'
+def PROD_DEPLOYMENT_NAME = 'dig-mkt-app-prod'
+def PROD_TAG_NAME = 'prod'
+def PROD_BCK_TAG_NAME = 'prod-previous'
+def PROD_NS = 'xzyxml-prod'
 
 // Note: openshiftVerifyDeploy requires policy to be added:
 // oc policy add-role-to-user view system:serviceaccount:xzyxml-tools:jenkins -n xzyxml-dev
@@ -33,9 +37,22 @@ node('maven') {
 	    echo ">>>> Build Complete"
     }
 
-    stage('Deploy to Dev') {
-	    echo ">>> Tag ${IMAGE_HASH} with ${DEV_TAG_NAME}"
- 	    openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: DEV_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
+    stage('Deploy to Test') {
+	    echo ">>> Tag ${IMAGE_HASH} with ${TEST_TAG_NAME}"
+ 	    openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TEST_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
 	    echo ">>>> Deployment Complete"
     }
+}
+
+stage('Deploy to Prod') {	
+  timeout(time: 1, unit: 'DAYS') {
+	  input message: "Deploy to prod?", submitter: 'dhruvio-admin,sutherlanda-admin'
+  }
+  node('master') {
+	  echo ">>> Tag ${PROD_TAG_NAME} with ${PROD_BCK_TAG_NAME}"
+	  openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: PROD_BCK_TAG_NAME, srcStream: IMAGE_NAME, srcTag: PROD_TAG_NAME
+          echo ">>> Tag ${IMAGE_HASH} with ${PROD_TAG_NAME}"
+	  openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: PROD_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
+	  echo ">>>> Deployment Complete"
+  }
 }
