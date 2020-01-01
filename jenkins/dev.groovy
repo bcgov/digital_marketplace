@@ -1,6 +1,6 @@
 // define constants
-def BUILDCFG_NAME ='dig-mkt-app'
-def IMAGE_NAME = 'dig-mkt-app'
+def BUILDCFG_NAME ='dig-mkt-app-dev'
+def IMAGE_NAME = 'dig-mkt-app-dev'
 def DEV_DEPLOYMENT_NAME = 'dig-mkt-app-dev'
 def DEV_TAG_NAME = 'dev'
 def DEV_NS = 'xzyxml-dev'
