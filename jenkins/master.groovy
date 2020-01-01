@@ -38,8 +38,8 @@ node('maven') {
     }
 
     stage('Deploy to Test') {
-	    echo ">>> Tag ${IMAGE_HASH} with ${TEST_TAG_NAME}"
- 	    openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TEST_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
+	    echo ">>> Tag ${IMAGE_HASH} with ${TST_TAG_NAME}"
+ 	    openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TST_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
 	    echo ">>>> Deployment Complete"
     }
 }
