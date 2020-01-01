@@ -13,6 +13,7 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
+import { includes } from 'lodash';
 import { Session } from 'shared/lib/resources/session';
 import { ADT } from 'shared/lib/types';
 
@@ -31,9 +32,14 @@ export type Route
   | ADT<'orgList',       PageOrgList.RouteParams>
   | ADT<'orgEdit',       PageOrgEdit.RouteParams>;
 
+const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
+  'signUpStepTwo',
+  'content',
+  'signOut'
+];
+
 export function isAllowedRouteForUsersWithUnacceptedTerms(route: Route): boolean {
-  return route.tag === 'signUpStepTwo'
-      || route.tag === 'content';
+  return includes(routesAllowedForUsersWithUnacceptedTerms, route.tag);
 }
 
 export interface SharedState {
