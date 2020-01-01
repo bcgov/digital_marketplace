@@ -1,5 +1,10 @@
+import { makeDomainLogger } from 'back-end/lib/logger';
+import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
+import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
+
+const logger = makeDomainLogger(consoleAdapter, 'back-end:config');
 
 // export the root directory of the repository.
 export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../');
@@ -28,7 +33,24 @@ export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
 
 export const ORIGIN = get('ORIGIN', 'http://digital-marketplace.bcgov.realfolk.io').replace(/\/*$/, '');
 
-export const POSTGRES_URL = getPostGresUrl();
+export function getPostgresUrl(): string | null {
+  // *SERVICE* variables are set automatically by OpenShift.
+  const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
+  const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
+  const port = get(`${databaseServiceName}_SERVICE_PORT`, '');
+  const user = get('DATABASE_USERNAME', '');
+  const password = get('DATABASE_PASSWORD', '');
+  const databaseName = get('DATABASE_NAME', '');
+  // Support OpenShift's environment variables.
+  if (host && port && user && password && databaseName) {
+    return `postgresql://${user}:${password}@${host}:${port}/${databaseName}`;
+  } else {
+    // Return standard POSTGRES_URL as fallback.
+    return get('POSTGRES_URL', '') || null;
+  }
+}
+
+export const POSTGRES_URL = getPostgresUrl();
 
 export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 
@@ -71,21 +93,12 @@ function isPositiveInteger(n: number): boolean {
   return !isNaN(n) && !!n && n >= 0 && Math.abs(n % 1) === 0;
 }
 
-export function getPostGresUrl(): string | null {
-  // *SERVICE* variables are set automatically by OpenShift.
-  const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
-  const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
-  const port = get(`${databaseServiceName}_SERVICE_PORT`, '');
-  const user = get('DATABASE_USERNAME', '');
-  const password = get('DATABASE_PASSWORD', '');
-  const databaseName = get('DATABASE_NAME', '');
-  // Support OpenShift's environment variables.
-  if (host && port && user && password && databaseName) {
-    return `postgresql://${user}:${password}@${host}:${port}/${databaseName}`;
-  } else {
-    // Return standard POSTGRES_URL as fallback.
-    return get('POSTGRES_URL', '') || null;
-  }
+function errorToJson(error: Error): object {
+  return {
+    message: error.message,
+    stack: error.stack,
+    raw: error.toString()
+  };
 }
 
 export function getConfigErrors(): string[] {
@@ -123,6 +136,36 @@ export function getConfigErrors(): string[] {
 
   if (!COOKIE_SECRET) {
     errors.push('COOKIE_SECRET must be specified.');
+  }
+
+  // TODO validate FILE_STORAGE_DIR is a directory
+  // and we have correct write permissions.
+  if (!FILE_STORAGE_DIR) {
+    errors.push('FILE_STORAGE_DIR must be specified.');
+  }
+  // Create FILE_STORAGE_DIR
+  try {
+    if (!existsSync(FILE_STORAGE_DIR)) {
+      mkdirSync(FILE_STORAGE_DIR, { recursive: true });
+    }
+  } catch (error) {
+    logger.error('error caught trying to create FILE_STORAGE_DIR', errorToJson(error));
+    errors.push('FILE_STORAGE_DIR does not exist and this process was unable to create it.');
+  }
+
+  // TODO validate TMP_DIR is a directory
+  // and we have correct write permissions.
+  if (!TMP_DIR) {
+    errors.push('TMP_DIR must be specified.');
+  }
+  // Create TMP_DIR
+  try {
+    if (!existsSync(TMP_DIR)) {
+      mkdirSync(TMP_DIR, { recursive: true });
+    }
+  } catch (error) {
+    logger.error('error caught trying to create TMP_DIR', errorToJson(error));
+    errors.push('TMP_DIR does not exist and this process was unable to create it.');
   }
 
   return errors;
