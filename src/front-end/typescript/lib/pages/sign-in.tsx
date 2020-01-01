@@ -57,7 +57,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     view: makeInstructionalSidebar<State, Msg>({
       showBackLink: true,
       getTitle: () => 'Welcome Back to the Digital Marketplace',
-      getDescription: () => 'Pleas sign in to access your Digital Marketplace account.',
+      getDescription: () => 'Please sign in to access your Digital Marketplace account.',
       getFooter: () => (
         <span>
           Don't have an account?&nbsp;
