@@ -3,6 +3,7 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Markdown from 'front-end/lib/views/markdown';
+import { includes } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
@@ -17,11 +18,10 @@ export type ContentId
   | 'copyright';
 
 export function parseContentId(id: any): ContentId | null {
-  switch (id) {
-    case 'terms-and-conditions':
-      return id;
-    default:
-      return null;
+  if (includes(Object.keys(DEFINITIONS), id)) {
+    return id;
+  } else {
+    return null;
   }
 }
 
