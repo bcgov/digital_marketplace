@@ -28,7 +28,6 @@
           }
         },
         "spec": {
-          "completionDeadlineSeconds": 1800,
           "source": {
             "type": "Git",
             "git": {
@@ -42,6 +41,16 @@
             "type": "Source",
             "dockerStrategy": {
               "noCache": false
+            }
+          },
+          "resources": {
+            "limits": {
+              "cpu": 2,
+              "memory": "4Gi"
+            },
+            "requests": {
+              "cpu": 1,
+              "memory": "2Gi"
             }
           },
           "output": {
