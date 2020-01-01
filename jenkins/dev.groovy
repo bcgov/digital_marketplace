@@ -44,41 +44,15 @@ node('maven') {
     }
 }
 
-// def owaspPodLabel = "owasp-zap-${UUID.randomUUID().toString()}"
-// podTemplate(label: owaspPodLabel, name: owaspPodLabel, serviceAccount: 'jenkins', cloud: 'openshift', containers: [
-//   containerTemplate(
-//     name: 'jnlp',
-//     image: '172.50.0.2:5000/openshift/jenkins-slave-zap',
-//     resourceRequestCpu: '500m',
-//     resourceLimitCpu: '1000m',
-//     resourceRequestMemory: '3Gi',
-//     resourceLimitMemory: '4Gi',
-//     workingDir: '/home/jenkins',
-//     command: '',
-//     args: '${computer.jnlpmac} ${computer.name}'
-//   )
-// ]) {
-//      stage('ZAP Security Scan') {
-//         node(owaspPodLabel) {
-//           sleep 60
-//           def retVal = sh returnStatus: true, script: '/zap/zap-baseline.py -r baseline.html -t https://dig-mkt-app-dev.pathfinder.gov.bc.ca/'
-//           publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '/zap/wrk', reportFiles: 'baseline.html', reportName: 'ZAP Baseline Scan', reportTitles: 'ZAP Baseline Scan'])
-//           echo "Return value is: ${retVal}"
-//         }
-//      }
-//   }
-
-// stage('Deploy to Test') {	
-//   timeout(time: 1, unit: 'DAYS') {
-// 	  input message: "Deploy to test?", submitter: 'dhruvio-admin,SteveChapmanBCDX-admin,sutherlanda-admin'
-//   }
-//   node('master') {
-// 	  echo ">>> Tag ${TST_TAG_NAME} with ${TST_BCK_TAG_NAME}"
-// 	  openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TST_BCK_TAG_NAME, srcStream: IMAGE_NAME, srcTag: TST_TAG_NAME
-//           echo ">>> Tag ${IMAGE_HASH} with ${TST_TAG_NAME}"
-// 	  openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TST_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
-//           sleep 5
-// 	  openshiftVerifyDeployment depCfg: TST_DEPLOYMENT_NAME, namespace: TST_NS, replicaCount: 1, verbose: 'false', verifyReplicaCount: 'false'
-// 	  echo ">>>> Deployment Complete"
-//   }
-// }
+stage('Deploy to Test') {	
+  timeout(time: 1, unit: 'DAYS') {
+	  input message: "Deploy to test?", submitter: 'dhruvio-admin,sutherlanda-admin'
+  }
+  node('master') {
+	  echo ">>> Tag ${TST_TAG_NAME} with ${TST_BCK_TAG_NAME}"
+	  openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TST_BCK_TAG_NAME, srcStream: IMAGE_NAME, srcTag: TST_TAG_NAME
+          echo ">>> Tag ${IMAGE_HASH} with ${TST_TAG_NAME}"
+	  openshiftTag destStream: IMAGE_NAME, verbose: 'false', destTag: TST_TAG_NAME, srcStream: IMAGE_NAME, srcTag: "${IMAGE_HASH}"
+	  echo ">>>> Deployment Complete"
+  }
+}

@@ -107,7 +107,7 @@
         "displayName": "The Jenksinfile this pipeline should use.",
         "description": "The Jenkinsfile this pipeline should use.",
         "required": false,
-        "value": "./jenkins/${TAG_NAME}.groovy"
+        "value": "./jenkins/dev.groovy"
       }
     ]
   }
