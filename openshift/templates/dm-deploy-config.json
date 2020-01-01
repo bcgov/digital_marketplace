@@ -244,7 +244,7 @@
                                 },
                                 "livenessProbe": {
                                     "httpGet": {
-                                        "path": "/",
+                                        "path": "/status",
                                         "port": 3000,
                                         "scheme": "HTTP"
                                     },
@@ -255,7 +255,7 @@
                                 },
                                 "readinessProbe": {
                                     "httpGet": {
-                                        "path": "/",
+                                        "path": "/status",
                                         "port": 3000,
                                         "scheme": "HTTP"
                                     },
