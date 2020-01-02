@@ -169,7 +169,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-4 d-flex flex-column align-items-stretch pt-5 pt-md-8 ${isEmptyOnMobile ? 'pb-md-5' : 'pb-5'}`}>
+                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-5 d-flex flex-column align-items-stretch pt-5 pt-md-8 ${isEmptyOnMobile ? 'pb-md-5' : 'pb-5'}`}>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-md-none' />
                   <sidebar.view {...viewProps} />
                 </Col>

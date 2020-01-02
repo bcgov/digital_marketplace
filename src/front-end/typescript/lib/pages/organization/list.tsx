@@ -7,6 +7,7 @@ import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
+import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 type TableOrganization = OrganizationSlim;
@@ -14,6 +15,7 @@ type TableOrganization = OrganizationSlim;
 export interface State {
   table: Immutable<Table.State>;
   organizations: TableOrganization[];
+  sessionUser?: User;
 }
 
 type InnerMsg = ADT<'table', Table.Msg>;
@@ -38,8 +40,9 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
   }
   return {
     ...(await baseState()),
+    sessionUser: shared.session && shared.session.user,
     organizations: result.value
-    .sort((a, b) => a.legalName.localeCompare(b.legalName))
+      .sort((a, b) => a.legalName.localeCompare(b.legalName))
   };
 };
 
@@ -58,7 +61,18 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+function showOwnerColumn(state: Immutable<State>): boolean {
+  return !!state.sessionUser && state.sessionUser.type !== UserType.Government;
+}
+
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
+  const owner = {
+    children: 'Owner',
+    style: {
+      width: '40%',
+      minWidth: '200px'
+    }
+  };
   return [
     {
       children: 'Organization Name',
@@ -67,29 +81,24 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
         minWidth: '240px'
       }
     },
-    {
-      children: 'Owner',
-      style: {
-        width: '40%',
-        minWidth: '200px'
-      }
-    }
+    ...(showOwnerColumn(state) ? [owner] : [])
   ];
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.organizations.map(org => {
+    const owner = {
+      children: org.owner
+        ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
+        : null
+    };
     return [
       {
         children: org.owner
           ? (<Link dest={routeDest(adt('orgEdit', { orgId: org.id})) }>{org.legalName}</Link>)
           : org.legalName
       },
-      {
-        children: org.owner
-          ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
-          : null
-      }
+      ...(showOwnerColumn(state) ? [owner] : [])
     ];
   });
 }
