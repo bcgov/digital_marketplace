@@ -25,7 +25,7 @@ export interface State {
 type InnerMsg
   = ADT<'orgForm', OrgForm.Msg>
   | ADT<'startEditing'>
-  | ADT<'cancelEditing', OrgResource.Organization>
+  | ADT<'finishEditing', OrgResource.Organization>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -99,8 +99,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         return state;
       }
     ];
-    case 'cancelEditing': {
-      return [ state, async (state) => {
+    case 'finishEditing': {
+      return [ state, async state => {
+        state = state.set('organization', msg.value );
         state = state.set('orgForm', OrgForm.setValues(state.orgForm, msg.value) );
         state = state.set('isEditing', false);
         return state;
@@ -129,7 +130,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isLoading = state.editingLoading > 0;
-
   return (
     <div>
       <Row>
@@ -140,7 +140,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             {
               state.isEditing
               ?
-              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('cancelEditing', state.organization))}>
+              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('finishEditing', state.organization))}>
                 Discard Changes
               </Link>
               :
@@ -157,7 +157,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             state={state.orgForm}
             disabled={!state.isEditing}
             dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
-            submitHook={(org: OrgResource.Organization) => { dispatch(adt('cancelEditing', org)); }}
+            submitHook={(org: OrgResource.Organization) => { dispatch(adt('finishEditing', org)); }}
           />
         </Col>
       </Row>
