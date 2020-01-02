@@ -142,7 +142,7 @@ const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({ state, disp
         <Checkbox.view
           extraChildProps={{
             inlineLabel: (
-              <span>I acknowledge that I have read and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Terms and Conditions</Link> and <Link newTab dest={routeDest(adt('content', 'privacy'))}>Privacy Policy</Link>.</span>
+              <b>I acknowledge that I have read and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Terms and Conditions</Link> and <Link newTab dest={routeDest(adt('content', 'privacy'))}>Privacy Policy</Link>.<FormField.ViewRequiredAsterisk /></b>
             )
           }}
           disabled={isDisabled}

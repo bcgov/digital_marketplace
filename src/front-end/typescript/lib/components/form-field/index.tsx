@@ -1,5 +1,5 @@
 import { FORM_FIELD_DEBOUNCE_DURATION } from 'front-end/config';
-import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
+import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
 import * as framework from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import { debounce } from 'lodash';
@@ -135,6 +135,10 @@ function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, 
   }
 }
 
+export const ViewRequiredAsterisk: View<{}> = () => {
+  return (<span className='font-weight-bold text-warning ml-1'>*</span>);
+};
+
 function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state, label, required, disabled, labelClassName } = props;
   const className = `font-weight-bold ${labelClassName || ''}`;
@@ -143,7 +147,7 @@ function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, Inner
       <Label for={state.child.id} className={className}>
         <span>
           {label}
-          {required && !disabled ? (<span className='text-warning ml-1'>*</span>) : null}
+          {required && !disabled ? (<ViewRequiredAsterisk />) : null}
           <ConditionalHelpToggle {...props} />
         </span>
       </Label>
