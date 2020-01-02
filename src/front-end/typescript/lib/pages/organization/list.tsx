@@ -1,8 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
-import { isSignedIn } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
@@ -32,23 +31,17 @@ async function baseState(): Promise<State> {
   };
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
-  async success({ shared }) {
-    const result = await api.organizations.readMany();
-    if (!api.isValid(result)) {
-      return await baseState();
-    }
-    return {
-      ...(await baseState()),
-      organizations: result.value
-        .sort((a, b) => a.legalName.localeCompare(b.legalName))
-    };
-  },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
+  const result = await api.organizations.readMany();
+  if (!api.isValid(result)) {
     return await baseState();
   }
-});
+  return {
+    ...(await baseState()),
+    organizations: result.value
+    .sort((a, b) => a.legalName.localeCompare(b.legalName))
+  };
+};
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -87,10 +80,14 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.organizations.map(org => {
     return [
-      { children: <Link dest={routeDest(adt('orgEdit', { orgId: org.id})) }>{org.legalName}</Link> },
       {
         children: org.owner
-        ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
+          ? (<Link dest={routeDest(adt('orgEdit', { orgId: org.id})) }>{org.legalName}</Link>)
+          : org.legalName
+      },
+      {
+        children: org.owner
+          ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
           : null
       }
     ];
