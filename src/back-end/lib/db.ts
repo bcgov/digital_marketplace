@@ -209,7 +209,7 @@ export async function readManyOrganizations(connection: Connection, session: Ses
       raw = {
         ...raw,
         ownerId: undefined,
-        ownerNmae: undefined
+        ownerName: undefined
       };
     }
     return await rawOrganizationToOrganizationSlim(connection, raw);
