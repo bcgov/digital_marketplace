@@ -33,8 +33,7 @@
             "git": {
               "uri": "${GIT_REPO_URL}",
               "ref": "${GIT_REF}"
-            },
-            "dockerfile": "FROM node:10-jessie\nCOPY . /usr/app\nWORKDIR /usr/app\nRUN npm install && NODE_ENV=production npm run front-end:build\nEXPOSE 3000\nCMD npm start"
+            }
           },
           "strategy": {
             "type": "Source",

@@ -25,7 +25,11 @@
                 "KEYCLOAK_CLIENT_ID": "dm-auth-web",
                 "KEYCLOAK_CLIENT_SECRET": "changeme",
                 "KEYCLOAK_URL": "https://sso-dev.pathfinder.gov.bc.ca",
-                "KEYCLOAK_REALM": "p2zhow64"
+                "KEYCLOAK_REALM": "p2zhow64",
+                "CONTACT_EMAIL": "UNKNOWN",
+                "SCHEDULED_DOWNTIME": 0,
+                "BASIC_AUTH_PASSWORD_HASH": "",
+                "BASIC_AUTH_USERNAME": ""
             }
         },
         {
@@ -228,6 +232,42 @@
                                             "configMapKeyRef": {
                                                 "name": "${NAME}-${TAG_NAME}-config",
                                                 "key": "COOKIE_SECRET"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "CONTACT_EMAIL",
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "${NAME}-${TAG_NAME}-config",
+                                                "key": "CONTACT_EMAIL"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "SCHEDULED_DOWNTIME",
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "${NAME}-${TAG_NAME}-config",
+                                                "key": "SCHEDULED_DOWNTIME"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "BASIC_AUTH_PASSWORD_HASH",
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "${NAME}-${TAG_NAME}-config",
+                                                "key": "BASIC_AUTH_PASSWORD_HASH"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "BASIC_AUTH_USERNAME",
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "${NAME}-${TAG_NAME}-config",
+                                                "key": "BASIC_AUTH_USERNAME"
                                             }
                                         }
                                     }
