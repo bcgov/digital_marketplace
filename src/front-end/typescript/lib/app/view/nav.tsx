@@ -45,6 +45,7 @@ const NavLink: View<NavLinkProps> = props => {
   const { text, active = false } = props;
   const onClick = () => {
     props.dispatch(adt('toggleMobileMenu', false));
+    props.dispatch(adt('toggleDesktopAccountDropdown', false));
     if (props.onClick) { return props.onClick(); }
   };
   const linkProps = { ...props };
@@ -89,9 +90,7 @@ const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; 
           <Fragment key={`nav-dropdown-group-${i}`}>
             {group.label ? (<DropdownItem header>{group.label}</DropdownItem>) : null}
             {group.links.map((link, j) => (
-              <DropdownItem key={`nav-dropdown-link-${i}-${j}`}>
-                <NavLink {...link} button={false} color='body' dispatch={dispatch} />
-              </DropdownItem>
+              <NavLink {...link} className={`${link.className || ''} dropdown-item`} button={false} color='body' dispatch={dispatch} key={`nav-dropdown-link-${i}-${j}`} />
             ))}
             {i < linkGroups.length - 1 ? (<DropdownItem divider />) : null}
           </Fragment>

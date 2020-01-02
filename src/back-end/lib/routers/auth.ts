@@ -158,7 +158,7 @@ function makeAuthErrorRedirect(request: Request<any, Session>) {
   return {
     code: 302,
     headers: {
-      'Location': '/notice/auth-failure'
+      'Location': '/notice/authFailure'
     },
     session: request.session,
     body: makeTextResponseBody('')
