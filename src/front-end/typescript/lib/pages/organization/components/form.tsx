@@ -364,10 +364,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-type SubmitHook = (org: Organization) => void | undefined;
+type SubmitHook = (org: Organization) => void;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
-  submitHook: SubmitHook;
+  submitHook?: SubmitHook;
 }
 
 export const view: View<Props> = props => {
@@ -518,7 +518,7 @@ export const view: View<Props> = props => {
           <LoadingButton loading={isSubmitLoading}
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-            onClick={() => dispatch(adt('submit', props.submitHook ))}
+            onClick={() => props.submitHook ? dispatch(adt('submit', props.submitHook)) : null }
           >
             Save
           </LoadingButton>
