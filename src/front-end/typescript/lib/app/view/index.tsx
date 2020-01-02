@@ -278,8 +278,8 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
-      organizationsLink,
-      opportunitiesLink
+      opportunitiesLink,
+      organizationsLink
     ]);
     if (sessionUser.type === UserType.Admin) {
       // User is an admin.
@@ -299,8 +299,8 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
-      organizationsLink,
-      opportunitiesLink
+      opportunitiesLink,
+      organizationsLink
     ]);
   }
   return {
