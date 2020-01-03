@@ -6,7 +6,7 @@ import { debounce } from 'lodash';
 import React, { CSSProperties } from 'react';
 import { Alert, FormGroup, FormText, Label } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
-import { getInvalidValue, getValidValue, Validation } from 'shared/lib/validation';
+import { getInvalidValue, getValidValue, isValid as isValidValidation, Validation } from 'shared/lib/validation';
 
 export interface ChildStateBase<Value> {
   value: Value;
@@ -244,5 +244,5 @@ export function validateAndSetValue<Value, ChildState extends ChildStateBase<Val
 }
 
 export function isValid<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): boolean {
-  return !state.errors.length;
+  return state.validate ? isValidValidation(state.validate(getValue(state))) : !state.errors.length;
 }
