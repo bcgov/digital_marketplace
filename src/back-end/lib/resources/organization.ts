@@ -158,7 +158,7 @@ const resource: Resource = {
       },
       async respond(request) {
         const respond = (code: number, body: Organization | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (!permissions.createOrganization(request.session)) {
+        if (!permissions.createOrganization(request.session) || !request.session.user) {
           return respond(401, {
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -167,7 +167,7 @@ const resource: Resource = {
           case 'invalid':
             return respond(400, request.body.value);
           case 'valid':
-            const organization = await createOrganization(connection, request.session.user!.id, request.body.value);
+            const organization = await createOrganization(connection, request.session.user.id, request.body.value);
             return respond(200, organization);
         }
       }

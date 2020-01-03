@@ -6,12 +6,16 @@ import * as api from 'front-end/lib/http/api';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { Organization } from 'shared/lib/resources/organization';
+import { OrganizationSlim } from 'shared/lib/resources/organization';
+import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
+
+type TableOrganization = OrganizationSlim;
 
 export interface State {
   table: Immutable<Table.State>;
-  organizations: Organization[];
+  organizations: TableOrganization[];
+  sessionUser?: User;
 }
 
 type InnerMsg = ADT<'table', Table.Msg>;
@@ -20,20 +24,26 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const defaultParams = {
-      table: immutable(await Table.init({
+async function baseState(): Promise<State> {
+  return {
+    organizations: [],
+    table: immutable(await Table.init({
       idNamespace: 'org-list-table'
     }))
   };
+}
 
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
   const result = await api.organizations.readMany();
-  if (api.isValid(result)) {
-    return { ...defaultParams, organizations: result.value };
-  } else {
-    // TODO(Jesse): Handle Errors
-    return { ...defaultParams, organizations: [] };
+  if (!api.isValid(result)) {
+    return await baseState();
   }
+  return {
+    ...(await baseState()),
+    sessionUser: shared.session && shared.session.user,
+    organizations: result.value
+      .sort((a, b) => a.legalName.localeCompare(b.legalName))
+  };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -51,28 +61,44 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+function showOwnerColumn(state: Immutable<State>): boolean {
+  return !!state.sessionUser && state.sessionUser.type !== UserType.Government;
+}
+
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
+  const owner = {
+    children: 'Owner',
+    style: {
+      width: '40%',
+      minWidth: '200px'
+    }
+  };
   return [
     {
       children: 'Organization Name',
       style: {
-        width: '60%'
+        width: '60%',
+        minWidth: '240px'
       }
     },
-    {
-      children: 'Owner',
-      style: {
-        width: '40%'
-      }
-    }
+    ...(showOwnerColumn(state) ? [owner] : [])
   ];
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return state.organizations.map( (org) => {
+  return state.organizations.map(org => {
+    const owner = {
+      children: org.owner
+        ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
+        : null
+    };
     return [
-      { children: <Link dest={routeDest(adt('orgEdit', { orgId: org.id})) }>{org.legalName}</Link> },
-      { children: org.contactName ? org.contactName : null }
+      {
+        children: org.owner
+          ? (<Link dest={routeDest(adt('orgEdit', { orgId: org.id})) }>{org.legalName}</Link>)
+          : org.legalName
+      },
+      ...(showOwnerColumn(state) ? [owner] : [])
     ];
   });
 }
@@ -81,8 +107,8 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
   return (
     <div>
-      <h1 className='pb-5'>Digital Marketplace Organizations</h1>
-      <Row className='mb-3 pb-3'>
+      <h1 className='mb-5'>Digital Marketplace Organizations</h1>
+      <Row>
         <Col xs='12'>
           <Table.view
             headCells={tableHeadCells(state)}
@@ -100,6 +126,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('List Organizations');
+    return makePageMetadata('Organizations');
   }
 };

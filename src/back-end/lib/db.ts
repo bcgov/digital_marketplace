@@ -181,30 +181,39 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
   return null;
 }
 
+/**
+ * Return all organizations from the database.
+ *
+ * If the user is:
+ *
+ * - An admin: Include owner information for all organizations.
+ * - A vendor: Include owner information only for owned organizations.
+ */
+
 export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
   const query = connection('organizations')
     .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId')
     .leftOuterJoin('files', 'organizations.logoImageFile', '=', 'files.id');
-
   // If a user is attached to this session, we need to add owner info to some or all of the orgs
-  if (session.user) {
-    if (session.user.type === UserType.Admin || session.user.type === UserType.Vendor) {
-      query
-        .select('users.id as ownerId', 'users.name as ownerName')
-        .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
-        .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
-        .andWhere({ 'affiliations.membershipType': MembershipType.Owner });
-
-      if (session.user.type === UserType.Vendor) {
-        query
-          .andWhere({ 'affiliations.user': session.user.id });
-      }
-    }
+  if (session.user && (session.user.type === UserType.Admin || session.user.type === UserType.Vendor)) {
+    query
+      .select('users.id as ownerId', 'users.name as ownerName')
+      .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
+      .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
+      .andWhere({ 'affiliations.membershipType': MembershipType.Owner });
   }
-
   const results = await query;
-
-  return Promise.all(results.map(async raw => await rawOrganizationToOrganizationSlim(connection, raw)));
+  // Only include ownership information for vendors' owned organizations.
+  return Promise.all(results.map(async raw => {
+    if (session.user && session.user.type === UserType.Vendor && raw.ownerId !== session.user.id) {
+      raw = {
+        ...raw,
+        ownerId: undefined,
+        ownerName: undefined
+      };
+    }
+    return await rawOrganizationToOrganizationSlim(connection, raw);
+  }));
 }
 
 export async function rawOrganizationToOrganizationSlim(connection: Connection, params: RawOrganizationSlimToOrganizationSlimParams): Promise<OrganizationSlim> {
@@ -257,6 +266,7 @@ export async function createOrganization(connection: Connection, user: Id, organ
       .transacting(trx)
       .insert({
         ...organization,
+        logoImageFile: organization.logoImageFile && organization.logoImageFile.id,
         id: generateUuid(),
         active: true,
         createdAt: now,
@@ -432,7 +442,6 @@ export async function readOneFileById(connection: Connection, id: Id): Promise<F
   const result = await connection('files')
     .where({ id })
     .first();
-
   return result ? result : null;
 }
 

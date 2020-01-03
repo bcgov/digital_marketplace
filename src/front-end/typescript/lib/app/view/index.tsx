@@ -259,10 +259,15 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
 function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks'] {
   const sessionUser = state.shared.session && state.shared.session.user;
   let left: Nav.NavLink[] = [];
-  const opporunitiesLink: Nav.NavLink = {
+  const opportunitiesLink: Nav.NavLink = {
     text: 'Opportunities',
     active: state.activeRoute.tag === 'opportunities',
     dest: routeDest(adt('opportunities', null))
+  };
+  const organizationsLink: Nav.NavLink = {
+    text: 'Organizations',
+    active: state.activeRoute.tag === 'orgList',
+    dest: routeDest(adt('orgList', null))
   };
   if (sessionUser) {
     // User has signed in.
@@ -273,12 +278,8 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
-      opporunitiesLink,
-      {
-        text: 'Organizations',
-        active: state.activeRoute.tag === 'orgList',
-        dest: routeDest(adt('orgList', null))
-      }
+      opportunitiesLink,
+      organizationsLink
     ]);
     if (sessionUser.type === UserType.Admin) {
       // User is an admin.
@@ -298,7 +299,8 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
-      opporunitiesLink
+      opportunitiesLink,
+      organizationsLink
     ]);
   }
   return {
