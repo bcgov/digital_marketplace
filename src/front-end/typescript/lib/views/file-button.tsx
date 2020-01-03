@@ -8,9 +8,11 @@ export interface Props extends Omit<ButtonProps, 'button' | 'dest' | 'onClick'> 
 }
 
 const FileButton: View<Props> = props => {
+  //tslint:disable no-empty
   return (
     <Link
       {...props}
+      onClick={() => {}}
       button
       className={`${props.className || ''} position-relative overflow-hidden`}>
       <input
@@ -33,6 +35,7 @@ const FileButton: View<Props> = props => {
       </Fragment>
     </Link>
   );
+  //tslint:enable no-empty
 };
 
 export default FileButton;
