@@ -4,11 +4,13 @@ import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import FileButton from 'front-end/lib/views/file-button';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
+import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
@@ -18,6 +20,8 @@ import { validateName } from 'shared/lib/validation/user';
 export interface Params {
   organization?: Organization;
 }
+
+type AvatarFiletype = { file: File; path: string; errors: string[]; } | null; // @avatar-filetype
 
 export interface State {
   legalName: Immutable<ShortText.State>;
@@ -33,29 +37,32 @@ export interface State {
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
 
+  newAvatarImage?: AvatarFiletype;
+
   submitLoading: number;
   organization?: Organization;
 }
 
-export type InnerMsg =
-  ADT<'legalName',       ShortText.Msg> |
-  ADT<'websiteUrl',      ShortText.Msg> |
-  ADT<'streetAddress1',  ShortText.Msg> |
-  ADT<'streetAddress2',  ShortText.Msg> |
-  ADT<'city',            ShortText.Msg> |
-  ADT<'country',         ShortText.Msg> |
-  ADT<'mailCode',        ShortText.Msg> |
-  ADT<'contactTitle',    ShortText.Msg> |
-  ADT<'contactName',     ShortText.Msg> |
-  ADT<'contactEmail',    ShortText.Msg> |
-  ADT<'contactPhone',    ShortText.Msg> |
-  ADT<'submit',          SubmitHook | undefined>    |
-  ADT<'region',          ShortText.Msg>
+export type InnerMsg
+  = ADT<'legalName',       ShortText.Msg>
+  | ADT<'websiteUrl',      ShortText.Msg>
+  | ADT<'streetAddress1',  ShortText.Msg>
+  | ADT<'streetAddress2',  ShortText.Msg>
+  | ADT<'city',            ShortText.Msg>
+  | ADT<'country',         ShortText.Msg>
+  | ADT<'mailCode',        ShortText.Msg>
+  | ADT<'contactTitle',    ShortText.Msg>
+  | ADT<'contactName',     ShortText.Msg>
+  | ADT<'contactEmail',    ShortText.Msg>
+  | ADT<'contactPhone',    ShortText.Msg>
+  | ADT<'submit',          SubmitHook | undefined>
+  | ADT<'onChangeAvatar',  File>
+  | ADT<'region',          ShortText.Msg>
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type Values = Required<CreateRequestBody>;
+export type Values = Required<CreateRequestBody> & { newAvatarImage?: File };
 
 type Errors = ErrorTypeFrom<Values>;
 
@@ -101,7 +108,8 @@ export function getValues(state: Immutable<State>): Values {
     contactEmail:    FormField.getValue(state.contactEmail),
     contactPhone:    FormField.getValue(state.contactPhone),
     region:          FormField.getValue(state.region),
-    websiteUrl:      FormField.getValue(state.websiteUrl)
+    websiteUrl:      FormField.getValue(state.websiteUrl),
+    newAvatarImage:  state.newAvatarImage ? state.newAvatarImage.file : undefined
   };
 }
 
@@ -118,7 +126,8 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || '' ))
     .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || '' ))
     .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || '' ))
-    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ));
+    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ))
+    .set('newAvatarImage', null);
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
@@ -134,12 +143,14 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
     .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
     .update('region',          s => FormField.setErrors(s, errors.region         || []))
-    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []));
+    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
+    .update('newAvatarImage', v => v && ({ ...v, errors: errors.newAvatarImage   || []} ));
 }
 
 export const init: Init<Params, State> = async (params) => {
   return {
     organization: params.organization,
+    newAvatarImage: null,
     submitLoading: 0,
     legalName: immutable(await ShortText.init({
       errors: [],
@@ -253,9 +264,11 @@ export const init: Init<Params, State> = async (params) => {
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
+  console.log(msg);
   switch (msg.tag) {
     case 'submit':
       return [state, async (state, dispatch) => {
+        console.log(getValues(state));
         const result = state.organization
          ? await api.organizations.update(state.organization.id, getValues(state))
          : await api.organizations.create(getValues(state));
@@ -276,6 +289,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         }
         return state;
       }];
+    case 'onChangeAvatar':
+      return [state, async state => {
+        return state.set('newAvatarImage', {
+          file: msg.value,
+          path: URL.createObjectURL(msg.value),
+          errors: []
+        });
+      }
+    ];
     case 'legalName':
       return updateComponentChild({
         state,
@@ -396,7 +418,26 @@ export const view: View<Props> = props => {
           </Col>
           <Col xs='10'>
             <div className='pb-3'><strong>Logo (Optional)</strong></div>
-            <Link button className='btn-secondary'>Choose Image</Link>
+              <img
+                className='rounded-circle border'
+                style={{
+                  width: '5rem',
+                  height: '5rem',
+                  objectFit: 'cover'
+                }}
+                src={state.newAvatarImage ? state.newAvatarImage.path : '' } /> { /* TODO(Jesse) Retrieve current avatar path */ }
+              <FileButton
+                outline
+                size='sm'
+                style={{
+                  visibility: disabled ? 'hidden' : undefined,
+                  pointerEvents: disabled ? 'none' : undefined
+                }}
+                onChange={file => dispatch(adt('onChangeAvatar', file))}
+                accept={SUPPORTED_IMAGE_EXTENSIONS}
+                color='primary'>
+                Choose Image
+              </FileButton>
           </Col>
         </Row>
 

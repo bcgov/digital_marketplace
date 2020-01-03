@@ -82,6 +82,7 @@ const startEditingLoading = makeStartLoading<State>('editingLoading');
 const stopEditingLoading = makeStopLoading<State>('editingLoading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
+  console.log(msg);
   switch (msg.tag) {
     case 'startEditing':
     return [
