@@ -163,7 +163,7 @@ const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({ state, dispatc
   const isDisabled = !isValid(state) || isCompleteProfileLoading;
   return (
     <Row className='mt-4'>
-      <Col xs='12'>
+      <Col xs='12' className='d-flex flex-nowrap justify-content-md-end'>
           <LoadingButton
             disabled={isDisabled}
             onClick={() => dispatch(adt('completeProfile'))}
