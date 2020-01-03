@@ -59,8 +59,15 @@ export type Values = Required<CreateRequestBody>;
 
 type Errors = ErrorTypeFrom<Values>;
 
+// FIXME(Jesse): This unfortunately returns 'true' on startup (when the form
+// contains no values) because there are no errors set, which is not actually
+// what we want.  We would rather be able to have the validation code run
+// independantly of the rendering of the validation error strings
 export function isFormValid(state: Immutable<State>): boolean {
-  return (
+
+  // debugger;
+
+  const result: boolean = (
     FormField.isValid(state.legalName)      &&
     FormField.isValid(state.websiteUrl)     &&
     FormField.isValid(state.streetAddress1) &&
@@ -74,6 +81,10 @@ export function isFormValid(state: Immutable<State>): boolean {
     FormField.isValid(state.contactPhone)   &&
     FormField.isValid(state.region)
   );
+
+  // console.log(result);
+
+  return result;
 }
 
 export function getValues(state: Immutable<State>): Values {
@@ -375,7 +386,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
   const isSubmitLoading = state.submitLoading > 0;
-
+  const submitDisabled = disabled || !isFormValid(state);
   return (
     <div>
       <Row>
@@ -522,7 +533,7 @@ export const view: View<Props> = props => {
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
             onClick={() => dispatch(adt('submit', props.submitHook)) }
-            disabled={disabled || !isFormValid(state)}
+            disabled={submitDisabled}
           >
             Save
           </LoadingButton>
