@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
@@ -50,7 +50,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'govProfile':
-      return updateComponentChild({
+      return updateGlobalComponentChild({
         state,
         childStatePath: ['govProfile'],
         childUpdate: OrgForm.update,
@@ -85,7 +85,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <OrgForm.view
             state={state.govProfile}
             disabled={false}
-            dispatch={mapComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
+            dispatch={mapGlobalComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
         </Col>
       </Row>
 
