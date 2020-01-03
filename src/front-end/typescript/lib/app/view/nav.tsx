@@ -117,6 +117,15 @@ function isAccountActionActive(action: AccountAction): boolean {
   }
 }
 
+function isAccountActionButton(action: AccountAction): boolean {
+  switch (action.tag) {
+    case 'text':
+      return false;
+    case 'link':
+      return !!action.value.button;
+  }
+}
+
 interface AccountActionProps {
   className?: string;
   action: AccountAction;
@@ -195,10 +204,12 @@ const MobileAccountMenu: View<Props> = props => {
         if (clonedAction.tag === 'link' && clonedAction.value.button) {
           clonedAction.value = { ...clonedAction.value, size: 'sm' };
         }
+        const active = isAccountActionActive(action);
+        const button = isAccountActionButton(action);
         return (
           <AccountAction
             action={clonedAction}
-            className={`${i !== menu.value.length - 1 ? marginClassName : ''} ${isAccountActionActive(action) ? 'o-100 font-weight-bold' : 'o-75'}`}
+            className={`${i !== menu.value.length - 1 ? marginClassName : ''} ${active || button ? 'o-100' : 'o-75'} ${active && button ? 'font-weight-bold' : ''}`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`} />);
         })}
@@ -267,6 +278,7 @@ const TopNavbar: View<Props> = props => {
 
 const DesktopBottomNavbar: View<Props> = props => {
   const { contextualLinks } = props;
+  const linkClassName = (link: NavLink) => `${link.active || link.button ? 'o-100' : 'o-75'} ${link.active && !link.button ? 'font-weight-bold' : ''}`;
   if (!contextualLinks) { return null; }
   return (
     <div className='bg-info-alt py-3 d-none d-md-block shadow'>
@@ -280,7 +292,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                     {...link}
                     dispatch={props.dispatch}
                     color='white'
-                    className={link.active ? 'o-100 font-weight-bold' : 'o-75'} />
+                    className={linkClassName(link)} />
                 </div>
               ))}
             </div>
@@ -291,7 +303,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                     {...link}
                     dispatch={props.dispatch}
                     color='white'
-                    className={link.active ? 'o-100 font-weight-bold' : 'o-75'} />
+                    className={linkClassName(link)} />
                 </div>
               ))}
             </div>
@@ -305,6 +317,7 @@ const DesktopBottomNavbar: View<Props> = props => {
 const MobileBottomNavbar: View<Props> = props => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
   const { contextualLinks } = props;
+  const linkClassName = (link: NavLink, numLinks: number, i: number) => `${link.active || link.button ? 'o-100' : 'o-75'} ${link.active && !link.button ? 'font-weight-bold' : ''} ${i < numLinks - 1 ? 'mb-3' : ''}`;
   return (
     <div
       className={`bg-info-alt ${isMobileMenuOpen ? 'py-4 shadow' : 'py-0'} d-md-none overflow-hidden`}
@@ -327,7 +340,7 @@ const MobileBottomNavbar: View<Props> = props => {
                       {...link}
                       dispatch={props.dispatch}
                       color='white'
-                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < contextualLinks.left.length - 1 ? 'mb-3' : ''}`}
+                      className={linkClassName(link, contextualLinks.left.length, i)}
                       key={`mobile-contextual-link-left-${i}`} />
                   ))}
                 </div>
@@ -348,7 +361,7 @@ const MobileBottomNavbar: View<Props> = props => {
                       {...link}
                       dispatch={props.dispatch}
                       color='white'
-                      className={`${link.active ? 'o-100 font-weight-bold' : 'o-75'} ${i < contextualLinks.right.length - 1 ? 'mb-3' : ''}`}
+                      className={linkClassName(link, contextualLinks.right.length, i)}
                       key={`mobile-contextual-link-right-${i}`} />
                   ))}
                 </div>
