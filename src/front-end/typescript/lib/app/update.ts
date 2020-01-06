@@ -227,7 +227,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     }
   };
 
-  console.log(msg);
   switch (msg.tag) {
 
     case 'noop':

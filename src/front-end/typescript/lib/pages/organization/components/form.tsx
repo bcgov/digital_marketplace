@@ -40,6 +40,10 @@ export interface State {
   newAvatarImage?: AvatarFiletype;
 
   submitLoading: number;
+
+  /**
+   *  TODO(Jesse): Document
+   */
   organization?: Organization;
 }
 
@@ -66,14 +70,7 @@ export type Values = Required<CreateRequestBody> & { newAvatarImage?: File };
 
 type Errors = ErrorTypeFrom<Values>;
 
-// FIXME(Jesse): This unfortunately returns 'true' on startup (when the form
-// contains no values) because there are no errors set, which is not actually
-// what we want.  We would rather be able to have the validation code run
-// independantly of the rendering of the validation error strings
 export function isFormValid(state: Immutable<State>): boolean {
-
-  // debugger;
-
   const result: boolean = (
     FormField.isValid(state.legalName)      &&
     FormField.isValid(state.websiteUrl)     &&
@@ -88,8 +85,6 @@ export function isFormValid(state: Immutable<State>): boolean {
     FormField.isValid(state.contactPhone)   &&
     FormField.isValid(state.region)
   );
-
-  // console.log(result);
 
   return result;
 }
@@ -130,7 +125,8 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .set('newAvatarImage', null);
 }
 
-export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
+export function setErrors(state: Immutable<State>, errors: Errors | undefined): Immutable<State> {
+  if (errors) {
   return state
     .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
     .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
@@ -145,6 +141,9 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('region',          s => FormField.setErrors(s, errors.region         || []))
     .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
     .update('newAvatarImage', v => v && ({ ...v, errors: errors.newAvatarImage   || []} ));
+  } else {
+    return state;
+  }
 }
 
 export const init: Init<Params, State> = async (params) => {
@@ -264,14 +263,34 @@ export const init: Init<Params, State> = async (params) => {
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
-  console.log(msg);
   switch (msg.tag) {
     case 'submit':
       return [state, async (state, dispatch) => {
-        console.log(getValues(state));
+        const values: Values = getValues(state);
+
+        let logoImage;
+        if (values.newAvatarImage) {
+          const fileResult = await api.files.create({
+            name: values.newAvatarImage.name,
+            file: values.newAvatarImage,
+            metadata: [adt('any')]
+          });
+
+          switch (fileResult.tag) {
+            case 'valid':
+              logoImage = fileResult.value.id;
+              break;
+            case 'unhandled':
+            case 'invalid':
+            /* TODO(Jesse): Handle Errors */
+          }
+        }
+
+        delete values.newAvatarImage;
+        const reqValues = {...values, logoImageFile: logoImage };
         const result = state.organization
-         ? await api.organizations.update(state.organization.id, getValues(state))
-         : await api.organizations.create(getValues(state));
+         ? await api.organizations.update(state.organization.id, reqValues)
+         : await api.organizations.create(reqValues);
 
         if (api.isValid(result)) {
           state = setErrors(state, {});
@@ -280,11 +299,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             const submitHook: SubmitHook | undefined = msg.value;
             if (submitHook) { submitHook(result.value); }
           } else {
-            // FIXME(Jesse): This compiles, but doesn't actually work..
             dispatch(replaceRoute(adt('orgEdit' as const, {orgId: result.value.id})));
           }
         } else {
-          state = setErrors(state, result.value as Errors ); // TODO(Jesse): Why does this need to be cast?
+          state = setErrors(state, result.value);
         }
         return state;
       }];

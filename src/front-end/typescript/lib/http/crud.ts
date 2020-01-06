@@ -55,6 +55,7 @@ interface MakeRequestParams<T extends ActionWithBodyTypes> {
 }
 
 export async function makeRequest<T extends ActionWithBodyTypes>(params: MakeRequestParams<T>): Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>> {
+  console.log('req params', params);
   const response = await request(params.method, params.url, params.body as object);
   switch (response.status) {
     case 200:
@@ -103,12 +104,15 @@ export function makeReadOne<T extends ActionTypes>(params: MakeActionParams<T & 
 }
 
 export function makeUpdate<T extends ActionWithBodyTypes>(params: MakeActionParams<T>): CrudClientActionWithIdAndBody<T> {
-  return async (id, body) => makeRequest({
-    body,
-    method: ClientHttpMethod.Put,
-    url: `${params.routeNamespace}/${id}`,
-    transformValid: params.transformValid
-  });
+  return async (id, body) => {
+    console.log("req body", body);
+    return makeRequest({
+      body,
+      method: ClientHttpMethod.Put,
+      url: `${params.routeNamespace}/${id}`,
+      transformValid: params.transformValid
+    });
+  };
 }
 
 export function makeDelete<T extends ActionTypes>(params: MakeActionParams<T & { request: any }>): CrudClientActionWithId<T> {
