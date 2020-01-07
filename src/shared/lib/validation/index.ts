@@ -129,6 +129,10 @@ export function optional<Value, Valid, Invalid>(v: Value | undefined, validate: 
   return isEmpty(v) ? valid(undefined) : validate(v as Value);
 }
 
+export async function optionalAsync<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Promise<Validation<Valid, Invalid>>): Promise<Validation<Valid | undefined, Invalid>> {
+  return isEmpty(v) ? valid(undefined) : await validate(v as Value);
+}
+
 export function validateGenericString(value: string, name: string, min = 1, max = 100, characters = 'characters'): Validation<string> {
   if (value.length < min || value.length > max) {
     return invalid([`${name} must be between ${min} and ${max} ${characters} long.`]);

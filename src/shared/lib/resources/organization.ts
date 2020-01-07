@@ -31,7 +31,7 @@ export interface OrganizationSlim {
 }
 
 export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active'> {
-  logoImageFile?: string;
+  logoImageFile?: Id;
 }
 
 export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {

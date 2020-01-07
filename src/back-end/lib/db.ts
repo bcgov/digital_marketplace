@@ -266,7 +266,6 @@ export async function createOrganization(connection: Connection, user: Id, organ
       .transacting(trx)
       .insert({
         ...organization,
-        logoImageFile: organization.logoImageFile && organization.logoImageFile.id,
         id: generateUuid(),
         active: true,
         createdAt: now,

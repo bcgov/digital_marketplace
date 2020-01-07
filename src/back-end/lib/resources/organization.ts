@@ -5,24 +5,20 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId, validateUUID } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { FileRecord } from 'shared/lib/resources/file';
 import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, optional, valid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isValid, optional, optionalAsync, valid } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
-export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'logoImageFile'> {
+export interface ValidatedUpdateRequestBody extends UpdateRequestBody {
   id: Id;
-  logoImageFile?: FileRecord;
   active?: boolean;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
 }
 
-export interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'logoImageFile'> {
-  logoImageFile?: FileRecord;
-}
+export type ValidatedCreateRequestBody = CreateRequestBody;
 
 type DeleteValidatedReqBody = Organization;
 
@@ -124,7 +120,7 @@ const resource: Resource = {
                     ])) {
                       return valid({
                         legalName: validatedLegalName.value,
-                        logoImageFile: validatedLogoImageFile.value,
+                        logoImageFile: isValid(validatedLogoImageFile) ? validatedLogoImageFile.value && validatedLogoImageFile.value.id : undefined,
                         websiteUrl: validatedWebsiteUrl.value,
                         streetAddress1: validatedStreetAddress1.value,
                         streetAddress2: validatedStreetAddress2.value,
@@ -136,7 +132,7 @@ const resource: Resource = {
                         contactTitle: validatedContactTitle.value,
                         contactEmail: validatedContactEmail.value,
                         contactPhone: validatedContactPhone.value
-                      });
+                      } as ValidatedCreateRequestBody);
                     } else {
                       return invalid({
                         legalName: getInvalidValue(validatedLegalName, undefined),
@@ -211,7 +207,7 @@ const resource: Resource = {
 
         const validatedOrganization = await validateOrganizationId(connection, request.params.id);
         const validatedLegalName = optional(legalName, orgValidation.validateLegalName);
-        const validatedLogoImageFile = logoImageFile ? await validateImageFile(connection, logoImageFile) : valid(undefined);
+        const validatedLogoImageFile = await optionalAsync(logoImageFile, v => validateImageFile(connection, v));
         const validatedWebsiteUrl = orgValidation.validateWebsiteUrl(websiteUrl);
         const validatedStreetAddress1 = optional(streetAddress1, orgValidation.validateStreetAddress1);
         const validatedStreetAddress2 = orgValidation.validateStreetAddress2(streetAddress2);
@@ -243,7 +239,7 @@ const resource: Resource = {
           return valid({
             id: (validatedOrganization.value as Organization).id,
             legalName: validatedLegalName.value,
-            logoImageFile: validatedLogoImageFile.value,
+            logoImageFile: isValid(validatedLogoImageFile) ? validatedLogoImageFile.value && validatedLogoImageFile.value.id : undefined,
             websiteUrl: validatedWebsiteUrl.value,
             streetAddress1: validatedStreetAddress1.value,
             streetAddress2: validatedStreetAddress2.value,
@@ -255,7 +251,7 @@ const resource: Resource = {
             contactTitle: validatedContactTitle.value,
             contactEmail: validatedContactEmail.value,
             contactPhone: validatedContactPhone.value
-          });
+          } as ValidatedUpdateRequestBody);
         } else {
           return invalid({
             id: getInvalidValue(validatedOrganization, undefined),
