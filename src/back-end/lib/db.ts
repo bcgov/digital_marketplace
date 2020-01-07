@@ -140,28 +140,11 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Se
   });
 }
 
-export async function updateSessionWithToken(connection: Connection, id: Id, accessToken: string): Promise<Session> {
+export async function updateSession(connection: Connection, session: Session): Promise<Session> {
   const [result] = await connection('sessions')
-    .where({ id })
+    .where({ id: session.id })
     .update({
-      accessToken,
-      updatedAt: new Date()
-    }, ['*']);
-  if (!result) {
-    throw new Error('unable to update session');
-  }
-  return await rawSessionToSession(connection, {
-    id: result.id,
-    accessToken: result.accessToken,
-    user: result.user
-  });
-}
-
-export async function updateSessionWithUser(connection: Connection, id: Id, userId: Id): Promise<Session> {
-  const [result] = await connection('sessions')
-    .where({ id })
-    .update({
-      user: userId,
+      ...session,
       updatedAt: new Date()
     }, ['*']);
   if (!result) {
