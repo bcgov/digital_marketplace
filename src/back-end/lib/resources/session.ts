@@ -1,12 +1,13 @@
-import axios from 'axios';
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, deleteSession } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
-import { ServerHttpMethod, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import qs from 'querystring';
+import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
+import { ClientHttpMethod } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 type Resource = crud.Resource<
@@ -38,15 +39,12 @@ export async function signOut(connection: Connection, session: Session): Promise
     refresh_token: session.accessToken || ''
   });
   try {
-    // TODO use the shared HTTP request library.
-    await axios({
-      method: ServerHttpMethod.Post,
-      url: `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/logout`,
-      data: formData,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
+    await httpRequest(
+      ClientHttpMethod.Post,
+      `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/logout`,
+      formData,
+      { 'Content-Type': 'application/x-www-form-urlencdoed'}
+    );
   } catch (e) {
     return invalid(['KeyCloak sign-out request failed.']);
   }

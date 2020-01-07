@@ -1,5 +1,5 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
-import { Connection, createUser, findOneUserByTypeAndUsername, updateSessionWithToken, updateSessionWithUser, updateUser } from 'back-end/lib/db';
+import { Connection, createUser, findOneUserByTypeAndUsername, updateSession, updateUser } from 'back-end/lib/db';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
@@ -134,8 +134,11 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             return makeAuthErrorRedirect(request);
           }
 
-          let session = await updateSessionWithUser(connection, request.session.id, user.id);
-          session = await updateSessionWithToken(connection, session.id, tokens.refresh_token);
+          const session = await updateSession(connection, {
+            ...request.session,
+            user: user.id,
+            accessToken: tokens.refresh_token
+          });
 
           return {
             code: 302,
