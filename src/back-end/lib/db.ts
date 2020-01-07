@@ -441,6 +441,7 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
 export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord> {
   const result = await connection('files')
     .where({ id })
+    .select(['name', 'id', 'createdAt', 'fileBlob'])
     .first();
   return result ? result : null;
 }
