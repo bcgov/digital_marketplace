@@ -27,7 +27,7 @@
                 "KEYCLOAK_URL": "https://sso-dev.pathfinder.gov.bc.ca",
                 "KEYCLOAK_REALM": "p2zhow64",
                 "CONTACT_EMAIL": "UNKNOWN",
-                "SCHEDULED_DOWNTIME": 0,
+                "SCHEDULED_DOWNTIME": "0",
                 "BASIC_AUTH_PASSWORD_HASH": "",
                 "BASIC_AUTH_USERNAME": ""
             }

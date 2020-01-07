@@ -1,5 +1,5 @@
 // define constants
-def BUILDCFG_NAME ='dig-mkt-app'
+def BUILDCFG_NAME ='dig-mkt-app-master'
 def IMAGE_NAME = 'dig-mkt-app-master'
 def TST_DEPLOYMENT_NAME = 'dig-mkt-app-test'
 def TST_TAG_NAME = 'test'
