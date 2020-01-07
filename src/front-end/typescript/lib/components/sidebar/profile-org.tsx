@@ -1,15 +1,15 @@
-import * as Tab from 'front-end/lib/pages/user/profile/tab';
-import { AvailableIcons } from 'front-end/lib/views/icon';
-import { routeDest } from 'front-end/lib/views/link';
-import { User, usersAreEquivalent, UserType } from 'shared/lib/resources/user';
-import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { adt, Id } from 'shared/lib/types';
-import * as LegalTab from 'front-end/lib/pages/user/profile/tab/legal';
 import { Route } from 'front-end/lib/app/types';
+import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { GlobalComponentMsg, Immutable, immutable } from 'front-end/lib/framework';
+import * as Tab from 'front-end/lib/pages/user/profile/tab';
+import * as LegalTab from 'front-end/lib/pages/user/profile/tab/legal';
 import * as NotificationsTab from 'front-end/lib/pages/user/profile/tab/notifications';
 import * as OrganizationsTab from 'front-end/lib/pages/user/profile/tab/organizations';
 import * as ProfileTab from 'front-end/lib/pages/user/profile/tab/profile';
+import { AvailableIcons } from 'front-end/lib/views/icon';
+import { routeDest } from 'front-end/lib/views/link';
+import { User, usersAreEquivalent, UserType } from 'shared/lib/resources/user';
+import { adt, Id } from 'shared/lib/types';
 
 interface Tab<State, InnerMsg> {
   state: State;
@@ -117,4 +117,3 @@ export async function makeSidebar(profileUser: User, viewerUser: User, activeTab
   })();
   return immutable(await MenuSidebar.init({ links }));
 }
-
