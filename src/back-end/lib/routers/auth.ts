@@ -134,8 +134,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             return makeAuthErrorRedirect(request);
           }
 
-          // let session = await updateSessionWithUser(connection, request.session.id, user.id);
-          // session = await updateSessionWithToken(connection, session.id, tokens.refresh_token);
           const session = await updateSession(connection, {
             ...request.session,
             user: user.id,
