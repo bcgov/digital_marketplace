@@ -146,7 +146,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Row className='mb-3 pb-3'>
           <Col xs='12' className='d-flex flex-nowrap align-items-center'>
-            <h1>Edit {state.organization.legalName}</h1>
+            <h1>{state.organization.legalName}</h1>
             <div className='ml-3'>
             {
               state.isEditing
