@@ -87,6 +87,8 @@ export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuS
   };
 }
 
+
+
 export async function makeSidebar(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   const links = (() => {
     switch (viewerUser.type) {

@@ -21,6 +21,9 @@ export interface Organization {
   contactPhone?: string;
   websiteUrl?: string;
   active: boolean;
+
+  // @org-needs-owner-information
+  // owner?: Pick<User, 'id' | 'name'>;
 }
 
 export interface OrganizationSlim {

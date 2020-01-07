@@ -1,12 +1,15 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { User } from 'shared/lib/resources/user';
+import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
+import { UserType } from 'shared/lib/resources/user';
+import { isUserType } from 'front-end/lib/access-control';
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { replaceRoute, ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import { routeDest } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -34,49 +37,57 @@ export interface RouteParams {
   orgId: string;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async params => {
-  const defaultState = {
+async function defaultState(): Promise<State> {
+  return {
     isEditing: false,
     editingLoading: 0,
-    sidebar: immutable(await MenuSidebar.init({
-      links: [
-        {
-          icon: 'user',
-          text: 'Profile',
-          active: true,
-          dest: routeDest(adt('userProfile', {userId: '1'}))
-        },
-        {
-          icon: 'bell',
-          text: 'Notifications',
-          active: false,
-          dest: routeDest(adt('landing', null))
-        },
-        {
-          icon: 'balance-scale',
-          text: 'Accepted Policies, Terms & Agreements',
-          active: false,
-          dest: routeDest(adt('landing', null))
-        }
-      ]
-    }))
+    sidebar: immutable(await MenuSidebar.init({ links: [] })),
+    submitErrors: [],
+    organization: OrgResource.Empty(),
+    orgForm: immutable(await OrgForm.init({}))
   };
-
-  const result = await api.organizations.readOne(params.routeParams.orgId);
-  if (api.isValid(result)) {
-    return ({
-      ...defaultState,
-      organization: result.value,
-      orgForm: immutable(await OrgForm.init({organization: result.value }))
-    });
-  } else {
-    return ({
-      ...defaultState,
-      organization: OrgResource.Empty(),
-      orgForm: immutable(await OrgForm.init({}))
-    });
-  }
 };
+
+function userOwnsOrg(user: User, org: OrgResource.Organization): boolean {
+  // FIXME: The backend doesn't vend the owner of the org, which we need in
+  // order to figure out if the current user is allowed to edit it.
+  //
+  // @org-needs-owner-information
+  //
+  // const result: boolean = (org.owner && org.owner.id === user.id);
+  // return result;
+
+  return true;
+}
+
+const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+  userType: [UserType.Vendor, UserType.Admin],
+
+  async success({dispatch, routeParams, shared}) {
+    const result = await api.organizations.readOne(routeParams.orgId);
+
+    if (api.isValid(result) && userOwnsOrg(shared.sessionUser, result.value)) {
+      return {
+        ...(await defaultState()),
+        sidebar: shared.sessionUser.type === UserType.Vendor
+                  ? await UserSidebar.makeSidebar(shared.sessionUser, shared.sessionUser, 'organizations')
+                  : immutable(await MenuSidebar.init({ links: [] })),
+        organization: result.value,
+        orgForm: immutable(await OrgForm.init({organization: result.value }))
+      };
+    } else {
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      return ({
+        ...(await defaultState()),
+      });
+    }
+
+  },
+  async fail({dispatch}) {
+    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    return defaultState();
+  }
+});
 
 const startEditingLoading = makeStartLoading<State>('editingLoading');
 const stopEditingLoading = makeStopLoading<State>('editingLoading');

@@ -1,4 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
+import { DEFAULT_LOGO_IMAGE_PATH } from 'front-end/config';
+import { fileBlobPath } from 'shared/lib/resources/file';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
@@ -36,7 +38,7 @@ export interface State {
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
 
-  newAvatarImage?: AvatarFiletype;
+  newLogoImage?: AvatarFiletype;
 
   submitLoading: number;
 
@@ -65,7 +67,7 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type Values = Required<CreateRequestBody> & { newAvatarImage?: File };
+export type Values = Required<CreateRequestBody> & { newLogoImage?: File };
 
 type Errors = ErrorTypeFrom<Values>;
 
@@ -103,7 +105,7 @@ export function getValues(state: Immutable<State>): Values {
     contactPhone:    FormField.getValue(state.contactPhone),
     region:          FormField.getValue(state.region),
     websiteUrl:      FormField.getValue(state.websiteUrl),
-    newAvatarImage:  state.newAvatarImage ? state.newAvatarImage.file : undefined
+    newLogoImage:  state.newLogoImage ? state.newLogoImage.file : undefined
   };
 }
 
@@ -121,7 +123,7 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || '' ))
     .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || '' ))
     .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ))
-    .set('newAvatarImage', null);
+    .set('newLogoImage', null);
 }
 
 export function setErrors(state: Immutable<State>, errors: Errors | undefined): Immutable<State> {
@@ -139,7 +141,7 @@ export function setErrors(state: Immutable<State>, errors: Errors | undefined): 
     .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
     .update('region',          s => FormField.setErrors(s, errors.region         || []))
     .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
-    .update('newAvatarImage', v => v && ({ ...v, errors: errors.newAvatarImage   || []} ));
+    .update('newLogoImage', v => v && ({ ...v, errors: errors.newLogoImage   || []} ));
   } else {
     return state;
   }
@@ -148,7 +150,7 @@ export function setErrors(state: Immutable<State>, errors: Errors | undefined): 
 export const init: Init<Params, State> = async (params) => {
   return {
     organization: params.organization,
-    newAvatarImage: null,
+    newLogoImage: null,
     submitLoading: 0,
     legalName: immutable(await ShortText.init({
       errors: [],
@@ -268,10 +270,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         const values: Values = getValues(state);
 
         let logoImage;
-        if (values.newAvatarImage) {
+        if (values.newLogoImage) {
           const fileResult = await api.files.create({
-            name: values.newAvatarImage.name,
-            file: values.newAvatarImage,
+            name: values.newLogoImage.name,
+            file: values.newLogoImage,
             metadata: [adt('any')]
           });
 
@@ -285,7 +287,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           }
         }
 
-        delete values.newAvatarImage;
+        delete values.newLogoImage;
         const reqValues = {...values, logoImageFile: logoImage };
         const result = state.organization
          ? await api.organizations.update(state.organization.id, reqValues)
@@ -307,7 +309,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       }];
     case 'onChangeAvatar':
       return [state, async state => {
-        return state.set('newAvatarImage', {
+        return state.set('newLogoImage', {
           file: msg.value,
           path: URL.createObjectURL(msg.value),
           errors: []
@@ -421,6 +423,13 @@ export interface Props extends ComponentViewProps<State, Msg> {
   submitHook?: SubmitHook;
 }
 
+
+export function orgLogoPath(org?: Organization): string {
+  return org && org.logoImageFile
+    ? fileBlobPath(org.logoImageFile)
+    : DEFAULT_LOGO_IMAGE_PATH;
+}
+
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
   const isSubmitLoading = state.submitLoading > 0;
@@ -429,19 +438,18 @@ export const view: View<Props> = props => {
     <div>
       <Row>
 
-        <Row className='my-3 py-3'>
-          <Col xs='2'>
-          </Col>
-          <Col xs='10'>
-            <div className='pb-3'><strong>Logo (Optional)</strong></div>
-              <img
-                className='rounded-circle border'
-                style={{
-                  width: '5rem',
-                  height: '5rem',
-                  objectFit: 'cover'
-                }}
-                src={state.newAvatarImage ? state.newAvatarImage.path : '' } /> { /* TODO(Jesse) Retrieve current avatar path */ }
+        <Row>
+          <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+            <img
+              className='rounded-circle border'
+              style={{
+                width: '5rem',
+                height: '5rem',
+                objectFit: 'cover'
+              }}
+              src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
+            <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
+              <div className='mb-2'><b>Profile Picture (Optional)</b></div>
               <FileButton
                 outline
                 size='sm'
@@ -454,6 +462,10 @@ export const view: View<Props> = props => {
                 color='primary'>
                 Choose Image
               </FileButton>
+              {state.newLogoImage && state.newLogoImage.errors.length
+                ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+                : null}
+            </div>
           </Col>
         </Row>
 
