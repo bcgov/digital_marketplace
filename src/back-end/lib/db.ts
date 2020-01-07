@@ -441,6 +441,7 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
 export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord> {
   const result = await connection('files')
     .where({ id })
+    .select(['name', 'id', 'createdAt', 'fileBlob'])
     .first();
   return result ? result : null;
 }
@@ -463,7 +464,7 @@ export async function createFile(connection: Connection, fileRecord: ValidatedFi
         resolve(data);
       });
     });
-    const fileHash = await hashFile(fileRecord.name, fileData);
+    const fileHash = hashFile(fileRecord.name, fileData);
     let fileBlob = await readOneFileBlob(connection, fileHash);
     // Create a new blob if it doesn't already exist.
     if (!fileBlob) {
@@ -483,7 +484,7 @@ export async function createFile(connection: Connection, fileRecord: ValidatedFi
         createdAt: now,
         createdBy: userId,
         fileBlob: fileBlob.hash
-      }, ['*']);
+      }, ['name', 'id', 'createdAt', 'fileBlob']);
 
     // Insert values for permissions defined in metadata
     // TODO this will fail if permissions aren't experessed as a set (may have duplicate perms)

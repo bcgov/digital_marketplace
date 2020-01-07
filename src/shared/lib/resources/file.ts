@@ -1,6 +1,6 @@
 import { get, isArray } from 'lodash';
 import { megabytesToBytes } from 'shared/lib';
-import { User, UserType } from 'shared/lib/resources/user';
+import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { isString } from 'util';
 
@@ -11,10 +11,8 @@ export const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
 export interface FileRecord {
   id: Id;
   createdAt: Date;
-  createdBy: User;
   fileBlob: Id;
   name: string;
-  permissions: Array<FilePermissions<Id, UserType>>;
 }
 
 export interface FileBlob {
