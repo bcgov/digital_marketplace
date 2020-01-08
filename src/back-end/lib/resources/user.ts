@@ -8,10 +8,13 @@ import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, mapValid, optional, valid } from 'shared/lib/validation';
 import { validateAcceptedTerms, validateEmail, validateIdpUsername, validateJobTitle, validateName, validateNotificationsOn, validateUserStatus, validateUserType } from 'shared/lib/validation/user';
+
+//type UpdateRequestBody = SharedUpdateRequestBody | null;
+type UpdateRequestBody = SharedUpdateRequestBody;
 
 export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'notificationsOn' | 'acceptedTerms'> {
   notificationsOn?: Date;
@@ -82,7 +85,7 @@ const resource: Resource = {
           jobTitle: getString(body, 'jobTitle', undefined), // undefined (fallback) means no change to job title, empty string means remove
           avatarImageFile: getString(body, 'avatarImageFile') || undefined,
           notificationsOn: isBoolean(body.notificationsOn) ? body.notificationsOn : undefined,
-          acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined,
+          acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined
           // idpUsername: getString(body, 'idpUsername')
         };
       },
