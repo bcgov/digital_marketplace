@@ -22,6 +22,7 @@ export interface State {
   submitErrors?: string[];
   sidebar: Immutable<MenuSidebar.State>;
   isEditing: boolean;
+  userCanDeactivate: boolean;
   editingLoading: number;
 }
 
@@ -41,6 +42,7 @@ export interface RouteParams {
 async function defaultState(): Promise<State> {
   return {
     isEditing: false,
+    userCanDeactivate: false,
     editingLoading: 0,
     sidebar: immutable(await MenuSidebar.init({ links: [] })),
     submitErrors: [],
@@ -73,6 +75,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         sidebar: shared.sessionUser.type === UserType.Vendor
                   ? await UserSidebar.makeSidebar(shared.sessionUser, shared.sessionUser, 'organizations')
                   : immutable(await MenuSidebar.init({ links: [] })),
+        userCanDeactivate: true,
         organization: result.value,
         orgForm: immutable(await OrgForm.init({organization: result.value }))
       };
@@ -97,7 +100,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'deactivate':
     return [state, async (state) => {
-      const result = await api.organizations.update(state.organization.id, {active: false})
+      const result = await api.organizations.delete(state.organization.id)
       if (api.isValid(result)) {
         state = state.set('organization', result.value);
         state = state.set('isEditing', false);
@@ -166,9 +169,14 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 Discard Changes
               </Link>
               :
-              <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
-                Edit Organization
-              </LoadingButton>
+                state.organization.active
+                ?
+                <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
+                  Edit Organization
+                </LoadingButton>
+                :
+                <span>(Deactivated)</span>
+
             }
             </div>
           </Col>
@@ -184,16 +192,24 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         </Col>
       </Row>
 
-      <Row className='pt-5 border-top'>
-        <h4>Deactivate Organization</h4>
-        <p>Deactivating this organization means that it will no longer be available for <i>Sprint With Us</i> opportunities</p>
-      </Row>
+      {
 
-      <Row>
-        <LoadingButton loading={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate', state.organization))}>
-          Deactivate Organization
-        </LoadingButton>
-      </Row>
+        state.organization.active && state.userCanDeactivate
+        ?
+        <div>
+          <Row className='pt-5 border-top'>
+            <h4>Deactivate Organization</h4>
+            <p>Deactivating this organization means that it will no longer be available for <i>Sprint With Us</i> opportunities</p>
+          </Row>
+
+          <Row>
+            <LoadingButton loading={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate', state.organization))}>
+              Deactivate Organization
+            </LoadingButton>
+          </Row>
+        </div>
+        : undefined
+      }
 
     </div>
   );
@@ -213,6 +229,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     }
   },
   getMetadata() {
-    return makePageMetadata('Create Organization');
+    return makePageMetadata('Edit Organization');
   }
 };

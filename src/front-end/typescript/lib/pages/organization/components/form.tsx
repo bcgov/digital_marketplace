@@ -106,7 +106,6 @@ export function getValues(state: Immutable<State>): Values {
     region:          FormField.getValue(state.region),
     websiteUrl:      FormField.getValue(state.websiteUrl),
     newLogoImage:    state.newLogoImage ? state.newLogoImage.file : undefined,
-    active: true,
   };
 }
 
@@ -434,7 +433,11 @@ export function orgLogoPath(org?: Organization): string {
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
   const isSubmitLoading = state.submitLoading > 0;
-  const submitDisabled = disabled || !isFormValid(state);
+
+  const isOrgDisabled = state.organization ? !state.organization.active : false;
+  const submitDisabled = disabled || isOrgDisabled || !isFormValid(state);
+  const formIsDisabled = disabled || isOrgDisabled;
+
   return (
     <div>
       <Row>
@@ -455,8 +458,8 @@ export const view: View<Props> = props => {
                 outline
                 size='sm'
                 style={{
-                  visibility: disabled ? 'hidden' : undefined,
-                  pointerEvents: disabled ? 'none' : undefined
+                  visibility: formIsDisabled ? 'hidden' : undefined,
+                  pointerEvents: formIsDisabled ? 'none' : undefined
                 }}
                 onChange={file => dispatch(adt('onChangeAvatar', file))}
                 accept={SUPPORTED_IMAGE_EXTENSIONS}
@@ -475,7 +478,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Legal Name'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.legalName}
             dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
         </Col>
@@ -484,7 +487,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Website Url (Optional)'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.websiteUrl}
             dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
         </Col>
@@ -499,7 +502,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Street Address'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.streetAddress1}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
         </Col>
@@ -508,7 +511,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Street Address'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.streetAddress2}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
         </Col>
@@ -518,7 +521,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='City'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.city}
             dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
         </Col>
@@ -528,7 +531,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Province/State'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.region}
             dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
         </Col>
@@ -538,7 +541,7 @@ export const view: View<Props> = props => {
               extraChildProps={{}}
               label='Postal / ZIP Code'
               required
-              disabled={disabled}
+              disabled={formIsDisabled}
               state={state.mailCode}
               dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
           </Col>
@@ -548,7 +551,7 @@ export const view: View<Props> = props => {
               extraChildProps={{}}
               label='Country'
               required
-              disabled={disabled}
+              disabled={formIsDisabled}
               state={state.country}
               dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
           </Col>
@@ -562,7 +565,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Contact Name'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactName}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
         </Col>
@@ -571,7 +574,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Job Title (Optional)'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactTitle}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
         </Col>
@@ -581,7 +584,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Contact Email'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactEmail}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
         </Col>
@@ -590,7 +593,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Phone Number (Optional)'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
         </Col>

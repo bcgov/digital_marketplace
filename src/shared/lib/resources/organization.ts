@@ -33,7 +33,7 @@ export interface OrganizationSlim {
   owner?: Pick<User, 'id' | 'name'>;
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile'> {
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active'> {
   logoImageFile?: Id;
 }
 
