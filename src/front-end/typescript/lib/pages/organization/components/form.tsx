@@ -105,7 +105,8 @@ export function getValues(state: Immutable<State>): Values {
     contactPhone:    FormField.getValue(state.contactPhone),
     region:          FormField.getValue(state.region),
     websiteUrl:      FormField.getValue(state.websiteUrl),
-    newLogoImage:  state.newLogoImage ? state.newLogoImage.file : undefined
+    newLogoImage:    state.newLogoImage ? state.newLogoImage.file : undefined,
+    active: true,
   };
 }
 
@@ -479,7 +480,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
         </Col>
 
-        <Col xs='12'>
+        <Col className='pb-5' xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Website Url (Optional)'
@@ -488,7 +489,8 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
         </Col>
 
-        <Col xs='12'>
+
+        <Col xs='12' className='pt-5 border-top'>
           <h2>Legal Address</h2>
         </Col >
 

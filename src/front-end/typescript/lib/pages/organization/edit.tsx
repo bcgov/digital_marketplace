@@ -29,6 +29,7 @@ type InnerMsg
   = ADT<'orgForm', OrgForm.Msg>
   | ADT<'startEditing'>
   | ADT<'finishEditing', OrgResource.Organization>
+  | ADT<'deactivate', OrgResource.Organization>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -94,6 +95,16 @@ const stopEditingLoading = makeStopLoading<State>('editingLoading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'deactivate':
+    return [state, async (state) => {
+      const result = await api.organizations.update(state.organization.id, {active: false})
+      if (api.isValid(result)) {
+        state = state.set('organization', result.value);
+        state = state.set('isEditing', false);
+        state = state.set('orgForm', OrgForm.setValues(state.orgForm, result.value) );
+      }
+      return state;
+    }]
     case 'startEditing':
     return [
       startEditingLoading(state),
@@ -143,7 +154,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isLoading = state.editingLoading > 0;
   return (
     <div>
-      <Row>
+      <Row className='pb-5'>
         <Row className='mb-3 pb-3'>
           <Col xs='12' className='d-flex flex-nowrap align-items-center'>
             <h1>{state.organization.legalName}</h1>
@@ -171,6 +182,17 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             submitHook={(org: OrgResource.Organization) => { dispatch(adt('finishEditing', org)); }}
           />
         </Col>
+      </Row>
+
+      <Row className='pt-5 border-top'>
+        <h4>Deactivate Organization</h4>
+        <p>Deactivating this organization means that it will no longer be available for <i>Sprint With Us</i> opportunities</p>
+      </Row>
+
+      <Row>
+        <LoadingButton loading={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate', state.organization))}>
+          Deactivate Organization
+        </LoadingButton>
       </Row>
 
     </div>
