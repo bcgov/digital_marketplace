@@ -8,20 +8,16 @@ import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { parseUserType, UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { UpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, mapValid, valid } from 'shared/lib/validation';
-import { validateAcceptedTerms, validateEmail, validateJobTitle, validateName, validateNotificationsOn, validateUserType } from 'shared/lib/validation/user';
+import { allValid, getInvalidValue, getValidValue, invalid, mapValid, optional, valid } from 'shared/lib/validation';
+import { validateAcceptedTerms, validateEmail, validateIdpUsername, validateJobTitle, validateName, validateNotificationsOn, validateUserStatus, validateUserType } from 'shared/lib/validation/user';
 
-export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'avatarImageFile' | 'notificationsOn' | 'acceptedTerms'> {
-  id: Id;
-  avatarImageFile?: Id;
+export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'notificationsOn' | 'acceptedTerms'> {
   notificationsOn?: Date;
   acceptedTerms?: Date;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
-  status?: UserStatus;
-  type?: UserType;
 }
 
 type DeleteValidatedReqBody = User;
@@ -67,7 +63,7 @@ const resource: Resource = {
         return respond(400, validatedUser.value);
       }
       if (!permissions.readOneUser(request.session, validatedUser.value.id)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
+        return respond(401,  [permissions.ERROR_MESSAGE]);
       }
       return respond(200, validatedUser.value);
     });
@@ -78,27 +74,51 @@ const resource: Resource = {
       async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
-          name: getString(body, 'name') || undefined,
+          id: request.params.id,
+          type: getString(body, 'type'),
+          status: getString(body, 'status'),
+          name: getString(body, 'name'),
           email: getString(body, 'email') || undefined,
-          jobTitle: getString(body, 'jobTitle'), // undefined means no change to job title, empty string means remove
+          jobTitle: getString(body, 'jobTitle', undefined), // undefined (fallback) means no change to job title, empty string means remove
           avatarImageFile: getString(body, 'avatarImageFile') || undefined,
           notificationsOn: isBoolean(body.notificationsOn) ? body.notificationsOn : undefined,
           acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined,
-          type: parseUserType(body.type) || undefined
+          // idpUsername: getString(body, 'idpUsername')
         };
       },
       async validateRequestBody(request) {
-        const { type, name, email, jobTitle, avatarImageFile, notificationsOn, acceptedTerms } = request.body;
-        const validatedUserId = await validateUserId(connection, request.params.id);
-        const validatedName = name ? validateName(name) : valid(undefined);
-        const validatedEmail = email ? validateEmail(email) : valid(undefined);
-        const validatedJobTitle = validateJobTitle(jobTitle || '');
-        const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
-        const validatedNotificationsOn = notificationsOn !== undefined ? validateNotificationsOn(notificationsOn) : valid(undefined);
-        const validatedAcceptedTerms = acceptedTerms !== undefined ? validateAcceptedTerms(acceptedTerms) : valid(undefined);
-        const validatedUserType = type !== undefined ? validateUserType(type) : valid(undefined);
+        const { id,
+                type,
+                status,
+                name,
+                email,
+                jobTitle,
+                avatarImageFile,
+                notificationsOn,
+                acceptedTerms,
+                idpUsername } = request.body;
 
-        if (allValid([validatedUserId, validatedName, validatedEmail, validatedJobTitle, validatedAvatarImageFile, validatedNotificationsOn, validatedAcceptedTerms, validatedUserType])) {
+        const validatedUserId = await validateUserId(connection, id);
+        const validatedUserType = validateUserType(type);
+        const validatedUserStatus = validateUserStatus(status);
+        const validatedName = validateName(name);
+        const validatedEmail = optional(email, userValidation.validateEmail);
+        const validatedJobTitle = jobTitle === '' ? validateJobTitle(jobTitle) : optional(jobTitle, validateJobTitle);
+        const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
+        const validatedNotificationsOn = optional(notificationsOn, validateNotificationsOn);
+        const validatedAcceptedTerms = optional(acceptedTerms, validateAcceptedTerms);
+        const validatedIdpUsername = validateIdpUsername(idpUsername);
+
+        if (allValid([validatedUserId,
+                      validatedUserType,
+                      validatedUserStatus,
+                      validatedName,
+                      validatedEmail,
+                      validatedJobTitle,
+                      validatedAvatarImageFile,
+                      validatedNotificationsOn,
+                      validatedAcceptedTerms,
+                      validatedIdpUsername])) {
 
           // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario) OR that the user type is being changed
           // Admin shouldn't provide any other updates to profile

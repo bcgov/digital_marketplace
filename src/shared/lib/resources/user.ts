@@ -58,14 +58,16 @@ export function isPublicSectorEmployee(user: User): boolean {
 }
 
 export interface UpdateRequestBody {
-  status?: UserStatus;
-  name?: string;
-  email?: string;
-  jobTitle?: string;
-  avatarImageFile?: Id;
-  notificationsOn?: boolean;
-  acceptedTerms?: boolean;
-  type?: UserType;
+  // id: Id;
+  type: string; // could be own resource
+  status: string; // could be own resource (including delete user)
+  name: string;
+  email: string; // same as jobTitle - required but allow empty string
+  jobTitle: string; // empty string removes, undefined leaves unchanged
+  avatarImageFile?: Id; // undefined indicates remove the avatar - separate resource
+  notificationsOn: boolean; // separate
+  acceptedTerms: boolean; // separate
+  // idpUsername: string;
 }
 
 export interface UpdateValidationErrors extends ErrorTypeFrom<Omit<UpdateRequestBody, 'status'>> {
