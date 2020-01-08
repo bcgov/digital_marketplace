@@ -1,6 +1,5 @@
+import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
-import { DEFAULT_LOGO_IMAGE_PATH } from 'front-end/config';
-import { fileBlobPath } from 'shared/lib/resources/file';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
@@ -12,6 +11,7 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
+import { fileBlobPath } from 'shared/lib/resources/file';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
@@ -423,11 +423,10 @@ export interface Props extends ComponentViewProps<State, Msg> {
   submitHook?: SubmitHook;
 }
 
-
 export function orgLogoPath(org?: Organization): string {
   return org && org.logoImageFile
     ? fileBlobPath(org.logoImageFile)
-    : DEFAULT_LOGO_IMAGE_PATH;
+    : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH;
 }
 
 export const view: View<Props> = props => {
