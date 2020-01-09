@@ -249,7 +249,6 @@ export async function createOrganization(connection: Connection, user: Id, organ
       .transacting(trx)
       .insert({
         ...organization,
-        logoImageFile: organization.logoImageFile && organization.logoImageFile.id,
         id: generateUuid(),
         active: true,
         createdAt: now,
@@ -265,7 +264,7 @@ export async function createOrganization(connection: Connection, user: Id, organ
       membershipType: MembershipType.Owner,
       membershipStatus: MembershipStatus.Active
     });
-    return result;
+    return await rawOrganizationToOrganization(connection, result);
   });
 }
 
@@ -280,7 +279,7 @@ export async function updateOrganization(connection: Connection, organization: V
   if (!result) {
     throw new Error('unable to update organization');
   }
-  return result;
+  return await rawOrganizationToOrganization(connection, result);
 }
 
 export async function readOneOrganization(connection: Connection, id: Id): Promise<Organization> {

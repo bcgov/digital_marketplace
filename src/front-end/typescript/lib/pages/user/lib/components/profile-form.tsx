@@ -22,7 +22,7 @@ export interface State extends Params {
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
   idpUsername: Immutable<ShortText.State>;
-  newAvatarImage: { file: File; path: string; errors: string[]; } | null;
+  newAvatarImage: { file: File; path: string; errors: string[]; } | null; // @avatar-filetype
 }
 
 export type Msg

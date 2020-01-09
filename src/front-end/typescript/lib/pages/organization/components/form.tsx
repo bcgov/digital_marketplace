@@ -1,23 +1,28 @@
+import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import FileButton from 'front-end/lib/views/file-button';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
+import { fileBlobPath } from 'shared/lib/resources/file';
+import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation/index';
-import { validateUrl } from 'shared/lib/validation/organization';
-import { validateName } from 'shared/lib/validation/user';
+import { ErrorTypeFrom, validateThenMapValid } from 'shared/lib/validation';
+import * as orgValidation from 'shared/lib/validation/organization';
 
 export interface Params {
   organization?: Organization;
 }
+
+type AvatarFiletype = { file: File; path: string; errors: string[]; } | null; // @avatar-filetype
 
 export interface State {
   legalName: Immutable<ShortText.State>;
@@ -33,34 +38,41 @@ export interface State {
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
 
+  newLogoImage?: AvatarFiletype;
+
   submitLoading: number;
+
+  /**
+   *  TODO(Jesse): Document
+   */
   organization?: Organization;
 }
 
-export type InnerMsg =
-  ADT<'legalName',       ShortText.Msg> |
-  ADT<'websiteUrl',      ShortText.Msg> |
-  ADT<'streetAddress1',  ShortText.Msg> |
-  ADT<'streetAddress2',  ShortText.Msg> |
-  ADT<'city',            ShortText.Msg> |
-  ADT<'country',         ShortText.Msg> |
-  ADT<'mailCode',        ShortText.Msg> |
-  ADT<'contactTitle',    ShortText.Msg> |
-  ADT<'contactName',     ShortText.Msg> |
-  ADT<'contactEmail',    ShortText.Msg> |
-  ADT<'contactPhone',    ShortText.Msg> |
-  ADT<'submit',          SubmitHook>    |
-  ADT<'region',          ShortText.Msg>
+export type InnerMsg
+  = ADT<'legalName',       ShortText.Msg>
+  | ADT<'websiteUrl',      ShortText.Msg>
+  | ADT<'streetAddress1',  ShortText.Msg>
+  | ADT<'streetAddress2',  ShortText.Msg>
+  | ADT<'city',            ShortText.Msg>
+  | ADT<'country',         ShortText.Msg>
+  | ADT<'mailCode',        ShortText.Msg>
+  | ADT<'contactTitle',    ShortText.Msg>
+  | ADT<'contactName',     ShortText.Msg>
+  | ADT<'contactEmail',    ShortText.Msg>
+  | ADT<'contactPhone',    ShortText.Msg>
+  | ADT<'submit',          SubmitHook | undefined>
+  | ADT<'onChangeAvatar',  File>
+  | ADT<'region',          ShortText.Msg>
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type Values = Required<CreateRequestBody>;
+export type Values = Required<CreateRequestBody> & { newLogoImage?: File };
 
 type Errors = ErrorTypeFrom<Values>;
 
 export function isFormValid(state: Immutable<State>): boolean {
-  return (
+  const result: boolean = (
     FormField.isValid(state.legalName)      &&
     FormField.isValid(state.websiteUrl)     &&
     FormField.isValid(state.streetAddress1) &&
@@ -74,6 +86,8 @@ export function isFormValid(state: Immutable<State>): boolean {
     FormField.isValid(state.contactPhone)   &&
     FormField.isValid(state.region)
   );
+
+  return result;
 }
 
 export function getValues(state: Immutable<State>): Values {
@@ -90,7 +104,8 @@ export function getValues(state: Immutable<State>): Values {
     contactEmail:    FormField.getValue(state.contactEmail),
     contactPhone:    FormField.getValue(state.contactPhone),
     region:          FormField.getValue(state.region),
-    websiteUrl:      FormField.getValue(state.websiteUrl)
+    websiteUrl:      FormField.getValue(state.websiteUrl),
+    newLogoImage:    state.newLogoImage ? state.newLogoImage.file : undefined,
   };
 }
 
@@ -107,10 +122,12 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || '' ))
     .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || '' ))
     .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || '' ))
-    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ));
+    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ))
+    .set('newLogoImage', null);
 }
 
-export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
+export function setErrors(state: Immutable<State>, errors: Errors | undefined): Immutable<State> {
+  if (errors) {
   return state
     .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
     .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
@@ -123,16 +140,21 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
     .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
     .update('region',          s => FormField.setErrors(s, errors.region         || []))
-    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []));
+    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
+    .update('newLogoImage', v => v && ({ ...v, errors: errors.newLogoImage   || []} ));
+  } else {
+    return state;
+  }
 }
 
 export const init: Init<Params, State> = async (params) => {
   return {
     organization: params.organization,
+    newLogoImage: null,
     submitLoading: 0,
     legalName: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateLegalName,
       child: {
         type: 'text',
         value: getString(params.organization, 'legalName'),
@@ -141,7 +163,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     websiteUrl: immutable(await ShortText.init({
       errors: [],
-      validate: validateUrl,
+      validate: validateThenMapValid(orgValidation.validateWebsiteUrl, a => a || ''),
       child: {
         type: 'text',
         value: getString(params.organization, 'websiteUrl'),
@@ -150,7 +172,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     streetAddress1: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateStreetAddress1,
       child: {
         type: 'text',
         value: getString(params.organization, 'streetAddress1'),
@@ -159,7 +181,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     streetAddress2: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: validateThenMapValid(orgValidation.validateStreetAddress2, a => a || ''),
       child: {
         type: 'text',
         value: getString(params.organization, 'streetAddress2'),
@@ -168,7 +190,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     city: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateCity,
       child: {
         type: 'text',
         value: getString(params.organization, 'city'),
@@ -177,7 +199,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     country: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateCountry,
       child: {
         type: 'text',
         value: getString(params.organization, 'country'),
@@ -186,7 +208,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     mailCode: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateMailCode,
       child: {
         type: 'text',
         value: getString(params.organization, 'mailCode'),
@@ -195,7 +217,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     contactTitle: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: validateThenMapValid(orgValidation.validateContactTitle, a => a || ''),
       child: {
         type: 'text',
         value: getString(params.organization, 'contactTitle'),
@@ -204,7 +226,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     contactName: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateContactName,
       child: {
         type: 'text',
         value: getString(params.organization, 'contactName'),
@@ -213,7 +235,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     contactEmail: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateContactEmail,
       child: {
         type: 'text',
         value: getString(params.organization, 'contactEmail'),
@@ -222,7 +244,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     contactPhone: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: validateThenMapValid(orgValidation.validateContactPhone, a => a || ''),
       child: {
         type: 'text',
         value: getString(params.organization, 'contactPhone'),
@@ -231,7 +253,7 @@ export const init: Init<Params, State> = async (params) => {
     })),
     region: immutable(await ShortText.init({
       errors: [],
-      validate: validateName,
+      validate: orgValidation.validateRegion,
       child: {
         type: 'text',
         value: getString(params.organization, 'region'),
@@ -245,24 +267,55 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'submit':
       return [state, async (state, dispatch) => {
+        const values: Values = getValues(state);
+
+        let logoImage;
+        if (values.newLogoImage) {
+          const fileResult = await api.files.create({
+            name: values.newLogoImage.name,
+            file: values.newLogoImage,
+            metadata: [adt('any')]
+          });
+
+          switch (fileResult.tag) {
+            case 'valid':
+              logoImage = fileResult.value.id;
+              break;
+            case 'unhandled':
+            case 'invalid':
+            /* TODO(Jesse): Handle Errors */
+          }
+        }
+
+        delete values.newLogoImage;
+        const reqValues = {...values, logoImageFile: logoImage };
         const result = state.organization
-         ? await api.organizations.update(state.organization.id, getValues(state))
-         : await api.organizations.create(getValues(state));
+         ? await api.organizations.update(state.organization.id, reqValues)
+         : await api.organizations.create(reqValues);
 
         if (api.isValid(result)) {
+          state = setErrors(state, {});
           if (state.organization) {
-            const submitHook: SubmitHook = msg.value;
+            state = state.set('organization', result.value);
+            const submitHook: SubmitHook | undefined = msg.value;
             if (submitHook) { submitHook(result.value); }
-            state.set('organization', result.value);
           } else {
-            // FIXME(Jesse): This compiles, but doesn't actually work..
             dispatch(replaceRoute(adt('orgEdit' as const, {orgId: result.value.id})));
           }
         } else {
-          // TODO(Jesse): Handle errors
+          state = setErrors(state, result.value);
         }
         return state;
       }];
+    case 'onChangeAvatar':
+      return [state, async state => {
+        return state.set('newLogoImage', {
+          file: msg.value,
+          path: URL.createObjectURL(msg.value),
+          errors: []
+        });
+      }
+    ];
     case 'legalName':
       return updateComponentChild({
         state,
@@ -364,26 +417,58 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-type SubmitHook = (org: Organization) => void | undefined;
+type SubmitHook = (org: Organization) => void;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
-  submitHook: SubmitHook;
+  submitHook?: SubmitHook;
+}
+
+export function orgLogoPath(org?: Organization): string {
+  return org && org.logoImageFile
+    ? fileBlobPath(org.logoImageFile)
+    : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH;
 }
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
   const isSubmitLoading = state.submitLoading > 0;
 
+  const isOrgDisabled = state.organization ? !state.organization.active : false;
+  const submitDisabled = disabled || isOrgDisabled || !isFormValid(state);
+  const formIsDisabled = disabled || isOrgDisabled;
+
   return (
     <div>
       <Row>
 
-        <Row className='my-3 py-3'>
-          <Col xs='2'>
-          </Col>
-          <Col xs='10'>
-            <div className='pb-3'><strong>Logo (Optional)</strong></div>
-            <Link button className='btn-secondary'>Choose Image</Link>
+        <Row>
+          <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+            <img
+              className='rounded-circle border'
+              style={{
+                width: '5rem',
+                height: '5rem',
+                objectFit: 'cover'
+              }}
+              src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
+            <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
+              <div className='mb-2'><b>Profile Picture (Optional)</b></div>
+              <FileButton
+                outline
+                size='sm'
+                style={{
+                  visibility: formIsDisabled ? 'hidden' : undefined,
+                  pointerEvents: formIsDisabled ? 'none' : undefined
+                }}
+                onChange={file => dispatch(adt('onChangeAvatar', file))}
+                accept={SUPPORTED_IMAGE_EXTENSIONS}
+                color='primary'>
+                Choose Image
+              </FileButton>
+              {state.newLogoImage && state.newLogoImage.errors.length
+                ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+                : null}
+            </div>
           </Col>
         </Row>
 
@@ -392,21 +477,22 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Legal Name'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.legalName}
             dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
         </Col>
 
-        <Col xs='12'>
+        <Col className='pb-5' xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Website Url (Optional)'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.websiteUrl}
             dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
         </Col>
 
-        <Col xs='12'>
+
+        <Col xs='12' className='pt-5 border-top'>
           <h2>Legal Address</h2>
         </Col >
 
@@ -415,7 +501,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Street Address'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.streetAddress1}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
         </Col>
@@ -424,7 +510,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Street Address'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.streetAddress2}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
         </Col>
@@ -434,7 +520,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='City'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.city}
             dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
         </Col>
@@ -444,7 +530,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Province/State'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.region}
             dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
         </Col>
@@ -454,7 +540,7 @@ export const view: View<Props> = props => {
               extraChildProps={{}}
               label='Postal / ZIP Code'
               required
-              disabled={disabled}
+              disabled={formIsDisabled}
               state={state.mailCode}
               dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
           </Col>
@@ -464,7 +550,7 @@ export const view: View<Props> = props => {
               extraChildProps={{}}
               label='Country'
               required
-              disabled={disabled}
+              disabled={formIsDisabled}
               state={state.country}
               dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
           </Col>
@@ -478,7 +564,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Contact Name'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactName}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
         </Col>
@@ -487,7 +573,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Job Title (Optional)'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactTitle}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
         </Col>
@@ -497,7 +583,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Contact Email'
             required
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactEmail}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
         </Col>
@@ -506,7 +592,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Phone Number (Optional)'
-            disabled={disabled}
+            disabled={formIsDisabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
         </Col>
@@ -515,10 +601,12 @@ export const view: View<Props> = props => {
       <Row>
         <Col className='d-flex justify-content-end pt-5'>
           <Link button className='mr-3'>Cancel</Link>
-          <LoadingButton loading={isSubmitLoading}
+          <LoadingButton
+            loading={isSubmitLoading}
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-            onClick={() => dispatch(adt('submit', props.submitHook ))}
+            onClick={() => dispatch(adt('submit', props.submitHook)) }
+            disabled={submitDisabled}
           >
             Save
           </LoadingButton>

@@ -90,6 +90,14 @@ export function mapInvalid<A, B, C>(value: Validation<A, B>, fn: (b: B) => C): V
   }
 }
 
+export function validateThenMapValid<A, B, C>(validate: (_: A) => Validation<A, B>, fn: (_: A) => C): (_: A) => Validation<C, B> {
+  return a => mapValid(validate(a), fn);
+}
+
+export function validateThenMapInvalid<A, B, C>(validate: (_: A) => Validation<A, B>, fn: (_: B) => C): (_: A) => Validation<A, C> {
+  return a => mapInvalid(validate(a), fn);
+}
+
 // Array Validators.
 
 export function validateArrayCustom<A, B, C>(raw: A[], validate: (v: A) => Validation<B, C>, defaultInvalidValue: C): ArrayValidation<B, C> {
@@ -119,6 +127,10 @@ export async function validateArrayAsync<A, B>(raw: A[], validate: (v: A) => Pro
 // Validate a field only if it is truthy.
 export function optional<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Validation<Valid, Invalid>): Validation<Valid | undefined, Invalid> {
   return isEmpty(v) ? valid(undefined) : validate(v as Value);
+}
+
+export async function optionalAsync<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Promise<Validation<Valid, Invalid>>): Promise<Validation<Valid | undefined, Invalid>> {
+  return isEmpty(v) ? valid(undefined) : await validate(v as Value);
 }
 
 export function validateGenericString(value: string, name: string, min = 1, max = 100, characters = 'characters'): Validation<string> {
@@ -182,4 +194,30 @@ export function validateDate(raw: string, minDate?: Date, maxDate?: Date): Valid
 
 export function validateTime(raw: string, minDate?: Date, maxDate?: Date): Validation<Date> {
   return validateGenericDate(raw, 'time', 'at', formatTime, minDate, maxDate);
+}
+
+export function validateUrl(url: string): Validation<string> {
+  url = url.toLowerCase();
+  if (!url.match(/(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i)) {
+    return invalid(['Please enter a valid URL.']);
+  } else {
+    return valid(url);
+  }
+}
+
+export function validatePhoneNumber(phone: string): Validation<string> {
+  if (!phone.match(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/i)) {
+    return invalid(['Please enter a valid phone number.']);
+  } else {
+    return valid(phone);
+  }
+}
+
+export function validateEmail(email: string): Validation<string> {
+  email = email.toLowerCase();
+  if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/i)) {
+    return invalid([ 'Please enter a valid email.' ]);
+  } else {
+    return valid(email);
+  }
 }

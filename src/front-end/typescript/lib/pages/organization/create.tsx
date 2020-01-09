@@ -1,11 +1,13 @@
 import { makePageMetadata } from 'front-end/lib';
+import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
-import { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -21,36 +23,34 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  govProfile: immutable(await OrgForm.init({})),
-  sidebar: immutable(await MenuSidebar.init({
-    links: [
-      {
-        icon: 'user',
-        text: 'Profile',
-        active: true,
-        dest: routeDest(adt('userProfile', {userId: '1'}))
-      },
-      {
-        icon: 'bell',
-        text: 'Notifications',
-        active: false,
-        dest: routeDest(adt('landing', null))
-      },
-      {
-        icon: 'balance-scale',
-        text: 'Accepted Policies, Terms & Agreements',
-        active: false,
-        dest: routeDest(adt('landing', null))
-      }
-    ]
-  }))
+async function baseState(): Promise<State> {
+  return {
+    govProfile: immutable(await OrgForm.init({})),
+    sidebar: immutable(await MenuSidebar.init({ links: [] }))
+  };
+}
+
+const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+  userType: [UserType.Vendor],
+
+  async success({ shared }) {
+    return {
+      ...(await baseState()),
+      sidebar: await UserSidebar.makeSidebar(shared.sessionUser, shared.sessionUser, 'organizations')
+    };
+  },
+
+  async fail({ dispatch }) {
+    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    return await baseState();
+  }
+
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'govProfile':
-      return updateComponentChild({
+      return updateGlobalComponentChild({
         state,
         childStatePath: ['govProfile'],
         childUpdate: OrgForm.update,
@@ -83,10 +83,9 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Col xs='12'>
           <OrgForm.view
-            submitHook={() => {}}
             state={state.govProfile}
             disabled={false}
-            dispatch={mapComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
+            dispatch={mapGlobalComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
         </Col>
       </Row>
 

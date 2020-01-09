@@ -21,6 +21,9 @@ export interface Organization {
   contactPhone?: string;
   websiteUrl?: string;
   active: boolean;
+
+  // @org-needs-owner-information
+  // owner?: Pick<User, 'id' | 'name'>;
 }
 
 export interface OrganizationSlim {
@@ -31,7 +34,7 @@ export interface OrganizationSlim {
 }
 
 export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active'> {
-  logoImageFile?: string;
+  logoImageFile?: Id;
 }
 
 export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
