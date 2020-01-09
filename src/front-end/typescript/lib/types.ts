@@ -2,6 +2,11 @@ export type BootstrapColor = 'body' | 'primary' | 'secondary' | 'success' | 'dan
 
 export type TextColor = BootstrapColor;
 
+export type AvatarFiletype
+  = { file: File; path: string; errors: string[]; }
+  | null
+  ;
+
 export type ButtonColor
   = Exclude<BootstrapColor, 'body' | 'muted'>
   | 'link';

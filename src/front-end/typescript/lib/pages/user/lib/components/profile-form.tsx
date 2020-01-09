@@ -3,6 +3,7 @@ import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
+import { AvatarFiletype } from 'front-end/lib/types';
 import FileButton from 'front-end/lib/views/file-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -22,7 +23,7 @@ export interface State extends Params {
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
   idpUsername: Immutable<ShortText.State>;
-  newAvatarImage: { file: File; path: string; errors: string[]; } | null; // @avatar-filetype
+  newAvatarImage: AvatarFiletype;
 }
 
 export type Msg

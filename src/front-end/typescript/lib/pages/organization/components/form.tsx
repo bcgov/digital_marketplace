@@ -3,8 +3,10 @@ import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import { replaceRoute } from 'front-end/lib/framework';
+// @org-needs-owner-information
+// import { replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import { AvatarFiletype } from 'front-end/lib/types';
 import FileButton from 'front-end/lib/views/file-button';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -22,8 +24,6 @@ import * as orgValidation from 'shared/lib/validation/organization';
 export interface Params {
   organization?: Organization;
 }
-
-type AvatarFiletype = { file: File; path: string; errors: string[]; } | null; // @avatar-filetype
 
 export interface State {
   legalName: Immutable<ShortText.State>;
@@ -70,7 +70,7 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type Values = Required<CreateRequestBody> & { newLogoImage?: File };
+export type Values = Omit<Required<CreateRequestBody>, 'logoImageFile'> & { newLogoImage?: File };
 
 type Errors = ErrorTypeFrom<Values>;
 
@@ -96,7 +96,6 @@ export function isFormValid(state: Immutable<State>): boolean {
 export function getValues(state: Immutable<State>): Values {
   return {
     legalName:       FormField.getValue(state.legalName),
-    logoImageFile:   '', // TODO(Jesse):  Implement this!
     streetAddress1:  FormField.getValue(state.streetAddress1),
     streetAddress2:  FormField.getValue(state.streetAddress2),
     city:            FormField.getValue(state.city),
@@ -129,7 +128,7 @@ export function setValues(state: Immutable<State>, org: Organization): Immutable
     .set('newLogoImage', null);
 }
 
-export function setErrors(state: Immutable<State>, errors: Errors | undefined): Immutable<State> {
+export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   if (errors) {
   return state
     .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
@@ -292,7 +291,9 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               break;
             case 'unhandled':
             case 'invalid':
-            /* TODO(Jesse): Handle Errors */
+              setErrors(state, {
+                newLogoImage: ['Please select a different image.']
+              });
           }
         }
 
@@ -309,7 +310,9 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             const stopEditingHook: StopEditingHook | undefined = msg.value;
             if (stopEditingHook) { stopEditingHook(result.value); }
           } else {
-            dispatch(replaceRoute(adt('orgEdit' as const, {orgId: result.value.id})));
+            // TODO: DM-182 Once we have access to the owner of an org we can do this redirect
+            // @org-needs-owner-information
+            // dispatch(replaceRoute(adt('userProfile' as const, { userId: result.value.owner.id, tab: 'organizations' as const})));
           }
         } else {
           state = setErrors(state, result.value);
@@ -450,36 +453,36 @@ export const view: View<Props> = props => {
   return (
     <Row>
 
-        <Col md='12' className='mb-4 d-flex align-items-center flex-nowrap'>
-          <img
-            className='rounded-circle border'
+      <Col md='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+        <img
+          className='rounded-circle border'
+          style={{
+            width: '5rem',
+            height: '5rem',
+            objectFit: 'cover'
+          }}
+          src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
+        <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
+          <div className='mb-2'><b>Profile Picture (Optional)</b></div>
+          <FileButton
+            outline
+            size='sm'
             style={{
-              width: '5rem',
-              height: '5rem',
-              objectFit: 'cover'
+              visibility: formIsDisabled ? 'hidden' : undefined,
+              pointerEvents: formIsDisabled ? 'none' : undefined
             }}
-            src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
-          <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
-            <div className='mb-2'><b>Profile Picture (Optional)</b></div>
-            <FileButton
-              outline
-              size='sm'
-              style={{
-                visibility: formIsDisabled ? 'hidden' : undefined,
-                pointerEvents: formIsDisabled ? 'none' : undefined
-              }}
-              onChange={file => dispatch(adt('onChangeAvatar', file))}
-              accept={SUPPORTED_IMAGE_EXTENSIONS}
-              color='primary'>
-              Choose Image
-            </FileButton>
-            {state.newLogoImage && state.newLogoImage.errors.length
-              ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
-              : null}
-          </div>
-        </Col>
+            onChange={file => dispatch(adt('onChangeAvatar', file))}
+            accept={SUPPORTED_IMAGE_EXTENSIONS}
+            color='primary'>
+            Choose Image
+          </FileButton>
+          {state.newLogoImage && state.newLogoImage.errors.length
+            ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+            : null}
+        </div>
+      </Col>
 
-      <Col md='12'>
+      <Col className='pb-4' md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Legal Name'
@@ -487,9 +490,7 @@ export const view: View<Props> = props => {
           disabled={formIsDisabled}
           state={state.legalName}
           dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
-      </Col>
 
-      <Col className='pb-5' md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Website Url (Optional)'
@@ -498,7 +499,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
       </Col>
 
-      <Col md='12' className='mb-4 pt-4 border-top'>
+      <Col md='12' className='py-4 border-top'>
         <h3>Legal Address</h3>
       </Col >
 

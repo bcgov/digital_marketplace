@@ -22,7 +22,6 @@ export interface State {
   submitErrors?: string[];
   sidebar: Immutable<MenuSidebar.State>;
   isEditing: boolean;
-  userCanDeactivate: boolean;
   editingLoading: number;
 }
 
@@ -42,7 +41,6 @@ export interface RouteParams {
 async function defaultState(): Promise<State> {
   return {
     isEditing: false,
-    userCanDeactivate: false,
     editingLoading: 0,
     sidebar: immutable(await MenuSidebar.init({ links: [] })),
     submitErrors: [],
@@ -69,13 +67,12 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   async success({dispatch, routeParams, shared}) {
     const result = await api.organizations.readOne(routeParams.orgId);
 
-    if (api.isValid(result) && userOwnsOrg(shared.sessionUser, result.value)) {
+    if (api.isValid(result) && userOwnsOrg(shared.sessionUser, result.value) && result.value.active) {
       return {
         ...(await defaultState()),
         sidebar: shared.sessionUser.type === UserType.Vendor
                   ? await UserSidebar.makeSidebar(shared.sessionUser, shared.sessionUser, 'organizations')
                   : immutable(await MenuSidebar.init({ links: [] })),
-        userCanDeactivate: true,
         organization: result.value,
         orgForm: immutable(await OrgForm.init({organization: result.value }))
       };
@@ -97,35 +94,36 @@ const stopEditingLoading = makeStopLoading<State>('editingLoading');
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'deactivate':
-    return [state, async (state) => {
-      const result = await api.organizations.delete(state.organization.id);
-      if (api.isValid(result)) {
-        state = state.set('organization', result.value);
-        state = state.set('isEditing', false);
-        state = state.set('orgForm', OrgForm.setValues(state.orgForm, result.value) );
-      }
-      return state;
-    }];
-    case 'startEditing':
-    return [
-      startEditingLoading(state),
-      async state => {
-        const result = await api.organizations.readOne(state.organization.id);
+      return [state, async (state) => {
+        const result = await api.organizations.delete(state.organization.id);
         if (api.isValid(result)) {
           state = state.set('organization', result.value);
-          state = state.set('isEditing', true);
+          state = state.set('isEditing', false);
           state = state.set('orgForm', OrgForm.setValues(state.orgForm, result.value) );
-          state = stopEditingLoading(state);
-        } else {
-          // TODO(Jesse): Handle errors
         }
         return state;
-      }
-    ];
+      }];
+    case 'startEditing':
+      return [
+        startEditingLoading(state),
+        async state => {
+          const result = await api.organizations.readOne(state.organization.id);
+          if (api.isValid(result)) {
+            state = state.set('organization', result.value);
+            state = state.set('isEditing', true);
+            state = state.set('orgForm', OrgForm.setValues(state.orgForm, result.value) );
+            state = stopEditingLoading(state);
+          } else {
+            // TODO(Jesse): Handle errors
+          }
+          return state;
+        }
+      ];
     case 'stopEditing': {
       return [ state, async state => {
         state = state.set('organization', msg.value );
         state = state.set('orgForm', OrgForm.setValues(state.orgForm, msg.value) );
+        state = state.set('orgForm', OrgForm.setErrors(state.orgForm, {}));
         state = state.set('isEditing', false);
         return state;
       }];
@@ -158,20 +156,16 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row className='pb-5'>
 
         <Col xs='12' className='mb-3 pb-3 d-flex flex-nowrap flex-column flex-md-row align-items-md-center'>
-          <h1 className='mr-3'>{state.organization.legalName}</h1>
+          <h2 className='mr-3'>{state.organization.legalName}</h2>
           <div>
           {
             state.isEditing
             ?
               undefined
             :
-              state.organization.active
-              ?
               <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
                 Edit Organization
               </LoadingButton>
-              :
-              <span>(Deactivated)</span>
 
           }
           </div>
@@ -188,24 +182,19 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         </Col>
       </Row>
 
-      {
-
-        state.organization.active && state.userCanDeactivate
-        ?
-        <div>
-          <Row className='pt-5 border-top'>
-            <h4>Deactivate Organization</h4>
-            <p>Deactivating this organization means that it will no longer be available for <i>Sprint With Us</i> opportunities</p>
-          </Row>
-
-          <Row>
-            <LoadingButton loading={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate', state.organization))}>
-              Deactivate Organization
-            </LoadingButton>
-          </Row>
-        </div>
-        : undefined
-      }
+      <Row className='pt-5 border-top'>
+        <Col>
+          <h3>Deactivate Organization</h3>
+          <p>Deactivating this organization means that it will no longer be available for <i>Sprint With Us</i> opportunities</p>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <LoadingButton loading={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate', state.organization))}>
+            Deactivate Organization
+          </LoadingButton>
+        </Col>
+      </Row>
 
     </div>
   );
@@ -224,7 +213,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
     }
   },
-  getMetadata() {
-    return makePageMetadata('Edit Organization');
+  getMetadata(state) {
+    return makePageMetadata(`${state.organization.legalName} — Organizations`);
   }
 };

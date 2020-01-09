@@ -11,12 +11,12 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  govProfile: Immutable<OrgForm.State>;
+  orgForm: Immutable<OrgForm.State>;
   sidebar: Immutable<MenuSidebar.State>;
 }
 
 type InnerMsg
-  = ADT<'govProfile', OrgForm.Msg>
+  = ADT<'orgForm', OrgForm.Msg>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -25,7 +25,7 @@ export type RouteParams = null;
 
 async function baseState(): Promise<State> {
   return {
-    govProfile: immutable(await OrgForm.init({})),
+    orgForm: immutable(await OrgForm.init({})),
     sidebar: immutable(await MenuSidebar.init({ links: [] }))
   };
 }
@@ -49,13 +49,13 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'govProfile':
+    case 'orgForm':
       return updateGlobalComponentChild({
         state,
-        childStatePath: ['govProfile'],
+        childStatePath: ['orgForm'],
         childUpdate: OrgForm.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('govProfile', value)
+        mapChildMsg: value => adt('orgForm', value)
       });
     case 'sidebar':
       return updateComponentChild({
@@ -73,23 +73,21 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
-
-      <Row className='mb-3 pb-3'>
-        <Col xs='12'>
-          <h1>Create  Organization</h1>
+      <Row>
+        <Col className='mb-5' xs='12'>
+          <h2>Create  Organization</h2>
         </Col>
       </Row>
 
       <Row>
         <Col xs='12'>
           <OrgForm.view
-            state={state.govProfile}
+            state={state.orgForm}
             icon={'plus-circle'}
             disabled={false}
-            dispatch={mapGlobalComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
+            dispatch={mapGlobalComponentDispatch(dispatch, value => adt('orgForm' as const, value))} />
         </Col>
       </Row>
-
     </div>
   );
 };
