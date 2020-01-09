@@ -219,7 +219,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
 const update: Update<State, Msg> = ({ state, msg }) => {
   const defaultPageUpdateParams = {
     state,
-    setModal(state: Immutable<State>, modal: PageModal<Msg>) {
+    setModal(state: Immutable<State>, modal: PageModal<Msg> | null) {
       state = state.setIn(['modal', 'open'], !!modal);
       return modal
         ? state.setIn(['modal', 'content'], modal)

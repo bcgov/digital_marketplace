@@ -279,7 +279,7 @@ export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<GlobalCompon
   };
 }
 
-export type PageGetModal<State, Msg> = (state: Immutable<State>, dispatch: Dispatch<Msg>) => PageModal<Msg> | null;
+export type PageGetModal<State, Msg> = (state: Immutable<State>) => PageModal<Msg> | null;
 
 export function noPageModal<Msg>() {
   return null;
@@ -410,7 +410,7 @@ export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams,
   }));
   setPageMetadata(params.childGetMetadata(childState));
   const childModal = params.childGetModal
-    ? params.childGetModal(childState, childDispatch)
+    ? params.childGetModal(childState)
     : null;
   const parentModal = mapPageModalMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<ParentMsg, Route>);
   const parentState = params.state.setIn(params.childStatePath, childState);
@@ -465,24 +465,23 @@ export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPag
     const metadata = params.childGetMetadata(pageState);
     setPageMetadata(metadata);
   };
-  const setModal = (parentState: Immutable<PS>, parentDispatch: Dispatch<AppMsg<PM, Route>>): Immutable<PS>  => {
+  const setModal = (parentState: Immutable<PS>): Immutable<PS>  => {
     const pageState = parentState.getIn(params.childStatePath);
-    const childDispatch = mapAppDispatch(parentDispatch, params.mapChildMsg);
     const childModal = params.childGetModal
-      ? params.childGetModal(pageState, childDispatch)
+      ? params.childGetModal(pageState)
       : null;
     const parentModal = mapPageModalMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<PM, Route>);
     return params.setModal(parentState, parentModal);
   };
   setMetadata(newState);
-  const newStateWithModal = newState; //setModal(newState); //TODO
+  const newStateWithModal = setModal(newState);
   const asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
-    state = setModal(state, dispatch);
+    state = setModal(state);
     let newState = null;
     if (newAsyncState) { newState = await newAsyncState(state, dispatch); }
     if (!newState) { return state; }
     setMetadata(newState);
-    return setModal(newState, dispatch);
+    return setModal(newState);
   };
   return [
     newStateWithModal,

@@ -1,4 +1,4 @@
-import { ComponentView, Immutable, PageMetadata, Update } from 'front-end/lib/framework';
+import { ComponentView, Immutable, PageGetModal, PageMetadata, Update } from 'front-end/lib/framework';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
@@ -62,6 +62,10 @@ export function viewValid<ValidState, Msg>(view: ComponentView<ValidState, Msg>)
       state: state.value
     });
   };
+}
+
+export function getModalValid<ValidState, Msg>(getModal: PageGetModal<ValidState, Msg>): PageGetModal<ValidatedState<ValidState>, Msg> {
+  return withValid(getModal, null);
 }
 
 export function makePageMetadata(title: string): PageMetadata {

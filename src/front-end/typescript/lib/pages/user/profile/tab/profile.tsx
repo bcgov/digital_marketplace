@@ -10,6 +10,7 @@ import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
+import { startCase } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -23,6 +24,7 @@ export interface State extends Tab.Params {
   isEditingForm: boolean;
   profileForm: Immutable<ProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>;
+  showActivationModal: boolean;
 }
 
 export type InnerMsg
@@ -31,7 +33,8 @@ export type InnerMsg
   | ADT<'cancelEditingForm'>
   | ADT<'saveChanges'>
   | ADT<'toggleAccountActivation'>
-  | ADT<'adminCheckbox', Checkbox.Msg>;
+  | ADT<'adminCheckbox', Checkbox.Msg>
+  | ADT<'hideActivationModal'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -48,6 +51,7 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
     startEditingFormLoading: 0,
     savePermissionsLoading: 0,
     isEditingForm: false,
+    showActivationModal: false,
     profileForm: await resetProfileForm(profileUser),
     adminCheckbox: immutable(await Checkbox.init({
       errors: [],
@@ -126,8 +130,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'toggleAccountActivation':
+      if (!state.showActivationModal) {
+        return [state.set('showActivationModal', true)];
+      } else {
+        state = startAccountActivationLoading(state)
+          .set('showActivationModal', false);
+      }
       return [
-        startAccountActivationLoading(state),
+        state,
         async (state, dispatch) => {
           state = stopAccountActivationLoading(state);
           const isOwner = usersAreEquivalent(state.profileUser, state.viewerUser);
@@ -177,6 +187,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return state;
         }
       ];
+    case 'hideActivationModal':
+      return [state.set('showActivationModal', false)];
     default:
       return [state];
   }
@@ -413,5 +425,43 @@ const view: ComponentView<State, Msg> = props => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  getModal(state) {
+    if (state.showActivationModal) {
+      const isActive = state.profileUser.status === UserStatus.Active;
+      const isOwner = usersAreEquivalent(state.profileUser, state.viewerUser);
+      const your = isOwner ? 'your' : 'user\'s';
+      const action = isActive ? 'deactivate' : 'reactivate';
+      return {
+        title: `${startCase(action)} ${your} account?`,
+        body: (() => {
+          if (!isOwner && isActive) {
+            // Admin deactivating user.
+            return 'Are you sure you want to deactivate this user’s account? They will no longer be able to access the Digital Marketplace.';
+          } else if (!isOwner && !isActive) {
+            // Admin reactivating user.
+            return 'Are you sure you want to reactivate this user’s account? They will be notified that their access to the Digital Marketplace has been renewed.';
+          } else {
+            // User deactivating self.
+            return 'Are you sure you want to deactivate your account? You will no longer be able to access the Digital Marketplace.';
+          }
+        })(),
+        onCloseMsg: adt('hideActivationModal'),
+        actions: [
+          {
+            text: `${startCase(action)} Account`,
+            color: 'primary',
+            msg: adt('toggleAccountActivation'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideActivationModal')
+          }
+        ]
+      };
+    }
+    return null;
+  }
 };
