@@ -15,6 +15,7 @@ type TableAffiliation = AffiliationSlim;
 
 export interface State extends Tab.Params {
   deleteAffiliationLoading: Id | null;
+  showDeleteAffiliationModal: Id | null;
   ownedRecords: TableAffiliation[];
   affiliatedRecords: TableAffiliation[];
   ownedTable: Immutable<Table.State>;
@@ -24,7 +25,8 @@ export interface State extends Tab.Params {
 export type InnerMsg
   = ADT<'ownedTable', Table.Msg>
   | ADT<'affiliatedTable', Table.Msg>
-  | ADT<'deleteAffiliation', Id>;
+  | ADT<'deleteAffiliation', Id>
+  | ADT<'hideDeleteAffiliationModal'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -32,10 +34,11 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
   const result = await api.affiliations.readMany();
   let affiliations: TableAffiliation[] = [];
   if (api.isValid(result)) {
-    affiliations = result.value;
+    affiliations = result.value.sort((a, b) => a.organization.legalName.localeCompare(b.organization.legalName));
   }
   return {
     deleteAffiliationLoading: null,
+    showDeleteAffiliationModal: null,
     profileUser,
     viewerUser,
     ownedRecords: affiliations.filter(a => a.membershipType === MembershipType.Owner),
@@ -68,6 +71,27 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => ({ tag: 'affiliatedTable', value })
       });
     case 'deleteAffiliation':
+      if (!state.showDeleteAffiliationModal) {
+        return [state.set('showDeleteAffiliationModal', msg.value)];
+      } else {
+        state = state
+          .set('deleteAffiliationLoading', msg.value)
+          .set('showDeleteAffiliationModal', null);
+      }
+      return [
+        state,
+        async state => {
+          state = state.set('deleteAffiliationLoading', null);
+          const result = await api.affiliations.delete(msg.value);
+          if (!api.isValid(result)) { return state; }
+          return immutable(await init({
+            profileUser: state.profileUser,
+            viewerUser: state.viewerUser
+          }));
+        }
+      ];
+    case 'hideDeleteAffiliationModal':
+      return [state.set('showDeleteAffiliationModal', null)];
     default:
       return [state];
   }
@@ -137,33 +161,45 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Row>
         <Col xs='12'>
           <h2>Owned Organizations</h2>
-          <p className='mb-5'>You are the owner of the following organizations.</p>
+          <p className={state.ownedRecords.length ? 'mb-5' : 'mb-0'}>
+            {state.ownedRecords.length
+              ? 'You are the owner of the following organizations.'
+              : 'You do not own any organizations.'}
+          </p>
         </Col>
       </Row>
       <Row>
         <Col xs='12' className='mb-5 pb-5 border-bottom'>
-          <Table.view
-            headCells={ownedTableHeadCells(state)}
-            bodyRows={ownedTableBodyRows(state)}
-            state={state.ownedTable}
-            dispatch={dispatchOwnedTable} />
+          {state.ownedRecords.length
+            ? (<Table.view
+                headCells={ownedTableHeadCells(state)}
+                bodyRows={ownedTableBodyRows(state)}
+                state={state.ownedTable}
+                dispatch={dispatchOwnedTable} />)
+            : null}
         </Col>
       </Row>
       <Row>
         <Col xs='12'>
           <h2>Affiliated Organizations</h2>
-          <p className='mb-5'>You've given these companies permission to put you forward as a team member on proposals for opportunities.</p>
+          <p className='mb-5'>
+            {state.affiliatedRecords.length
+              ? 'You\'ve given these companies permission to put you forward as a team member on proposals for opportunities.'
+              : 'You are not affiliated with any organizations'}
+          </p>
         </Col>
       </Row>
-      <Row>
-        <Col xs='12'>
-          <Table.view
-            headCells={affiliatedTableHeadCells(state)}
-            bodyRows={affiliatedTableBodyRows(state, dispatch)}
-            state={state.affiliatedTable}
-            dispatch={dispatchAffiliatedTable} />
-        </Col>
-      </Row>
+      {state.affiliatedRecords.length
+        ? (<Row>
+            <Col xs='12'>
+              <Table.view
+                headCells={affiliatedTableHeadCells(state)}
+                bodyRows={affiliatedTableBodyRows(state, dispatch)}
+                state={state.affiliatedTable}
+                dispatch={dispatchAffiliatedTable} />
+            </Col>
+          </Row>)
+        : null}
     </div>
   );
 };
@@ -171,5 +207,28 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  getModal(state) {
+    if (state.showDeleteAffiliationModal) {
+      return {
+        title: 'Leave Organization?',
+        body: 'Are you sure you want to leave this organization? You will no longer be able to be included as a team member in its opportunity proposals.',
+        onCloseMsg: adt('hideDeleteAffiliationModal'),
+        actions: [
+          {
+            text: 'Leave Organization',
+            color: 'primary',
+            msg: adt('deleteAffiliation', state.showDeleteAffiliationModal),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideDeleteAffiliationModal')
+          }
+        ]
+      };
+    }
+    return null;
+  }
 };

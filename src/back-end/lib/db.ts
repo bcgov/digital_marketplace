@@ -331,7 +331,8 @@ export async function readManyAffiliations(connection: Connection, userId: Id): 
     .where({
       'affiliations.user': userId,
       'organizations.active': true
-    });
+    })
+    .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
 
   return Promise.all(results.map(async raw => rawAffiliationToAffiliationSlim(connection, raw)));
 }
@@ -351,9 +352,8 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
 
 export async function readOneAffiliationById(connection: Connection, id: Id): Promise<Affiliation> {
   const result = await connection('affiliations')
-    .where({
-      id
-    })
+    .where({ id })
+    .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
     .first();
 
   return result;
@@ -384,7 +384,10 @@ export async function rawAffiliationToAffiliationSlim(connection: Connection, pa
 export async function approveAffiliation(connection: Connection, id: Id): Promise<Affiliation> {
   const now = new Date();
   const [result] = await connection('affiliations')
-    .where({ id })
+    .where({
+      id,
+      membershipStatus: MembershipStatus.Pending
+    })
     .update({
       membershipStatus: MembershipStatus.Active,
       updatedAt: now

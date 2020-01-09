@@ -182,7 +182,7 @@ const resource: Resource = {
         }
 
         const existingAffiliation = validatedAffiliationId.value;
-        if (existingAffiliation.membershipType === MembershipType.Owner && await readActiveOwnerCount(connection, request.query.organization) === 1 ) {
+        if (existingAffiliation.membershipType === MembershipType.Owner && await readActiveOwnerCount(connection, existingAffiliation.organization.id) === 1 ) {
           return invalid({
             membershipType: ['Unable to remove membership. This is the sole owner for this organization.']
           });
@@ -195,7 +195,7 @@ const resource: Resource = {
         }
 
         return valid({
-          affiliation: (validatedAffiliationId.value as Affiliation).id
+          affiliation: existingAffiliation.id
         });
       },
       async respond(request) {
