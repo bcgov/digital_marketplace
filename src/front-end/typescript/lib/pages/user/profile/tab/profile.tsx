@@ -8,11 +8,11 @@ import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTy
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
-import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
+import { startCase } from 'lodash';
 import React from 'react';
-import { Col, Row, Spinner } from 'reactstrap';
+import { Col, Row } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -24,7 +24,7 @@ export interface State extends Tab.Params {
   isEditingForm: boolean;
   profileForm: Immutable<ProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>;
-  isEditingAdminCheckbox: boolean;
+  showActivationModal: boolean;
 }
 
 export type InnerMsg
@@ -34,8 +34,7 @@ export type InnerMsg
   | ADT<'saveChanges'>
   | ADT<'toggleAccountActivation'>
   | ADT<'adminCheckbox', Checkbox.Msg>
-  | ADT<'savePermissions'>
-  | ADT<'startEditingPermissions'>;
+  | ADT<'hideActivationModal'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -52,8 +51,8 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
     startEditingFormLoading: 0,
     savePermissionsLoading: 0,
     isEditingForm: false,
+    showActivationModal: false,
     profileForm: await resetProfileForm(profileUser),
-    isEditingAdminCheckbox: false,
     adminCheckbox: immutable(await Checkbox.init({
       errors: [],
       child: {
@@ -131,8 +130,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'toggleAccountActivation':
+      if (!state.showActivationModal) {
+        return [state.set('showActivationModal', true)];
+      } else {
+        state = startAccountActivationLoading(state)
+          .set('showActivationModal', false);
+      }
       return [
-        startAccountActivationLoading(state),
+        state,
         async (state, dispatch) => {
           state = stopAccountActivationLoading(state);
           const isOwner = usersAreEquivalent(state.profileUser, state.viewerUser);
@@ -153,12 +158,26 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
         }
       ];
-    case 'savePermissions':
+    case 'adminCheckbox':
+      const adminValueChanged = msg.value.tag === 'child' && msg.value.value.tag === 'onChange';
+      const newAdminResult = updateComponentChild({
+        state,
+        childStatePath: ['adminCheckbox'],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('adminCheckbox' as const, value)
+      });
+      if (!adminValueChanged) { return newAdminResult; }
       return [
-        startSavePermissionsLoading(state),
-        async state => {
+        startSavePermissionsLoading(newAdminResult[0]),
+        async (state, dispatch) => {
+          // Ensure async updates from child component have been run.
+          if (newAdminResult[1]) {
+            const newState = await newAdminResult[1](state, dispatch);
+            state = newState || state;
+          }
+          // Persist change to back-end.
           state = stopSavePermissionsLoading(state);
-          state = state.set('isEditingAdminCheckbox', false);
           const result = await api.users.update(state.profileUser.id, {
             type: FormField.getValue(state.adminCheckbox) ? UserType.Admin : UserType.Government
           });
@@ -168,16 +187,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return state;
         }
       ];
-    case 'startEditingPermissions':
-      return [state.set('isEditingAdminCheckbox', true)];
-    case 'adminCheckbox':
-      return updateComponentChild({
-        state,
-        childStatePath: ['adminCheckbox'],
-        childUpdate: Checkbox.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('adminCheckbox', value)
-      });
+    case 'hideActivationModal':
+      return [state.set('showActivationModal', false)];
     default:
       return [state];
   }
@@ -221,41 +232,17 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
   const isSavePermissionsLoading = state.savePermissionsLoading > 0;
   const isAccountActivationLoading = state.accountActivationLoading > 0;
   const isLoading = isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
-  const icon = () => {
-    if (state.isEditingAdminCheckbox && isSavePermissionsLoading) {
-      return (
-        <Spinner size='sm' color='secondary'></Spinner>
-      );
-    } else if (state.isEditingAdminCheckbox) {
-      return (
-        <Icon
-          name='check'
-          color='success'
-          hover={!isLoading}
-          onClick={() => !isLoading && dispatch(adt('savePermissions'))} />
-      );
-    } else {
-      return (
-        <Icon
-          name='edit'
-          color='primary'
-          hover={!isLoading}
-          style={{ cursor: 'pointer' }}
-          onClick={() => !isLoading && dispatch(adt('startEditingPermissions'))} />
-      );
-    }
-  };
   return (
     <ViewDetail name='Permission(s)'>
-      <div className='d-flex align-items-center'>
-        <Checkbox.view
-          extraChildProps={{ inlineLabel: 'Admin' }}
-          className='mb-0 mr-3'
-          disabled={!state.isEditingAdminCheckbox || isLoading}
-          state={state.adminCheckbox}
-          dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
-        {icon()}
-      </div>
+      <Checkbox.view
+        extraChildProps={{
+          inlineLabel: 'Admin',
+            loading: isSavePermissionsLoading
+        }}
+        className='mb-0 mr-3'
+        disabled={isLoading}
+        state={state.adminCheckbox}
+        dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
     </ViewDetail>
   );
 };
@@ -438,5 +425,43 @@ const view: ComponentView<State, Msg> = props => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  getModal(state) {
+    if (state.showActivationModal) {
+      const isActive = state.profileUser.status === UserStatus.Active;
+      const isOwner = usersAreEquivalent(state.profileUser, state.viewerUser);
+      const your = isOwner ? 'your' : 'user\'s';
+      const action = isActive ? 'deactivate' : 'reactivate';
+      return {
+        title: `${startCase(action)} ${your} account?`,
+        body: (() => {
+          if (!isOwner && isActive) {
+            // Admin deactivating user.
+            return 'Are you sure you want to deactivate this user’s account? They will no longer be able to access the Digital Marketplace.';
+          } else if (!isOwner && !isActive) {
+            // Admin reactivating user.
+            return 'Are you sure you want to reactivate this user’s account? They will be notified that their access to the Digital Marketplace has been renewed.';
+          } else {
+            // User deactivating self.
+            return 'Are you sure you want to deactivate your account? You will no longer be able to access the Digital Marketplace.';
+          }
+        })(),
+        onCloseMsg: adt('hideActivationModal'),
+        actions: [
+          {
+            text: `${startCase(action)} Account`,
+            color: 'primary',
+            msg: adt('toggleAccountActivation'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideActivationModal')
+          }
+        ]
+      };
+    }
+    return null;
+  }
 };

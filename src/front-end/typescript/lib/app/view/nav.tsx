@@ -66,16 +66,18 @@ interface NavDropdownLinkGroup {
 }
 
 interface NavDropdown {
+  text: string;
   imageUrl: string;
   linkGroups: NavDropdownLinkGroup[];
 }
 
 const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; }> = props => {
-  const { imageUrl, linkGroups, open, dispatch } = props;
+  const { text, imageUrl, linkGroups, open, dispatch } = props;
   const toggleOpen = () => dispatch(adt('toggleDesktopAccountDropdown'));
   return (
     <Dropdown isOpen={open} toggle={toggleOpen}>
-      <DropdownToggle caret tag='div' className='text-white' style={{ cursor: 'pointer' }}>
+      <DropdownToggle caret tag='div' className='text-white text-hover-white' style={{ cursor: 'pointer' }}>
+        <span className='mr-2 o-75'>{text}</span>
         <img
           src={imageUrl}
           className='rounded-circle'
@@ -135,7 +137,7 @@ interface AccountActionProps {
 const AccountAction: View<AccountActionProps> = ({ className = '', action, dispatch }) => {
   switch (action.tag) {
     case 'text':
-      return (<div className={`${className} o-50 text-white`}>{action.value}</div>);
+      return (<div className={`${className} o-75 text-white`}>{action.value}</div>);
     case 'link':
       return (<NavLink className={className} {...action.value} dispatch={dispatch} />);
   }
@@ -144,7 +146,7 @@ const AccountAction: View<AccountActionProps> = ({ className = '', action, dispa
 type UnauthenticatedAccountMenu = ADT<'unauthenticated', AccountAction[]>;
 export const unauthenticatedAccountMenu = adtCurried<UnauthenticatedAccountMenu>('unauthenticated');
 
-type AuthenticatedDesktopAccountMenu = ADT<'authenticated', { email: string; dropdown: NavDropdown; }>;
+type AuthenticatedDesktopAccountMenu = ADT<'authenticated', NavDropdown>;
 export const authenticatedDesktopAccountMenu = adtCurried<AuthenticatedDesktopAccountMenu>('authenticated');
 
 type AuthenticatedMobileAccountMenu = ADT<'authenticated', AccountAction[]>;
@@ -188,8 +190,7 @@ const DesktopAccountMenu: View<Props> = props => {
     case 'authenticated':
       return (
         <Fragment>
-          <div className='text-white o-50 mr-3'>{menu.value.email}</div>
-          <NavDropdown {...menu.value.dropdown} open={state.isDesktopAccountDropdownOpen} dispatch={dispatch} />
+          <NavDropdown {...menu.value} open={state.isDesktopAccountDropdownOpen} dispatch={dispatch} />
         </Fragment>
       );
   }
@@ -209,7 +210,7 @@ const MobileAccountMenu: View<Props> = props => {
         return (
           <AccountAction
             action={clonedAction}
-            className={`${i !== menu.value.length - 1 ? marginClassName : ''} ${active || button ? 'o-100' : 'o-75'} ${active && button ? 'font-weight-bold' : ''}`}
+            className={`${i !== menu.value.length - 1 ? marginClassName : ''} ${active && !button ? 'font-weight-bold' : ''}`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`} />);
         })}
@@ -278,7 +279,7 @@ const TopNavbar: View<Props> = props => {
 
 const DesktopBottomNavbar: View<Props> = props => {
   const { contextualLinks } = props;
-  const linkClassName = (link: NavLink) => `${link.active || link.button ? 'o-100' : 'o-75'} ${link.active && !link.button ? 'font-weight-bold' : ''}`;
+  const linkClassName = (link: NavLink) => `${link.active && !link.button ? 'font-weight-bold' : ''}`;
   if (!contextualLinks) { return null; }
   return (
     <div className='bg-info-alt py-3 d-none d-md-block shadow'>
@@ -317,7 +318,7 @@ const DesktopBottomNavbar: View<Props> = props => {
 const MobileBottomNavbar: View<Props> = props => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
   const { contextualLinks } = props;
-  const linkClassName = (link: NavLink, numLinks: number, i: number) => `${link.active || link.button ? 'o-100' : 'o-75'} ${link.active && !link.button ? 'font-weight-bold' : ''} ${i < numLinks - 1 ? 'mb-3' : ''}`;
+  const linkClassName = (link: NavLink, numLinks: number, i: number) => `${link.active && !link.button ? 'font-weight-bold' : ''} ${i < numLinks - 1 ? 'mb-3' : ''}`;
   return (
     <div
       className={`bg-info-alt ${isMobileMenuOpen ? 'py-4 shadow' : 'py-0'} d-md-none overflow-hidden`}

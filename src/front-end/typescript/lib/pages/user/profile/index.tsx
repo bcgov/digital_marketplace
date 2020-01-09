@@ -1,9 +1,9 @@
-import { makePageMetadata, updateValid, viewValid } from 'front-end/lib';
+import { getModalValid, makePageMetadata, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import React from 'react';
 import { isAdmin, User } from 'shared/lib/resources/user';
@@ -124,17 +124,24 @@ function makeComponent<K extends UserSidebar.TabId>(): PageComponent<RouteParams
     sidebar: {
       size: 'medium',
       color: 'light',
-      isEmptyOnMobile(state) {
-        if (state.tag !== 'valid') { return false; }
-        return !state.value.sidebar.links.length;
-      },
+      isEmptyOnMobile: withValid(state => {
+        return !state.sidebar.links.length;
+      }, false),
       view: viewValid(({ state, dispatch }) => {
         return (<MenuSidebar.view
           state={state.sidebar}
           dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
       })
     },
-    //TODO getModal
+    getModal: getModalValid(state => {
+      const tabId = state.tab[0];
+      const definition = UserSidebar.tabIdToTabDefinition(tabId);
+      if (!definition.component.getModal) { return null; }
+      return mapPageModalMsg(
+        definition.component.getModal(state.tab[1]),
+        v => adt('tab', v)
+      );
+    }),
     //TODO getAlerts
     getMetadata(state) {
       if (isValid(state)) {
