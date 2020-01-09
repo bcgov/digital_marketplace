@@ -1,4 +1,5 @@
-import { CrudApi, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
@@ -76,7 +77,7 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // Organizations
 
-export const organizations = makeSimpleCrudApi<{
+interface OrganizationSimpleResourceTypesParams {
   record: OrgResource.Organization;
   create: {
     request: OrgResource.CreateRequestBody;
@@ -86,7 +87,77 @@ export const organizations = makeSimpleCrudApi<{
     request: OrgResource.UpdateRequestBody;
     invalidResponse: OrgResource.UpdateValidationErrors;
   };
-}>(apiNamespace('organizations'));
+}
+
+interface OrganizationResourceTypes extends Omit<SimpleResourceTypes<OrganizationSimpleResourceTypesParams>, 'readMany'> {
+  readMany: {
+    rawResponse: OrgResource.OrganizationSlim;
+    validResponse: OrgResource.OrganizationSlim;
+    invalidResponse: string[];
+  };
+}
+
+const ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace('organizations');
+
+export const organizations: CrudApi<OrganizationResourceTypes> = {
+  ...makeSimpleCrudApi<OrganizationSimpleResourceTypesParams>(ORGANIZATIONS_ROUTE_NAMESPACE),
+  readMany: makeReadMany<OrganizationResourceTypes['readMany']>({
+    routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE
+  })
+};
+
+// Affiliations
+
+interface RawAffiliation extends Omit<AffiliationResource.Affiliation, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawAffiliationToAffiliation(raw: RawAffiliation): AffiliationResource.Affiliation {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface AffiliationResourceTypes extends Pick<UndefinedResourceTypes, 'readOne'> {
+  create: {
+    request: AffiliationResource.CreateRequestBody;
+    rawResponse: RawAffiliation;
+    validResponse: AffiliationResource.Affiliation;
+    invalidResponse: AffiliationResource.CreateValidationErrors;
+  };
+  readMany: {
+    rawResponse: AffiliationResource.AffiliationSlim;
+    validResponse: AffiliationResource.AffiliationSlim;
+    invalidResponse: string[];
+  };
+  update: {
+    request: null;
+    rawResponse: RawAffiliation;
+    validResponse: AffiliationResource.Affiliation;
+    invalidResponse: AffiliationResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawAffiliation;
+    validResponse: AffiliationResource.Affiliation;
+    invalidResponse: AffiliationResource.DeleteValidationErrors;
+  };
+}
+
+const affiliationActionParams = {
+  transformValid: rawAffiliationToAffiliation
+};
+
+export const affiliations: CrudApi<AffiliationResourceTypes> = makeCrudApi({
+  routeNamespace: apiNamespace('affiliations'),
+  create: affiliationActionParams,
+  update: affiliationActionParams,
+  delete: affiliationActionParams,
+  readMany: {
+    transformValid: a => a
+  },
+  readOne: undefined
+});
 
 // Files
 
@@ -121,11 +192,11 @@ interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'rea
   };
 }
 
-const FILES_ROUTE_NAMESPACE = 'files';
+const FILES_ROUTE_NAMESPACE = apiNamespace('files');
 
 const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
   ...undefinedActions,
-  routeNamespace: apiNamespace(FILES_ROUTE_NAMESPACE),
+  routeNamespace: FILES_ROUTE_NAMESPACE,
   readOne: {
     transformValid: rawFileRecordToFileRecord
   }
@@ -139,7 +210,7 @@ export const files: CrudApi<FileResourceTypes> = {
     multipartBody.append('file', body.file);
     multipartBody.append('metadata', JSON.stringify(body.metadata));
     return makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
-      routeNamespace: apiNamespace(FILES_ROUTE_NAMESPACE),
+      routeNamespace: FILES_ROUTE_NAMESPACE,
       transformValid: rawFileRecordToFileRecord
     })(multipartBody);
   }
