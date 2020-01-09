@@ -333,7 +333,7 @@ export async function readManyAffiliations(connection: Connection, userId: Id): 
       'organizations.active': true
     });
 
-  return Promise.all(results.map(async raw => rawAffiliationToAffiliation(connection, raw)));
+  return Promise.all(results.map(async raw => rawAffiliationToAffiliationSlim(connection, raw)));
 }
 
 export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<Affiliation> {
@@ -359,7 +359,8 @@ export async function readOneAffiliationById(connection: Connection, id: Id): Pr
   return result;
 }
 
-interface RawAffiliationToAffiliationParams {
+interface RawAffiliationToAffiliationSlimParams {
+  id: Id;
   user: Id;
   organization: Id;
   membershipType: MembershipType;
@@ -367,12 +368,16 @@ interface RawAffiliationToAffiliationParams {
   updatedAt: Date;
 }
 
-export async function rawAffiliationToAffiliation(connection: Connection, params: RawAffiliationToAffiliationParams): Promise<AffiliationSlim> {
-  const { organization: orgId, membershipType } = params;
+export async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliationToAffiliationSlimParams): Promise<AffiliationSlim> {
+  const { id, organization: orgId, membershipType } = params;
   const organization = await readOneOrganization(connection, orgId);
   return {
-    organizationName: organization.legalName,
-    membershipType
+    id,
+    membershipType,
+    organization: {
+      id: organization.id,
+      legalName: organization.legalName
+    }
   };
 }
 

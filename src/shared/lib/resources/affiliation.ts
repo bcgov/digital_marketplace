@@ -24,7 +24,8 @@ export interface Affiliation {
 
 // Used when returning a list of the current user's affiliations
 export interface AffiliationSlim {
-  organizationName: string;
+  id: Id;
+  organization: Pick<Organization, 'id' | 'legalName'>;
   membershipType: MembershipType;
 }
 
