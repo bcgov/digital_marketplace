@@ -1,12 +1,10 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
-import { User } from 'shared/lib/resources/user';
-import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
-import { UserType } from 'shared/lib/resources/user';
-import { isUserType } from 'front-end/lib/access-control';
 import { makePageMetadata } from 'front-end/lib';
+import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { replaceRoute, ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -14,6 +12,8 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
+import { User } from 'shared/lib/resources/user';
+import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -49,7 +49,7 @@ async function defaultState(): Promise<State> {
     organization: OrgResource.Empty(),
     orgForm: immutable(await OrgForm.init({}))
   };
-};
+}
 
 function userOwnsOrg(user: User, org: OrgResource.Organization): boolean {
   // FIXME: The backend doesn't vend the owner of the org, which we need in
@@ -81,9 +81,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       };
     } else {
       dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
-      return ({
-        ...(await defaultState()),
-      });
+      return (await defaultState());
     }
 
   },
@@ -100,14 +98,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'deactivate':
     return [state, async (state) => {
-      const result = await api.organizations.delete(state.organization.id)
+      const result = await api.organizations.delete(state.organization.id);
       if (api.isValid(result)) {
         state = state.set('organization', result.value);
         state = state.set('isEditing', false);
         state = state.set('orgForm', OrgForm.setValues(state.orgForm, result.value) );
       }
       return state;
-    }]
+    }];
     case 'startEditing':
     return [
       startEditingLoading(state),
@@ -158,33 +156,33 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <Row className='pb-5'>
-        <Row className='mb-3 pb-3'>
-          <Col xs='12' className='d-flex flex-nowrap align-items-center'>
-            <h1>{state.organization.legalName}</h1>
-            <div className='ml-3'>
-            {
-              state.isEditing
-              ?
-              <Link button size='sm' color='secondary' onClick={() => dispatch(adt('finishEditing', state.organization))}>
-                Discard Changes
-              </Link>
-              :
-                state.organization.active
-                ?
-                <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
-                  Edit Organization
-                </LoadingButton>
-                :
-                <span>(Deactivated)</span>
 
-            }
-            </div>
-          </Col>
-        </Row>
+        <Col xs='12' className='mb-3 pb-3 d-flex flex-nowrap flex-column flex-md-row align-items-md-center'>
+          <h1 className='mr-3'>{state.organization.legalName}</h1>
+          <div>
+          {
+            state.isEditing
+            ?
+            <Link button size='sm' color='secondary' onClick={() => dispatch(adt('finishEditing', state.organization))}>
+              Discard Changes
+            </Link>
+            :
+              state.organization.active
+              ?
+              <LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
+                Edit Organization
+              </LoadingButton>
+              :
+              <span>(Deactivated)</span>
+
+          }
+          </div>
+        </Col>
 
         <Col xs='12'>
           <OrgForm.view
             state={state.orgForm}
+            icon={'check'}
             disabled={!state.isEditing}
             dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
             submitHook={(org: OrgResource.Organization) => { dispatch(adt('finishEditing', org)); }}

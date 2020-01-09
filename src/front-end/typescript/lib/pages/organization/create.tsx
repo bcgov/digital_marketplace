@@ -84,6 +84,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Col xs='12'>
           <OrgForm.view
             state={state.govProfile}
+            icon={'plus-circle'}
             disabled={false}
             dispatch={mapGlobalComponentDispatch(dispatch, value => adt('govProfile' as const, value))} />
         </Col>

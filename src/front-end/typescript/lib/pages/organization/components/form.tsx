@@ -1,6 +1,6 @@
-import { Route } from 'front-end/lib/app/types';
 import { DEFAULT_LOGO_IMAGE_PATH } from 'front-end/config';
-import { fileBlobPath } from 'shared/lib/resources/file';
+import { AvailableIcons } from 'front-end/lib/views/icon';
+import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
@@ -12,6 +12,7 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
+import { fileBlobPath } from 'shared/lib/resources/file';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
@@ -43,7 +44,8 @@ export interface State {
   submitLoading: number;
 
   /**
-   *  TODO(Jesse): Document
+   *  This is effectively a switch for whether or not the component does a
+   *  'create' or 'update operation
    */
   organization?: Organization;
 }
@@ -105,7 +107,7 @@ export function getValues(state: Immutable<State>): Values {
     contactPhone:    FormField.getValue(state.contactPhone),
     region:          FormField.getValue(state.region),
     websiteUrl:      FormField.getValue(state.websiteUrl),
-    newLogoImage:    state.newLogoImage ? state.newLogoImage.file : undefined,
+    newLogoImage:    state.newLogoImage ? state.newLogoImage.file : undefined
   };
 }
 
@@ -421,8 +423,8 @@ type SubmitHook = (org: Organization) => void;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
   submitHook?: SubmitHook;
+  icon: AvailableIcons;
 }
-
 
 export function orgLogoPath(org?: Organization): string {
   return org && org.logoImageFile
@@ -439,181 +441,173 @@ export const view: View<Props> = props => {
   const formIsDisabled = disabled || isOrgDisabled;
 
   return (
-    <div>
-      <Row>
+    <Row>
 
-        <Row>
-          <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
-            <img
-              className='rounded-circle border'
+        <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+          <img
+            className='rounded-circle border'
+            style={{
+              width: '5rem',
+              height: '5rem',
+              objectFit: 'cover'
+            }}
+            src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
+          <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
+            <div className='mb-2'><b>Profile Picture (Optional)</b></div>
+            <FileButton
+              outline
+              size='sm'
               style={{
-                width: '5rem',
-                height: '5rem',
-                objectFit: 'cover'
+                visibility: formIsDisabled ? 'hidden' : undefined,
+                pointerEvents: formIsDisabled ? 'none' : undefined
               }}
-              src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
-            <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
-              <div className='mb-2'><b>Profile Picture (Optional)</b></div>
-              <FileButton
-                outline
-                size='sm'
-                style={{
-                  visibility: formIsDisabled ? 'hidden' : undefined,
-                  pointerEvents: formIsDisabled ? 'none' : undefined
-                }}
-                onChange={file => dispatch(adt('onChangeAvatar', file))}
-                accept={SUPPORTED_IMAGE_EXTENSIONS}
-                color='primary'>
-                Choose Image
-              </FileButton>
-              {state.newLogoImage && state.newLogoImage.errors.length
-                ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
-                : null}
-            </div>
-          </Col>
-        </Row>
+              onChange={file => dispatch(adt('onChangeAvatar', file))}
+              accept={SUPPORTED_IMAGE_EXTENSIONS}
+              color='primary'>
+              Choose Image
+            </FileButton>
+            {state.newLogoImage && state.newLogoImage.errors.length
+              ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+              : null}
+          </div>
+        </Col>
 
-        <Col xs='12'>
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Legal Name'
+          required
+          disabled={formIsDisabled}
+          state={state.legalName}
+          dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
+      </Col>
+
+      <Col className='pb-5' xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Website Url (Optional)'
+          disabled={formIsDisabled}
+          state={state.websiteUrl}
+          dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
+      </Col>
+
+      <Col xs='12' className='mb-4 pt-4 border-top'>
+        <h3>Legal Address</h3>
+      </Col >
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Street Address'
+          required
+          disabled={formIsDisabled}
+          state={state.streetAddress1}
+          dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Street Address'
+          disabled={formIsDisabled}
+          state={state.streetAddress2}
+          dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
+      </Col>
+
+      <Col xs='8'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='City'
+          required
+          disabled={formIsDisabled}
+          state={state.city}
+          dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
+      </Col>
+
+      <Col xs='4'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Province/State'
+          required
+          disabled={formIsDisabled}
+          state={state.region}
+          dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
+      </Col>
+
+        <Col xs='5' className='pb-4'>
           <ShortText.view
             extraChildProps={{}}
-            label='Legal Name'
+            label='Postal / ZIP Code'
             required
             disabled={formIsDisabled}
-            state={state.legalName}
-            dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
+            state={state.mailCode}
+            dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
         </Col>
 
-        <Col className='pb-5' xs='12'>
+        <Col xs='7' className='pb-4'>
           <ShortText.view
             extraChildProps={{}}
-            label='Website Url (Optional)'
-            disabled={formIsDisabled}
-            state={state.websiteUrl}
-            dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
-        </Col>
-
-
-        <Col xs='12' className='pt-5 border-top'>
-          <h2>Legal Address</h2>
-        </Col >
-
-        <Col xs='12'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Street Address'
+            label='Country'
             required
             disabled={formIsDisabled}
-            state={state.streetAddress1}
-            dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
+            state={state.country}
+            dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
         </Col>
 
-        <Col xs='12'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Street Address'
-            disabled={formIsDisabled}
-            state={state.streetAddress2}
-            dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
-        </Col>
+      <Col xs='12' className='mb-4 pt-4 border-top'>
+        <h3>Contact Information</h3>
+      </Col >
 
-        <Col xs='8'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='City'
-            required
-            disabled={formIsDisabled}
-            state={state.city}
-            dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
-        </Col>
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Contact Name'
+          required
+          disabled={formIsDisabled}
+          state={state.contactName}
+          dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
+      </Col>
 
-        <Col xs='4'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Province/State'
-            required
-            disabled={formIsDisabled}
-            state={state.region}
-            dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
-        </Col>
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Job Title (Optional)'
+          disabled={formIsDisabled}
+          state={state.contactTitle}
+          dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
+      </Col>
 
-          <Col xs='5' className='pb-4'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Postal / ZIP Code'
-              required
-              disabled={formIsDisabled}
-              state={state.mailCode}
-              dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
-          </Col>
+      <Col xs='7'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Contact Email'
+          required
+          disabled={formIsDisabled}
+          state={state.contactEmail}
+          dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
+      </Col>
 
-          <Col xs='7' className='pb-4'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Country'
-              required
-              disabled={formIsDisabled}
-              state={state.country}
-              dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
-          </Col>
+      <Col xs='5'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Phone Number (Optional)'
+          disabled={formIsDisabled}
+          state={state.contactPhone}
+          dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
+      </Col>
 
-        <Col xs='12' className='pt-5 border-top'>
-          <h2>Contact Information</h2>
-        </Col >
-
-        <Col xs='12'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Contact Name'
-            required
-            disabled={formIsDisabled}
-            state={state.contactName}
-            dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
-        </Col>
-
-        <Col xs='12'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Job Title (Optional)'
-            disabled={formIsDisabled}
-            state={state.contactTitle}
-            dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
-        </Col>
-
-        <Col xs='7'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Contact Email'
-            required
-            disabled={formIsDisabled}
-            state={state.contactEmail}
-            dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
-        </Col>
-
-        <Col xs='5'>
-          <ShortText.view
-            extraChildProps={{}}
-            label='Phone Number (Optional)'
-            disabled={formIsDisabled}
-            state={state.contactPhone}
-            dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
-        </Col>
-      </Row>
-
-      <Row>
-        <Col className='d-flex justify-content-end pt-5'>
-          <Link button className='mr-3'>Cancel</Link>
-          <LoadingButton
-            loading={isSubmitLoading}
-            color='primary'
-            symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-            onClick={() => dispatch(adt('submit', props.submitHook)) }
-            disabled={submitDisabled}
-          >
-            Save
-          </LoadingButton>
-        </Col>
-      </Row>
-
-    </div>
+      <Col className='d-flex justify-content-end pt-4'>
+        <Link button>Cancel</Link>
+        <LoadingButton
+          loading={isSubmitLoading}
+          color='primary'
+          symbol_={leftPlacement(iconLinkSymbol(props.icon))}
+          onClick={() => dispatch(adt('submit', props.submitHook)) }
+          disabled={submitDisabled}
+        >
+          Save Changes
+        </LoadingButton>
+      </Col>
+    </Row>
   );
 };
