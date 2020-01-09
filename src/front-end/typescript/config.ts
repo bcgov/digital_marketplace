@@ -8,7 +8,7 @@ export const PROCUREMENT_CONCIERGE_URL = 'https://procurementconcierge.gov.bc.ca
 
 export const DEFAULT_USER_AVATAR_IMAGE_PATH = '/images/default_user_avatar.svg';
 
-export const DEFAULT_LOGO_IMAGE_PATH = '/images/default_user_avatar.svg';
+export const DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH = '/images/default_organization_logo.svg';
 
 export const TRANSITION_DURATION = 240; //ms
 

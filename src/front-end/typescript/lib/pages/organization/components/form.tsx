@@ -1,4 +1,4 @@
-import { DEFAULT_LOGO_IMAGE_PATH } from 'front-end/config';
+import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
@@ -439,7 +439,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
 export function orgLogoPath(org?: Organization): string {
   return org && org.logoImageFile
     ? fileBlobPath(org.logoImageFile)
-    : DEFAULT_LOGO_IMAGE_PATH;
+    : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH;
 }
 
 export const view: View<Props> = props => {
