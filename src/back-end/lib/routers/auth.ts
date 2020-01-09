@@ -37,6 +37,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       handler: nullRequestBodyHandler(async request => {
         try {
           const provider = request.query.provider;
+          const redirectOnSuccess = request.query.redirectOnSuccess;
           const nonce = generators.codeVerifier();
           const authQuery: KeyCloakAuthQuery = {
             client_id: KEYCLOAK_CLIENT_ID,
@@ -47,6 +48,11 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             scope: 'openid',
             nonce
           };
+
+          // If redirectOnSuccess specified, include that as query parameter for callback
+          if (redirectOnSuccess) {
+            authQuery.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
+          }
 
           if (provider === 'github' || provider === 'idir') {
             authQuery.kc_idp_hint = provider;
@@ -73,8 +79,8 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       path: '/auth/callback',
       handler: nullRequestBodyHandler(async request => {
         try {
-          // Retrieve authorization code
-          const { code } = request.query;
+          // Retrieve authorization code and redirect
+          const { code, redirectOnSuccess } = request.query;
 
           // Use auth code to retrieve token asynchronously
           const data: KeyCloakTokenRequestData = {
@@ -85,6 +91,11 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             scope: 'openid',
             redirect_uri: `${ORIGIN}/auth/callback`
           };
+
+          // If redirectOnSuccess was provided on callback, this must also be provided on token request (redirect_uri must match for each request)
+          if (redirectOnSuccess) {
+            data.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
+          }
 
           const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
           const response = await httpRequest(ClientHttpMethod.Post, `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`, qs.stringify(data), headers);
@@ -130,7 +141,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             const { id } = user;
             await updateUser(connection, { id, status: UserStatus.Active });
           } else if (user.status === UserStatus.InactiveByAdmin) {
-            // If deactivated by admin, reroute to error (separate route/page for this?)
             return makeAuthErrorRedirect(request);
           }
 
@@ -140,10 +150,12 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             accessToken: tokens.refresh_token
           });
 
+          const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? '/' : '/sign-up/complete');
+
           return {
             code: 302,
             headers: {
-              'Location': existingUser ? '/' : '/sign-up/complete'
+              'Location': signinCompleteLocation
             },
             session,
             body: makeTextResponseBody('')
