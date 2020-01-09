@@ -97,10 +97,10 @@ interface OrganizationResourceTypes extends Omit<SimpleResourceTypes<Organizatio
   };
 }
 
-const ORGANIZATIONS_ROUTE_NAMESPACE = 'organizations';
+const ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace('organizations');
 
 export const organizations: CrudApi<OrganizationResourceTypes> = {
-  ...makeSimpleCrudApi<OrganizationSimpleResourceTypesParams>(apiNamespace(ORGANIZATIONS_ROUTE_NAMESPACE)),
+  ...makeSimpleCrudApi<OrganizationSimpleResourceTypesParams>(ORGANIZATIONS_ROUTE_NAMESPACE),
   readMany: makeReadMany<OrganizationResourceTypes['readMany']>({
     routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE
   })
@@ -149,7 +149,7 @@ const affiliationActionParams = {
 };
 
 export const affiliations: CrudApi<AffiliationResourceTypes> = makeCrudApi({
-  routeNamespace: 'affiliations',
+  routeNamespace: apiNamespace('affiliations'),
   create: affiliationActionParams,
   update: affiliationActionParams,
   delete: affiliationActionParams,
@@ -192,11 +192,11 @@ interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'rea
   };
 }
 
-const FILES_ROUTE_NAMESPACE = 'files';
+const FILES_ROUTE_NAMESPACE = apiNamespace('files');
 
 const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
   ...undefinedActions,
-  routeNamespace: apiNamespace(FILES_ROUTE_NAMESPACE),
+  routeNamespace: FILES_ROUTE_NAMESPACE,
   readOne: {
     transformValid: rawFileRecordToFileRecord
   }
@@ -210,7 +210,7 @@ export const files: CrudApi<FileResourceTypes> = {
     multipartBody.append('file', body.file);
     multipartBody.append('metadata', JSON.stringify(body.metadata));
     return makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
-      routeNamespace: apiNamespace(FILES_ROUTE_NAMESPACE),
+      routeNamespace: FILES_ROUTE_NAMESPACE,
       transformValid: rawFileRecordToFileRecord
     })(multipartBody);
   }
