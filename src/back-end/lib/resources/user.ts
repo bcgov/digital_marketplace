@@ -4,24 +4,20 @@ import * as permissions from 'back-end/lib/permissions';
 import { signOut } from 'back-end/lib/resources/session';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateImageFile, validateUserId } from 'back-end/lib/validation';
+import { validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, mapValid, optional, valid } from 'shared/lib/validation';
-import { validateAcceptedTerms, validateEmail, validateIdpUsername, validateJobTitle, validateName, validateNotificationsOn, validateUserStatus, validateUserType } from 'shared/lib/validation/user';
+import { UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { adt, ADT } from 'shared/lib/types';
+import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import * as userValidation from 'shared/lib/validation/user';
 
-//type UpdateRequestBody = SharedUpdateRequestBody | null;
-type UpdateRequestBody = SharedUpdateRequestBody;
+type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'notificationsOn' | 'acceptedTerms'> {
-  notificationsOn?: Date;
-  acceptedTerms?: Date;
-  deactivatedOn?: Date;
-  deactivatedBy?: Id;
-}
+type ValidatedUpdateRequestBody = SharedUpdateRequestBody | ADT<'updateNotifications', Date | null> | ADT<'updateAdminPermissions', UserType>;
+
+type ValidatedUpdateProfileRequestBody = UpdateProfileRequestBody;
 
 type DeleteValidatedReqBody = User;
 
@@ -74,123 +70,142 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      async parseRequestBody(request) {
+      async parseRequestBody(request): Promise<UpdateRequestBody | null> {
         const body = request.body.tag === 'json' ? request.body.value : {};
-        return {
-          id: request.params.id,
-          type: getString(body, 'type'),
-          status: getString(body, 'status'),
-          name: getString(body, 'name'),
-          email: getString(body, 'email') || undefined,
-          jobTitle: getString(body, 'jobTitle', undefined), // undefined (fallback) means no change to job title, empty string means remove
-          avatarImageFile: getString(body, 'avatarImageFile') || undefined,
-          notificationsOn: isBoolean(body.notificationsOn) ? body.notificationsOn : undefined,
-          acceptedTerms: isBoolean(body.acceptedTerms) ? body.acceptedTerms : undefined
-          // idpUsername: getString(body, 'idpUsername')
-        };
-      },
-      async validateRequestBody(request) {
-        const { id,
-                type,
-                status,
-                name,
-                email,
-                jobTitle,
-                avatarImageFile,
-                notificationsOn,
-                acceptedTerms,
-                idpUsername } = request.body;
-
-        const validatedUserId = await validateUserId(connection, id);
-        const validatedUserType = validateUserType(type);
-        const validatedUserStatus = validateUserStatus(status);
-        const validatedName = validateName(name);
-        const validatedEmail = optional(email, userValidation.validateEmail);
-        const validatedJobTitle = jobTitle === '' ? validateJobTitle(jobTitle) : optional(jobTitle, validateJobTitle);
-        const validatedAvatarImageFile = avatarImageFile ? await validateImageFile(connection, avatarImageFile) : valid(undefined);
-        const validatedNotificationsOn = optional(notificationsOn, validateNotificationsOn);
-        const validatedAcceptedTerms = optional(acceptedTerms, validateAcceptedTerms);
-        const validatedIdpUsername = validateIdpUsername(idpUsername);
-
-        if (allValid([validatedUserId,
-                      validatedUserType,
-                      validatedUserStatus,
-                      validatedName,
-                      validatedEmail,
-                      validatedJobTitle,
-                      validatedAvatarImageFile,
-                      validatedNotificationsOn,
-                      validatedAcceptedTerms,
-                      validatedIdpUsername])) {
-
-          // Check for admin role, and if not own account, ensure only user id was provided (re-activation scenario) OR that the user type is being changed
-          // Admin shouldn't provide any other updates to profile
-          if (permissions.isAdmin(request.session) && !permissions.isOwnAccount(request.session, request.params.id)) {
-            if (validatedName.value || validatedEmail.value || validatedJobTitle.value || validatedAvatarImageFile.value || validatedNotificationsOn.value || validatedAcceptedTerms.value) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-
-            // Admins can grant/revoke admin privileges for govt users (but not their own)
-            if (validatedUserType.value) {
-              if (validatedUserId.tag === 'valid' &&
-                  validatedUserType.value !== UserType.Vendor &&
-                  validatedUserId.value.type !== UserType.Vendor) {
-                    return valid({
-                      id: validatedUserId.value.id,
-                      type: validatedUserType.value
-                    });
-                  } else {
-                    return invalid({
-                      permissions: [permissions.ERROR_MESSAGE]
-                    });
-                  }
-            }
-
-            return valid({
-              id: (validatedUserId.value as User).id,
-              status: UserStatus.Active
+        switch (body.tag) {
+          case 'updateProfile':
+            return adt('updateProfile', {
+              name: getString(body.value, 'name'),
+              email: getString(body.value, 'email'),
+              jobTitle: getString(body.value, 'jobTitle')
             });
-          }
 
-          return valid({
-            id: (validatedUserId.value as User).id,
-            name: validatedName.value,
-            email: validatedEmail.value,
-            jobTitle: validatedJobTitle.value,
-            avatarImageFile: getValidValue(mapValid(validatedAvatarImageFile, v => v && v.id), undefined),
-            notificationsOn: validatedNotificationsOn.value,
-            acceptedTerms: validatedAcceptedTerms.value
-          });
-        } else {
-          return invalid({
-            id: getInvalidValue(validatedUserId, undefined),
-            name: getInvalidValue(validatedName, undefined),
-            email: getInvalidValue(validatedEmail, undefined),
-            jobTitle: getInvalidValue(validatedJobTitle, undefined),
-            avatarImageFile: getInvalidValue(validatedAvatarImageFile, undefined),
-            notificationsOn: getInvalidValue(validatedNotificationsOn, undefined),
-            acceptedTerms: getInvalidValue(validatedAcceptedTerms, undefined)
-          });
+          case 'acceptTerms':
+            return adt('acceptTerms');
+
+          case 'updateNotifications':
+            if (isBoolean(body.value)) {
+              return adt('updateNotifications', body.value);
+            } else {
+              return null;
+            }
+
+          case 'reactivateUser':
+            return adt('reactivateUser');
+
+          case 'updateAdminPermissions':
+            if (isBoolean(body.value)) {
+              return adt('updateAdminPermissions', body.value);
+            } else {
+              return null;
+            }
+
+          default:
+            return null;
+        }
+      },
+      async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+        if (!request.body) { return invalid(adt('parseFailure')); }
+        const validatedUser = await validateUserId(connection, request.params.id);
+        if (isInvalid(validatedUser)) {
+          return invalid(adt('userNotFound', ['The specified user does not exist.']));
+        }
+        switch (request.body.tag) {
+          case 'updateProfile':
+            const { name, email, jobTitle } = request.body.value;
+            const validatedName = userValidation.validateName(name);
+            const validatedEmail = userValidation.validateEmail(email);
+            const validatedJobTitle = userValidation.validateJobTitle(jobTitle);
+
+            if (allValid([validatedName, validatedEmail, validatedJobTitle])) {
+              if (!permissions.updateUser(request.session, request.params.id)) {
+                return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
+              }
+              return valid(adt('updateProfile', {
+                name: validatedName.value,
+                email: validatedEmail.value,
+                jobTitle: validatedJobTitle.value
+              } as ValidatedUpdateProfileRequestBody));
+            } else {
+              return invalid(adt('updateProfile', {
+                name: getInvalidValue(validatedName, undefined),
+                email: getInvalidValue(validatedEmail, undefined),
+                jobTitle: getInvalidValue(validatedJobTitle, undefined)
+              }));
+            }
+
+          case 'acceptTerms':
+            if (!permissions.acceptTerms(request.session, request.params.id)) {
+              return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
+            }
+            if (validatedUser.value.acceptedTerms) {
+              return invalid(adt('acceptTerms', ['You have already accepted the terms of service.']));
+            }
+            return valid(adt('acceptTerms'));
+
+          case 'updateNotifications':
+            const validatedNotificationsOn = userValidation.validateNotificationsOn(request.body.value);
+            if (!permissions.updateUser(request.session, request.params.id)) {
+              return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
+            }
+            if (isInvalid(validatedNotificationsOn)) {
+              return invalid(adt('parseFailure'));
+            }
+            return valid(adt('updateNotifications', validatedNotificationsOn.value));
+
+          case 'reactivateUser':
+            if (!permissions.reactivateUser(request.session, request.params.id) || validatedUser.value.status !== UserStatus.InactiveByAdmin) {
+              return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
+            }
+            return valid(adt('reactivateUser'));
+
+          case 'updateAdminPermissions':
+            const validatedAdminStatus = userValidation.validateAdminStatus(request.body.value);
+            if (!permissions.updateAdminStatus(request.session)) {
+              return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
+            }
+            if (validatedUser.value.type === UserType.Vendor) {
+              return invalid(adt('updateAdminPermissions', ['Vendors cannot be granted admin permissions.']));
+            }
+            if (isInvalid(validatedAdminStatus)) {
+             return invalid(adt('parseFailure'));
+            }
+            return valid(adt('updateAdminPermissions', validatedAdminStatus.value));
+
+          default:
+            return invalid(adt('parseFailure')); // Unsure if this is the correct ADT to return as default - open to suggestions
         }
       },
       async respond(request) {
         const respond = (code: number, body: User | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (!permissions.updateUser(request.session, request.params.id)) {
-          return respond(401, {
-            permissions: [permissions.ERROR_MESSAGE]
-          });
-        }
-        switch (request.body.tag) {
-          case 'invalid':
-            if (request.body.value.permissions) {
-              return respond(401, request.body.value);
+        if (isInvalid(request.body)) {
+            switch (request.body.value.tag) {
+              case 'permissions':
+                return respond(401, request.body.value);
+              case 'userNotFound':
+                return respond(404, request.body.value);
+              default:
+                return respond(400, request.body.value);
             }
-            return respond(400, request.body.value);
-          case 'valid':
-            const updatedUser = await updateUser(connection, request.body.value);
-            return respond(200, updatedUser);
+        } else {
+          let updatedUser: User;
+          switch (request.body.value.tag) {
+            case 'updateProfile':
+              updatedUser = await updateUser(connection, {...request.body.value.value, id: request.params.id });
+              break;
+            case 'acceptTerms':
+              updatedUser = await updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
+              break;
+            case 'updateNotifications':
+              updatedUser = await updateUser(connection, { notificationsOn: new Date(), id: request.params.id });
+              break;
+            case 'reactivateUser':
+              updatedUser = await updateUser(connection, { status: UserStatus.Active, id: request.params.id });
+              break;
+            case 'updateAdminPermissions':
+              updatedUser = await updateUser(connection, { type: request.body.value.value as UserType, id: request.params.id });
+          }
+          return respond(200, updatedUser);
         }
       }
     };

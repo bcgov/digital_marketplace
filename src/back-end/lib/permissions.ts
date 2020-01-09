@@ -54,6 +54,18 @@ export function deleteUser(session: Session, id: string): boolean {
   return isOwnAccount(session, id) || (!!session.user && session.user.type === UserType.Admin);
 }
 
+export function acceptTerms(session: Session, id: string): boolean {
+  return isOwnAccount(session, id);
+}
+
+export function reactivateUser(session: Session, id: string): boolean {
+  return isAdmin(session) && !isOwnAccount(session, id);
+}
+
+export function updateAdminStatus(session: Session): boolean {
+  return isAdmin(session);
+}
+
 // Sessions.
 
 export function readOneSession(session: Session, id: string): boolean {

@@ -2,7 +2,6 @@ import { generateUuid } from 'back-end/lib';
 import { ValidatedCreateRequestBody as ValidatedAffiliationCreateRequestBody } from 'back-end/lib/resources/affiliation';
 import { hashFile, ValidatedCreateRequestBody as ValidatedFileCreateRequestBody } from 'back-end/lib/resources/file';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
-import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import { readFile } from 'fs';
 import Knex from 'knex';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
@@ -29,7 +28,7 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   return await rawUserToUser(connection, result);
 }
 
-export async function updateUser(connection: Connection, userInfo: ValidatedUserUpdateRequestBody): Promise<User> {
+export async function updateUser(connection: Connection, userInfo: Partial<User>): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
     .where({ id: userInfo.id })

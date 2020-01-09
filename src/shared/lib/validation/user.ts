@@ -15,8 +15,8 @@ export function validateNotificationsOn(notificationsOn: boolean): Validation<Da
   return notificationsOn ? valid(new Date()) : valid(null);
 }
 
-export function validateAcceptedTerms(acceptedTerms: boolean): Validation<Date> {
-  return acceptedTerms ? valid(new Date()) : invalid(['You cannot unaccept the terms and conditions.']);
+export function validateAdminStatus(adminStatus: boolean): Validation<UserType> {
+  return adminStatus ? valid(UserType.Admin) : valid(UserType.Government);
 }
 
 export function validateUserType(type: string): Validation<UserType> {
@@ -27,8 +27,4 @@ export function validateUserType(type: string): Validation<UserType> {
 export function validateUserStatus(status: string): Validation<UserStatus> {
   const userStatus = parseUserStatus(status);
   return userStatus ? valid(userStatus) : invalid(['Invalid user status specified']);
-}
-
-export function validateIdpUsername(v: string): Validation<string> {
-  return validateGenericString(v, 'Username');
 }
