@@ -7,7 +7,7 @@ import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -29,7 +29,7 @@ export interface State {
 type InnerMsg
   = ADT<'orgForm', OrgForm.Msg>
   | ADT<'startEditing'>
-  | ADT<'finishEditing', OrgResource.Organization>
+  | ADT<'stopEditing', OrgResource.Organization>
   | ADT<'deactivate', OrgResource.Organization>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
@@ -122,7 +122,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         return state;
       }
     ];
-    case 'finishEditing': {
+    case 'stopEditing': {
       return [ state, async state => {
         state = state.set('organization', msg.value );
         state = state.set('orgForm', OrgForm.setValues(state.orgForm, msg.value) );
@@ -163,9 +163,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           {
             state.isEditing
             ?
-            <Link button size='sm' color='secondary' onClick={() => dispatch(adt('finishEditing', state.organization))}>
-              Discard Changes
-            </Link>
+              undefined
             :
               state.organization.active
               ?
@@ -185,7 +183,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             icon={'check'}
             disabled={!state.isEditing}
             dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
-            submitHook={(org: OrgResource.Organization) => { dispatch(adt('finishEditing', org)); }}
+            stopEditingHook={(org: OrgResource.Organization) => { dispatch(adt('stopEditing', org)); }}
           />
         </Col>
       </Row>

@@ -1,5 +1,4 @@
 import { DEFAULT_LOGO_IMAGE_PATH } from 'front-end/config';
-import { AvailableIcons } from 'front-end/lib/views/icon';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
@@ -7,6 +6,7 @@ import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, map
 import { replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import FileButton from 'front-end/lib/views/file-button';
+import { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
@@ -62,7 +62,8 @@ export type InnerMsg
   | ADT<'contactName',     ShortText.Msg>
   | ADT<'contactEmail',    ShortText.Msg>
   | ADT<'contactPhone',    ShortText.Msg>
-  | ADT<'submit',          SubmitHook | undefined>
+  | ADT<'submit',          StopEditingHook | undefined>
+  | ADT<'stopEditing',     StopEditingHook | undefined>
   | ADT<'onChangeAvatar',  File>
   | ADT<'region',          ShortText.Msg>
   ;
@@ -267,6 +268,12 @@ export const init: Init<Params, State> = async (params) => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'stopEditing':
+      return [state, async (state) => {
+        const stopEditingHook: StopEditingHook | undefined = msg.value;
+        if (stopEditingHook && state.organization) { stopEditingHook(state.organization); }
+        return state;
+      }];
     case 'submit':
       return [state, async (state, dispatch) => {
         const values: Values = getValues(state);
@@ -299,8 +306,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           state = setErrors(state, {});
           if (state.organization) {
             state = state.set('organization', result.value);
-            const submitHook: SubmitHook | undefined = msg.value;
-            if (submitHook) { submitHook(result.value); }
+            const stopEditingHook: StopEditingHook | undefined = msg.value;
+            if (stopEditingHook) { stopEditingHook(result.value); }
           } else {
             dispatch(replaceRoute(adt('orgEdit' as const, {orgId: result.value.id})));
           }
@@ -419,10 +426,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-type SubmitHook = (org: Organization) => void;
+type StopEditingHook = (org: Organization) => void;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
-  submitHook?: SubmitHook;
+  stopEditingHook?: StopEditingHook;
   icon: AvailableIcons;
 }
 
@@ -443,7 +450,7 @@ export const view: View<Props> = props => {
   return (
     <Row>
 
-        <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+        <Col md='12' className='mb-4 d-flex align-items-center flex-nowrap'>
           <img
             className='rounded-circle border'
             style={{
@@ -472,7 +479,7 @@ export const view: View<Props> = props => {
           </div>
         </Col>
 
-      <Col xs='12'>
+      <Col md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Legal Name'
@@ -482,7 +489,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
       </Col>
 
-      <Col className='pb-5' xs='12'>
+      <Col className='pb-5' md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Website Url (Optional)'
@@ -491,11 +498,11 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
       </Col>
 
-      <Col xs='12' className='mb-4 pt-4 border-top'>
+      <Col md='12' className='mb-4 pt-4 border-top'>
         <h3>Legal Address</h3>
       </Col >
 
-      <Col xs='12'>
+      <Col md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Street Address'
@@ -505,7 +512,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
       </Col>
 
-      <Col xs='12'>
+      <Col md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Street Address'
@@ -514,7 +521,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
       </Col>
 
-      <Col xs='8'>
+      <Col md='8'>
         <ShortText.view
           extraChildProps={{}}
           label='City'
@@ -524,7 +531,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
       </Col>
 
-      <Col xs='4'>
+      <Col md='4'>
         <ShortText.view
           extraChildProps={{}}
           label='Province/State'
@@ -534,7 +541,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
       </Col>
 
-        <Col xs='5' className='pb-4'>
+        <Col md='5' className='pb-4'>
           <ShortText.view
             extraChildProps={{}}
             label='Postal / ZIP Code'
@@ -544,7 +551,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
         </Col>
 
-        <Col xs='7' className='pb-4'>
+        <Col md='7' className='pb-4'>
           <ShortText.view
             extraChildProps={{}}
             label='Country'
@@ -554,11 +561,11 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
         </Col>
 
-      <Col xs='12' className='mb-4 pt-4 border-top'>
+      <Col md='12' className='mb-4 pt-4 border-top'>
         <h3>Contact Information</h3>
       </Col >
 
-      <Col xs='12'>
+      <Col md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Contact Name'
@@ -568,7 +575,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
       </Col>
 
-      <Col xs='12'>
+      <Col md='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Job Title (Optional)'
@@ -577,7 +584,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
       </Col>
 
-      <Col xs='7'>
+      <Col md='7'>
         <ShortText.view
           extraChildProps={{}}
           label='Contact Email'
@@ -587,7 +594,7 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
       </Col>
 
-      <Col xs='5'>
+      <Col md='5'>
         <ShortText.view
           extraChildProps={{}}
           label='Phone Number (Optional)'
@@ -596,18 +603,29 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
       </Col>
 
-      <Col className='d-flex justify-content-end pt-4'>
-        <Link button>Cancel</Link>
-        <LoadingButton
-          loading={isSubmitLoading}
-          color='primary'
-          symbol_={leftPlacement(iconLinkSymbol(props.icon))}
-          onClick={() => dispatch(adt('submit', props.submitHook)) }
-          disabled={submitDisabled}
-        >
-          Save Changes
-        </LoadingButton>
-      </Col>
+      {
+        disabled
+        ?
+          null
+        :
+          <Col className='d-flex justify-content-md-end pt-4'>
+
+            <Link button onClick={() => dispatch(adt('stopEditing', props.stopEditingHook))} >
+              Cancel
+            </Link>
+
+            <LoadingButton
+              loading={isSubmitLoading}
+              color='primary'
+              symbol_={leftPlacement(iconLinkSymbol(props.icon))}
+              onClick={() => dispatch(adt('submit', props.stopEditingHook)) }
+              disabled={submitDisabled}
+            >
+              Save Changes
+            </LoadingButton>
+          </Col>
+        }
+
     </Row>
   );
 };
