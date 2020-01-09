@@ -228,30 +228,28 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
       Nav.linkAccountAction(signOutLink)
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
-      email: userIdentifier,
-      dropdown: {
-        imageUrl: userAvatar,
-        linkGroups: [
-          {
-            label: `Signed in as ${sessionUser.name}`,
-            links: compact([
-              {
-                text: 'My Profile',
-                dest: routeDest(adt('userProfile', { userId: sessionUser.id }))
-              },
-              sessionUser.type === UserType.Vendor
-                ? {
-                    text: 'My Organizations',
-                    dest: routeDest(adt('userProfile', { userId: sessionUser.id, tab: 'organizations' as const }))
-                  }
-                : undefined
-            ])
-          },
-          {
-            links: [signOutLink]
-          }
-        ]
-      }
+      text: userIdentifier,
+      imageUrl: userAvatar,
+      linkGroups: [
+        {
+          label: `Signed in as ${sessionUser.name}`,
+          links: compact([
+            {
+              text: 'My Profile',
+              dest: routeDest(adt('userProfile', { userId: sessionUser.id }))
+            },
+            sessionUser.type === UserType.Vendor
+              ? {
+                  text: 'My Organizations',
+                  dest: routeDest(adt('userProfile', { userId: sessionUser.id, tab: 'organizations' as const }))
+                }
+              : undefined
+          ])
+        },
+        {
+          links: [signOutLink]
+        }
+      ]
     })
   };
 }
