@@ -57,7 +57,7 @@ export function isPublicSectorEmployee(user: User): boolean {
   return isPublicSectorUserType(user.type);
 }
 
-export interface UpdateRequestBody {
+/*export interface UpdateRequestBody {
   // id: Id;
   type: string; // could be own resource
   status: string; // could be own resource (including delete user)
@@ -68,6 +68,75 @@ export interface UpdateRequestBody {
   notificationsOn: boolean; // separate
   acceptedTerms: boolean; // separate
   // idpUsername: string;
+}*/
+
+interface UpdateProfileRequestBody {
+  name: string;
+  email: string; // same as jobTitle - required but allow empty string
+  jobTitle: string; // empty string removes, undefined leaves unchanged
+}
+
+export type UpdateRequestBody
+  = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'acceptTerms'>
+  | ADT<'updateNotifications', boolean>
+  | ADT<'reactivateUser'>
+  | ADT<'updateAdminPermissions', boolean>;
+
+function parseUpdateRequestBody(raw: any): UpdateRequestBody | null {
+  if (!raw) { return null; }
+  switch (raw.tag) {
+    case 'updateProfile':
+      return adt('updateProfile', {
+        name: getString(raw.value, 'name'),
+        email: getString(raw.value, 'email'),
+        jobTitle: getString(raw.value, 'jobTitle')
+      });
+    case 'acceptTerms':
+      return adt('acceptTerms');
+    case 'updateNotifications':
+      if (isBoolean(raw.value)) {
+        return adt('updateNotifications', raw.value);
+      } else {
+        return null;
+      }
+    case 'reactivateUser':
+      return adt('reactivateUser');
+    case 'updateAdminPermissions':
+      if (isBoolean(raw.value)) {
+        return adt('updateAdminPermissions', raw.value);
+      } else {
+        return null;
+      }
+    default:
+      return null;
+  }
+}
+
+type ValidatedUpdateRequestBody = UpdateRequestBody;
+
+type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+
+export type UpdateValidationErrors
+  = ADT<'updateProfile', UpdateProfileValidationErrors>
+  | ADT<'acceptTerms', string[]>
+  | ADT<'updateNotifications', string[]>
+  | ADT<'parseFailure'>;
+
+async function validateRequestBody(body: UpdateRequestBody | null): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+  if (!body) { return invalid(adt('parseFailure')); }
+  switch (body.tag) {
+    case 'updateProfile':
+      return invalid(adt('updateProfile', {
+        name: ['some error']
+      }));
+    case 'acceptTerms':
+      //Has the user already acceptedTerms?
+      return invalid(adt('acceptTerms', []));
+    case 'updateNotifications':
+      return invalid(adt('updateNotifications', []));
+    //TODO
+  }
 }
 
 export interface UpdateValidationErrors extends ErrorTypeFrom<Omit<UpdateRequestBody, 'status'>> {
