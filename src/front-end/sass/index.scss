@@ -151,7 +151,7 @@ nav {
     @include media-breakpoint-up(md) {
       position: sticky;
       top: -1 * $main-nav-top-height;
-      z-index: 9999;
+      z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
     }
   }
 
@@ -167,7 +167,6 @@ nav {
     border: 3px solid transparent;
   }
 
-  .dropdown.show .dropdown-toggle img,
   .dropdown-toggle:hover img {
     border-color: $info-alt;
   }

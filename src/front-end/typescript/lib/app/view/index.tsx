@@ -163,7 +163,7 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   const closeModal = () => dispatch({ tag: 'closeModal', value: undefined });
   return (
     <Modal isOpen={open} toggle={closeModal}>
-      <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon name='times' color='secondary' onClick={closeModal} style={{ cursor: 'pointer' }}/>)}>{content.title}</ModalHeader>
+      <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{content.title}</ModalHeader>
       <ModalBody>{content.body}</ModalBody>
       <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
         <div className='p-3 d-flex flex-md-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
@@ -228,30 +228,28 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
       Nav.linkAccountAction(signOutLink)
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
-      email: userIdentifier,
-      dropdown: {
-        imageUrl: userAvatar,
-        linkGroups: [
-          {
-            label: `Signed in as ${sessionUser.name}`,
-            links: compact([
-              {
-                text: 'My Profile',
-                dest: routeDest(adt('userProfile', { userId: sessionUser.id }))
-              },
-              sessionUser.type === UserType.Vendor
-                ? {
-                    text: 'My Organizations',
-                    dest: routeDest(adt('userProfile', { userId: sessionUser.id, tab: 'organizations' as const }))
-                  }
-                : undefined
-            ])
-          },
-          {
-            links: [signOutLink]
-          }
-        ]
-      }
+      text: userIdentifier,
+      imageUrl: userAvatar,
+      linkGroups: [
+        {
+          label: `Signed in as ${sessionUser.name}`,
+          links: compact([
+            {
+              text: 'My Profile',
+              dest: routeDest(adt('userProfile', { userId: sessionUser.id }))
+            },
+            sessionUser.type === UserType.Vendor
+              ? {
+                  text: 'My Organizations',
+                  dest: routeDest(adt('userProfile', { userId: sessionUser.id, tab: 'organizations' as const }))
+                }
+              : undefined
+          ])
+        },
+        {
+          links: [signOutLink]
+        }
+      ]
     })
   };
 }
