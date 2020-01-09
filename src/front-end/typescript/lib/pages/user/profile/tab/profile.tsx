@@ -8,11 +8,10 @@ import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTy
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
-import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
-import { Col, Row, Spinner } from 'reactstrap';
+import { Col, Row } from 'reactstrap';
 import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -24,7 +23,6 @@ export interface State extends Tab.Params {
   isEditingForm: boolean;
   profileForm: Immutable<ProfileForm.State>;
   adminCheckbox: Immutable<Checkbox.State>;
-  isEditingAdminCheckbox: boolean;
 }
 
 export type InnerMsg
@@ -33,9 +31,7 @@ export type InnerMsg
   | ADT<'cancelEditingForm'>
   | ADT<'saveChanges'>
   | ADT<'toggleAccountActivation'>
-  | ADT<'adminCheckbox', Checkbox.Msg>
-  | ADT<'savePermissions'>
-  | ADT<'startEditingPermissions'>;
+  | ADT<'adminCheckbox', Checkbox.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -53,7 +49,6 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
     savePermissionsLoading: 0,
     isEditingForm: false,
     profileForm: await resetProfileForm(profileUser),
-    isEditingAdminCheckbox: false,
     adminCheckbox: immutable(await Checkbox.init({
       errors: [],
       child: {
@@ -153,12 +148,26 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
         }
       ];
-    case 'savePermissions':
+    case 'adminCheckbox':
+      const adminValueChanged = msg.value.tag === 'child' && msg.value.value.tag === 'onChange';
+      const newAdminResult = updateComponentChild({
+        state,
+        childStatePath: ['adminCheckbox'],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('adminCheckbox' as const, value)
+      });
+      if (!adminValueChanged) { return newAdminResult; }
       return [
-        startSavePermissionsLoading(state),
-        async state => {
+        startSavePermissionsLoading(newAdminResult[0]),
+        async (state, dispatch) => {
+          // Ensure async updates from child component have been run.
+          if (newAdminResult[1]) {
+            const newState = await newAdminResult[1](state, dispatch);
+            state = newState || state;
+          }
+          // Persist change to back-end.
           state = stopSavePermissionsLoading(state);
-          state = state.set('isEditingAdminCheckbox', false);
           const result = await api.users.update(state.profileUser.id, {
             type: FormField.getValue(state.adminCheckbox) ? UserType.Admin : UserType.Government
           });
@@ -168,16 +177,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return state;
         }
       ];
-    case 'startEditingPermissions':
-      return [state.set('isEditingAdminCheckbox', true)];
-    case 'adminCheckbox':
-      return updateComponentChild({
-        state,
-        childStatePath: ['adminCheckbox'],
-        childUpdate: Checkbox.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('adminCheckbox', value)
-      });
     default:
       return [state];
   }
@@ -221,41 +220,17 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
   const isSavePermissionsLoading = state.savePermissionsLoading > 0;
   const isAccountActivationLoading = state.accountActivationLoading > 0;
   const isLoading = isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
-  const icon = () => {
-    if (state.isEditingAdminCheckbox && isSavePermissionsLoading) {
-      return (
-        <Spinner size='sm' color='secondary'></Spinner>
-      );
-    } else if (state.isEditingAdminCheckbox) {
-      return (
-        <Icon
-          name='check'
-          color='success'
-          hover={!isLoading}
-          onClick={() => !isLoading && dispatch(adt('savePermissions'))} />
-      );
-    } else {
-      return (
-        <Icon
-          name='edit'
-          color='primary'
-          hover={!isLoading}
-          style={{ cursor: 'pointer' }}
-          onClick={() => !isLoading && dispatch(adt('startEditingPermissions'))} />
-      );
-    }
-  };
   return (
     <ViewDetail name='Permission(s)'>
-      <div className='d-flex align-items-center'>
-        <Checkbox.view
-          extraChildProps={{ inlineLabel: 'Admin' }}
-          className='mb-0 mr-3'
-          disabled={!state.isEditingAdminCheckbox || isLoading}
-          state={state.adminCheckbox}
-          dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
-        {icon()}
-      </div>
+      <Checkbox.view
+        extraChildProps={{
+          inlineLabel: 'Admin',
+            loading: isSavePermissionsLoading
+        }}
+        className='mb-0 mr-3'
+        disabled={isLoading}
+        state={state.adminCheckbox}
+        dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
     </ViewDetail>
   );
 };
