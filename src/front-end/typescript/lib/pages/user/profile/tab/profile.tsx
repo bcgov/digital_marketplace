@@ -296,12 +296,12 @@ const ViewProfileFormHeading: ComponentView<State, Msg> = ({ state, dispatch }) 
   return (
     <Row>
       <Col xs='12' className='mb-4 d-flex flex-wrap flex-column flex-md-row align-items-start align-items-md-center'>
-        <h3 className='mr-md-3 mb-0'>Profile Information</h3>
+        <h3 className='mr-md-3 mb-1'>Profile Information</h3>
         {isEditingForm
           ? null
           : (<LoadingButton
               onClick={() => dispatch(adt('startEditingForm'))}
-              className='mt-1 mb-md-1'
+              className='mb-1'
               size='sm'
               loading={isStartEditingFormLoading}
               disabled={isDisabled}

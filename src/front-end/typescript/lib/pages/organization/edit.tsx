@@ -210,14 +210,14 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
     <div>
       <Row>
         <Col xs='12' className='mb-5 d-flex flex-wrap flex-column flex-md-row align-items-start align-items-md-center'>
-          <h2 className='mr-md-3 mb-0'>{state.organization.legalName}</h2>
+          <h2 className='mr-md-3 mb-1'>{state.organization.legalName}</h2>
           <div>
           {state.isEditing
             ? null
             : (<LoadingButton
                 loading={isEditingLoading}
                 disabled={isLoading}
-                className='mt-1 mb-md-1'
+                className='mb-1'
                 size='sm'
                 color='primary'
                 symbol_={leftPlacement(iconLinkSymbol('edit'))}
