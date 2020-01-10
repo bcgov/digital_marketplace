@@ -1,6 +1,7 @@
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export enum MembershipType {
   Owner = 'OWNER',
@@ -30,15 +31,12 @@ export interface AffiliationSlim {
 }
 
 export interface CreateRequestBody {
-  user: Id;
-  organization: Id;
-  membershipType: MembershipType;
+  user: string;
+  organization: string;
+  membershipType: string;
 }
 
-export interface CreateValidationErrors {
-  user?: string[];
-  organization?: string[];
-  membershipType?: string[];
+export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
   permissions?: string[];
 }
 
@@ -50,4 +48,15 @@ export interface UpdateValidationErrors {
 export interface DeleteValidationErrors {
   affiliation?: string[];
   permissions?: string[];
+}
+
+export function parseMembershipType(raw: string): MembershipType | null {
+  switch (raw) {
+    case MembershipType.Member:
+      return MembershipType.Member;
+    case MembershipType.Owner:
+      return MembershipType.Owner;
+    default:
+      return null;
+  }
 }
