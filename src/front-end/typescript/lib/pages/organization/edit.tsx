@@ -1,4 +1,4 @@
-import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
+import { getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
@@ -22,10 +22,11 @@ interface ValidState {
   editingLoading: number;
   saveChangesLoading: number;
   archiveLoading: number;
+  showArchiveModal: boolean;
+  showSaveChangesModal: boolean;
   user: User;
   organization: OrgResource.Organization;
   orgForm: Immutable<OrgForm.State>;
-  submitErrors?: string[];
   sidebar: Immutable<MenuSidebar.State>;
 }
 
@@ -37,6 +38,8 @@ type InnerMsg
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
   | ADT<'archive'>
+  | ADT<'hideArchiveModal'>
+  | ADT<'hideSaveChangesModal'>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -60,7 +63,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         editingLoading: 0,
         saveChangesLoading: 0,
         archiveLoading: 0,
-        submitErrors: [],
+        showArchiveModal: false,
+        showSaveChangesModal: false,
         user: shared.sessionUser,
         organization: result.value,
         sidebar: shared.sessionUser.type === UserType.Vendor
@@ -94,8 +98,14 @@ function isOwner(user: User, org: OrgResource.Organization): boolean {
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'archive':
+      if (!state.showArchiveModal) {
+        return [state.set('showArchiveModal', true)];
+      } else {
+        state = startArchiveLoading(state)
+          .set('showArchiveModal', false);
+      }
       return [
-        startArchiveLoading(state),
+        state,
         async (state, dispatch) => {
           const result = await api.organizations.delete(state.organization.id);
           if (api.isValid(result)) {
@@ -112,8 +122,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         }
       ];
     case 'saveChanges':
+      if (!state.showSaveChangesModal) {
+        return [state.set('showSaveChangesModal', true)];
+      } else {
+        state = startSaveChangesLoading(state)
+          .set('showSaveChangesModal', false);
+      }
       return [
-        startSaveChangesLoading(state),
+        state,
         async state => {
           state = stopSaveChangesLoading(state);
           const result = await OrgForm.persist(adt('update', {
@@ -159,6 +175,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             .set('orgForm', await resetOrgForm(state.organization));
         }
       ];
+    case 'hideArchiveModal':
+      return [state.set('showArchiveModal', false)];
+    case 'hideSaveChangesModal':
+      return [state.set('showSaveChangesModal', false)];
     case 'orgForm':
       return updateGlobalComponentChild({
         state,
@@ -268,5 +288,47 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   },
   getMetadata: withValid((state) => {
     return makePageMetadata(`${state.organization.legalName} — Organizations`);
-  }, makePageMetadata('Edit Organization'))
+  }, makePageMetadata('Edit Organization')),
+  getModal: getModalValid<ValidState, Msg>(state => {
+    if (state.showArchiveModal) {
+      return {
+        title: 'Archive Organization?',
+        body: 'Are you sure you want to archive this organization?',
+        onCloseMsg: adt('hideArchiveModal'),
+        actions: [
+          {
+            text: 'Archive Organization',
+            color: 'danger',
+            msg: adt('archive'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideArchiveModal')
+          }
+        ]
+      };
+    } else if (state.showSaveChangesModal) {
+      return {
+        title: 'Save Changes?',
+        body: 'Are you sure you want to save the changes you\'ve made to this organization?',
+        onCloseMsg: adt('hideSaveChangesModal'),
+        actions: [
+          {
+            text: 'Save Changes',
+            color: 'primary',
+            msg: adt('saveChanges'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideSaveChangesModal')
+          }
+        ]
+      };
+    }
+    return null;
+  })
 };

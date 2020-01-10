@@ -448,7 +448,7 @@ export const component: Tab.Component<State, Msg> = {
         actions: [
           {
             text: `${startCase(action)} Account`,
-            color: 'primary',
+            color: isActive ? 'danger' : 'success',
             msg: adt('toggleAccountActivation'),
             button: true
           },
