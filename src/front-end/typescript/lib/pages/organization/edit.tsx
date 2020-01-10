@@ -21,7 +21,7 @@ interface ValidState {
   isEditing: boolean;
   editingLoading: number;
   saveChangesLoading: number;
-  deactivateLoading: number;
+  archiveLoading: number;
   user: User;
   organization: OrgResource.Organization;
   orgForm: Immutable<OrgForm.State>;
@@ -36,7 +36,7 @@ type InnerMsg
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
-  | ADT<'deactivate'>
+  | ADT<'archive'>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -59,7 +59,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         isEditing: false,
         editingLoading: 0,
         saveChangesLoading: 0,
-        deactivateLoading: 0,
+        archiveLoading: 0,
         submitErrors: [],
         user: shared.sessionUser,
         organization: result.value,
@@ -84,8 +84,8 @@ const startEditingLoading = makeStartLoading<ValidState>('editingLoading');
 const stopEditingLoading = makeStopLoading<ValidState>('editingLoading');
 const startSaveChangesLoading = makeStartLoading<ValidState>('saveChangesLoading');
 const stopSaveChangesLoading = makeStopLoading<ValidState>('saveChangesLoading');
-const startDeactivateLoading = makeStartLoading<ValidState>('deactivateLoading');
-const stopDeactivateLoading = makeStopLoading<ValidState>('deactivateLoading');
+const startArchiveLoading = makeStartLoading<ValidState>('archiveLoading');
+const stopArchiveLoading = makeStopLoading<ValidState>('archiveLoading');
 
 function isOwner(user: User, org: OrgResource.Organization): boolean {
   return user.id === org.owner.id;
@@ -93,9 +93,9 @@ function isOwner(user: User, org: OrgResource.Organization): boolean {
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
-    case 'deactivate':
+    case 'archive':
       return [
-        startDeactivateLoading(state),
+        startArchiveLoading(state),
         async (state, dispatch) => {
           const result = await api.organizations.delete(state.organization.id);
           if (api.isValid(result)) {
@@ -106,7 +106,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               dispatch(replaceRoute(adt('orgList' as const, null)));
             }
           } else {
-            state = stopDeactivateLoading(state);
+            state = stopArchiveLoading(state);
           }
           return state;
         }
@@ -183,8 +183,8 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
   const isEditingLoading = state.editingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
-  const isDeactivateLoading = state.deactivateLoading > 0;
-  const isLoading = isEditingLoading || isSaveChangesLoading || isDeactivateLoading;
+  const isArchiveLoading = state.archiveLoading > 0;
+  const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
   const isValid = OrgForm.isValid(state.orgForm);
   return (
     <div>
@@ -236,15 +236,15 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
       <Row>
         <Col>
           <div className='mt-5 pt-5 border-top'>
-            <h3>Deactivate Organization</h3>
-            <p className='mb-4'>Deactivating this organization means that it will no longer be available for opportunity proposals.</p>
+            <h3>Archive Organization</h3>
+            <p className='mb-4'>Archiving this organization means that it will no longer be available for opportunity proposals.</p>
           </div>
         </Col>
       </Row>
       <Row>
         <Col>
-          <LoadingButton loading={isDeactivateLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate'))}>
-            Deactivate Organization
+          <LoadingButton loading={isArchiveLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('archive'))}>
+            Archive Organization
           </LoadingButton>
         </Col>
       </Row>
