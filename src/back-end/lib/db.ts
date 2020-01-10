@@ -163,6 +163,41 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
   return null;
 }
 
+interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
+  logoImageFile?: Id;
+  ownerId: Id;
+  ownerName: string;
+}
+
+export async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
+  const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  return {
+    ...restOfRawOrg,
+    logoImageFile: logoImageFile ? await readOneFileById(connection, logoImageFile) : undefined,
+    owner: {
+      id: ownerId,
+      name: ownerName
+    }
+  };
+}
+
+interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | 'owner'> {
+  logoImageFile?: Id;
+  ownerId?: Id;
+  ownerName?: string;
+}
+
+export async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
+  const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  return {
+    ...restOfRawOrg,
+    logoImageFile: logoImageFile ? await readOneFileById(connection, logoImageFile) : undefined,
+    owner: ownerId && ownerName
+      ? { id: ownerId, name: ownerName }
+      : undefined
+  };
+}
+
 /**
  * Return all organizations from the database.
  *
@@ -174,8 +209,7 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
 
 export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
   const query = connection('organizations')
-    .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId')
-    .leftOuterJoin('files', 'organizations.logoImageFile', '=', 'files.id')
+    .select('organizations.id', 'legalName', 'logoImageFile')
     .where({ active: true });
   // If a user is attached to this session, we need to add owner info to some or all of the orgs
   if (session.user && (session.user.type === UserType.Admin || session.user.type === UserType.Vendor)) {
@@ -195,50 +229,8 @@ export async function readManyOrganizations(connection: Connection, session: Ses
         ownerName: undefined
       };
     }
-    return await rawOrganizationToOrganizationSlim(connection, raw);
+    return await rawOrganizationSlimToOrganizationSlim(connection, raw);
   }));
-}
-
-export async function rawOrganizationToOrganizationSlim(connection: Connection, params: RawOrganizationSlimToOrganizationSlimParams): Promise<OrganizationSlim> {
-  const organization: OrganizationSlim = {
-    id: params.org_id,
-    legalName: params.legalName
-  };
-  if (params.logoImageFileId) {
-    organization.logoImageFile = await readOneFileById(connection, params.logoImageFileId);
-  }
-  if (params.ownerId && params.ownerName) {
-    organization.owner = {
-      id: params.ownerId,
-      name: params.ownerName
-    };
-  }
-  return organization;
-}
-
-export async function rawOrganizationToOrganization(connection: Connection, params: RawOrganizationToOrganizationParams): Promise<Organization> {
-  const { logoImageFile: fileId, ...restOfRawOrg } = params;
-  if (fileId) {
-    const logoImageFile = await readOneFileById(connection, fileId);
-    return {
-      ...restOfRawOrg,
-      logoImageFile
-    };
-  } else {
-    return restOfRawOrg;
-  }
-}
-
-interface RawOrganizationSlimToOrganizationSlimParams {
-  org_id: Id;
-  legalName: string;
-  logoImageFileId?: Id;
-  ownerId: Id;
-  ownerName: string;
-}
-
-interface RawOrganizationToOrganizationParams extends Omit<Organization, 'logoImageFile'> {
-  logoImageFile?: Id;
 }
 
 export async function createOrganization(connection: Connection, user: Id, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
@@ -264,7 +256,7 @@ export async function createOrganization(connection: Connection, user: Id, organ
       membershipType: MembershipType.Owner,
       membershipStatus: MembershipStatus.Active
     });
-    return await rawOrganizationToOrganization(connection, result);
+    return await readOneOrganization(connection, result.id);
   });
 }
 
@@ -282,17 +274,23 @@ export async function updateOrganization(connection: Connection, organization: V
   if (!result) {
     throw new Error('unable to update organization');
   }
-  return await rawOrganizationToOrganization(connection, result);
+  return await readOneOrganization(connection, result.id, true);
 }
 
-export async function readOneOrganization(connection: Connection, id: Id): Promise<Organization> {
+export async function readOneOrganization(connection: Connection, id: Id, allowInactive = false): Promise<Organization> {
+  const where = {
+    'organizations.id': id,
+    'affiliations.membershipType': MembershipType.Owner
+  };
+  if (!allowInactive) {
+    (where as any)['organizations.active'] = true;
+  }
   const result = await connection('organizations')
-    .where({
-      id,
-      active: true
-    })
+    .select('organizations.*', 'users.id as ownerId', 'users.name as ownerName')
+    .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
+    .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
+    .where(where)
     .first();
-
   return await rawOrganizationToOrganization(connection, result);
 }
 

@@ -51,14 +51,6 @@ export function getValues(state: Immutable<State>): Values {
   };
 }
 
-export function setValues(state: Immutable<State>, values: Omit<Values, 'newAvatarImage'>): Immutable<State> {
-  return state
-    .update('name', s => FormField.setValue(s, values.name))
-    .update('email', s => FormField.setValue(s, values.email))
-    .update('jobTitle', s => FormField.setValue(s, values.jobTitle))
-    .set('newAvatarImage', null);
-}
-
 export function isValid(state: Immutable<State>): boolean {
   return !!state.name.child.value
       && !!state.email.child.value
