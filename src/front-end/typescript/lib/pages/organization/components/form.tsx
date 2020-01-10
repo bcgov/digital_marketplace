@@ -454,7 +454,7 @@ export const view: View<Props> = props => {
   return (
     <div>
       <Row>
-        <Col md='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+        <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
           <img
             className='rounded-circle border'
             style={{
@@ -483,7 +483,7 @@ export const view: View<Props> = props => {
           </div>
         </Col>
 
-        <Col md='12'>
+        <Col xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Legal Name'
@@ -504,11 +504,11 @@ export const view: View<Props> = props => {
           </div>
         </Col>
 
-        <Col md='12'>
+        <Col xs='12'>
           <h3 className='mb-4'>Legal Address</h3>
         </Col >
 
-        <Col md='12'>
+        <Col xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Street Address'
@@ -518,7 +518,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
         </Col>
 
-        <Col md='12'>
+        <Col xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Street Address'
@@ -527,7 +527,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
         </Col>
 
-        <Col md='8'>
+        <Col xs='12' md='8'>
           <ShortText.view
             extraChildProps={{}}
             label='City'
@@ -537,7 +537,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
         </Col>
 
-        <Col md='4'>
+        <Col xs='12' md='4'>
           <ShortText.view
             extraChildProps={{}}
             label='Province/State'
@@ -573,11 +573,11 @@ export const view: View<Props> = props => {
           </div>
         </Col>
 
-        <Col md='12'>
+        <Col xs='12'>
           <h3 className='mb-4'>Contact Information</h3>
         </Col >
 
-        <Col md='12'>
+        <Col xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Contact Name'
@@ -587,7 +587,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
         </Col>
 
-        <Col md='12'>
+        <Col xs='12'>
           <ShortText.view
             extraChildProps={{}}
             label='Job Title (Optional)'
@@ -596,7 +596,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
         </Col>
 
-        <Col md='7'>
+        <Col xs='12' md='7'>
           <ShortText.view
             extraChildProps={{}}
             label='Contact Email'
@@ -606,7 +606,7 @@ export const view: View<Props> = props => {
             dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
         </Col>
 
-        <Col md='5'>
+        <Col xs='12' md='5'>
           <ShortText.view
             extraChildProps={{}}
             label='Phone Number (Optional)'
