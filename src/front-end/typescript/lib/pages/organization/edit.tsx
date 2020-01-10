@@ -155,11 +155,11 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <div>
       <Row>
         <Col xs='12' className='mb-5 d-flex flex-nowrap flex-column flex-md-row align-items-md-center'>
-          <h2 className='mr-3 mb-md-0'>{state.organization.legalName}</h2>
+          <h2 className='mr-3 mb-0'>{state.organization.legalName}</h2>
           <div>
           {state.isEditing
             ? undefined
-            : (<LoadingButton loading={isLoading} size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
+            : (<LoadingButton loading={isLoading} className='mt-2 mt-md-0' size='sm' color='primary' symbol_={leftPlacement(iconLinkSymbol('edit'))} onClick={() => dispatch(adt('startEditing'))}>
                 Edit Organization
               </LoadingButton>)}
           </div>
