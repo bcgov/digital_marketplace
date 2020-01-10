@@ -5,25 +5,20 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId, validateUUID } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { FileRecord } from 'shared/lib/resources/file';
 import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, valid, validateGenericString } from 'shared/lib/validation';
-import { validatePhone, validateUrl } from 'shared/lib/validation/organization';
-import { validateEmail } from 'shared/lib/validation/user';
+import { allValid, getInvalidValue, invalid, isValid, optional, optionalAsync, valid } from 'shared/lib/validation';
+import * as orgValidation from 'shared/lib/validation/organization';
 
-export interface ValidatedUpdateRequestBody extends Omit<UpdateRequestBody, 'logoImageFile'> {
+export interface ValidatedUpdateRequestBody extends UpdateRequestBody {
   id: Id;
-  logoImageFile?: FileRecord;
   active?: boolean;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
 }
 
-export interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'logoImageFile'> {
-  logoImageFile?: FileRecord;
-}
+export type ValidatedCreateRequestBody = CreateRequestBody;
 
 type DeleteValidatedReqBody = Organization;
 
@@ -95,19 +90,19 @@ const resource: Resource = {
                 contactEmail,
                 contactPhone } = request.body;
 
-        const validatedLegalName = legalName ? validateGenericString(legalName, 'Legal Name') : invalid(['Legal name is required']);
+        const validatedLegalName = orgValidation.validateLegalName(legalName);
         const validatedLogoImageFile = logoImageFile ? await validateImageFile(connection, logoImageFile) : valid(undefined);
-        const validatedWebsiteUrl = websiteUrl ? validateUrl(websiteUrl) : valid(undefined);
-        const validatedStreetAddress1 = streetAddress1 ? validateGenericString(streetAddress1, 'Street Address') : invalid(['Street Address is required']);
-        const validatedStreetAddress2 = streetAddress2 ? validateGenericString(streetAddress2, 'Street Address') : valid(undefined);
-        const validatedCity = city ? validateGenericString(city, 'City') : invalid(['City is required']);
-        const validatedRegion = region ? validateGenericString(region, 'Province/State') : invalid(['Region is required']);
-        const validatedMailCode = mailCode ? validateGenericString(mailCode, 'Postal / Zip Code') : invalid(['Zip/Postal Code is required']);
-        const validatedCountry = country ? validateGenericString(country, 'Country') : invalid(['Country is required']);
-        const validatedContactName = contactName ? validateGenericString(contactName, 'Contact Name') : invalid(['Contact name is required']);
-        const validatedContactTitle = contactTitle ? validateGenericString(contactTitle, 'Contact Title') : valid(undefined);
-        const validatedContactEmail = contactEmail ? validateEmail(contactEmail) : invalid(['Contact email is required']);
-        const validatedContactPhone = contactPhone ? validatePhone(contactPhone) : valid(undefined);
+        const validatedWebsiteUrl = orgValidation.validateWebsiteUrl(websiteUrl);
+        const validatedStreetAddress1 = orgValidation.validateStreetAddress1(streetAddress1);
+        const validatedStreetAddress2 = orgValidation.validateStreetAddress2(streetAddress2);
+        const validatedCity = orgValidation.validateCity(city);
+        const validatedRegion = orgValidation.validateRegion(region);
+        const validatedMailCode = orgValidation.validateMailCode(mailCode);
+        const validatedCountry = orgValidation.validateCountry(country);
+        const validatedContactName = orgValidation.validateContactName(contactName);
+        const validatedContactTitle = orgValidation.validateContactTitle(contactTitle);
+        const validatedContactEmail = orgValidation.validateContactEmail(contactEmail);
+        const validatedContactPhone = orgValidation.validateContactPhone(contactPhone);
 
         if (allValid([validatedLegalName,
                       validatedLogoImageFile,
@@ -125,7 +120,7 @@ const resource: Resource = {
                     ])) {
                       return valid({
                         legalName: validatedLegalName.value,
-                        logoImageFile: validatedLogoImageFile.value,
+                        logoImageFile: isValid(validatedLogoImageFile) ? validatedLogoImageFile.value && validatedLogoImageFile.value.id : undefined,
                         websiteUrl: validatedWebsiteUrl.value,
                         streetAddress1: validatedStreetAddress1.value,
                         streetAddress2: validatedStreetAddress2.value,
@@ -137,7 +132,7 @@ const resource: Resource = {
                         contactTitle: validatedContactTitle.value,
                         contactEmail: validatedContactEmail.value,
                         contactPhone: validatedContactPhone.value
-                      });
+                      } as ValidatedCreateRequestBody);
                     } else {
                       return invalid({
                         legalName: getInvalidValue(validatedLegalName, undefined),
@@ -211,19 +206,19 @@ const resource: Resource = {
           contactPhone } = request.body;
 
         const validatedOrganization = await validateOrganizationId(connection, request.params.id);
-        const validatedLegalName = legalName ? validateGenericString(legalName, 'Legal Name') : valid(undefined);
-        const validatedLogoImageFile = logoImageFile ? await validateImageFile(connection, logoImageFile) : valid(undefined);
-        const validatedWebsiteUrl = websiteUrl ? validateUrl(websiteUrl) : valid(undefined);
-        const validatedStreetAddress1 = streetAddress1 ? validateGenericString(streetAddress1, 'Street Address') : valid(undefined);
-        const validatedStreetAddress2 = streetAddress2 ? validateGenericString(streetAddress2, 'Street Address') : valid(undefined);
-        const validatedCity = city ? validateGenericString(city, 'City') : valid(undefined);
-        const validatedRegion = region ? validateGenericString(region, 'Province/State') : valid(undefined);
-        const validatedMailCode = mailCode ? validateGenericString(mailCode, 'Postal / Zip Code') : valid(undefined);
-        const validatedCountry = country ? validateGenericString(country, 'Country') : valid(undefined);
-        const validatedContactName = contactName ? validateGenericString(contactName, 'Contact Name') : valid(undefined);
-        const validatedContactTitle = contactTitle ? validateGenericString(contactTitle, 'Contact Title') : valid(undefined);
-        const validatedContactEmail = contactEmail ? validateEmail(contactEmail) : valid(undefined);
-        const validatedContactPhone = contactPhone ? validatePhone(contactPhone) : valid(undefined);
+        const validatedLegalName = optional(legalName, orgValidation.validateLegalName);
+        const validatedLogoImageFile = await optionalAsync(logoImageFile, v => validateImageFile(connection, v));
+        const validatedWebsiteUrl = orgValidation.validateWebsiteUrl(websiteUrl);
+        const validatedStreetAddress1 = optional(streetAddress1, orgValidation.validateStreetAddress1);
+        const validatedStreetAddress2 = orgValidation.validateStreetAddress2(streetAddress2);
+        const validatedCity = optional(city, orgValidation.validateCity);
+        const validatedRegion = optional(region, orgValidation.validateRegion);
+        const validatedMailCode = optional(mailCode, orgValidation.validateMailCode);
+        const validatedCountry = optional(country, orgValidation.validateCountry);
+        const validatedContactName = optional(contactName, orgValidation.validateContactName);
+        const validatedContactTitle = orgValidation.validateContactTitle(contactTitle);
+        const validatedContactEmail = optional(contactEmail, orgValidation.validateContactEmail);
+        const validatedContactPhone = orgValidation.validateContactPhone(contactPhone);
 
         if (allValid([
           validatedOrganization,
@@ -244,7 +239,7 @@ const resource: Resource = {
           return valid({
             id: (validatedOrganization.value as Organization).id,
             legalName: validatedLegalName.value,
-            logoImageFile: validatedLogoImageFile.value,
+            logoImageFile: isValid(validatedLogoImageFile) ? validatedLogoImageFile.value && validatedLogoImageFile.value.id : undefined,
             websiteUrl: validatedWebsiteUrl.value,
             streetAddress1: validatedStreetAddress1.value,
             streetAddress2: validatedStreetAddress2.value,
@@ -256,7 +251,7 @@ const resource: Resource = {
             contactTitle: validatedContactTitle.value,
             contactEmail: validatedContactEmail.value,
             contactPhone: validatedContactPhone.value
-          });
+          } as ValidatedUpdateRequestBody);
         } else {
           return invalid({
             id: getInvalidValue(validatedOrganization, undefined),

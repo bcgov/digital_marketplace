@@ -1,8 +1,8 @@
 import { Route } from 'front-end/lib/app/types';
+import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { Router } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
-import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
@@ -52,7 +52,7 @@ const router: Router<Route> = {
     },
     {
       path: '/organizations/:id/edit',
-      makeRoute({ params }) {
+      makeRoute({ params, query }) {
         return {
           tag: 'orgEdit',
           value: {
@@ -68,7 +68,7 @@ const router: Router<Route> = {
           tag: 'userProfile',
           value: {
             userId: params.id || '',
-            tab: PageUserProfile.parseTabId(query.tab)
+            tab: UserSidebar.parseTabId(query.tab)
           }
         };
       }

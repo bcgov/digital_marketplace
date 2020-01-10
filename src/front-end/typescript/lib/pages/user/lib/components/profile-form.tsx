@@ -3,6 +3,7 @@ import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
+import { AvatarFiletype } from 'front-end/lib/types';
 import FileButton from 'front-end/lib/views/file-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -22,7 +23,7 @@ export interface State extends Params {
   email: Immutable<ShortText.State>;
   jobTitle: Immutable<ShortText.State>;
   idpUsername: Immutable<ShortText.State>;
-  newAvatarImage: { file: File; path: string; errors: string[]; } | null;
+  newAvatarImage: AvatarFiletype;
 }
 
 export type Msg
@@ -48,14 +49,6 @@ export function getValues(state: Immutable<State>): Values {
     jobTitle: FormField.getValue(state.jobTitle),
     newAvatarImage: state.newAvatarImage ? state.newAvatarImage.file : undefined
   };
-}
-
-export function setValues(state: Immutable<State>, values: Omit<Values, 'newAvatarImage'>): Immutable<State> {
-  return state
-    .update('name', s => FormField.setValue(s, values.name))
-    .update('email', s => FormField.setValue(s, values.email))
-    .update('jobTitle', s => FormField.setValue(s, values.jobTitle))
-    .set('newAvatarImage', null);
 }
 
 export function isValid(state: Immutable<State>): boolean {

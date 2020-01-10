@@ -103,12 +103,14 @@ export function makeReadOne<T extends ActionTypes>(params: MakeActionParams<T & 
 }
 
 export function makeUpdate<T extends ActionWithBodyTypes>(params: MakeActionParams<T>): CrudClientActionWithIdAndBody<T> {
-  return async (id, body) => makeRequest({
-    body,
-    method: ClientHttpMethod.Put,
-    url: `${params.routeNamespace}/${id}`,
-    transformValid: params.transformValid
-  });
+  return async (id, body) => {
+    return makeRequest({
+      body,
+      method: ClientHttpMethod.Put,
+      url: `${params.routeNamespace}/${id}`,
+      transformValid: params.transformValid
+    });
+  };
 }
 
 export function makeDelete<T extends ActionTypes>(params: MakeActionParams<T & { request: any }>): CrudClientActionWithId<T> {
