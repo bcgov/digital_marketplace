@@ -1,7 +1,8 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createAnonymousSession, readManyUsers, readOneUser, updateUser } from 'back-end/lib/db';
+import { Connection, createAnonymousSession, readManyUsers, updateUser } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { signOut } from 'back-end/lib/resources/session';
+import { Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateUserId } from 'back-end/lib/validation';
@@ -21,7 +22,10 @@ type ValidatedUpdateProfileRequestBody = UpdateProfileRequestBody;
 
 type DeleteValidatedReqBody = User;
 
-type DeleteReqBodyErrors = string[];
+type DeleteValidationErrors
+  = ADT<'userNotFound', string[]>
+  | ADT<'userNotActive', string[]>
+  | ADT<'permissions', string[]>;
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -35,7 +39,7 @@ type Resource = crud.Resource<
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
   DeleteValidatedReqBody,
-  DeleteReqBodyErrors,
+  DeleteValidationErrors,
   Session,
   Connection
 >;
@@ -176,7 +180,7 @@ const resource: Resource = {
             return invalid(adt('parseFailure')); // Unsure if this is the correct ADT to return as default - open to suggestions
         }
       },
-      async respond(request) {
+      async respond(request): Promise<Response<JsonResponseBody<User | UpdateValidationErrors>, Session>> {
         const respond = (code: number, body: User | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (isInvalid(request.body)) {
             switch (request.body.value.tag) {
@@ -213,46 +217,53 @@ const resource: Resource = {
 
   delete(connection) {
     return {
-      async validateRequestBody(request) {
-        const user = await readOneUser(connection, request.params.id);
-        if (!user) {
-          return invalid(['User not found.']);
+      async validateRequestBody(request): Promise<Validation<DeleteValidatedReqBody, DeleteValidationErrors>> {
+        const validatedUser = await validateUserId(connection, request.params.id);
+        if (isInvalid(validatedUser)) {
+          return invalid(adt('userNotFound' as const, ['Specified user not found.']));
         }
-        if (user.status !== UserStatus.Active) {
-          return invalid(['User is already inactive.']);
+        if (validatedUser.value.status !== UserStatus.Active) {
+          return invalid(adt('userNotActive' as const, ['Specified user is already inactive']));
         }
-        return valid(user);
+        if (!permissions.deleteUser(request.session, validatedUser.value.id)) {
+          return invalid(adt('permissions' as const, [permissions.ERROR_MESSAGE]));
+        }
+        return valid(validatedUser.value);
       },
-      async respond(request) {
-        const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      async respond(request): Promise<Response<JsonResponseBody<User | DeleteValidationErrors>, Session>> {
+        const respond = (code: number, body: User | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (request.body.tag === 'invalid') {
-          return respond(404, request.body.value);
-        }
-        const id = request.body.value.id;
-        if (!permissions.deleteUser(request.session, id) || !request.session.user) {
-          return respond(401, [permissions.ERROR_MESSAGE]);
-        }
-        // If this own account, then mark as deactivated by user, otherwise by admin
-        // Track the date the user was made inactive, and the user id of the user that made them inactive
-        const isOwnAccount = permissions.isOwnAccount(request.session, id);
-        const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
-        const updatedUser = await updateUser(connection, {
-          id,
-          status,
-          deactivatedOn: new Date(),
-          deactivatedBy: request.session.user.id
-        });
-        // Sign the user out of the current session if they are deactivating their own account.
-        let session = request.session;
-        if (isOwnAccount) {
-          const result = await signOut(connection, session);
-          if (result.tag === 'invalid') {
-            session = await createAnonymousSession(connection);
-          } else {
-            session = result.value;
+          switch (request.body.value.tag) {
+            case 'userNotFound':
+              return respond(404, request.body.value);
+            case 'userNotActive':
+              return respond(400, request.body.value);
+            case 'permissions':
+              return respond(401, request.body.value);
           }
+        } else {
+          // Track the date the user was made inactive, and the user id of the user that made them inactive
+          const isOwnAccount = permissions.isOwnAccount(request.session, request.params.id);
+          const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
+          const deactivatingUserId = request.session.user ? request.session.user.id : undefined;
+          const updatedUser = await updateUser(connection, {
+            id: request.params.id,
+            status,
+            deactivatedOn: new Date(),
+            deactivatedBy: deactivatingUserId
+          });
+          // Sign the user out of the current session if they are deactivating their own account.
+          let session = request.session;
+          if (isOwnAccount) {
+            const result = await signOut(connection, session);
+            if (result.tag === 'invalid') {
+              session = await createAnonymousSession(connection);
+            } else {
+              session = result.value;
+            }
+          }
+          return basicResponse(200, session, makeJsonResponseBody(updatedUser));
         }
-        return basicResponse(200, session, makeJsonResponseBody(updatedUser));
       }
     };
   }

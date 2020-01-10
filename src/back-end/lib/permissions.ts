@@ -33,7 +33,7 @@ export function isVendor(session: Session): boolean {
 }
 
 export function isAdmin(session: Session): boolean {
-  return isUser(session) && session.user!.type === UserType.Admin;
+  return !!session.user && session.user.type === UserType.Admin;
 }
 
 // Users.
@@ -51,7 +51,7 @@ export function updateUser(session: Session, id: string): boolean {
 }
 
 export function deleteUser(session: Session, id: string): boolean {
-  return isOwnAccount(session, id) || (!!session.user && session.user.type === UserType.Admin);
+  return isOwnAccount(session, id) || isAdmin(session);
 }
 
 export function acceptTerms(session: Session, id: string): boolean {
