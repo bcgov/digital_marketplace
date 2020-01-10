@@ -176,7 +176,8 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
 export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
   const query = connection('organizations')
     .select('organizations.id as org_id', 'legalName', 'files.id as logoImageFileId')
-    .leftOuterJoin('files', 'organizations.logoImageFile', '=', 'files.id');
+    .leftOuterJoin('files', 'organizations.logoImageFile', '=', 'files.id')
+    .where({ active: true });
   // If a user is attached to this session, we need to add owner info to some or all of the orgs
   if (session.user && (session.user.type === UserType.Admin || session.user.type === UserType.Vendor)) {
     query
@@ -271,7 +272,10 @@ export async function createOrganization(connection: Connection, user: Id, organ
 export async function updateOrganization(connection: Connection, organization: ValidatedOrgUpdateRequestBody): Promise<Organization> {
   const now = new Date();
   const [result] = await connection('organizations')
-    .where({ id: organization.id })
+    .where({
+      id: organization.id,
+      active: true
+    })
     .update({
       ...organization,
       updatedAt: now
@@ -284,7 +288,10 @@ export async function updateOrganization(connection: Connection, organization: V
 
 export async function readOneOrganization(connection: Connection, id: Id): Promise<Organization> {
   const result = await connection('organizations')
-    .where({ id })
+    .where({
+      id,
+      active: true
+    })
     .first();
 
   return await rawOrganizationToOrganization(connection, result);
