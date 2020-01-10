@@ -3,30 +3,24 @@ import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-// @org-needs-owner-information
-// import { replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { AvatarFiletype } from 'front-end/lib/types';
 import FileButton from 'front-end/lib/views/file-button';
-import FormButtonsContainer from 'front-end/lib/views/form-buttons-container';
-import { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { CreateRequestBody, Organization } from 'shared/lib/resources/organization';
-import { adt, ADT } from 'shared/lib/types';
-import { ErrorTypeFrom, validateThenMapValid } from 'shared/lib/validation';
+import { CreateRequestBody, Organization, UpdateRequestBody } from 'shared/lib/resources/organization';
+import { adt, ADT, Id } from 'shared/lib/types';
+import { ErrorTypeFrom, invalid, valid, validateThenMapValid, Validation } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
 export interface Params {
   organization?: Organization;
 }
 
-export interface State {
+export interface State extends Params {
   legalName: Immutable<ShortText.State>;
   websiteUrl: Immutable<ShortText.State>;
   streetAddress1: Immutable<ShortText.State>;
@@ -39,16 +33,7 @@ export interface State {
   contactTitle: Immutable<ShortText.State>;
   contactEmail: Immutable<ShortText.State>;
   contactPhone: Immutable<ShortText.State>;
-
   newLogoImage?: AvatarFiletype;
-
-  submitLoading: number;
-
-  /**
-   *  This is effectively a switch for whether or not the component does a
-   *  'create' or 'update operation
-   */
-  organization?: Organization;
 }
 
 export type InnerMsg
@@ -63,19 +48,19 @@ export type InnerMsg
   | ADT<'contactName',     ShortText.Msg>
   | ADT<'contactEmail',    ShortText.Msg>
   | ADT<'contactPhone',    ShortText.Msg>
-  | ADT<'submit',          StopEditingHook | undefined>
-  | ADT<'stopEditing',     StopEditingHook | undefined>
-  | ADT<'onChangeAvatar',  File>
   | ADT<'region',          ShortText.Msg>
+  | ADT<'onChangeAvatar',  File>
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type Values = Omit<Required<CreateRequestBody>, 'logoImageFile'> & { newLogoImage?: File };
+export interface Values extends Omit<Required<CreateRequestBody>, 'logoImageFile'> {
+  newLogoImage?: File;
+}
 
 type Errors = ErrorTypeFrom<Values>;
 
-export function isFormValid(state: Immutable<State>): boolean {
+export function isValid(state: Immutable<State>): boolean {
   const result: boolean = (
     FormField.isValid(state.legalName)      &&
     FormField.isValid(state.websiteUrl)     &&
@@ -112,23 +97,6 @@ export function getValues(state: Immutable<State>): Values {
   };
 }
 
-export function setValues(state: Immutable<State>, org: Organization): Immutable<State> {
-  return state
-    .update('legalName',       s => FormField.setValue(s, org.legalName))
-    .update('streetAddress1',  s => FormField.setValue(s, org.streetAddress1))
-    .update('city',            s => FormField.setValue(s, org.city))
-    .update('country',         s => FormField.setValue(s, org.country))
-    .update('mailCode',        s => FormField.setValue(s, org.mailCode))
-    .update('contactName',     s => FormField.setValue(s, org.contactName))
-    .update('contactEmail',    s => FormField.setValue(s, org.contactEmail))
-    .update('region',          s => FormField.setValue(s, org.region))
-    .update('streetAddress2',  s => FormField.setValue(s, org.streetAddress2 || '' ))
-    .update('contactTitle',    s => FormField.setValue(s, org.contactTitle   || '' ))
-    .update('contactPhone',    s => FormField.setValue(s, org.contactPhone   || '' ))
-    .update('websiteUrl',      s => FormField.setValue(s, org.websiteUrl     || '' ))
-    .set('newLogoImage', null);
-}
-
 export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   if (errors) {
   return state
@@ -150,17 +118,16 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
   }
 }
 
-export const init: Init<Params, State> = async (params) => {
+export const init: Init<Params, State> = async ({ organization }) => {
   return {
-    organization: params.organization,
+    organization,
     newLogoImage: null,
-    submitLoading: 0,
     legalName: immutable(await ShortText.init({
       errors: [],
       validate: orgValidation.validateLegalName,
       child: {
         type: 'text',
-        value: getString(params.organization, 'legalName'),
+        value: getString(organization, 'legalName'),
         id: 'organization-gov-legal-name'
       }
     })),
@@ -169,7 +136,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: validateThenMapValid(orgValidation.validateWebsiteUrl, a => a || ''),
       child: {
         type: 'text',
-        value: getString(params.organization, 'websiteUrl'),
+        value: getString(organization, 'websiteUrl'),
         id: 'organization-gov-website-url'
       }
     })),
@@ -178,7 +145,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateStreetAddress1,
       child: {
         type: 'text',
-        value: getString(params.organization, 'streetAddress1'),
+        value: getString(organization, 'streetAddress1'),
         id: 'organization-gov-street-address-one'
       }
     })),
@@ -187,7 +154,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: validateThenMapValid(orgValidation.validateStreetAddress2, a => a || ''),
       child: {
         type: 'text',
-        value: getString(params.organization, 'streetAddress2'),
+        value: getString(organization, 'streetAddress2'),
         id: 'organization-gov-street-address-two'
       }
     })),
@@ -196,7 +163,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateCity,
       child: {
         type: 'text',
-        value: getString(params.organization, 'city'),
+        value: getString(organization, 'city'),
         id: 'organization-gov-city'
       }
     })),
@@ -205,7 +172,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateCountry,
       child: {
         type: 'text',
-        value: getString(params.organization, 'country'),
+        value: getString(organization, 'country'),
         id: 'organization-gov-country'
       }
     })),
@@ -214,7 +181,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateMailCode,
       child: {
         type: 'text',
-        value: getString(params.organization, 'mailCode'),
+        value: getString(organization, 'mailCode'),
         id: 'organization-gov-mail-code'
       }
     })),
@@ -223,7 +190,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: validateThenMapValid(orgValidation.validateContactTitle, a => a || ''),
       child: {
         type: 'text',
-        value: getString(params.organization, 'contactTitle'),
+        value: getString(organization, 'contactTitle'),
         id: 'organization-gov-contact-title'
       }
     })),
@@ -232,7 +199,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateContactName,
       child: {
         type: 'text',
-        value: getString(params.organization, 'contactName'),
+        value: getString(organization, 'contactName'),
         id: 'organization-gov-contact-name'
       }
     })),
@@ -241,7 +208,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateContactEmail,
       child: {
         type: 'text',
-        value: getString(params.organization, 'contactEmail'),
+        value: getString(organization, 'contactEmail'),
         id: 'organization-gov-contact-email'
       }
     })),
@@ -250,7 +217,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: validateThenMapValid(orgValidation.validateContactPhone, a => a || ''),
       child: {
         type: 'text',
-        value: getString(params.organization, 'contactPhone'),
+        value: getString(organization, 'contactPhone'),
         id: 'organization-gov-contact-phone'
       }
     })),
@@ -259,7 +226,7 @@ export const init: Init<Params, State> = async (params) => {
       validate: orgValidation.validateRegion,
       child: {
         type: 'text',
-        value: getString(params.organization, 'region'),
+        value: getString(organization, 'region'),
         id: 'organization-gov-region'
       }
     }))
@@ -268,58 +235,6 @@ export const init: Init<Params, State> = async (params) => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'stopEditing':
-      return [state, async (state) => {
-        const stopEditingHook: StopEditingHook | undefined = msg.value;
-        if (stopEditingHook && state.organization) { stopEditingHook(state.organization); }
-        return state;
-      }];
-    case 'submit':
-      return [state, async (state, dispatch) => {
-        const values: Values = getValues(state);
-
-        let logoImage;
-        if (values.newLogoImage) {
-          const fileResult = await api.files.create({
-            name: values.newLogoImage.name,
-            file: values.newLogoImage,
-            metadata: [adt('any')]
-          });
-
-          switch (fileResult.tag) {
-            case 'valid':
-              logoImage = fileResult.value.id;
-              break;
-            case 'unhandled':
-            case 'invalid':
-              setErrors(state, {
-                newLogoImage: ['Please select a different image.']
-              });
-          }
-        }
-
-        delete values.newLogoImage;
-        const reqValues = {...values, logoImageFile: logoImage };
-        const result = state.organization
-         ? await api.organizations.update(state.organization.id, reqValues)
-         : await api.organizations.create(reqValues);
-
-        if (api.isValid(result)) {
-          state = setErrors(state, {});
-          if (state.organization) {
-            state = state.set('organization', result.value);
-            const stopEditingHook: StopEditingHook | undefined = msg.value;
-            if (stopEditingHook) { stopEditingHook(result.value); }
-          } else {
-            // TODO: DM-182 Once we have access to the owner of an org we can do this redirect
-            // @org-needs-owner-information
-            // dispatch(replaceRoute(adt('userProfile' as const, { userId: result.value.owner.id, tab: 'organizations' as const})));
-          }
-        } else {
-          state = setErrors(state, result.value);
-        }
-        return state;
-      }];
     case 'onChangeAvatar':
       return [state, async state => {
         return state.set('newLogoImage', {
@@ -430,11 +345,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-type StopEditingHook = (org: Organization) => void;
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled: boolean;
-  stopEditingHook?: StopEditingHook;
-  icon: AvailableIcons;
 }
 
 export function orgLogoPath(org?: Organization): string {
@@ -445,12 +357,6 @@ export function orgLogoPath(org?: Organization): string {
 
 export const view: View<Props> = props => {
   const { state, dispatch, disabled } = props;
-  const isSubmitLoading = state.submitLoading > 0;
-
-  const isOrgDisabled = state.organization ? !state.organization.active : false;
-  const submitDisabled = disabled || isOrgDisabled || !isFormValid(state);
-  const formIsDisabled = disabled || isOrgDisabled;
-
   return (
     <div>
       <Row>
@@ -469,8 +375,8 @@ export const view: View<Props> = props => {
               outline
               size='sm'
               style={{
-                visibility: formIsDisabled ? 'hidden' : undefined,
-                pointerEvents: formIsDisabled ? 'none' : undefined
+                visibility: disabled ? 'hidden' : undefined,
+                pointerEvents: disabled ? 'none' : undefined
               }}
               onChange={file => dispatch(adt('onChangeAvatar', file))}
               accept={SUPPORTED_IMAGE_EXTENSIONS}
@@ -478,7 +384,7 @@ export const view: View<Props> = props => {
               Choose Image
             </FileButton>
             {state.newLogoImage && state.newLogoImage.errors.length
-              ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
+              ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`org-logo-error-${i}`}>{e}</div>))}</div>)
               : null}
           </div>
         </Col>
@@ -488,7 +394,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Legal Name'
             required
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.legalName}
             dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value))} />
         </Col>
@@ -498,7 +404,7 @@ export const view: View<Props> = props => {
             <ShortText.view
               extraChildProps={{}}
               label='Website Url (Optional)'
-              disabled={formIsDisabled}
+              disabled={disabled}
               state={state.websiteUrl}
               dispatch={mapComponentDispatch(dispatch, value => adt('websiteUrl' as const, value))} />
           </div>
@@ -513,7 +419,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Street Address'
             required
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.streetAddress1}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress1' as const, value))} />
         </Col>
@@ -522,7 +428,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Street Address'
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.streetAddress2}
             dispatch={mapComponentDispatch(dispatch, value => adt('streetAddress2' as const, value))} />
         </Col>
@@ -532,7 +438,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='City'
             required
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.city}
             dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value))} />
         </Col>
@@ -542,7 +448,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Province/State'
             required
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.region}
             dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value))} />
         </Col>
@@ -555,7 +461,7 @@ export const view: View<Props> = props => {
                   extraChildProps={{}}
                   label='Postal / ZIP Code'
                   required
-                  disabled={formIsDisabled}
+                  disabled={disabled}
                   state={state.mailCode}
                   dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value))} />
               </Col>
@@ -565,7 +471,7 @@ export const view: View<Props> = props => {
                   extraChildProps={{}}
                   label='Country'
                   required
-                  disabled={formIsDisabled}
+                  disabled={disabled}
                   state={state.country}
                   dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value))} />
               </Col>
@@ -582,7 +488,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Contact Name'
             required
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.contactName}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactName' as const, value))} />
         </Col>
@@ -591,7 +497,7 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Job Title (Optional)'
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.contactTitle}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactTitle' as const, value))} />
         </Col>
@@ -601,7 +507,7 @@ export const view: View<Props> = props => {
             extraChildProps={{}}
             label='Contact Email'
             required
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.contactEmail}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactEmail' as const, value))} />
         </Col>
@@ -610,28 +516,77 @@ export const view: View<Props> = props => {
           <ShortText.view
             extraChildProps={{}}
             label='Phone Number (Optional)'
-            disabled={formIsDisabled}
+            disabled={disabled}
             state={state.contactPhone}
             dispatch={mapComponentDispatch(dispatch, value => adt('contactPhone' as const, value))} />
         </Col>
       </Row>
-
-      {disabled
-        ? null
-        : (<FormButtonsContainer className='mt-4'>
-            <LoadingButton
-              loading={isSubmitLoading}
-              color='primary'
-              symbol_={leftPlacement(iconLinkSymbol(props.icon))}
-              onClick={() => dispatch(adt('submit', props.stopEditingHook)) }
-              disabled={submitDisabled}
-            >
-              {state.organization ? 'Save Changes' : 'Create Organization'}
-            </LoadingButton>
-            <Link onClick={() => dispatch(adt('stopEditing', props.stopEditingHook))} color='secondary' className='px-3'>
-              Cancel
-            </Link>
-          </FormButtonsContainer>)}
     </div>
   );
 };
+
+interface PersistUpdateParams {
+  state: Immutable<State>;
+  orgId: Id;
+  extraBody: Omit<UpdateRequestBody, keyof Values>;
+}
+
+type PersistParams
+  = ADT<'create', Immutable<State>>
+  | ADT<'update', PersistUpdateParams>;
+
+type PersistReturnValue = Validation<[Immutable<State>, Organization], Immutable<State>>;
+
+export async function persist(params: PersistParams): Promise<PersistReturnValue> {
+  const state = params.tag === 'create' ? params.value : params.value.state;
+  const values = getValues(state);
+  let logoImageFile: Id | undefined = params.tag === 'update'
+    ? params.value.extraBody.logoImageFile
+    : undefined;
+  if (values.newLogoImage) {
+    const fileResult = await api.files.create({
+      name: values.newLogoImage.name,
+      file: values.newLogoImage,
+      metadata: [adt('any')]
+    });
+    switch (fileResult.tag) {
+      case 'valid':
+        logoImageFile = fileResult.value.id;
+        break;
+      case 'unhandled':
+      case 'invalid':
+        return invalid(setErrors(state, {
+          newLogoImage: ['Please select a different avatar image.']
+        }));
+    }
+  }
+  values.newLogoImage = undefined; // So this property isn't passed to back-end.
+  // Make the back-end request.
+  const result = await (() => {
+    switch (params.tag) {
+      case 'create':
+        return api.organizations.create({
+          ...values,
+          logoImageFile
+        });
+      case 'update':
+        return api.organizations.update(params.value.orgId, {
+          ...params.value.extraBody,
+          ...values,
+          logoImageFile
+        });
+    }
+  })();
+  // Handle the back-end response.
+  switch (result.tag) {
+    case 'invalid':
+      return invalid(setErrors(state, result.value));
+    case 'unhandled':
+      return invalid(state);
+    case 'valid':
+      return valid([
+        immutable(await init({ organization: result.value })),
+        result.value
+      ]);
+  }
+}
