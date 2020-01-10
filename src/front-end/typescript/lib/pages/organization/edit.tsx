@@ -153,9 +153,9 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isLoading = state.editingLoading > 0;
   return (
     <div>
-      <Row className='pb-5'>
+      <Row>
 
-        <Col xs='12' className='mb-3 pb-3 d-flex flex-nowrap flex-column flex-md-row align-items-md-center'>
+        <Col xs='12' className='mb-4 d-flex flex-nowrap flex-column flex-md-row align-items-md-center'>
           <h2 className='mr-3'>{state.organization.legalName}</h2>
           <div>
           {
@@ -172,20 +172,22 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         </Col>
 
         <Col xs='12'>
-          <OrgForm.view
-            state={state.orgForm}
-            icon={'check'}
-            disabled={!state.isEditing}
-            dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
-            stopEditingHook={(org: OrgResource.Organization) => { dispatch(adt('stopEditing', org)); }}
-          />
+          <div className='pb-5 mb-5 border-bottom'>
+            <OrgForm.view
+              state={state.orgForm}
+              icon={'check'}
+              disabled={!state.isEditing}
+              dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))}
+              stopEditingHook={(org: OrgResource.Organization) => { dispatch(adt('stopEditing', org)); }}
+            />
+          </div>
         </Col>
       </Row>
 
-      <Row className='pt-5 border-top'>
+      <Row>
         <Col>
           <h3>Deactivate Organization</h3>
-          <p>Deactivating this organization means that it will no longer be available for <i>Sprint With Us</i> opportunities</p>
+          <p className='mb-4'>Deactivating this organization means that it will no longer be available for opportunity proposals.</p>
         </Col>
       </Row>
       <Row>
