@@ -168,16 +168,26 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           </p>
         </Col>
       </Row>
+      {state.ownedRecords.length
+        ? (<Row>
+            <Col xs='12'>
+              <Table.view
+                    headCells={ownedTableHeadCells(state)}
+                    bodyRows={ownedTableBodyRows(state)}
+                    state={state.ownedTable}
+                    dispatch={dispatchOwnedTable} />
+            </Col>
+          </Row>)
+        : null}
       <Row>
         <Col xs='12'>
-          <div className='mb-5 pb-5 border-bottom'>
-            {state.ownedRecords.length
-              ? (<Table.view
-                  headCells={ownedTableHeadCells(state)}
-                  bodyRows={ownedTableBodyRows(state)}
-                  state={state.ownedTable}
-                  dispatch={dispatchOwnedTable} />)
-              : null}
+          <div className='mt-4 mb-5 pb-5 border-bottom'>
+            <Link
+              dest={routeDest(adt('orgCreate', null))}
+              symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
+              button
+              color='primary'
+              className='my-1'>Create Organization</Link>
           </div>
         </Col>
       </Row>
