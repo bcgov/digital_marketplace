@@ -626,7 +626,7 @@ export const view: View<Props> = props => {
               onClick={() => dispatch(adt('submit', props.stopEditingHook)) }
               disabled={submitDisabled}
             >
-              Save Changes
+              {state.organization ? 'Save Changes' : 'Create Organization'}
             </LoadingButton>
             <Link onClick={() => dispatch(adt('stopEditing', props.stopEditingHook))} color='secondary' className='px-3'>
               Cancel
