@@ -43,7 +43,7 @@ export async function signOut(connection: Connection, session: Session): Promise
       ClientHttpMethod.Post,
       `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/logout`,
       formData,
-      { 'Content-Type': 'application/x-www-form-urlencdoed'}
+      { 'Content-Type': 'application/x-www-form-urlencoded'}
     );
   } catch (e) {
     return invalid(['KeyCloak sign-out request failed.']);
