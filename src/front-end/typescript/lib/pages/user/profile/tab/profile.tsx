@@ -8,6 +8,7 @@ import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTy
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
+import FormButtonsContainer from 'front-end/lib/views/form-buttons-container';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import { startCase } from 'lodash';
@@ -325,25 +326,23 @@ const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) 
   const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   const isValid = ProfileForm.isValid(state.profileForm);
   return (
-    <Row className='mt-4'>
-      <Col xs='12' className='py-1 d-flex flex-nowrap flex-row flex-md-row-reverse align-items-center overflow-auto'>
-          <LoadingButton
-            disabled={!isValid || isDisabled}
-            onClick={() => dispatch(adt('saveChanges'))}
-            loading={isSaveChangesLoading}
-            symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-            color='primary'>
-            Save Changes
-          </LoadingButton>
-          <Link
-            disabled={isDisabled}
-            onClick={() => dispatch(adt('cancelEditingForm'))}
-            color='secondary'
-            className='px-3'>
-            Cancel
-          </Link>
-      </Col>
-    </Row>
+    <FormButtonsContainer className='mt-4'>
+      <LoadingButton
+        disabled={!isValid || isDisabled}
+        onClick={() => dispatch(adt('saveChanges'))}
+        loading={isSaveChangesLoading}
+        symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+        color='primary'>
+        Save Changes
+      </LoadingButton>
+      <Link
+        disabled={isDisabled}
+        onClick={() => dispatch(adt('cancelEditingForm'))}
+        color='secondary'
+        className='px-3'>
+        Cancel
+      </Link>
+    </FormButtonsContainer>
   );
 };
 
@@ -385,7 +384,7 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({ state, dispatch }) =
       <Col xs='12'>
         <div className='mt-5 pt-5 border-top'>
           <h3>{title}</h3>
-          <p>
+          <p className='mb-4'>
             {isActive
               ? `Deactivating ${your} account means that ${you} will no longer have access to the Digital Marketplace.`
               : `Reactivate ${yourFull} account to enable ${your} access to the Digital Marketplace.`}
@@ -395,7 +394,6 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({ state, dispatch }) =
             disabled={isLoading}
             onClick={() => dispatch(adt('toggleAccountActivation'))}
             symbol_={leftPlacement(iconLinkSymbol(isActive ? 'user-minus' : 'user-plus'))}
-            className='mt-4'
             color={isActive ? 'danger' : 'success'}>
             {title}
           </LoadingButton>

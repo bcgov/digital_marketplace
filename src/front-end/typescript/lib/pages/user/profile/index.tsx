@@ -135,7 +135,7 @@ function makeComponent<K extends UserSidebar.TabId>(): PageComponent<RouteParams
     },
     getModal: getModalValid(state => {
       const tabId = state.tab[0];
-      const definition = tabIdToTabDefinition(tabId);
+      const definition = UserSidebar.tabIdToTabDefinition(tabId);
       if (!definition.component.getModal) { return null; }
       return mapPageModalMsg(
         definition.component.getModal(state.tab[1]),

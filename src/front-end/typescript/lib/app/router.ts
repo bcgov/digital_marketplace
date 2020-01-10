@@ -1,9 +1,9 @@
 import { Route } from 'front-end/lib/app/types';
+import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { Router } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import { adt } from 'shared/lib/types';
-import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org'
 
 export function pushState(route: Route) {
   if (window.history && window.history.pushState) {
@@ -56,8 +56,7 @@ const router: Router<Route> = {
         return {
           tag: 'orgEdit',
           value: {
-            orgId: params.id || '',
-            tab: UserSidebar.parseTabId(query.tab)
+            orgId: params.id || ''
           }
         };
       }
