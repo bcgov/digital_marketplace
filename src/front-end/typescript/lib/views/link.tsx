@@ -108,6 +108,7 @@ function AnchorLink(props: AnchorProps) {
     symbolClassName = ''
   } = props;
   const href: string | undefined = (() => {
+    if (disabled) { return undefined; }
     if (!dest) { return '#noop'; }
     switch (dest.tag) {
       case 'route': return router.routeToUrl(dest.value);

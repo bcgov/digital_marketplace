@@ -295,13 +295,13 @@ const ViewProfileFormHeading: ComponentView<State, Msg> = ({ state, dispatch }) 
   const isDisabled = isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   return (
     <Row>
-      <Col xs='12' className='mb-4 d-flex flex-nowrap flex-column flex-md-row align-items-start align-items-md-center'>
-        <h3 className='mb-0'>Profile Information</h3>
+      <Col xs='12' className='mb-4 d-flex flex-wrap flex-column flex-md-row align-items-start align-items-md-center'>
+        <h3 className='mr-md-3 mb-0'>Profile Information</h3>
         {isEditingForm
           ? null
           : (<LoadingButton
               onClick={() => dispatch(adt('startEditingForm'))}
-              className='mt-2 mt-md-0 ml-md-3'
+              className='mt-1 mb-md-1'
               size='sm'
               loading={isStartEditingFormLoading}
               disabled={isDisabled}

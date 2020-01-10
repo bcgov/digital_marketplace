@@ -169,14 +169,16 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         </Col>
       </Row>
       <Row>
-        <Col xs='12' className='mb-5 pb-5 border-bottom'>
-          {state.ownedRecords.length
-            ? (<Table.view
-                headCells={ownedTableHeadCells(state)}
-                bodyRows={ownedTableBodyRows(state)}
-                state={state.ownedTable}
-                dispatch={dispatchOwnedTable} />)
-            : null}
+        <Col xs='12'>
+          <div className='mb-5 pb-5 border-bottom'>
+            {state.ownedRecords.length
+              ? (<Table.view
+                  headCells={ownedTableHeadCells(state)}
+                  bodyRows={ownedTableBodyRows(state)}
+                  state={state.ownedTable}
+                  dispatch={dispatchOwnedTable} />)
+              : null}
+          </div>
         </Col>
       </Row>
       <Row>
