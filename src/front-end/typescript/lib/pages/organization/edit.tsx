@@ -88,7 +88,7 @@ const startDeactivateLoading = makeStartLoading<ValidState>('deactivateLoading')
 const stopDeactivateLoading = makeStopLoading<ValidState>('deactivateLoading');
 
 function isOwner(user: User, org: OrgResource.Organization): boolean {
-  return true;
+  return user.id === org.owner.id;
 }
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
