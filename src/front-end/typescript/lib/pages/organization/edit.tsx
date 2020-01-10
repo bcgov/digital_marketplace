@@ -1,4 +1,4 @@
-import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
+import { getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
@@ -21,11 +21,12 @@ interface ValidState {
   isEditing: boolean;
   editingLoading: number;
   saveChangesLoading: number;
-  deactivateLoading: number;
+  archiveLoading: number;
+  showArchiveModal: boolean;
+  showSaveChangesModal: boolean;
   user: User;
   organization: OrgResource.Organization;
   orgForm: Immutable<OrgForm.State>;
-  submitErrors?: string[];
   sidebar: Immutable<MenuSidebar.State>;
 }
 
@@ -36,7 +37,9 @@ type InnerMsg
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
-  | ADT<'deactivate'>
+  | ADT<'archive'>
+  | ADT<'hideArchiveModal'>
+  | ADT<'hideSaveChangesModal'>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -59,8 +62,9 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         isEditing: false,
         editingLoading: 0,
         saveChangesLoading: 0,
-        deactivateLoading: 0,
-        submitErrors: [],
+        archiveLoading: 0,
+        showArchiveModal: false,
+        showSaveChangesModal: false,
         user: shared.sessionUser,
         organization: result.value,
         sidebar: shared.sessionUser.type === UserType.Vendor
@@ -84,8 +88,8 @@ const startEditingLoading = makeStartLoading<ValidState>('editingLoading');
 const stopEditingLoading = makeStopLoading<ValidState>('editingLoading');
 const startSaveChangesLoading = makeStartLoading<ValidState>('saveChangesLoading');
 const stopSaveChangesLoading = makeStopLoading<ValidState>('saveChangesLoading');
-const startDeactivateLoading = makeStartLoading<ValidState>('deactivateLoading');
-const stopDeactivateLoading = makeStopLoading<ValidState>('deactivateLoading');
+const startArchiveLoading = makeStartLoading<ValidState>('archiveLoading');
+const stopArchiveLoading = makeStopLoading<ValidState>('archiveLoading');
 
 function isOwner(user: User, org: OrgResource.Organization): boolean {
   return user.id === org.owner.id;
@@ -93,9 +97,15 @@ function isOwner(user: User, org: OrgResource.Organization): boolean {
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
-    case 'deactivate':
+    case 'archive':
+      if (!state.showArchiveModal) {
+        return [state.set('showArchiveModal', true)];
+      } else {
+        state = startArchiveLoading(state)
+          .set('showArchiveModal', false);
+      }
       return [
-        startDeactivateLoading(state),
+        state,
         async (state, dispatch) => {
           const result = await api.organizations.delete(state.organization.id);
           if (api.isValid(result)) {
@@ -106,14 +116,20 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               dispatch(replaceRoute(adt('orgList' as const, null)));
             }
           } else {
-            state = stopDeactivateLoading(state);
+            state = stopArchiveLoading(state);
           }
           return state;
         }
       ];
     case 'saveChanges':
+      if (!state.showSaveChangesModal) {
+        return [state.set('showSaveChangesModal', true)];
+      } else {
+        state = startSaveChangesLoading(state)
+          .set('showSaveChangesModal', false);
+      }
       return [
-        startSaveChangesLoading(state),
+        state,
         async state => {
           state = stopSaveChangesLoading(state);
           const result = await OrgForm.persist(adt('update', {
@@ -159,6 +175,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             .set('orgForm', await resetOrgForm(state.organization));
         }
       ];
+    case 'hideArchiveModal':
+      return [state.set('showArchiveModal', false)];
+    case 'hideSaveChangesModal':
+      return [state.set('showSaveChangesModal', false)];
     case 'orgForm':
       return updateGlobalComponentChild({
         state,
@@ -183,21 +203,21 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
   const isEditingLoading = state.editingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
-  const isDeactivateLoading = state.deactivateLoading > 0;
-  const isLoading = isEditingLoading || isSaveChangesLoading || isDeactivateLoading;
+  const isArchiveLoading = state.archiveLoading > 0;
+  const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
   const isValid = OrgForm.isValid(state.orgForm);
   return (
     <div>
       <Row>
         <Col xs='12' className='mb-5 d-flex flex-wrap flex-column flex-md-row align-items-start align-items-md-center'>
-          <h2 className='mr-md-3 mb-0'>{state.organization.legalName}</h2>
+          <h2 className='mr-md-3 mb-1'>{state.organization.legalName}</h2>
           <div>
           {state.isEditing
             ? null
             : (<LoadingButton
                 loading={isEditingLoading}
                 disabled={isLoading}
-                className='mt-1 mb-md-1'
+                className='mb-1'
                 size='sm'
                 color='primary'
                 symbol_={leftPlacement(iconLinkSymbol('edit'))}
@@ -236,15 +256,15 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
       <Row>
         <Col>
           <div className='mt-5 pt-5 border-top'>
-            <h3>Deactivate Organization</h3>
-            <p className='mb-4'>Deactivating this organization means that it will no longer be available for opportunity proposals.</p>
+            <h3>Archive Organization</h3>
+            <p className='mb-4'>Archiving this organization means that it will no longer be available for opportunity proposals.</p>
           </div>
         </Col>
       </Row>
       <Row>
         <Col>
-          <LoadingButton loading={isDeactivateLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('deactivate'))}>
-            Deactivate Organization
+          <LoadingButton loading={isArchiveLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('archive'))}>
+            Archive Organization
           </LoadingButton>
         </Col>
       </Row>
@@ -268,5 +288,47 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   },
   getMetadata: withValid((state) => {
     return makePageMetadata(`${state.organization.legalName} — Organizations`);
-  }, makePageMetadata('Edit Organization'))
+  }, makePageMetadata('Edit Organization')),
+  getModal: getModalValid<ValidState, Msg>(state => {
+    if (state.showArchiveModal) {
+      return {
+        title: 'Archive Organization?',
+        body: 'Are you sure you want to archive this organization?',
+        onCloseMsg: adt('hideArchiveModal'),
+        actions: [
+          {
+            text: 'Archive Organization',
+            color: 'danger',
+            msg: adt('archive'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideArchiveModal')
+          }
+        ]
+      };
+    } else if (state.showSaveChangesModal) {
+      return {
+        title: 'Save Changes?',
+        body: 'Are you sure you want to save the changes you\'ve made to this organization?',
+        onCloseMsg: adt('hideSaveChangesModal'),
+        actions: [
+          {
+            text: 'Save Changes',
+            color: 'primary',
+            msg: adt('saveChanges'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideSaveChangesModal')
+          }
+        ]
+      };
+    }
+    return null;
+  })
 };

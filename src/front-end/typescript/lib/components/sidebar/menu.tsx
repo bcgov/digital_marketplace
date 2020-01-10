@@ -64,8 +64,7 @@ const linksByActive = (links: SidebarLink[], activePredicate: boolean) => links.
 export const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   if (!state.links.length) { return null; }
-  const [activeLink, ...otherActiveLinks] = linksByActive(state.links, true);
-  const inactiveLinks = linksByActive(state.links, false);
+  const [activeLink] = linksByActive(state.links, true);
   return (
     <Sticky>
       <div className='d-none d-md-flex flex-column flex-nowrap align-items-start'>
@@ -87,7 +86,7 @@ export const view: ComponentView<State, Msg> = props => {
             left: 0,
             zIndex: 99
           }}>
-          {[...otherActiveLinks, ...inactiveLinks].map((link, i) => (
+          {state.links.map((link, i) => (
             <SidebarLink {...link} active={false} className='rounded-0' key={`mobile-sidebar-link-${i}`} />
           ))}
         </div>

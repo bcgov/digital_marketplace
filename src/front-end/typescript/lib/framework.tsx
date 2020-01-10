@@ -253,7 +253,7 @@ export function mapPageBreadcrumbsMsg<MsgA, MsgB, Route>(breadcrumbs: PageBreadc
 
 export interface ModalButton<Msg> {
   text: string;
-  color: 'primary' | 'info' | 'secondary' | 'danger';
+  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
   msg: Msg;
   button?: boolean;
 }
