@@ -9,7 +9,7 @@ import { getString } from 'shared/lib';
 import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as affiliationValidation from 'shared/lib/validation/affiliation';
 
 export interface ValidatedCreateRequestBody {
@@ -19,13 +19,9 @@ export interface ValidatedCreateRequestBody {
   membershipStatus: MembershipStatus;
 }
 
-export interface ValidatedUpdateRequestBody {
-  affiliation: Id;
-}
+type ValidatedUpdateRequestBody = Id;
 
-export interface ValidatedDeleteRequestBody {
-  affiliation: Id;
-}
+type ValidatedDeleteRequestBody = Id;
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -128,40 +124,38 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      async parseRequestBody(request) {
+      async parseRequestBody(request): Promise<null> {
         return null;
       },
-      async validateRequestBody(request) {
-        const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);
-        if (validatedAffiliationId.tag === 'invalid') {
+      async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+        const validatedAffiliation = await validateAffiliationId(connection, request.params.id);
+        if (isInvalid(validatedAffiliation)) {
           return invalid({
-            affiliation: getInvalidValue(validatedAffiliationId, undefined)
+            affiliation: getInvalidValue(validatedAffiliation, undefined)
           });
         }
-        const existingAffiliation = validatedAffiliationId.value;
+        const existingAffiliation = validatedAffiliation.value;
         if (existingAffiliation.membershipStatus === MembershipStatus.Pending) {
           if (!permissions.updateAffiliation(connection, request.session, existingAffiliation.organization.id)) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          return valid({
-            affiliation: existingAffiliation.id
-          });
+          return valid(existingAffiliation.id);
         }
         return invalid({
-          membershipType: ['Membership is not pending.']
+          affiliation: ['Membership is not pending.']
         });
       },
-      async respond(request) {
-        const respond = (code: number, body: Affiliation | UpdateValidationErrors | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      async respond(request): Promise<Response<JsonResponseBody<Affiliation | UpdateValidationErrors>, Session>> {
+        const respond = (code: number, body: Affiliation | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (request.body.tag === 'invalid') {
           if (request.body.value.permissions) {
             return respond(401, request.body.value);
           }
           return respond(400, request.body.value);
         }
-        const id = request.body.value.affiliation;
+        const id = request.body.value;
         const updatedAffiliation = await approveAffiliation(connection, id);
         return respond(200, updatedAffiliation);
       }
@@ -170,7 +164,7 @@ const resource: Resource = {
 
   delete(connection) {
     return {
-      async validateRequestBody(request) {
+      async validateRequestBody(request): Promise<Validation<ValidatedDeleteRequestBody, DeleteValidationErrors>> {
         const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);
         if (validatedAffiliationId.tag === 'invalid') {
           return invalid({
@@ -179,9 +173,10 @@ const resource: Resource = {
         }
 
         const existingAffiliation = validatedAffiliationId.value;
-        if (existingAffiliation.membershipType === MembershipType.Owner && await readActiveOwnerCount(connection, existingAffiliation.organization.id) === 1 ) {
+        if (existingAffiliation.membershipType === MembershipType.Owner &&
+            await readActiveOwnerCount(connection, existingAffiliation.organization.id) === 1) {
           return invalid({
-            membershipType: ['Unable to remove membership. This is the sole owner for this organization.']
+            affiliation: ['Unable to remove membership. This is the sole owner for this organization.']
           });
         }
 
@@ -191,19 +186,17 @@ const resource: Resource = {
           });
         }
 
-        return valid({
-          affiliation: existingAffiliation.id
-        });
+        return valid(existingAffiliation.id);
       },
-      async respond(request) {
-        const respond = (code: number, body: Affiliation | DeleteValidationErrors | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      async respond(request): Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>> {
+        const respond = (code: number, body: Affiliation | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
         if (request.body.tag === 'invalid') {
           if (request.body.value.permissions) {
             return respond(401, request.body.value);
           }
           return respond(400, request.body.value);
         }
-        const affiliationId = request.body.value.affiliation;
+        const affiliationId = request.body.value;
         const deletedAffiliation = await deleteAffiliation(connection, affiliationId);
         return respond(200, deletedAffiliation);
       }

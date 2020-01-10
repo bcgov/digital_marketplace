@@ -41,7 +41,7 @@ export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody>
 }
 
 export interface UpdateValidationErrors {
-  membershipStatus?: string[];
+  affiliation?: string[];
   permissions?: string[];
 }
 
