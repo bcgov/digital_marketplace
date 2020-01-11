@@ -4,16 +4,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
-
-// Validates a v4 UUID
-export function validateUUID(id: Id): Validation<Id> {
-  if (!id.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
-    return invalid(['Invalid identifier provided.']);
-  } else {
-    return valid(id);
-  }
-}
+import { invalid, valid, validateUUID, Validation } from 'shared/lib/validation';
 
 export async function validateUserId(connection: Connection, userId: Id): Promise<Validation<User>> {
   try {

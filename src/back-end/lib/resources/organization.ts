@@ -3,12 +3,12 @@ import { Connection, createOrganization, readManyOrganizations, readOneOrganizat
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateImageFile, validateOrganizationId, validateUUID } from 'back-end/lib/validation';
+import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
 import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isValid, optional, optionalAsync, valid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isValid, optional, optionalAsync, valid, validateUUID } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
 export interface ValidatedUpdateRequestBody extends UpdateRequestBody {

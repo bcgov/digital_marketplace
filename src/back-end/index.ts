@@ -19,7 +19,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
-import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions, parseUserType } from 'shared/lib/resources/file';
+import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
 import { emptySession, Session } from 'shared/lib/resources/session';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
@@ -141,7 +141,7 @@ async function start() {
     port: SERVER_PORT,
     maxMultipartFilesSize: MAX_MULTIPART_FILES_SIZE,
     parseFileUploadMetadata(raw) {
-      return parseFilePermissions(raw, parseUserType);
+      return parseFilePermissions(raw);
     }
   });
   logger.info('server started', { host: SERVER_HOST, port: String(SERVER_PORT) });

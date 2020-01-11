@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
 import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
+import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Response } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { lookup } from 'mime-types';
 import shajs from 'sha.js';
@@ -10,8 +10,8 @@ import { CreateValidationErrors, FilePermissions, FileRecord, FileUploadMetadata
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, valid } from 'shared/lib/validation';
-import { validateFileName } from 'shared/lib/validation/file';
+import { allValid, getInvalidValue, invalid, valid, Validation } from 'shared/lib/validation';
+import * as fileValidation from 'shared/lib/validation/file';
 
 export function hashFile(originalName: string, data: Buffer): string {
   const hash = shajs('sha1');
@@ -67,50 +67,59 @@ const resource: Resource = {
 
   create(connection) {
     return {
-      async parseRequestBody(request) {
-        return request.body.tag === 'file' ? request.body.value : null;
+      async parseRequestBody(request): Promise<CreateRequestBody> {
+        const body = request.body.tag === 'file' ? request.body.value : null;
+        if (body) {
+          return {
+            name: getString(body, 'name'),
+            metadata: body.metadata,
+            path: getString(body, 'path')
+          };
+        } else {
+          return null;
+        }
       },
-      async validateRequestBody(request) {
+      async validateRequestBody(request): Promise<Validation<ValidatedCreateRequestBody, CreateValidationErrors>> {
         if (!request.body) {
           return invalid({
             requestBodyType: ['You need to submit a valid multipart request to create a file.']
           });
         }
         const { name, metadata, path } = request.body;
-        const validatedOriginalFileName = name ? validateFileName(name) : invalid(['File name must be provided']);
-        let validatedFilePermissions;
-        const filePerms: Array<FilePermissions<Id, UserType>> | null  = metadata || null;
-        if (!filePerms) {
-          validatedFilePermissions = invalid(['Invalid metadata provided.']);
-        } else {
-          validatedFilePermissions = valid(filePerms);
-        }
+        const validatedOriginalFileName = fileValidation.validateFileName(name);
+        const validatedFilePermissions = metadata ? valid(metadata) : invalid(['Invalid metadata provided.']);
+        const validatedFilePath = fileValidation.validateFilePath(path);
 
-        if (allValid([validatedOriginalFileName, validatedFilePermissions])) {
+        if (allValid([validatedOriginalFileName, validatedFilePermissions, validatedFilePath])) {
+          if (!permissions.createFile(request.session)) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
           return valid({
             name: validatedOriginalFileName.value,
             permissions: validatedFilePermissions.value,
-            path
-          });
+            path: validatedFilePath.value
+          } as ValidatedCreateRequestBody);
         } else {
           return invalid({
             name: getInvalidValue(validatedOriginalFileName, undefined),
-            metadata: getInvalidValue(validatedFilePermissions, undefined)
+            metadata: getInvalidValue(validatedFilePermissions, undefined),
+            path: getInvalidValue(validatedFilePath, undefined)
           });
         }
       },
-      async respond(request) {
+      async respond(request): Promise<Response<JsonResponseBody<FileRecord | CreateValidationErrors>, Session>> {
         const respond = (code: number, body: FileRecord | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (!permissions.createFile(request.session) || !request.session.user) {
-          return respond(401, {
-            permissions: [permissions.ERROR_MESSAGE]
-          });
-        }
         switch (request.body.tag) {
           case 'invalid':
+            if (request.body.value.permissions) {
+              return respond(401, request.body.value);
+            }
             return respond(400, request.body.value);
           case 'valid':
-            const fileRecord = await createFile(connection, request.body.value, request.session.user.id);
+            const createdById = request.session.user ? request.session.user.id : '';
+            const fileRecord = await createFile(connection, request.body.value, createdById);
             return respond(201, fileRecord);
         }
       }

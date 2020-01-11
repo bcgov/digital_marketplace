@@ -2,7 +2,7 @@ import * as immutable from 'immutable';
 import { isEmpty } from 'lodash';
 import moment from 'moment';
 import { compareDates, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
-import { ADT } from 'shared/lib/types';
+import { ADT, Id } from 'shared/lib/types';
 
 export type ErrorTypeFrom<T> = {
   [p in keyof T]?: string[];
@@ -219,5 +219,14 @@ export function validateEmail(email: string): Validation<string> {
     return invalid([ 'Please enter a valid email.' ]);
   } else {
     return valid(email);
+  }
+}
+
+// Validates a v4 UUID
+export function validateUUID(raw: string): Validation<Id> {
+  if (!raw.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    return invalid(['Invalid identifier provided.']);
+  } else {
+    return valid(raw);
   }
 }
