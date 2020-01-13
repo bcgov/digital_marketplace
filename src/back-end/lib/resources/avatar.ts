@@ -2,21 +2,12 @@
 import * as crud from 'back-end/lib/crud';
 import { Connection } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import FileResource from 'back-end/lib/resources/file';
-import { FileUpload } from 'back-end/lib/server';
+import FileResource, { CreateRequestBody, ValidatedCreateRequestBody } from 'back-end/lib/resources/file';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { CreateValidationErrors, FilePermissions, FileUploadMetadata } from 'shared/lib/resources/file';
+import { CreateValidationErrors } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
-import { UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
 import { getInvalidValue, invalid, isValid, valid, Validation } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
-
-export type CreateRequestBody = FileUpload<FileUploadMetadata> | null;
-
-export interface ValidatedCreateRequestBody extends Pick<FileUpload<FileUploadMetadata>, 'name' | 'path'> {
-  permissions: Array<FilePermissions<Id, UserType>>;
-}
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
