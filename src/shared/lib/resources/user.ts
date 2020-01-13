@@ -61,6 +61,7 @@ export interface UpdateProfileRequestBody {
   name: string;
   email: string;
   jobTitle: string;
+  avatarImageFile: Id;
 }
 
 export type UpdateRequestBody

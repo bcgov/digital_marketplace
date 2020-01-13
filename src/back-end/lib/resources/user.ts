@@ -5,18 +5,18 @@ import { signOut } from 'back-end/lib/resources/session';
 import { Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateUserId } from 'back-end/lib/validation';
+import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 import { UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-type ValidatedUpdateRequestBody = SharedUpdateRequestBody | ADT<'updateNotifications', Date | null> | ADT<'updateAdminPermissions', UserType>;
+export type ValidatedUpdateRequestBody = SharedUpdateRequestBody | ADT<'updateNotifications', Date | null> | ADT<'updateAdminPermissions', UserType>;
 
 type ValidatedUpdateProfileRequestBody = UpdateProfileRequestBody;
 
@@ -81,7 +81,8 @@ const resource: Resource = {
             return adt('updateProfile', {
               name: getString(body.value, 'name'),
               email: getString(body.value, 'email'),
-              jobTitle: getString(body.value, 'jobTitle')
+              jobTitle: getString(body.value, 'jobTitle'),
+              avatarImageFile: getString(body.value, 'avatarImageFile')
             });
 
           case 'acceptTerms':
@@ -116,25 +117,28 @@ const resource: Resource = {
         }
         switch (request.body.tag) {
           case 'updateProfile':
-            const { name, email, jobTitle } = request.body.value;
+            const { name, email, jobTitle, avatarImageFile } = request.body.value;
             const validatedName = userValidation.validateName(name);
             const validatedEmail = userValidation.validateEmail(email);
             const validatedJobTitle = userValidation.validateJobTitle(jobTitle);
+            const validatedAvatarImageFile = await optionalAsync(avatarImageFile, v => validateImageFile(connection, v));
 
-            if (allValid([validatedName, validatedEmail, validatedJobTitle])) {
+            if (allValid([validatedName, validatedEmail, validatedJobTitle, validatedAvatarImageFile])) {
               if (!permissions.updateUser(request.session, request.params.id)) {
                 return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
               }
               return valid(adt('updateProfile', {
                 name: validatedName.value,
                 email: validatedEmail.value,
-                jobTitle: validatedJobTitle.value
+                jobTitle: validatedJobTitle.value,
+                avatarImageFile: isValid(validatedAvatarImageFile) && validatedAvatarImageFile.value && validatedAvatarImageFile.value.id
               } as ValidatedUpdateProfileRequestBody));
             } else {
               return invalid(adt('updateProfile', {
                 name: getInvalidValue(validatedName, undefined),
                 email: getInvalidValue(validatedEmail, undefined),
-                jobTitle: getInvalidValue(validatedJobTitle, undefined)
+                jobTitle: getInvalidValue(validatedJobTitle, undefined),
+                avatarImageFile: getInvalidValue(validatedAvatarImageFile, undefined)
               }));
             }
 
