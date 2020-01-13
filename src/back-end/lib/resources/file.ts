@@ -51,6 +51,9 @@ const resource: Resource = {
       const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       if (await permissions.readOneFile(connection, request.session, request.params.id)) {
         const file = await readOneFileById(connection, request.params.id);
+        if (!file) {
+          return respond(404, ['File not found.']);
+        }
         if (!getBlob) { return respond(200, file); }
         const blob = await readOneFileBlob(connection, file.fileBlob);
         if (blob) {

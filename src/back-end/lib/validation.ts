@@ -24,7 +24,6 @@ export async function validateUserId(connection: Connection, userId: Id): Promis
   }
 }
 
-//TODO validate file extensions: jpg,jpeg,png
 export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
     // Validate the provided id

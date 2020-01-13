@@ -60,15 +60,11 @@ interface RawUserToUserParams extends Omit<User, 'avatarImageFile'> {
 
 export async function rawUserToUser(connection: Connection, params: RawUserToUserParams): Promise<User> {
   const { avatarImageFile: fileId, ...restOfRawUser } = params;
-  if (fileId) {
-    const avatarImageFile = await readOneFileById(connection, fileId);
-    return {
-      ...restOfRawUser,
-      avatarImageFile
-    };
-  } else {
-    return restOfRawUser;
-  }
+  const avatarImageFile = fileId && await readOneFileById(connection, fileId) || undefined;
+  return {
+    ...restOfRawUser,
+    avatarImageFile
+  };
 }
 
 export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<User | null> {
@@ -164,16 +160,17 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
 }
 
 interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
-  logoImageFile?: Id;
+  logoImageFile: Id;
   ownerId: Id;
   ownerName: string;
 }
 
 export async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
   const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  const fetchedLogoFile = logoImageFile && await readOneFileById(connection, logoImageFile) || undefined;
   return {
     ...restOfRawOrg,
-    logoImageFile: logoImageFile ? await readOneFileById(connection, logoImageFile) : undefined,
+    logoImageFile: fetchedLogoFile,
     owner: {
       id: ownerId,
       name: ownerName
@@ -189,9 +186,10 @@ interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | '
 
 export async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
   const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  const fetchedLogoFile = logoImageFile && await readOneFileById(connection, logoImageFile) || undefined;
   return {
     ...restOfRawOrg,
-    logoImageFile: logoImageFile ? await readOneFileById(connection, logoImageFile) : undefined,
+    logoImageFile: fetchedLogoFile,
     owner: ownerId && ownerName
       ? { id: ownerId, name: ownerName }
       : undefined
@@ -260,7 +258,7 @@ export async function createOrganization(connection: Connection, user: Id, organ
   });
 }
 
-export async function updateOrganization(connection: Connection, organization: ValidatedOrgUpdateRequestBody): Promise<Organization> {
+export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<Organization> {
   const now = new Date();
   const [result] = await connection('organizations')
     .where({
@@ -460,8 +458,8 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
   return result ? result.length : 0;
 }
 
-export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord> {
-  const result = await connection('files')
+export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord | null> {
+  const result: FileRecord = await connection('files')
     .where({ id })
     .select(['name', 'id', 'createdAt', 'fileBlob'])
     .first();
