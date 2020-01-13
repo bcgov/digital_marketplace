@@ -139,3 +139,9 @@ export function createFile(session: Session): boolean {
 export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {
   return await hasFilePermission(connection, session, fileId);
 }
+
+// Avatars.
+
+export function createAvatar(session: Session, userId: string): boolean {
+  return isUser(session) && isOwnAccount(session, userId);
+}

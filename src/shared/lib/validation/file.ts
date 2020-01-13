@@ -2,11 +2,21 @@ import { get } from 'immutable';
 import { FilePermissions } from 'shared/lib/resources/file';
 import { parseUserType, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { invalid, mapValid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { invalid, isValid, mapValid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 import { isString } from 'util';
 
-export function validateFileName(name: string): Validation<string> {
-  return validateGenericString(name, 'File name');
+export function validateFileName(name: string, validExtensions: string[] = []): Validation<string> {
+  const validatedName = validateGenericString(name, 'File name');
+  if (isValid(validatedName) && validExtensions.length > 0) {
+    const extension = name.substr(name.lastIndexOf('.') + 1);
+    if (validExtensions.map(ext => ext.toLowerCase()).includes(extension.toLowerCase())) {
+      return validatedName;
+    } else {
+      return invalid(['Invalid file extension.']);
+    }
+  } else {
+    return validatedName;
+  }
 }
 
 export function validateFilePath(path: string): Validation<string> {
