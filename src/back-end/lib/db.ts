@@ -233,7 +233,7 @@ export async function readManyOrganizations(connection: Connection, session: Ses
 
 export async function createOrganization(connection: Connection, user: Id, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
   const now = new Date();
-  return await connection.transaction(async trx => {
+  const result = await connection.transaction(async trx => {
     // Create organization
     const [result] = await connection('organizations')
       .transacting(trx)
@@ -254,8 +254,9 @@ export async function createOrganization(connection: Connection, user: Id, organ
       membershipType: MembershipType.Owner,
       membershipStatus: MembershipStatus.Active
     });
-    return await readOneOrganization(trx, result.id);
+    return result;
   });
+  return await readOneOrganization(connection, result.id);
 }
 
 export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<Organization> {
