@@ -85,7 +85,7 @@ const resource: Resource = {
               membershipStatus: MembershipStatus.Pending
             });
           } else {
-            if (!permissions.updateAffiliation(connection, request.session, organization)) {
+            if (!await permissions.updateAffiliation(connection, request.session, organization)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -136,7 +136,7 @@ const resource: Resource = {
         }
         const existingAffiliation = validatedAffiliation.value;
         if (existingAffiliation.membershipStatus === MembershipStatus.Pending) {
-          if (!permissions.updateAffiliation(connection, request.session, existingAffiliation.organization.id)) {
+          if (!await permissions.updateAffiliation(connection, request.session, existingAffiliation.organization.id)) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]
             });
@@ -180,7 +180,7 @@ const resource: Resource = {
           });
         }
 
-        if (!permissions.deleteAffiliation(connection, request.session, existingAffiliation.user.id, existingAffiliation.organization.id)) {
+        if (!await permissions.deleteAffiliation(connection, request.session, existingAffiliation.user.id, existingAffiliation.organization.id)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -190,7 +190,7 @@ const resource: Resource = {
       },
       async respond(request): Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>> {
         const respond = (code: number, body: Affiliation | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (request.body.tag === 'invalid') {
+        if (isInvalid(request.body)) {
           if (request.body.value.permissions) {
             return respond(401, request.body.value);
           }

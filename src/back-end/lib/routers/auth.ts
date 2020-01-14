@@ -135,7 +135,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
               status: UserStatus.Active,
               name: claims.name || '',
               email: claims.email || '',
-              jobTitle: '', // TODO - retrieve job title from claims for IDIR
+              jobTitle: '',
               idpUsername
             });
           } else if (user.status === UserStatus.InactiveByUser) {
