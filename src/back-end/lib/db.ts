@@ -349,8 +349,10 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
       'affiliations.user': user,
       'affiliations.organization': organization
     })
-    .andWhereNot({ 'affiliations.membershipStatus': MembershipStatus.Inactive })
-    .andWhereNot({ 'organizations.active': false })
+    .andWhereNot({
+      'affiliations.membershipStatus': MembershipStatus.Inactive,
+      'organizations.active': false
+    })
     .orderBy('createdAt')
     .first();
 
@@ -362,8 +364,10 @@ export async function readOneAffiliationById(connection: Connection, id: Id): Pr
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select('affiliations.*')
     .where({ 'affiliations.id': id })
-    .andWhereNot({ 'affiliations.membershipStatus': MembershipStatus.Inactive })
-    .andWhereNot({ 'organizations.active': false })
+    .andWhereNot({
+      'affiliations.membershipStatus': MembershipStatus.Inactive,
+      'organizations.active': false
+    })
     .first();
 
   return result;
