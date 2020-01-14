@@ -86,21 +86,21 @@ export async function readOneOrganization(connection: Connection, session: Sessi
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 export async function updateOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 export async function deleteOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 // Affiliations.
@@ -111,7 +111,7 @@ export function readManyAffiliations(session: Session): boolean {
 
 export function createAffiliation(session: Session, userId: string): boolean {
   // New affiliations can be created by vendors for themselves, or by admins
-  return (isVendor(session) && isOwnAccount(session, userId)) || isAdmin(session);
+  return isAdmin(session) || (isVendor(session) && isOwnAccount(session, userId));
 }
 
 export async function updateAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
@@ -119,7 +119,7 @@ export async function updateAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 export async function deleteAffiliation(connection: Connection, session: Session, userId: string, orgId: string): Promise<boolean> {
@@ -127,7 +127,7 @@ export async function deleteAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 // Files.
