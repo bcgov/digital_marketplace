@@ -111,10 +111,10 @@ const router: Router<Route> = {
     },
     {
       path: '/sign-in',
-      makeRoute() {
+      makeRoute({query}) {
         return {
           tag: 'signIn',
-          value: null
+          value: { redirectOnSuccess: query.redirectOnSuccess as string } // TODO(Jesse): Why does this need to be cast?
         };
       }
     },
@@ -175,7 +175,7 @@ const router: Router<Route> = {
       case 'content':
         return `/content/${route.value}`;
       case 'signIn':
-        return '/sign-in';
+        return `/sign-in${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`;
       case 'signOut':
         return '/sign-out';
       case 'signUpStepOne':

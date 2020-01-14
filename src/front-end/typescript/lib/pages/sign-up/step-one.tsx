@@ -62,7 +62,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       getFooter: () => (
         <span>
           Already have an account?&nbsp;
-          <Link dest={routeDest(adt('signIn', null))}>Sign in</Link>.
+          <Link dest={routeDest(adt('signIn', {}))}>Sign in</Link>.
         </span>
       )
     })
