@@ -56,7 +56,7 @@ const resource: Resource = {
 
   create(connection) {
     return {
-      async parseRequestBody(request): Promise<CreateRequestBody> {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           user: getString(body, 'user'),
@@ -124,7 +124,7 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      async parseRequestBody(request): Promise<null> {
+      async parseRequestBody(request) {
         return null;
       },
       async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {

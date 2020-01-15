@@ -74,7 +74,7 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      async parseRequestBody(request): Promise<UpdateRequestBody | null> {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         const tag = getString(body, 'tag');
         const value: unknown = get(body, 'value');
@@ -110,7 +110,7 @@ const resource: Resource = {
             return null;
         }
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+      async validateRequestBody(request) {
         if (!request.body) { return invalid(adt('parseFailure')); }
         const validatedUser = await validateUserId(connection, request.params.id);
         if (isInvalid(validatedUser)) {
