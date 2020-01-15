@@ -70,34 +70,31 @@ const resource: Resource = {
         const validatedOrganization = await validateOrganizationId(connection, organization);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
+          // Get the most recent affiliation for this user and organization
           const existingAffiliation = await readOneAffiliation(connection, user, organization);
-          if (!existingAffiliation) {
-            if (!permissions.createAffiliation(request.session, user)) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-            // If no existing, active affiliation, create new affiliation with PENDING status
-            return valid({
-              user,
-              organization,
-              membershipType: (validatedMembershipType.value as MembershipType),
-              membershipStatus: MembershipStatus.Pending
-            });
-          } else {
+          let membershipStatus: MembershipStatus;
+          // If existing affiliation in pending state, we check for admin perms, and create new active one
+          if (existingAffiliation && existingAffiliation.membershipStatus === MembershipStatus.Pending) {
             if (!await permissions.updateAffiliation(connection, request.session, organization)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            // If existing, active affiliation, create new affiliation with ACTIVE status and updated role
-            return valid({
-              user,
-              organization,
-              membershipType: (validatedMembershipType.value as MembershipType),
-              membershipStatus: MembershipStatus.Active
-            });
+            membershipStatus = MembershipStatus.Active;
+          } else { // Otherwise we are creating a brand new membership in pending state (perms for own account only)
+            if (!permissions.createAffiliation(request.session, user)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            membershipStatus = MembershipStatus.Pending;
           }
+          return valid({
+            user,
+            organization,
+            membershipType: (validatedMembershipType.value as MembershipType),
+            membershipStatus
+          });
         } else {
           return invalid({
             user: getInvalidValue(validatedUser, undefined),
