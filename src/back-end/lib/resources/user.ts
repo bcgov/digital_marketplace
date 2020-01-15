@@ -6,7 +6,7 @@ import { Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateUserId } from 'back-end/lib/validation';
-import { isBoolean } from 'lodash';
+import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 import { adminPermissionsToUserType, parseNotificationsFlag, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -76,20 +76,22 @@ const resource: Resource = {
     return {
       async parseRequestBody(request): Promise<UpdateRequestBody | null> {
         const body = request.body.tag === 'json' ? request.body.value : {};
-        switch (body.tag) {
+        const tag = getString(body, 'tag');
+        const value: unknown = get(body, 'value');
+        switch (tag) {
           case 'updateProfile':
             return adt('updateProfile', {
-              name: getString(body.value, 'name'),
-              email: getString(body.value, 'email'),
-              jobTitle: getString(body.value, 'jobTitle')
+              name: getString(value, 'name'),
+              email: getString(value, 'email'),
+              jobTitle: getString(value, 'jobTitle')
             });
 
           case 'acceptTerms':
             return adt('acceptTerms');
 
           case 'updateNotifications':
-            if (isBoolean(body.value)) {
-              return adt('updateNotifications', body.value);
+            if (isBoolean(value)) {
+              return adt('updateNotifications', value);
             } else {
               return null;
             }
@@ -98,8 +100,8 @@ const resource: Resource = {
             return adt('reactivateUser');
 
           case 'updateAdminPermissions':
-            if (isBoolean(body.value)) {
-              return adt('updateAdminPermissions', body.value);
+            if (isBoolean(value)) {
+              return adt('updateAdminPermissions', value);
             } else {
               return null;
             }

@@ -73,7 +73,22 @@ const resource: Resource = {
   create(connection) {
     return {
       async parseRequestBody(request) {
-        return request.body.tag === 'json' ? request.body.value : {};
+        const body = request.body.tag === 'json' ? request.body.value : {};
+        return {
+          legalName: getString(body, 'legalName'),
+          logoImageFile: getString(body, 'logoImageFile'),
+          websiteUrl: getString(body, 'websiteUrl'),
+          streetAddress1: getString(body, 'streetAddress1'),
+          streetAddress2: getString(body, 'streetAddress2'),
+          city: getString(body, 'city'),
+          region: getString(body, 'region'),
+          mailCode: getString(body, 'mailCode'),
+          country: getString(body, 'country'),
+          contactName: getString(body, 'contactName'),
+          contactTitle: getString(body, 'contactTitle'),
+          contactEmail: getString(body, 'contactEmail'),
+          contactPhone: getString(body, 'contactPhone')
+        };
       },
       async validateRequestBody(request) {
         const { legalName,
