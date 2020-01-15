@@ -9,7 +9,7 @@ import { getString } from 'shared/lib';
 import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
 import * as affiliationValidation from 'shared/lib/validation/affiliation';
 
 export interface ValidatedCreateRequestBody {
@@ -64,7 +64,7 @@ const resource: Resource = {
           membershipType: getString(body, 'membershipType')
         };
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedCreateRequestBody, CreateValidationErrors>> {
+      async validateRequestBody(request) {
         const { user, organization, membershipType } = request.body;
         const validatedUser = await validateUserId(connection, user);
         const validatedOrganization = await validateOrganizationId(connection, organization);
@@ -127,7 +127,7 @@ const resource: Resource = {
       async parseRequestBody(request) {
         return null;
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+      async validateRequestBody(request) {
         const validatedAffiliation = await validateAffiliationId(connection, request.params.id);
         if (isInvalid(validatedAffiliation)) {
           return invalid({
@@ -164,7 +164,7 @@ const resource: Resource = {
 
   delete(connection) {
     return {
-      async validateRequestBody(request): Promise<Validation<ValidatedDeleteRequestBody, DeleteValidationErrors>> {
+      async validateRequestBody(request) {
         const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);
         if (validatedAffiliationId.tag === 'invalid') {
           return invalid({

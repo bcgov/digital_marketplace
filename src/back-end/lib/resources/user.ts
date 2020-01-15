@@ -11,7 +11,7 @@ import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 import { adminPermissionsToUserType, parseNotificationsFlag, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
@@ -213,7 +213,7 @@ const resource: Resource = {
 
   delete(connection) {
     return {
-      async validateRequestBody(request): Promise<Validation<DeleteValidatedReqBody, DeleteValidationErrors>> {
+      async validateRequestBody(request) {
         const validatedUser = await validateUserId(connection, request.params.id);
         if (isInvalid(validatedUser)) {
           return invalid(adt('userNotFound' as const, ['Specified user not found.']));
