@@ -28,7 +28,7 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   return await rawUserToUser(connection, result);
 }
 
-export async function updateUser(connection: Connection, userInfo: Partial<User>): Promise<User> {
+export async function updateUser(connection: Connection, userInfo: Partial<Omit<User, 'avatarImageFile'> & { avatarImageFile: Id }>): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
     .where({ id: userInfo.id })
