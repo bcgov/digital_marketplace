@@ -75,7 +75,7 @@ const resource: Resource = {
 
   create(connection) {
     return {
-      async parseRequestBody(request): Promise<CreateRequestBody> {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           legalName: getString(body, 'legalName'),
@@ -90,7 +90,7 @@ const resource: Resource = {
           contactName: getString(body, 'contactName'),
           contactTitle: getString(body, 'contactTitle'),
           contactEmail: getString(body, 'contactEmail'),
-          contactPhone: getString(body, 'contactString')
+          contactPhone: getString(body, 'contactPhone')
         };
       },
       async validateRequestBody(request): Promise<Validation<ValidatedCreateRequestBody, CreateValidationErrors>> {

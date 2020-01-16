@@ -108,6 +108,14 @@ export function parseUserType(raw: string): UserType | null {
   }
 }
 
+export function adminPermissionsToUserType(admin: boolean): UserType {
+  return admin ? UserType.Admin : UserType.Government;
+}
+
+export function parseNotificationsFlag(notificationsOn: boolean): Date | null {
+  return notificationsOn ? new Date() : null;
+}
+
 export function emptyUser(): User {
   return {
     id: '',

@@ -9,7 +9,7 @@ import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { adminPermissionsToUserType, parseNotificationsFlag, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
@@ -74,9 +74,11 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      async parseRequestBody(request): Promise<UpdateRequestBody | null> {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
-        switch (body.tag) {
+        const tag = getString(body, 'tag');
+        const value: unknown = get(body, 'value');
+        switch (tag) {
           case 'updateProfile':
             return adt('updateProfile', {
               name: getString(body.value, 'name'),
@@ -89,8 +91,8 @@ const resource: Resource = {
             return adt('acceptTerms');
 
           case 'updateNotifications':
-            if (isBoolean(body.value)) {
-              return adt('updateNotifications', body.value);
+            if (isBoolean(value)) {
+              return adt('updateNotifications', value);
             } else {
               return null;
             }
@@ -99,8 +101,8 @@ const resource: Resource = {
             return adt('reactivateUser');
 
           case 'updateAdminPermissions':
-            if (isBoolean(body.value)) {
-              return adt('updateAdminPermissions', body.value);
+            if (isBoolean(value)) {
+              return adt('updateAdminPermissions', value);
             } else {
               return null;
             }
@@ -109,7 +111,7 @@ const resource: Resource = {
             return null;
         }
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+      async validateRequestBody(request) {
         if (!request.body) { return invalid(adt('parseFailure')); }
         const validatedUser = await validateUserId(connection, request.params.id);
         if (isInvalid(validatedUser)) {
@@ -152,14 +154,11 @@ const resource: Resource = {
             return valid(adt('acceptTerms'));
 
           case 'updateNotifications':
-            const validatedNotificationsOn = userValidation.validateNotificationsOn(request.body.value);
+            const notifications = parseNotificationsFlag(request.body.value);
             if (!permissions.updateUser(request.session, request.params.id)) {
               return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
             }
-            if (isInvalid(validatedNotificationsOn)) {
-              return invalid(adt('parseFailure'));
-            }
-            return valid(adt('updateNotifications', validatedNotificationsOn.value));
+            return valid(adt('updateNotifications', notifications));
 
           case 'reactivateUser':
             if (!permissions.reactivateUser(request.session, request.params.id) || validatedUser.value.status !== UserStatus.InactiveByAdmin) {
@@ -168,17 +167,14 @@ const resource: Resource = {
             return valid(adt('reactivateUser'));
 
           case 'updateAdminPermissions':
-            const validatedAdminStatus = userValidation.validateAdminStatus(request.body.value);
+            const userType = adminPermissionsToUserType(request.body.value);
             if (!permissions.updateAdminStatus(request.session)) {
               return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
             }
             if (validatedUser.value.type === UserType.Vendor) {
               return invalid(adt('updateAdminPermissions', ['Vendors cannot be granted admin permissions.']));
             }
-            if (isInvalid(validatedAdminStatus)) {
-             return invalid(adt('parseFailure'));
-            }
-            return valid(adt('updateAdminPermissions', validatedAdminStatus.value));
+            return valid(adt('updateAdminPermissions', userType));
 
           default:
             return invalid(adt('parseFailure')); // Unsure if this is the correct ADT to return as default - open to suggestions
@@ -221,7 +217,7 @@ const resource: Resource = {
 
   delete(connection) {
     return {
-      async validateRequestBody(request): Promise<Validation<DeleteValidatedReqBody, DeleteValidationErrors>> {
+      async validateRequestBody(request) {
         const validatedUser = await validateUserId(connection, request.params.id);
         if (isInvalid(validatedUser)) {
           return invalid(adt('userNotFound' as const, ['Specified user not found.']));

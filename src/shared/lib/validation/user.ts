@@ -11,14 +11,6 @@ export function validateJobTitle(v: string): Validation<string> {
   return validateGenericString(v, 'Job Title', 0);
 }
 
-export function validateNotificationsOn(notificationsOn: boolean): Validation<Date|null> {
-  return notificationsOn ? valid(new Date()) : valid(null);
-}
-
-export function validateAdminStatus(adminStatus: boolean): Validation<UserType> {
-  return adminStatus ? valid(UserType.Admin) : valid(UserType.Government);
-}
-
 export function validateUserType(type: string): Validation<UserType> {
   const userType = parseUserType(type);
   return userType ? valid(userType) : invalid(['Invalid user type specified.']);

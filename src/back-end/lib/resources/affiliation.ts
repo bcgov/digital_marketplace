@@ -9,7 +9,7 @@ import { getString } from 'shared/lib';
 import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
 import * as affiliationValidation from 'shared/lib/validation/affiliation';
 
 export interface ValidatedCreateRequestBody {
@@ -56,7 +56,7 @@ const resource: Resource = {
 
   create(connection) {
     return {
-      async parseRequestBody(request): Promise<CreateRequestBody> {
+      async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           user: getString(body, 'user'),
@@ -64,40 +64,37 @@ const resource: Resource = {
           membershipType: getString(body, 'membershipType')
         };
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedCreateRequestBody, CreateValidationErrors>> {
+      async validateRequestBody(request) {
         const { user, organization, membershipType } = request.body;
         const validatedUser = await validateUserId(connection, user);
         const validatedOrganization = await validateOrganizationId(connection, organization);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
+          // Get the most recent affiliation for this user and organization
           const existingAffiliation = await readOneAffiliation(connection, user, organization);
-          if (!existingAffiliation) {
+          let membershipStatus: MembershipStatus;
+          // If existing affiliation in pending state, we check for admin perms, and create new active one
+          if (existingAffiliation && existingAffiliation.membershipStatus === MembershipStatus.Pending) {
+            if (!await permissions.updateAffiliation(connection, request.session, organization)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            membershipStatus = MembershipStatus.Active;
+          } else { // Otherwise we are creating a brand new membership in pending state (perms for own account only)
             if (!permissions.createAffiliation(request.session, user)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            // If no existing, active affiliation, create new affiliation with PENDING status
-            return valid({
-              user,
-              organization,
-              membershipType: (validatedMembershipType.value as MembershipType),
-              membershipStatus: MembershipStatus.Pending
-            });
-          } else {
-            if (!permissions.updateAffiliation(connection, request.session, organization)) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-            // If existing, active affiliation, create new affiliation with ACTIVE status and updated role
-            return valid({
-              user,
-              organization,
-              membershipType: (validatedMembershipType.value as MembershipType),
-              membershipStatus: MembershipStatus.Active
-            });
+            membershipStatus = MembershipStatus.Pending;
           }
+          return valid({
+            user,
+            organization,
+            membershipType: (validatedMembershipType.value as MembershipType),
+            membershipStatus
+          });
         } else {
           return invalid({
             user: getInvalidValue(validatedUser, undefined),
@@ -124,10 +121,10 @@ const resource: Resource = {
 
   update(connection) {
     return {
-      async parseRequestBody(request): Promise<null> {
+      async parseRequestBody(request) {
         return null;
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
+      async validateRequestBody(request) {
         const validatedAffiliation = await validateAffiliationId(connection, request.params.id);
         if (isInvalid(validatedAffiliation)) {
           return invalid({
@@ -136,7 +133,7 @@ const resource: Resource = {
         }
         const existingAffiliation = validatedAffiliation.value;
         if (existingAffiliation.membershipStatus === MembershipStatus.Pending) {
-          if (!permissions.updateAffiliation(connection, request.session, existingAffiliation.organization.id)) {
+          if (!await permissions.updateAffiliation(connection, request.session, existingAffiliation.organization.id)) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]
             });
@@ -164,7 +161,7 @@ const resource: Resource = {
 
   delete(connection) {
     return {
-      async validateRequestBody(request): Promise<Validation<ValidatedDeleteRequestBody, DeleteValidationErrors>> {
+      async validateRequestBody(request) {
         const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);
         if (validatedAffiliationId.tag === 'invalid') {
           return invalid({
@@ -180,7 +177,7 @@ const resource: Resource = {
           });
         }
 
-        if (!permissions.deleteAffiliation(connection, request.session, existingAffiliation.user.id, existingAffiliation.organization.id)) {
+        if (!await permissions.deleteAffiliation(connection, request.session, existingAffiliation.user.id, existingAffiliation.organization.id)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -190,7 +187,7 @@ const resource: Resource = {
       },
       async respond(request): Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>> {
         const respond = (code: number, body: Affiliation | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (request.body.tag === 'invalid') {
+        if (isInvalid(request.body)) {
           if (request.body.value.permissions) {
             return respond(401, request.body.value);
           }
