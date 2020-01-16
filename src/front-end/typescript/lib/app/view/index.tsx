@@ -4,6 +4,7 @@ import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
+// Note(Jesse): @add_new_page_location
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -47,6 +48,7 @@ function makeViewPageProps<RouteParams, PageState, PageMsg>(
 function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPageProps<any, any, any> {
   switch (props.state.activeRoute.tag) {
 
+    // Note(Jesse): @add_new_page_location
     case 'landing':
       return makeViewPageProps(
         props,

@@ -31,6 +31,8 @@ export function back() {
 
 const router: Router<Route> = {
 
+  // Note(Jesse): @add_new_page_location
+
   routes: [
     {
       path: '/organizations',
@@ -165,6 +167,8 @@ const router: Router<Route> = {
       }
     }
   ],
+
+  // Note(Jesse): @add_new_page_location
 
   routeToUrl(route) {
     switch (route.tag) {

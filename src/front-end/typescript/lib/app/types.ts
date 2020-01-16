@@ -1,22 +1,31 @@
 import * as Nav from 'front-end/lib/app/view/nav';
 import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
-import * as PageContent from 'front-end/lib/pages/content';
-import * as PageLanding from 'front-end/lib/pages/landing';
-import * as PageNotice from 'front-end/lib/pages/notice';
-import * as PageOpportunities from 'front-end/lib/pages/opportunities';
-import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
-import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
-import * as PageOrgList from 'front-end/lib/pages/organization/list';
-import * as PageSignIn from 'front-end/lib/pages/sign-in';
-import * as PageSignOut from 'front-end/lib/pages/sign-out';
-import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
-import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
-import * as PageUserList from 'front-end/lib/pages/user/list';
-import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-import { includes } from 'lodash';
-import { Session } from 'shared/lib/resources/session';
-import { ADT } from 'shared/lib/types';
+// Note(Jesse): @add_new_page_location
+import * as CwuOpportunityCreate from 'front-end/lib/pages/cwu/opportunities/create';
+import * as CWuOpportunityEdit   from 'front-end/lib/pages/cwu/opportunities/edit';
+import * as CWuOpportunityView   from 'front-end/lib/pages/cwu/opportunities/view';
+import * as CwuProposalCreate    from 'front-end/lib/pages/cwu/proposals/create';
+import * as CWuProposalEdit      from 'front-end/lib/pages/cwu/proposals/edit';
+import * as CWuProposalView      from 'front-end/lib/pages/cwu/proposals/view';
+import * as CWuProposalList      from 'front-end/lib/pages/cwu/proposals/list';
+import * as PageContent          from 'front-end/lib/pages/content';
+import * as PageLanding          from 'front-end/lib/pages/landing';
+import * as PageNotice           from 'front-end/lib/pages/notice';
+import * as PageOpportunities    from 'front-end/lib/pages/opportunities';
+import * as PageOrgCreate        from 'front-end/lib/pages/organization/create';
+import * as PageOrgEdit          from 'front-end/lib/pages/organization/edit';
+import * as PageOrgList          from 'front-end/lib/pages/organization/list';
+import * as PageSignIn           from 'front-end/lib/pages/sign-in';
+import * as PageSignOut          from 'front-end/lib/pages/sign-out';
+import * as PageSignUpStepOne    from 'front-end/lib/pages/sign-up/step-one';
+import * as PageSignUpStepTwo    from 'front-end/lib/pages/sign-up/step-two';
+import * as PageUserList         from 'front-end/lib/pages/user/list';
+import * as PageUserProfile      from 'front-end/lib/pages/user/profile';
+import { includes }              from 'lodash';
+import { Session }               from 'shared/lib/resources/session';
+import { ADT }                   from 'shared/lib/types';
 
+// Note(Jesse): @add_new_page_location
 export type Route
   = ADT<'landing',       PageLanding.RouteParams>
   | ADT<'opportunities', PageOpportunities.RouteParams>
@@ -57,6 +66,7 @@ export interface State {
   activeRoute: Route;
   nav: Immutable<Nav.State>;
 
+// Note(Jesse): @add_new_page_location
   pages: {
     landing?: Immutable<PageLanding.State>;
     opportunities?: Immutable<PageOpportunities.State>;
@@ -74,6 +84,7 @@ export interface State {
   };
 }
 
+// Note(Jesse): @add_new_page_location
 type InnerMsg
   = ADT<'noop'>
   | ADT<'closeModal'>

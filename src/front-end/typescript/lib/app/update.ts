@@ -3,6 +3,7 @@ import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'fr
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+// Note(Jesse): @add_new_page_location
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -45,6 +46,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
 
   switch (route.tag) {
 
+    // Note(Jesse): @add_new_page_location
     case 'orgEdit':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -229,6 +231,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
   switch (msg.tag) {
 
+    // Note(Jesse): @add_new_page_location
     case 'noop':
       return [state];
 
