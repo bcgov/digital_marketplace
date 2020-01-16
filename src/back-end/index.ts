@@ -22,6 +22,7 @@ import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
 import { emptySession, Session } from 'shared/lib/resources/session';
+import { isValid } from 'shared/lib/validation';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 
@@ -133,9 +134,19 @@ async function start() {
       }
       try {
         if (!id) { throw new Error('session ID is undefined'); }
-        return await readOneSession(connection, id);
+        const dbResult = await readOneSession(connection, id);
+        if (isValid(dbResult)) {
+          return dbResult.value;
+        } else {
+          throw new Error();
+        }
       } catch (e) {
-        return await createAnonymousSession(connection);
+        const dbResult = await createAnonymousSession(connection);
+        if (isValid(dbResult)) {
+          return dbResult.value;
+        } else {
+          throw new Error();
+        }
       }
     },
     sessionToSessionId: ({ id }) => id,

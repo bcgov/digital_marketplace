@@ -9,9 +9,13 @@ import { FileBlob, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { adt, Id } from 'shared/lib/types';
+import { invalid, isValid, valid } from 'shared/lib/validation';
+import { DatabaseValidation } from 'shared/lib/validation/db';
 
 export type Connection = Knex<any, any>;
+
+const createDatabaseError = () => adt('databaseError' as const);
 
 export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms'>): Promise<User> {
   const now = new Date();
@@ -28,30 +32,42 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   return await rawUserToUser(connection, result);
 }
 
-export async function updateUser(connection: Connection, userInfo: Omit<Partial<User>, 'avatarImageFile'> & { id: Id, avatarImageFile?: Id }): Promise<User> {
+export async function updateUser(connection: Connection, userInfo: Omit<Partial<User>, 'avatarImageFile'> & { id: Id, avatarImageFile?: Id }): Promise<DatabaseValidation<User>> {
   const now = new Date();
-  const [result] = await connection('users')
+  try {
+    const result: RawUserToUserParams = await connection('users')
     .where({ id: userInfo.id })
     .update({
       ...userInfo,
       updatedAt: now
     }, ['*']);
-  if (!result) {
-    throw new Error('unable to update user');
+    if (!result) {
+      throw new Error('unable to update user');
+    }
+    return valid(await rawUserToUser(connection, result));
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return await rawUserToUser(connection, result);
 }
 
-export async function readOneUser(connection: Connection, id: Id): Promise<User | null> {
-  const result = await connection('users')
+export async function readOneUser(connection: Connection, id: Id): Promise<DatabaseValidation<User | null>> {
+  try {
+    const result: RawUserToUserParams = await connection('users')
     .where({ id })
     .first();
-  return result ? await rawUserToUser(connection, result) : null;
+    return valid(result ? await rawUserToUser(connection, result) : null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function readManyUsers(connection: Connection): Promise<User[]> {
-  const results = await connection('users').select();
-  return Promise.all(results.map(async raw => await rawUserToUser(connection, raw)));
+export async function readManyUsers(connection: Connection): Promise<DatabaseValidation<User[]>> {
+  try {
+    const results: RawUserToUserParams[] = await connection('users').select();
+    return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 interface RawUserToUserParams extends Omit<User, 'avatarImageFile'> {
@@ -67,21 +83,19 @@ export async function rawUserToUser(connection: Connection, params: RawUserToUse
   };
 }
 
-export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<User | null> {
-  let result: User;
+export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<DatabaseValidation<User | null>> {
+  try {
+    let query = connection('users')
+      .where({ type, idpUsername });
 
-  // If Government, we want to search on Admin types as well.
-  if (type === UserType.Government) {
-    result = await connection('users')
-      .where({ type, idpUsername })
-      .orWhere({ type: UserType.Admin, idpUsername })
-      .first();
-  } else {
-    result = await connection('users')
-      .where ({type, idpUsername })
-      .first();
+    if (type === UserType.Government) {
+      query = query.orWhere({ type: UserType.Admin });
+    }
+    const result = await query.first();
+    return valid(result ? result : null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return result ? result : null;
 }
 
 interface RawSessionToSessionParams {
@@ -96,43 +110,52 @@ async function rawSessionToSession(connection: Connection, params: RawSessionToS
     accessToken: params.accessToken
   };
   if (params.user) {
-    const user = await readOneUser(connection, params.user);
-    if (user) {
+    const dbResult = await readOneUser(connection, params.user);
+    if (isValid(dbResult) && dbResult.value) {
       return {
         ...session,
-        user
+        user: dbResult.value
       };
     }
   }
   return session;
 }
 
-export async function createAnonymousSession(connection: Connection): Promise<Session> {
+export async function createAnonymousSession(connection: Connection): Promise<DatabaseValidation<Session>> {
   const now = new Date();
-  const [result] = await connection('sessions')
+  try {
+    const result: Session[] = await connection('sessions')
     .insert({
       id: generateUuid(),
       createdAt: now,
       updatedAt: now
     }, ['*']);
-  if (!result) {
-    throw new Error('unable to create anonymous session');
+    if (!result || result.length === 0) {
+      throw new Error('unable to create anonymous session');
+    }
+    return valid(await rawSessionToSession(connection, {
+      id: result[0].id
+    }));
+  } catch (exception) {
+    return invalid(adt('databaseError' as const));
   }
-  return await rawSessionToSession(connection, {
-    id: result.id
-  });
 }
 
-export async function readOneSession(connection: Connection, id: Id): Promise<Session> {
-  const result = await connection('sessions')
-    .where({ id })
-    .first();
-  if (!result) { return await createAnonymousSession(connection); }
-  return await rawSessionToSession(connection, {
-    id: result.id,
-    accessToken: result.accessToken,
-    user: result.user
-  });
+export async function readOneSession(connection: Connection, id: Id): Promise<DatabaseValidation<Session>> {
+  try {
+    const result: RawSessionToSessionParams = await connection('sessions')
+      .where({ id })
+      .first();
+
+    if (!result) { return await createAnonymousSession(connection); }
+    return valid(await rawSessionToSession(connection, {
+      id: result.id,
+      accessToken: result.accessToken,
+      user: result.user
+    }));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 export async function updateSession(connection: Connection, session: Session): Promise<Session> {
