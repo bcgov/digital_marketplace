@@ -2,12 +2,12 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
 // Note(Jesse): @add_new_page_location
 import * as CwuOpportunityCreate from 'front-end/lib/pages/cwu/opportunities/create';
-import * as CWuOpportunityEdit   from 'front-end/lib/pages/cwu/opportunities/edit';
-import * as CWuOpportunityView   from 'front-end/lib/pages/cwu/opportunities/view';
+import * as CwuOpportunityEdit   from 'front-end/lib/pages/cwu/opportunities/edit';
+import * as CwuOpportunityView   from 'front-end/lib/pages/cwu/opportunities/view';
 import * as CwuProposalCreate    from 'front-end/lib/pages/cwu/proposals/create';
-import * as CWuProposalEdit      from 'front-end/lib/pages/cwu/proposals/edit';
-import * as CWuProposalView      from 'front-end/lib/pages/cwu/proposals/view';
-import * as CWuProposalList      from 'front-end/lib/pages/cwu/proposals/list';
+import * as CwuProposalEdit      from 'front-end/lib/pages/cwu/proposals/edit';
+import * as CwuProposalView      from 'front-end/lib/pages/cwu/proposals/view';
+import * as CwuProposalList      from 'front-end/lib/pages/cwu/proposals/list';
 import * as PageContent          from 'front-end/lib/pages/content';
 import * as PageLanding          from 'front-end/lib/pages/landing';
 import * as PageNotice           from 'front-end/lib/pages/notice';
@@ -27,19 +27,26 @@ import { ADT }                   from 'shared/lib/types';
 
 // Note(Jesse): @add_new_page_location
 export type Route
-  = ADT<'landing',       PageLanding.RouteParams>
-  | ADT<'opportunities', PageOpportunities.RouteParams>
-  | ADT<'content',       PageContent.RouteParams>
-  | ADT<'signOut',       PageSignOut.RouteParams>
-  | ADT<'signIn',        PageSignIn.RouteParams>
-  | ADT<'signUpStepOne', PageSignUpStepOne.RouteParams>
-  | ADT<'signUpStepTwo', PageSignUpStepTwo.RouteParams>
-  | ADT<'notice',        PageNotice.RouteParams>
-  | ADT<'userList',      PageUserList.RouteParams>
-  | ADT<'userProfile',   PageUserProfile.RouteParams>
-  | ADT<'orgCreate',     PageOrgCreate.RouteParams>
-  | ADT<'orgList',       PageOrgList.RouteParams>
-  | ADT<'orgEdit',       PageOrgEdit.RouteParams>;
+  = ADT<'landing',               PageLanding.RouteParams>
+  | ADT<'opportunities',         PageOpportunities.RouteParams>
+  | ADT<'content',               PageContent.RouteParams>
+  | ADT<'signOut',               PageSignOut.RouteParams>
+  | ADT<'signIn',                PageSignIn.RouteParams>
+  | ADT<'signUpStepOne',         PageSignUpStepOne.RouteParams>
+  | ADT<'signUpStepTwo',         PageSignUpStepTwo.RouteParams>
+  | ADT<'notice',                PageNotice.RouteParams>
+  | ADT<'userList',              PageUserList.RouteParams>
+  | ADT<'userProfile',           PageUserProfile.RouteParams>
+  | ADT<'orgCreate',             PageOrgCreate.RouteParams>
+  | ADT<'orgList',               PageOrgList.RouteParams>
+  | ADT<'orgEdit',               PageOrgEdit.RouteParams>
+  | ADT<'cwuOpportunityCreate',  CwuOpportunityCreate.RouteParams>
+  | ADT<'cwuOpportunityEdit',    CwuOpportunityEdit.RouteParams>
+  | ADT<'cwuOpportunityView',    CwuOpportunityView.RouteParams>
+  | ADT<'cwuProposalCreate',     CwuProposalCreate.RouteParams>
+  | ADT<'cwuProposalEdit',       CwuProposalEdit.RouteParams>
+  | ADT<'cwuProposalView',       CwuProposalView.RouteParams>
+  | ADT<'cwuProposalList',       CwuProposalList.RouteParams>;
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
   'signUpStepTwo',
@@ -81,6 +88,13 @@ export interface State {
     orgCreate?: Immutable<PageOrgCreate.State>;
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
+    cwuOpportunityCreate?: Immutable<CwuOpportunityCreate.State>;
+    cwuOpportunityEdit?: Immutable<CwuOpportunityEdit.State>;
+    cwuOpportunityView?: Immutable<CwuOpportunityView.State>;
+    cwuProposalCreate?: Immutable<CwuProposalCreate.State>;
+    cwuProposalEdit?: Immutable<CwuProposalEdit.State>;
+    cwuProposalView?: Immutable<CwuProposalView.State>;
+    cwuProposalList?: Immutable<CwuProposalList.State>;
   };
 }
 
@@ -88,19 +102,27 @@ export interface State {
 type InnerMsg
   = ADT<'noop'>
   | ADT<'closeModal'>
-  | ADT<'nav', Nav.Msg>
-  | ADT<'pageLanding', PageLanding.Msg>
-  | ADT<'pageOpportunities', PageOpportunities.Msg>
-  | ADT<'pageContent', PageContent.Msg>
-  | ADT<'pageSignIn', PageSignIn.Msg>
-  | ADT<'pageSignOut', PageSignOut.Msg>
-  | ADT<'pageSignUpStepOne', PageSignUpStepOne.Msg>
-  | ADT<'pageSignUpStepTwo', PageSignUpStepTwo.Msg>
-  | ADT<'pageNotice', PageNotice.Msg>
-  | ADT<'pageUserList', PageUserList.Msg>
-  | ADT<'pageUserProfile', PageUserProfile.Msg>
-  | ADT<'pageOrgCreate', PageOrgCreate.Msg>
-  | ADT<'pageOrgList', PageOrgList.Msg>
-  | ADT<'pageOrgEdit', PageOrgEdit.Msg>;
+  | ADT<'nav',                   Nav.Msg>
+  | ADT<'pageLanding',           PageLanding.Msg>
+  | ADT<'pageOpportunities',     PageOpportunities.Msg>
+  | ADT<'pageContent',           PageContent.Msg>
+  | ADT<'pageSignIn',            PageSignIn.Msg>
+  | ADT<'pageSignOut',           PageSignOut.Msg>
+  | ADT<'pageSignUpStepOne',     PageSignUpStepOne.Msg>
+  | ADT<'pageSignUpStepTwo',     PageSignUpStepTwo.Msg>
+  | ADT<'pageNotice',            PageNotice.Msg>
+  | ADT<'pageUserList',          PageUserList.Msg>
+  | ADT<'pageUserProfile',       PageUserProfile.Msg>
+  | ADT<'pageOrgCreate',         PageOrgCreate.Msg>
+  | ADT<'pageOrgList',           PageOrgList.Msg>
+  | ADT<'pageOrgEdit',           PageOrgEdit.Msg>
+  | ADT<'cwuOpportunityCreate',  CwuOpportunityCreate.Msg>
+  | ADT<'cwuOpportunityEdit',    CwuOpportunityEdit.Msg>
+  | ADT<'cwuOpportunityView',    CwuOpportunityView.Msg>
+  | ADT<'cwuProposalCreate',     CwuProposalCreate.Msg>
+  | ADT<'cwuProposalEdit',       CwuProposalEdit.Msg>
+  | ADT<'cwuProposalView',       CwuProposalView.Msg>
+  | ADT<'cwuProposalList',       CwuProposalList.Msg>;
+
 
 export type Msg = AppMsg<InnerMsg, Route>;

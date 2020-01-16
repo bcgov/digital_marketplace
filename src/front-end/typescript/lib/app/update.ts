@@ -4,6 +4,13 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
+import * as CwuOpportunityCreate from 'front-end/lib/pages/cwu/opportunities/create';
+import * as CwuOpportunityEdit   from 'front-end/lib/pages/cwu/opportunities/edit';
+import * as CwuOpportunityView   from 'front-end/lib/pages/cwu/opportunities/view';
+import * as CwuProposalCreate    from 'front-end/lib/pages/cwu/proposals/create';
+import * as CwuProposalEdit      from 'front-end/lib/pages/cwu/proposals/edit';
+import * as CwuProposalView      from 'front-end/lib/pages/cwu/proposals/view';
+import * as CwuProposalList      from 'front-end/lib/pages/cwu/proposals/list';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -47,6 +54,8 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   switch (route.tag) {
 
     // Note(Jesse): @add_new_page_location
+      //
+
     case 'orgEdit':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -59,6 +68,92 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return { tag: 'pageOrgEdit' as const, value };
         }
       });
+
+    case 'cwuOpportunityCreate':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuOpportunityCreate'],
+        childRouteParams: route.value,
+        childInit: CwuOpportunityCreate.component.init,
+        childGetMetadata: CwuOpportunityCreate.component.getMetadata,
+        childGetModal: CwuOpportunityCreate.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuOpportunityCreate' as const, value}
+        }
+      });
+    case 'cwuOpportunityEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuOpportunityEdit'],
+        childRouteParams: route.value,
+        childInit: CwuOpportunityEdit.component.init,
+        childGetMetadata: CwuOpportunityEdit.component.getMetadata,
+        childGetModal: CwuOpportunityEdit.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuOpportunityEdit' as const, value}
+        }
+      });
+    case 'cwuOpportunityView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuOpportunityView'],
+        childRouteParams: route.value,
+        childInit: CwuOpportunityView.component.init,
+        childGetMetadata: CwuOpportunityView.component.getMetadata,
+        childGetModal: CwuOpportunityView.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuOpportunityView' as const, value}
+        }
+      });
+    case 'cwuProposalCreate':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuProposalCreate'],
+        childRouteParams: route.value,
+        childInit: CwuProposalCreate.component.init,
+        childGetMetadata: CwuProposalCreate.component.getMetadata,
+        childGetModal: CwuProposalCreate.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuProposalCreate' as const, value}
+        }
+      });
+    case 'cwuProposalEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuProposalEdit'],
+        childRouteParams: route.value,
+        childInit: CwuProposalEdit.component.init,
+        childGetMetadata: CwuProposalEdit.component.getMetadata,
+        childGetModal: CwuProposalEdit.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuProposalEdit' as const, value}
+        }
+      });
+    case 'cwuProposalView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuProposalView'],
+        childRouteParams: route.value,
+        childInit: CwuProposalView.component.init,
+        childGetMetadata: CwuProposalView.component.getMetadata,
+        childGetModal: CwuProposalView.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuProposalView' as const, value}
+        }
+      });
+    case 'cwuProposalList':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'cwuProposalList'],
+        childRouteParams: route.value,
+        childInit: CwuProposalList.component.init,
+        childGetMetadata: CwuProposalList.component.getMetadata,
+        childGetModal: CwuProposalList.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'cwuProposalList' as const, value}
+        }
+      });
+
 
     case 'orgCreate':
       return await initAppChildPage({
@@ -301,6 +396,78 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageOrgEdit.component.getModal,
         childMsg: msg.value
       });
+
+    case 'cwuOpportunityCreate':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuOpportunityCreate' as const, value}),
+        childStatePath: ['pages', 'cwuOpportunityCreate'],
+        childUpdate: CwuOpportunityCreate.component.update,
+        childGetMetadata: CwuOpportunityCreate.component.getMetadata,
+        childGetModal: CwuOpportunityCreate.component.getModal,
+        childMsg: msg.value
+      });
+    case 'cwuOpportunityEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuOpportunityEdit' as const, value}),
+        childStatePath: ['pages', 'cwuOpportunityEdit'],
+        childUpdate: CwuOpportunityEdit.component.update,
+        childGetMetadata: CwuOpportunityEdit.component.getMetadata,
+        childGetModal: CwuOpportunityEdit.component.getModal,
+        childMsg: msg.value
+      });
+    case 'cwuOpportunityView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuOpportunityView' as const, value}),
+        childStatePath: ['pages', 'cwuOpportunityView'],
+        childUpdate: CwuOpportunityView.component.update,
+        childGetMetadata: CwuOpportunityView.component.getMetadata,
+        childGetModal: CwuOpportunityView.component.getModal,
+        childMsg: msg.value
+      });
+    case 'cwuProposalCreate':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuProposalCreate' as const, value}),
+        childStatePath: ['pages', 'cwuProposalCreate'],
+        childUpdate: CwuProposalCreate.component.update,
+        childGetMetadata: CwuProposalCreate.component.getMetadata,
+        childGetModal: CwuProposalCreate.component.getModal,
+        childMsg: msg.value
+      });
+    case 'cwuProposalEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuProposalEdit' as const, value}),
+        childStatePath: ['pages', 'cwuProposalEdit'],
+        childUpdate: CwuProposalEdit.component.update,
+        childGetMetadata: CwuProposalEdit.component.getMetadata,
+        childGetModal: CwuProposalEdit.component.getModal,
+        childMsg: msg.value
+      });
+    case 'cwuProposalView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuProposalView' as const, value}),
+        childStatePath: ['pages', 'cwuProposalView'],
+        childUpdate: CwuProposalView.component.update,
+        childGetMetadata: CwuProposalView.component.getMetadata,
+        childGetModal: CwuProposalView.component.getModal,
+        childMsg: msg.value
+      });
+    case 'cwuProposalList':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'cwuProposalList' as const, value}),
+        childStatePath: ['pages', 'cwuProposalList'],
+        childUpdate: CwuProposalList.component.update,
+        childGetMetadata: CwuProposalList.component.getMetadata,
+        childGetModal: CwuProposalList.component.getModal,
+        childMsg: msg.value
+      });
+
 
     case 'pageOrgCreate':
       return updateAppChildPage({
