@@ -36,66 +36,66 @@ const router: Router<Route> = {
   routes: [
 
     {
-      path: 'code-with-us/opportunities/create',
+      path: '/code-with-us/opportunities/create',
       makeRoute() {
         return {
           tag: 'cwuOpportunityCreate',
           value: null
-        }
+        };
       }
     },
     {
-      path: 'code-with-us/opportunities/edit',
+      path: '/code-with-us/opportunities/edit',
       makeRoute() {
         return {
           tag: 'cwuOpportunityEdit',
           value: null
-        }
+        };
       }
     },
     {
-      path: 'code-with-us/opportunities/view',
+      path: '/code-with-us/opportunities/view',
       makeRoute() {
         return {
           tag: 'cwuOpportunityView',
           value: null
-        }
+        };
       }
     },
     {
-      path: 'code-with-us/proposals/create',
+      path: '/code-with-us/proposals/create',
       makeRoute() {
         return {
           tag: 'cwuProposalCreate',
           value: null
-        }
+        };
       }
     },
     {
-      path: 'code-with-us/proposals/edit',
+      path: '/code-with-us/proposals/edit',
       makeRoute() {
         return {
           tag: 'cwuProposalEdit',
           value: null
-        }
+        };
       }
     },
     {
-      path: 'code-with-us/proposals/view',
+      path: '/code-with-us/proposals/view',
       makeRoute() {
         return {
           tag: 'cwuProposalView',
           value: null
-        }
+        };
       }
     },
     {
-      path: 'code-with-us/proposals/list',
+      path: '/code-with-us/proposals/list',
       makeRoute() {
         return {
           tag: 'cwuProposalList',
           value: null
-        }
+        };
       }
     },
     {
