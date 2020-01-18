@@ -41,6 +41,7 @@ export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt'
 
 export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
   permissions?: string[];
+  database?: string[];
 }
 
 export type UpdateRequestBody = CreateRequestBody;
@@ -48,4 +49,11 @@ export type UpdateRequestBody = CreateRequestBody;
 export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody> {
   id?: string[];
   permissions?: string[];
+  database?: string[];
 }
+
+export type DeleteValidationErrors = {
+  id?: string[];
+  permissions?: string[];
+  database?: string[];
+};

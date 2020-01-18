@@ -135,7 +135,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           let user = dbResult.value as User | null;
           const existingUser = !!user;
           if (!user) {
-            user = await createUser(connection, {
+            const result = await createUser(connection, {
               type: userType,
               status: UserStatus.Active,
               name: claims.name || '',
@@ -143,6 +143,10 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
               jobTitle: '',
               idpUsername
             });
+            if (isInvalid(result) || !result.value) {
+              makeAuthErrorRedirect(request);
+            }
+            user = result.value as User;
           } else if (user.status === UserStatus.InactiveByUser) {
             const { id } = user;
             await updateUser(connection, { id, status: UserStatus.Active });
@@ -150,11 +154,15 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             return makeAuthErrorRedirect(request);
           }
 
-          const session = await updateSession(connection, {
+          const result = await updateSession(connection, {
             ...request.session,
             user: user.id,
             accessToken: tokens.refresh_token
           });
+          if (isInvalid(result)) {
+            return makeAuthErrorRedirect(request);
+          }
+          const session = result.value;
 
           const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? '/' : '/sign-up/complete');
 

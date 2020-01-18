@@ -5,46 +5,50 @@ import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedU
 import { readFile } from 'fs';
 import Knex from 'knex';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
-import { FileBlob, FileRecord } from 'shared/lib/resources/file';
+import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { invalid, isValid, valid } from 'shared/lib/validation';
+import { invalid, isInvalid, isValid, valid } from 'shared/lib/validation';
 import { DatabaseValidation } from 'shared/lib/validation/db';
 
 export type Connection = Knex<any, any>;
 
 const createDatabaseError = () => adt('databaseError' as const);
 
-export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms'>): Promise<User> {
+export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms'>): Promise<DatabaseValidation<User>> {
   const now = new Date();
-  const [result] = await connection('users')
+  try {
+    const result: RawUserToUserParams[] = await connection('users')
     .insert({
       ...user,
       id: generateUuid(),
       createdAt: now,
       updatedAt: now
     }, ['*']);
-  if (!result) {
-    throw new Error('unable to create user');
+    if (!result || result.length === 0) {
+      throw new Error('unable to create user');
+    }
+    return valid(await rawUserToUser(connection, result[0]));
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return await rawUserToUser(connection, result);
 }
 
 export async function updateUser(connection: Connection, userInfo: Omit<Partial<User>, 'avatarImageFile'> & { id: Id, avatarImageFile?: Id }): Promise<DatabaseValidation<User>> {
   const now = new Date();
   try {
-    const result: RawUserToUserParams = await connection('users')
+    const result: RawUserToUserParams[] = await connection('users')
     .where({ id: userInfo.id })
     .update({
       ...userInfo,
       updatedAt: now
     }, ['*']);
-    if (!result) {
+    if (!result || result.length === 0) {
       throw new Error('unable to update user');
     }
-    return valid(await rawUserToUser(connection, result));
+    return valid(await rawUserToUser(connection, result[0]));
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -75,11 +79,18 @@ interface RawUserToUserParams extends Omit<User, 'avatarImageFile'> {
 }
 
 export async function rawUserToUser(connection: Connection, params: RawUserToUserParams): Promise<User> {
-  const { avatarImageFile: fileId, ...restOfRawUser } = params;
-  const avatarImageFile = fileId && await readOneFileById(connection, fileId) || undefined;
+  const { avatarImageFile, ...restOfRawUser } = params;
+  let fetchedAvatarImageFile: FileRecord | undefined;
+  if (avatarImageFile) {
+    const dbResult = await readOneFileById(connection, avatarImageFile);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('Database error');
+    }
+    fetchedAvatarImageFile = dbResult.value;
+  }
   return {
     ...restOfRawUser,
-    avatarImageFile
+    avatarImageFile: fetchedAvatarImageFile
   };
 }
 
@@ -92,7 +103,7 @@ export async function findOneUserByTypeAndUsername(connection: Connection, type:
       query = query.orWhere({ type: UserType.Admin });
     }
     const result = await query.first();
-    return valid(result ? result : null);
+    return valid(result || null);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -158,28 +169,37 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Da
   }
 }
 
-export async function updateSession(connection: Connection, session: Session): Promise<Session> {
-  const [result] = await connection('sessions')
+export async function updateSession(connection: Connection, session: Session): Promise<DatabaseValidation<Session>> {
+  try {
+    const results: RawSessionToSessionParams[] = await connection('sessions')
     .where({ id: session.id })
     .update({
       ...session,
       updatedAt: new Date()
     }, ['*']);
-  if (!result) {
-    throw new Error('unable to update session');
+    if (!results || results.length === 0) {
+      throw new Error('unable to update session');
+    }
+    const result = results[0];
+    return valid(await rawSessionToSession(connection, {
+      id: result.id,
+      accessToken: result.accessToken,
+      user: result.user
+    }));
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return await rawSessionToSession(connection, {
-    id: result.id,
-    accessToken: result.accessToken,
-    user: result.user
-  });
 }
 
-export async function deleteSession(connection: Connection, id: Id): Promise<null> {
-  await connection('sessions')
+export async function deleteSession(connection: Connection, id: Id): Promise<DatabaseValidation<null>> {
+  try {
+    await connection('sessions')
     .where({ id })
     .delete();
-  return null;
+    return valid(null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
@@ -190,7 +210,14 @@ interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> 
 
 export async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
   const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
-  const fetchedLogoFile = logoImageFile && await readOneFileById(connection, logoImageFile) || undefined;
+  let fetchedLogoFile: FileRecord | undefined;
+  if (logoImageFile) {
+    const dbResult = await readOneFileById(connection, logoImageFile);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('Database error');
+    }
+    fetchedLogoFile = dbResult.value;
+  }
   return {
     ...restOfRawOrg,
     logoImageFile: fetchedLogoFile,
@@ -209,10 +236,17 @@ interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | '
 
 export async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
   const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
-  const fetchedLogoFile = logoImageFile && await readOneFileById(connection, logoImageFile) || undefined;
+  let fetchedLogoImageFile: FileRecord | undefined;
+  if (logoImageFile) {
+    const dbResult = await readOneFileById(connection, logoImageFile);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('Database error');
+    }
+    fetchedLogoImageFile = dbResult.value;
+  }
   return {
     ...restOfRawOrg,
-    logoImageFile: fetchedLogoFile,
+    logoImageFile: fetchedLogoImageFile,
     owner: ownerId && ownerName
       ? { id: ownerId, name: ownerName }
       : undefined
@@ -228,37 +262,41 @@ export async function rawOrganizationSlimToOrganizationSlim(connection: Connecti
  * - A vendor: Include owner information only for owned organizations.
  */
 
-export async function readManyOrganizations(connection: Connection, session: Session): Promise<OrganizationSlim[]> {
-  const query = connection('organizations')
+export async function readManyOrganizations(connection: Connection, session: Session): Promise<DatabaseValidation<OrganizationSlim[]>> {
+  try {
+    const query = connection('organizations')
     .select('organizations.id', 'legalName', 'logoImageFile')
     .where({ active: true });
-  // If a user is attached to this session, we need to add owner info to some or all of the orgs
-  if (session.user && (session.user.type === UserType.Admin || session.user.type === UserType.Vendor)) {
-    query
-      .select('users.id as ownerId', 'users.name as ownerName')
-      .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
-      .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
-      .andWhere({ 'affiliations.membershipType': MembershipType.Owner });
-  }
-  const results = await query;
-  // Only include ownership information for vendors' owned organizations.
-  return Promise.all(results.map(async raw => {
-    if (session.user && session.user.type === UserType.Vendor && raw.ownerId !== session.user.id) {
-      raw = {
-        ...raw,
-        ownerId: undefined,
-        ownerName: undefined
-      };
+    // If a user is attached to this session, we need to add owner info to some or all of the orgs
+    if (session.user && (session.user.type === UserType.Admin || session.user.type === UserType.Vendor)) {
+      query
+        .select('users.id as ownerId', 'users.name as ownerName')
+        .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
+        .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
+        .andWhere({ 'affiliations.membershipType': MembershipType.Owner });
     }
-    return await rawOrganizationSlimToOrganizationSlim(connection, raw);
-  }));
+    const results: RawOrganizationSlim[] = await query;
+    // Only include ownership information for vendors' owned organizations.
+    return valid(await Promise.all(results.map(async raw => {
+      if (session.user && session.user.type === UserType.Vendor && raw.ownerId !== session.user.id) {
+        raw = {
+          ...raw,
+          ownerId: undefined,
+          ownerName: undefined
+        };
+      }
+      return await rawOrganizationSlimToOrganizationSlim(connection, raw);
+    })));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function createOrganization(connection: Connection, user: Id, organization: ValidatedOrgCreateRequestBody): Promise<Organization> {
+export async function createOrganization(connection: Connection, user: Id, organization: ValidatedOrgCreateRequestBody): Promise<DatabaseValidation<Organization>> {
   const now = new Date();
-  const result = await connection.transaction(async trx => {
+  const result: RawOrganization = await connection.transaction(async trx => {
     // Create organization
-    const [result] = await connection('organizations')
+    const result: RawOrganization[] = await connection('organizations')
       .transacting(trx)
       .insert({
         ...organization,
@@ -267,24 +305,25 @@ export async function createOrganization(connection: Connection, user: Id, organ
         createdAt: now,
         updatedAt: now
       }, ['*']);
-    if (!result) {
+    if (!result || result.length === 0) {
       throw new Error('unable to create organization');
     }
     // Create affiliation
     await createAffiliation(trx, {
       user,
-      organization: result.id,
+      organization: result[0].id,
       membershipType: MembershipType.Owner,
       membershipStatus: MembershipStatus.Active
     });
-    return result;
+    return result[0];
   });
-  return await readOneOrganization(connection, result.id);
+  return valid(await rawOrganizationToOrganization(connection, result));
 }
 
-export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<Organization> {
+export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<DatabaseValidation<Organization>> {
   const now = new Date();
-  const [result] = await connection('organizations')
+  try {
+    const result: RawOrganization[] = await connection('organizations')
     .where({
       id: organization.id,
       active: true
@@ -293,77 +332,91 @@ export async function updateOrganization(connection: Connection, organization: P
       ...organization,
       updatedAt: now
     }, ['*']);
-  if (!result) {
-    throw new Error('unable to update organization');
-  }
-  return await readOneOrganization(connection, result.id, true);
-}
-
-export async function readOneOrganization(connection: Connection, id: Id, allowInactive = false): Promise<Organization> {
-  const where = {
-    'organizations.id': id,
-    'affiliations.membershipType': MembershipType.Owner
-  };
-  if (!allowInactive) {
-    (where as any)['organizations.active'] = true;
-  }
-  const result = await connection('organizations')
-    .select('organizations.*', 'users.id as ownerId', 'users.name as ownerName')
-    .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
-    .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
-    .where(where)
-    .first();
-  return await rawOrganizationToOrganization(connection, result);
-}
-
-export async function createAffiliation(connection: Connection, affiliation: ValidatedAffiliationCreateRequestBody): Promise<Affiliation> {
-  const now = new Date();
-  return await connection.transaction(async trx => {
-    const [result] = await connection('affiliations')
-      .transacting(trx)
-      .insert({
-        ...affiliation,
-        id: generateUuid(),
-        createdAt: now
-      }, ['*']);
-
-    if (!result) {
-      throw new Error('unable to create affiliation');
+    if (!result || result.length === 0) {
+      throw new Error('unable to update organization');
     }
+    return valid(await rawOrganizationToOrganization(connection, result[0]));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
+}
 
-    // Mark any other affiliation for this user/org as INACTIVE
-    await connection('affiliations')
-      .transacting(trx)
+export async function readOneOrganization(connection: Connection, id: Id, allowInactive = false): Promise<DatabaseValidation<Organization | null>> {
+  try {
+    const where = {
+      'organizations.id': id,
+      'affiliations.membershipType': MembershipType.Owner
+    };
+    if (!allowInactive) {
+      (where as any)['organizations.active'] = true;
+    }
+    const result: RawOrganization = await connection('organizations')
+      .select('organizations.*', 'users.id as ownerId', 'users.name as ownerName')
+      .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
+      .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
+      .where(where)
+      .first();
+    return valid(result ? await rawOrganizationToOrganization(connection, result) : null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
+}
+
+export async function createAffiliation(connection: Connection, affiliation: ValidatedAffiliationCreateRequestBody): Promise<DatabaseValidation<Affiliation>> {
+  const now = new Date();
+  try {
+    return await connection.transaction(async trx => {
+      const result: Affiliation[]  = await connection('affiliations')
+        .transacting(trx)
+        .insert({
+          ...affiliation,
+          id: generateUuid(),
+          createdAt: now
+        }, ['*']);
+
+      if (!result || result.length === 0) {
+        throw new Error('unable to create affiliation');
+      }
+
+      // Mark any other affiliation for this user/org as INACTIVE
+      await connection('affiliations')
+        .transacting(trx)
+        .where({
+          user: affiliation.user,
+          organization: affiliation.organization
+        })
+        .andWhereNot({
+          id: result[0].id
+        })
+        .update({
+          membershipStatus: MembershipStatus.Inactive
+        });
+      return valid(result[0]);
+    });
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
+}
+
+export async function readManyAffiliations(connection: Connection, userId: Id): Promise<DatabaseValidation<AffiliationSlim[]>> {
+  try {
+    const results: RawAffiliationToAffiliationSlimParams[] = await connection('affiliations')
+      .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+      .select('affiliations.*')
       .where({
-        user: affiliation.user,
-        organization: affiliation.organization
+        'affiliations.user': userId,
+        'organizations.active': true
       })
-      .andWhereNot({
-        id: result.id
-      })
-      .update({
-        membershipStatus: MembershipStatus.Inactive
-      });
-
-    return result;
-  });
+      .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
+    return valid(await Promise.all(results.map(async raw => rawAffiliationToAffiliationSlim(connection, raw))));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function readManyAffiliations(connection: Connection, userId: Id): Promise<AffiliationSlim[]> {
-  const results = await connection('affiliations')
-    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
-    .select('affiliations.*')
-    .where({
-      'affiliations.user': userId,
-      'organizations.active': true
-    })
-    .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
-
-  return Promise.all(results.map(async raw => rawAffiliationToAffiliationSlim(connection, raw)));
-}
-
-export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<Affiliation> {
-  const result = await connection('affiliations')
+export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<DatabaseValidation<Affiliation | null>> {
+  try {
+    const result: Affiliation = await connection('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select('affiliations.*')
     .where({
@@ -377,11 +430,15 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
     .orderBy('createdAt')
     .first();
 
-  return result;
+    return valid(result || null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function readOneAffiliationById(connection: Connection, id: Id): Promise<Affiliation> {
-  const result = await connection('affiliations')
+export async function readOneAffiliationById(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation | null>> {
+  try {
+    const result: Affiliation = await connection('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select('affiliations.*')
     .where({ 'affiliations.id': id })
@@ -391,7 +448,10 @@ export async function readOneAffiliationById(connection: Connection, id: Id): Pr
     })
     .first();
 
-  return result;
+    return valid(result || null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 interface RawAffiliationToAffiliationSlimParams {
@@ -403,9 +463,13 @@ interface RawAffiliationToAffiliationSlimParams {
   updatedAt: Date;
 }
 
-export async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliationToAffiliationSlimParams): Promise<AffiliationSlim> {
+async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliationToAffiliationSlimParams): Promise<AffiliationSlim> {
   const { id, organization: orgId, membershipType } = params;
-  const organization = await readOneOrganization(connection, orgId);
+  const dbResult = await readOneOrganization(connection, orgId);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('Database error'); // error will be caught be calling function
+  }
+  const organization = dbResult.value;
   return {
     id,
     membershipType,
@@ -416,9 +480,10 @@ export async function rawAffiliationToAffiliationSlim(connection: Connection, pa
   };
 }
 
-export async function approveAffiliation(connection: Connection, id: Id): Promise<Affiliation> {
+export async function approveAffiliation(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
-  const [result] = await connection('affiliations')
+  try {
+    const result: Affiliation[] = await connection('affiliations')
     .update({
       membershipStatus: MembershipStatus.Active,
       updatedAt: now
@@ -433,15 +498,19 @@ export async function approveAffiliation(connection: Connection, id: Id): Promis
             active: true
           });
     });
-  if (!result) {
-    throw new Error('unable to approve affiliation');
+    if (!result || result.length === 0) {
+      throw new Error('unable to approve affiliation');
+    }
+    return valid(result[0]);
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return result;
 }
 
-export async function deleteAffiliation(connection: Connection, id: Id): Promise<Affiliation> {
+export async function deleteAffiliation(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
-  const [result] = await connection('affiliations')
+  try {
+    const result: Affiliation[] = await connection('affiliations')
     .update({
       membershipStatus: MembershipStatus.Inactive,
       updatedAt: now
@@ -456,25 +525,33 @@ export async function deleteAffiliation(connection: Connection, id: Id): Promise
             active: true
           });
     });
-  if (!result) {
-    throw new Error('unable to delete affiliation');
+    if (!result || result.length === 0) {
+      throw new Error('unable to delete affiliation');
+    }
+    return valid(result[0]);
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return result;
 }
 
 export async function isUserOwnerOfOrg(connection: Connection, user: User, orgId: Id): Promise<boolean> {
-  if (!user) {
-    return false;
-  }
-  const result = await connection('affiliations')
-    .where ({ user: user.id, organization: orgId, membershipType: MembershipType.Owner })
-    .first();
+  try {
+    if (!user) {
+      return false;
+    }
+    const result = await connection('affiliations')
+      .where ({ user: user.id, organization: orgId, membershipType: MembershipType.Owner })
+      .first();
 
-  return !!result;
+    return !!result;
+  } catch (exception) {
+    return false; // If something goes wrong, fallback to false as this function is used for validating permissions.
+  }
 }
 
 export async function readActiveOwnerCount(connection: Connection, orgId: Id): Promise<number> {
-  const result = await connection('affiliations')
+  try {
+    const result = await connection('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select('affiliations.*')
     .where({
@@ -483,110 +560,132 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
       'affiliations.membershipStatus': MembershipStatus.Active,
       'organizations.active': true
     });
-  return result ? result.length : 0;
+    return result ? result.length : 0;
+  } catch (exception) {
+    return 0;
+  }
 }
 
-export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord | null> {
-  const result: FileRecord = await connection('files')
+export async function readOneFileById(connection: Connection, id: Id): Promise<DatabaseValidation<FileRecord | null>> {
+  try {
+    const result: FileRecord = await connection('files')
     .where({ id })
     .select(['name', 'id', 'createdAt', 'fileBlob'])
     .first();
-  return result ? result : null;
+    return valid(result || null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function readOneFileBlob(connection: Connection, hash: string): Promise<FileBlob> {
-  const result = await connection('fileBlobs')
+export async function readOneFileBlob(connection: Connection, hash: string): Promise<DatabaseValidation<FileBlob | null>> {
+  try {
+    const result: FileBlob = await connection('fileBlobs')
     .where({ hash })
     .first();
-  return result || null;
+    return valid(result || null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody, userId: Id): Promise<FileRecord> {
+export async function createFile(connection: Connection, fileRecord: ValidatedFileCreateRequestBody, userId: Id): Promise<DatabaseValidation<FileRecord>> {
   const now = new Date();
-  return await connection.transaction(async trx => {
-    const fileData: Buffer = await new Promise((resolve, reject) => {
-      readFile(fileRecord.path, (err, data) => {
-        if (err) {
-          reject(new Error('error reading file'));
-        }
-        resolve(data);
+  try {
+    return valid(await connection.transaction(async trx => {
+      const fileData: Buffer = await new Promise((resolve, reject) => {
+        readFile(fileRecord.path, (err, data) => {
+          if (err) {
+            reject(new Error('error reading file'));
+          }
+          resolve(data);
+        });
       });
-    });
-    const fileHash = hashFile(fileRecord.name, fileData);
-    let fileBlob = await readOneFileBlob(connection, fileHash);
-    // Create a new blob if it doesn't already exist.
-    if (!fileBlob) {
-      [fileBlob] = await connection('fileBlobs')
+      const fileHash = hashFile(fileRecord.name, fileData);
+      const dbResult = await readOneFileBlob(connection, fileHash);
+      if (isInvalid(dbResult)) {
+        throw new Error('Database error');
+      }
+      let fileBlob = dbResult.value;
+      // Create a new blob if it doesn't already exist.
+      if (!fileBlob) {
+        [fileBlob] = await connection('fileBlobs')
+          .transacting(trx)
+          .insert({
+            hash: fileHash,
+            blob: fileData
+          }, ['*']);
+      }
+      // Insert the file record.
+      const [file]: FileRecord[] = await connection('files')
         .transacting(trx)
         .insert({
-          hash: fileHash,
-          blob: fileData
-        }, ['*']);
-    }
-    // Insert the file record.
-    const [file] = await connection('files')
-      .transacting(trx)
-      .insert({
-        name: fileRecord.name,
-        id: generateUuid(),
-        createdAt: now,
-        createdBy: userId,
-        fileBlob: fileBlob.hash
-      }, ['name', 'id', 'createdAt', 'fileBlob']);
+          name: fileRecord.name,
+          id: generateUuid(),
+          createdAt: now,
+          createdBy: userId,
+          fileBlob: fileBlob && fileBlob.hash
+        }, ['name', 'id', 'createdAt', 'fileBlob']);
 
-    // Insert values for permissions defined in metadata
-    // TODO this will fail if permissions aren't experessed as a set (may have duplicate perms)
-    for (const permission of fileRecord.permissions) {
-      switch (permission.tag) {
-        case 'any':
-          await connection('filePermissionsPublic')
-            .transacting(trx)
-            .insert({
-              file: file.id
-            });
-          break;
+      // Insert values for permissions defined in metadata
+      for (const permission of fileRecord.permissions) {
+        switch (permission.tag) {
+          case 'any':
+            await connection('filePermissionsPublic')
+              .transacting(trx)
+              .insert({
+                file: file.id
+              });
+            break;
 
-        case 'user':
-          await connection('filePermissionsUser')
-            .transacting(trx)
-            .insert({
-              user: permission.value,
-              file: file.id
-            });
-          break;
+          case 'user':
+            await connection('filePermissionsUser')
+              .transacting(trx)
+              .insert({
+                user: permission.value,
+                file: file.id
+              });
+            break;
 
-        case 'userType':
-          await connection('filePermissionsUserType')
-            .transacting(trx)
-            .insert({
-              userType: permission.value,
-              file: file.id
-            });
-          break;
+          case 'userType':
+            await connection('filePermissionsUserType')
+              .transacting(trx)
+              .insert({
+                userType: permission.value,
+                file: file.id
+              });
+            break;
+        }
       }
-    }
 
-    return file;
-  });
+      return file;
+    }));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 export async function hasFilePermission(connection: Connection, session: Session, id: string): Promise<boolean> {
-  const query = connection('files')
+  try {
+    const query = connection('files')
     .where({ id });
 
-  if (!session.user) {
-    query
-      .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
-  } else {
-    query
-      .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id')
-      .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
-      .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
-      .where({ 'u.user': session.user.id })
-      .orWhere({ 'ut.userType': session.user.type })
-      .orWhere({ 'files.createdBy': session.user.id });
-  }
+    if (!session.user) {
+      query
+        .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
+    } else {
+      query
+        .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id')
+        .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
+        .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
+        .where({ 'u.user': session.user.id })
+        .orWhere({ 'ut.userType': session.user.type })
+        .orWhere({ 'files.createdBy': session.user.id });
+    }
 
-  const results = await query;
-  return results.length > 0;
+    const results: Array<FilePermissions<Id, UserType>> = await query;
+    return results.length > 0;
+  } catch (exception) {
+    return false;
+  }
 }

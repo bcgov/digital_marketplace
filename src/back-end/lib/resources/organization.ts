@@ -5,10 +5,10 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isValid, optionalAsync, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateUUID, Validation } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
 export interface ValidatedUpdateRequestBody extends UpdateRequestBody {
@@ -21,11 +21,6 @@ export interface ValidatedUpdateRequestBody extends UpdateRequestBody {
 export type ValidatedCreateRequestBody = CreateRequestBody;
 
 type DeleteValidatedReqBody = Organization;
-
-type DeleteValidationErrors = {
-  id?: string[];
-  permissions?: string[];
-};
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -48,11 +43,14 @@ const resource: Resource = {
   routeNamespace: 'organizations',
 
   readMany(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[]>, Session>(async request => {
-      const respond = (code: number, body: OrganizationSlim[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[] | string[]>, Session>(async request => {
+      const respond = (code: number, body: OrganizationSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       // Pass session in so we can add owner name for admin/owner only
-      const organizations = await readManyOrganizations(connection, request.session);
-      return respond(200, organizations);
+      const dbResult = await readManyOrganizations(connection, request.session);
+      if (isInvalid(dbResult)) {
+        return respond(503, ['Database error']);
+      }
+      return respond(200, dbResult.value);
     });
   },
 
@@ -61,15 +59,21 @@ const resource: Resource = {
       const respond = (code: number, body: Organization | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       // Validate the provided id
       const validatedId = validateUUID(request.params.id);
-      if (validatedId.tag === 'invalid') {
+      if (isInvalid(validatedId)) {
         return respond(400, validatedId.value);
       }
       // Only admins or the org owner can read the full org details
-      if (await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
-        const organization = await readOneOrganization(connection, validatedId.value);
-        return respond(200, organization);
+      if (!await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      return respond(401, [permissions.ERROR_MESSAGE]);
+      const dbResult = await readOneOrganization(connection, validatedId.value);
+      if (isInvalid(dbResult)) {
+        return respond(503, ['Database error']);
+      }
+      if (!dbResult.value) {
+        return respond(404, ['Organization not found.']);
+      }
+      return respond(200, dbResult.value);
     });
   },
 
@@ -186,8 +190,11 @@ const resource: Resource = {
             if (!request.session.user) {
               return respond(401, { permissions: [permissions.ERROR_MESSAGE] });
             }
-            const organization = await createOrganization(connection, request.session.user.id, request.body.value);
-            return respond(201, organization);
+            const dbResult = await createOrganization(connection, request.session.user.id, request.body.value);
+            if (isInvalid(dbResult)) {
+              return respond(503, { database: ['Database error'] });
+            }
+            return respond(201, dbResult.value);
         }
       }
     };
@@ -314,8 +321,11 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            const updatedOrganization = await updateOrganization(connection, request.body.value);
-            return respond(200, updatedOrganization);
+            const dbResult = await updateOrganization(connection, request.body.value);
+            if (isInvalid(dbResult)) {
+              return respond(503, { database: ['Database error'] });
+            }
+            return respond(200, dbResult.value);
         }
       }
     };
@@ -347,13 +357,16 @@ const resource: Resource = {
           return respond(404, request.body.value);
         }
         // Mark the organization as inactive
-        const updatedOrganization = await updateOrganization(connection, {
+        const dbResult = await updateOrganization(connection, {
           id: request.params.id,
           active: false,
           deactivatedOn: new Date(),
           deactivatedBy: request.session.user && request.session.user.id
         });
-        return respond(200, updatedOrganization);
+        if (isInvalid(dbResult)) {
+          return respond(503, { database: ['Database error'] });
+        }
+        return respond(200, dbResult.value);
       }
     };
   }

@@ -28,6 +28,7 @@ export interface CreateValidationErrors {
   metadata?: string[];
   permissions?: string[];
   requestBodyType?: string[];
+  database?: string[];
 }
 
 export type FilePermissions<Id, UserType>

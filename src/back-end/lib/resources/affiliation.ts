@@ -49,8 +49,11 @@ const resource: Resource = {
       if (!request.session.user || !permissions.readManyAffiliations(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      const affiliations = await readManyAffiliations(connection, request.session.user.id);
-      return respond(200, affiliations);
+      const dbResult = await readManyAffiliations(connection, request.session.user.id);
+      if (isInvalid(dbResult)) {
+        return respond(503, ['Database error']);
+      }
+      return respond(200, dbResult.value);
     });
   },
 
@@ -71,7 +74,11 @@ const resource: Resource = {
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
           // Get the most recent affiliation for this user and organization
-          const existingAffiliation = await readOneAffiliation(connection, user, organization);
+          const dbResult = await readOneAffiliation(connection, user, organization);
+          if (isInvalid(dbResult)) {
+            return invalid({ database: ['Database error']});
+          }
+          const existingAffiliation = dbResult.value;
           let membershipStatus: MembershipStatus;
           // If existing affiliation in pending state, we check for admin perms, and create new active one
           if (existingAffiliation && existingAffiliation.membershipStatus === MembershipStatus.Pending) {
@@ -108,12 +115,17 @@ const resource: Resource = {
         switch (request.body.tag) {
           case 'invalid':
             if (request.body.value.permissions) {
-              return basicResponse(401, request.session, makeJsonResponseBody(request.body.value));
+              return respond(401, request.body.value);
+            } else if (request.body.value.database) {
+              return respond(503, request.body.value);
             }
             return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
           case 'valid':
-            const affiliation = await createAffiliation(connection, request.body.value);
-            return respond(201, affiliation);
+            const dbResult = await createAffiliation(connection, request.body.value);
+            if (isInvalid(dbResult)) {
+              return respond(503, { database: ['Database error'] });
+            }
+            return respond(201, dbResult.value);
         }
       }
     };
@@ -153,8 +165,11 @@ const resource: Resource = {
           return respond(400, request.body.value);
         }
         const id = request.body.value;
-        const updatedAffiliation = await approveAffiliation(connection, id);
-        return respond(200, updatedAffiliation);
+        const dbResult = await approveAffiliation(connection, id);
+        if (isInvalid(dbResult)) {
+          return respond(503, { database: ['Database error']});
+        }
+        return respond(200, dbResult.value);
       }
     };
   },
@@ -194,8 +209,11 @@ const resource: Resource = {
           return respond(400, request.body.value);
         }
         const affiliationId = request.body.value;
-        const deletedAffiliation = await deleteAffiliation(connection, affiliationId);
-        return respond(200, deletedAffiliation);
+        const dbResult = await deleteAffiliation(connection, affiliationId);
+        if (isInvalid(dbResult)) {
+          return respond(503, { database: ['Database error'] });
+        }
+        return respond(200, dbResult.value);
       }
     };
   }

@@ -10,7 +10,7 @@ import { CreateValidationErrors, FilePermissions, FileRecord, FileUploadMetadata
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
 
 export function hashFile(originalName: string, data: Buffer): string {
@@ -50,19 +50,27 @@ const resource: Resource = {
       const getBlob = getString(request.query, 'type') === 'blob';
       const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       if (await permissions.readOneFile(connection, request.session, request.params.id)) {
-        const file = await readOneFileById(connection, request.params.id);
+        const dbResult = await readOneFileById(connection, request.params.id);
+        if (isInvalid(dbResult)) {
+          return respond(503, ['Database error']);
+        }
+        const file = dbResult.value;
         if (!file) {
           return respond(404, ['File not found.']);
         }
         if (!getBlob) { return respond(200, file); }
-        const blob = await readOneFileBlob(connection, file.fileBlob);
-        if (blob) {
-          return basicResponse(200, request.session, adt('file', {
-            buffer: blob.blob,
-            contentType: lookup(file.name) || 'application/octet-stream',
-            contentDisposition: `attachment; filename="${file.name}"`
-          }));
+        const dbResultBlob = await readOneFileBlob(connection, file.fileBlob);
+        if (isInvalid(dbResultBlob)) {
+          return respond(503, ['Database error']);
         }
+        if (!dbResultBlob.value) {
+          return respond(404, ['File not found.']);
+        }
+        return basicResponse(200, request.session, adt('file', {
+          buffer: dbResultBlob.value.blob,
+          contentType: lookup(file.name) || 'application/octet-stream',
+          contentDisposition: `attachment; filename="${file.name}"`
+        }));
       }
       return respond(401, [permissions.ERROR_MESSAGE]);
     });
@@ -122,8 +130,11 @@ const resource: Resource = {
             return respond(400, request.body.value);
           case 'valid':
             const createdById = request.session.user ? request.session.user.id : '';
-            const fileRecord = await createFile(connection, request.body.value, createdById);
-            return respond(201, fileRecord);
+            const dbResult = await createFile(connection, request.body.value, createdById);
+            if (isInvalid(dbResult)) {
+              return respond(503, { database: ['Database errorr'] });
+            }
+            return respond(201, dbResult.value);
         }
       }
     };

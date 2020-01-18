@@ -28,7 +28,11 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
     if (validatedId.tag === 'invalid') {
       return validatedId;
     }
-    const file = await readOneFileById(connection, fileId);
+    const dbResult = await readOneFileById(connection, fileId);
+    if (isInvalid(dbResult)) {
+      return invalid(['Database error']);
+    }
+    const file = dbResult.value;
     if (file) {
       return valid(file);
     } else {
@@ -40,20 +44,16 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
 }
 
 export async function validateOrganizationId(connection: Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
-  try {
-    // Validate the provided id
-    const validatedId = validateUUID(orgId);
-    if (validatedId.tag === 'invalid') {
-      return validatedId;
-    }
-    const organization = await readOneOrganization(connection, orgId, allowInactive);
-    if (!organization) {
-      return invalid(['The specified organization was not found.']);
-    }
-    return valid(organization);
-  } catch (e) {
+  // Validate the provided id
+  const validatedId = validateUUID(orgId);
+  if (isInvalid(validatedId)) {
+    return validatedId;
+  }
+  const dbResult = await readOneOrganization(connection, orgId, allowInactive);
+  if (isInvalid(dbResult) || !dbResult.value) {
     return invalid(['Please select a valid organization.']);
   }
+  return valid(dbResult.value);
 }
 
 export async function validateAffiliationId(connection: Connection, affiliationId: Id): Promise<Validation<Affiliation>> {
@@ -63,7 +63,11 @@ export async function validateAffiliationId(connection: Connection, affiliationI
     if (validatedId.tag === 'invalid') {
       return validatedId;
     }
-    const affiliation = await readOneAffiliationById(connection, affiliationId);
+    const dbResult = await readOneAffiliationById(connection, affiliationId);
+    if (isInvalid(dbResult)) {
+      return invalid(['Database error']);
+    }
+    const affiliation = dbResult.value;
     if (!affiliation) {
       return invalid(['The specified affiliation was not found.']);
     } else if (affiliation.membershipStatus === MembershipStatus.Inactive) {

@@ -38,16 +38,19 @@ export interface CreateRequestBody {
 
 export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
   permissions?: string[];
+  database?: string[];
 }
 
 export interface UpdateValidationErrors {
   affiliation?: string[];
   permissions?: string[];
+  database?: string[];
 }
 
 export interface DeleteValidationErrors {
   affiliation?: string[];
   permissions?: string[];
+  database?: string[];
 }
 
 export function parseMembershipType(raw: string): MembershipType | null {
