@@ -36,7 +36,7 @@ const router: Router<Route> = {
   routes: [
 
     {
-      path: '/code-with-us/opportunities/create',
+      path: '/opportunities/code-with-us/create',
       makeRoute() {
         return {
           tag: 'cwuOpportunityCreate',
@@ -45,7 +45,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/code-with-us/opportunities/edit',
+      path: '/opportunities/code-with-us/:id/edit',
       makeRoute() {
         return {
           tag: 'cwuOpportunityEdit',
@@ -54,7 +54,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/code-with-us/opportunities/view',
+      path: '/opportunities/code-with-us/:id',
       makeRoute() {
         return {
           tag: 'cwuOpportunityView',
@@ -63,7 +63,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/code-with-us/proposals/create',
+      path: '/proposals/code-with-us/create',
       makeRoute() {
         return {
           tag: 'cwuProposalCreate',
@@ -72,7 +72,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/code-with-us/proposals/edit',
+      path: '/proposals/code-with-us/:id/edit',
       makeRoute() {
         return {
           tag: 'cwuProposalEdit',
@@ -81,7 +81,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/code-with-us/proposals/view',
+      path: '/proposals/code-with-us/:id',
       makeRoute() {
         return {
           tag: 'cwuProposalView',
@@ -90,7 +90,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '/code-with-us/proposals/list',
+      path: '/proposals',
       makeRoute() {
         return {
           tag: 'cwuProposalList',
@@ -261,19 +261,19 @@ const router: Router<Route> = {
       case 'orgCreate':
         return '/organizations/create';
       case 'cwuOpportunityCreate':
-        return 'code-with-us/opportunities/create';
+        return '/code-with-us/opportunities/create';
       case 'cwuOpportunityEdit':
-        return 'code-with-us/opportunities/edit';
+        return '/code-with-us/opportunities/edit';
       case 'cwuOpportunityView':
-        return 'code-with-us/opportunities/view';
+        return '/code-with-us/opportunities/view';
       case 'cwuProposalCreate':
-        return 'code-with-us/proposals/create';
+        return '/proposals/code-with-us/create';
       case 'cwuProposalEdit':
-        return 'code-with-us/proposals/edit';
+        return '/proposals/code-with-us/edit';
       case 'cwuProposalView':
-        return 'code-with-us/proposals/view';
+        return '/proposals/code-with-us/view';
       case 'cwuProposalList':
-        return 'code-with-us/proposals/list';
+        return '/proposals/code-with-us';
       case 'notice':
         return (() => {
           switch (route.value.tag) {
