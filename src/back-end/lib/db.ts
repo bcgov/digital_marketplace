@@ -20,17 +20,17 @@ const createDatabaseError = () => adt('databaseError' as const);
 export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms'>): Promise<DatabaseValidation<User>> {
   const now = new Date();
   try {
-    const result: RawUserToUserParams[] = await connection('users')
-    .insert({
-      ...user,
-      id: generateUuid(),
-      createdAt: now,
-      updatedAt: now
-    }, ['*']);
-    if (!result || result.length === 0) {
+    const [result]: RawUserToUserParams[] = await connection('users')
+      .insert({
+        ...user,
+        id: generateUuid(),
+        createdAt: now,
+        updatedAt: now
+      }, ['*']);
+    if (!result) {
       throw new Error('unable to create user');
     }
-    return valid(await rawUserToUser(connection, result[0]));
+    return valid(await rawUserToUser(connection, result));
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -39,16 +39,16 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
 export async function updateUser(connection: Connection, userInfo: Omit<Partial<User>, 'avatarImageFile'> & { id: Id, avatarImageFile?: Id }): Promise<DatabaseValidation<User>> {
   const now = new Date();
   try {
-    const result: RawUserToUserParams[] = await connection('users')
-    .where({ id: userInfo.id })
-    .update({
-      ...userInfo,
-      updatedAt: now
-    }, ['*']);
-    if (!result || result.length === 0) {
+    const [result]: RawUserToUserParams[] = await connection('users')
+      .where({ id: userInfo.id })
+      .update({
+        ...userInfo,
+        updatedAt: now
+      }, ['*']);
+    if (!result) {
       throw new Error('unable to update user');
     }
-    return valid(await rawUserToUser(connection, result[0]));
+    return valid(await rawUserToUser(connection, result));
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -57,8 +57,8 @@ export async function updateUser(connection: Connection, userInfo: Omit<Partial<
 export async function readOneUser(connection: Connection, id: Id): Promise<DatabaseValidation<User | null>> {
   try {
     const result: RawUserToUserParams = await connection('users')
-    .where({ id })
-    .first();
+      .where({ id })
+      .first();
     return valid(result ? await rawUserToUser(connection, result) : null);
   } catch (exception) {
     return invalid(createDatabaseError());
@@ -135,17 +135,17 @@ async function rawSessionToSession(connection: Connection, params: RawSessionToS
 export async function createAnonymousSession(connection: Connection): Promise<DatabaseValidation<Session>> {
   const now = new Date();
   try {
-    const result: Session[] = await connection('sessions')
-    .insert({
-      id: generateUuid(),
-      createdAt: now,
-      updatedAt: now
-    }, ['*']);
-    if (!result || result.length === 0) {
+    const [result]: Session[] = await connection('sessions')
+      .insert({
+        id: generateUuid(),
+        createdAt: now,
+        updatedAt: now
+      }, ['*']);
+    if (!result) {
       throw new Error('unable to create anonymous session');
     }
     return valid(await rawSessionToSession(connection, {
-      id: result[0].id
+      id: result.id
     }));
   } catch (exception) {
     return invalid(adt('databaseError' as const));
@@ -171,16 +171,15 @@ export async function readOneSession(connection: Connection, id: Id): Promise<Da
 
 export async function updateSession(connection: Connection, session: Session): Promise<DatabaseValidation<Session>> {
   try {
-    const results: RawSessionToSessionParams[] = await connection('sessions')
-    .where({ id: session.id })
-    .update({
-      ...session,
-      updatedAt: new Date()
-    }, ['*']);
-    if (!results || results.length === 0) {
+    const [result]: RawSessionToSessionParams[] = await connection('sessions')
+      .where({ id: session.id })
+      .update({
+        ...session,
+        updatedAt: new Date()
+      }, ['*']);
+    if (!result) {
       throw new Error('unable to update session');
     }
-    const result = results[0];
     return valid(await rawSessionToSession(connection, {
       id: result.id,
       accessToken: result.accessToken,
@@ -194,8 +193,8 @@ export async function updateSession(connection: Connection, session: Session): P
 export async function deleteSession(connection: Connection, id: Id): Promise<DatabaseValidation<null>> {
   try {
     await connection('sessions')
-    .where({ id })
-    .delete();
+      .where({ id })
+      .delete();
     return valid(null);
   } catch (exception) {
     return invalid(createDatabaseError());
@@ -265,8 +264,8 @@ export async function rawOrganizationSlimToOrganizationSlim(connection: Connecti
 export async function readManyOrganizations(connection: Connection, session: Session): Promise<DatabaseValidation<OrganizationSlim[]>> {
   try {
     const query = connection('organizations')
-    .select('organizations.id', 'legalName', 'logoImageFile')
-    .where({ active: true });
+      .select('organizations.id', 'legalName', 'logoImageFile')
+      .where({ active: true });
     // If a user is attached to this session, we need to add owner info to some or all of the orgs
     if (session.user && (session.user.type === UserType.Admin || session.user.type === UserType.Vendor)) {
       query
@@ -296,7 +295,7 @@ export async function createOrganization(connection: Connection, user: Id, organ
   const now = new Date();
   const result: RawOrganization = await connection.transaction(async trx => {
     // Create organization
-    const result: RawOrganization[] = await connection('organizations')
+    const [result]: RawOrganization[] = await connection('organizations')
       .transacting(trx)
       .insert({
         ...organization,
@@ -305,17 +304,17 @@ export async function createOrganization(connection: Connection, user: Id, organ
         createdAt: now,
         updatedAt: now
       }, ['*']);
-    if (!result || result.length === 0) {
+    if (!result) {
       throw new Error('unable to create organization');
     }
     // Create affiliation
     await createAffiliation(trx, {
       user,
-      organization: result[0].id,
+      organization: result.id,
       membershipType: MembershipType.Owner,
       membershipStatus: MembershipStatus.Active
     });
-    return result[0];
+    return result;
   });
   return valid(await rawOrganizationToOrganization(connection, result));
 }
@@ -323,19 +322,19 @@ export async function createOrganization(connection: Connection, user: Id, organ
 export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<DatabaseValidation<Organization>> {
   const now = new Date();
   try {
-    const result: RawOrganization[] = await connection('organizations')
-    .where({
-      id: organization.id,
-      active: true
-    })
-    .update({
-      ...organization,
-      updatedAt: now
-    }, ['*']);
-    if (!result || result.length === 0) {
+    const [result]: RawOrganization[] = await connection('organizations')
+      .where({
+        id: organization.id,
+        active: true
+      })
+      .update({
+        ...organization,
+        updatedAt: now
+      }, ['*']);
+    if (!result) {
       throw new Error('unable to update organization');
     }
-    return valid(await rawOrganizationToOrganization(connection, result[0]));
+    return valid(await rawOrganizationToOrganization(connection, result));
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -366,7 +365,7 @@ export async function createAffiliation(connection: Connection, affiliation: Val
   const now = new Date();
   try {
     return await connection.transaction(async trx => {
-      const result: Affiliation[]  = await connection('affiliations')
+      const [result]: Affiliation[]  = await connection('affiliations')
         .transacting(trx)
         .insert({
           ...affiliation,
@@ -374,7 +373,7 @@ export async function createAffiliation(connection: Connection, affiliation: Val
           createdAt: now
         }, ['*']);
 
-      if (!result || result.length === 0) {
+      if (!result) {
         throw new Error('unable to create affiliation');
       }
 
@@ -386,12 +385,12 @@ export async function createAffiliation(connection: Connection, affiliation: Val
           organization: affiliation.organization
         })
         .andWhereNot({
-          id: result[0].id
+          id: result.id
         })
         .update({
           membershipStatus: MembershipStatus.Inactive
         });
-      return valid(result[0]);
+      return valid(result);
     });
   } catch (exception) {
     return invalid(createDatabaseError());
@@ -417,18 +416,18 @@ export async function readManyAffiliations(connection: Connection, userId: Id): 
 export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<DatabaseValidation<Affiliation | null>> {
   try {
     const result: Affiliation = await connection('affiliations')
-    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
-    .select('affiliations.*')
-    .where({
-      'affiliations.user': user,
-      'affiliations.organization': organization
-    })
-    .andWhereNot({
-      'affiliations.membershipStatus': MembershipStatus.Inactive,
-      'organizations.active': false
-    })
-    .orderBy('createdAt')
-    .first();
+      .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+      .select('affiliations.*')
+      .where({
+        'affiliations.user': user,
+        'affiliations.organization': organization
+      })
+      .andWhereNot({
+        'affiliations.membershipStatus': MembershipStatus.Inactive,
+        'organizations.active': false
+      })
+      .orderBy('createdAt')
+      .first();
 
     return valid(result || null);
   } catch (exception) {
@@ -439,14 +438,14 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
 export async function readOneAffiliationById(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation | null>> {
   try {
     const result: Affiliation = await connection('affiliations')
-    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
-    .select('affiliations.*')
-    .where({ 'affiliations.id': id })
-    .andWhereNot({
-      'affiliations.membershipStatus': MembershipStatus.Inactive,
-      'organizations.active': false
-    })
-    .first();
+      .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+      .select('affiliations.*')
+      .where({ 'affiliations.id': id })
+      .andWhereNot({
+        'affiliations.membershipStatus': MembershipStatus.Inactive,
+        'organizations.active': false
+      })
+      .first();
 
     return valid(result || null);
   } catch (exception) {
@@ -483,25 +482,25 @@ async function rawAffiliationToAffiliationSlim(connection: Connection, params: R
 export async function approveAffiliation(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
   try {
-    const result: Affiliation[] = await connection('affiliations')
-    .update({
-      membershipStatus: MembershipStatus.Active,
-      updatedAt: now
-    }, ['*'])
-    .where({
-      id
-    })
-    .whereIn('organization', function() {
-      this.select('id')
-          .from('organizations')
-          .where({
-            active: true
-          });
-    });
-    if (!result || result.length === 0) {
+    const [result]: Affiliation[] = await connection('affiliations')
+      .update({
+        membershipStatus: MembershipStatus.Active,
+        updatedAt: now
+      }, ['*'])
+      .where({
+        id
+      })
+      .whereIn('organization', function() {
+        this.select('id')
+            .from('organizations')
+            .where({
+              active: true
+            });
+      });
+    if (!result) {
       throw new Error('unable to approve affiliation');
     }
-    return valid(result[0]);
+    return valid(result);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -510,25 +509,25 @@ export async function approveAffiliation(connection: Connection, id: Id): Promis
 export async function deleteAffiliation(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
   try {
-    const result: Affiliation[] = await connection('affiliations')
-    .update({
-      membershipStatus: MembershipStatus.Inactive,
-      updatedAt: now
-    }, ['*'])
-    .where({
-      id
-    })
-    .whereIn('organization', function() {
-      this.select('id')
-          .from('organizations')
-          .where({
-            active: true
-          });
-    });
-    if (!result || result.length === 0) {
+    const [result]: Affiliation[] = await connection('affiliations')
+      .update({
+        membershipStatus: MembershipStatus.Inactive,
+        updatedAt: now
+      }, ['*'])
+      .where({
+        id
+      })
+      .whereIn('organization', function() {
+        this.select('id')
+            .from('organizations')
+            .where({
+              active: true
+            });
+      });
+    if (!result) {
       throw new Error('unable to delete affiliation');
     }
-    return valid(result[0]);
+    return valid(result);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -552,14 +551,14 @@ export async function isUserOwnerOfOrg(connection: Connection, user: User, orgId
 export async function readActiveOwnerCount(connection: Connection, orgId: Id): Promise<number> {
   try {
     const result = await connection('affiliations')
-    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
-    .select('affiliations.*')
-    .where({
-      'affiliations.organization': orgId,
-      'affiliations.membershipType': MembershipType.Owner,
-      'affiliations.membershipStatus': MembershipStatus.Active,
-      'organizations.active': true
-    });
+      .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+      .select('affiliations.*')
+      .where({
+        'affiliations.organization': orgId,
+        'affiliations.membershipType': MembershipType.Owner,
+        'affiliations.membershipStatus': MembershipStatus.Active,
+        'organizations.active': true
+      });
     return result ? result.length : 0;
   } catch (exception) {
     return 0;
@@ -569,9 +568,9 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
 export async function readOneFileById(connection: Connection, id: Id): Promise<DatabaseValidation<FileRecord | null>> {
   try {
     const result: FileRecord = await connection('files')
-    .where({ id })
-    .select(['name', 'id', 'createdAt', 'fileBlob'])
-    .first();
+      .where({ id })
+      .select(['name', 'id', 'createdAt', 'fileBlob'])
+      .first();
     return valid(result || null);
   } catch (exception) {
     return invalid(createDatabaseError());
@@ -581,8 +580,8 @@ export async function readOneFileById(connection: Connection, id: Id): Promise<D
 export async function readOneFileBlob(connection: Connection, hash: string): Promise<DatabaseValidation<FileBlob | null>> {
   try {
     const result: FileBlob = await connection('fileBlobs')
-    .where({ hash })
-    .first();
+      .where({ hash })
+      .first();
     return valid(result || null);
   } catch (exception) {
     return invalid(createDatabaseError());
