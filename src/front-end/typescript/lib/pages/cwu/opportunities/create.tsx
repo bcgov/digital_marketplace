@@ -1,9 +1,12 @@
 import { makePageMetadata } from 'front-end/lib';
+import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
@@ -18,7 +21,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
+async function defaultState() {
   return {
     title: immutable(await ShortText.init({
       errors: [],
@@ -30,7 +33,21 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
       }
     }))
   };
-};
+}
+
+const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+  userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users be here?
+  async success() {
+    return {
+      ...(await defaultState())
+    };
+  },
+  async fail() {
+    return {
+      ...(await defaultState())
+    };
+  }
+});
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
@@ -59,6 +76,19 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+  sidebar: {
+    size: 'large',
+    color: 'light-blue',
+    view: makeInstructionalSidebar<State, Msg>({
+      getTitle: () => 'Create a Code With Us Opportunity',
+      getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
+      getFooter: () => (
+        <span>
+          Need help? <a href='# TODO(Jesse): Where does this point?'>Read the guide</a> for creating and managing a CWU opportunity
+        </span>
+      )
+    })
+  },
   getMetadata() {
     return makePageMetadata('Create Opportunity');
   }
