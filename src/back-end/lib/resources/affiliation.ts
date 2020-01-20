@@ -1,13 +1,14 @@
 import * as crud from 'back-end/lib/crud';
-import { approveAffiliation, Connection, createAffiliation, deleteAffiliation, readActiveOwnerCount, readManyAffiliations, readOneAffiliation } from 'back-end/lib/db';
+import { approveAffiliation, Connection, createAffiliation, deleteAffiliation, readActiveOwnerCount, readManyAffiliations, readOneAffiliation, readOneUserByEmail } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAffiliationId, validateOrganizationId, validateUserId } from 'back-end/lib/validation';
+import { validateAffiliationId, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
 import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
+import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
 import * as affiliationValidation from 'shared/lib/validation/affiliation';
@@ -60,47 +61,56 @@ const resource: Resource = {
   create(connection) {
     return {
       async parseRequestBody(request) {
-        const body = request.body.tag === 'json' ? request.body.value : {};
+        const body: unknown = request.body.tag === 'json' ? request.body.value : {};
         return {
-          user: getString(body, 'user'),
+          userEmail: getString(body, 'userEmail'),
           organization: getString(body, 'organization'),
           membershipType: getString(body, 'membershipType')
         };
       },
       async validateRequestBody(request) {
-        const { user, organization, membershipType } = request.body;
-        const validatedUser = await validateUserId(connection, user);
+        const { userEmail, organization, membershipType } = request.body;
+        // Attempt to fetch a valid user for the given email
+        const validatedUser = await readOneUserByEmail(connection, userEmail);
         const validatedOrganization = await validateOrganizationId(connection, organization);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
-          // Get the most recent affiliation for this user and organization
-          const dbResult = await readOneAffiliation(connection, user, organization);
+          const user = validatedUser.value as User | null;
+          if (!user) {
+            return invalid({
+              inviteeNotRegistered: ['User is not registered, but has been notified.']
+            });
+          }
+          // Only active members can be invited
+          if (user.status !== UserStatus.Active) {
+            return invalid({
+              affiliation: ['Only active members can be invited.']
+            });
+          }
+          // Only vendor type users can be invited
+          if (user.type !== UserType.Vendor) {
+            return invalid({
+              affiliation: ['Only vendors can be invited.']
+            });
+          }
+          if (!await permissions.createAffiliation(connection, request.session, organization)) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // Do not create if there is already an active affiliation for this user/org
+          const dbResult = await readOneAffiliation(connection, user.id, organization);
           if (isInvalid(dbResult)) {
             return invalid({ database: ['Database error']});
           }
-          const existingAffiliation = dbResult.value;
-          let membershipStatus: MembershipStatus;
-          // If existing affiliation in pending state, we check for admin perms, and create new active one
-          if (existingAffiliation && existingAffiliation.membershipStatus === MembershipStatus.Pending) {
-            if (!await permissions.updateAffiliation(connection, request.session, organization)) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-            membershipStatus = MembershipStatus.Active;
-          } else { // Otherwise we are creating a brand new membership in pending state (perms for own account only)
-            if (!permissions.createAffiliation(request.session, user)) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-            membershipStatus = MembershipStatus.Pending;
+          if (dbResult.value) {
+            return invalid({ affiliation: ['This user is already a member of this organization.']});
           }
           return valid({
-            user,
+            user: user.id,
             organization,
             membershipType: (validatedMembershipType.value as MembershipType),
-            membershipStatus
+            membershipStatus: MembershipStatus.Pending
           });
         } else {
           return invalid({
@@ -112,15 +122,19 @@ const resource: Resource = {
       },
       async respond(request): Promise<Response<JsonResponseBody<Affiliation | CreateValidationErrors>, Session>> {
         const respond = (code: number, body: Affiliation | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        switch (request.body.tag) {
-          case 'invalid':
+        if (isInvalid(request.body)) {
             if (request.body.value.permissions) {
               return respond(401, request.body.value);
+            } else if (request.body.value.affiliation) {
+              return respond(409, request.body.value);
             } else if (request.body.value.database) {
               return respond(503, request.body.value);
+            } else if (request.body.value.inviteeNotRegistered) {
+              // TODO: send invitee notification requesting registration once email notifications in place
+              return respond(200, request.body.value);
             }
             return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
-          case 'valid':
+        } else {
             const dbResult = await createAffiliation(connection, request.body.value);
             if (isInvalid(dbResult)) {
               return respond(503, { database: ['Database error'] });
@@ -145,7 +159,7 @@ const resource: Resource = {
         }
         const existingAffiliation = validatedAffiliation.value;
         if (existingAffiliation.membershipStatus === MembershipStatus.Pending) {
-          if (!await permissions.updateAffiliation(connection, request.session, existingAffiliation.organization.id)) {
+          if (!permissions.updateAffiliation(request.session, existingAffiliation)) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]
             });
@@ -158,7 +172,7 @@ const resource: Resource = {
       },
       async respond(request): Promise<Response<JsonResponseBody<Affiliation | UpdateValidationErrors>, Session>> {
         const respond = (code: number, body: Affiliation | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (request.body.tag === 'invalid') {
+        if (isInvalid(request.body)) {
           if (request.body.value.permissions) {
             return respond(401, request.body.value);
           }
@@ -177,14 +191,14 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request) {
-        const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);
-        if (validatedAffiliationId.tag === 'invalid') {
+        const validatedAffiliation = await validateAffiliationId(connection, request.params.id);
+        if (isInvalid(validatedAffiliation)) {
           return invalid({
-            affiliation: getInvalidValue(validatedAffiliationId, undefined)
+            affiliation: getInvalidValue(validatedAffiliation, undefined)
           });
         }
 
-        const existingAffiliation = validatedAffiliationId.value;
+        const existingAffiliation = validatedAffiliation.value;
         if (existingAffiliation.membershipType === MembershipType.Owner &&
             await readActiveOwnerCount(connection, existingAffiliation.organization.id) === 1) {
           return invalid({
@@ -192,7 +206,7 @@ const resource: Resource = {
           });
         }
 
-        if (!await permissions.deleteAffiliation(connection, request.session, existingAffiliation.user.id, existingAffiliation.organization.id)) {
+        if (!await permissions.deleteAffiliation(connection, request.session, existingAffiliation)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });

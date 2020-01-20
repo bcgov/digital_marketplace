@@ -1,4 +1,5 @@
 import { Connection, hasFilePermission, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -109,25 +110,21 @@ export function readManyAffiliations(session: Session): boolean {
   return isVendor(session);
 }
 
-export function createAffiliation(session: Session, userId: string): boolean {
-  // New affiliations can be created by vendors for themselves, or by admins
-  return isAdmin(session) || (isVendor(session) && isOwnAccount(session, userId));
+export async function createAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  // New affiliations can be created only by organization owners, or admins
+  return isAdmin(session) || (!!session.user && await isUserOwnerOfOrg(connection, session.user, orgId));
 }
 
-export async function updateAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
-  // Updates can be performed by owners of the organization in question, or by admins
-  if (!session.user) {
-    return false;
-  }
-  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
+export function updateAffiliation(session: Session, affiliation: Affiliation): boolean {
+  // Affiliations can only be accepted by the invited user, or admins
+  return isAdmin(session) || (!!session.user && session.user.id === affiliation.user.id);
 }
 
-export async function deleteAffiliation(connection: Connection, session: Session, userId: string, orgId: string): Promise<boolean> {
+export async function deleteAffiliation(connection: Connection, session: Session, affiliation: Affiliation): Promise<boolean> {
   // Affiliations can be deleted by the user who owns them, an owner of the org, or an admin
-  if (!session.user) {
-    return false;
-  }
-  return isAdmin(session) || isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId);
+  return isAdmin(session) ||
+    (!!session.user && isOwnAccount(session, affiliation.user.id)) ||
+    (!!session.user && await isUserOwnerOfOrg(connection, session.user, affiliation.organization.id));
 }
 
 // Files.

@@ -8,7 +8,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
-import { User, UserType } from 'shared/lib/resources/user';
+import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { invalid, isInvalid, isValid, valid } from 'shared/lib/validation';
 import { DatabaseValidation } from 'shared/lib/validation/db';
@@ -58,6 +58,21 @@ export async function readOneUser(connection: Connection, id: Id): Promise<Datab
   try {
     const result: RawUserToUserParams = await connection('users')
       .where({ id })
+      .first();
+    return valid(result ? await rawUserToUser(connection, result) : null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
+}
+
+export async function readOneUserByEmail(connection: Connection, email: string, allowInactive = false): Promise<DatabaseValidation<User | null>> {
+  try {
+    const where = {
+      email,
+      status: (allowInactive ? '*' : UserStatus.Active)
+    };
+    const result: RawUserToUserParams = await connection('users')
+      .where(where)
       .first();
     return valid(result ? await rawUserToUser(connection, result) : null);
   } catch (exception) {
@@ -316,7 +331,11 @@ export async function createOrganization(connection: Connection, user: Id, organ
     });
     return result;
   });
-  return valid(await rawOrganizationToOrganization(connection, result));
+  const dbResult = await readOneOrganization(connection, result.id);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    return invalid(createDatabaseError());
+  }
+  return valid(dbResult.value);
 }
 
 export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<DatabaseValidation<Organization>> {
@@ -334,7 +353,11 @@ export async function updateOrganization(connection: Connection, organization: P
     if (!result) {
       throw new Error('unable to update organization');
     }
-    return valid(await rawOrganizationToOrganization(connection, result));
+    const dbResult = await readOneOrganization(connection, result.id, true);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      return invalid(createDatabaseError());
+    }
+    return valid(dbResult.value);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -361,37 +384,28 @@ export async function readOneOrganization(connection: Connection, id: Id, allowI
   }
 }
 
+export interface RawAffiliation extends Omit<Affiliation, 'user' | 'organization'> {
+  user: Id;
+  organization: Id;
+}
+
 export async function createAffiliation(connection: Connection, affiliation: ValidatedAffiliationCreateRequestBody): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
   try {
-    return await connection.transaction(async trx => {
-      const [result]: Affiliation[]  = await connection('affiliations')
-        .transacting(trx)
-        .insert({
-          ...affiliation,
-          id: generateUuid(),
-          createdAt: now
-        }, ['*']);
+    const [result]: Affiliation[]  = await connection('affiliations')
+      .insert({
+        ...affiliation,
+        id: generateUuid(),
+        createdAt: now,
+        updatedAt: now
+      }, ['*']);
 
-      if (!result) {
-        throw new Error('unable to create affiliation');
-      }
+    if (!result) {
+      throw new Error('unable to create affiliation');
+    }
 
-      // Mark any other affiliation for this user/org as INACTIVE
-      await connection('affiliations')
-        .transacting(trx)
-        .where({
-          user: affiliation.user,
-          organization: affiliation.organization
-        })
-        .andWhereNot({
-          id: result.id
-        })
-        .update({
-          membershipStatus: MembershipStatus.Inactive
-        });
-      return valid(result);
-    });
+    // TODO: send invitation email once emails notifications are in place.
+    return valid(result);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -399,7 +413,7 @@ export async function createAffiliation(connection: Connection, affiliation: Val
 
 export async function readManyAffiliations(connection: Connection, userId: Id): Promise<DatabaseValidation<AffiliationSlim[]>> {
   try {
-    const results: RawAffiliationToAffiliationSlimParams[] = await connection('affiliations')
+    const results: RawAffiliation[] = await connection('affiliations')
       .join('organizations', 'affiliations.organization', '=', 'organizations.id')
       .select('affiliations.*')
       .where({
@@ -415,7 +429,7 @@ export async function readManyAffiliations(connection: Connection, userId: Id): 
 
 export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<DatabaseValidation<Affiliation | null>> {
   try {
-    const result: Affiliation = await connection('affiliations')
+    const result: RawAffiliation = await connection('affiliations')
       .join('organizations', 'affiliations.organization', '=', 'organizations.id')
       .select('affiliations.*')
       .where({
@@ -429,7 +443,7 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
       .orderBy('createdAt')
       .first();
 
-    return valid(result || null);
+    return valid(result ? await rawAffiliationToAffiliation(connection, result) : null);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -437,7 +451,7 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
 
 export async function readOneAffiliationById(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation | null>> {
   try {
-    const result: Affiliation = await connection('affiliations')
+    const result: RawAffiliation = await connection('affiliations')
       .join('organizations', 'affiliations.organization', '=', 'organizations.id')
       .select('affiliations.*')
       .where({ 'affiliations.id': id })
@@ -447,22 +461,32 @@ export async function readOneAffiliationById(connection: Connection, id: Id): Pr
       })
       .first();
 
-    return valid(result || null);
+    return valid(result ? await rawAffiliationToAffiliation(connection, result) : null);
   } catch (exception) {
     return invalid(createDatabaseError());
   }
 }
 
-interface RawAffiliationToAffiliationSlimParams {
-  id: Id;
-  user: Id;
-  organization: Id;
-  membershipType: MembershipType;
-  createdAt: Date;
-  updatedAt: Date;
+async function rawAffiliationToAffiliation(connection: Connection, params: RawAffiliation): Promise<Affiliation> {
+  const { user: userId, organization: orgId } = params;
+  const userDbResult = await readOneUser(connection, userId);
+  if (isInvalid(userDbResult) || !userDbResult.value) {
+    throw new Error('Database error');
+  }
+  const user = userDbResult.value;
+  const orgDbResult = await readOneOrganization(connection, orgId);
+  if (isInvalid(orgDbResult) || !orgDbResult.value) {
+    throw new Error('Database error');
+  }
+  const organization = orgDbResult.value;
+  return {
+    ...params,
+    user,
+    organization
+  };
 }
 
-async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliationToAffiliationSlimParams): Promise<AffiliationSlim> {
+async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliation): Promise<AffiliationSlim> {
   const { id, organization: orgId, membershipType } = params;
   const dbResult = await readOneOrganization(connection, orgId);
   if (isInvalid(dbResult) || !dbResult.value) {
@@ -482,7 +506,7 @@ async function rawAffiliationToAffiliationSlim(connection: Connection, params: R
 export async function approveAffiliation(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
   try {
-    const [result]: Affiliation[] = await connection('affiliations')
+    const [result]: RawAffiliation[] = await connection('affiliations')
       .update({
         membershipStatus: MembershipStatus.Active,
         updatedAt: now
@@ -500,7 +524,7 @@ export async function approveAffiliation(connection: Connection, id: Id): Promis
     if (!result) {
       throw new Error('unable to approve affiliation');
     }
-    return valid(result);
+    return valid(await rawAffiliationToAffiliation(connection, result));
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -509,7 +533,7 @@ export async function approveAffiliation(connection: Connection, id: Id): Promis
 export async function deleteAffiliation(connection: Connection, id: Id): Promise<DatabaseValidation<Affiliation>> {
   const now = new Date();
   try {
-    const [result]: Affiliation[] = await connection('affiliations')
+    const [result]: RawAffiliation[] = await connection('affiliations')
       .update({
         membershipStatus: MembershipStatus.Inactive,
         updatedAt: now
@@ -527,7 +551,7 @@ export async function deleteAffiliation(connection: Connection, id: Id): Promise
     if (!result) {
       throw new Error('unable to delete affiliation');
     }
-    return valid(result);
+    return valid(await rawAffiliationToAffiliation(connection, result));
   } catch (exception) {
     return invalid(createDatabaseError());
   }
@@ -538,8 +562,12 @@ export async function isUserOwnerOfOrg(connection: Connection, user: User, orgId
     if (!user) {
       return false;
     }
-    const result = await connection('affiliations')
-      .where ({ user: user.id, organization: orgId, membershipType: MembershipType.Owner })
+    const result: RawAffiliation = await connection('affiliations')
+      .where ({
+        user: user.id,
+        organization: orgId,
+        membershipType: MembershipType.Owner
+      })
       .first();
 
     return !!result;
@@ -550,7 +578,7 @@ export async function isUserOwnerOfOrg(connection: Connection, user: User, orgId
 
 export async function readActiveOwnerCount(connection: Connection, orgId: Id): Promise<number> {
   try {
-    const result = await connection('affiliations')
+    const result: RawAffiliation[] = await connection('affiliations')
       .join('organizations', 'affiliations.organization', '=', 'organizations.id')
       .select('affiliations.*')
       .where({
