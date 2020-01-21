@@ -70,7 +70,7 @@ export type UpdateRequestBody
   | ADT<'reactivateUser'>
   | ADT<'updateAdminPermissions', boolean>;
 
-type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
 
 export type UpdateValidationErrors
   = ADT<'updateProfile', UpdateProfileValidationErrors>
