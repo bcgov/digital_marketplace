@@ -60,9 +60,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
           // Persist change to back-end.
           state = stopNewOpportunitiesLoading(state);
-          const result = await api.users.update(state.profileUser.id, {
-            notificationsOn: FormField.getValue(state.newOpportunities)
-          });
+          const result = await api.users.update(state.profileUser.id, adt('updateNotifications', FormField.getValue(state.newOpportunities)));
           if (api.isValid(result)) {
             state = state
               .set('profileUser', result.value)

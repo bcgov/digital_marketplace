@@ -2,7 +2,6 @@ import { generateUuid } from 'back-end/lib';
 import { ValidatedCreateRequestBody as ValidatedAffiliationCreateRequestBody } from 'back-end/lib/resources/affiliation';
 import { hashFile, ValidatedCreateRequestBody as ValidatedFileCreateRequestBody } from 'back-end/lib/resources/file';
 import { ValidatedCreateRequestBody as ValidatedOrgCreateRequestBody, ValidatedUpdateRequestBody as ValidatedOrgUpdateRequestBody } from 'back-end/lib/resources/organization';
-import { ValidatedUpdateRequestBody as ValidatedUserUpdateRequestBody } from 'back-end/lib/resources/user';
 import { readFile } from 'fs';
 import Knex from 'knex';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
@@ -29,7 +28,7 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   return await rawUserToUser(connection, result);
 }
 
-export async function updateUser(connection: Connection, userInfo: ValidatedUserUpdateRequestBody): Promise<User> {
+export async function updateUser(connection: Connection, userInfo: Partial<Omit<User, 'avatarImageFile'> & { avatarImageFile: Id }>): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
     .where({ id: userInfo.id })
@@ -344,11 +343,16 @@ export async function readManyAffiliations(connection: Connection, userId: Id): 
 
 export async function readOneAffiliation(connection: Connection, user: Id, organization: Id): Promise<Affiliation> {
   const result = await connection('affiliations')
+    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+    .select('affiliations.*')
     .where({
-      user,
-      organization
+      'affiliations.user': user,
+      'affiliations.organization': organization
     })
-    .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
+    .andWhereNot({
+      'affiliations.membershipStatus': MembershipStatus.Inactive,
+      'organizations.active': false
+    })
     .orderBy('createdAt')
     .first();
 
@@ -357,8 +361,13 @@ export async function readOneAffiliation(connection: Connection, user: Id, organ
 
 export async function readOneAffiliationById(connection: Connection, id: Id): Promise<Affiliation> {
   const result = await connection('affiliations')
-    .where({ id })
-    .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
+    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+    .select('affiliations.*')
+    .where({ 'affiliations.id': id })
+    .andWhereNot({
+      'affiliations.membershipStatus': MembershipStatus.Inactive,
+      'organizations.active': false
+    })
     .first();
 
   return result;
@@ -389,14 +398,20 @@ export async function rawAffiliationToAffiliationSlim(connection: Connection, pa
 export async function approveAffiliation(connection: Connection, id: Id): Promise<Affiliation> {
   const now = new Date();
   const [result] = await connection('affiliations')
-    .where({
-      id,
-      membershipStatus: MembershipStatus.Pending
-    })
     .update({
       membershipStatus: MembershipStatus.Active,
       updatedAt: now
-    }, ['*']);
+    }, ['*'])
+    .where({
+      id
+    })
+    .whereIn('organization', function() {
+      this.select('id')
+          .from('organizations')
+          .where({
+            active: true
+          });
+    });
   if (!result) {
     throw new Error('unable to approve affiliation');
   }
@@ -406,11 +421,20 @@ export async function approveAffiliation(connection: Connection, id: Id): Promis
 export async function deleteAffiliation(connection: Connection, id: Id): Promise<Affiliation> {
   const now = new Date();
   const [result] = await connection('affiliations')
-    .where({ id })
     .update({
       membershipStatus: MembershipStatus.Inactive,
       updatedAt: now
-    }, ['*']);
+    }, ['*'])
+    .where({
+      id
+    })
+    .whereIn('organization', function() {
+      this.select('id')
+          .from('organizations')
+          .where({
+            active: true
+          });
+    });
   if (!result) {
     throw new Error('unable to delete affiliation');
   }
@@ -430,7 +454,14 @@ export async function isUserOwnerOfOrg(connection: Connection, user: User, orgId
 
 export async function readActiveOwnerCount(connection: Connection, orgId: Id): Promise<number> {
   const result = await connection('affiliations')
-    .where({ organization: orgId, membershipType: MembershipType.Owner, membershipStatus: MembershipStatus.Active });
+    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+    .select('affiliations.*')
+    .where({
+      'affiliations.organization': orgId,
+      'affiliations.membershipType': MembershipType.Owner,
+      'affiliations.membershipStatus': MembershipStatus.Active,
+      'organizations.active': true
+    });
   return result ? result.length : 0;
 }
 
