@@ -25,3 +25,12 @@ export function validateFixedPriceAmount(dollarString: string): Validation<strin
     return invalid(['Please enter a value of $70,000 or less.']);
   }
 }
+
+export function validateDate(dollarString: string): Validation<string> {
+  const parsedAmount = parseInt(dollarString, 10);
+  if ( validNumberString(dollarString) && validNumber(parsedAmount) && parsedAmount <= 70000) {
+    return valid(dollarString);
+  } else {
+    return invalid(['Please enter a value of $70,000 or less.']);
+  }
+}

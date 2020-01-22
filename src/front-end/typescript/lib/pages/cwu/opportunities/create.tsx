@@ -1,30 +1,57 @@
 import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as Date from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
+import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
+type TabValues = 'Overview' | 'Description' | 'Details';
+
 export interface State {
+  activeTab: TabValues;
+
+  // Overview Tab
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
   location: Immutable<ShortText.State>;
   fixedPriceReward: Immutable<ShortText.State>;
   requiredSkills: Immutable<ShortText.State>;
+
+  // Description Tab
+  description: Immutable<LongText.State>;
+
+  // Details Tab
+  proposalDeadline: Immutable<Date.State>;
+  startDate: Immutable<Date.State>;
+  assignmentDate: Immutable<Date.State>;
+  completionDate: Immutable<Date.State>;
 }
 
 type InnerMsg
+  // Details Tab
   = ADT<'title',             ShortText.Msg>
-  | ADT<'teaser',            ShortText.Msg>
+  | ADT<'teaser',            LongText.Msg>
   | ADT<'location',          ShortText.Msg>
   | ADT<'fixedPriceReward',  ShortText.Msg>
   | ADT<'requiredSkills',    ShortText.Msg>
+  | ADT<'updateActiveTab',   TabValues>
+
+  // Description Tab
+  | ADT<'description',       LongText.Msg>
+
+  // Details Tab
+  | ADT<'proposalDeadline',         Date.Msg>
+  | ADT<'startDate',         Date.Msg>
+  | ADT<'assignmentDate',         Date.Msg>
+  | ADT<'completionDate',         Date.Msg>
+
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -33,6 +60,7 @@ export type RouteParams = null;
 
 async function defaultState() {
   return {
+    activeTab: 'Overview' as const,
 
     title: immutable(await ShortText.init({
       errors: [],
@@ -81,6 +109,51 @@ async function defaultState() {
         value: '',
         id: 'opportunity-required-skills'
       }
+    })),
+
+    description: immutable(await LongText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-description'
+      }
+    })),
+
+    proposalDeadline: immutable(await Date.init({
+      errors: [],
+      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      child: {
+        value: undefined,
+        id: 'opportunity-start-date'
+      }
+    })),
+
+    startDate: immutable(await Date.init({
+      errors: [],
+      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      child: {
+        value: undefined,
+        id: 'opportunity-start-date'
+      }
+    })),
+
+    assignmentDate: immutable(await Date.init({
+      errors: [],
+      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      child: {
+        value: undefined,
+        id: 'opportunity-start-date'
+      }
+    })),
+
+    completionDate: immutable(await Date.init({
+      errors: [],
+      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      child: {
+        value: undefined,
+        id: 'opportunity-start-date'
+      }
     }))
 
   };
@@ -102,6 +175,9 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+
+    case 'updateActiveTab':
+      return [state.set('activeTab', msg.value)];
 
     case 'title':
       return updateComponentChild({
@@ -148,13 +224,48 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('requiredSkills', value)
       });
 
+    case 'description':
+      return updateComponentChild({
+        state,
+        childStatePath: ['description'],
+        childUpdate: LongText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('description', value)
+      });
+
+    case 'proposalDeadline':
+      return updateComponentChild({
+        state,
+        childStatePath: ['proposalDeadline'],
+        childUpdate: Date.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('proposalDeadline', value)
+      });
+
+    case 'assignmentDate':
+      return updateComponentChild({
+        state,
+        childStatePath: ['assignmentDate'],
+        childUpdate: Date.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('assignmentDate', value)
+      });
+
+    case 'completionDate':
+      return updateComponentChild({
+        state,
+        childStatePath: ['completionDate'],
+        childUpdate: Date.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('completionDate', value)
+      });
+
     default:
       return [state];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const disabled = false;
+const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
 
@@ -163,7 +274,6 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Title'
           required
-          disabled={disabled}
           state={state.title}
           dispatch={mapComponentDispatch(dispatch, value => adt('title' as const, value))} />
       </Col>
@@ -172,27 +282,24 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <LongText.view
           extraChildProps={{}}
           label='Teaser'
-          disabled={disabled}
           state={state.teaser}
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
 
-      <Col xs='12'>
+      <Col md='8' xs='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Location'
           required
-          disabled={disabled}
           state={state.location}
           dispatch={mapComponentDispatch(dispatch, value => adt('location' as const, value))} />
       </Col>
 
-      <Col xs='12'>
+      <Col md='8' xs='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Fixed-Price Reward'
           required
-          disabled={disabled}
           state={state.fixedPriceReward}
           dispatch={mapComponentDispatch(dispatch, value => adt('fixedPriceReward' as const, value))} />
       </Col>
@@ -202,12 +309,127 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Required Skills'
           required
-          disabled={disabled}
           state={state.requiredSkills}
           dispatch={mapComponentDispatch(dispatch, value => adt('requiredSkills' as const, value))} />
       </Col>
 
     </Row>
+  );
+};
+
+const DescriptionView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <Row>
+
+      <Col xs='12'>
+        <LongText.view
+          extraChildProps={{}}
+          label='Description'
+          state={state.description}
+          dispatch={mapComponentDispatch(dispatch, value => adt('description' as const, value))} />
+      </Col>
+
+    </Row>
+  );
+};
+
+const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <Row>
+
+      <Col xs='12' md='6'>
+
+        <Col xs='12'>
+          <Date.view
+            required
+            extraChildProps={{}}
+            label='Proposal Deadline'
+            state={state.proposalDeadline}
+            dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
+        </Col>
+
+        <Col xs='12'>
+          <Date.view
+            required
+            extraChildProps={{}}
+            label='Start Date'
+            state={state.startDate}
+            dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
+        </Col>
+
+      </Col>
+
+      <Col xs='12' md='6'>
+
+        <Col xs='12'>
+          <Date.view
+            required
+            extraChildProps={{}}
+            label='Assignment Date'
+            state={state.assignmentDate}
+            dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
+        </Col>
+
+        <Col xs='12'>
+          <Date.view
+            required
+            extraChildProps={{}}
+            label='Assignment Date'
+            state={state.completionDate}
+            dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
+        </Col>
+
+      </Col>
+
+    </Row>
+  );
+};
+
+function isActiveTab(state: State, activeTab: TabValues): boolean {
+  const Result: boolean = state.activeTab === activeTab;
+  return Result;
+}
+
+function renderTab(params: any, tabName: TabValues): JSX.Element {
+  const state = params.state;
+  const dispatch = params.dispatch;
+  return (
+    <NavItem>
+      <NavLink active={isActiveTab(state, tabName)} onClick={() => {dispatch(adt('updateActiveTab', tabName)); }}> {tabName} </NavLink>
+    </NavItem>
+  );
+}
+
+const view: ComponentView<State, Msg> = (params) => {
+  const state = params.state;
+
+  let activeView = <div>No Active view selected</div>;
+  switch (state.activeTab) {
+    case 'Overview': {
+      activeView = <OverviewView {...params} /> ;
+      break;
+    }
+    case 'Description': {
+      activeView = <DescriptionView {...params} /> ;
+      break;
+    }
+    case 'Details': {
+      activeView = <DetailsView {...params} /> ;
+      break;
+    }
+  }
+
+  return (
+    <div>
+      <Nav tabs>
+        {renderTab(params, 'Overview')}
+        {renderTab(params, 'Description')}
+        {renderTab(params, 'Details')}
+      </Nav>
+      <div>
+        {activeView}
+      </div>
+    </div>
   );
 };
 
