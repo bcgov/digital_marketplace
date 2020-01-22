@@ -3,6 +3,7 @@ import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { Router } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
@@ -114,7 +115,7 @@ const router: Router<Route> = {
       makeRoute({query}) {
         return {
           tag: 'signIn',
-          value: { redirectOnSuccess: query.redirectOnSuccess as string } // TODO(Jesse): Why does this need to be cast?
+          value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
         };
       }
     },
