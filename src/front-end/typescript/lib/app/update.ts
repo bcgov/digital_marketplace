@@ -10,7 +10,7 @@ import * as CwuOpportunityEdit from 'front-end/lib/pages/cwu/opportunities/edit'
 import * as CwuOpportunityView from 'front-end/lib/pages/cwu/opportunities/view';
 import * as CwuProposalCreate from 'front-end/lib/pages/cwu/proposals/create';
 import * as CwuProposalEdit from 'front-end/lib/pages/cwu/proposals/edit';
-import * as CwuProposalList from 'front-end/lib/pages/cwu/proposals/list';
+import * as PageProposalList from 'front-end/lib/pages/cwu/proposals/list';
 import * as CwuProposalView from 'front-end/lib/pages/cwu/proposals/view';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -146,9 +146,9 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         ...defaultPageInitParams,
         childStatePath: ['pages', 'proposalList'],
         childRouteParams: route.value,
-        childInit: CwuProposalList.component.init,
-        childGetMetadata: CwuProposalList.component.getMetadata,
-        childGetModal: CwuProposalList.component.getModal,
+        childInit: PageProposalList.component.init,
+        childGetMetadata: PageProposalList.component.getMetadata,
+        childGetModal: PageProposalList.component.getModal,
         mapChildMsg(value) {
           return {tag: 'proposalList' as const, value};
         }
@@ -461,9 +461,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         ...defaultPageUpdateParams,
         mapChildMsg: value => ({ tag: 'proposalList' as const, value}),
         childStatePath: ['pages', 'proposalList'],
-        childUpdate: CwuProposalList.component.update,
-        childGetMetadata: CwuProposalList.component.getMetadata,
-        childGetModal: CwuProposalList.component.getModal,
+        childUpdate: PageProposalList.component.update,
+        childGetMetadata: PageProposalList.component.getMetadata,
+        childGetModal: PageProposalList.component.getModal,
         childMsg: msg.value
       });
 

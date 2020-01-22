@@ -7,7 +7,7 @@ import * as CwuOpportunityEdit from 'front-end/lib/pages/cwu/opportunities/edit'
 import * as CwuOpportunityView from 'front-end/lib/pages/cwu/opportunities/view';
 import * as CwuProposalCreate from 'front-end/lib/pages/cwu/proposals/create';
 import * as CwuProposalEdit from 'front-end/lib/pages/cwu/proposals/edit';
-import * as CwuProposalList from 'front-end/lib/pages/cwu/proposals/list';
+import * as PageProposalList from 'front-end/lib/pages/cwu/proposals/list';
 import * as CwuProposalView from 'front-end/lib/pages/cwu/proposals/view';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -46,7 +46,8 @@ export type Route
   | ADT<'cwuProposalCreate',     CwuProposalCreate.RouteParams>
   | ADT<'cwuProposalEdit',       CwuProposalEdit.RouteParams>
   | ADT<'cwuProposalView',       CwuProposalView.RouteParams>
-  | ADT<'proposalList',       CwuProposalList.RouteParams>;
+  | ADT<'proposalList',          PageProposalList.RouteParams>
+  ;
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
   'signUpStepTwo',
@@ -94,7 +95,7 @@ export interface State {
     cwuProposalCreate?: Immutable<CwuProposalCreate.State>;
     cwuProposalEdit?: Immutable<CwuProposalEdit.State>;
     cwuProposalView?: Immutable<CwuProposalView.State>;
-    proposalList?: Immutable<CwuProposalList.State>;
+    pageProposalList?: Immutable<PageProposalList.State>;
   };
 }
 
@@ -122,6 +123,6 @@ type InnerMsg
   | ADT<'cwuProposalCreate',     CwuProposalCreate.Msg>
   | ADT<'cwuProposalEdit',       CwuProposalEdit.Msg>
   | ADT<'cwuProposalView',       CwuProposalView.Msg>
-  | ADT<'proposalList',       CwuProposalList.Msg>;
+  | ADT<'proposalList',          PageProposalList.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;

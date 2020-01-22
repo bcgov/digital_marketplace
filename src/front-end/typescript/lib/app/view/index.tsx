@@ -11,7 +11,7 @@ import * as CwuOpportunityEdit from 'front-end/lib/pages/cwu/opportunities/edit'
 import * as CwuOpportunityView from 'front-end/lib/pages/cwu/opportunities/view';
 import * as CwuProposalCreate from 'front-end/lib/pages/cwu/proposals/create';
 import * as CwuProposalEdit from 'front-end/lib/pages/cwu/proposals/edit';
-import * as CwuProposalList from 'front-end/lib/pages/cwu/proposals/list';
+import * as PageProposalList from 'front-end/lib/pages/cwu/proposals/list';
 import * as CwuProposalView from 'front-end/lib/pages/cwu/proposals/view';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -149,8 +149,8 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
     case 'proposalList':
       return makeViewPageProps(
         props,
-        CwuProposalList.component,
-        state => state.pages.proposalList,
+        PageProposalList.component,
+        state => state.pages.pageProposalList,
         value => ({tag: 'proposalList', value})
       );
 
