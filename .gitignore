@@ -5,6 +5,7 @@
 *.map
 *.DS_Store
 .env
+make.sh
 .sass-cache/
 node_modules/
 /tmp/
