@@ -32,6 +32,9 @@ export interface State {
   startDate: Immutable<Date.State>;
   assignmentDate: Immutable<Date.State>;
   completionDate: Immutable<Date.State>;
+  submissionInfo: Immutable<ShortText.State>;
+  acceptanceCriteria: Immutable<LongText.State>;
+  evaluationCriteria: Immutable<LongText.State>;
 }
 
 type InnerMsg
@@ -47,10 +50,13 @@ type InnerMsg
   | ADT<'description',       LongText.Msg>
 
   // Details Tab
-  | ADT<'proposalDeadline',         Date.Msg>
-  | ADT<'startDate',         Date.Msg>
-  | ADT<'assignmentDate',         Date.Msg>
-  | ADT<'completionDate',         Date.Msg>
+  | ADT<'proposalDeadline',    Date.Msg>
+  | ADT<'startDate',           Date.Msg>
+  | ADT<'assignmentDate',      Date.Msg>
+  | ADT<'completionDate',      Date.Msg>
+  | ADT<'submissionInfo',      ShortText.Msg>
+  | ADT<'acceptanceCriteria',  LongText.Msg>
+  | ADT<'evaluationCriteria',  LongText.Msg>
 
   ;
 
@@ -153,6 +159,34 @@ async function defaultState() {
       child: {
         value: undefined,
         id: 'opportunity-start-date'
+      }
+    })),
+
+    submissionInfo: immutable(await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        type: 'text',
+        value: '',
+        id: 'opportunity-submission-info'
+      }
+    })),
+
+    acceptanceCriteria: immutable(await LongText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-acceptance-criteria'
+      }
+    })),
+
+    evaluationCriteria: immutable(await LongText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-evaluation-criteria'
       }
     }))
 
@@ -260,6 +294,33 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('completionDate', value)
       });
 
+    case 'submissionInfo':
+      return updateComponentChild({
+        state,
+        childStatePath: ['submissionInfo'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('submissionInfo', value)
+      });
+
+    case 'acceptanceCriteria':
+      return updateComponentChild({
+        state,
+        childStatePath: ['acceptanceCriteria'],
+        childUpdate: LongText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('acceptanceCriteria', value)
+      });
+
+    case 'evaluationCriteria':
+      return updateComponentChild({
+        state,
+        childStatePath: ['evaluationCriteria'],
+        childUpdate: LongText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('evaluationCriteria', value)
+      });
+
     default:
       return [state];
   }
@@ -338,7 +399,6 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <Row>
 
       <Col xs='12' md='6'>
-
         <Col xs='12'>
           <Date.view
             required
@@ -347,7 +407,6 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
             state={state.proposalDeadline}
             dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
         </Col>
-
         <Col xs='12'>
           <Date.view
             required
@@ -356,11 +415,9 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
             state={state.startDate}
             dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
         </Col>
-
       </Col>
 
       <Col xs='12' md='6'>
-
         <Col xs='12'>
           <Date.view
             required
@@ -369,7 +426,6 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
             state={state.assignmentDate}
             dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
         </Col>
-
         <Col xs='12'>
           <Date.view
             required
@@ -378,8 +434,34 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
             state={state.completionDate}
             dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
         </Col>
-
       </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Project Submission Info'
+          state={state.submissionInfo}
+          dispatch={mapComponentDispatch(dispatch, value => adt('submissionInfo' as const, value))} />
+      </Col>
+
+      <Col xs='12'>
+        <LongText.view
+          required
+          extraChildProps={{}}
+          label='Acceptance Criteria'
+          state={state.acceptanceCriteria}
+          dispatch={mapComponentDispatch(dispatch, value => adt('acceptanceCriteria' as const, value))} />
+      </Col>
+
+      <Col xs='12'>
+        <LongText.view
+          required
+          extraChildProps={{}}
+          label='Evaluation Criteria'
+          state={state.evaluationCriteria}
+          dispatch={mapComponentDispatch(dispatch, value => adt('evaluationCriteria' as const, value))} />
+      </Col>
+
 
     </Row>
   );
