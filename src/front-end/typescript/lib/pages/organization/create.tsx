@@ -1,5 +1,6 @@
 import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
+import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
@@ -44,8 +45,14 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     }));
   },
 
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({ routeParams, shared, dispatch }) {
+    if (!shared.session || !shared.session.user) {
+      dispatch(replaceRoute(adt('signIn' as const, {
+        redirectOnSuccess: router.routeToUrl(adt('orgCreate', null))
+      })));
+    } else {
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    }
     return invalid(null);
   }
 

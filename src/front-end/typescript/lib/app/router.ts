@@ -3,6 +3,7 @@ import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { Router } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
@@ -189,10 +190,10 @@ const router: Router<Route> = {
     },
     {
       path: '/sign-in',
-      makeRoute() {
+      makeRoute({query}) {
         return {
           tag: 'signIn',
-          value: null
+          value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
         };
       }
     },
@@ -255,7 +256,7 @@ const router: Router<Route> = {
       case 'content':
         return `/content/${route.value}`;
       case 'signIn':
-        return '/sign-in';
+        return `/sign-in${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`;
       case 'signOut':
         return '/sign-out';
       case 'signUpStepOne':

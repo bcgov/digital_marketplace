@@ -1,5 +1,6 @@
 import { getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
+import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
@@ -76,10 +77,16 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
       return invalid(null);
     }
-
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({dispatch, shared, routeParams}) {
+    if (!shared.session || !shared.session.user) {
+      dispatch(replaceRoute(adt('signIn' as const, {
+        redirectOnSuccess: router.routeToUrl(adt('orgEdit', {orgId: routeParams.orgId}))
+      })));
+    } else {
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    }
+
     return invalid(null);
   }
 });

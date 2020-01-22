@@ -1,5 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
+import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { replaceRoute } from 'front-end/lib/framework';
@@ -63,8 +64,14 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         })
     };
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({ shared, dispatch }) {
+    if (!shared.session || !shared.session.user) {
+      dispatch(replaceRoute(adt('signIn' as const, {
+        redirectOnSuccess: router.routeToUrl(adt('userList', null))
+      })));
+    } else {
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    }
     return await baseState();
   }
 });

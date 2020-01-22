@@ -251,7 +251,7 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
     button: true,
     outline: true,
     color: 'white',
-    dest: routeDest(adt('signIn', null))
+    dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
     text: 'Sign Up',
