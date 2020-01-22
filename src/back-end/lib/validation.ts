@@ -4,7 +4,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 
 export async function validateUserId(connection: Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -78,4 +78,8 @@ export async function validateAffiliationId(connection: Connection, affiliationI
   } catch (e) {
     return invalid(['Please select a valid affiliation.']);
   }
+}
+
+export function validateFilePath(path: string): Validation<string> {
+  return validateGenericString(path, 'File path');
 }

@@ -3,6 +3,7 @@ import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-e
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Response } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import { validateFilePath } from 'back-end/lib/validation';
 import { lookup } from 'mime-types';
 import shajs from 'sha.js';
 import { getString } from 'shared/lib';
@@ -96,17 +97,17 @@ const resource: Resource = {
             requestBodyType: ['You need to submit a valid multipart request to create a file.']
           });
         }
+        if (!permissions.createFile(request.session)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
         const { name, metadata, path } = request.body;
         const validatedOriginalFileName = fileValidation.validateFileName(name);
         const validatedFilePermissions = metadata ? valid(metadata) : invalid(['Invalid metadata provided.']);
-        const validatedFilePath = fileValidation.validateFilePath(path);
+        const validatedFilePath = validateFilePath(path);
 
         if (allValid([validatedOriginalFileName, validatedFilePermissions, validatedFilePath])) {
-          if (!permissions.createFile(request.session)) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
           return valid({
             name: validatedOriginalFileName.value,
             permissions: validatedFilePermissions.value,
@@ -129,12 +130,9 @@ const resource: Resource = {
             }
             return respond(400, request.body.value);
           case 'valid':
-            const createdById = request.session.user ? request.session.user.id : '';
-            const dbResult = await createFile(connection, request.body.value, createdById);
-            if (isInvalid(dbResult)) {
-              return respond(503, { database: ['Database errorr'] });
-            }
-            return respond(201, dbResult.value);
+            const createdById = getString(request.session.user, 'id');
+            const fileRecord = await createFile(connection, request.body.value, createdById);
+            return respond(201, fileRecord);
         }
       }
     };

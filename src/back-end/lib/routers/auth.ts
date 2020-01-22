@@ -141,7 +141,8 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
               name: claims.name || '',
               email: claims.email || '',
               jobTitle: '',
-              idpUsername
+              idpUsername,
+              avatarImageFile: null
             });
             if (isInvalid(result) || !result.value) {
               makeAuthErrorRedirect(request);

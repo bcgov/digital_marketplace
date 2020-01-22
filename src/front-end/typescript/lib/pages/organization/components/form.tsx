@@ -54,7 +54,7 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export interface Values extends Omit<Required<CreateRequestBody>, 'logoImageFile'> {
+export interface Values extends Omit<Required<CreateRequestBody>, 'logoImageFile' | 'deactivatedOn' | 'deactivatedBy'> {
   newLogoImage?: File;
 }
 
@@ -544,7 +544,7 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
     ? params.value.extraBody.logoImageFile
     : undefined;
   if (values.newLogoImage) {
-    const fileResult = await api.files.create({
+    const fileResult = await api.avatars.create({
       name: values.newLogoImage.name,
       file: values.newLogoImage,
       metadata: [adt('any')]

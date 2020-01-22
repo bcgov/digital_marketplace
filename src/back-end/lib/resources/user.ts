@@ -10,7 +10,7 @@ import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
 import { DeleteValidationErrors } from 'shared/lib/resources/user';
-import { adminPermissionsToUserType, parseNotificationsFlag, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { adminPermissionsToUserType, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid } from 'shared/lib/validation';
 import { DatabaseValidation } from 'shared/lib/validation/db';
@@ -18,9 +18,12 @@ import * as userValidation from 'shared/lib/validation/user';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-export type ValidatedUpdateRequestBody = SharedUpdateRequestBody | ADT<'updateNotifications', Date | null> | ADT<'updateAdminPermissions', UserType>;
-
-type ValidatedUpdateProfileRequestBody = UpdateProfileRequestBody;
+export type ValidatedUpdateRequestBody
+  = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'acceptTerms'>
+  | ADT<'updateNotifications', Date | null>
+  | ADT<'reactivateUser'>
+  | ADT<'updateAdminPermissions', UserType>;
 
 type DeleteValidatedReqBody = User;
 
@@ -85,7 +88,7 @@ const resource: Resource = {
               name: getString(value, 'name'),
               email: getString(value, 'email'),
               jobTitle: getString(value, 'jobTitle'),
-              avatarImageFile: getString(value, 'avatarImageFile')
+              avatarImageFile: getString(value, 'avatarImageFile') || undefined
             });
 
           case 'acceptTerms':
@@ -135,7 +138,7 @@ const resource: Resource = {
                 email: validatedEmail.value,
                 jobTitle: validatedJobTitle.value,
                 avatarImageFile: isValid(validatedAvatarImageFile) && validatedAvatarImageFile.value && validatedAvatarImageFile.value.id
-              } as ValidatedUpdateProfileRequestBody));
+              } as UpdateProfileRequestBody));
             } else {
               return invalid(adt('updateProfile', {
                 name: getInvalidValue(validatedName, undefined),
@@ -155,11 +158,10 @@ const resource: Resource = {
             return valid(adt('acceptTerms'));
 
           case 'updateNotifications':
-            const notifications = parseNotificationsFlag(request.body.value);
             if (!permissions.updateUser(request.session, request.params.id)) {
               return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
             }
-            return valid(adt('updateNotifications', notifications));
+            return valid(adt('updateNotifications', notificationsBooleanToNotificationsOn(request.body.value)));
 
           case 'reactivateUser':
             if (!permissions.reactivateUser(request.session, request.params.id) || validatedUser.value.status !== UserStatus.InactiveByAdmin) {
@@ -202,13 +204,16 @@ const resource: Resource = {
               dbResult = await updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
               break;
             case 'updateNotifications':
-              dbResult = await updateUser(connection, { notificationsOn: new Date(), id: request.params.id });
+              dbResult = await updateUser(connection, {
+                notificationsOn: request.body.value.value,
+                id: request.params.id
+              });
               break;
             case 'reactivateUser':
               dbResult = await updateUser(connection, { status: UserStatus.Active, id: request.params.id });
               break;
             case 'updateAdminPermissions':
-              dbResult = await updateUser(connection, { type: request.body.value.value as UserType, id: request.params.id });
+              dbResult = await updateUser(connection, { type: request.body.value.value, id: request.params.id });
           }
           switch (dbResult.tag) {
             case 'valid':

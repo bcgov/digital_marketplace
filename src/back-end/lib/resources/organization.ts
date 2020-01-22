@@ -83,7 +83,7 @@ const resource: Resource = {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           legalName: getString(body, 'legalName'),
-          logoImageFile: getString(body, 'logoImageFile'),
+          logoImageFile: getString(body, 'logoImageFile') || undefined,
           websiteUrl: getString(body, 'websiteUrl'),
           streetAddress1: getString(body, 'streetAddress1'),
           streetAddress2: getString(body, 'streetAddress2'),
@@ -334,13 +334,13 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request): Promise<Validation<DeleteValidatedReqBody, DeleteValidationErrors>> {
+        if (!(await permissions.deleteOrganization(connection, request.session, request.params.id))) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
         const validatedOrganization = await validateOrganizationId(connection, request.params.id);
         if (isValid(validatedOrganization)) {
-          if (!(await permissions.deleteOrganization(connection, request.session, request.params.id))) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
           return validatedOrganization;
         } else {
           return invalid({

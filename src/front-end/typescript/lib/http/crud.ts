@@ -27,13 +27,13 @@ export interface BaseResourceTypes {
   delete: ActionTypes | undefined;
 }
 
-type CrudClientAction<T extends ActionTypes> = () => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+export type CrudClientAction<T extends ActionTypes> = () => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
 
-type CrudClientActionWithBody<T extends ActionWithBodyTypes> = (body: T['request']) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+export type CrudClientActionWithBody<T extends ActionWithBodyTypes> = (body: T['request']) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
 
-type CrudClientActionWithId<T extends ActionTypes> = (id: Id) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+export type CrudClientActionWithId<T extends ActionTypes> = (id: Id) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
 
-type CrudClientActionWithIdAndBody<T extends ActionWithBodyTypes> = (id: Id, body: T['request']) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
+export type CrudClientActionWithIdAndBody<T extends ActionWithBodyTypes> = (id: Id, body: T['request']) => Promise<ResponseValidation<T['validResponse'], T['invalidResponse']>>;
 
 export interface CrudApi<ResourceTypes extends BaseResourceTypes = BaseResourceTypes> {
   create: IfDefined<ResourceTypes['create'], CrudClientActionWithBody<Defined<ResourceTypes['create']>>>;

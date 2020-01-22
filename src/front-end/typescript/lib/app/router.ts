@@ -31,7 +31,85 @@ export function back() {
 
 const router: Router<Route> = {
 
+  // Note(Jesse): @add_new_page_location
+
   routes: [
+
+    {
+      path: '/opportunities/code-with-us/create',
+      makeRoute() {
+        return {
+          tag: 'opportunityCwuCreate',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:id/edit',
+      makeRoute({params}) {
+        return {
+          tag: 'opportunityCwuEdit',
+          value: {
+            id: params.id || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:id',
+      makeRoute({params}) {
+        return {
+          tag: 'opportunityCwuView',
+          value: {
+            id: params.id || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/create',
+      makeRoute({ params }) {
+        return {
+          tag: 'proposalCwuCreate',
+          value: {
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit',
+      makeRoute({params}) {
+        return {
+          tag: 'proposalCwuEdit',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId',
+      makeRoute({ params }) {
+        return {
+          tag: 'proposalCwuView',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/proposals',
+      makeRoute() {
+        return {
+          tag: 'proposalList',
+          value: null
+        };
+      }
+    },
     {
       path: '/organizations',
       makeRoute() {
@@ -166,6 +244,8 @@ const router: Router<Route> = {
     }
   ],
 
+  // Note(Jesse): @add_new_page_location
+
   routeToUrl(route) {
     switch (route.tag) {
       case 'landing':
@@ -192,6 +272,20 @@ const router: Router<Route> = {
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
+      case 'opportunityCwuCreate':
+        return '/opportunities/code-with-us/create';
+      case 'opportunityCwuEdit':
+        return `/opportunities/code-with-us/${route.value.id}/edit`;
+      case 'opportunityCwuView':
+        return `/opportunities/code-with-us/${route.value.id}/view`;
+      case 'proposalCwuCreate':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
+      case 'proposalCwuEdit':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
+      case 'proposalCwuView':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
+      case 'proposalList':
+        return '/proposals';
       case 'notice':
         return (() => {
           switch (route.value.tag) {
