@@ -141,16 +141,16 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return {tag: 'cwuProposalView' as const, value};
         }
       });
-    case 'cwuProposalList':
+    case 'proposalList':
       return await initAppChildPage({
         ...defaultPageInitParams,
-        childStatePath: ['pages', 'cwuProposalList'],
+        childStatePath: ['pages', 'proposalList'],
         childRouteParams: route.value,
         childInit: CwuProposalList.component.init,
         childGetMetadata: CwuProposalList.component.getMetadata,
         childGetModal: CwuProposalList.component.getModal,
         mapChildMsg(value) {
-          return {tag: 'cwuProposalList' as const, value};
+          return {tag: 'proposalList' as const, value};
         }
       });
 
@@ -456,11 +456,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: CwuProposalView.component.getModal,
         childMsg: msg.value
       });
-    case 'cwuProposalList':
+    case 'proposalList':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
-        mapChildMsg: value => ({ tag: 'cwuProposalList' as const, value}),
-        childStatePath: ['pages', 'cwuProposalList'],
+        mapChildMsg: value => ({ tag: 'proposalList' as const, value}),
+        childStatePath: ['pages', 'proposalList'],
         childUpdate: CwuProposalList.component.update,
         childGetMetadata: CwuProposalList.component.getMetadata,
         childGetModal: CwuProposalList.component.getModal,

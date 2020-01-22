@@ -93,7 +93,7 @@ const router: Router<Route> = {
       path: '/proposals',
       makeRoute() {
         return {
-          tag: 'cwuProposalList',
+          tag: 'proposalList',
           value: null
         };
       }
@@ -272,8 +272,8 @@ const router: Router<Route> = {
         return '/proposals/code-with-us/edit';
       case 'cwuProposalView':
         return '/proposals/code-with-us/view';
-      case 'cwuProposalList':
-        return '/proposals/code-with-us';
+      case 'proposalList':
+        return '/proposals';
       case 'notice':
         return (() => {
           switch (route.value.tag) {

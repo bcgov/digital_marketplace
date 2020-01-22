@@ -146,12 +146,12 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.cwuProposalView,
         value => ({tag: 'cwuProposalView', value})
       );
-    case 'cwuProposalList':
+    case 'proposalList':
       return makeViewPageProps(
         props,
         CwuProposalList.component,
-        state => state.pages.cwuProposalList,
-        value => ({tag: 'cwuProposalList', value})
+        state => state.pages.proposalList,
+        value => ({tag: 'proposalList', value})
       );
 
     case 'userList':

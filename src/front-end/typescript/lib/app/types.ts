@@ -46,7 +46,7 @@ export type Route
   | ADT<'cwuProposalCreate',     CwuProposalCreate.RouteParams>
   | ADT<'cwuProposalEdit',       CwuProposalEdit.RouteParams>
   | ADT<'cwuProposalView',       CwuProposalView.RouteParams>
-  | ADT<'cwuProposalList',       CwuProposalList.RouteParams>;
+  | ADT<'proposalList',       CwuProposalList.RouteParams>;
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
   'signUpStepTwo',
@@ -94,7 +94,7 @@ export interface State {
     cwuProposalCreate?: Immutable<CwuProposalCreate.State>;
     cwuProposalEdit?: Immutable<CwuProposalEdit.State>;
     cwuProposalView?: Immutable<CwuProposalView.State>;
-    cwuProposalList?: Immutable<CwuProposalList.State>;
+    proposalList?: Immutable<CwuProposalList.State>;
   };
 }
 
@@ -122,6 +122,6 @@ type InnerMsg
   | ADT<'cwuProposalCreate',     CwuProposalCreate.Msg>
   | ADT<'cwuProposalEdit',       CwuProposalEdit.Msg>
   | ADT<'cwuProposalView',       CwuProposalView.Msg>
-  | ADT<'cwuProposalList',       CwuProposalList.Msg>;
+  | ADT<'proposalList',       CwuProposalList.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;
