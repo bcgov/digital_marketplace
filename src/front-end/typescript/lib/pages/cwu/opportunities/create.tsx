@@ -5,6 +5,7 @@ import * as Date from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
@@ -12,7 +13,7 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
-type TabValues = 'Overview' | 'Description' | 'Details';
+type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
 
 export interface State {
   activeTab: TabValues;
@@ -35,6 +36,8 @@ export interface State {
   submissionInfo: Immutable<ShortText.State>;
   acceptanceCriteria: Immutable<LongText.State>;
   evaluationCriteria: Immutable<LongText.State>;
+
+  // Attachments tab
 }
 
 type InnerMsg
@@ -58,6 +61,7 @@ type InnerMsg
   | ADT<'acceptanceCriteria',  LongText.Msg>
   | ADT<'evaluationCriteria',  LongText.Msg>
 
+  // Attachments tab
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -66,7 +70,7 @@ export type RouteParams = null;
 
 async function defaultState() {
   return {
-    activeTab: 'Overview' as const,
+    activeTab: 'Attachments' as const,
 
     title: immutable(await ShortText.init({
       errors: [],
@@ -194,7 +198,7 @@ async function defaultState() {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
-  userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users be here?
+  userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
   async success() {
     return {
       ...(await defaultState())
@@ -462,7 +466,34 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           dispatch={mapComponentDispatch(dispatch, value => adt('evaluationCriteria' as const, value))} />
       </Col>
 
+    </Row>
+  );
+};
 
+const AttachmentsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <Row>
+      <Col xs='12'>
+
+        <p>
+          Note(Jesse): Regarding the copy, I believe being exhaustive and
+          explicit on which file formats are accepted is better than having an
+          etc.
+        </p>
+        <p>
+          Upload any supporting material for your opportunity here. Accepted file
+          formats are pdf, jpeg, jpg.
+        </p>
+
+        <Link
+          button
+          color='primary'
+          symbol_={leftPlacement(iconLinkSymbol('cog'))}
+        >
+          Add Attachment
+        </Link>
+
+      </Col>
     </Row>
   );
 };
@@ -499,14 +530,19 @@ const view: ComponentView<State, Msg> = (params) => {
       activeView = <DetailsView {...params} /> ;
       break;
     }
+    case 'Attachments': {
+      activeView = <AttachmentsView {...params} /> ;
+      break;
+    }
   }
 
   return (
     <div>
-      <Nav tabs>
+      <Nav tabs className='mb-5'>
         {renderTab(params, 'Overview')}
         {renderTab(params, 'Description')}
         {renderTab(params, 'Details')}
+        {renderTab(params, 'Attachments')}
       </Nav>
       <div>
         {activeView}
