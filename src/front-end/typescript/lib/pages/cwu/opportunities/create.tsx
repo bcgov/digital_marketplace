@@ -536,17 +536,60 @@ const view: ComponentView<State, Msg> = (params) => {
     }
   }
 
+  const saveButtonDisabled = true; // TODO(Jesse): How do we determine this?
   return (
-    <div>
-      <Nav tabs className='mb-5'>
-        {renderTab(params, 'Overview')}
-        {renderTab(params, 'Description')}
-        {renderTab(params, 'Details')}
-        {renderTab(params, 'Attachments')}
-      </Nav>
+    <div className='d-flex flex-column h-100 justify-content-between'>
       <div>
+        <Nav tabs className='mb-5'>
+          {renderTab(params, 'Overview')}
+          {renderTab(params, 'Description')}
+          {renderTab(params, 'Details')}
+          {renderTab(params, 'Attachments')}
+        </Nav>
+
         {activeView}
+    </div>
+
+      <div className='d-flex justify-content-between'>
+        <div>
+          <Link
+            disabled={saveButtonDisabled}
+            button
+            color='secondary'
+            symbol_={leftPlacement(iconLinkSymbol('cog'))}
+          >
+            Save Draft
+          </Link>
+        </div>
+
+        <div>
+          <Link
+            button
+            className='mr-1'
+            symbol_={leftPlacement(iconLinkSymbol('cog'))}
+          >
+            Cancel
+          </Link>
+
+          <Link
+            button
+            className='mr-3'
+            color='secondary'
+            symbol_={leftPlacement(iconLinkSymbol('cog'))}
+          >
+            Prev
+          </Link>
+
+          <Link
+            button
+            color='primary'
+            symbol_={leftPlacement(iconLinkSymbol('cog'))}
+          >
+            Publish
+          </Link>
+        </div>
       </div>
+
     </div>
   );
 };
