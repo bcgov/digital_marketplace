@@ -2,7 +2,7 @@ import { get } from 'immutable';
 import { FilePermissions, SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { parseUserType, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { invalid, isValid, mapValid, valid, validateArray, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { ArrayValidation, invalid, isValid, mapValid, valid, validateArray, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 import { isArray, isString } from 'util';
 
 export function validateAvatarFilename(name: string): Validation<string> {
@@ -23,18 +23,14 @@ export function validateFileName(name: string, validExtensions: string[] = []): 
   }
 }
 
-export function validateFilePermissions(raw: any): Validation<Array<FilePermissions<Id, UserType>>> {
-  if (!isArray(raw)) {
-    return invalid(['File permissions must be provided as an array.']);
-  }
+export function validateFilePermissions(raw: any): ArrayValidation<FilePermissions<Id, UserType>> {
+  raw = isArray(raw) ? raw : [raw];
   const validatedFilePermissions = validateArray(raw, validateFilePermission);
-  if (isValid(validatedFilePermissions)) {
-    // Reduce array of valid permissions into a unique set
-    const uniquePerms = Array.from(new Set(validatedFilePermissions.value.map(v => JSON.stringify(v))))
+  return mapValid(validatedFilePermissions, perms => {
+    return Array
+      .from(new Set(perms.map(v => JSON.stringify(v))))
       .map(v => JSON.parse(v) as FilePermissions<Id, UserType>);
-    return valid(uniquePerms);
-  }
-  return invalid(['Invalid file permission.']);
+  });
 }
 
 export function validateFilePermission(raw: any): Validation<FilePermissions<Id, UserType>> {
