@@ -49,3 +49,8 @@ export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody>
   id?: string[];
   permissions?: string[];
 }
+
+export type DeleteValidationErrors = {
+  id?: string[];
+  permissions?: string[];
+};

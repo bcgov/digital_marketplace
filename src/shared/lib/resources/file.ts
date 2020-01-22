@@ -1,9 +1,8 @@
-import { isArray } from 'lodash';
 import { megabytesToBytes } from 'shared/lib';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, Id } from 'shared/lib/types';
-import { isValid, validateArray } from 'shared/lib/validation';
-import { validateFilePermission } from 'shared/lib/validation/file';
+import { isValid } from 'shared/lib/validation';
+import { validateFilePermissions } from 'shared/lib/validation/file';
 
 export const MAX_MULTIPART_FILES_SIZE = megabytesToBytes(10);
 
@@ -40,17 +39,9 @@ export type FilePermissions<Id, UserType>
  * Returns `null` if the parse fails or no permissions are supplied in the metadata.
  */
 export function parseFilePermissions(raw: any): FileUploadMetadata {
-  if (!isArray(raw)) {
-    return null;
-  }
-
-  // Validate each file permission
-  const validatedFilePermissions = validateArray(raw, validateFilePermission);
+  const validatedFilePermissions = validateFilePermissions(raw);
   if (isValid(validatedFilePermissions)) {
-    // Reduce array of valid permissions into a unique set
-    const uniquePerms = Array.from(new Set(validatedFilePermissions.value.map(v => JSON.stringify(v))))
-      .map(v => JSON.parse(v) as FilePermissions<Id, UserType>);
-    return uniquePerms;
+    return validatedFilePermissions.value;
   }
   return null;
 }

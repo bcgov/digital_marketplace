@@ -5,7 +5,7 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isValid, optionalAsync, valid, validateUUID, Validation } from 'shared/lib/validation';
@@ -21,11 +21,6 @@ export interface ValidatedUpdateRequestBody extends UpdateRequestBody {
 export type ValidatedCreateRequestBody = CreateRequestBody;
 
 type DeleteValidatedReqBody = Organization;
-
-type DeleteValidationErrors = {
-  id?: string[];
-  permissions?: string[];
-};
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -324,13 +319,13 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request): Promise<Validation<DeleteValidatedReqBody, DeleteValidationErrors>> {
+        if (!(await permissions.deleteOrganization(connection, request.session, request.params.id))) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
         const validatedOrganization = await validateOrganizationId(connection, request.params.id);
         if (isValid(validatedOrganization)) {
-          if (!(await permissions.deleteOrganization(connection, request.session, request.params.id))) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
           return validatedOrganization;
         } else {
           return invalid({
