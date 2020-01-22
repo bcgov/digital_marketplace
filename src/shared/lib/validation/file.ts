@@ -23,10 +23,6 @@ export function validateFileName(name: string, validExtensions: string[] = []): 
   }
 }
 
-export function validateFilePath(path: string): Validation<string> {
-  return validateGenericString(path, 'File path');
-}
-
 export function validateFilePermission(raw: any): Validation<FilePermissions<Id, UserType>> {
   switch (get(raw, 'tag')) {
     case 'any':
