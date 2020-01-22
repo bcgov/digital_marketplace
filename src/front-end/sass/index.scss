@@ -4,6 +4,19 @@
 
 // Custom Bootstrap variable overrides.
 
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 1100px,
+  lg: 1400px 
+);
+
+$container-max-widths: (
+  sm: 720px,
+  md: 960px,
+  lg: 1140px
+);
+
 $spacer: 1rem;
 
 $spacers: (
