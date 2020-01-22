@@ -75,7 +75,7 @@ export function makePageMetadata(title: string): PageMetadata {
 }
 
 export function getSignInUrl(userType: UserType, redirectOnSuccess?: string): string   {
-  let result: string = `/auth/sign-in?provider=${userTypeToKeycloakIdentityProvider(userType)}`;
-  if (redirectOnSuccess) { result += `&redirectOnSuccess=${redirectOnSuccess}`; }
+  let result = `/auth/sign-in?provider=${userTypeToKeycloakIdentityProvider(userType)}`;
+  if (redirectOnSuccess) { result += `&redirectOnSuccess=${window.encodeURIComponent(redirectOnSuccess)}`; }
   return result;
 }

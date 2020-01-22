@@ -79,7 +79,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     }
   },
   async fail({dispatch, shared, routeParams}) {
-
     if (!shared.session || !shared.session.user) {
       dispatch(replaceRoute(adt('signIn' as const, {
         redirectOnSuccess: router.routeToUrl(adt('orgEdit', {orgId: routeParams.orgId}))

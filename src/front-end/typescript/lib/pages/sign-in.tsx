@@ -15,11 +15,9 @@ export interface State {
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export interface RouteParams {
-  redirectOnSuccess?: string;
-}
+export type RouteParams = State;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({routeParams}) => ({redirectOnSuccess: routeParams.redirectOnSuccess});
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams }) => routeParams;
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
@@ -45,8 +43,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         redirectOnSuccess={state.redirectOnSuccess}
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
-        buttonText='Sign In Using IDIR'
-      />
+        buttonText='Sign In Using IDIR' />
     </div>
   );
 };
