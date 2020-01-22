@@ -1,4 +1,4 @@
-import { CrudApi, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
@@ -202,16 +202,29 @@ const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: un
   }
 });
 
-export const files: CrudApi<FileResourceTypes> = {
-  ...fileCrudApi,
-  create: body => {
+function makeCreateFileAction(routeNamespace: string): CrudClientActionWithBody<FileResourceTypes['create']>  {
+  return body => {
     const multipartBody = new FormData();
     multipartBody.append('name', body.name);
     multipartBody.append('file', body.file);
     multipartBody.append('metadata', JSON.stringify(body.metadata));
     return makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
-      routeNamespace: FILES_ROUTE_NAMESPACE,
+      routeNamespace,
       transformValid: rawFileRecordToFileRecord
     })(multipartBody);
-  }
+  };
+}
+
+export const files: CrudApi<FileResourceTypes> = {
+  ...fileCrudApi,
+  create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
+};
+
+type AvatarResourceTypes
+  = Pick<FileResourceTypes, 'create'>
+  & Omit<UndefinedResourceTypes, 'create'>;
+
+export const avatars: CrudApi<AvatarResourceTypes> = {
+  ...undefinedActions,
+  create: makeCreateFileAction(apiNamespace('avatars'))
 };

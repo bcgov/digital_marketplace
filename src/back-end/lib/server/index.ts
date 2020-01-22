@@ -38,9 +38,17 @@ export function makeTextRequestBody(value: string): TextRequestBody {
   };
 }
 
-export type JsonRequestBody = ADT<'json', any>;
+type JsonValue
+  = number
+  | string
+  | boolean
+  | null
+  | JsonValue[]
+  | { [property: string]: JsonValue };
 
-export function makeJsonRequestBody(value: any): JsonRequestBody {
+export type JsonRequestBody = ADT<'json', JsonValue>;
+
+export function makeJsonRequestBody(value: JsonValue): JsonRequestBody {
   return {
     tag: 'json',
     value

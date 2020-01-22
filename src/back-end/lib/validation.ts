@@ -4,36 +4,23 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
-
-// Validates a v4 UUID
-export function validateUUID(id: Id): Validation<Id> {
-  if (!id.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
-    return invalid(['Invalid identifier provided.']);
-  } else {
-    return valid(id);
-  }
-}
+import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 
 export async function validateUserId(connection: Connection, userId: Id): Promise<Validation<User>> {
-  try {
-    // Validate the provided id
-    const validatedId = validateUUID(userId);
-    if (validatedId.tag === 'invalid') {
-      return validatedId;
-    }
-    const user = await readOneUser(connection, userId);
-    if (user) {
-      return valid(user);
-    } else {
-      return invalid(['This user cannot be found.']);
-    }
-  } catch (e) {
-    return invalid(['Please select a valid user.']);
+  // Validate the provided id
+  const validatedId = validateUUID(userId);
+  if (isInvalid(validatedId)) {
+    return validatedId;
+  }
+  const dbResult = await readOneUser(connection, userId);
+  switch (dbResult.tag) {
+    case 'valid':
+      return dbResult.value ? valid(dbResult.value) : invalid(['This user cannot be found.']);
+    case 'invalid':
+      return invalid(['Please select a valid user']);
   }
 }
 
-//TODO validate file extensions: jpg,jpeg,png
 export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
     // Validate the provided id
@@ -52,21 +39,18 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
   }
 }
 
-export async function validateOrganizationId(connection: Connection, orgId: Id): Promise<Validation<Organization>> {
+export async function validateOrganizationId(connection: Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(orgId);
     if (validatedId.tag === 'invalid') {
       return validatedId;
     }
-    const organization = await readOneOrganization(connection, orgId);
+    const organization = await readOneOrganization(connection, orgId, allowInactive);
     if (!organization) {
       return invalid(['The specified organization was not found.']);
-    } else if (!organization.active) {
-      return invalid(['The specified organization is inactive.']);
-    } else {
-      return valid(organization);
     }
+    return valid(organization);
   } catch (e) {
     return invalid(['Please select a valid organization.']);
   }
@@ -90,4 +74,8 @@ export async function validateAffiliationId(connection: Connection, affiliationI
   } catch (e) {
     return invalid(['Please select a valid affiliation.']);
   }
+}
+
+export function validateFilePath(path: string): Validation<string> {
+  return validateGenericString(path, 'File path');
 }

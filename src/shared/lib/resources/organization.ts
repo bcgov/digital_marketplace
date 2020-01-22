@@ -12,18 +12,20 @@ export interface Organization {
   logoImageFile?: FileRecord;
   legalName: string;
   streetAddress1: string;
-  streetAddress2?: string;
+  streetAddress2: string;
   city: string;
   region: string;
   mailCode: string;
   country: string;
   contactName: string;
   contactEmail: string;
-  contactTitle?: string;
-  contactPhone?: string;
-  websiteUrl?: string;
+  contactTitle: string;
+  contactPhone: string;
+  websiteUrl: string;
   active: boolean;
   owner: OrganizationOwner;
+  deactivatedOn?: Date;
+  deactivatedBy?: Id;
 }
 
 export interface OrganizationSlim {
@@ -41,9 +43,14 @@ export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody>
   permissions?: string[];
 }
 
-export type UpdateRequestBody = Partial<CreateRequestBody>;
+export type UpdateRequestBody = CreateRequestBody;
 
 export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody> {
   id?: string[];
   permissions?: string[];
 }
+
+export type DeleteValidationErrors = {
+  id?: string[];
+  permissions?: string[];
+};
