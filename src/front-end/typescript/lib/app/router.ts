@@ -46,19 +46,23 @@ const router: Router<Route> = {
     },
     {
       path: '/opportunities/code-with-us/:id/edit',
-      makeRoute() {
+      makeRoute({params}) {
         return {
           tag: 'cwuOpportunityEdit',
-          value: null
+          value: {
+            id: params.id || ''
+          }
         };
       }
     },
     {
       path: '/opportunities/code-with-us/:id',
-      makeRoute() {
+      makeRoute({params}) {
         return {
           tag: 'cwuOpportunityView',
-          value: null
+          value: {
+            id: params.id || ''
+          }
         };
       }
     },
@@ -73,19 +77,23 @@ const router: Router<Route> = {
     },
     {
       path: '/proposals/code-with-us/:id/edit',
-      makeRoute() {
+      makeRoute({params}) {
         return {
           tag: 'cwuProposalEdit',
-          value: null
+          value: {
+            id: params.id || ''
+          }
         };
       }
     },
     {
       path: '/proposals/code-with-us/:id',
-      makeRoute() {
+      makeRoute({params}) {
         return {
           tag: 'cwuProposalView',
-          value: null
+          value: {
+            id: params.id || ''
+          }
         };
       }
     },
@@ -261,17 +269,17 @@ const router: Router<Route> = {
       case 'orgCreate':
         return '/organizations/create';
       case 'cwuOpportunityCreate':
-        return '/code-with-us/opportunities/create';
+        return '/opportunities/code-with-us/create';
       case 'cwuOpportunityEdit':
-        return '/code-with-us/opportunities/edit';
+        return `/opportunities/code-with-us/${route.value.id}/edit`;
       case 'cwuOpportunityView':
-        return '/code-with-us/opportunities/view';
+        return `/opportunities/code-with-us/${route.value.id}/view`;
       case 'cwuProposalCreate':
         return '/proposals/code-with-us/create';
       case 'cwuProposalEdit':
-        return '/proposals/code-with-us/edit';
+        return `/proposals/code-with-us/${route.value.id}/edit`;
       case 'cwuProposalView':
-        return '/proposals/code-with-us/view';
+        return `/proposals/code-with-us/${route.value.id}/view`;
       case 'proposalList':
         return '/proposals';
       case 'notice':
