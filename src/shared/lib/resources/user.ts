@@ -38,12 +38,12 @@ export interface User {
   name: string;
   email: string;
   jobTitle: string;
-  avatarImageFile?: FileRecord;
-  notificationsOn?: Date;
-  acceptedTerms?: Date;
+  avatarImageFile: FileRecord | null;
+  notificationsOn: Date | null;
+  acceptedTerms: Date | null;
   idpUsername: string;
-  deactivatedOn?: Date;
-  deactivatedBy?: Id;
+  deactivatedOn: Date | null;
+  deactivatedBy: Id | null;
 }
 
 export function usersAreEquivalent(a: User, b: User): boolean {
@@ -62,7 +62,7 @@ export interface UpdateProfileRequestBody {
   name: string;
   email: string;
   jobTitle: string;
-  avatarImageFile: Id;
+  avatarImageFile?: Id;
 }
 
 export type UpdateRequestBody
@@ -120,18 +120,6 @@ export function adminPermissionsToUserType(admin: boolean): UserType {
   return admin ? UserType.Admin : UserType.Government;
 }
 
-export function parseNotificationsFlag(notificationsOn: boolean): Date | null {
+export function notificationsBooleanToNotificationsOn(notificationsOn: boolean): Date | null {
   return notificationsOn ? new Date() : null;
-}
-
-export function emptyUser(): User {
-  return {
-    id: '',
-    type: UserType.Government,
-    status: UserStatus.Active,
-    name: '',
-    email: '',
-    jobTitle: '',
-    idpUsername: ''
-  };
 }

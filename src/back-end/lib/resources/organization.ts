@@ -79,7 +79,7 @@ const resource: Resource = {
         const body = request.body.tag === 'json' ? request.body.value : {};
         return {
           legalName: getString(body, 'legalName'),
-          logoImageFile: getString(body, 'logoImageFile'),
+          logoImageFile: getString(body, 'logoImageFile') || undefined,
           websiteUrl: getString(body, 'websiteUrl'),
           streetAddress1: getString(body, 'streetAddress1'),
           streetAddress2: getString(body, 'streetAddress2'),

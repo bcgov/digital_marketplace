@@ -54,7 +54,7 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export interface Values extends Omit<Required<CreateRequestBody>, 'logoImageFile'> {
+export interface Values extends Omit<Required<CreateRequestBody>, 'logoImageFile' | 'deactivatedOn' | 'deactivatedBy'> {
   newLogoImage?: File;
 }
 
