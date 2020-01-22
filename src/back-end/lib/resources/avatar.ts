@@ -6,7 +6,7 @@ import FileResource, { CreateRequestBody, ValidatedCreateRequestBody } from 'bac
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { CreateValidationErrors } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
-import { getInvalidValue, invalid, isValid, valid, Validation } from 'shared/lib/validation';
+import { getInvalidValue, invalid, isValid, valid } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
 
 type Resource = crud.Resource<
@@ -29,25 +29,19 @@ type Resource = crud.Resource<
 const resource: Resource = {
   routeNamespace: 'avatars',
 
-  readOne: FileResource.readOne,
   create(connection) {
     const fileCreateObj = FileResource.create!(connection);
     return {
-      parseRequestBody: fileCreateObj.parseRequestBody,
-      async validateRequestBody(request): Promise<Validation<ValidatedCreateRequestBody, CreateValidationErrors>> {
+      ...fileCreateObj,
+      async validateRequestBody(request) {
         // Perform regular file validation
         const validatedRequestBody = await fileCreateObj.validateRequestBody(request);
         // Then perform avatar-specific validation
         if (isValid(validatedRequestBody)) {
-          if (!request.body) {
-            return invalid({
-              requestBodyType: ['You need to submit a valid multipart request to create a file']
-            });
-          }
-          const { name } = request.body;
-          const validatedFileName = fileValidation.validateFileName(name, ['png', 'jpg', 'jpeg']);
+          const { name } = validatedRequestBody.value;
+          const validatedFileName = fileValidation.validateAvatarFilename(name);
           if (isValid(validatedFileName)) {
-            if (!request.session.user || !permissions.createAvatar(request.session, request.session.user.id)) {
+            if (!request.session.user) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -63,8 +57,7 @@ const resource: Resource = {
           }
         }
         return validatedRequestBody;
-      },
-      respond: fileCreateObj.respond
+      }
     };
   }
 };

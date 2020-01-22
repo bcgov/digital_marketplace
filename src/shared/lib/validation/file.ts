@@ -5,6 +5,10 @@ import { adt, Id } from 'shared/lib/types';
 import { invalid, isValid, mapValid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 import { isString } from 'util';
 
+export function validateAvatarFilename(name: string): Validation<string> {
+  return validateFileName(name, ['png', 'jpg', 'jpeg']);
+}
+
 export function validateFileName(name: string, validExtensions: string[] = []): Validation<string> {
   const validatedName = validateGenericString(name, 'File name');
   if (isValid(validatedName) && validExtensions.length > 0) {
