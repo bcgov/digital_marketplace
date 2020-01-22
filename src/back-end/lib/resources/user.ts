@@ -5,27 +5,27 @@ import { signOut } from 'back-end/lib/resources/session';
 import { Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateUserId } from 'back-end/lib/validation';
+import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { adminPermissionsToUserType, parseNotificationsFlag, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { DeleteValidationErrors } from 'shared/lib/resources/user';
+import { adminPermissionsToUserType, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid } from 'shared/lib/validation';
+import { DatabaseValidation } from 'shared/lib/validation/db';
 import * as userValidation from 'shared/lib/validation/user';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-type ValidatedUpdateRequestBody = SharedUpdateRequestBody | ADT<'updateNotifications', Date | null> | ADT<'updateAdminPermissions', UserType>;
-
-type ValidatedUpdateProfileRequestBody = UpdateProfileRequestBody;
+export type ValidatedUpdateRequestBody
+  = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'acceptTerms'>
+  | ADT<'updateNotifications', Date | null>
+  | ADT<'reactivateUser'>
+  | ADT<'updateAdminPermissions', UserType>;
 
 type DeleteValidatedReqBody = User;
-
-type DeleteValidationErrors
-  = ADT<'userNotFound', string[]>
-  | ADT<'userNotActive', string[]>
-  | ADT<'permissions', string[]>;
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -53,8 +53,12 @@ const resource: Resource = {
       if (!permissions.readManyUsers(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      const users = await readManyUsers(connection);
-      return respond(200, users);
+      const dbResult = await readManyUsers(connection);
+      if (isValid(dbResult)) {
+        return respond(200, dbResult.value);
+      } else {
+        return respond(503, ['Database error']);
+      }
     });
   },
 
@@ -83,7 +87,8 @@ const resource: Resource = {
             return adt('updateProfile', {
               name: getString(value, 'name'),
               email: getString(value, 'email'),
-              jobTitle: getString(value, 'jobTitle')
+              jobTitle: getString(value, 'jobTitle'),
+              avatarImageFile: getString(value, 'avatarImageFile') || undefined
             });
 
           case 'acceptTerms':
@@ -118,25 +123,28 @@ const resource: Resource = {
         }
         switch (request.body.tag) {
           case 'updateProfile':
-            const { name, email, jobTitle } = request.body.value;
+            const { name, email, jobTitle, avatarImageFile } = request.body.value;
             const validatedName = userValidation.validateName(name);
             const validatedEmail = userValidation.validateEmail(email);
             const validatedJobTitle = userValidation.validateJobTitle(jobTitle);
+            const validatedAvatarImageFile = await optionalAsync(avatarImageFile, v => validateImageFile(connection, v));
 
-            if (allValid([validatedName, validatedEmail, validatedJobTitle])) {
+            if (allValid([validatedName, validatedEmail, validatedJobTitle, validatedAvatarImageFile])) {
               if (!permissions.updateUser(request.session, request.params.id)) {
                 return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
               }
               return valid(adt('updateProfile', {
                 name: validatedName.value,
                 email: validatedEmail.value,
-                jobTitle: validatedJobTitle.value
-              } as ValidatedUpdateProfileRequestBody));
+                jobTitle: validatedJobTitle.value,
+                avatarImageFile: isValid(validatedAvatarImageFile) && validatedAvatarImageFile.value && validatedAvatarImageFile.value.id
+              } as UpdateProfileRequestBody));
             } else {
               return invalid(adt('updateProfile', {
                 name: getInvalidValue(validatedName, undefined),
                 email: getInvalidValue(validatedEmail, undefined),
-                jobTitle: getInvalidValue(validatedJobTitle, undefined)
+                jobTitle: getInvalidValue(validatedJobTitle, undefined),
+                avatarImageFile: getInvalidValue(validatedAvatarImageFile, undefined)
               }));
             }
 
@@ -150,11 +158,10 @@ const resource: Resource = {
             return valid(adt('acceptTerms'));
 
           case 'updateNotifications':
-            const notifications = parseNotificationsFlag(request.body.value);
             if (!permissions.updateUser(request.session, request.params.id)) {
               return invalid(adt('permissions', [permissions.ERROR_MESSAGE]));
             }
-            return valid(adt('updateNotifications', notifications));
+            return valid(adt('updateNotifications', notificationsBooleanToNotificationsOn(request.body.value)));
 
           case 'reactivateUser':
             if (!permissions.reactivateUser(request.session, request.params.id) || validatedUser.value.status !== UserStatus.InactiveByAdmin) {
@@ -188,24 +195,32 @@ const resource: Resource = {
                 return respond(400, request.body.value);
             }
         } else {
-          let updatedUser: User;
+          let dbResult: DatabaseValidation<User>;
           switch (request.body.value.tag) {
             case 'updateProfile':
-              updatedUser = await updateUser(connection, {...request.body.value.value, id: request.params.id });
+              dbResult = await updateUser(connection, {...request.body.value.value, id: request.params.id });
               break;
             case 'acceptTerms':
-              updatedUser = await updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
+              dbResult = await updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
               break;
             case 'updateNotifications':
-              updatedUser = await updateUser(connection, { notificationsOn: new Date(), id: request.params.id });
+              dbResult = await updateUser(connection, {
+                notificationsOn: request.body.value.value,
+                id: request.params.id
+              });
               break;
             case 'reactivateUser':
-              updatedUser = await updateUser(connection, { status: UserStatus.Active, id: request.params.id });
+              dbResult = await updateUser(connection, { status: UserStatus.Active, id: request.params.id });
               break;
             case 'updateAdminPermissions':
-              updatedUser = await updateUser(connection, { type: request.body.value.value as UserType, id: request.params.id });
+              dbResult = await updateUser(connection, { type: request.body.value.value, id: request.params.id });
           }
-          return respond(200, updatedUser);
+          switch (dbResult.tag) {
+            case 'valid':
+              return respond(200, dbResult.value);
+            case 'invalid':
+              return respond(503, dbResult.value);
+          }
         }
       }
     };
@@ -227,38 +242,46 @@ const resource: Resource = {
         return valid(validatedUser.value);
       },
       async respond(request): Promise<Response<JsonResponseBody<User | DeleteValidationErrors>, Session>> {
-        const respond = (code: number, body: User | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (request.body.tag === 'invalid') {
+        const respond = (code: number, session: Session, body: User | DeleteValidationErrors) => basicResponse(code, session, makeJsonResponseBody(body));
+        if (isInvalid(request.body)) {
           switch (request.body.value.tag) {
             case 'userNotFound':
-              return respond(404, request.body.value);
-            case 'userNotActive':
-              return respond(400, request.body.value);
+              return respond(404, request.session, request.body.value);
             case 'permissions':
-              return respond(401, request.body.value);
+              return respond(401, request.session, request.body.value);
+            default:
+              return respond(400, request.session, request.body.value);
           }
         } else {
           // Track the date the user was made inactive, and the user id of the user that made them inactive
           const isOwnAccount = permissions.isOwnAccount(request.session, request.params.id);
           const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
           const deactivatingUserId = request.session.user ? request.session.user.id : undefined;
-          const updatedUser = await updateUser(connection, {
+          const dbResult = await updateUser(connection, {
             id: request.params.id,
             status,
             deactivatedOn: new Date(),
             deactivatedBy: deactivatingUserId
           });
-          // Sign the user out of the current session if they are deactivating their own account.
-          let session = request.session;
-          if (isOwnAccount) {
-            const result = await signOut(connection, session);
-            if (result.tag === 'invalid') {
-              session = await createAnonymousSession(connection);
-            } else {
-              session = result.value;
-            }
+
+          switch (dbResult.tag) {
+            case 'valid':
+              // Sign the user out of the current session if they are deactivating their own account.
+              let session = request.session;
+              if (isOwnAccount) {
+                const result = await signOut(connection, session);
+                if (isInvalid(result)) {
+                  const dbResult = await createAnonymousSession(connection);
+                  session = isValid(dbResult) ? getValidValue(dbResult, session) : session;
+                } else {
+                  session = result.value;
+                }
+              }
+              return respond(200, session, dbResult.value);
+
+            case 'invalid':
+              return respond(503, request.session, dbResult.value);
           }
-          return basicResponse(200, session, makeJsonResponseBody(updatedUser));
         }
       }
     };

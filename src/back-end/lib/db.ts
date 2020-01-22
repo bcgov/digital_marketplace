@@ -9,11 +9,15 @@ import { FileBlob, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { adt, Id } from 'shared/lib/types';
+import { invalid, isValid, valid } from 'shared/lib/validation';
+import { DatabaseValidation } from 'shared/lib/validation/db';
 
-export type Connection = Knex<any, any>;
+export type Connection = Knex;
 
-export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms'>): Promise<User> {
+const createDatabaseError = () => adt('databaseError' as const);
+
+export async function createUser(connection: Connection, user: Omit<User, 'id' | 'notificationsOn' | 'acceptedTerms' | 'deactivatedOn' | 'deactivatedBy'>): Promise<User> {
   const now = new Date();
   const [result] = await connection('users')
     .insert({
@@ -28,64 +32,72 @@ export async function createUser(connection: Connection, user: Omit<User, 'id' |
   return await rawUserToUser(connection, result);
 }
 
-export async function updateUser(connection: Connection, userInfo: Partial<Omit<User, 'avatarImageFile'> & { avatarImageFile: Id }>): Promise<User> {
+type UpdateUserParams = Omit<Partial<User>, 'avatarImageFile'> & { id: Id, avatarImageFile?: Id };
+
+export async function updateUser(connection: Connection, userInfo: UpdateUserParams): Promise<DatabaseValidation<User>> {
   const now = new Date();
-  const [result] = await connection('users')
+  try {
+    const [result] = await connection<RawUserToUserParams>('users')
     .where({ id: userInfo.id })
     .update({
       ...userInfo,
       updatedAt: now
-    }, ['*']);
-  if (!result) {
-    throw new Error('unable to update user');
+    } as UpdateUserParams, '*');
+    if (!result) {
+      throw new Error('unable to update user');
+    }
+    return valid(await rawUserToUser(connection, result));
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return await rawUserToUser(connection, result);
 }
 
-export async function readOneUser(connection: Connection, id: Id): Promise<User | null> {
-  const result = await connection('users')
-    .where({ id })
-    .first();
-  return result ? await rawUserToUser(connection, result) : null;
+export async function readOneUser(connection: Connection, id: Id): Promise<DatabaseValidation<User | null>> {
+  try {
+    const result = await connection<RawUserToUserParams>('users')
+      .where({ id })
+      .first();
+    return valid(result ? await rawUserToUser(connection, result) : null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
-export async function readManyUsers(connection: Connection): Promise<User[]> {
-  const results = await connection('users').select();
-  return Promise.all(results.map(async raw => await rawUserToUser(connection, raw)));
+export async function readManyUsers(connection: Connection): Promise<DatabaseValidation<User[]>> {
+  try {
+    const results = await connection<RawUserToUserParams>('users').select();
+    return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 interface RawUserToUserParams extends Omit<User, 'avatarImageFile'> {
-  avatarImageFile: Id;
+  avatarImageFile: Id | null;
 }
 
 export async function rawUserToUser(connection: Connection, params: RawUserToUserParams): Promise<User> {
   const { avatarImageFile: fileId, ...restOfRawUser } = params;
-  if (fileId) {
-    const avatarImageFile = await readOneFileById(connection, fileId);
-    return {
-      ...restOfRawUser,
-      avatarImageFile
-    };
-  } else {
-    return restOfRawUser;
-  }
+  const avatarImageFile = fileId && await readOneFileById(connection, fileId) || null;
+  return {
+    ...restOfRawUser,
+    avatarImageFile
+  };
 }
 
-export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<User | null> {
-  let result: User;
+export async function findOneUserByTypeAndUsername(connection: Connection, type: UserType, idpUsername: string): Promise<DatabaseValidation<User | null>> {
+  try {
+    let query = connection('users')
+      .where({ type, idpUsername });
 
-  // If Government, we want to search on Admin types as well.
-  if (type === UserType.Government) {
-    result = await connection('users')
-      .where({ type, idpUsername })
-      .orWhere({ type: UserType.Admin, idpUsername })
-      .first();
-  } else {
-    result = await connection('users')
-      .where ({type, idpUsername })
-      .first();
+    if (type === UserType.Government) {
+      query = query.orWhere({ type: UserType.Admin });
+    }
+    const result = await query.first();
+    return valid(result ? result : null);
+  } catch (exception) {
+    return invalid(createDatabaseError());
   }
-  return result ? result : null;
 }
 
 interface RawSessionToSessionParams {
@@ -100,43 +112,52 @@ async function rawSessionToSession(connection: Connection, params: RawSessionToS
     accessToken: params.accessToken
   };
   if (params.user) {
-    const user = await readOneUser(connection, params.user);
-    if (user) {
+    const dbResult = await readOneUser(connection, params.user);
+    if (isValid(dbResult) && dbResult.value) {
       return {
         ...session,
-        user
+        user: dbResult.value
       };
     }
   }
   return session;
 }
 
-export async function createAnonymousSession(connection: Connection): Promise<Session> {
+export async function createAnonymousSession(connection: Connection): Promise<DatabaseValidation<Session>> {
   const now = new Date();
-  const [result] = await connection('sessions')
+  try {
+    const result = await connection<Session>('sessions')
     .insert({
       id: generateUuid(),
       createdAt: now,
       updatedAt: now
-    }, ['*']);
-  if (!result) {
-    throw new Error('unable to create anonymous session');
+    } as Session, ['*']);
+    if (!result || result.length === 0) {
+      throw new Error('unable to create anonymous session');
+    }
+    return valid(await rawSessionToSession(connection, {
+      id: result[0].id
+    }));
+  } catch (exception) {
+    return invalid(adt('databaseError' as const));
   }
-  return await rawSessionToSession(connection, {
-    id: result.id
-  });
 }
 
-export async function readOneSession(connection: Connection, id: Id): Promise<Session> {
-  const result = await connection('sessions')
-    .where({ id })
-    .first();
-  if (!result) { return await createAnonymousSession(connection); }
-  return await rawSessionToSession(connection, {
-    id: result.id,
-    accessToken: result.accessToken,
-    user: result.user
-  });
+export async function readOneSession(connection: Connection, id: Id): Promise<DatabaseValidation<Session>> {
+  try {
+    const result = await connection<RawSessionToSessionParams>('sessions')
+      .where({ id })
+      .first();
+
+    if (!result) { return await createAnonymousSession(connection); }
+    return valid(await rawSessionToSession(connection, {
+      id: result.id,
+      accessToken: result.accessToken,
+      user: result.user
+    }));
+  } catch (exception) {
+    return invalid(createDatabaseError());
+  }
 }
 
 export async function updateSession(connection: Connection, session: Session): Promise<Session> {
@@ -164,16 +185,17 @@ export async function deleteSession(connection: Connection, id: Id): Promise<nul
 }
 
 interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
-  logoImageFile?: Id;
+  logoImageFile: Id;
   ownerId: Id;
   ownerName: string;
 }
 
 export async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
   const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  const fetchedLogoFile = logoImageFile && await readOneFileById(connection, logoImageFile) || undefined;
   return {
     ...restOfRawOrg,
-    logoImageFile: logoImageFile ? await readOneFileById(connection, logoImageFile) : undefined,
+    logoImageFile: fetchedLogoFile,
     owner: {
       id: ownerId,
       name: ownerName
@@ -189,9 +211,10 @@ interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | '
 
 export async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
   const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  const fetchedLogoFile = logoImageFile && await readOneFileById(connection, logoImageFile) || undefined;
   return {
     ...restOfRawOrg,
-    logoImageFile: logoImageFile ? await readOneFileById(connection, logoImageFile) : undefined,
+    logoImageFile: fetchedLogoFile,
     owner: ownerId && ownerName
       ? { id: ownerId, name: ownerName }
       : undefined
@@ -261,7 +284,7 @@ export async function createOrganization(connection: Connection, user: Id, organ
   return await readOneOrganization(connection, result.id);
 }
 
-export async function updateOrganization(connection: Connection, organization: ValidatedOrgUpdateRequestBody): Promise<Organization> {
+export async function updateOrganization(connection: Connection, organization: Partial<ValidatedOrgUpdateRequestBody>): Promise<Organization> {
   const now = new Date();
   const [result] = await connection('organizations')
     .where({
@@ -465,8 +488,8 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
   return result ? result.length : 0;
 }
 
-export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord> {
-  const result = await connection('files')
+export async function readOneFileById(connection: Connection, id: Id): Promise<FileRecord | null> {
+  const result = await connection<FileRecord>('files')
     .where({ id })
     .select(['name', 'id', 'createdAt', 'fileBlob'])
     .first();

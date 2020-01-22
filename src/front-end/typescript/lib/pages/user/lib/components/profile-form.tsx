@@ -234,6 +234,7 @@ export const view: View<Props> = props => {
 interface PersistParams {
   state: Immutable<State>;
   userId: Id;
+  existingAvatarImageFile?: Id;
   acceptedTerms?: boolean;
   notificationsOn?: boolean;
 }
@@ -241,11 +242,12 @@ interface PersistParams {
 type PersistReturnValue = Validation<[Immutable<State>, User], Immutable<State>>;
 
 export async function persist(params: PersistParams): Promise<PersistReturnValue> {
-  const { state, acceptedTerms, notificationsOn, userId } = params;
+  const { state, existingAvatarImageFile, acceptedTerms, notificationsOn, userId } = params;
   const values = getValues(state);
+  let avatarImageFile: Id | undefined = existingAvatarImageFile;
   // Update avatar image.
   if (values.newAvatarImage) {
-    const fileResult = await api.files.create({
+    const fileResult = await api.avatars.create({
       name: values.newAvatarImage.name,
       file: values.newAvatarImage,
       metadata: [adt('any')]
@@ -255,6 +257,7 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
         newAvatarImage: ['Please select a different avatar image.']
       }));
     }
+    avatarImageFile = fileResult.value.id;
   }
   // Accept terms.
   if (acceptedTerms === true) {
@@ -270,7 +273,8 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
   const result = await api.users.update(userId, adt('updateProfile', {
     name: values.name,
     email: values.email,
-    jobTitle: values.jobTitle
+    jobTitle: values.jobTitle,
+    avatarImageFile
   }));
   switch (result.tag) {
     case 'invalid':

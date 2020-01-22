@@ -1,6 +1,7 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
+import { DatabaseError } from 'shared/lib/validation/db';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
 
@@ -37,12 +38,12 @@ export interface User {
   name: string;
   email: string;
   jobTitle: string;
-  avatarImageFile?: FileRecord;
-  notificationsOn?: Date;
-  acceptedTerms?: Date;
+  avatarImageFile: FileRecord | null;
+  notificationsOn: Date | null;
+  acceptedTerms: Date | null;
   idpUsername: string;
-  deactivatedOn?: Date;
-  deactivatedBy?: Id;
+  deactivatedOn: Date | null;
+  deactivatedBy: Id | null;
 }
 
 export function usersAreEquivalent(a: User, b: User): boolean {
@@ -61,6 +62,7 @@ export interface UpdateProfileRequestBody {
   name: string;
   email: string;
   jobTitle: string;
+  avatarImageFile?: Id;
 }
 
 export type UpdateRequestBody
@@ -79,7 +81,14 @@ export type UpdateValidationErrors
   | ADT<'updateAdminPermissions', string[]>
   | ADT<'parseFailure'>
   | ADT<'permissions', string[]>
-  | ADT<'userNotFound', string[]>;
+  | ADT<'userNotFound', string[]>
+  | DatabaseError;
+
+export type DeleteValidationErrors
+  = ADT<'userNotFound', string[]>
+  | ADT<'userNotActive', string[]>
+  | ADT<'permissions', string[]>
+  | DatabaseError;
 
 export function parseUserStatus(raw: string): UserStatus | null {
   switch (raw) {
@@ -111,18 +120,6 @@ export function adminPermissionsToUserType(admin: boolean): UserType {
   return admin ? UserType.Admin : UserType.Government;
 }
 
-export function parseNotificationsFlag(notificationsOn: boolean): Date | null {
+export function notificationsBooleanToNotificationsOn(notificationsOn: boolean): Date | null {
   return notificationsOn ? new Date() : null;
-}
-
-export function emptyUser(): User {
-  return {
-    id: '',
-    type: UserType.Government,
-    status: UserStatus.Active,
-    name: '',
-    email: '',
-    jobTitle: '',
-    idpUsername: ''
-  };
 }

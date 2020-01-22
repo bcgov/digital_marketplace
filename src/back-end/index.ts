@@ -6,6 +6,7 @@ import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import basicAuth from 'back-end/lib/map-routes/basic-auth';
 import affiliationResource from 'back-end/lib/resources/affiliation';
+import avatarResource from 'back-end/lib/resources/avatar';
 import fileResource from 'back-end/lib/resources/file';
 import organizationResource from 'back-end/lib/resources/organization';
 import sessionResource from 'back-end/lib/resources/session';
@@ -19,8 +20,9 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
-import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions, parseUserType } from 'shared/lib/resources/file';
+import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
 import { emptySession, Session } from 'shared/lib/resources/session';
+import { isValid } from 'shared/lib/validation';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 
@@ -53,6 +55,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
     affiliationResource,
+    avatarResource,
     fileResource,
     organizationResource,
     sessionResource,
@@ -131,9 +134,19 @@ async function start() {
       }
       try {
         if (!id) { throw new Error('session ID is undefined'); }
-        return await readOneSession(connection, id);
+        const dbResult = await readOneSession(connection, id);
+        if (isValid(dbResult)) {
+          return dbResult.value;
+        } else {
+          throw new Error();
+        }
       } catch (e) {
-        return await createAnonymousSession(connection);
+        const dbResult = await createAnonymousSession(connection);
+        if (isValid(dbResult)) {
+          return dbResult.value;
+        } else {
+          throw new Error();
+        }
       }
     },
     sessionToSessionId: ({ id }) => id,
@@ -141,7 +154,7 @@ async function start() {
     port: SERVER_PORT,
     maxMultipartFilesSize: MAX_MULTIPART_FILES_SIZE,
     parseFileUploadMetadata(raw) {
-      return parseFilePermissions(raw, parseUserType);
+      return parseFilePermissions(raw);
     }
   });
   logger.info('server started', { host: SERVER_HOST, port: String(SERVER_PORT) });
