@@ -33,7 +33,7 @@ export function isVendor(session: Session): boolean {
 }
 
 export function isAdmin(session: Session): boolean {
-  return isUser(session) && session.user!.type === UserType.Admin;
+  return !!session.user && session.user.type === UserType.Admin;
 }
 
 // Users.
@@ -51,7 +51,19 @@ export function updateUser(session: Session, id: string): boolean {
 }
 
 export function deleteUser(session: Session, id: string): boolean {
-  return isOwnAccount(session, id) || (!!session.user && session.user.type === UserType.Admin);
+  return isOwnAccount(session, id) || isAdmin(session);
+}
+
+export function acceptTerms(session: Session, id: string): boolean {
+  return isOwnAccount(session, id);
+}
+
+export function reactivateUser(session: Session, id: string): boolean {
+  return isAdmin(session) && !isOwnAccount(session, id);
+}
+
+export function updateAdminStatus(session: Session): boolean {
+  return isAdmin(session);
 }
 
 // Sessions.
@@ -74,21 +86,21 @@ export async function readOneOrganization(connection: Connection, session: Sessi
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 export async function updateOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 export async function deleteOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 // Affiliations.
@@ -99,7 +111,7 @@ export function readManyAffiliations(session: Session): boolean {
 
 export function createAffiliation(session: Session, userId: string): boolean {
   // New affiliations can be created by vendors for themselves, or by admins
-  return (isVendor(session) && isOwnAccount(session, userId)) || isAdmin(session);
+  return isAdmin(session) || (isVendor(session) && isOwnAccount(session, userId));
 }
 
 export async function updateAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
@@ -107,7 +119,7 @@ export async function updateAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 export async function deleteAffiliation(connection: Connection, session: Session, userId: string, orgId: string): Promise<boolean> {
@@ -115,7 +127,7 @@ export async function deleteAffiliation(connection: Connection, session: Session
   if (!session.user) {
     return false;
   }
-  return isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId) || isAdmin(session);
+  return isAdmin(session) || isOwnAccount(session, userId) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
 // Files.
