@@ -12,8 +12,7 @@ import { Session } from 'shared/lib/resources/session';
 import { DeleteValidationErrors } from 'shared/lib/resources/user';
 import { adminPermissionsToUserType, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid } from 'shared/lib/validation';
-import { DatabaseValidation } from 'shared/lib/validation/db';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
@@ -195,7 +194,7 @@ const resource: Resource = {
                 return respond(400, request.body.value);
             }
         } else {
-          let dbResult: DatabaseValidation<User>;
+          let dbResult: Validation<User, null>;
           switch (request.body.value.tag) {
             case 'updateProfile':
               dbResult = await updateUser(connection, {...request.body.value.value, id: request.params.id });
@@ -219,7 +218,7 @@ const resource: Resource = {
             case 'valid':
               return respond(200, dbResult.value);
             case 'invalid':
-              return respond(503, dbResult.value);
+              return respond(503, adt('databaseError'));
           }
         }
       }
@@ -280,7 +279,7 @@ const resource: Resource = {
               return respond(200, session, dbResult.value);
 
             case 'invalid':
-              return respond(503, request.session, dbResult.value);
+              return respond(503, request.session, adt('databaseError'));
           }
         }
       }

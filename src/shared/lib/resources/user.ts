@@ -1,7 +1,6 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
-import { DatabaseError } from 'shared/lib/validation/db';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
 
@@ -82,13 +81,13 @@ export type UpdateValidationErrors
   | ADT<'parseFailure'>
   | ADT<'permissions', string[]>
   | ADT<'userNotFound', string[]>
-  | DatabaseError;
+  | ADT<'databaseError'>;
 
 export type DeleteValidationErrors
   = ADT<'userNotFound', string[]>
   | ADT<'userNotActive', string[]>
   | ADT<'permissions', string[]>
-  | DatabaseError;
+  | ADT<'databaseError'>;
 
 export function parseUserStatus(raw: string): UserStatus | null {
   switch (raw) {

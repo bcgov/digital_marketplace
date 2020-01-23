@@ -44,16 +44,23 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
 }
 
 export async function validateOrganizationId(connection: Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
-  // Validate the provided id
-  const validatedId = validateUUID(orgId);
-  if (isInvalid(validatedId)) {
-    return validatedId;
-  }
-  const dbResult = await readOneOrganization(connection, orgId, allowInactive);
-  if (isInvalid(dbResult) || !dbResult.value) {
+  try {
+    // Validate the provided id
+    const validatedId = validateUUID(orgId);
+    if (validatedId.tag === 'invalid') {
+      return validatedId;
+    }
+    const dbResult = await readOneOrganization(connection, orgId, allowInactive);
+    if (isInvalid(dbResult)) {
+      return invalid(['Database error.']);
+    }
+    if (!dbResult.value) {
+      return invalid(['The specified organization was not found.']);
+    }
+    return dbResult;
+  } catch (e) {
     return invalid(['Please select a valid organization.']);
   }
-  return valid(dbResult.value);
 }
 
 export async function validateAffiliationId(connection: Connection, affiliationId: Id): Promise<Validation<Affiliation>> {

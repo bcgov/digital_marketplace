@@ -48,7 +48,7 @@ const resource: Resource = {
       // Pass session in so we can add owner name for admin/owner only
       const dbResult = await readManyOrganizations(connection, request.session);
       if (isInvalid(dbResult)) {
-        return respond(503, ['Database error']);
+        return respond(503, ['Database error.']);
       }
       return respond(200, dbResult.value);
     });
@@ -63,17 +63,15 @@ const resource: Resource = {
         return respond(400, validatedId.value);
       }
       // Only admins or the org owner can read the full org details
-      if (!await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
+      if (await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
+        const dbResult = await readOneOrganization(connection, validatedId.value);
+        if (isInvalid(dbResult)) {
+          return respond(503, ['Database error.']);
+        }
+        return respond(200, dbResult.value);
+      } else {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      const dbResult = await readOneOrganization(connection, validatedId.value);
-      if (isInvalid(dbResult)) {
-        return respond(503, ['Database error']);
-      }
-      if (!dbResult.value) {
-        return respond(404, ['Organization not found.']);
-      }
-      return respond(200, dbResult.value);
     });
   },
 
@@ -97,7 +95,7 @@ const resource: Resource = {
           contactPhone: getString(body, 'contactPhone')
         };
       },
-      async validateRequestBody(request): Promise<Validation<ValidatedCreateRequestBody, CreateValidationErrors>> {
+      async validateRequestBody(request) {
         const { legalName,
                 logoImageFile,
                 websiteUrl,
@@ -192,7 +190,7 @@ const resource: Resource = {
             }
             const dbResult = await createOrganization(connection, request.session.user.id, request.body.value);
             if (isInvalid(dbResult)) {
-              return respond(503, { database: ['Database error'] });
+              return respond(503, { database: ['Database error.'] });
             }
             return respond(201, dbResult.value);
         }
@@ -323,7 +321,7 @@ const resource: Resource = {
             }
             const dbResult = await updateOrganization(connection, request.body.value);
             if (isInvalid(dbResult)) {
-              return respond(503, { database: ['Database error'] });
+              return respond(503, { database: ['Database error.'] });
             }
             return respond(200, dbResult.value);
         }
@@ -364,7 +362,7 @@ const resource: Resource = {
           deactivatedBy: request.session.user && request.session.user.id
         });
         if (isInvalid(dbResult)) {
-          return respond(503, { database: ['Database error'] });
+          return respond(503, { database: ['Database error.'] });
         }
         return respond(200, dbResult.value);
       }

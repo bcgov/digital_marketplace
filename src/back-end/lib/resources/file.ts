@@ -131,8 +131,11 @@ const resource: Resource = {
             return respond(400, request.body.value);
           case 'valid':
             const createdById = getString(request.session.user, 'id');
-            const fileRecord = await createFile(connection, request.body.value, createdById);
-            return respond(201, fileRecord);
+            const dbResult = await createFile(connection, request.body.value, createdById);
+            if (isInvalid(dbResult)) {
+              return respond(503, { database: ['Database error.'] });
+            }
+            return respond(201, dbResult.value);
         }
       }
     };
