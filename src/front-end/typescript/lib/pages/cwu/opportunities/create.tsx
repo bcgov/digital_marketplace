@@ -22,6 +22,8 @@ export interface State {
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
   location: Immutable<ShortText.State>;
+  // TODO(Jesse): Implement radio option @radio-option
+  // whateverTheRadioFieldIs: Immutable<Radio.State>;
   fixedPriceReward: Immutable<ShortText.State>;
   requiredSkills: Immutable<ShortText.State>;
 
@@ -38,16 +40,19 @@ export interface State {
   evaluationCriteria: Immutable<LongText.State>;
 
   // Attachments tab
+  // TODO(Jesse): Do attachments @file-attachments
+  // attachments: File[];
 }
 
 type InnerMsg
+  = ADT<'updateActiveTab',   TabValues>
+
   // Details Tab
-  = ADT<'title',             ShortText.Msg>
+  | ADT<'title',             ShortText.Msg>
   | ADT<'teaser',            LongText.Msg>
   | ADT<'location',          ShortText.Msg>
   | ADT<'fixedPriceReward',  ShortText.Msg>
   | ADT<'requiredSkills',    ShortText.Msg>
-  | ADT<'updateActiveTab',   TabValues>
 
   // Description Tab
   | ADT<'description',       LongText.Msg>
@@ -62,6 +67,7 @@ type InnerMsg
   | ADT<'evaluationCriteria',  LongText.Msg>
 
   // Attachments tab
+  // @file-attachments
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -470,6 +476,7 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
+// @duplicated-attachments-view
 const AttachmentsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
@@ -498,11 +505,13 @@ const AttachmentsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
+// @duplicated-tab-helper-functions
 function isActiveTab(state: State, activeTab: TabValues): boolean {
   const Result: boolean = state.activeTab === activeTab;
   return Result;
 }
 
+// @duplicated-tab-helper-functions
 function renderTab(params: any, tabName: TabValues): JSX.Element {
   const state = params.state;
   const dispatch = params.dispatch;
