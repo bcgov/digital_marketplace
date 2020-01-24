@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
 import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Response } from 'back-end/lib/server';
+import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Request, Response } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateFilePath } from 'back-end/lib/validation';
 import { lookup } from 'mime-types';
@@ -121,23 +121,19 @@ const resource: Resource = {
           });
         }
       },
-      async respond(request): Promise<Response<JsonResponseBody<FileRecord | CreateValidationErrors>, Session>> {
-        const respond = (code: number, body: FileRecord | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        switch (request.body.tag) {
-          case 'invalid':
-            if (request.body.value.permissions) {
-              return respond(401, request.body.value);
-            }
-            return respond(400, request.body.value);
-          case 'valid':
-            const createdById = getString(request.session.user, 'id');
-            const dbResult = await createFile(connection, request.body.value, createdById);
-            if (isInvalid(dbResult)) {
-              return respond(503, { database: ['Database error.'] });
-            }
-            return respond(201, dbResult.value);
-        }
-      }
+      respond: crud.wrapRespond({
+        valid: (async request => {
+          const createdById = getString(request.session.user, 'id');
+          const dbResult = await createFile(connection, request.body, createdById);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+          }
+          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
+        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<FileRecord | CreateValidationErrors>, Session>>,
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+      })
     };
   }
 };

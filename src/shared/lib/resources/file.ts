@@ -1,4 +1,4 @@
-import { megabytesToBytes } from 'shared/lib';
+import { BodyWithErrors, megabytesToBytes } from 'shared/lib';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, Id } from 'shared/lib/types';
 import { isValid } from 'shared/lib/validation';
@@ -22,12 +22,10 @@ export interface FileBlob {
 
 export type FileUploadMetadata = Array<FilePermissions<Id, UserType>> | null;
 
-export interface CreateValidationErrors {
+export interface CreateValidationErrors extends BodyWithErrors {
   name?: string[];
   metadata?: string[];
-  permissions?: string[];
   requestBodyType?: string[];
-  database?: string[];
 }
 
 export type FilePermissions<Id, UserType>
