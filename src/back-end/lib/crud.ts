@@ -1,5 +1,6 @@
 import { basicResponse, Handler, namespaceRoute, nullRequestBodyHandler, Respond, Route, Router } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
+import { BodyWithErrors } from 'shared/lib';
 import { Validation } from 'shared/lib/validation';
 
 export type CrudAction<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session, Connection, PickFromHandler extends keyof Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session> = 'parseRequestBody' | 'validateRequestBody' | 'respond'> = (connection: Connection) => Pick<Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session>, PickFromHandler>;
@@ -88,11 +89,6 @@ export function makeRouter<SupportedRequestBodies, SupportedResponseBodies, Crea
   };
 }
 
-interface BodyWithErrors {
-  permissions?: string[];
-  database?: string[];
-}
-
 interface ResponseValidation<ValidBody, InvalidBody, ResB, Session> {
   valid: Respond<ValidBody, ResB, Session>;
   invalid: Respond<InvalidBody, ResB, Session>;
@@ -107,6 +103,8 @@ export function wrapRespond<ValidBody, InvalidBody extends BodyWithErrors, ResB,
           return respond(401, request.body.value);
         } else if (request.body.value.database) {
           return respond(503, request.body.value);
+        } else if (request.body.value.notFound) {
+          return respond(404, request.body.value);
         } else {
           return await responseValidation.invalid({
             ...request,

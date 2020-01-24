@@ -1,3 +1,4 @@
+import { BodyWithErrors } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -73,21 +74,23 @@ export type UpdateRequestBody
 
 export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
 
-export type UpdateValidationErrors
+type UpdateADTErrors
   = ADT<'updateProfile', UpdateProfileValidationErrors>
   | ADT<'acceptTerms', string[]>
   | ADT<'updateNotifications', string[]>
   | ADT<'updateAdminPermissions', string[]>
-  | ADT<'parseFailure'>
-  | ADT<'permissions', string[]>
-  | ADT<'userNotFound', string[]>
-  | ADT<'databaseError'>;
+  | ADT<'parseFailure'>;
 
-export type DeleteValidationErrors
-  = ADT<'userNotFound', string[]>
-  | ADT<'userNotActive', string[]>
-  | ADT<'permissions', string[]>
-  | ADT<'databaseError'>;
+export interface UpdateValidationErrors extends BodyWithErrors {
+  user?: UpdateADTErrors;
+}
+
+type DeleteADTErrors
+  = ADT<'userNotActive', string[]>;
+
+export interface DeleteValidationErrors extends BodyWithErrors {
+  user?: DeleteADTErrors;
+}
 
 export function parseUserStatus(raw: string): UserStatus | null {
   switch (raw) {
