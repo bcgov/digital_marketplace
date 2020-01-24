@@ -1,4 +1,4 @@
-import { basicResponse, Handler, namespaceRoute, nullRequestBodyHandler, Respond, Route, Router } from 'back-end/lib/server';
+import { basicResponse, Handler, makeJsonResponseBody, namespaceRoute, nullRequestBodyHandler, Respond, Route, Router } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { BodyWithErrors } from 'shared/lib';
 import { Validation } from 'shared/lib/validation';
@@ -95,8 +95,8 @@ interface ResponseValidation<ValidBody, InvalidBody, ResB, Session> {
 }
 
 export function wrapRespond<ValidBody, InvalidBody extends BodyWithErrors, ResB, Session>(responseValidation: ResponseValidation<ValidBody, InvalidBody, ResB, Session>): Respond<Validation<ValidBody, InvalidBody>, ResB, Session> {
-  return async request => {
-    const respond = (code: number, body: any) => basicResponse(code, request.session, body);
+  return (async request => {
+    const respond = (code: number, body: any) => basicResponse(code, request.session, makeJsonResponseBody(body));
     switch (request.body.tag) {
       case 'invalid':
         if (request.body.value.permissions) {
@@ -117,5 +117,5 @@ export function wrapRespond<ValidBody, InvalidBody extends BodyWithErrors, ResB,
           body: request.body.value
         });
     }
-  };
+  }) as Respond<Validation<ValidBody, InvalidBody>, ResB, Session>;
 }

@@ -286,7 +286,11 @@ export const createOrganization = tryDb<Id, CreateOrganizationParams, Organizati
     });
     return result;
   });
-  return await readOneOrganization(connection, result.id);
+  const dbResult = await readOneOrganization(connection, result.id);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to create organization');
+  }
+  return valid(dbResult.value);
 });
 
 type UpdateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & { logoImageFile?: Id };
@@ -305,10 +309,14 @@ export const updateOrganization = tryDb<UpdateOrganizationParams, null, Organiza
   if (!result || !result.id) {
     throw new Error('unable to update organization');
   }
-  return await readOneOrganization(connection, result.id, true);
+  const dbResult = await readOneOrganization(connection, result.id, true);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update organization');
+  }
+  return valid(dbResult.value);
 });
 
-export const readOneOrganization = tryDb<Id, boolean, Organization>(async (connection, id, allowInactive = false) => {
+export const readOneOrganization = tryDb<Id, boolean, Organization | null>(async (connection, id, allowInactive = false) => {
   const where = {
     'organizations.id': id,
     'affiliations.membershipType': MembershipType.Owner
@@ -322,7 +330,7 @@ export const readOneOrganization = tryDb<Id, boolean, Organization>(async (conne
     .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
     .where(where)
     .first() as RawOrganization;
-  return valid(await rawOrganizationToOrganization(connection, result));
+  return valid(result ? await rawOrganizationToOrganization(connection, result) : null);
 });
 
 type CreateAffiliationParams = Partial<Omit<Affiliation, 'user' | 'organization'>> & { user: Id, organization: Id };

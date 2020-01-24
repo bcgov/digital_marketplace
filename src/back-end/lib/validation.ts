@@ -57,7 +57,7 @@ export async function validateOrganizationId(connection: Connection, orgId: Id, 
     if (!dbResult.value) {
       return invalid(['The specified organization was not found.']);
     }
-    return dbResult;
+    return valid(dbResult.value);
   } catch (e) {
     return invalid(['Please select a valid organization.']);
   }
