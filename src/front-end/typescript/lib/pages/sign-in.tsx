@@ -10,14 +10,14 @@ import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  redirectOnSuccess?: string;
 }
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-export type RouteParams = null;
+export type RouteParams = State;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({ empty: true });
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams }) => routeParams;
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
@@ -36,13 +36,14 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         userType={UserType.Vendor}
         title='Vendor'
         description='Use your GitHub account to sign in to the Digital Marketplace.'
+        redirectOnSuccess={state.redirectOnSuccess}
         buttonText='Sign In Using GitHub' />
       <SignInCard
         userType={UserType.Government}
+        redirectOnSuccess={state.redirectOnSuccess}
         title='Public Sector Employee'
         description='Use your IDIR to sign in to the Digital Marketplace.'
-        buttonText='Sign In Using IDIR'
-      />
+        buttonText='Sign In Using IDIR' />
     </div>
   );
 };

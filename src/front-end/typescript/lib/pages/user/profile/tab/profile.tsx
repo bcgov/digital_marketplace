@@ -14,7 +14,7 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import { startCase } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus, UserType } from 'shared/lib/resources/user';
+import { isAdmin, isPublicSectorEmployee, User, usersAreEquivalent, UserStatus } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -114,10 +114,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           state = stopSaveChangesLoading(state);
           const result = await ProfileForm.persist({
             state: state.profileForm,
-            userId: state.profileUser.id,
-            extraUpdateBody: {
-              avatarImageFile: state.profileUser.avatarImageFile && state.profileUser.avatarImageFile.id
-            }
+            userId: state.profileUser.id
           });
           switch (result.tag) {
             case 'valid':
@@ -145,7 +142,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const isActive = state.profileUser.status === UserStatus.Active;
           const result = isActive
             ? await api.users.delete(state.profileUser.id)
-            : await api.users.update(state.profileUser.id, { status: UserStatus.Active });
+            : await api.users.update(state.profileUser.id, adt('reactivateUser'));
           switch (result.tag) {
             case 'valid':
               state = state.set('profileUser', result.value);
@@ -179,9 +176,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
           // Persist change to back-end.
           state = stopSavePermissionsLoading(state);
-          const result = await api.users.update(state.profileUser.id, {
-            type: FormField.getValue(state.adminCheckbox) ? UserType.Admin : UserType.Government
-          });
+          const result = await api.users.update(state.profileUser.id, adt('updateAdminPermissions', FormField.getValue(state.adminCheckbox)));
           if (api.isValid(result)) {
             state.set('profileUser', result.value);
           }

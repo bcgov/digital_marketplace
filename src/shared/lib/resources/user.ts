@@ -1,7 +1,7 @@
+import { BodyWithErrors } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
-import { DatabaseError } from 'shared/lib/validation/db';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
 
@@ -38,12 +38,12 @@ export interface User {
   name: string;
   email: string;
   jobTitle: string;
-  avatarImageFile?: FileRecord;
-  notificationsOn?: Date;
-  acceptedTerms?: Date;
+  avatarImageFile: FileRecord | null;
+  notificationsOn: Date | null;
+  acceptedTerms: Date | null;
   idpUsername: string;
-  deactivatedOn?: Date;
-  deactivatedBy?: Id;
+  deactivatedOn: Date | null;
+  deactivatedBy: Id | null;
 }
 
 export function usersAreEquivalent(a: User, b: User): boolean {
@@ -62,7 +62,7 @@ export interface UpdateProfileRequestBody {
   name: string;
   email: string;
   jobTitle: string;
-  avatarImageFile: Id;
+  avatarImageFile?: Id;
 }
 
 export type UpdateRequestBody
@@ -72,23 +72,25 @@ export type UpdateRequestBody
   | ADT<'reactivateUser'>
   | ADT<'updateAdminPermissions', boolean>;
 
-type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
 
-export type UpdateValidationErrors
+type UpdateADTErrors
   = ADT<'updateProfile', UpdateProfileValidationErrors>
   | ADT<'acceptTerms', string[]>
   | ADT<'updateNotifications', string[]>
   | ADT<'updateAdminPermissions', string[]>
-  | ADT<'parseFailure'>
-  | ADT<'permissions', string[]>
-  | ADT<'userNotFound', string[]>
-  | DatabaseError;
+  | ADT<'parseFailure'>;
 
-export type DeleteValidationErrors
-  = ADT<'userNotFound', string[]>
-  | ADT<'userNotActive', string[]>
-  | ADT<'permissions', string[]>
-  | DatabaseError;
+export interface UpdateValidationErrors extends BodyWithErrors {
+  user?: UpdateADTErrors;
+}
+
+type DeleteADTErrors
+  = ADT<'userNotActive', string[]>;
+
+export interface DeleteValidationErrors extends BodyWithErrors {
+  user?: DeleteADTErrors;
+}
 
 export function parseUserStatus(raw: string): UserStatus | null {
   switch (raw) {
@@ -120,18 +122,6 @@ export function adminPermissionsToUserType(admin: boolean): UserType {
   return admin ? UserType.Admin : UserType.Government;
 }
 
-export function parseNotificationsFlag(notificationsOn: boolean): Date | null {
+export function notificationsBooleanToNotificationsOn(notificationsOn: boolean): Date | null {
   return notificationsOn ? new Date() : null;
-}
-
-export function emptyUser(): User {
-  return {
-    id: '',
-    type: UserType.Government,
-    status: UserStatus.Active,
-    name: '',
-    email: '',
-    jobTitle: '',
-    idpUsername: ''
-  };
 }

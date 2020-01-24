@@ -8,7 +8,7 @@ import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { ClientHttpMethod } from 'shared/lib/types';
-import { isInvalid } from 'shared/lib/validation';
+import { getValidValue, isInvalid } from 'shared/lib/validation';
 
 interface KeyCloakAuthQuery {
   client_id: string;
@@ -135,18 +135,14 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           let user = dbResult.value as User | null;
           const existingUser = !!user;
           if (!user) {
-            const result = await createUser(connection, {
+            user = getValidValue(await createUser(connection, {
               type: userType,
               status: UserStatus.Active,
               name: claims.name || '',
               email: claims.email || '',
               jobTitle: '',
               idpUsername
-            });
-            if (isInvalid(result) || !result.value) {
-              makeAuthErrorRedirect(request);
-            }
-            user = result.value as User;
+            }), null);
           } else if (user.status === UserStatus.InactiveByUser) {
             const { id } = user;
             await updateUser(connection, { id, status: UserStatus.Active });
@@ -156,7 +152,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
 
           const result = await updateSession(connection, {
             ...request.session,
-            user: user.id,
+            user: user && user.id,
             accessToken: tokens.refresh_token
           });
           if (isInvalid(result)) {

@@ -65,7 +65,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
     }));
   },
   async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('signIn' as const, null)));
+    dispatch(replaceRoute(adt('signIn' as const, {})));
     return invalid(null);
   }
 });
@@ -106,11 +106,8 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await ProfileForm.persist({
             state: state.profileForm,
             userId: state.user.id,
-            extraUpdateBody: {
-              acceptedTerms: FormField.getValue(state.acceptedTerms),
-              notificationsOn: FormField.getValue(state.notificationsOn),
-              avatarImageFile: state.user.avatarImageFile && state.user.avatarImageFile.id
-            }
+            acceptedTerms: FormField.getValue(state.acceptedTerms),
+            notificationsOn: FormField.getValue(state.notificationsOn)
           });
           switch (result.tag) {
             case 'valid':

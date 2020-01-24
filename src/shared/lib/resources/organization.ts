@@ -1,3 +1,4 @@
+import { BodyWithErrors } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -36,24 +37,13 @@ export interface OrganizationSlim {
 }
 
 export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner'> {
-  logoImageFile: Id;
+  logoImageFile?: Id;
 }
 
-export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
-  permissions?: string[];
-  database?: string[];
-}
+export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
 
 export type UpdateRequestBody = CreateRequestBody;
 
-export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody> {
-  id?: string[];
-  permissions?: string[];
-  database?: string[];
-}
+export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody> & BodyWithErrors;
 
-export type DeleteValidationErrors = {
-  id?: string[];
-  permissions?: string[];
-  database?: string[];
-};
+export type DeleteValidationErrors = BodyWithErrors;

@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
 import { approveAffiliation, Connection, createAffiliation, deleteAffiliation, readActiveOwnerCount, readManyAffiliations, readOneAffiliation, readOneUserByEmail } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { Response } from 'back-end/lib/server';
+import { Request, Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAffiliationId, validateOrganizationId } from 'back-end/lib/validation';
@@ -120,28 +120,25 @@ const resource: Resource = {
           });
         }
       },
-      async respond(request): Promise<Response<JsonResponseBody<Affiliation | CreateValidationErrors>, Session>> {
-        const respond = (code: number, body: Affiliation | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (isInvalid(request.body)) {
-            if (request.body.value.permissions) {
-              return respond(401, request.body.value);
-            } else if (request.body.value.affiliation) {
-              return respond(409, request.body.value);
-            } else if (request.body.value.database) {
-              return respond(503, request.body.value);
-            } else if (request.body.value.inviteeNotRegistered) {
-              // TODO: send invitee notification requesting registration once email notifications in place
-              return respond(200, request.body.value);
-            }
-            return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
-        } else {
-            const dbResult = await createAffiliation(connection, request.body.value);
-            if (isInvalid(dbResult)) {
-              return respond(503, { database: ['Database error'] });
-            }
-            return respond(201, dbResult.value);
-        }
-      }
+      respond: crud.wrapRespond({
+        valid: (async request => {
+          const dbResult = await createAffiliation(connection, request.body);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error'] }));
+          }
+          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
+        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<Affiliation | CreateValidationErrors>, Session>>,
+        invalid: (async request => {
+          if (request.body.affiliation) {
+            return basicResponse(409, request.session, makeJsonResponseBody(request.body));
+          }
+          if (request.body.inviteeNotRegistered) {
+            // TODO: send invitee notification requesting registration once email notifications in place
+            return basicResponse(200, request.session, makeJsonResponseBody(request.body));
+          }
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+      })
     };
   },
 
@@ -170,21 +167,19 @@ const resource: Resource = {
           affiliation: ['Membership is not pending.']
         });
       },
-      async respond(request): Promise<Response<JsonResponseBody<Affiliation | UpdateValidationErrors>, Session>> {
-        const respond = (code: number, body: Affiliation | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (isInvalid(request.body)) {
-          if (request.body.value.permissions) {
-            return respond(401, request.body.value);
+      respond: crud.wrapRespond({
+        valid: (async request => {
+          const id = request.body;
+          const dbResult = await approveAffiliation(connection, id);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error']}));
           }
-          return respond(400, request.body.value);
-        }
-        const id = request.body.value;
-        const dbResult = await approveAffiliation(connection, id);
-        if (isInvalid(dbResult)) {
-          return respond(503, { database: ['Database error']});
-        }
-        return respond(200, dbResult.value);
-      }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        }) as (request: Request<ValidatedUpdateRequestBody, Session>) => Promise<Response<JsonResponseBody<Affiliation | UpdateValidationErrors>, Session>>,
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }) as (request: Request<UpdateValidationErrors, Session>) => Promise<Response<JsonResponseBody<UpdateValidationErrors>, Session>>
+      })
     };
   },
 
@@ -214,21 +209,19 @@ const resource: Resource = {
 
         return valid(existingAffiliation.id);
       },
-      async respond(request): Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>> {
-        const respond = (code: number, body: Affiliation | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (isInvalid(request.body)) {
-          if (request.body.value.permissions) {
-            return respond(401, request.body.value);
+      respond: crud.wrapRespond({
+        valid: (async request => {
+          const affiliationId = request.body;
+          const dbResult = await deleteAffiliation(connection, affiliationId);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error'] }));
           }
-          return respond(400, request.body.value);
-        }
-        const affiliationId = request.body.value;
-        const dbResult = await deleteAffiliation(connection, affiliationId);
-        if (isInvalid(dbResult)) {
-          return respond(503, { database: ['Database error'] });
-        }
-        return respond(200, dbResult.value);
-      }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        }) as (request: Request<ValidatedDeleteRequestBody, Session>) => Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>>,
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }) as (request: Request<DeleteValidationErrors, Session>) => Promise<Response<JsonResponseBody<DeleteValidationErrors>, Session>>
+      })
     };
   }
 };

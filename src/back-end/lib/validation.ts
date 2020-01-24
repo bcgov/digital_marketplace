@@ -4,7 +4,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 
 export async function validateUserId(connection: Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -44,16 +44,23 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
 }
 
 export async function validateOrganizationId(connection: Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
-  // Validate the provided id
-  const validatedId = validateUUID(orgId);
-  if (isInvalid(validatedId)) {
-    return validatedId;
-  }
-  const dbResult = await readOneOrganization(connection, orgId, allowInactive);
-  if (isInvalid(dbResult) || !dbResult.value) {
+  try {
+    // Validate the provided id
+    const validatedId = validateUUID(orgId);
+    if (validatedId.tag === 'invalid') {
+      return validatedId;
+    }
+    const dbResult = await readOneOrganization(connection, orgId, allowInactive);
+    if (isInvalid(dbResult)) {
+      return invalid(['Database error.']);
+    }
+    if (!dbResult.value) {
+      return invalid(['The specified organization was not found.']);
+    }
+    return valid(dbResult.value);
+  } catch (e) {
     return invalid(['Please select a valid organization.']);
   }
-  return valid(dbResult.value);
 }
 
 export async function validateAffiliationId(connection: Connection, affiliationId: Id): Promise<Validation<Affiliation>> {
@@ -78,4 +85,8 @@ export async function validateAffiliationId(connection: Connection, affiliationI
   } catch (e) {
     return invalid(['Please select a valid affiliation.']);
   }
+}
+
+export function validateFilePath(path: string): Validation<string> {
+  return validateGenericString(path, 'File path');
 }

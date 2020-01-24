@@ -9,7 +9,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { isPublicSectorUserType, UpdateRequestBody, User } from 'shared/lib/resources/user';
+import { isPublicSectorUserType, User } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom, invalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import { validateEmail, validateJobTitle, validateName } from 'shared/lib/validation/user';
@@ -233,43 +233,56 @@ export const view: View<Props> = props => {
 
 interface PersistParams {
   state: Immutable<State>;
-  extraUpdateBody: Omit<UpdateRequestBody, keyof Values>;
   userId: Id;
+  existingAvatarImageFile?: Id;
+  acceptedTerms?: boolean;
+  notificationsOn?: boolean;
 }
 
 type PersistReturnValue = Validation<[Immutable<State>, User], Immutable<State>>;
 
 export async function persist(params: PersistParams): Promise<PersistReturnValue> {
-  const { state, extraUpdateBody, userId } = params;
+  const { state, existingAvatarImageFile, acceptedTerms, notificationsOn, userId } = params;
   const values = getValues(state);
-  let avatarImageFile: Id | undefined = extraUpdateBody.avatarImageFile;
+  let avatarImageFile: Id | undefined = existingAvatarImageFile;
+  // Update avatar image.
   if (values.newAvatarImage) {
-    const fileResult = await api.files.create({
+    const fileResult = await api.avatars.create({
       name: values.newAvatarImage.name,
       file: values.newAvatarImage,
       metadata: [adt('any')]
     });
-    switch (fileResult.tag) {
-      case 'valid':
-        avatarImageFile = fileResult.value.id;
-        break;
-      case 'unhandled':
-      case 'invalid':
-        return invalid(setErrors(state, {
-          newAvatarImage: ['Please select a different avatar image.']
-        }));
+    if (!api.isValid(fileResult)) {
+      return invalid(setErrors(state, {
+        newAvatarImage: ['Please select a different avatar image.']
+      }));
     }
+    avatarImageFile = fileResult.value.id;
   }
-  const result = await api.users.update(userId, {
-    ...extraUpdateBody,
+  // Accept terms.
+  if (acceptedTerms === true) {
+    const result = await api.users.update(userId, adt('acceptTerms'));
+    if (api.isInvalid(result)) { return invalid(state); }
+  }
+  // Modify notification subscription.
+  if (notificationsOn !== undefined) {
+    const result = await api.users.update(userId, adt('updateNotifications', notificationsOn));
+    if (api.isInvalid(result)) { return invalid(state); }
+  }
+  // Update the user's profile.
+  const result = await api.users.update(userId, adt('updateProfile', {
     name: values.name,
     email: values.email,
     jobTitle: values.jobTitle,
     avatarImageFile
-  });
+  }));
   switch (result.tag) {
     case 'invalid':
-      return invalid(setErrors(state, result.value));
+      if (result.value.tag === 'updateProfile') {
+        return invalid(setErrors(state, result.value.value));
+      } else {
+        return invalid(state);
+      }
     case 'unhandled':
       return invalid(state);
     case 'valid':

@@ -1,5 +1,6 @@
 import { getModalValid, makePageMetadata, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
+import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
@@ -68,12 +69,14 @@ function makeInit<K extends UserSidebar.TabId>(): PageInit<RouteParams, SharedSt
       }));
     },
 
-    async fail({ dispatch }) {
-      // Viewer isn't signed in, so show "Not Found" page.
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    async fail({ routeParams, dispatch, shared }) {
+      if (!shared.session || !shared.session.user) {
+        dispatch(replaceRoute(adt('signIn' as const, {
+          redirectOnSuccess: router.routeToUrl(adt('userProfile', { userId: routeParams.userId }))
+        })));
+      }
       return invalid(null);
     }
-
   });
 }
 

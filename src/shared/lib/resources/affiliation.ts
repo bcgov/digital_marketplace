@@ -1,3 +1,4 @@
+import { BodyWithErrors } from 'shared/lib';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -36,23 +37,17 @@ export interface CreateRequestBody {
   membershipType: string;
 }
 
-export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody> {
+export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody>, BodyWithErrors {
   inviteeNotRegistered?: string[];
   affiliation?: string[];
-  permissions?: string[];
-  database?: string[];
 }
 
-export interface UpdateValidationErrors {
+export interface UpdateValidationErrors extends BodyWithErrors {
   affiliation?: string[];
-  permissions?: string[];
-  database?: string[];
 }
 
-export interface DeleteValidationErrors {
+export interface DeleteValidationErrors extends BodyWithErrors {
   affiliation?: string[];
-  permissions?: string[];
-  database?: string[];
 }
 
 export function parseMembershipType(raw: string): MembershipType | null {

@@ -1,15 +1,19 @@
 import { get } from 'immutable';
-import { FilePermissions } from 'shared/lib/resources/file';
+import { FilePermissions, SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { parseUserType, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { invalid, isValid, mapValid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
-import { isString } from 'util';
+import { ArrayValidation, invalid, isValid, mapValid, valid, validateArray, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { isArray, isString } from 'util';
+
+export function validateAvatarFilename(name: string): Validation<string> {
+  return validateFileName(name, SUPPORTED_IMAGE_EXTENSIONS);
+}
 
 export function validateFileName(name: string, validExtensions: string[] = []): Validation<string> {
   const validatedName = validateGenericString(name, 'File name');
   if (isValid(validatedName) && validExtensions.length > 0) {
-    const extension = name.substr(name.lastIndexOf('.') + 1);
-    if (validExtensions.map(ext => ext.toLowerCase()).includes(extension.toLowerCase())) {
+    const extension = name.match(/\.([a-zA-Z0-9]+)$/);
+    if (extension && validExtensions.map(ext => ext.toLowerCase()).includes(extension[0].toLowerCase())) {
       return validatedName;
     } else {
       return invalid(['Invalid file extension.']);
@@ -19,8 +23,14 @@ export function validateFileName(name: string, validExtensions: string[] = []): 
   }
 }
 
-export function validateFilePath(path: string): Validation<string> {
-  return validateGenericString(path, 'File path');
+export function validateFilePermissions(raw: any): ArrayValidation<FilePermissions<Id, UserType>> {
+  raw = isArray(raw) ? raw : [raw];
+  const validatedFilePermissions = validateArray(raw, validateFilePermission);
+  return mapValid(validatedFilePermissions, perms => {
+    return Array
+      .from(new Set(perms.map(v => JSON.stringify(v))))
+      .map(v => JSON.parse(v) as FilePermissions<Id, UserType>);
+  });
 }
 
 export function validateFilePermission(raw: any): Validation<FilePermissions<Id, UserType>> {
