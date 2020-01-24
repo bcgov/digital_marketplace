@@ -183,7 +183,7 @@ const resource: Resource = {
         }
       },
       respond: crud.wrapRespond({
-        valid: (async request => {
+        valid: async request => {
           let dbResult: Validation<User, null>;
           switch (request.body.tag) {
             case 'updateProfile':
@@ -210,10 +210,10 @@ const resource: Resource = {
             case 'invalid':
               return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database errors.'] }));
           }
-        }) as (request: Request<ValidatedUpdateRequestBody, Session>) => Promise<Response<JsonResponseBody<User | UpdateValidationErrors>, Session>>,
+        },
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<UpdateValidationErrors, Session>) => Promise<Response<JsonResponseBody<UpdateValidationErrors>, Session>>
+        })
       })
     };
   },
@@ -234,7 +234,7 @@ const resource: Resource = {
         return valid(validatedUser.value);
       },
       respond: crud.wrapRespond({
-        valid: (async request => {
+        valid: async request => {
           // Track the date the user was made inactive, and the user id of the user that made them inactive
           const isOwnAccount = permissions.isOwnAccount(request.session, request.params.id);
           const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
@@ -247,25 +247,25 @@ const resource: Resource = {
           });
 
           if (isValid(dbResult)) {
-              // Sign the user out of the current session if they are deactivating their own account.
-              let session = request.session;
-              if (isOwnAccount) {
-                const result = await signOut(connection, session);
-                if (isInvalid(result)) {
-                  const dbResult = await createAnonymousSession(connection);
-                  session = isValid(dbResult) ? getValidValue(dbResult, session) : session;
-                } else {
-                  session = result.value;
-                }
+            // Sign the user out of the current session if they are deactivating their own account.
+            let session = request.session;
+            if (isOwnAccount) {
+              const result = await signOut(connection, session);
+              if (isInvalid(result)) {
+                const dbResult = await createAnonymousSession(connection);
+                session = isValid(dbResult) ? getValidValue(dbResult, session) : session;
+              } else {
+                session = result.value;
               }
-              return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
+            }
+            return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
           } else {
-              return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
           }
-        }) as (request: Request<DeleteValidatedReqBody, Session>) => Promise<Response<JsonResponseBody<User | DeleteValidationErrors>, Session>>,
-        invalid: (async request => {
+        },
+        invalid: async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<DeleteValidationErrors, Session>) => Promise<Response<JsonResponseBody<DeleteValidationErrors>, Session>>
+        }
       })
     };
   }

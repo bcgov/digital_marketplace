@@ -14,12 +14,12 @@ export type Connection = Knex;
 
 type DatabaseValidation<Valid> = Validation<Valid, null>;
 
-type DbFn<Arg1, Arg2, Valid> = (connection: Connection, arg1?: Arg1, arg2?: Arg2) => Promise<DatabaseValidation<Valid>>;
+type DbFn<Args extends unknown[], Valid> = (connection: Connection, ...args: Args) => Promise<DatabaseValidation<Valid>>;
 
-function tryDb<Arg1, Arg2, Valid>(fn: DbFn<Arg1, Arg2, Valid>): DbFn<Arg1, Arg2, Valid> {
-  return async (connection, arg1?, arg2?) => {
+function tryDb<Args extends unknown[], Valid>(fn: DbFn<Args, Valid>): DbFn<Args, Valid> {
+  return async (connection, ...args) => {
     try {
-      return arg1 ? (arg2 ? await fn(connection, arg1, arg2) : await fn(connection, arg1)) : await fn(connection);
+      return await fn(connection, ...args);
     } catch (exception) {
       return invalid(null);
     }
@@ -28,7 +28,7 @@ function tryDb<Arg1, Arg2, Valid>(fn: DbFn<Arg1, Arg2, Valid>): DbFn<Arg1, Arg2,
 
 type CreateUserParams = Omit<Partial<User>, 'avatarImageFile'> & { createdAt?: Date, updatedAt?: Date, avatarImageFile?: Id };
 
-export const createUser = tryDb<CreateUserParams, null, User>(async (connection, user) => {
+export const createUser = tryDb<[CreateUserParams], User>(async (connection, user) => {
   const now = new Date();
   const [result] = await connection<RawUserToUserParams>('users')
     .insert({
@@ -84,11 +84,11 @@ export async function rawUserToUser(connection: Connection, params: RawUserToUse
   };
 }
 
-export const findOneUserByTypeAndUsername = tryDb<UserType, string, User | null>(async (connection, type, idpUsername) => {
+export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | null>(async (connection, userType, idpUsername) => {
   let query = connection<User>('users')
-    .where({ type, idpUsername });
+    .where({ type: userType, idpUsername });
 
-  if (type === UserType.Government) {
+  if (userType === UserType.Government) {
     query = query.orWhere({ type: UserType.Admin });
   }
   const result = await query.first();

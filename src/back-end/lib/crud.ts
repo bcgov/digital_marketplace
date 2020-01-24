@@ -1,4 +1,4 @@
-import { basicResponse, Handler, makeJsonResponseBody, namespaceRoute, nullRequestBodyHandler, Respond, Route, Router } from 'back-end/lib/server';
+import { basicResponse, Handler, JsonResponseBody, makeJsonResponseBody, namespaceRoute, nullRequestBodyHandler, Respond, Route, Router } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { BodyWithErrors } from 'shared/lib';
 import { Validation } from 'shared/lib/validation';
@@ -89,14 +89,14 @@ export function makeRouter<SupportedRequestBodies, SupportedResponseBodies, Crea
   };
 }
 
-interface ResponseValidation<ValidBody, InvalidBody, ResB, Session> {
-  valid: Respond<ValidBody, ResB, Session>;
-  invalid: Respond<InvalidBody, ResB, Session>;
+interface ResponseValidation<ValidReqB, InvalidReqB, ValidResB, InvalidResB, Session> {
+  valid: Respond<ValidReqB, ValidResB | InvalidResB, Session>;
+  invalid: Respond<InvalidReqB, InvalidResB, Session>;
 }
 
-export function wrapRespond<ValidBody, InvalidBody extends BodyWithErrors, ResB, Session>(responseValidation: ResponseValidation<ValidBody, InvalidBody, ResB, Session>): Respond<Validation<ValidBody, InvalidBody>, ResB, Session> {
+export function wrapRespond<ValidReqB, InvalidReqB extends BodyWithErrors, ValidResB, InvalidResB, Session>(responseValidation: ResponseValidation<ValidReqB, InvalidReqB, ValidResB, InvalidResB, Session>): Respond<Validation<ValidReqB, InvalidReqB>, ValidResB | InvalidResB | JsonResponseBody<InvalidReqB>, Session> {
   return (async request => {
-    const respond = (code: number, body: any) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    const respond = (code: number, body: InvalidReqB) => basicResponse(code, request.session, makeJsonResponseBody(body));
     switch (request.body.tag) {
       case 'invalid':
         if (request.body.value.permissions) {
@@ -117,5 +117,5 @@ export function wrapRespond<ValidBody, InvalidBody extends BodyWithErrors, ResB,
           body: request.body.value
         });
     }
-  }) as Respond<Validation<ValidBody, InvalidBody>, ResB, Session>;
+  });
 }
