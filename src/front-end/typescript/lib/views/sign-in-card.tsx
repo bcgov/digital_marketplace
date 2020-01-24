@@ -11,6 +11,7 @@ export interface SignInCardProps {
   description: string;
   buttonText: string;
   userType: UserType.Vendor | UserType.Government;
+  redirectOnSuccess?: string;
 }
 
 function userTypeToIcon(userType: SignInCardProps['userType']): AvailableIcons {
@@ -39,7 +40,7 @@ export function SignInCard(props: SignInCardProps) {
           <p>{props.description}</p>
           <Link
             button
-            dest={externalDest(getSignInUrl(props.userType))}
+            dest={externalDest(getSignInUrl(props.userType, props.redirectOnSuccess))}
             className='btn-primary'>
             {props.buttonText}
           </Link>
