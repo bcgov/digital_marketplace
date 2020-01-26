@@ -1,8 +1,8 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createAnonymousSession, readManyUsers, updateUser } from 'back-end/lib/db';
+import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { signOut } from 'back-end/lib/resources/session';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
@@ -39,7 +39,7 @@ type Resource = crud.Resource<
   DeleteValidatedReqBody,
   DeleteValidationErrors,
   Session,
-  Connection
+  db.Connection
 >;
 
 const resource: Resource = {
@@ -51,11 +51,11 @@ const resource: Resource = {
       if (!permissions.readManyUsers(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      const dbResult = await readManyUsers(connection);
+      const dbResult = await db.readManyUsers(connection);
       if (isValid(dbResult)) {
         return respond(200, dbResult.value);
       } else {
-        return respond(503, ['Database error']);
+        return respond(503, [db.ERROR_MESSAGE]);
       }
     });
   },
@@ -64,7 +64,7 @@ const resource: Resource = {
     return nullRequestBodyHandler<JsonResponseBody<User | string[]>, Session>(async request => {
       const respond = (code: number, body: User | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       const validatedUser = await validateUserId(connection, request.params.id);
-      if (validatedUser.tag === 'invalid') {
+      if (isInvalid(validatedUser)) {
         return respond(400, validatedUser.value);
       }
       if (!permissions.readOneUser(request.session, validatedUser.value.id)) {
@@ -178,36 +178,36 @@ const resource: Resource = {
             return valid(adt('updateAdminPermissions', userType));
 
           default:
-            return invalid(adt('parseFailure')); // Unsure if this is the correct ADT to return as default - open to suggestions
+            return invalid({ user: adt('parseFailure') });
         }
       },
-      respond: crud.wrapRespond({
+      respond: wrapRespond({
         valid: async request => {
           let dbResult: Validation<User, null>;
           switch (request.body.tag) {
             case 'updateProfile':
-              dbResult = await updateUser(connection, {...request.body.value, id: request.params.id });
+              dbResult = await db.updateUser(connection, {...request.body.value, id: request.params.id });
               break;
             case 'acceptTerms':
-              dbResult = await updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
+              dbResult = await db.updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
               break;
             case 'updateNotifications':
-              dbResult = await updateUser(connection, {
+              dbResult = await db.updateUser(connection, {
                 notificationsOn: request.body.value,
                 id: request.params.id
               });
               break;
             case 'reactivateUser':
-              dbResult = await updateUser(connection, { status: UserStatus.Active, id: request.params.id });
+              dbResult = await db.updateUser(connection, { status: UserStatus.Active, id: request.params.id });
               break;
             case 'updateAdminPermissions':
-              dbResult = await updateUser(connection, { type: request.body.value, id: request.params.id });
+              dbResult = await db.updateUser(connection, { type: request.body.value, id: request.params.id });
           }
           switch (dbResult.tag) {
             case 'valid':
               return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
             case 'invalid':
-              return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database errors.'] }));
+              return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
         },
         invalid: (async request => {
@@ -232,13 +232,13 @@ const resource: Resource = {
         }
         return valid(validatedUser.value);
       },
-      respond: crud.wrapRespond({
+      respond: wrapRespond({
         valid: async request => {
           // Track the date the user was made inactive, and the user id of the user that made them inactive
           const isOwnAccount = permissions.isOwnAccount(request.session, request.params.id);
           const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
           const deactivatingUserId = request.session.user ? request.session.user.id : undefined;
-          const dbResult = await updateUser(connection, {
+          const dbResult = await db.updateUser(connection, {
             id: request.params.id,
             status,
             deactivatedOn: new Date(),
@@ -251,7 +251,7 @@ const resource: Resource = {
             if (isOwnAccount) {
               const result = await signOut(connection, session);
               if (isInvalid(result)) {
-                const dbResult = await createAnonymousSession(connection);
+                const dbResult = await db.createAnonymousSession(connection);
                 session = isValid(dbResult) ? getValidValue(dbResult, session) : session;
               } else {
                 session = result.value;
@@ -259,7 +259,7 @@ const resource: Resource = {
             }
             return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
           } else {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
         },
         invalid: async request => {

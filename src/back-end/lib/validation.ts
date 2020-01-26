@@ -1,4 +1,4 @@
-import { Connection, readOneAffiliationById, readOneFileById, readOneOrganization, readOneUser } from 'back-end/lib/db';
+import * as db from 'back-end/lib/db';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
@@ -6,13 +6,13 @@ import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 
-export async function validateUserId(connection: Connection, userId: Id): Promise<Validation<User>> {
+export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
   const validatedId = validateUUID(userId);
   if (isInvalid(validatedId)) {
     return validatedId;
   }
-  const dbResult = await readOneUser(connection, userId);
+  const dbResult = await db.readOneUser(connection, userId);
   switch (dbResult.tag) {
     case 'valid':
       return dbResult.value ? valid(dbResult.value) : invalid(['This user cannot be found.']);
@@ -21,16 +21,16 @@ export async function validateUserId(connection: Connection, userId: Id): Promis
   }
 }
 
-export async function validateImageFile(connection: Connection, fileId: Id): Promise<Validation<FileRecord>> {
+export async function validateImageFile(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(fileId);
-    if (validatedId.tag === 'invalid') {
+    if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await readOneFileById(connection, fileId);
+    const dbResult = await db.readOneFileById(connection, fileId);
     if (isInvalid(dbResult)) {
-      return invalid(['Database error']);
+      return invalid([db.ERROR_MESSAGE]);
     }
     const file = dbResult.value;
     if (file) {
@@ -43,16 +43,16 @@ export async function validateImageFile(connection: Connection, fileId: Id): Pro
   }
 }
 
-export async function validateOrganizationId(connection: Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
+export async function validateOrganizationId(connection: db.Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(orgId);
-    if (validatedId.tag === 'invalid') {
+    if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await readOneOrganization(connection, orgId, allowInactive);
+    const dbResult = await db.readOneOrganization(connection, orgId, allowInactive);
     if (isInvalid(dbResult)) {
-      return invalid(['Database error.']);
+      return invalid([db.ERROR_MESSAGE]);
     }
     if (!dbResult.value) {
       return invalid(['The specified organization was not found.']);
@@ -63,16 +63,16 @@ export async function validateOrganizationId(connection: Connection, orgId: Id, 
   }
 }
 
-export async function validateAffiliationId(connection: Connection, affiliationId: Id): Promise<Validation<Affiliation>> {
+export async function validateAffiliationId(connection: db.Connection, affiliationId: Id): Promise<Validation<Affiliation>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(affiliationId);
-    if (validatedId.tag === 'invalid') {
+    if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await readOneAffiliationById(connection, affiliationId);
+    const dbResult = await db.readOneAffiliationById(connection, affiliationId);
     if (isInvalid(dbResult)) {
-      return invalid(['Database error']);
+      return invalid([db.ERROR_MESSAGE]);
     }
     const affiliation = dbResult.value;
     if (!affiliation) {

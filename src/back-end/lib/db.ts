@@ -12,6 +12,8 @@ import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 's
 
 export type Connection = Knex;
 
+export const ERROR_MESSAGE = 'Database error.';
+
 type DatabaseValidation<Valid> = Validation<Valid, null>;
 
 type DbFn<Args extends unknown[], Valid> = (connection: Connection, ...args: Args) => Promise<DatabaseValidation<Valid>>;
@@ -186,7 +188,7 @@ async function rawOrganizationToOrganization(connection: Connection, raw: RawOrg
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
     if (isInvalid(dbResult) || !dbResult.value) {
-      throw new Error('Database error');
+      throw new Error(ERROR_MESSAGE);
     }
     fetchedLogoFile = dbResult.value;
   }
@@ -212,7 +214,7 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
     if (isInvalid(dbResult) || !dbResult.value) {
-      throw new Error('Database error');
+      throw new Error(ERROR_MESSAGE);
     }
     fetchedLogoImageFile = dbResult.value;
   }

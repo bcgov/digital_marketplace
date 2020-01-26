@@ -1,7 +1,6 @@
-import { BodyWithErrors } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export type OrganizationOwner = Pick<User, 'id' | 'name'>;

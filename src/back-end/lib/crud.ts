@@ -1,7 +1,5 @@
-import { basicResponse, Handler, JsonResponseBody, makeJsonResponseBody, namespaceRoute, nullRequestBodyHandler, Respond, Route, Router } from 'back-end/lib/server';
+import { Handler, namespaceRoute, nullRequestBodyHandler, Route, Router } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
-import { BodyWithErrors } from 'shared/lib';
-import { Validation } from 'shared/lib/validation';
 
 export type CrudAction<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session, Connection, PickFromHandler extends keyof Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session> = 'parseRequestBody' | 'validateRequestBody' | 'respond'> = (connection: Connection) => Pick<Handler<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, Session>, PickFromHandler>;
 
@@ -87,35 +85,4 @@ export function makeRouter<SupportedRequestBodies, SupportedResponseBodies, Crea
     if (resource.delete) { routes.push(namespaceRoute(resource.routeNamespace, makeDeleteRoute(connection, resource.delete))); }
     return routes;
   };
-}
-
-interface ResponseValidation<ValidReqB, InvalidReqB, ValidResB, InvalidResB, Session> {
-  valid: Respond<ValidReqB, ValidResB | InvalidResB, Session>;
-  invalid: Respond<InvalidReqB, InvalidResB, Session>;
-}
-
-export function wrapRespond<ValidReqB, InvalidReqB extends BodyWithErrors, ValidResB, InvalidResB, Session>(responseValidation: ResponseValidation<ValidReqB, InvalidReqB, ValidResB, InvalidResB, Session>): Respond<Validation<ValidReqB, InvalidReqB>, ValidResB | InvalidResB | JsonResponseBody<InvalidReqB>, Session> {
-  return (async request => {
-    const respond = (code: number, body: InvalidReqB) => basicResponse(code, request.session, makeJsonResponseBody(body));
-    switch (request.body.tag) {
-      case 'invalid':
-        if (request.body.value.permissions) {
-          return respond(401, request.body.value);
-        } else if (request.body.value.database) {
-          return respond(503, request.body.value);
-        } else if (request.body.value.notFound) {
-          return respond(404, request.body.value);
-        } else {
-          return await responseValidation.invalid({
-            ...request,
-            body: request.body.value
-          });
-        }
-      case 'valid':
-        return responseValidation.valid({
-          ...request,
-          body: request.body.value
-        });
-    }
-  });
 }
