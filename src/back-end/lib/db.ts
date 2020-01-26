@@ -68,7 +68,7 @@ export const readOneUser = tryDb<[Id], User | null>(async (connection, id) => {
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 
-export const readOneUserByEmail = tryDb<[string, boolean], User | null>(async (connection, email, allowInactive = false) => {
+export const readOneUserByEmail = tryDb<[string, boolean?], User | null>(async (connection, email, allowInactive = false) => {
   const where = {
     email,
     status: (allowInactive ? '*' : UserStatus.Active)
