@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
 import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Request, Response } from 'back-end/lib/server';
+import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateFilePath } from 'back-end/lib/validation';
 import { lookup } from 'mime-types';
@@ -121,7 +121,7 @@ const resource: Resource = {
           });
         }
       },
-      respond: crud.wrapRespond({
+      respond: crud.wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
           const createdById = getString(request.session.user, 'id');
           const dbResult = await createFile(connection, request.body, createdById);
@@ -129,10 +129,10 @@ const resource: Resource = {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<FileRecord | CreateValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+        })
       })
     };
   }

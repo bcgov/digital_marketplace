@@ -179,8 +179,11 @@ const resource: Resource = {
                       });
                     }
       },
-      respond: crud.wrapRespond({
+      respond: crud.wrapRespond<CreateRequestBody, CreateValidationErrors, JsonResponseBody<Organization>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
+          if (!request.session.user) {
+            return basicResponse(401, request.session, makeJsonResponseBody({ permissions: [permissions.ERROR_MESSAGE]}));
+          }
           const dbResult = await createOrganization(connection, request.session.user.id, request.body);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));

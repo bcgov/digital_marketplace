@@ -2,7 +2,6 @@ import * as crud from 'back-end/lib/crud';
 import { Connection, createAnonymousSession, readManyUsers, updateUser } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { signOut } from 'back-end/lib/resources/session';
-import { Request, Response } from 'back-end/lib/server';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateUserId } from 'back-end/lib/validation';
