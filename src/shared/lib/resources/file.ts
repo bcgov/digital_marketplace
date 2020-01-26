@@ -1,6 +1,6 @@
-import { BodyWithErrors, megabytesToBytes } from 'shared/lib';
+import { megabytesToBytes } from 'shared/lib';
 import { UserType } from 'shared/lib/resources/user';
-import { ADT, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { isValid } from 'shared/lib/validation';
 import { validateFilePermissions } from 'shared/lib/validation/file';
 

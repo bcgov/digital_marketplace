@@ -1,6 +1,5 @@
-import { BodyWithErrors } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { ADT, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
@@ -85,11 +84,8 @@ export interface UpdateValidationErrors extends BodyWithErrors {
   user?: UpdateADTErrors;
 }
 
-type DeleteADTErrors
-  = ADT<'userNotActive', string[]>;
-
 export interface DeleteValidationErrors extends BodyWithErrors {
-  user?: DeleteADTErrors;
+  user?: string[];
 }
 
 export function parseUserStatus(raw: string): UserStatus | null {

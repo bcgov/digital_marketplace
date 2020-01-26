@@ -2,12 +2,6 @@ import { get, isArray, isBoolean } from 'lodash';
 import moment from 'moment-timezone';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
-export interface BodyWithErrors {
-  permissions?: string[];
-  database?: string[];
-  notFound?: string[];
-}
-
 export function getString(obj: any, keyPath: string | string[], fallback = ''): string {
   const value = get(obj, keyPath);
   return String(value === undefined || value === null ? fallback : value);

@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-end/lib/db';
+import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Request, Response } from 'back-end/lib/server';
+import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateFilePath } from 'back-end/lib/validation';
 import { lookup } from 'mime-types';
@@ -40,7 +40,7 @@ type Resource = crud.Resource<
   null,
   null,
   Session,
-  Connection
+  db.Connection
 >;
 
 const resource: Resource = {
@@ -51,18 +51,18 @@ const resource: Resource = {
       const getBlob = getString(request.query, 'type') === 'blob';
       const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       if (await permissions.readOneFile(connection, request.session, request.params.id)) {
-        const dbResult = await readOneFileById(connection, request.params.id);
+        const dbResult = await db.readOneFileById(connection, request.params.id);
         if (isInvalid(dbResult)) {
-          return respond(503, ['Database error']);
+          return respond(503, [db.ERROR_MESSAGE]);
         }
         const file = dbResult.value;
         if (!file) {
           return respond(404, ['File not found.']);
         }
         if (!getBlob) { return respond(200, file); }
-        const dbResultBlob = await readOneFileBlob(connection, file.fileBlob);
+        const dbResultBlob = await db.readOneFileBlob(connection, file.fileBlob);
         if (isInvalid(dbResultBlob)) {
-          return respond(503, ['Database error']);
+          return respond(503, [db.ERROR_MESSAGE]);
         }
         if (!dbResultBlob.value) {
           return respond(404, ['File not found.']);
@@ -121,18 +121,18 @@ const resource: Resource = {
           });
         }
       },
-      respond: crud.wrapRespond({
+      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
           const createdById = getString(request.session.user, 'id');
-          const dbResult = await createFile(connection, request.body, createdById);
+          const dbResult = await db.createFile(connection, request.body, createdById);
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<FileRecord | CreateValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+        })
       })
     };
   }

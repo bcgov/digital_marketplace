@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createOrganization, readManyOrganizations, readOneOrganization, updateOrganization } from 'back-end/lib/db';
+import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Request, Response } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Request, Response, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
@@ -36,7 +36,7 @@ type Resource = crud.Resource<
   DeleteValidatedReqBody,
   DeleteValidationErrors,
   Session,
-  Connection
+  db.Connection
 >;
 
 const resource: Resource = {
@@ -46,9 +46,9 @@ const resource: Resource = {
     return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[] | string[]>, Session>(async request => {
       const respond = (code: number, body: OrganizationSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       // Pass session in so we can add owner name for admin/owner only
-      const dbResult = await readManyOrganizations(connection, request.session);
+      const dbResult = await db.readManyOrganizations(connection, request.session);
       if (isInvalid(dbResult)) {
-        return respond(503, ['Database error.']);
+        return respond(503, [db.ERROR_MESSAGE]);
       }
       return respond(200, dbResult.value);
     });
@@ -64,9 +64,9 @@ const resource: Resource = {
       }
       // Only admins or the org owner can read the full org details
       if (await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
-        const dbResult = await readOneOrganization(connection, validatedId.value);
+        const dbResult = await db.readOneOrganization(connection, validatedId.value);
         if (isInvalid(dbResult)) {
-          return respond(503, ['Database error.']);
+          return respond(503, [db.ERROR_MESSAGE]);
         }
         if (!dbResult.value) {
           return respond(404, ['Organization not found.']);
@@ -179,17 +179,20 @@ const resource: Resource = {
                       });
                     }
       },
-      respond: crud.wrapRespond({
+      respond: wrapRespond<CreateRequestBody, CreateValidationErrors, JsonResponseBody<Organization>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
-          const dbResult = await createOrganization(connection, request.session.user && request.session.user.id, request.body);
+          if (!request.session.user) {
+            return basicResponse(401, request.session, makeJsonResponseBody({ permissions: [permissions.ERROR_MESSAGE]}));
+          }
+          const dbResult = await db.createOrganization(connection, request.session.user.id, request.body);
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<Organization | CreateValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+        })
       })
     };
   },
@@ -301,11 +304,11 @@ const resource: Resource = {
           });
         }
       },
-      respond: crud.wrapRespond({
+      respond: wrapRespond({
         valid: (async request => {
-          const dbResult = await updateOrganization(connection, request.body);
+          const dbResult = await db.updateOrganization(connection, request.body);
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
         }) as (request: Request<ValidatedUpdateRequestBody, Session>) => Promise<Response<JsonResponseBody<Organization | UpdateValidationErrors>, Session>>,
@@ -331,23 +334,23 @@ const resource: Resource = {
           return invalid({ notFound: ['Organization not found.']});
         }
       },
-      respond: crud.wrapRespond({
+      respond: wrapRespond({
         valid: (async request => {
         // Mark the organization as inactive
-          const dbResult = await updateOrganization(connection, {
+          const dbResult = await db.updateOrganization(connection, {
             id: request.params.id,
             active: false,
             deactivatedOn: new Date(),
             deactivatedBy: request.session.user && request.session.user.id
           });
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<DeleteValidatedReqBody, Session>) => Promise<Response<JsonResponseBody<Organization | DeleteValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<DeleteValidationErrors, Session>) => Promise<Response<JsonResponseBody<DeleteValidationErrors>, Session>>
+        })
       })
     };
   }

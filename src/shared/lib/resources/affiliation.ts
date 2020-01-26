@@ -1,7 +1,6 @@
-import { BodyWithErrors } from 'shared/lib';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export enum MembershipType {

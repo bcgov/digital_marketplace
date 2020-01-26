@@ -150,6 +150,10 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             return makeAuthErrorRedirect(request);
           }
 
+          if (!user) {
+            return makeAuthErrorRedirect(request);
+          }
+
           const result = await updateSession(connection, {
             ...request.session,
             user: user && user.id,

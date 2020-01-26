@@ -12,14 +12,16 @@ import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 's
 
 export type Connection = Knex;
 
+export const ERROR_MESSAGE = 'Database error.';
+
 type DatabaseValidation<Valid> = Validation<Valid, null>;
 
-type DbFn<Arg1, Arg2, Valid> = (connection: Connection, arg1?: Arg1, arg2?: Arg2) => Promise<DatabaseValidation<Valid>>;
+type DbFn<Args extends unknown[], Valid> = (connection: Connection, ...args: Args) => Promise<DatabaseValidation<Valid>>;
 
-function tryDb<Arg1, Arg2, Valid>(fn: DbFn<Arg1, Arg2, Valid>): DbFn<Arg1, Arg2, Valid> {
-  return async (connection, arg1?, arg2?) => {
+function tryDb<Args extends unknown[], Valid>(fn: DbFn<Args, Valid>): DbFn<Args, Valid> {
+  return async (connection, ...args) => {
     try {
-      return arg1 ? (arg2 ? await fn(connection, arg1, arg2) : await fn(connection, arg1)) : await fn(connection);
+      return await fn(connection, ...args);
     } catch (exception) {
       return invalid(null);
     }
@@ -28,7 +30,7 @@ function tryDb<Arg1, Arg2, Valid>(fn: DbFn<Arg1, Arg2, Valid>): DbFn<Arg1, Arg2,
 
 type CreateUserParams = Omit<Partial<User>, 'avatarImageFile'> & { createdAt?: Date, updatedAt?: Date, avatarImageFile?: Id };
 
-export const createUser = tryDb<CreateUserParams, null, User>(async (connection, user) => {
+export const createUser = tryDb<[CreateUserParams], User>(async (connection, user) => {
   const now = new Date();
   const [result] = await connection<RawUserToUserParams>('users')
     .insert({
@@ -45,7 +47,7 @@ export const createUser = tryDb<CreateUserParams, null, User>(async (connection,
 
 type UpdateUserParams = Omit<Partial<User>, 'avatarImageFile'> & { updatedAt?: Date, avatarImageFile?: Id };
 
-export const updateUser = tryDb<UpdateUserParams, null, User>(async (connection, user) => {
+export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, user) => {
   const now = new Date();
   const [result] = await connection<RawUserToUserParams>('users')
   .where({ id: user && user.id })
@@ -59,14 +61,14 @@ export const updateUser = tryDb<UpdateUserParams, null, User>(async (connection,
   return valid(await rawUserToUser(connection, result));
 });
 
-export const readOneUser = tryDb<Id, null, User | null>(async (connection, id) => {
+export const readOneUser = tryDb<[Id], User | null>(async (connection, id) => {
   const result = await connection<RawUserToUserParams>('users')
     .where({ id })
     .first();
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 
-export const readOneUserByEmail = tryDb<string, boolean, User | null>(async (connection, email, allowInactive = false) => {
+export const readOneUserByEmail = tryDb<[string, boolean], User | null>(async (connection, email, allowInactive = false) => {
   const where = {
     email,
     status: (allowInactive ? '*' : UserStatus.Active)
@@ -77,7 +79,7 @@ export const readOneUserByEmail = tryDb<string, boolean, User | null>(async (con
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 
-export const readManyUsers = tryDb<null, null, User[]>(async (connection) => {
+export const readManyUsers = tryDb<[], User[]>(async (connection) => {
   const results = await connection<RawUserToUserParams>('users').select();
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
@@ -95,11 +97,11 @@ export async function rawUserToUser(connection: Connection, params: RawUserToUse
   };
 }
 
-export const findOneUserByTypeAndUsername = tryDb<UserType, string, User | null>(async (connection, type, idpUsername) => {
+export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | null>(async (connection, userType, idpUsername) => {
   let query = connection<User>('users')
-    .where({ type, idpUsername });
+    .where({ type: userType, idpUsername });
 
-  if (type === UserType.Government) {
+  if (userType === UserType.Government) {
     query = query.orWhere({ type: UserType.Admin });
   }
   const result = await query.first();
@@ -129,7 +131,7 @@ async function rawSessionToSession(connection: Connection, params: RawSessionToS
   return session;
 }
 
-export const createAnonymousSession = tryDb<null, null, Session>(async (connection) => {
+export const createAnonymousSession = tryDb<[], Session>(async (connection) => {
   const now = new Date();
   const [result] = await connection<Session>('sessions')
     .insert({
@@ -145,7 +147,7 @@ export const createAnonymousSession = tryDb<null, null, Session>(async (connecti
   }));
 });
 
-export const readOneSession = tryDb<Id, null, Session>(async (connection, id) => {
+export const readOneSession = tryDb<[Id], Session>(async (connection, id) => {
   const result = await connection<RawSessionToSessionParams>('sessions')
     .where({ id })
     .first();
@@ -160,7 +162,7 @@ export const readOneSession = tryDb<Id, null, Session>(async (connection, id) =>
 
 type UpdateSessionParams = Omit<Session, 'user'> & { user: Id, updatedAt?: Date };
 
-export const updateSession = tryDb<UpdateSessionParams, null, Session>(async (connection, session) => {
+export const updateSession = tryDb<[UpdateSessionParams], Session>(async (connection, session) => {
   const now = new Date();
   const [result] = await connection<UpdateSessionParams>('sessions')
     .where({ id: session && session.id })
@@ -178,7 +180,7 @@ export const updateSession = tryDb<UpdateSessionParams, null, Session>(async (co
   }));
 });
 
-export const deleteSession = tryDb<Id, null, null>(async (connection, id) => {
+export const deleteSession = tryDb<[Id], null>(async (connection, id) => {
   await connection('sessions')
     .where({ id })
     .delete();
@@ -197,7 +199,7 @@ async function rawOrganizationToOrganization(connection: Connection, raw: RawOrg
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
     if (isInvalid(dbResult) || !dbResult.value) {
-      throw new Error('Database error');
+      throw new Error(ERROR_MESSAGE);
     }
     fetchedLogoFile = dbResult.value;
   }
@@ -223,7 +225,7 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
     if (isInvalid(dbResult) || !dbResult.value) {
-      throw new Error('Database error');
+      throw new Error(ERROR_MESSAGE);
     }
     fetchedLogoImageFile = dbResult.value;
   }
@@ -244,7 +246,7 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
  * - An admin: Include owner information for all organizations.
  * - A vendor: Include owner information only for owned organizations.
  */
-export const readManyOrganizations = tryDb<Session, null, OrganizationSlim[]>(async (connection, session) => {
+export const readManyOrganizations = tryDb<[Session], OrganizationSlim[]>(async (connection, session) => {
   const query = connection('organizations')
     .select('organizations.id', 'legalName', 'logoImageFile')
     .where({ active: true });
@@ -272,7 +274,7 @@ export const readManyOrganizations = tryDb<Session, null, OrganizationSlim[]>(as
 
 type CreateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & { logoImageFile?: Id };
 
-export const createOrganization = tryDb<Id, CreateOrganizationParams, Organization>(async (connection, user, organization) => {
+export const createOrganization = tryDb<[Id, CreateOrganizationParams], Organization>(async (connection, user, organization) => {
   const now = new Date();
   const result: RawOrganization = await connection.transaction(async trx => {
     // Create organization
@@ -306,7 +308,7 @@ export const createOrganization = tryDb<Id, CreateOrganizationParams, Organizati
 
 type UpdateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & { logoImageFile?: Id };
 
-export const updateOrganization = tryDb<UpdateOrganizationParams, null, Organization>(async (connection, organization) => {
+export const updateOrganization = tryDb<[UpdateOrganizationParams], Organization>(async (connection, organization) => {
   const now = new Date();
   const [result] = await connection<UpdateOrganizationParams>('organizations')
     .where({
@@ -327,7 +329,7 @@ export const updateOrganization = tryDb<UpdateOrganizationParams, null, Organiza
   return valid(dbResult.value);
 });
 
-export const readOneOrganization = tryDb<Id, boolean, Organization | null>(async (connection, id, allowInactive = false) => {
+export const readOneOrganization = tryDb<[Id, boolean?], Organization | null>(async (connection, id, allowInactive = false) => {
   const where = {
     'organizations.id': id,
     'affiliations.membershipType': MembershipType.Owner
@@ -346,7 +348,7 @@ export const readOneOrganization = tryDb<Id, boolean, Organization | null>(async
 
 type CreateAffiliationParams = Partial<Omit<Affiliation, 'user' | 'organization'>> & { user: Id, organization: Id };
 
-export const createAffiliation = tryDb<CreateAffiliationParams, null, Affiliation>(async (connection, affiliation) => {
+export const createAffiliation = tryDb<[CreateAffiliationParams], Affiliation>(async (connection, affiliation) => {
   const now = new Date();
   if (!affiliation) {
     throw new Error('unable to create affiliation');
@@ -368,7 +370,7 @@ export const createAffiliation = tryDb<CreateAffiliationParams, null, Affiliatio
   return valid(await rawAffiliationToAffiliation(connection, result));
 });
 
-export const readManyAffiliations = tryDb<Id, null, AffiliationSlim[]>(async (connection, userId) => {
+export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connection, userId) => {
     const results: RawAffiliation[] = await connection<RawAffiliation>('affiliations')
       .join('organizations', 'affiliations.organization', '=', 'organizations.id')
       .select('affiliations.*')
@@ -380,7 +382,7 @@ export const readManyAffiliations = tryDb<Id, null, AffiliationSlim[]>(async (co
     return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw))));
 });
 
-export const readOneAffiliation = tryDb<Id, Id, Affiliation | null>(async (connection, user, organization) => {
+export const readOneAffiliation = tryDb<[Id, Id], Affiliation | null>(async (connection, user, organization) => {
   const result = await connection<RawAffiliation>('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select<RawAffiliation>('affiliations.*')
@@ -398,7 +400,7 @@ export const readOneAffiliation = tryDb<Id, Id, Affiliation | null>(async (conne
   return valid(result ? await rawAffiliationToAffiliation(connection, result) : null);
 });
 
-export const readOneAffiliationById = tryDb<Id, null, Affiliation | null>(async (connection, id) => {
+export const readOneAffiliationById = tryDb<[Id], Affiliation | null>(async (connection, id) => {
   const result = await connection<RawAffiliation>('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select<RawAffiliation>('affiliations.*')
@@ -452,7 +454,7 @@ async function rawAffiliationToAffiliation(connection: Connection, params: RawAf
   };
 }
 
-export const approveAffiliation = tryDb<Id, null, Affiliation>(async (connection, id) => {
+export const approveAffiliation = tryDb<[Id], Affiliation>(async (connection, id) => {
   const now = new Date();
   const [result] = await connection<RawAffiliation>('affiliations')
     .update({
@@ -475,7 +477,7 @@ export const approveAffiliation = tryDb<Id, null, Affiliation>(async (connection
   return valid(await rawAffiliationToAffiliation(connection, result));
 });
 
-export const deleteAffiliation = tryDb<Id, null, Affiliation>(async (connection, id) => {
+export const deleteAffiliation = tryDb<[Id], Affiliation>(async (connection, id) => {
   const now = new Date();
   const [result] = await connection<RawAffiliation>('affiliations')
     .update({
@@ -526,7 +528,7 @@ export async function readActiveOwnerCount(connection: Connection, orgId: Id): P
   }
 }
 
-export const readOneFileById = tryDb<Id, null, FileRecord | null>(async (connection, id) => {
+export const readOneFileById = tryDb<[Id], FileRecord | null>(async (connection, id) => {
   const result = await connection<FileRecord>('files')
     .where({ id })
     .select(['name', 'id', 'createdAt', 'fileBlob'])
@@ -534,7 +536,7 @@ export const readOneFileById = tryDb<Id, null, FileRecord | null>(async (connect
   return valid(result ? result : null);
 });
 
-export const readOneFileBlob = tryDb<string, null, FileBlob | null>(async (connection, hash) => {
+export const readOneFileBlob = tryDb<[string], FileBlob | null>(async (connection, hash) => {
   const result = await connection<FileBlob>('fileBlobs')
     .where({ hash })
     .first();
@@ -543,7 +545,7 @@ export const readOneFileBlob = tryDb<string, null, FileBlob | null>(async (conne
 
 type CreateFileParams = Partial<FileRecord> & { path: string, permissions: Array<FilePermissions<Id, UserType>> };
 
-export const createFile = tryDb<CreateFileParams, Id, FileRecord>(async (connection, fileRecord, userId) => {
+export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (connection, fileRecord, userId) => {
   const now = new Date();
   if (!fileRecord) {
     throw new Error();
