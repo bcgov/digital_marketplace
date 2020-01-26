@@ -181,15 +181,15 @@ const resource: Resource = {
       },
       respond: crud.wrapRespond({
         valid: (async request => {
-          const dbResult = await createOrganization(connection, request.session.user && request.session.user.id, request.body);
+          const dbResult = await createOrganization(connection, request.session.user.id, request.body);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<Organization | CreateValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+        })
       })
     };
   },
@@ -344,10 +344,10 @@ const resource: Resource = {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error.'] }));
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<DeleteValidatedReqBody, Session>) => Promise<Response<JsonResponseBody<Organization | DeleteValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<DeleteValidationErrors, Session>) => Promise<Response<JsonResponseBody<DeleteValidationErrors>, Session>>
+        })
       })
     };
   }

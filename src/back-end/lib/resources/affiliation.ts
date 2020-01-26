@@ -1,12 +1,11 @@
 import * as crud from 'back-end/lib/crud';
 import { approveAffiliation, Connection, createAffiliation, deleteAffiliation, readActiveOwnerCount, readManyAffiliations, readOneAffiliation } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { Request, Response } from 'back-end/lib/server';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Response } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAffiliationId, validateOrganizationId, validateUserId } from 'back-end/lib/validation';
-import { getString } from 'shared/lib';
-import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
+import { getString, BodyWithErrors } from 'shared/lib';
+import { AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors, Affiliation } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
@@ -114,13 +113,13 @@ const resource: Resource = {
         valid: (async request => {
           const dbResult = await createAffiliation(connection, request.body);
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error'] }));
+          return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error'] }));
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedCreateRequestBody, Session>) => Promise<Response<JsonResponseBody<Affiliation | CreateValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<CreateValidationErrors, Session>) => Promise<Response<JsonResponseBody<CreateValidationErrors>, Session>>
+        })
       })
     };
   },
@@ -158,10 +157,10 @@ const resource: Resource = {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error']}));
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedUpdateRequestBody, Session>) => Promise<Response<JsonResponseBody<Affiliation | UpdateValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<UpdateValidationErrors, Session>) => Promise<Response<JsonResponseBody<UpdateValidationErrors>, Session>>
+        })
       })
     };
   },
@@ -200,10 +199,10 @@ const resource: Resource = {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: ['Database error'] }));
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
-        }) as (request: Request<ValidatedDeleteRequestBody, Session>) => Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>>,
+        }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        }) as (request: Request<DeleteValidationErrors, Session>) => Promise<Response<JsonResponseBody<DeleteValidationErrors>, Session>>
+        })
       })
     };
   }
