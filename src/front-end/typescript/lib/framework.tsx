@@ -1,5 +1,6 @@
 import { BootstrapColor } from 'front-end/lib/types';
 import { AvailableIcons } from 'front-end/lib/views/icon';
+import { Placement } from 'front-end/lib/views/link';
 import * as Immutable from 'immutable';
 import { get, remove } from 'lodash';
 import page from 'page';
@@ -252,7 +253,7 @@ export function mapPageBreadcrumbsMsg<MsgA, MsgB, Route>(breadcrumbs: PageBreadc
   }));
 }
 
-export interface ModalButton<Msg> {
+export interface ModalAction<Msg> {
   text: string;
   color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
   msg: Msg;
@@ -264,7 +265,7 @@ export interface PageModal<Msg> {
   title: string;
   body: ViewElementChildren;
   onCloseMsg: Msg;
-  actions: Array<ModalButton<Msg>>;
+  actions: Array<ModalAction<Msg>>;
 }
 
 export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<GlobalComponentMsg<MsgA, Route>> | null, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageModal<GlobalComponentMsg<MsgB, Route>> | null {
@@ -296,6 +297,32 @@ export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State,
   isEmptyOnMobile?(state: Immutable<State>): boolean;
 }
 
+interface PageContextualLink<Msg> {
+  text: string;
+  msg: Msg;
+  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
+  button?: boolean;
+  icon?: Placement<AvailableIcons>;
+}
+
+interface PageContextualDropdownLinkGroup<Msg> {
+  label?: string;
+  links: Array<PageContextualLink<Msg>>;
+}
+
+interface PageContextualDropdown<Msg> {
+  text: string;
+  open: boolean;
+  toggleMsg: Msg;
+  linkGroups: Array<PageContextualDropdownLinkGroup<Msg>>;
+}
+
+export type PageContextualAction<Msg>
+  = ADT<'link', PageContextualLink<Msg>>
+  | ADT<'dropdown', PageContextualDropdown<Msg>>;
+
+export type PageGetContextualActions<State, Msg> = (state: Immutable<State>) => Array<PageContextualAction<Msg>>;
+
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   fullWidth?: boolean;
   simpleNav?: boolean;
@@ -308,6 +335,7 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   getAlerts?: PageGetAlerts<State, Msg>;
   getBreadcrumbs?: PageGetBreadcrumbs<State, Msg>;
   getModal?: PageGetModal<State, Msg>;
+  getContextualActions?: PageGetContextualActions<State, Msg>;
 }
 
 export function setPageMetadata(metadata: PageMetadata): void {
