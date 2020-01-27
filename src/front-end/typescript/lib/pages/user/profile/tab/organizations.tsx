@@ -229,6 +229,7 @@ export const component: Tab.Component<State, Msg> = {
         actions: [
           {
             text: 'Leave Organization',
+            icon: 'user-times',
             color: 'danger',
             msg: adt('deleteAffiliation', state.showDeleteAffiliationModal),
             button: true

@@ -1,4 +1,5 @@
 import { BootstrapColor } from 'front-end/lib/types';
+import { AvailableIcons } from 'front-end/lib/views/icon';
 import * as Immutable from 'immutable';
 import { get, remove } from 'lodash';
 import page from 'page';
@@ -256,6 +257,7 @@ export interface ModalButton<Msg> {
   color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
   msg: Msg;
   button?: boolean;
+  icon?: AvailableIcons;
 }
 
 export interface PageModal<Msg> {
