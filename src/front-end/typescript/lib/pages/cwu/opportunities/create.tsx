@@ -141,7 +141,7 @@ async function defaultState() {
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
         value: undefined,
-        id: 'opportunity-start-date'
+        id: 'opportunity-proposal-deadline'
       }
     })),
 
@@ -159,7 +159,7 @@ async function defaultState() {
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
         value: undefined,
-        id: 'opportunity-start-date'
+        id: 'opportunity-assignment-date'
       }
     })),
 
@@ -168,7 +168,7 @@ async function defaultState() {
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
         value: undefined,
-        id: 'opportunity-start-date'
+        id: 'opportunity-completion-date'
       }
     })),
 
