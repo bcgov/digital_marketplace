@@ -76,7 +76,7 @@ export type RouteParams = null;
 
 async function defaultState() {
   return {
-    activeTab: 'Attachments' as const,
+    activeTab: 'Details' as const,
 
     title: immutable(await ShortText.init({
       errors: [],
