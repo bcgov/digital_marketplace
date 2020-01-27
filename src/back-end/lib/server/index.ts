@@ -4,7 +4,7 @@ import { existsSync, readFileSync, statSync } from 'fs';
 import { IncomingHttpHeaders, OutgoingHttpHeaders } from 'http';
 import { assign } from 'lodash';
 import { lookup } from 'mime-types';
-import { ADT, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { valid, Validation } from 'shared/lib/validation';
 
 export type SessionId = Id;
@@ -384,3 +384,34 @@ export const notFoundJsonRoute: Route<any, any, any, any, JsonResponseBody, any,
 };
 
 export type Router<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, HookState, Session> = Array<Route<IncomingReqBody, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ResBody, HookState, Session>>;
+
+interface ResponseValidation<ValidReqB, InvalidReqB, ValidResB, InvalidResB, Session> {
+  valid: Respond<ValidReqB, ValidResB | InvalidResB, Session>;
+  invalid: Respond<InvalidReqB, InvalidResB, Session>;
+}
+
+export function wrapRespond<ValidReqB, InvalidReqB extends BodyWithErrors, ValidResB, InvalidResB, Session>(responseValidation: ResponseValidation<ValidReqB, InvalidReqB, ValidResB, InvalidResB, Session>): Respond<Validation<ValidReqB, InvalidReqB>, ValidResB | InvalidResB | JsonResponseBody<InvalidReqB>, Session> {
+  return (async request => {
+    const respond = (code: number, body: InvalidReqB) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    switch (request.body.tag) {
+      case 'invalid':
+        if (request.body.value.permissions) {
+          return respond(401, request.body.value);
+        } else if (request.body.value.database) {
+          return respond(503, request.body.value);
+        } else if (request.body.value.notFound) {
+          return respond(404, request.body.value);
+        } else {
+          return await responseValidation.invalid({
+            ...request,
+            body: request.body.value
+          });
+        }
+      case 'valid':
+        return await responseValidation.valid({
+          ...request,
+          body: request.body.value
+        });
+    }
+  });
+}

@@ -1,7 +1,7 @@
 import * as crud from 'back-end/lib/crud';
-import { Connection, createFile, readOneFileBlob, readOneFileById } from 'back-end/lib/db';
+import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Response } from 'back-end/lib/server';
+import { basicResponse, FileResponseBody, FileUpload, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateFilePath } from 'back-end/lib/validation';
 import { lookup } from 'mime-types';
@@ -11,7 +11,7 @@ import { CreateValidationErrors, FilePermissions, FileRecord, FileUploadMetadata
 import { Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
 
 export function hashFile(originalName: string, data: Buffer): string {
@@ -40,7 +40,7 @@ type Resource = crud.Resource<
   null,
   null,
   Session,
-  Connection
+  db.Connection
 >;
 
 const resource: Resource = {
@@ -51,19 +51,27 @@ const resource: Resource = {
       const getBlob = getString(request.query, 'type') === 'blob';
       const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       if (await permissions.readOneFile(connection, request.session, request.params.id)) {
-        const file = await readOneFileById(connection, request.params.id);
+        const dbResult = await db.readOneFileById(connection, request.params.id);
+        if (isInvalid(dbResult)) {
+          return respond(503, [db.ERROR_MESSAGE]);
+        }
+        const file = dbResult.value;
         if (!file) {
           return respond(404, ['File not found.']);
         }
         if (!getBlob) { return respond(200, file); }
-        const blob = await readOneFileBlob(connection, file.fileBlob);
-        if (blob) {
-          return basicResponse(200, request.session, adt('file', {
-            buffer: blob.blob,
-            contentType: lookup(file.name) || 'application/octet-stream',
-            contentDisposition: `attachment; filename="${file.name}"`
-          }));
+        const dbResultBlob = await db.readOneFileBlob(connection, file.fileBlob);
+        if (isInvalid(dbResultBlob)) {
+          return respond(503, [db.ERROR_MESSAGE]);
         }
+        if (!dbResultBlob.value) {
+          return respond(404, ['File not found.']);
+        }
+        return basicResponse(200, request.session, adt('file', {
+          buffer: dbResultBlob.value.blob,
+          contentType: lookup(file.name) || 'application/octet-stream',
+          contentDisposition: `attachment; filename="${file.name}"`
+        }));
       }
       return respond(401, [permissions.ERROR_MESSAGE]);
     });
@@ -113,20 +121,19 @@ const resource: Resource = {
           });
         }
       },
-      async respond(request): Promise<Response<JsonResponseBody<FileRecord | CreateValidationErrors>, Session>> {
-        const respond = (code: number, body: FileRecord | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        switch (request.body.tag) {
-          case 'invalid':
-            if (request.body.value.permissions) {
-              return respond(401, request.body.value);
-            }
-            return respond(400, request.body.value);
-          case 'valid':
-            const createdById = getString(request.session.user, 'id');
-            const fileRecord = await createFile(connection, request.body.value, createdById);
-            return respond(201, fileRecord);
-        }
-      }
+      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
+        valid: (async request => {
+          const createdById = getString(request.session.user, 'id');
+          const dbResult = await db.createFile(connection, request.body, createdById);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
+        }),
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        })
+      })
     };
   }
 };
