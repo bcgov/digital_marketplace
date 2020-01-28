@@ -3,7 +3,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 
-export enum OpportunityStatus {
+export enum CWUOpportunityStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
   Evaluation = 'EVALUATION',
@@ -15,9 +15,9 @@ export enum OpportunityStatus {
 export interface CWUOpportunity {
   id: Id;
   createdAt: Date;
-  createdBy: User;
+  createdBy?: User;
   updatedAt: Date;
-  updatedBy: User;
+  updatedBy?: User;
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -33,9 +33,9 @@ export interface CWUOpportunity {
   submissionInfo: string;
   acceptanceCriteria: string;
   evaluationCriteria: string;
-  status: OpportunityStatus;
+  status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
 }
 
-export type CWUOpportunitySlim = Omit<CWUOpportunity, 'attachments' | 'addenda' | 'updatedAt' | 'updatedBy'>;
+export type CWUOpportunitySlim = Pick<CWUOpportunity, 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;

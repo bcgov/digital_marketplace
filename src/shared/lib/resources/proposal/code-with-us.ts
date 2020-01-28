@@ -1,8 +1,8 @@
-import { CWUOpportunitySlim } from 'shared/lib/resources/cwu-opportunity';
+import { CWUOpportunitySlim } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { ADT, Id } from 'shared/lib/types';
 
 export enum ProposalStatus {
   Draft = 'DRAFT',
@@ -21,8 +21,7 @@ export interface CWUProposal {
   opportunity: CWUOpportunitySlim;
   proposalText: string;
   additionalComments: string;
-  proponent?: CWUProponent;
-  proponentOrg?: Organization;
+  proponent?: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
   score: number;
   status: ProposalStatus;
   attachments: FileRecord;
@@ -30,7 +29,7 @@ export interface CWUProposal {
 
 export type CWUProposalSlim = Omit<CWUProposal, 'attachments'>;
 
-export interface CWUProponent {
+export interface CWUIndividualProponent {
   id: Id;
   legalName: string;
   email: string;
