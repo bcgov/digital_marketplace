@@ -1,4 +1,6 @@
 import { generateUuid } from 'back-end/lib';
+import { makeDomainLogger } from 'back-end/lib/logger';
+import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
@@ -9,6 +11,8 @@ import { Session } from 'shared/lib/resources/session';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
+
+const logger = makeDomainLogger(consoleAdapter, 'back-end');
 
 export type Connection = Knex;
 
@@ -22,7 +26,11 @@ function tryDb<Args extends unknown[], Valid>(fn: DbFn<Args, Valid>): DbFn<Args,
   return async (connection, ...args) => {
     try {
       return await fn(connection, ...args);
-    } catch (exception) {
+    } catch (e) {
+      logger.error('database operation failed', {
+        message: e.message,
+        stack: e.stack
+      });
       return invalid(null);
     }
   };
@@ -378,7 +386,7 @@ export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connec
         'affiliations.user': userId,
         'organizations.active': true
       })
-      .andWhereNot({ membeshipStatus: MembershipStatus.Inactive });
+      .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
     return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw))));
 });
 

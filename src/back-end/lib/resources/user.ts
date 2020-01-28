@@ -114,7 +114,7 @@ const resource: Resource = {
         }
       },
       async validateRequestBody(request) {
-        if (!request.body) { return invalid(adt('parseFailure')); }
+        if (!request.body) { return invalid({ user: adt('parseFailure') }); }
         const validatedUser = await validateUserId(connection, request.params.id);
         if (isInvalid(validatedUser)) {
           return invalid({ notFound: ['The specified user does not exist.'] });
@@ -138,12 +138,14 @@ const resource: Resource = {
                 avatarImageFile: isValid(validatedAvatarImageFile) && validatedAvatarImageFile.value && validatedAvatarImageFile.value.id
               } as UpdateProfileRequestBody));
             } else {
-              return invalid(adt('updateProfile', {
-                name: getInvalidValue(validatedName, undefined),
-                email: getInvalidValue(validatedEmail, undefined),
-                jobTitle: getInvalidValue(validatedJobTitle, undefined),
-                avatarImageFile: getInvalidValue(validatedAvatarImageFile, undefined)
-              }));
+              return invalid({
+                user: adt('updateProfile', {
+                  name: getInvalidValue(validatedName, undefined),
+                  email: getInvalidValue(validatedEmail, undefined),
+                  jobTitle: getInvalidValue(validatedJobTitle, undefined),
+                  avatarImageFile: getInvalidValue(validatedAvatarImageFile, undefined)
+                })
+              });
             }
 
           case 'acceptTerms':
@@ -151,7 +153,7 @@ const resource: Resource = {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             if (validatedUser.value.acceptedTerms) {
-              return invalid(adt('acceptTerms', ['You have already accepted the terms of service.']));
+              return invalid({ user: adt('acceptTerms', ['You have already accepted the terms of service.']) });
             }
             return valid(adt('acceptTerms'));
 
@@ -173,7 +175,9 @@ const resource: Resource = {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             if (validatedUser.value.type === UserType.Vendor) {
-              return invalid(adt('updateAdminPermissions', ['Vendors cannot be granted admin permissions.']));
+              return invalid({
+                user: adt('updateAdminPermissions', ['Vendors cannot be granted admin permissions.'])
+              });
             }
             return valid(adt('updateAdminPermissions', userType));
 
@@ -225,7 +229,7 @@ const resource: Resource = {
           return invalid({ notFound: ['Specified user not found.'] });
         }
         if (validatedUser.value.status !== UserStatus.Active) {
-          return invalid(adt('userNotActive' as const, ['Specified user is already inactive']));
+          return invalid({ user: ['Specified user is already inactive'] });
         }
         if (!permissions.deleteUser(request.session, validatedUser.value.id)) {
           return invalid({ permissions: [permissions.ERROR_MESSAGE] });

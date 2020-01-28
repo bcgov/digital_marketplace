@@ -278,8 +278,8 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
   }));
   switch (result.tag) {
     case 'invalid':
-      if (result.value.tag === 'updateProfile') {
-        return invalid(setErrors(state, result.value.value));
+      if (result.value.user && result.value.user.tag === 'updateProfile') {
+        return invalid(setErrors(state, result.value.user.value));
       } else {
         return invalid(state);
       }

@@ -124,7 +124,6 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
   }
   // pageState is defined, render page.
   const {
-    viewBottomBar,
     sidebar,
     getBreadcrumbs = emptyPageBreadcrumbs,
     getAlerts = emptyPageAlerts,
@@ -140,8 +139,6 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     alerts: getAlerts(pageState),
     breadcrumbs: getBreadcrumbs(pageState)
   };
-  // View bottom bar.
-  const bottomBar = viewBottomBar ? viewBottomBar(viewProps) : null;
   // Handle full width pages.
   if (fullWidth) {
     // Do not show sidebar on fullWidth pages.
@@ -150,7 +147,6 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
       <div className='d-flex flex-column flex-grow-1 page-container'>
         <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container />
         <component.view {...viewProps} />
-        {bottomBar}
       </div>
     );
   } else {
@@ -180,7 +176,6 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
               </Row>
             </Container>
           </div>
-          {bottomBar}
         </div>
       );
     } else {
@@ -191,7 +186,6 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>
-          {bottomBar}
         </div>
       );
     }
