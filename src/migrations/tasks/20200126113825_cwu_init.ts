@@ -1,8 +1,8 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
-import { OpportunityStatus } from 'shared/lib/resources/cwu-opportunity';
-import { ProposalStatus } from 'shared/lib/resources/cwu-proposal';
+import { CWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
+import { ProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
@@ -47,7 +47,7 @@ export async function up(connection: Knex): Promise<void> {
     table.timestamp('createdAt').notNullable();
     table.uuid('createdBy').references('id').inTable('users').notNullable();
     table.uuid('opportunity').references('id').inTable('cwuOpportunities');
-    table.enu('status', Object.values(OpportunityStatus)).notNullable();
+    table.enu('status', Object.values(CWUOpportunityStatus)).notNullable();
     table.string('note');
   });
   logger.info('Created cwuOpportunityStatuses table.');
