@@ -7,7 +7,7 @@ import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import React from 'react';
-import { isAdmin, User } from 'shared/lib/resources/user';
+import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
@@ -55,10 +55,18 @@ function makeInit<K extends UserSidebar.TabId>(): PageInit<RouteParams, SharedSt
         return invalid(null);
       }
       // Set up the visible tab state.
-      // Admins can only view the profile tab of non-owned profiles.
-      const tabId = viewerIsAdmin && !isOwner
-        ? 'profile'
-        : (routeParams.tab || 'profile');
+      const tabId = (() => {
+        if (viewerIsAdmin && !isOwner) {
+          // Admins can only view the profile tab of non-owned profiles.
+          return 'profile';
+        } else if (routeParams.tab === 'organizations' && isOwner && isPublicSectorEmployee(viewerUser)) {
+          // Public Sector Employees do not have an organizations tab.
+          return 'profile';
+        } else {
+          // Fallback to 'profile' tab.
+          return routeParams.tab || 'profile';
+        }
+      })();
       const tabState = immutable(await UserSidebar.tabIdToTabDefinition(tabId).component.init({ profileUser, viewerUser }));
       // Everything checks out, return valid state.
       return valid(immutable({
