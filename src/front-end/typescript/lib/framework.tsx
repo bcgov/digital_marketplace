@@ -329,7 +329,6 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   init: PageInit<RouteParams, SharedState, State, Msg>;
   update: Update<State, Msg>;
   view: View<Props>;
-  viewBottomBar?: View<Props>; //TODO potentially remove
   sidebar?: PageSidebar<State, Msg, Props>;
   getMetadata: PageGetMetadata<State>;
   getAlerts?: PageGetAlerts<State, Msg>;
