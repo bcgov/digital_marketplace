@@ -21,7 +21,7 @@ export interface CWUProposal {
   opportunity: CWUOpportunitySlim;
   proposalText: string;
   additionalComments: string;
-  proponent?: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
+  proponent: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
   score: number;
   status: ProposalStatus;
   attachments: FileRecord;
