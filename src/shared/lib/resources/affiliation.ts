@@ -33,7 +33,7 @@ export interface AffiliationSlim {
 export interface CreateRequestBody {
   userEmail: string;
   organization: string;
-  membershipType: string;
+  membershipType: MembershipType;
 }
 
 export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody>, BodyWithErrors {

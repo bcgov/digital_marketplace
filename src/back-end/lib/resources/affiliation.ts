@@ -5,11 +5,11 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAffiliationId, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationSlim, CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
-import { User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
 import * as affiliationValidation from 'shared/lib/validation/affiliation';
 
 export interface ValidatedCreateRequestBody {
@@ -22,6 +22,10 @@ export interface ValidatedCreateRequestBody {
 type ValidatedUpdateRequestBody = Id;
 
 type ValidatedDeleteRequestBody = Id;
+
+interface CreateRequestBody extends Omit<SharedCreateRequestBody, 'membershipType'> {
+  membershipType: string;
+}
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -70,11 +74,16 @@ const resource: Resource = {
       async validateRequestBody(request) {
         const { userEmail, organization, membershipType } = request.body;
         // Attempt to fetch a valid user for the given email
+        if (!await permissions.createAffiliation(connection, request.session, organization)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
         const validatedUser = await db.readOneUserByEmail(connection, userEmail);
         const validatedOrganization = await validateOrganizationId(connection, organization);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
-          const user = validatedUser.value as User | null;
+          const user = getValidValue(validatedUser, null);
           if (!user) {
             return invalid({
               inviteeNotRegistered: ['User is not registered, but has been notified.']
@@ -90,11 +99,6 @@ const resource: Resource = {
           if (user.type !== UserType.Vendor) {
             return invalid({
               affiliation: ['Only vendors can be invited.']
-            });
-          }
-          if (!await permissions.createAffiliation(connection, request.session, organization)) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
             });
           }
           // Do not create if there is already an active affiliation for this user/org
@@ -188,7 +192,7 @@ const resource: Resource = {
         const validatedAffiliation = await validateAffiliationId(connection, request.params.id);
         if (isInvalid(validatedAffiliation)) {
           return invalid({
-            affiliation: getInvalidValue(validatedAffiliation, undefined)
+            affiliation: validatedAffiliation.value
           });
         }
 
