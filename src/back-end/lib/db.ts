@@ -8,7 +8,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
-import { User, UserType } from 'shared/lib/resources/user';
+import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
 
@@ -72,6 +72,17 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
 export const readOneUser = tryDb<[Id], User | null>(async (connection, id) => {
   const result = await connection<RawUserToUserParams>('users')
     .where({ id })
+    .first();
+  return valid(result ? await rawUserToUser(connection, result) : null);
+});
+
+export const readOneUserByEmail = tryDb<[string, boolean?], User | null>(async (connection, email, allowInactive = false) => {
+  const where = {
+    email,
+    status: (allowInactive ? '*' : UserStatus.Active)
+  };
+  const result: RawUserToUserParams = await connection('users')
+    .where(where)
     .first();
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
@@ -350,36 +361,21 @@ export const createAffiliation = tryDb<[CreateAffiliationParams], Affiliation>(a
   if (!affiliation) {
     throw new Error('unable to create affiliation');
   }
-  return await connection.transaction(async trx => {
-    const [result] = await connection<RawAffiliation>('affiliations')
-      .transacting(trx)
-      .insert({
-        ...affiliation,
-        id: generateUuid(),
-        createdAt: now,
-        updatedAt: now
-      } as RawAffiliation, '*');
 
-    if (!result) {
-      throw new Error('unable to create affiliation');
-    }
+  const [result] = await connection<RawAffiliation>('affiliations')
+    .insert({
+      ...affiliation,
+      id: generateUuid(),
+      createdAt: now,
+      updatedAt: now
+    } as RawAffiliation, '*');
 
-    // Mark any other affiliation for this user/org as INACTIVE
-    await connection('affiliations')
-      .transacting(trx)
-      .where({
-        user: affiliation.user,
-        organization: affiliation.organization
-      })
-      .andWhereNot({
-        id: result.id
-      })
-      .update({
-        membershipStatus: MembershipStatus.Inactive,
-        updatedAt: now
-      });
-    return valid(await rawAffiliationToAffiliation(connection, result));
-  });
+  if (!result) {
+    throw new Error('unable to create affiliation');
+  }
+
+  // TODO: send invitation email once emails notifications are in place.
+  return valid(await rawAffiliationToAffiliation(connection, result));
 });
 
 export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connection, userId) => {
