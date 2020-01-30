@@ -1,6 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as FormField from 'front-end/lib/components/form-field';
 import * as Date from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
@@ -12,6 +13,7 @@ import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 // import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -45,8 +47,11 @@ export interface State {
   // attachments: File[];
 }
 
+type FormValues = Omit<State, 'activeTab'>;
+
 type InnerMsg
   = ADT<'updateActiveTab',   TabValues>
+  | ADT<'submit'>
 
   // Details Tab
   | ADT<'title',             ShortText.Msg>
@@ -218,8 +223,48 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   }
 });
 
+function getFormValues(state: State): any { // TODO(Jesse): should return FormValues
+  const result = {
+    title:               FormField.getValue(state.title),
+    teaser:              FormField.getValue(state.teaser),
+    location:            FormField.getValue(state.location),
+    fixedPriceReward:    FormField.getValue(state.fixedPriceReward),
+    requiredSkills:      FormField.getValue(state.requiredSkills),
+    description:         FormField.getValue(state.description),
+    proposalDeadline:    FormField.getValue(state.proposalDeadline),
+    startDate:           FormField.getValue(state.startDate),
+    assignmentDate:      FormField.getValue(state.assignmentDate),
+    completionDate:      FormField.getValue(state.completionDate),
+    submissionInfo:      FormField.getValue(state.submissionInfo),
+    acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
+    evaluationCriteria:  FormField.getValue(state.evaluationCriteria)
+  };
+
+  return result;
+}
+
+function persist(state: State): Validation<State, string[]> {
+  const formValues: FormValues = getFormValues(state);
+
+  return valid(state);
+}
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+
+    case 'submit':
+      return [
+        state,
+        async (state, dispatch) => {
+          const result = persist(state);
+          switch (result.tag) {
+            case 'valid':
+              return state;
+            case 'invalid':
+              return state;
+          }
+        }
+      ];
 
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
@@ -567,6 +612,7 @@ const view: ComponentView<State, Msg> = (params) => {
             button
             color='secondary'
             symbol_={leftPlacement(iconLinkSymbol('cog'))}
+            onClick={() => dispatch(adt('submit')) }
           >
             Save Draft
           </Link>
