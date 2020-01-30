@@ -15,7 +15,7 @@ import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 // import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
+import { ErrorTypeFrom, invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -222,6 +222,30 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     };
   }
 });
+
+// TODO(Jesse): This doesn't need to be exported, but it shut the linter up about not being used.
+export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
+  if (errors) {
+    return state
+      .update('title',              s => FormField.setErrors(s, errors.title              || []))
+      .update('teaser',             s => FormField.setErrors(s, errors.teaser             || []))
+      .update('location',           s => FormField.setErrors(s, errors.location           || []))
+      .update('reward',             s => FormField.setErrors(s, errors.reward             || []))
+      .update('skills',             s => FormField.setErrors(s, errors.skills             || []))
+      .update('description',        s => FormField.setErrors(s, errors.description        || []))
+      .update('proposalDeadline',   s => FormField.setErrors(s, errors.proposalDeadline   || []))
+      .update('startDate',          s => FormField.setErrors(s, errors.startDate          || []))
+      .update('assignmentDate',     s => FormField.setErrors(s, errors.assignmentDate     || []))
+      .update('completionDate',     s => FormField.setErrors(s, errors.completionDate     || []))
+      .update('submissionInfo',     s => FormField.setErrors(s, errors.submissionInfo     || []))
+      .update('acceptanceCriteria', s => FormField.setErrors(s, errors.acceptanceCriteria || []))
+      .update('evaluationCriteria', s => FormField.setErrors(s, errors.evaluationCriteria || []));
+  } else {
+    return state;
+  }
+}
+
+type Errors = ErrorTypeFrom<CWUOpportunityResource.CreateRequestBody>;
 
 function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
 
@@ -589,7 +613,6 @@ function renderTab(params: any, tabName: TabValues): JSX.Element {
 const view: ComponentView<State, Msg> = (params) => {
   const state = params.state;
   const dispatch = params.dispatch;
-  console.log("HI");
 
   let activeView = <div>No Active view selected</div>;
   switch (state.activeTab) {

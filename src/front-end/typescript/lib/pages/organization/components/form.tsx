@@ -99,20 +99,20 @@ export function getValues(state: Immutable<State>): Values {
 
 export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   if (errors) {
-  return state
-    .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
-    .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
-    .update('streetAddress2',  s => FormField.setErrors(s, errors.streetAddress2 || []))
-    .update('city',            s => FormField.setErrors(s, errors.city           || []))
-    .update('country',         s => FormField.setErrors(s, errors.country        || []))
-    .update('mailCode',        s => FormField.setErrors(s, errors.mailCode       || []))
-    .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle   || []))
-    .update('contactName',     s => FormField.setErrors(s, errors.contactName    || []))
-    .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
-    .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
-    .update('region',          s => FormField.setErrors(s, errors.region         || []))
-    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
-    .update('newLogoImage', v => v && ({ ...v, errors: errors.newLogoImage   || []} ));
+    return state
+      .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
+      .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
+      .update('streetAddress2',  s => FormField.setErrors(s, errors.streetAddress2 || []))
+      .update('city',            s => FormField.setErrors(s, errors.city           || []))
+      .update('country',         s => FormField.setErrors(s, errors.country        || []))
+      .update('mailCode',        s => FormField.setErrors(s, errors.mailCode       || []))
+      .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle   || []))
+      .update('contactName',     s => FormField.setErrors(s, errors.contactName    || []))
+      .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
+      .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
+      .update('region',          s => FormField.setErrors(s, errors.region         || []))
+      .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
+      .update('newLogoImage', v => v && ({ ...v, errors: errors.newLogoImage       || []}));
   } else {
     return state;
   }
