@@ -6,19 +6,19 @@ import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
 // Note(Jesse): @add_new_page_location
 import * as PageContent from 'front-end/lib/pages/content';
-import * as CwuOpportunityCreate from 'front-end/lib/pages/cwu/opportunities/create';
-import * as CwuOpportunityEdit from 'front-end/lib/pages/cwu/opportunities/edit';
-import * as CwuOpportunityView from 'front-end/lib/pages/cwu/opportunities/view';
-import * as CwuProposalCreate from 'front-end/lib/pages/cwu/proposals/create';
-import * as CwuProposalEdit from 'front-end/lib/pages/cwu/proposals/edit';
-import * as CwuProposalList from 'front-end/lib/pages/cwu/proposals/list';
-import * as CwuProposalView from 'front-end/lib/pages/cwu/proposals/view';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
-import * as PageOpportunities from 'front-end/lib/pages/opportunities';
+import * as PageOpportunityCwuCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
+import * as PageOpportunityCwuEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
+import * as PageOpportunityCwuView from 'front-end/lib/pages/opportunity/code-with-us/view';
+import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+import * as PageProposalCwuCreate from 'front-end/lib/pages/proposal/code-with-us/create';
+import * as PageProposalCwuEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCwuView from 'front-end/lib/pages/proposal/code-with-us/view';
+import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
@@ -104,54 +104,54 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         value => ({ tag: 'pageOrgList', value })
       );
 
-    case 'cwuOpportunityCreate':
+    case 'opportunityCwuCreate':
       return makeViewPageProps(
         props,
-        CwuOpportunityCreate.component,
-        state => state.pages.cwuOpportunityCreate,
-        value => ({tag: 'cwuOpportunityCreate', value})
+        PageOpportunityCwuCreate.component,
+        state => state.pages.opportunityCwuCreate,
+        value => ({tag: 'pageOpportunityCwuCreate', value})
       );
-    case 'cwuOpportunityEdit':
+    case 'opportunityCwuEdit':
       return makeViewPageProps(
         props,
-        CwuOpportunityEdit.component,
-        state => state.pages.cwuOpportunityEdit,
-        value => ({tag: 'cwuOpportunityEdit', value})
+        PageOpportunityCwuEdit.component,
+        state => state.pages.opportunityCwuEdit,
+        value => ({tag: 'pageOpportunityCwuEdit', value})
       );
-    case 'cwuOpportunityView':
+    case 'opportunityCwuView':
       return makeViewPageProps(
         props,
-        CwuOpportunityView.component,
-        state => state.pages.cwuOpportunityView,
-        value => ({tag: 'cwuOpportunityView', value})
+        PageOpportunityCwuView.component,
+        state => state.pages.opportunityCwuView,
+        value => ({tag: 'pageOpportunityCwuView', value})
       );
-    case 'cwuProposalCreate':
+    case 'proposalCwuCreate':
       return makeViewPageProps(
         props,
-        CwuProposalCreate.component,
-        state => state.pages.cwuProposalCreate,
-        value => ({tag: 'cwuProposalCreate', value})
+        PageProposalCwuCreate.component,
+        state => state.pages.proposalCwuCreate,
+        value => ({tag: 'pageProposalCwuCreate', value})
       );
-    case 'cwuProposalEdit':
+    case 'proposalCwuEdit':
       return makeViewPageProps(
         props,
-        CwuProposalEdit.component,
-        state => state.pages.cwuProposalEdit,
-        value => ({tag: 'cwuProposalEdit', value})
+        PageProposalCwuEdit.component,
+        state => state.pages.proposalCwuEdit,
+        value => ({tag: 'pageProposalCwuEdit', value})
       );
-    case 'cwuProposalView':
+    case 'proposalCwuView':
       return makeViewPageProps(
         props,
-        CwuProposalView.component,
-        state => state.pages.cwuProposalView,
-        value => ({tag: 'cwuProposalView', value})
+        PageProposalCwuView.component,
+        state => state.pages.proposalCwuView,
+        value => ({tag: 'pageProposalCwuView', value})
       );
-    case 'cwuProposalList':
+    case 'proposalList':
       return makeViewPageProps(
         props,
-        CwuProposalList.component,
-        state => state.pages.cwuProposalList,
-        value => ({tag: 'cwuProposalList', value})
+        PageProposalList.component,
+        state => state.pages.proposalList,
+        value => ({tag: 'pageProposalList', value})
       );
 
     case 'userList':
@@ -226,9 +226,10 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
       <ModalBody>{content.body}</ModalBody>
       <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
         <div className='p-3 d-flex flex-md-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
-          {content.actions.map(({ button, text, color, msg }, i) => {
+          {content.actions.map(({ icon, button, text, color, msg }, i) => {
             const props = {
               key: `modal-action-${i}`,
+              symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
               color,
               onClick: () => dispatch(msg),
               className: i === 0 ? 'mx-0' : 'ml-3 mr-0 ml-md-0 mr-md-3'
@@ -251,7 +252,7 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
     button: true,
     outline: true,
     color: 'white',
-    dest: routeDest(adt('signIn', null))
+    dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
     text: 'Sign Up',

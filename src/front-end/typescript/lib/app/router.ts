@@ -3,6 +3,7 @@ import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { Router } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
@@ -39,53 +40,65 @@ const router: Router<Route> = {
       path: '/opportunities/code-with-us/create',
       makeRoute() {
         return {
-          tag: 'cwuOpportunityCreate',
+          tag: 'opportunityCwuCreate',
           value: null
         };
       }
     },
     {
       path: '/opportunities/code-with-us/:id/edit',
-      makeRoute() {
+      makeRoute({params}) {
         return {
-          tag: 'cwuOpportunityEdit',
-          value: null
+          tag: 'opportunityCwuEdit',
+          value: {
+            id: params.id || ''
+          }
         };
       }
     },
     {
       path: '/opportunities/code-with-us/:id',
-      makeRoute() {
+      makeRoute({params}) {
         return {
-          tag: 'cwuOpportunityView',
-          value: null
+          tag: 'opportunityCwuView',
+          value: {
+            id: params.id || ''
+          }
         };
       }
     },
     {
-      path: '/proposals/code-with-us/create',
-      makeRoute() {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/create',
+      makeRoute({ params }) {
         return {
-          tag: 'cwuProposalCreate',
-          value: null
+          tag: 'proposalCwuCreate',
+          value: {
+            opportunityId: params.opportunityId || ''
+          }
         };
       }
     },
     {
-      path: '/proposals/code-with-us/:id/edit',
-      makeRoute() {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit',
+      makeRoute({params}) {
         return {
-          tag: 'cwuProposalEdit',
-          value: null
+          tag: 'proposalCwuEdit',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
         };
       }
     },
     {
-      path: '/proposals/code-with-us/:id',
-      makeRoute() {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId',
+      makeRoute({ params }) {
         return {
-          tag: 'cwuProposalView',
-          value: null
+          tag: 'proposalCwuView',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
         };
       }
     },
@@ -93,7 +106,7 @@ const router: Router<Route> = {
       path: '/proposals',
       makeRoute() {
         return {
-          tag: 'cwuProposalList',
+          tag: 'proposalList',
           value: null
         };
       }
@@ -177,10 +190,10 @@ const router: Router<Route> = {
     },
     {
       path: '/sign-in',
-      makeRoute() {
+      makeRoute({query}) {
         return {
           tag: 'signIn',
-          value: null
+          value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
         };
       }
     },
@@ -243,7 +256,7 @@ const router: Router<Route> = {
       case 'content':
         return `/content/${route.value}`;
       case 'signIn':
-        return '/sign-in';
+        return `/sign-in${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`;
       case 'signOut':
         return '/sign-out';
       case 'signUpStepOne':
@@ -260,20 +273,20 @@ const router: Router<Route> = {
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
-      case 'cwuOpportunityCreate':
-        return '/code-with-us/opportunities/create';
-      case 'cwuOpportunityEdit':
-        return '/code-with-us/opportunities/edit';
-      case 'cwuOpportunityView':
-        return '/code-with-us/opportunities/view';
-      case 'cwuProposalCreate':
-        return '/proposals/code-with-us/create';
-      case 'cwuProposalEdit':
-        return '/proposals/code-with-us/edit';
-      case 'cwuProposalView':
-        return '/proposals/code-with-us/view';
-      case 'cwuProposalList':
-        return '/proposals/code-with-us';
+      case 'opportunityCwuCreate':
+        return '/opportunities/code-with-us/create';
+      case 'opportunityCwuEdit':
+        return `/opportunities/code-with-us/${route.value.id}/edit`;
+      case 'opportunityCwuView':
+        return `/opportunities/code-with-us/${route.value.id}/view`;
+      case 'proposalCwuCreate':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
+      case 'proposalCwuEdit':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
+      case 'proposalCwuView':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
+      case 'proposalList':
+        return '/proposals';
       case 'notice':
         return (() => {
           switch (route.value.tag) {

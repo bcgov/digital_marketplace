@@ -443,6 +443,7 @@ export const component: Tab.Component<State, Msg> = {
         actions: [
           {
             text: `${startCase(action)} Account`,
+            icon: isActive ? 'user-minus' : 'user-plus',
             color: isActive ? 'danger' : 'success',
             msg: adt('toggleAccountActivation'),
             button: true

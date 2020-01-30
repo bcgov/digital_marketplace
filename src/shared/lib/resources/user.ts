@@ -1,7 +1,6 @@
 import { FileRecord } from 'shared/lib/resources/file';
-import { ADT, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
-import { DatabaseError } from 'shared/lib/validation/db';
 
 export type KeyCloakIdentityProvider = 'github' | 'idir';
 
@@ -74,21 +73,20 @@ export type UpdateRequestBody
 
 export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
 
-export type UpdateValidationErrors
+type UpdateADTErrors
   = ADT<'updateProfile', UpdateProfileValidationErrors>
   | ADT<'acceptTerms', string[]>
   | ADT<'updateNotifications', string[]>
   | ADT<'updateAdminPermissions', string[]>
-  | ADT<'parseFailure'>
-  | ADT<'permissions', string[]>
-  | ADT<'userNotFound', string[]>
-  | DatabaseError;
+  | ADT<'parseFailure'>;
 
-export type DeleteValidationErrors
-  = ADT<'userNotFound', string[]>
-  | ADT<'userNotActive', string[]>
-  | ADT<'permissions', string[]>
-  | DatabaseError;
+export interface UpdateValidationErrors extends BodyWithErrors {
+  user?: UpdateADTErrors;
+}
+
+export interface DeleteValidationErrors extends BodyWithErrors {
+  user?: string[];
+}
 
 export function parseUserStatus(raw: string): UserStatus | null {
   switch (raw) {
