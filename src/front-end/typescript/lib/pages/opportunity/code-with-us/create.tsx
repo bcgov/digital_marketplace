@@ -9,6 +9,7 @@ import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+// import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';

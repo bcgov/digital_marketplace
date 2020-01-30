@@ -1,5 +1,6 @@
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
+import * as CWUResource from 'shared/lib/resources/code-with-us';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
@@ -73,6 +74,37 @@ type UserResourceTypes = OmitCrudApi<UserSimpleResourceTypes, 'create'>;
 export const users: CrudApi<UserResourceTypes> = {
   ...makeSimpleCrudApi<UserSimpleResourceTypesParams>(apiNamespace('users')),
   create: undefined
+};
+
+// CWUOpportunity
+
+interface CWUResourceSimpleResourceTypesParams {
+  record: CWUResource.CWUOpportunity;
+  create: {
+    request: CWUResource.CreateRequestBody;
+    invalidResponse: CWUResource.CreateValidationErrors;
+  };
+  update: {
+    request: CWUResource.UpdateRequestBody;
+    invalidResponse: CWUResource.UpdateValidationErrors;
+  };
+}
+
+interface CWUResourceResourceTypes extends Omit<SimpleResourceTypes<CWUResourceSimpleResourceTypesParams>, 'readMany'> {
+  readMany: {
+    rawResponse: CWUResource.CWUOpportunitySlim;
+    validResponse: CWUResource.CWUOpportunitySlim;
+    invalidResponse: string[];
+  };
+}
+
+const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('opportunities/code-with-us');
+
+export const cwuOrganizations: CrudApi<CWUResourceResourceTypes> = {
+  ...makeSimpleCrudApi<CWUResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
+  readMany: makeReadMany<CWUResourceResourceTypes['readMany']>({
+    routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
+  })
 };
 
 // Organizations
