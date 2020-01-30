@@ -16,9 +16,11 @@ export enum CWUOpportunityStatus {
 export interface CWUOpportunity {
   id: Id;
   createdAt: Date;
-  createdBy?: User;
   updatedAt: Date;
+
+  createdBy?: User;
   updatedBy?: User;
+
   title: string;
   teaser: string;
   remoteOk: boolean;

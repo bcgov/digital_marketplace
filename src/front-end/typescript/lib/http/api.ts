@@ -1,6 +1,6 @@
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
-import * as CWUResource from 'shared/lib/resources/code-with-us';
+import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
@@ -78,31 +78,31 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CWUOpportunity
 
-interface CWUResourceSimpleResourceTypesParams {
-  record: CWUResource.CWUOpportunity;
+interface CWUOpportunityResourceSimpleResourceTypesParams {
+  record: CWUOpportunityResource.CWUOpportunity;
   create: {
-    request: CWUResource.CreateRequestBody;
-    invalidResponse: CWUResource.CreateValidationErrors;
+    request: CWUOpportunityResource.CreateRequestBody;
+    invalidResponse: CWUOpportunityResource.CreateValidationErrors;
   };
   update: {
-    request: CWUResource.UpdateRequestBody;
-    invalidResponse: CWUResource.UpdateValidationErrors;
+    request: CWUOpportunityResource.UpdateRequestBody;
+    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
   };
 }
 
-interface CWUResourceResourceTypes extends Omit<SimpleResourceTypes<CWUResourceSimpleResourceTypesParams>, 'readMany'> {
+interface CWUOpportunityResourceTypes extends Omit<SimpleResourceTypes<CWUOpportunityResourceSimpleResourceTypesParams>, 'readMany'> {
   readMany: {
-    rawResponse: CWUResource.CWUOpportunitySlim;
-    validResponse: CWUResource.CWUOpportunitySlim;
+    rawResponse: CWUOpportunityResource.CWUOpportunitySlim;
+    validResponse: CWUOpportunityResource.CWUOpportunitySlim;
     invalidResponse: string[];
   };
 }
 
 const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('opportunities/code-with-us');
 
-export const cwuOrganizations: CrudApi<CWUResourceResourceTypes> = {
-  ...makeSimpleCrudApi<CWUResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
-  readMany: makeReadMany<CWUResourceResourceTypes['readMany']>({
+export const cwuOpportunity: CrudApi<CWUOpportunityResourceTypes> = {
+  ...makeSimpleCrudApi<CWUOpportunityResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
+  readMany: makeReadMany<CWUOpportunityResourceTypes['readMany']>({
     routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
   })
 };

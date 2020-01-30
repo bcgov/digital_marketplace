@@ -2,18 +2,20 @@ import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
-import * as Date from 'front-end/lib/components/form-field/date';
+import * as DateField from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 // import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
+import { valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -27,17 +29,17 @@ export interface State {
   location: Immutable<ShortText.State>;
   // TODO(Jesse): Implement radio option @radio-option
   // whateverTheRadioFieldIs: Immutable<Radio.State>;
-  fixedPriceReward: Immutable<ShortText.State>;
-  requiredSkills: Immutable<ShortText.State>;
+  reward: Immutable<ShortText.State>;
+  skills: Immutable<ShortText.State>;
 
   // Description Tab
   description: Immutable<LongText.State>;
 
   // Details Tab
-  proposalDeadline: Immutable<Date.State>;
-  startDate: Immutable<Date.State>;
-  assignmentDate: Immutable<Date.State>;
-  completionDate: Immutable<Date.State>;
+  proposalDeadline: Immutable<DateField.State>;
+  startDate: Immutable<DateField.State>;
+  assignmentDate: Immutable<DateField.State>;
+  completionDate: Immutable<DateField.State>;
   submissionInfo: Immutable<ShortText.State>;
   acceptanceCriteria: Immutable<LongText.State>;
   evaluationCriteria: Immutable<LongText.State>;
@@ -47,8 +49,6 @@ export interface State {
   // attachments: File[];
 }
 
-type FormValues = Omit<State, 'activeTab'>;
-
 type InnerMsg
   = ADT<'updateActiveTab',   TabValues>
   | ADT<'submit'>
@@ -57,17 +57,17 @@ type InnerMsg
   | ADT<'title',             ShortText.Msg>
   | ADT<'teaser',            LongText.Msg>
   | ADT<'location',          ShortText.Msg>
-  | ADT<'fixedPriceReward',  ShortText.Msg>
-  | ADT<'requiredSkills',    ShortText.Msg>
+  | ADT<'reward',            ShortText.Msg>
+  | ADT<'skills',            ShortText.Msg>
 
   // Description Tab
   | ADT<'description',       LongText.Msg>
 
   // Details Tab
-  | ADT<'proposalDeadline',    Date.Msg>
-  | ADT<'startDate',           Date.Msg>
-  | ADT<'assignmentDate',      Date.Msg>
-  | ADT<'completionDate',      Date.Msg>
+  | ADT<'proposalDeadline',    DateField.Msg>
+  | ADT<'startDate',           DateField.Msg>
+  | ADT<'assignmentDate',      DateField.Msg>
+  | ADT<'completionDate',      DateField.Msg>
   | ADT<'submissionInfo',      ShortText.Msg>
   | ADT<'acceptanceCriteria',  LongText.Msg>
   | ADT<'evaluationCriteria',  LongText.Msg>
@@ -113,23 +113,23 @@ async function defaultState() {
       }
     })),
 
-    fixedPriceReward: immutable(await ShortText.init({
+    reward: immutable(await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateFixedPriceAmount,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-fixed-price-reward'
+        id: 'opportunity-reward'
       }
     })),
 
-    requiredSkills: immutable(await ShortText.init({
+    skills: immutable(await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-required-skills'
+        id: 'opportunity-skills'
       }
     })),
 
@@ -142,7 +142,7 @@ async function defaultState() {
       }
     })),
 
-    proposalDeadline: immutable(await Date.init({
+    proposalDeadline: immutable(await DateField.init({
       errors: [],
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
@@ -151,7 +151,7 @@ async function defaultState() {
       }
     })),
 
-    startDate: immutable(await Date.init({
+    startDate: immutable(await DateField.init({
       errors: [],
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
@@ -160,7 +160,7 @@ async function defaultState() {
       }
     })),
 
-    assignmentDate: immutable(await Date.init({
+    assignmentDate: immutable(await DateField.init({
       errors: [],
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
@@ -169,7 +169,7 @@ async function defaultState() {
       }
     })),
 
-    completionDate: immutable(await Date.init({
+    completionDate: immutable(await DateField.init({
       errors: [],
       // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
       child: {
@@ -223,29 +223,42 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   }
 });
 
-function getFormValues(state: State): any { // TODO(Jesse): should return FormValues
+function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
+
+  const proposalDeadline = FormField.getValue(state.proposalDeadline);
+  const startDate = FormField.getValue(state.startDate);
+  const assignmentDate = FormField.getValue(state.assignmentDate);
+  const completionDate = FormField.getValue(state.completionDate);
+
   const result = {
     title:               FormField.getValue(state.title),
     teaser:              FormField.getValue(state.teaser),
     location:            FormField.getValue(state.location),
-    fixedPriceReward:    FormField.getValue(state.fixedPriceReward),
-    requiredSkills:      FormField.getValue(state.requiredSkills),
+    reward:              Number.parseInt(FormField.getValue(state.reward), 10),
+    skills:              [FormField.getValue(state.skills)], // TODO(Jesse): How's this going to work?
     description:         FormField.getValue(state.description),
-    proposalDeadline:    FormField.getValue(state.proposalDeadline),
-    startDate:           FormField.getValue(state.startDate),
-    assignmentDate:      FormField.getValue(state.assignmentDate),
-    completionDate:      FormField.getValue(state.completionDate),
+
+    proposalDeadline:    new Date(DateField.valueToString(proposalDeadline)),
+    startDate:           new Date(DateField.valueToString(startDate)),
+    assignmentDate:      new Date(DateField.valueToString(assignmentDate )),
+    completionDate:      new Date(DateField.valueToString(completionDate )),
+
     submissionInfo:      FormField.getValue(state.submissionInfo),
     acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
-    evaluationCriteria:  FormField.getValue(state.evaluationCriteria)
+    evaluationCriteria:  FormField.getValue(state.evaluationCriteria),
+    remoteOk: true,
+    remoteDesc: 'TODO(Jesse): Some really great text goes here',
+    status: 'DRAFT' as CWUOpportunityResource.CWUOpportunityStatus,  // TODO(Jesse): ???
+    attachments: [],
+    addenda: []
   };
 
   return result;
 }
 
 function persist(state: State): Validation<State, string[]> {
-  const formValues: FormValues = getFormValues(state);
-
+  const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state);
+  api.cwuOpportunity.create(formValues);
   return valid(state);
 }
 
@@ -296,22 +309,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('location', value)
       });
 
-    case 'fixedPriceReward':
+    case 'reward':
       return updateComponentChild({
         state,
-        childStatePath: ['fixedPriceReward'],
+        childStatePath: ['reward'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('fixedPriceReward', value)
+        mapChildMsg: (value) => adt('reward', value)
       });
 
-    case 'requiredSkills':
+    case 'skills':
       return updateComponentChild({
         state,
-        childStatePath: ['requiredSkills'],
+        childStatePath: ['skills'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('requiredSkills', value)
+        mapChildMsg: (value) => adt('skills', value)
       });
 
     case 'description':
@@ -327,7 +340,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['proposalDeadline'],
-        childUpdate: Date.update,
+        childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('proposalDeadline', value)
       });
@@ -336,7 +349,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['assignmentDate'],
-        childUpdate: Date.update,
+        childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('assignmentDate', value)
       });
@@ -345,7 +358,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['completionDate'],
-        childUpdate: Date.update,
+        childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('completionDate', value)
       });
@@ -417,8 +430,8 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Fixed-Price Reward'
           required
-          state={state.fixedPriceReward}
-          dispatch={mapComponentDispatch(dispatch, value => adt('fixedPriceReward' as const, value))} />
+          state={state.reward}
+          dispatch={mapComponentDispatch(dispatch, value => adt('reward' as const, value))} />
       </Col>
 
       <Col xs='12'>
@@ -426,8 +439,8 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Required Skills'
           required
-          state={state.requiredSkills}
-          dispatch={mapComponentDispatch(dispatch, value => adt('requiredSkills' as const, value))} />
+          state={state.skills}
+          dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
       </Col>
 
     </Row>
@@ -456,7 +469,7 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
       <Col xs='12' md='6'>
         <Col xs='12'>
-          <Date.view
+          <DateField.view
             required
             extraChildProps={{}}
             label='Proposal Deadline'
@@ -464,7 +477,7 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
         </Col>
         <Col xs='12'>
-          <Date.view
+          <DateField.view
             required
             extraChildProps={{}}
             label='Start Date'
@@ -475,7 +488,7 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
       <Col xs='12' md='6'>
         <Col xs='12'>
-          <Date.view
+          <DateField.view
             required
             extraChildProps={{}}
             label='Assignment Date'
@@ -483,7 +496,7 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
         </Col>
         <Col xs='12'>
-          <Date.view
+          <DateField.view
             required
             extraChildProps={{}}
             label='Assignment Date'
@@ -570,6 +583,8 @@ function renderTab(params: any, tabName: TabValues): JSX.Element {
 
 const view: ComponentView<State, Msg> = (params) => {
   const state = params.state;
+  const dispatch = params.dispatch;
+  console.log("HI");
 
   let activeView = <div>No Active view selected</div>;
   switch (state.activeTab) {
@@ -640,6 +655,7 @@ const view: ComponentView<State, Msg> = (params) => {
             button
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('cog'))}
+            onClick={() => dispatch(adt('submit')) }
           >
             Publish
           </Link>
