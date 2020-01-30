@@ -15,7 +15,7 @@ import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 // import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { valid, Validation } from 'shared/lib/validation';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -248,7 +248,7 @@ function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
     evaluationCriteria:  FormField.getValue(state.evaluationCriteria),
     remoteOk: true,
     remoteDesc: 'TODO(Jesse): Some really great text goes here',
-    status: 'DRAFT' as CWUOpportunityResource.CWUOpportunityStatus,  // TODO(Jesse): ???
+    status: 'DRAFT' as CWUOpportunityResource.CWUOpportunityStatus,  // TODO(Jesse): Why we must cast .. bro???
     attachments: [],
     addenda: []
   };
@@ -256,10 +256,16 @@ function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
   return result;
 }
 
-function persist(state: State): Validation<State, string[]> {
+async function persist(state: State): Promise<Validation<State, string[]>> {
   const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state);
-  api.cwuOpportunity.create(formValues);
-  return valid(state);
+  const apiResult = await api.cwuOpportunity.create(formValues);
+  switch (apiResult.tag) {
+    case 'valid':
+      return valid(state);
+    case 'unhandled':
+    case 'invalid':
+      return invalid(['TODO(Jesse): Error handling']);
+  }
 }
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -269,10 +275,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         async (state, dispatch) => {
-          const result = persist(state);
+          const result = await persist(state);
           switch (result.tag) {
             case 'valid':
-              return state;
             case 'invalid':
               return state;
           }
