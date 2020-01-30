@@ -5,7 +5,7 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAffiliationId, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { Affiliation, AffiliationSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationSlim, CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
 import { UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -22,6 +22,10 @@ export interface ValidatedCreateRequestBody {
 type ValidatedUpdateRequestBody = Id;
 
 type ValidatedDeleteRequestBody = Id;
+
+interface CreateRequestBody extends Omit<SharedCreateRequestBody, 'membershipType'> {
+  membershipType: string;
+}
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
