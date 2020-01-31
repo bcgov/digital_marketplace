@@ -1,7 +1,8 @@
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { User } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { BodyWithErrors, Id } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export enum CWUOpportunityStatus {
   Draft = 'DRAFT',
@@ -38,4 +39,10 @@ export interface CWUOpportunity {
   addenda: Addendum[];
 }
 
-export type CWUOpportunitySlim = Pick<CWUOpportunity, 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+
+export interface CreateRequestBody extends Omit<CWUOpportunity, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'addenda' | 'attachments'> {
+  attachments: Id[];
+}
+
+export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;

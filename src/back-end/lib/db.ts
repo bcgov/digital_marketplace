@@ -4,7 +4,9 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
+import { Addendum } from 'shared/lib/resources/addendum';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
+import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
@@ -654,3 +656,216 @@ export async function hasFilePermission(connection: Connection, session: Session
     return false;
   }
 }
+
+interface RawCWUOpportunitySlim extends Omit<CWUOpportunitySlim, 'createdBy' | 'updatedBy'> {
+  createdBy?: Id;
+  updatedBy?: Id;
+}
+
+async function rawCWUOpportunitySlimToCWUOpportunitySlim(connection: Connection, raw: RawCWUOpportunitySlim): Promise<CWUOpportunitySlim> {
+  const { createdBy: createdById, updatedBy: updatedById } = raw;
+  const createdBy = createdById && getValidValue(await readOneUser(connection, createdById), undefined) || undefined;
+  const updatedBy = updatedById && getValidValue(await readOneUser(connection, updatedById), undefined) || undefined;
+
+  return {
+    ...raw,
+    createdBy,
+    updatedBy
+  };
+}
+
+interface RawCWUOpportunity extends Omit<CWUOpportunity, 'createdBy' | 'updatedBy' | 'attachments' | 'addenda'> {
+  createdBy?: Id;
+  updatedBy?: Id;
+  attachments: Id[];
+  addenda: Id[];
+}
+
+async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: RawCWUOpportunity): Promise<CWUOpportunity> {
+  const { createdBy: createdById, updatedBy: updatedById, attachments: attachmentIds, addenda: addendaIds } = raw;
+  const createdBy = createdById ? getValidValue(await readOneUser(connection, createdById), undefined) : undefined;
+  const updatedBy = updatedById ? getValidValue(await readOneUser(connection, updatedById), undefined) : undefined;
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error(); // to be caught by calling function
+    }
+    return result;
+  }));
+  const addenda = await Promise.all(addendaIds.map(async id => {
+    const result = getValidValue(await readOneCWUOpportunityAddendum(connection, id), null);
+    if (!result) {
+      throw new Error(); // to be caught by calling function
+    }
+    return result;
+  }));
+
+  return {
+    ...raw,
+    createdBy: createdBy || undefined,
+    updatedBy: updatedBy || undefined,
+    attachments,
+    addenda
+  };
+}
+
+export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
+  // Retrieve the opportunity and most recent opportunity status
+
+  const results = await connection<RawCWUOpportunitySlim>('cwuOpportunities')
+    // Join on latest CWU status
+    .join<RawCWUOpportunitySlim>('cwuOpportunityStatuses', function() {
+      this
+        .on('cwuOpportunities.id', '=', 'cwuOpportunityStatuses.opportunity')
+        .andOn('cwuOpportunityStatuses.createdAt', '=',
+          connection.raw('(select max(createdAt) from cwuOpportunityStatuses where \
+            cwuOpportunities.id = cwuOpportunityStatuses.opportunity)'));
+    })
+    // Join on latest CWU version
+    .join<RawCWUOpportunitySlim>('cwuOpportunityVersions', function() {
+      this
+        .on('cwuOpportunities.id', '=', 'cuwOpportunityVersions.opportunity')
+        .andOn('cwuOpportunityVersions.createdAt', '=',
+          connection.raw('(select max(createdAt) from cwuOpportunityVersions where \
+            cwuOpportunities.id = cwuOpportunityVersions.opportunity)'));
+    })
+    // Select fields for 'slim' opportunity
+    .select<RawCWUOpportunitySlim[]>(
+      'id',
+      'title',
+      'cwuOpportunities.createdAt',
+      'cwuOpportunities.createdBy',
+      'cwuOpportunityVersions.createdAt as updatedAt',
+      'cwuOpportunityVersions.createdBy as updatedBy',
+      'cwuOpportunityStatuses.status'
+    );
+
+  return valid(await Promise.all(results.map(async (raw: RawCWUOpportunitySlim) => {
+    // Remove createdBy/updatedBy for non-admin or non-author
+    if (session?.user?.type !== UserType.Admin &&
+        session?.user?.id !== raw.createdBy &&
+        session?.user?.id !== raw.updatedBy) {
+          delete raw.createdBy;
+          delete raw.updatedBy;
+    }
+    return await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw);
+  })));
+});
+
+export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
+  const result = await connection<RawCWUOpportunity>('cwuOpportunities')
+    .where({ id })
+    // Join on latest CWU status
+    .join<RawCWUOpportunity>('cwuOpportunityStatuses', function() {
+      this
+        .on('cwuOpportunities.id', '=', 'cwuOpportunityStatuses.opportunity')
+        .andOn('cwuOpportunityStatuses.createdAt', '=',
+          connection.raw('(select max(createdAt) from cwuOpportunityStatuses where \
+            cwuOpportunities.id = cwuOpportunityStatuses.opportunity)'));
+    })
+    // Join on latest CWU version
+    .join<RawCWUOpportunity>('cwuOpportunityVersions', function() {
+      this
+        .on('cwuOpportunities.id', '=', 'cuwOpportunityVersions.opportunity')
+        .andOn('cwuOpportunityVersions.createdAt', '=',
+          connection.raw('(select max(createdAt) from cwuOpportunityVersions where \
+            cwuOpportunities.id = cwuOpportunityVersions.opportunity)'));
+    })
+    .select<RawCWUOpportunity>([
+      'cwuOpportunityVersions.*',
+      'cwuOpportunityStatuses.status as status'
+    ]);
+
+  // Query for attachment file ids
+  if (result) {
+    result.attachments = await connection<Id>('cwuOpportunityAttachments')
+      .where({ opportunityVersion: result.id })
+      .select('file');
+  }
+
+  // Query for addenda ids
+  if (result) {
+    result.addenda = await connection<Id>('cwuOpportunityAddenda')
+      .where({ opportunity: id })
+      .select('id');
+  }
+
+  // Remove createdBy/updatedBy for non-admin or non-author
+  if (session?.user?.type !== UserType.Admin &&
+    session?.user?.id !== result.createdBy &&
+    session?.user?.id !== result.updatedBy) {
+      delete result.createdBy;
+      delete result.updatedBy;
+  }
+
+  return valid(await rawCWUOpportunityToCWUOpportunity(connection, result) || null);
+});
+
+interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
+  createdBy?: Id;
+}
+
+async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection: Connection, raw: RawCWUOpportunityAddendum): Promise<Addendum> {
+  const { createdBy: createdById } = raw;
+  const createdBy = createdById ? getValidValue(await readOneUser(connection, createdById), undefined) : undefined;
+
+  return {
+    ...raw,
+    createdBy: createdBy || undefined
+  };
+}
+
+export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connection, id) => {
+  const result = await connection<RawCWUOpportunityAddendum>('cwuOpportunityAddenda')
+    .where({ id })
+    .first();
+
+  if (!result) {
+    throw new Error('unable to read addendum');
+  }
+
+  return valid(await rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection, result));
+});
+
+type CreateCWUOpportunityParams = Partial<CWUOpportunity>;
+
+interface RootOpportunityRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: Id;
+}
+
+export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Id], CWUOpportunity>(async (connection, opportunity, user) => {
+  // Create root opportunity record
+  const now = new Date();
+  const [rootOppRecord] = await connection<RootOpportunityRecord>('cwuOpportunities')
+    .insert({
+      id: generateUuid(),
+      createdAt: now,
+      createdBy: user
+    }, '*');
+
+  // Create initial version
+  const [oppVersionRecord] = await connection('cwuOpportunityVersions')
+    .insert({
+      ...opportunity,
+      id: generateUuid(),
+      opportunity: rootOppRecord.id,
+      createdAt: now,
+      createdBy: user
+    }, '*');
+
+  // Create status record
+  const [oppStatusRecord] = await connection('cwuOpportunyStatuses')
+    .insert({
+      id: generateUuid(),
+      opportunity: rootOppRecord.id,
+      createdAt: now,
+      createdBy: user,
+      status: CWUOpportunityStatus.Draft,
+      note: ''
+    }, '*');
+
+  // Create attachment records
+  
+});

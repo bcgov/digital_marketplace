@@ -37,6 +37,10 @@ export function isAdmin(session: Session): boolean {
   return !!session.user && session.user.type === UserType.Admin;
 }
 
+export function isGovernment(session: Session): boolean {
+  return !!session.user && session.user.type === UserType.Government;
+}
+
 // Users.
 
 export function readManyUsers(session: Session): boolean {
@@ -135,4 +139,10 @@ export function createFile(session: Session): boolean {
 
 export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {
   return await hasFilePermission(connection, session, fileId);
+}
+
+// CWU Opportunities.
+
+export function createCWUOpportunity(session: Session): boolean {
+  return isAdmin(session) || isGovernment(session);
 }

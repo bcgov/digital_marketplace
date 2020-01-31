@@ -4,7 +4,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation, validateArrayAsync, isValid } from 'shared/lib/validation';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -21,7 +21,7 @@ export async function validateUserId(connection: db.Connection, userId: Id): Pro
   }
 }
 
-export async function validateImageFile(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
+export async function validateFileRecord(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(fileId);
@@ -41,6 +41,11 @@ export async function validateImageFile(connection: db.Connection, fileId: Id): 
   } catch (e) {
     return invalid(['Please specify a valid image file id.']);
   }
+}
+
+export async function validateAttachments(connection: db.Connection, raw: string[]): Promise<Validation<FileRecord[]>> {
+  const validatedArray = await validateArrayAsync(raw, v => validateFileRecord(connection, v));
+  return isValid(validatedArray) ? validatedArray : invalid(['Invalid attachment specified.']);
 }
 
 export async function validateOrganizationId(connection: db.Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
