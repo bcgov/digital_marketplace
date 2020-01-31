@@ -2,6 +2,7 @@ import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
@@ -17,8 +18,7 @@ export interface State {
   activeTab: TabValues;
 
   // Proponent Tab
-  // TODO(Jesse): Implement radio option @radio-option
-  // proponentType: Immutable<Radio.State>;
+  proponentType: Immutable<RadioGroup.State>;
 
   // Proposal Tab
   proposal: Immutable<LongText.State>;
@@ -34,7 +34,7 @@ type InnerMsg
 
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
-  // = ADT<'proponentType', Radio.Msg>
+  | ADT<'proponentType', RadioGroup.Msg>
 
   // Proposal Tab
   | ADT<'proposal',           LongText.Msg>
@@ -55,13 +55,13 @@ async function defaultState() {
     activeTab: 'Proponent' as const,
 
     // @radio-option
-    // proponentType: immutable(await Radio.init({
-    //   errors: [],
-    //   child: {
-    //     value: '',
-    //     id: 'proposal-proponent-type'
-    //   }
-    // })),
+    proponentType: immutable(await RadioGroup.init({
+      errors: [],
+      child: {
+        value: false,
+        id: 'proposal-proponent-type'
+      }
+    })),
 
     proposal: immutable(await LongText.init({
       errors: [],
@@ -137,14 +137,14 @@ const ProponentView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         </p>
       </Col>
 
-      { /*
-      @radio-option
-      <Col xs='12'>
-        <Radio.view
-          state={state.teaser}
-          dispatch={mapComponentDispatch(dispatch, value => adt('radio???' as const, value))} />
-      </Col>
-      */ }
+      {
+        <Col xs='12'>
+          <RadioGroup.view
+            extraChildProps={{}}
+            state={state.proponentType}
+            dispatch={mapComponentDispatch(dispatch, value => adt('proponentType' as const, value))} />
+        </Col>
+      }
 
     </Row>
   );
