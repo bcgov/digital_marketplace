@@ -2,7 +2,8 @@ import { CWUOpportunitySlim } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
-import { ADT, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id  } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export enum ProposalStatus {
   Draft = 'DRAFT',
@@ -41,3 +42,15 @@ export interface CWUIndividualProponent {
   mailCode: string;
   country: string;
 }
+
+export type CwuProposalSlim = CWUProposal;
+
+export type CreateRequestBody = Omit<CWUProposal, 'id' | 'createdBy' | 'updatedAt' >;
+
+export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
+
+export type UpdateRequestBody = CreateRequestBody;
+
+export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody> & BodyWithErrors;
+
+export type DeleteValidationErrors = BodyWithErrors;
