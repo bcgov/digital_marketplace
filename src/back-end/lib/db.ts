@@ -712,32 +712,32 @@ async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: Ra
 export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
   // Retrieve the opportunity and most recent opportunity status
 
-  const results = await connection<RawCWUOpportunitySlim>('cwuOpportunities')
+  const results = await connection<RawCWUOpportunitySlim>('cwuOpportunities as opp')
     // Join on latest CWU status
-    .join<RawCWUOpportunitySlim>('cwuOpportunityStatuses', function() {
+    .join<RawCWUOpportunitySlim>('cwuOpportunityStatuses as stat', function() {
       this
-        .on('cwuOpportunities.id', '=', 'cwuOpportunityStatuses.opportunity')
-        .andOn('cwuOpportunityStatuses.createdAt', '=',
-          connection.raw('(select max(createdAt) from cwuOpportunityStatuses where \
-            cwuOpportunities.id = cwuOpportunityStatuses.opportunity)'));
+        .on('opp.id', '=', 'stat.opportunity')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
+            stat2.opportunity = opp.id)'));
     })
     // Join on latest CWU version
-    .join<RawCWUOpportunitySlim>('cwuOpportunityVersions', function() {
+    .join<RawCWUOpportunitySlim>('cwuOpportunityVersions as version', function() {
       this
-        .on('cwuOpportunities.id', '=', 'cuwOpportunityVersions.opportunity')
-        .andOn('cwuOpportunityVersions.createdAt', '=',
-          connection.raw('(select max(createdAt) from cwuOpportunityVersions where \
-            cwuOpportunities.id = cwuOpportunityVersions.opportunity)'));
+        .on('opp.id', '=', 'version.opportunity')
+        .andOn('version.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
+            version2.opportunity = opp.id)'));
     })
     // Select fields for 'slim' opportunity
     .select<RawCWUOpportunitySlim[]>(
-      'id',
-      'title',
-      'cwuOpportunities.createdAt',
-      'cwuOpportunities.createdBy',
-      'cwuOpportunityVersions.createdAt as updatedAt',
-      'cwuOpportunityVersions.createdBy as updatedBy',
-      'cwuOpportunityStatuses.status'
+      'opp.id as id',
+      'version.title as title',
+      'opp.createdAt as createdAt',
+      'opp.createdBy as createdBy',
+      'version.createdAt as updatedAt',
+      'version.createdBy as updatedBy',
+      'stat.status'
     );
 
   return valid(await Promise.all(results.map(async (raw: RawCWUOpportunitySlim) => {
@@ -753,52 +753,50 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
 });
 
 export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
-  const result = await connection<RawCWUOpportunity>('cwuOpportunities')
-    .where({ id })
+  const result = await connection<RawCWUOpportunity>('cwuOpportunities as opp')
+    .where({ 'opp.id': id })
     // Join on latest CWU status
-    .join<RawCWUOpportunity>('cwuOpportunityStatuses', function() {
+    .join<RawCWUOpportunity>('cwuOpportunityStatuses as stat', function() {
       this
-        .on('cwuOpportunities.id', '=', 'cwuOpportunityStatuses.opportunity')
-        .andOn('cwuOpportunityStatuses.createdAt', '=',
-          connection.raw('(select max(createdAt) from cwuOpportunityStatuses where \
-            cwuOpportunities.id = cwuOpportunityStatuses.opportunity)'));
+        .on('opp.id', '=', 'stat.opportunity')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
+            stat2.opportunity = opp.id)'));
     })
     // Join on latest CWU version
-    .join<RawCWUOpportunity>('cwuOpportunityVersions', function() {
+    .join<RawCWUOpportunity>('cwuOpportunityVersions as version', function() {
       this
-        .on('cwuOpportunities.id', '=', 'cuwOpportunityVersions.opportunity')
-        .andOn('cwuOpportunityVersions.createdAt', '=',
-          connection.raw('(select max(createdAt) from cwuOpportunityVersions where \
-            cwuOpportunities.id = cwuOpportunityVersions.opportunity)'));
+        .on('opp.id', '=', 'version.opportunity')
+        .andOn('version.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
+            version2.opportunity = opp.id)'));
     })
     .select<RawCWUOpportunity>([
-      'cwuOpportunityVersions.*',
-      'cwuOpportunityStatuses.status as status'
-    ]);
+      'version.*',
+      'stat.status as status'
+    ])
+    .first();
 
   // Query for attachment file ids
   if (result) {
     result.attachments = await connection<Id>('cwuOpportunityAttachments')
       .where({ opportunityVersion: result.id })
       .select('file');
-  }
 
-  // Query for addenda ids
-  if (result) {
     result.addenda = await connection<Id>('cwuOpportunityAddenda')
       .where({ opportunity: id })
       .select('id');
+
+    // Remove createdBy/updatedBy for non-admin or non-author
+    if (session?.user?.type !== UserType.Admin &&
+      session?.user?.id !== result.createdBy &&
+      session?.user?.id !== result.updatedBy) {
+        delete result.createdBy;
+        delete result.updatedBy;
+    }
   }
 
-  // Remove createdBy/updatedBy for non-admin or non-author
-  if (session?.user?.type !== UserType.Admin &&
-    session?.user?.id !== result.createdBy &&
-    session?.user?.id !== result.updatedBy) {
-      delete result.createdBy;
-      delete result.updatedBy;
-  }
-
-  return valid(await rawCWUOpportunityToCWUOpportunity(connection, result) || null);
+  return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);
 });
 
 interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
@@ -835,37 +833,72 @@ interface RootOpportunityRecord {
   createdBy: Id;
 }
 
-export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Id], CWUOpportunity>(async (connection, opportunity, user) => {
+interface OpportunityVersionRecord extends Omit<CreateCWUOpportunityParams, 'createdBy'> {
+  opportunity: Id;
+  createdAt: Date;
+  createdBy: Id;
+}
+
+export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Session], CWUOpportunity>(async (connection, opportunity, session) => {
   // Create root opportunity record
   const now = new Date();
-  const [rootOppRecord] = await connection<RootOpportunityRecord>('cwuOpportunities')
-    .insert({
-      id: generateUuid(),
-      createdAt: now,
-      createdBy: user
-    }, '*');
+  const result = await connection.transaction(async trx => {
+    const [rootOppRecord] = await connection<RootOpportunityRecord>('cwuOpportunities')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        createdAt: now,
+        createdBy: session.user?.id
+      }, '*');
 
-  // Create initial version
-  const [oppVersionRecord] = await connection('cwuOpportunityVersions')
-    .insert({
-      ...opportunity,
-      id: generateUuid(),
-      opportunity: rootOppRecord.id,
-      createdAt: now,
-      createdBy: user
-    }, '*');
+    if (!rootOppRecord) {
+      throw new Error('unable to create opportunity root record');
+    }
 
-  // Create status record
-  const [oppStatusRecord] = await connection('cwuOpportunyStatuses')
-    .insert({
-      id: generateUuid(),
-      opportunity: rootOppRecord.id,
-      createdAt: now,
-      createdBy: user,
-      status: CWUOpportunityStatus.Draft,
-      note: ''
-    }, '*');
+    // Create initial opportunity version
+    const { attachments, ...restOfOpportunity } = opportunity;
+    const [oppVersionRecord] = await connection<OpportunityVersionRecord>('cwuOpportunityVersions')
+      .transacting(trx)
+      .insert({
+        ...restOfOpportunity,
+        id: generateUuid(),
+        opportunity: rootOppRecord.id,
+        createdAt: now,
+        createdBy: session.user?.id
+      }, '*');
 
-  // Create attachment records
-  
+    if (!oppVersionRecord) {
+      throw new Error('unable to create opportunity version');
+    }
+
+    // Create initial opportunity status record (Draft)
+    await connection('cwuOpportunityStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: rootOppRecord.id,
+        createdAt: now,
+        createdBy: session.user?.id,
+        status: CWUOpportunityStatus.Draft,
+        note: ''
+      }, '*');
+
+    // Create attachment records
+    attachments?.forEach(async attachment => {
+      await connection('cwuOpportunityAttachments')
+        .transacting(trx)
+        .insert({
+          opportunityVersion: oppVersionRecord.id,
+          file: attachment
+        }, '*');
+    });
+
+    const dbResult = await readOneCWUOpportunity(trx, rootOppRecord.id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to create opportunity');
+    }
+    return dbResult.value;
+  });
+
+  return valid(result);
 });

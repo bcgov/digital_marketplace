@@ -7,19 +7,19 @@ import { validateAttachments } from 'back-end/lib/validation';
 import { get } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { CreateRequestBody as SharedRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim } from 'shared/lib/resources/code-with-us';
+import { FileRecord } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, validateUUID } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
 interface CreateRequestBody extends Omit<SharedRequestBody, 'status' | 'proposalDeadline' | 'completionDate' | 'assignmentDate' | 'startDate'> {
-  status: string;
   proposalDeadline: string;
   completionDate: string;
   assignmentDate: string;
   startDate: string;
 }
 
-type ValidatedCreateRequestBody = CreateRequestBody;
+export type ValidatedCreateRequestBody = Omit<CWUOpportunity, 'status' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -39,7 +39,7 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'cwu-opportunities',
+  routeNamespace: 'code-with-us',
 
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<CWUOpportunitySlim[] | string[]>, Session>(async request => {
@@ -170,7 +170,7 @@ const resource: Resource = {
             submissionInfo: validatedSubmissionInfo.value,
             acceptanceCriteria: validatedAcceptanceCriteria.value,
             evaluationCriteria: validatedEvaluationCriteria.value,
-            attachments: validatedAttachments.value
+            attachments: (validatedAttachments.value as FileRecord[]).map(v => v.id)
           });
         } else {
           return invalid({
@@ -193,9 +193,9 @@ const resource: Resource = {
           });
         }
       },
-      response: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUOpportunity>, JsonResponseBody<CreateValidationErrors>, Session>({
+      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUOpportunity>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
-          const dbResult = await db.createCWUOpportunity(connection, request.body, request.session.user);
+          const dbResult = await db.createCWUOpportunity(connection, request.body, request.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
