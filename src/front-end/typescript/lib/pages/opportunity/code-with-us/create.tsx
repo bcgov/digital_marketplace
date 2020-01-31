@@ -14,7 +14,7 @@ import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 // import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom, invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
@@ -51,7 +51,7 @@ export interface State {
 
 type InnerMsg
   = ADT<'updateActiveTab',   TabValues>
-  | ADT<'submit'>
+  | ADT<'submit', CWUOpportunityResource.CWUOpportunityStatus>
 
   // Details Tab
   | ADT<'title',             ShortText.Msg>
@@ -247,7 +247,7 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
 
 type Errors = ErrorTypeFrom<CWUOpportunityResource.CreateRequestBody>;
 
-function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
+function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): CWUOpportunityResource.CreateRequestBody {
 
   const proposalDeadline = FormField.getValue(state.proposalDeadline);
   const startDate = FormField.getValue(state.startDate);
@@ -270,9 +270,11 @@ function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
     submissionInfo:      FormField.getValue(state.submissionInfo),
     acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
     evaluationCriteria:  FormField.getValue(state.evaluationCriteria),
+
     remoteOk: true,
     remoteDesc: 'TODO(Jesse): Some really great text goes here',
-    status: 'DRAFT' as CWUOpportunityResource.CWUOpportunityStatus,  // TODO(Jesse): Why we must cast .. bro???
+    status,
+
     attachments: [],
     addenda: []
   };
@@ -280,9 +282,10 @@ function getFormValues(state: State): CWUOpportunityResource.CreateRequestBody {
   return result;
 }
 
-async function persist(state: State): Promise<Validation<State, string[]>> {
-  const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state);
-  const apiResult = await api.cwuOpportunity.create(formValues);
+async function persist(id: Id | null, state: State, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
+  const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state, status);
+  const apiResult = id ? await api.cwuOpportunity.update(id, formValues) :
+                         await api.cwuOpportunity.create(formValues);
   switch (apiResult.tag) {
     case 'valid':
       return valid(state);
@@ -299,7 +302,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         async (state, dispatch) => {
-          const result = await persist(state);
+          const result = await persist(null, state, msg.value);
           switch (result.tag) {
             case 'valid':
             case 'invalid':
@@ -655,7 +658,7 @@ const view: ComponentView<State, Msg> = (params) => {
             button
             color='secondary'
             symbol_={leftPlacement(iconLinkSymbol('cog'))}
-            onClick={() => dispatch(adt('submit')) }
+            onClick={() => dispatch(adt('submit', 'DRAFT' as CWUOpportunityResource.CWUOpportunityStatus)) }  // TODO(Jesse): Why must we cast here?
           >
             Save Draft
           </Link>
@@ -683,7 +686,7 @@ const view: ComponentView<State, Msg> = (params) => {
             button
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('cog'))}
-            onClick={() => dispatch(adt('submit')) }
+            onClick={() => dispatch(adt('submit', 'PUBLISHED' as CWUOpportunityResource.CWUOpportunityStatus)) }  // TODO(Jesse): Why must we cast here?
           >
             Publish
           </Link>
