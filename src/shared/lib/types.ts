@@ -44,3 +44,9 @@ export enum ClientHttpMethod {
   Delete = 'DELETE',
   Options = 'OPTIONS'
 }
+
+export interface BodyWithErrors {
+  permissions?: string[];
+  database?: string[];
+  notFound?: string[];
+}

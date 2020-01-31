@@ -1,8 +1,7 @@
 import * as crud from 'back-end/lib/crud';
-import { approveAffiliation, Connection, createAffiliation, deleteAffiliation, readActiveOwnerCount, readManyAffiliations, readOneAffiliation } from 'back-end/lib/db';
+import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { Response } from 'back-end/lib/server';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAffiliationId, validateOrganizationId, validateUserId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
@@ -37,7 +36,7 @@ type Resource = crud.Resource<
   ValidatedDeleteRequestBody,
   DeleteValidationErrors,
   Session,
-  Connection
+  db.Connection
 >;
 
 const resource: Resource = {
@@ -49,8 +48,11 @@ const resource: Resource = {
       if (!request.session.user || !permissions.readManyAffiliations(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      const affiliations = await readManyAffiliations(connection, request.session.user.id);
-      return respond(200, affiliations);
+      const dbResult = await db.readManyAffiliations(connection, request.session.user.id);
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
     });
   },
 
@@ -71,7 +73,11 @@ const resource: Resource = {
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
           // Get the most recent affiliation for this user and organization
-          const existingAffiliation = await readOneAffiliation(connection, user, organization);
+          const dbResult = await db.readOneAffiliation(connection, user, organization);
+          if (isInvalid(dbResult)) {
+            return invalid({ database: [db.ERROR_MESSAGE]});
+          }
+          const existingAffiliation = dbResult.value;
           let membershipStatus: MembershipStatus;
           // If existing affiliation in pending state, we check for admin perms, and create new active one
           if (existingAffiliation && existingAffiliation.membershipStatus === MembershipStatus.Pending) {
@@ -103,19 +109,18 @@ const resource: Resource = {
           });
         }
       },
-      async respond(request): Promise<Response<JsonResponseBody<Affiliation | CreateValidationErrors>, Session>> {
-        const respond = (code: number, body: Affiliation | CreateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        switch (request.body.tag) {
-          case 'invalid':
-            if (request.body.value.permissions) {
-              return basicResponse(401, request.session, makeJsonResponseBody(request.body.value));
-            }
-            return basicResponse(400, request.session, makeJsonResponseBody(request.body.value));
-          case 'valid':
-            const affiliation = await createAffiliation(connection, request.body.value);
-            return respond(201, affiliation);
-        }
-      }
+      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<Affiliation>, JsonResponseBody<CreateValidationErrors>, Session>({
+        valid: (async request => {
+          const dbResult = await db.createAffiliation(connection, request.body);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
+        }),
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        })
+      })
     };
   },
 
@@ -144,18 +149,19 @@ const resource: Resource = {
           affiliation: ['Membership is not pending.']
         });
       },
-      async respond(request): Promise<Response<JsonResponseBody<Affiliation | UpdateValidationErrors>, Session>> {
-        const respond = (code: number, body: Affiliation | UpdateValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (request.body.tag === 'invalid') {
-          if (request.body.value.permissions) {
-            return respond(401, request.body.value);
+      respond: wrapRespond({
+        valid: (async request => {
+          const id = request.body;
+          const dbResult = await db.approveAffiliation(connection, id);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE]}));
           }
-          return respond(400, request.body.value);
-        }
-        const id = request.body.value;
-        const updatedAffiliation = await approveAffiliation(connection, id);
-        return respond(200, updatedAffiliation);
-      }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        }),
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        })
+      })
     };
   },
 
@@ -163,7 +169,7 @@ const resource: Resource = {
     return {
       async validateRequestBody(request) {
         const validatedAffiliationId = await validateAffiliationId(connection, request.params.id);
-        if (validatedAffiliationId.tag === 'invalid') {
+        if (isInvalid(validatedAffiliationId)) {
           return invalid({
             affiliation: getInvalidValue(validatedAffiliationId, undefined)
           });
@@ -171,7 +177,7 @@ const resource: Resource = {
 
         const existingAffiliation = validatedAffiliationId.value;
         if (existingAffiliation.membershipType === MembershipType.Owner &&
-            await readActiveOwnerCount(connection, existingAffiliation.organization.id) === 1) {
+            await db.readActiveOwnerCount(connection, existingAffiliation.organization.id) === 1) {
           return invalid({
             affiliation: ['Unable to remove membership. This is the sole owner for this organization.']
           });
@@ -185,18 +191,19 @@ const resource: Resource = {
 
         return valid(existingAffiliation.id);
       },
-      async respond(request): Promise<Response<JsonResponseBody<Affiliation | DeleteValidationErrors>, Session>> {
-        const respond = (code: number, body: Affiliation | DeleteValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
-        if (isInvalid(request.body)) {
-          if (request.body.value.permissions) {
-            return respond(401, request.body.value);
+      respond: wrapRespond({
+        valid: (async request => {
+          const affiliationId = request.body;
+          const dbResult = await db.deleteAffiliation(connection, affiliationId);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
-          return respond(400, request.body.value);
-        }
-        const affiliationId = request.body.value;
-        const deletedAffiliation = await deleteAffiliation(connection, affiliationId);
-        return respond(200, deletedAffiliation);
-      }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        }),
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        })
+      })
     };
   }
 };

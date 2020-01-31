@@ -305,6 +305,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         actions: [
           {
             text: 'Archive Organization',
+            icon: 'minus-circle',
             color: 'danger',
             msg: adt('archive'),
             button: true
@@ -324,6 +325,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         actions: [
           {
             text: 'Save Changes',
+            icon: 'check',
             color: 'primary',
             msg: adt('saveChanges'),
             button: true

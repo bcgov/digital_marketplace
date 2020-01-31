@@ -226,9 +226,10 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
       <ModalBody>{content.body}</ModalBody>
       <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
         <div className='p-3 d-flex flex-md-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
-          {content.actions.map(({ button, text, color, msg }, i) => {
+          {content.actions.map(({ icon, button, text, color, msg }, i) => {
             const props = {
               key: `modal-action-${i}`,
+              symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
               color,
               onClick: () => dispatch(msg),
               className: i === 0 ? 'mx-0' : 'ml-3 mr-0 ml-md-0 mr-md-3'
