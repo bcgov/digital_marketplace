@@ -731,10 +731,10 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
     })
     // Select fields for 'slim' opportunity
     .select<RawCWUOpportunitySlim[]>(
-      'opp.id as id',
-      'version.title as title',
-      'opp.createdAt as createdAt',
-      'opp.createdBy as createdBy',
+      'opp.id',
+      'version.title',
+      'opp.createdAt',
+      'opp.createdBy',
       'version.createdAt as updatedAt',
       'version.createdBy as updatedBy',
       'stat.status'
@@ -752,7 +752,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
   })));
 });
 
-export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
+export const readOneCWUOpportunity = tryDb<[Id, Session?], CWUOpportunity | null>(async (connection, id, session) => {
   const result = await connection<RawCWUOpportunity>('cwuOpportunities as opp')
     .where({ 'opp.id': id })
     // Join on latest CWU status
@@ -772,8 +772,27 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
             version2.opportunity = opp.id)'));
     })
     .select<RawCWUOpportunity>([
-      'version.*',
-      'stat.status as status'
+      'opp.id',
+      'opp.createdAt',
+      'opp.createdBy',
+      'version.createdAt as updatedAt',
+      'version.createdBy as updatedBy',
+      'version.title',
+      'version.teaser',
+      'version.remoteOk',
+      'version.remoteDesc',
+      'version.location',
+      'version.reward',
+      'version.skills',
+      'version.description',
+      'version.proposalDeadline',
+      'version.assignmentDate',
+      'version.startDate',
+      'version.completionDate',
+      'version.submissionInfo',
+      'version.acceptanceCriteria',
+      'version.evaluationCriteria',
+      'stat.status'
     ])
     .first();
 
@@ -825,7 +844,7 @@ export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connec
   return valid(await rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection, result));
 });
 
-type CreateCWUOpportunityParams = Partial<CWUOpportunity>;
+type CreateCWUOpportunityParams = Omit<CWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status'>;
 
 interface RootOpportunityRecord {
   id: Id;
@@ -833,7 +852,7 @@ interface RootOpportunityRecord {
   createdBy: Id;
 }
 
-interface OpportunityVersionRecord extends Omit<CreateCWUOpportunityParams, 'createdBy'> {
+interface OpportunityVersionRecord extends CreateCWUOpportunityParams {
   opportunity: Id;
   createdAt: Date;
   createdBy: Id;
@@ -901,4 +920,111 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Session],
   });
 
   return valid(result);
+});
+
+export async function isCWUOpportunityAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
+  try {
+    const result = await connection<RawCWUOpportunity>('cwuOpportunities')
+      .select('*')
+      .where({ id, createdBy: user.id });
+    return !!result && result.length > 0;
+  } catch (exception) {
+    return false;
+  }
+}
+
+type UpdateCWUOpportunityParams = Partial<CWUOpportunity>;
+
+export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Session], CWUOpportunity>(async (connection, opportunity, session) => {
+  const now = new Date();
+  const { attachments, ...restOfOpportunity } = opportunity;
+  const [oppVersion] = await connection<OpportunityVersionRecord>('cwuOpportunityVersions')
+    .insert({
+      ...restOfOpportunity,
+      opportunity: restOfOpportunity.id,
+      id: generateUuid(),
+      createdAt: now,
+      createdBy: session.user?.id
+    }, '*');
+
+  if (!oppVersion) {
+    throw new Error('unable to update opportunity');
+  }
+
+  attachments?.forEach(async attachment => {
+    await connection('cwuOpportunityAttachments')
+      .insert({
+        opportunity: oppVersion.id,
+        file: attachment.id
+      });
+  });
+
+  const dbResult = await readOneCWUOpportunity(connection, oppVersion.opportunity, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+  return valid(dbResult.value);
+});
+
+interface OpportunityStatusRecord {
+  id: Id;
+  opportunity: Id;
+  createdAt: Date;
+  createdBy: Id;
+  status: CWUOpportunityStatus;
+  note: string;
+}
+
+export const updateCWUOpportunityStatus = tryDb<[Id, CWUOpportunityStatus, string, Session], CWUOpportunity>(async (connection, id, status, note, session) => {
+  const now = new Date();
+  const [result] = await connection<OpportunityStatusRecord>('cwuOpportunityStatuses')
+    .insert({
+      id: generateUuid(),
+      opportunity: id,
+      createdAt: now,
+      createdBy: session.user?.id,
+      status,
+      note
+    }, '*');
+
+  if (!result) {
+    throw new Error('unable to update opportunity');
+  }
+
+  const dbResult = await readOneCWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+
+  return valid(dbResult.value);
+});
+
+interface OpportunityAddendumRecord {
+  id: Id;
+  opportunity: Id;
+  description: string;
+  createdBy: string;
+  createdAt: Date;
+}
+
+export const addCWUOpportunityAddendum = tryDb<[Id, string, Session], CWUOpportunity>(async (connection, id, addendumText, session) => {
+  const now = new Date();
+  const [result] = await connection<OpportunityAddendumRecord>('cwuOpportunityAddenda')
+    .insert({
+      id: generateUuid(),
+      opportunity: id,
+      description: addendumText,
+      createdBy: session.user?.id,
+      createdAt: now
+    }, '*');
+
+  if (!result) {
+    throw new Error('unable to add addendum');
+  }
+
+  const dbResult = await readOneCWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add addendum');
+  }
+  return valid(dbResult.value);
 });

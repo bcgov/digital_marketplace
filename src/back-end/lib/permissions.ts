@@ -1,4 +1,4 @@
-import { Connection, hasFilePermission, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Connection, hasFilePermission, isCWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
@@ -145,4 +145,8 @@ export async function readOneFile(connection: Connection, session: Session, file
 
 export function createCWUOpportunity(session: Session): boolean {
   return isAdmin(session) || isGovernment(session);
+}
+
+export async function editCWUOpportunity(connection: Connection, session: Session, opportunityId: string) {
+  return isAdmin(session) || (isGovernment(session) && session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId));
 }

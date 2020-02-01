@@ -47,3 +47,11 @@ export function validateAcceptanceCriteria(raw: string): Validation<string> {
 export function validateEvaluationCriteria(raw: string): Validation<string> {
   return validateGenericString(raw, 'Evaluation Criteria', 0);
 }
+
+export function validateAddendumText(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Addendum');
+}
+
+export function validateNote(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Status Note', 0);
+}
