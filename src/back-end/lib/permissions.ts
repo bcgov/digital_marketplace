@@ -148,5 +148,9 @@ export function createCWUOpportunity(session: Session): boolean {
 }
 
 export async function editCWUOpportunity(connection: Connection, session: Session, opportunityId: string) {
-  return isAdmin(session) || (isGovernment(session) && session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId));
+  return isAdmin(session) || (session.user && isGovernment(session) && await isCWUOpportunityAuthor(connection, session.user, opportunityId));
+}
+
+export async function deleteCWUOpportunity(connection: Connection, session: Session, opportunityId: string) {
+  return isAdmin(session) || (session.user && isGovernment(session) && await isCWUOpportunityAuthor(connection, session.user, opportunityId));
 }

@@ -63,9 +63,8 @@ export interface CreateRequestBody {
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
 
 export type UpdateRequestBody
-  = ADT<'editDraft', UpdateDraftRequestBody>
+  = ADT<'edit', UpdateDraftRequestBody>
   | ADT<'publish', string>
-  | ADT<'startEvaluation', string>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>;
@@ -73,9 +72,8 @@ export type UpdateRequestBody
 export type UpdateDraftRequestBody = CreateRequestBody;
 
 type UpdateADTErrors
-  = ADT<'editDraft', UpdateDraftValidationErrors>
+  = ADT<'edit', UpdateDraftValidationErrors>
   | ADT<'publish', string[]>
-  | ADT<'startEvaluation', string[]>
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
@@ -87,3 +85,24 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 }
 
 export type UpdateDraftValidationErrors = ErrorTypeFrom<UpdateDraftRequestBody>;
+
+export type DeleteValidationErrors = BodyWithErrors;
+
+export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportunityStatus): boolean {
+  switch (from) {
+    case CWUOpportunityStatus.Draft:
+      return to === CWUOpportunityStatus.Published;
+    case CWUOpportunityStatus.Published:
+      return [CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended, CWUOpportunityStatus.Evaluation].includes(to);
+    case CWUOpportunityStatus.Evaluation:
+      return [CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended, CWUOpportunityStatus.Awarded].includes(to);
+    case CWUOpportunityStatus.Suspended:
+      return [CWUOpportunityStatus.Published, CWUOpportunityStatus.Canceled].includes(to);
+    default:
+      return false;
+  }
+}
+
+export const publicOpportunityStatuses = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
+
+export const privateOpportunitiesStatuses = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
