@@ -12,7 +12,9 @@ type ChildParams = FormField.ChildParamsBase<Value>;
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+type ExtraChildProps = {
+  name: string;
+};
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -38,7 +40,7 @@ const ChildView: ChildComponent['view'] = props => {
   return (
     <CustomInput
       id={state.id}
-      name={state.id}
+      name={props.name}
       checked={state.value}
       disabled={disabled}
       type='radio'

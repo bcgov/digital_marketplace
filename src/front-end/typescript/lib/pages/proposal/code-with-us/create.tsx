@@ -2,7 +2,7 @@ import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
-import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
+import * as Radio from 'front-end/lib/components/form-field/radio';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
@@ -18,7 +18,8 @@ export interface State {
   activeTab: TabValues;
 
   // Proponent Tab
-  proponentType: Immutable<RadioGroup.State>;
+  proponentTypeIndividual: Immutable<Radio.State>;
+  proponentTypeOrganization: Immutable<Radio.State>;
 
   // Proposal Tab
   proposal: Immutable<LongText.State>;
@@ -34,7 +35,8 @@ type InnerMsg
 
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
-  | ADT<'proponentType', RadioGroup.Msg>
+  | ADT<'proponentTypeIndividual', Radio.Msg>
+  | ADT<'proponentTypeOrganization', Radio.Msg>
 
   // Proposal Tab
   | ADT<'proposal',           LongText.Msg>
@@ -55,11 +57,20 @@ async function defaultState() {
     activeTab: 'Proponent' as const,
 
     // @radio-option
-    proponentType: immutable(await RadioGroup.init({
+    proponentTypeIndividual: immutable(await Radio.init({
       errors: [],
       child: {
         value: false,
-        id: 'proposal-proponent-type'
+        id: 'proposal-proponent-type-individual'
+      }
+    })),
+
+    // @radio-option
+    proponentTypeOrganization: immutable(await Radio.init({
+      errors: [],
+      child: {
+        value: false,
+        id: 'proposal-proponent-type-organization'
       }
     })),
 
@@ -104,6 +115,24 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
 
+    case 'proponentTypeIndividual':
+      return updateComponentChild({
+        state,
+        childStatePath: ['proponentTypeIndividual'],
+        childUpdate: Radio.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('proponentTypeIndividual', value)
+      });
+
+    case 'proponentTypeOrganization':
+      return updateComponentChild({
+        state,
+        childStatePath: ['proponentTypeOrganization'],
+        childUpdate: Radio.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('proponentTypeOrganization', value)
+      });
+
     case 'proposal':
       return updateComponentChild({
         state,
@@ -139,10 +168,19 @@ const ProponentView: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
       {
         <Col xs='12'>
-          <RadioGroup.view
-            extraChildProps={{}}
-            state={state.proponentType}
-            dispatch={mapComponentDispatch(dispatch, value => adt('proponentType' as const, value))} />
+          <Radio.view
+            extraChildProps={{ name: 'proponent-type' }}
+            state={state.proponentTypeIndividual}
+            dispatch={mapComponentDispatch(dispatch, value => adt('proponentTypeIndividual' as const, value))} />
+        </Col>
+      }
+
+      {
+        <Col xs='12'>
+          <Radio.view
+            extraChildProps={{ name: 'proponent-type' }}
+            state={state.proponentTypeOrganization}
+            dispatch={mapComponentDispatch(dispatch, value => adt('proponentTypeOrganization' as const, value))} />
         </Col>
       }
 
