@@ -3,7 +3,7 @@ import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'fr
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
-import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapComponentDispatch, View } from 'front-end/lib/framework';
+import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapComponentDispatch, PageContextualDropdown, PageContextualLink, View } from 'front-end/lib/framework';
 // Note(Jesse): @add_new_page_location
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
@@ -268,6 +268,13 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol('sign-out'))
 };
 
+const procurementConciergeLink: Nav.NavLink = {
+  text: 'Procurement Concierge',
+  dest: externalDest(PROCUREMENT_CONCIERGE_URL),
+  newTab: true,
+  symbol_: rightPlacement(iconLinkSymbol('external-link'))
+};
+
 function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -285,7 +292,8 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
         symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
         active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
       }),
-      Nav.linkAccountAction(signOutLink)
+      Nav.linkAccountAction(signOutLink),
+      Nav.linkAccountAction(procurementConciergeLink)
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -308,15 +316,18 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
         },
         {
           links: [signOutLink]
+        },
+        {
+          links: [procurementConciergeLink]
         }
       ]
     })
   };
 }
 
-function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks'] {
+function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
   const sessionUser = state.shared.session && state.shared.session.user;
-  let left: Nav.NavLink[] = [];
+  let links: Nav.NavLink[] = [];
   const opportunitiesLink: Nav.NavLink = {
     text: 'Opportunities',
     active: state.activeRoute.tag === 'opportunities',
@@ -329,7 +340,7 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
   };
   if (sessionUser) {
     // User has signed in.
-    left = left.concat([
+    links = links.concat([
       {
         text: 'Dashboard',
         // TODO add dashboard route when available.
@@ -341,7 +352,7 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
     ]);
     if (sessionUser.type === UserType.Admin) {
       // User is an admin.
-      left = left.concat([
+      links = links.concat([
         {
           text: 'Users',
           active: state.activeRoute.tag === 'userList',
@@ -351,7 +362,7 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
     }
   } else {
     // User has not signed in.
-    left = left.concat([
+    links = links.concat([
       {
         text: 'Home',
         active: state.activeRoute.tag === 'landing',
@@ -361,18 +372,71 @@ function navContextualLinks(state: Immutable<State>): Nav.Props['contextualLinks
       organizationsLink
     ]);
   }
+  return links;
+}
+
+interface ContextualLinkToNavLinkParams<PageMsg> {
+  link: PageContextualLink<PageMsg>;
+  dispatch: Dispatch<Msg>;
+  mapPageMsg(msg: PageMsg): Msg;
+}
+
+function contextualLinkToNavLink<PageMsg>(params: ContextualLinkToNavLinkParams<PageMsg>): Nav.NavLink {
+  const { link, dispatch, mapPageMsg } = params;
   return {
-    left,
-    right: [{
-      text: 'Procurement Concierge',
-      dest: externalDest(PROCUREMENT_CONCIERGE_URL),
-      newTab: true,
-      symbol_: rightPlacement(iconLinkSymbol('external-link'))
-    }]
+    text: link.text,
+    color: link.color,
+    button: link.button,
+    symbol_: link.icon && adt(link.icon.tag, iconLinkSymbol(link.icon.value)),
+    onClick: () => dispatch(mapPageMsg(link.msg))
+  } as Nav.NavLink;
+}
+
+interface ContextualDropdownToNavDropdownParams<PageMsg> {
+  dropdown: PageContextualDropdown<PageMsg>;
+  dispatch: Dispatch<Msg>;
+  mapPageMsg(msg: PageMsg): Msg;
+}
+
+function contextualDropdownToNavDropdown<PageMsg>(params: ContextualDropdownToNavDropdownParams<PageMsg>): Nav.NavContextualDropdown {
+  const { dropdown, dispatch, mapPageMsg } = params;
+  return {
+    text: dropdown.text,
+    linkGroups: dropdown.linkGroups.map(group => ({
+      label: group.label,
+      links: group.links.map(link => contextualLinkToNavLink({
+        link,
+        dispatch,
+        mapPageMsg
+      }))
+    }))
   };
 }
 
-function regularNavProps({ state, dispatch }: ComponentViewProps<State, Msg>): Nav.Props {
+function navContextualLinks(props: ComponentViewProps<State, Msg>): Nav.Props['contextualLinks'] {
+  const viewPageProps = pageToViewPageProps(props);
+  if (!viewPageProps.component.getContextualActions || !viewPageProps.pageState) { return undefined; }
+  const actions = viewPageProps.component.getContextualActions(viewPageProps.pageState);
+  switch (actions.tag) {
+    case 'links':
+      return adt('links', actions.value.map(link => {
+        return contextualLinkToNavLink({
+          dispatch: props.dispatch,
+          mapPageMsg: viewPageProps.mapPageMsg,
+          link
+        });
+      }));
+    case 'dropdown':
+      return adt('dropdown', contextualDropdownToNavDropdown({
+        dispatch: props.dispatch,
+        mapPageMsg: viewPageProps.mapPageMsg,
+        dropdown: actions.value
+      }));
+  }
+}
+
+function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
+  const { state, dispatch } = props;
   const dispatchNav = mapComponentDispatch(dispatch, adtCurried<ADT<'nav', Nav.Msg>>('nav'));
   return {
     state: state.nav,
@@ -382,7 +446,8 @@ function regularNavProps({ state, dispatch }: ComponentViewProps<State, Msg>): N
     title: 'Digital Marketplace',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
-    contextualLinks: navContextualLinks(state)
+    appLinks: navAppLinks(state),
+    contextualLinks: navContextualLinks(props)
   };
 }
 
@@ -406,6 +471,7 @@ function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
   ]);
   return {
     ...regularNavProps(props),
+    appLinks: [],
     contextualLinks: undefined,
     homeDest: undefined,
     accountMenus: {

@@ -297,31 +297,29 @@ export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State,
   isEmptyOnMobile?(state: Immutable<State>): boolean;
 }
 
-interface PageContextualLink<Msg> {
+export interface PageContextualLink<Msg> {
   text: string;
   msg: Msg;
-  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
+  color?: 'primary' | 'info' | 'secondary' | 'danger' | 'success' | 'white';
   button?: boolean;
   icon?: Placement<AvailableIcons>;
 }
 
-interface PageContextualDropdownLinkGroup<Msg> {
+export interface PageContextualDropdownLinkGroup<Msg> {
   label?: string;
   links: Array<PageContextualLink<Msg>>;
 }
 
-interface PageContextualDropdown<Msg> {
+export interface PageContextualDropdown<Msg> {
   text: string;
-  open: boolean;
-  toggleMsg: Msg;
   linkGroups: Array<PageContextualDropdownLinkGroup<Msg>>;
 }
 
 export type PageContextualAction<Msg>
-  = ADT<'link', PageContextualLink<Msg>>
+  = ADT<'links', Array<PageContextualLink<Msg>>>
   | ADT<'dropdown', PageContextualDropdown<Msg>>;
 
-export type PageGetContextualActions<State, Msg> = (state: Immutable<State>) => Array<PageContextualAction<Msg>>;
+export type PageGetContextualActions<State, Msg> = (state: Immutable<State>) => PageContextualAction<Msg>;
 
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   fullWidth?: boolean;
