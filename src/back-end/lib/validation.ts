@@ -1,10 +1,12 @@
 import * as db from 'back-end/lib/db';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
+import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
+import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, isInvalid, valid, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { invalid, isInvalid, isValid, valid, validateArrayAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -21,7 +23,7 @@ export async function validateUserId(connection: db.Connection, userId: Id): Pro
   }
 }
 
-export async function validateImageFile(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
+export async function validateFileRecord(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(fileId);
@@ -41,6 +43,11 @@ export async function validateImageFile(connection: db.Connection, fileId: Id): 
   } catch (e) {
     return invalid(['Please specify a valid image file id.']);
   }
+}
+
+export async function validateAttachments(connection: db.Connection, raw: string[]): Promise<Validation<FileRecord[]>> {
+  const validatedArray = await validateArrayAsync(raw, v => validateFileRecord(connection, v));
+  return isValid(validatedArray) ? validatedArray : invalid(['Invalid attachment specified.']);
 }
 
 export async function validateOrganizationId(connection: db.Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
@@ -89,4 +96,25 @@ export async function validateAffiliationId(connection: db.Connection, affiliati
 
 export function validateFilePath(path: string): Validation<string> {
   return validateGenericString(path, 'File path');
+}
+
+export async function validateCWUOpportunityId(connection: db.Connection, opportunityId: Id, session: Session): Promise<Validation<CWUOpportunity>> {
+  try {
+    const validatedId = validateUUID(opportunityId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneCWUOpportunity(connection, opportunityId, session);
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const opportunity = dbResult.value;
+    if (!opportunity) {
+      return invalid(['The specified Code With Us opportunity was not found.']);
+    }
+    return valid(opportunity);
+
+  } catch (exception) {
+    return invalid(['Please select a valid Code With Us opportunity.']);
+  }
 }

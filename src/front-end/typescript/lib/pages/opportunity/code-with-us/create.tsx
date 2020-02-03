@@ -14,7 +14,7 @@ import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 // import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
-import { adt, ADT, Id } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 import { ErrorTypeFrom, invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
@@ -257,22 +257,22 @@ function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportuni
   const result = {
     title:               FormField.getValue(state.title),
     teaser:              FormField.getValue(state.teaser),
+    remoteOk: true,
+    remoteDesc: 'TODO(Jesse): Some really great text goes here',
     location:            FormField.getValue(state.location),
     reward:              Number.parseInt(FormField.getValue(state.reward), 10),
     skills:              [FormField.getValue(state.skills)], // TODO(Jesse): How's this going to work?
     description:         FormField.getValue(state.description),
 
-    proposalDeadline:    new Date(DateField.valueToString(proposalDeadline)),
-    startDate:           new Date(DateField.valueToString(startDate)),
-    assignmentDate:      new Date(DateField.valueToString(assignmentDate )),
-    completionDate:      new Date(DateField.valueToString(completionDate )),
+    proposalDeadline:    DateField.valueToString(proposalDeadline),
+    assignmentDate:      DateField.valueToString(assignmentDate),
+    startDate:           DateField.valueToString(startDate),
+    completionDate:      DateField.valueToString(completionDate),
 
     submissionInfo:      FormField.getValue(state.submissionInfo),
     acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
     evaluationCriteria:  FormField.getValue(state.evaluationCriteria),
 
-    remoteOk: true,
-    remoteDesc: 'TODO(Jesse): Some really great text goes here',
     status,
 
     attachments: [],
@@ -282,10 +282,10 @@ function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportuni
   return result;
 }
 
-async function persist(id: Id | null, state: State, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
+async function persist(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
   const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state, status);
-  const apiResult = id ? await api.cwuOpportunity.update(id, formValues) :
-                         await api.cwuOpportunity.create(formValues);
+  const apiResult = await api.cwuOpportunity.create(formValues);
+
   switch (apiResult.tag) {
     case 'valid':
       return valid(state);
@@ -302,7 +302,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         async (state, dispatch) => {
-          const result = await persist(null, state, msg.value);
+          const result = await persist(state, msg.value);
           switch (result.tag) {
             case 'valid':
             case 'invalid':
