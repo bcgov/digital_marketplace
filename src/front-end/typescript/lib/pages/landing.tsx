@@ -3,7 +3,7 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
   empty: true;
@@ -40,5 +40,19 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata() {
     return makePageMetadata('Welcome');
+  },
+  getContextualActions(state) {
+    return adt('links', [
+      {
+        text: 'Foo',
+        msg: adt('noop' as const),
+        button: true,
+        color: 'primary'
+      },
+      {
+        text: 'Bar',
+        msg: adt('noop' as const)
+      }
+    ]);
   }
 };
