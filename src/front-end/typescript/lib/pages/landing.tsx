@@ -42,32 +42,17 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     return makePageMetadata('Welcome');
   },
   getContextualActions(state) {
-    return adt('dropdown', {
-      text: 'Actions',
-      linkGroups: [
-        {
-          links: [
-            {
-              text: 'Foo',
-              msg: adt('noop' as const)
-            }
-          ]
-        }
-      ]
-    });
+    return adt('links', [
+      {
+        text: 'Foo',
+        msg: adt('noop' as const),
+        button: true,
+        color: 'primary'
+      },
+      {
+        text: 'Bar',
+        msg: adt('noop' as const)
+      }
+    ]);
   }
-  //getContextualActions(state) {
-    //return adt('links', [
-      //{
-        //text: 'Foo',
-        //msg: adt('noop' as const),
-        //button: true,
-        //color: 'primary'
-      //},
-      //{
-        //text: 'Bar',
-        //msg: adt('noop' as const)
-      //}
-    //]);
-  //}
 };

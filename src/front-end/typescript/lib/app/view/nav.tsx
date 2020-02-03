@@ -344,13 +344,13 @@ const TopNavbar: View<Props> = props => {
   );
 };
 
-const ContextualLinks: View<Props & { reverseLinks?: boolean; }> = props => {
-  const { reverseLinks, contextualLinks, dispatch } = props;
+const ContextualLinks: View<Props> = props => {
+  const { contextualLinks, dispatch } = props;
   if (!contextualLinks) { return null; }
   switch (contextualLinks.tag) {
     case 'links':
       return (
-        <div className={`d-flex flex-nowrap align-items-center ${reverseLinks ? 'flex-row-reverse' : ''}`}>
+        <div className='d-flex flex-nowrap align-items-center flex-row-reverse'>
           {contextualLinks.value.map((link, i, links) => {
             const linkProps = {
               ...link,
@@ -358,7 +358,7 @@ const ContextualLinks: View<Props & { reverseLinks?: boolean; }> = props => {
               className: link.button ? '' : 'font-size-small'
             } as NavLink;
             return (
-              <div className={`${reverseLinks ? 'ml-3' : 'mr-3'}`} key={`contextual-link-${i}`}>
+              <div className='ml-3' key={`contextual-link-${i}`}>
                 <NavLink {...linkProps} dispatch={dispatch} />
               </div>
             );
@@ -390,7 +390,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                 </div>
               ))}
             </div>
-            <ContextualLinks {...props} reverseLinks />
+            <ContextualLinks {...props} />
           </Col>
         </Row>
       </Container>
