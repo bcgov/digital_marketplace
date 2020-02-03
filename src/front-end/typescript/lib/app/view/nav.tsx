@@ -1,6 +1,6 @@
-import { ComponentViewProps, Dispatch, Init, Update, View } from 'front-end/lib/framework';
+import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { AnchorProps, ButtonProps, Dest } from 'front-end/lib/views/link';
+import Link, { Dest, ExtendProps as ExtendLinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
 //Use "Uncontrolled*" dropdowns because controlled reactstrap dropdowns have a bug.
 import { Col, Container, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner, UncontrolledButtonDropdown, UncontrolledDropdown } from 'reactstrap';
@@ -31,17 +31,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-interface NavLinkInfo {
-  text: string;
-  active?: boolean;
-}
-
-export type NavLink = (AnchorProps & NavLinkInfo) | (ButtonProps & NavLinkInfo);
+export type NavLink = ExtendLinkProps<{ active?: boolean; }>;
 
 type NavLinkProps = NavLink & { dispatch: Dispatch<Msg>; };
 
 const NavLink: View<NavLinkProps> = props => {
-  const { text, active = false } = props;
   const onClick = () => {
     props.dispatch(adt('toggleMobileMenu', false));
     if (props.onClick) { return props.onClick(); }
@@ -52,23 +46,11 @@ const NavLink: View<NavLinkProps> = props => {
     <Link
       {...linkProps}
       onClick={onClick}
-      className={`d-block ${props.className || ''} ${active ? 'font-weight-bold' : ''}`}>
-      {text}
-    </Link>
+      className={`text-nowrap ${props.className || ''} ${props.active ? 'font-weight-bold' : ''}`} />
   );
 };
 
-interface NavDropdownLinkGroup {
-  label?: string;
-  links: NavLink[];
-}
-
-export interface NavContextualDropdown {
-  text: string;
-  linkGroups: NavDropdownLinkGroup[];
-}
-
-const NavContextualDropdown: View<NavContextualDropdown & { dispatch: Dispatch<Msg>; }> = props => {
+const ContextualDropdown: View<PageContextualDropdown & { dispatch: Dispatch<Msg>; }> = props => {
   const { text, linkGroups, dispatch } = props;
   return (
     <UncontrolledButtonDropdown>
@@ -94,7 +76,7 @@ const NavContextualDropdown: View<NavContextualDropdown & { dispatch: Dispatch<M
   );
 };
 
-export interface NavAccountDropdown extends NavContextualDropdown {
+export interface NavAccountDropdown extends PageContextualDropdown {
   imageUrl: string;
 }
 
@@ -192,7 +174,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
     desktop: DesktopAccountMenu;
   };
   appLinks: NavLink[];
-  contextualLinks?: ADT<'links', NavLink[]> | ADT<'dropdown', NavContextualDropdown>;
+  contextualActions?: PageContextualActions;
 }
 
 const DesktopAccountMenu: View<Props> = props => {
@@ -259,7 +241,7 @@ const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) 
   <div className={className}>
     <NavLink
       dispatch={dispatch}
-      text={title}
+      children={title}
       color='white'
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : 'none' }}
@@ -345,35 +327,31 @@ const TopNavbar: View<Props> = props => {
 };
 
 const ContextualLinks: View<Props> = props => {
-  const { contextualLinks, dispatch } = props;
-  if (!contextualLinks) { return null; }
-  switch (contextualLinks.tag) {
+  const { contextualActions, dispatch } = props;
+  if (!contextualActions) { return null; }
+  switch (contextualActions.tag) {
     case 'links':
       return (
-        <div className='d-flex flex-nowrap align-items-center flex-row-reverse'>
-          {contextualLinks.value.map((link, i, links) => {
+        <div className='d-flex flex-nowrap align-items-center flex-row-reverse' style={{ overflowX: 'auto' }}>
+          {contextualActions.value.map((link, i, links) => {
             const linkProps = {
               ...link,
               size: link.button ? 'sm' : undefined,
-              className: link.button ? '' : 'font-size-small'
+              className: `ml-3 ${link.button ? '' : 'font-size-small'}`
             } as NavLink;
-            return (
-              <div className='ml-3' key={`contextual-link-${i}`}>
-                <NavLink {...linkProps} dispatch={dispatch} />
-              </div>
-            );
+            return (<NavLink {...linkProps} dispatch={dispatch} key={`contextual-link-${i}`} />);
           })}
         </div>
       );
     case 'dropdown':
-      return (<NavContextualDropdown {...contextualLinks.value} dispatch={dispatch} />);
+      return (<ContextualDropdown {...contextualActions.value} dispatch={dispatch} />);
   }
 };
 
 const DesktopBottomNavbar: View<Props> = props => {
-  const { appLinks, contextualLinks } = props;
+  const { appLinks, contextualActions } = props;
   const linkClassName = (link: NavLink) => `${link.active && !link.button ? 'font-weight-bold' : ''}`;
-  if (!appLinks.length && !contextualLinks) { return null; }
+  if (!appLinks.length && !contextualActions) { return null; }
   return (
     <div className='main-nav-bottom-navbar desktop'>
       <Container className='h-100'>
@@ -399,8 +377,8 @@ const DesktopBottomNavbar: View<Props> = props => {
 };
 
 const MobileBottomNavbar: View<Props> = props => {
-  const { contextualLinks } = props;
-  if (!contextualLinks || (contextualLinks.tag === 'links' && !contextualLinks.value.length)) { return null; }
+  const { contextualActions } = props;
+  if (!contextualActions || (contextualActions.tag === 'links' && !contextualActions.value.length)) { return null; }
   return (
     <div className='main-nav-bottom-navbar mobile'>
       <Container className='h-100'>

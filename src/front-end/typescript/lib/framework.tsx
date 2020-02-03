@@ -1,6 +1,6 @@
 import { BootstrapColor } from 'front-end/lib/types';
 import { AvailableIcons } from 'front-end/lib/views/icon';
-import { Placement } from 'front-end/lib/views/link';
+import * as Link from 'front-end/lib/views/link';
 import * as Immutable from 'immutable';
 import { get, remove } from 'lodash';
 import page from 'page';
@@ -297,29 +297,21 @@ export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State,
   isEmptyOnMobile?(state: Immutable<State>): boolean;
 }
 
-export interface PageContextualLink<Msg> {
-  text: string;
-  msg: Msg;
-  color?: 'primary' | 'info' | 'secondary' | 'danger' | 'success' | 'white';
-  button?: boolean;
-  icon?: Placement<AvailableIcons>;
-}
-
-export interface PageContextualDropdownLinkGroup<Msg> {
+export interface PageContextualDropdownLinkGroup {
   label?: string;
-  links: Array<PageContextualLink<Msg>>;
+  links: Link.Props[];
 }
 
-export interface PageContextualDropdown<Msg> {
+export interface PageContextualDropdown {
   text: string;
-  linkGroups: Array<PageContextualDropdownLinkGroup<Msg>>;
+  linkGroups: PageContextualDropdownLinkGroup[];
 }
 
-export type PageContextualAction<Msg>
-  = ADT<'links', Array<PageContextualLink<Msg>>>
-  | ADT<'dropdown', PageContextualDropdown<Msg>>;
+export type PageContextualActions
+  = ADT<'links', Link.Props[]>
+  | ADT<'dropdown', PageContextualDropdown>;
 
-export type PageGetContextualActions<State, Msg> = (state: Immutable<State>) => PageContextualAction<Msg>;
+export type PageGetContextualActions<State, Msg> = (props: ComponentViewProps<State, Msg>) => PageContextualActions | null;
 
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   fullWidth?: boolean;
