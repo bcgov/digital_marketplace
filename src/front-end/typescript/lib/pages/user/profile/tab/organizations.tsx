@@ -147,7 +147,8 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
       },
       {
         children: (<LoadingButton disabled={isDisabled} loading={isDeleteLoading} size='sm' color='danger' symbol_={leftPlacement(iconLinkSymbol('user-times'))} onClick={() => dispatch(adt('deleteAffiliation', affiliation.id))}>Leave</LoadingButton>),
-        className: 'py-2'
+        className: 'py-2',
+        showOnHover: true
       }
     ];
   });

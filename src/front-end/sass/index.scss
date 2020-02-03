@@ -268,6 +268,14 @@ table {
     @extend .font-weight-bold;
     @extend .bg-light;
   }
+
+  .table-show-on-hover {
+    display: none;
+  }
+
+  tr:hover .table-show-on-hover {
+    display: unset;
+  }
 }
 
 pre {
