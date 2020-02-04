@@ -15,11 +15,13 @@ import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Proponent' | 'Proposal' | 'Attachments';
 
+type ProponentType = 'Individual' | 'Organization' | null;
+
 export interface State {
   activeTab: TabValues;
 
   // Proponent Tab
-  proponentIsIndividual: boolean;
+  proponentIsIndividual: ProponentType;
     // Individual
     name: Immutable<ShortText.State>;
     email: Immutable<ShortText.State>;
@@ -47,7 +49,7 @@ type InnerMsg
 
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
-  | ADT<'proponentIsIndividual', boolean>
+  | ADT<'proponentIsIndividual', ProponentType>
 
   // Individual Proponent
   | ADT<'name', ShortText.Msg>
@@ -77,7 +79,7 @@ export type RouteParams = {
 async function defaultState() {
   return {
     activeTab: 'Proponent' as const,
-    proponentIsIndividual: true,
+    proponentIsIndividual: null,
     orgId: '',
 
     // Individual
@@ -328,7 +330,116 @@ const Radio: View<RadioProps> = (props) => {
   );
 };
 
-const ProponentView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <div>
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Name'
+          state={state.name}
+          dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Email'
+          state={state.email}
+          dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Phone'
+          state={state.phone}
+          dispatch={mapComponentDispatch(dispatch, value => adt('phone' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Address'
+          state={state.address}
+          dispatch={mapComponentDispatch(dispatch, value => adt('address' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Address'
+          state={state.address2}
+          dispatch={mapComponentDispatch(dispatch, value => adt('address2' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='City'
+          state={state.city}
+          dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Province'
+          state={state.province}
+          dispatch={mapComponentDispatch(dispatch, value => adt('province' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Postal'
+          state={state.postal}
+          dispatch={mapComponentDispatch(dispatch, value => adt('postal' as const, value)) }
+        />
+      </Col>
+
+      <Col xs='12'>
+        <ShortText.view
+          extraChildProps={{}}
+          label='Country'
+          state={state.country}
+          dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value)) }
+        />
+      </Col>
+    </div>
+  );
+};
+
+const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <div>
+      Organization
+    </div>
+  );
+};
+
+const ProponentView: ComponentView<State, Msg> = (params) => {
+  const state = params.state;
+  const dispatch = params.dispatch;
+
+  let activeView = <div>No Active view selected</div>;
+  switch (state.proponentIsIndividual) {
+    case 'Individual': {
+      activeView = <IndividualProponent {...params} /> ;
+      break;
+    }
+    case 'Organization': {
+      activeView = <OrganizationProponent {...params} /> ;
+      break;
+    }
+  }
 
   return (
     <div>
@@ -344,8 +455,8 @@ const ProponentView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <Radio
             id='proponenet-is-individual'
             label='Individual'
-            checked={state.proponentIsIndividual}
-            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, true)); } }
+            checked={state.proponentIsIndividual === 'Individual'}
+            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, 'Individual' as const)); } }
           />
         </Col>
 
@@ -353,98 +464,14 @@ const ProponentView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <Radio
             id='proponenet-is-org'
             label='Organization'
-            checked={!state.proponentIsIndividual}
-            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, false)); } }
+            checked={state.proponentIsIndividual === 'Organization'}
+            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, 'Organization' as const)); } }
           />
         </Col>
       </Row>
 
       {
-        state.proponentIsIndividual ?
-        <div>
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Name'
-              state={state.name}
-              dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Email'
-              state={state.email}
-              dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Phone'
-              state={state.phone}
-              dispatch={mapComponentDispatch(dispatch, value => adt('phone' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Address'
-              state={state.address}
-              dispatch={mapComponentDispatch(dispatch, value => adt('address' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Address'
-              state={state.address2}
-              dispatch={mapComponentDispatch(dispatch, value => adt('address2' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='City'
-              state={state.city}
-              dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Province'
-              state={state.province}
-              dispatch={mapComponentDispatch(dispatch, value => adt('province' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Postal'
-              state={state.postal}
-              dispatch={mapComponentDispatch(dispatch, value => adt('postal' as const, value)) }
-            />
-          </Col>
-
-          <Col xs='12'>
-            <ShortText.view
-              extraChildProps={{}}
-              label='Country'
-              state={state.country}
-              dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value)) }
-            />
-          </Col>
-        </div>
-        :
-        <div>Organization</div>
+        activeView
       }
     </div>
   );
