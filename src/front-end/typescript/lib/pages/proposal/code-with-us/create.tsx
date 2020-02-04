@@ -2,6 +2,7 @@ import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 // import * as FormField from 'front-end/lib/components/form-field';
+import * as ShortText from 'front-end/lib/components/form-field/long-text';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -9,7 +10,7 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import { UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Proponent' | 'Proposal' | 'Attachments';
@@ -19,6 +20,18 @@ export interface State {
 
   // Proponent Tab
   proponentIsIndividual: boolean;
+    // Individual
+    name: Immutable<ShortText.State>;
+    email: Immutable<ShortText.State>;
+    phone: Immutable<ShortText.State>;
+    address: Immutable<ShortText.State>;
+    address2: Immutable<ShortText.State>;
+    city: Immutable<ShortText.State>;
+    province: Immutable<ShortText.State>;
+    postal: Immutable<ShortText.State>;
+    country: Immutable<ShortText.State>;
+    // Organziation
+    orgId: Id;
 
   // Proposal Tab
   proposal: Immutable<LongText.State>;
@@ -35,6 +48,17 @@ type InnerMsg
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
   | ADT<'proponentIsIndividual', boolean>
+
+  // Individual Proponent
+  | ADT<'name', ShortText.Msg>
+  | ADT<'email', ShortText.Msg>
+  | ADT<'phone', ShortText.Msg>
+  | ADT<'address', ShortText.Msg>
+  | ADT<'address2', ShortText.Msg>
+  | ADT<'city', ShortText.Msg>
+  | ADT<'province', ShortText.Msg>
+  | ADT<'postal', ShortText.Msg>
+  | ADT<'country', ShortText.Msg>
 
   // Proposal Tab
   | ADT<'proposal',           LongText.Msg>
@@ -54,6 +78,89 @@ async function defaultState() {
   return {
     activeTab: 'Proponent' as const,
     proponentIsIndividual: true,
+    orgId: '',
+
+    // Individual
+    name: immutable(await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-name'
+      }
+    })),
+
+    email: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-email'
+      }
+    })),
+
+    phone: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-phone'
+      }
+    })),
+
+    address: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-address'
+      }
+    })),
+
+    address2: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-address2'
+      }
+    })),
+
+    city: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-city'
+      }
+    })),
+
+    province: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-province'
+      }
+    })),
+
+    postal: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-postal'
+      }
+    })),
+
+    country: immutable( await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        value: '',
+        id: 'opportunity-individual-country'
+      }
+    })),
 
     proposal: immutable(await LongText.init({
       errors: [],
@@ -99,6 +206,87 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'proponentIsIndividual':
       return [state.set('proponentIsIndividual', msg.value)];
 
+    case 'name':
+      return updateComponentChild({
+        state,
+        childStatePath: ['name'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('name', value)
+      });
+
+    case 'email':
+      return updateComponentChild({
+        state,
+        childStatePath: ['email'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('email', value)
+      });
+
+    case 'phone':
+      return updateComponentChild({
+        state,
+        childStatePath: ['phone'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('phone', value)
+      });
+
+    case 'address':
+      return updateComponentChild({
+        state,
+        childStatePath: ['address'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('address', value)
+      });
+
+    case 'address2':
+      return updateComponentChild({
+        state,
+        childStatePath: ['address2'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('address2', value)
+      });
+
+    case 'city':
+      return updateComponentChild({
+        state,
+        childStatePath: ['city'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('city', value)
+      });
+
+    case 'province':
+      return updateComponentChild({
+        state,
+        childStatePath: ['province'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('province', value)
+      });
+
+    case 'postal':
+      return updateComponentChild({
+        state,
+        childStatePath: ['postal'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('postal', value)
+      });
+
+    case 'country':
+      return updateComponentChild({
+        state,
+        childStatePath: ['country'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('country', value)
+      });
+
     case 'proposal':
       return updateComponentChild({
         state,
@@ -143,40 +331,122 @@ const Radio: View<RadioProps> = (props) => {
 const ProponentView: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
   return (
-    <Row>
-      <Col xs='12'>
-        <p>
-          Please select the type of proponent that will be submitting a
-          proposal for the opportunity
-        </p>
-      </Col>
+    <div>
+      <Row>
+        <Col xs='12'>
+          <p>
+            Please select the type of proponent that will be submitting a
+            proposal for the opportunity
+          </p>
+        </Col>
 
-      <Col xs='12'>
-        <Radio
-          id='proponenet-is-individual'
-          label='Individual'
-          checked={state.proponentIsIndividual}
-          onClick={ () => { dispatch(adt('proponentIsIndividual' as const, true)); } }
-        />
-      </Col>
+        <Col xs='12'>
+          <Radio
+            id='proponenet-is-individual'
+            label='Individual'
+            checked={state.proponentIsIndividual}
+            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, true)); } }
+          />
+        </Col>
 
-      <Col xs='12'>
-        <Radio
-          id='proponenet-is-org'
-          label='Organization'
-          checked={!state.proponentIsIndividual}
-          onClick={ () => { dispatch(adt('proponentIsIndividual' as const, false)); } }
-        />
-      </Col>
+        <Col xs='12'>
+          <Radio
+            id='proponenet-is-org'
+            label='Organization'
+            checked={!state.proponentIsIndividual}
+            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, false)); } }
+          />
+        </Col>
+      </Row>
 
-    {
-      state.proponentIsIndividual ?
-      <div>Individual</div>
-      :
-      <div>Organization</div>
-    }
+      {
+        state.proponentIsIndividual ?
+        <div>
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Name'
+              state={state.name}
+              dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value)) }
+            />
+          </Col>
 
-    </Row>
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Email'
+              state={state.email}
+              dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Phone'
+              state={state.phone}
+              dispatch={mapComponentDispatch(dispatch, value => adt('phone' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Address'
+              state={state.address}
+              dispatch={mapComponentDispatch(dispatch, value => adt('address' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Address'
+              state={state.address2}
+              dispatch={mapComponentDispatch(dispatch, value => adt('address2' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='City'
+              state={state.city}
+              dispatch={mapComponentDispatch(dispatch, value => adt('city' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Province'
+              state={state.province}
+              dispatch={mapComponentDispatch(dispatch, value => adt('province' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Postal'
+              state={state.postal}
+              dispatch={mapComponentDispatch(dispatch, value => adt('postal' as const, value)) }
+            />
+          </Col>
+
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Country'
+              state={state.country}
+              dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value)) }
+            />
+          </Col>
+        </div>
+        :
+        <div>Organization</div>
+      }
+    </div>
   );
 };
 
