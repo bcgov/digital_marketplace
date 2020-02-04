@@ -4,8 +4,9 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 // import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/long-text';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Radio from 'front-end/lib/views/radio';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
@@ -310,24 +311,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     default:
       return [state];
   }
-};
-
-interface RadioProps {
-  id: string;
-  label: string;
-  checked: boolean;
-  onClick: () => void;
-}
-
-const Radio: View<RadioProps> = (props) => {
-  return (
-    <div
-      id={props.id}
-      onClick={ (evt) => { props.onClick(); } }
-    >
-      <span>{props.label}</span>
-    </div>
-  );
 };
 
 const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
