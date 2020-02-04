@@ -23,7 +23,7 @@ interface ValidatedUpdateDraftRequestBody extends Omit<UpdateDraftRequestBody, '
 }
 
 type ValidatedUpdateRequestBody
-  = ADT<'editDraft', ValidatedUpdateDraftRequestBody>
+  = ADT<'edit', ValidatedUpdateDraftRequestBody>
   | ADT<'publish', string>
   | ADT<'startEvaluation', string>
   | ADT<'suspend', string>
@@ -325,7 +325,7 @@ const resource: Resource = {
               validatedEvaluationCriteria,
               validatedAttachments
             ])) {
-              return valid(adt('editDraft' as const, {
+              return valid(adt('edit' as const, {
                 title: validatedTitle.value,
                 teaser: validatedTeaser.value,
                 remoteOk: validatedRemoteOk.value,
@@ -345,7 +345,7 @@ const resource: Resource = {
               }));
             } else {
               return invalid({
-                opportunity: adt('editDraft' as const, {
+                opportunity: adt('edit' as const, {
                   title: getInvalidValue(validatedTitle, undefined),
                   teaser: getInvalidValue(validatedTeaser, undefined),
                   remoteOk: getInvalidValue(validatedRemoteOk, undefined),
@@ -409,7 +409,7 @@ const resource: Resource = {
         valid: async request => {
           let dbResult: Validation<CWUOpportunity, null>;
           switch (request.body.tag) {
-            case 'editDraft':
+            case 'edit':
               dbResult = await db.updateCWUOpportunityVersion(connection, { ...request.body.value, id: request.params.id }, request.session);
               break;
             case 'publish':
