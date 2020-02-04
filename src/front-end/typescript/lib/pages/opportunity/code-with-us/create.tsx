@@ -8,6 +8,7 @@ import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Radio from 'front-end/lib/views/radio';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
@@ -27,10 +28,11 @@ export interface State {
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
   location: Immutable<ShortText.State>;
-  // TODO(Jesse): Implement radio option @radio-option
-  // whateverTheRadioFieldIs: Immutable<Radio.State>;
   reward: Immutable<ShortText.State>;
   skills: Immutable<ShortText.State>;
+  remoteOk: boolean;
+    // If remoteOk
+    remoteDesc: Immutable<ShortText.State>;
 
   // Description Tab
   description: Immutable<LongText.State>;
@@ -59,6 +61,8 @@ type InnerMsg
   | ADT<'location',          ShortText.Msg>
   | ADT<'reward',            ShortText.Msg>
   | ADT<'skills',            ShortText.Msg>
+  | ADT<'remoteOk',          boolean>
+  | ADT<'remoteDesc',        ShortText.Msg>
 
   // Description Tab
   | ADT<'description',       LongText.Msg>
@@ -82,7 +86,8 @@ export type RouteParams = null;
 
 async function defaultState() {
   return {
-    activeTab: 'Details' as const,
+    activeTab: 'Overview' as const,
+    remoteOk: true,
 
     title: immutable(await ShortText.init({
       errors: [],
@@ -130,6 +135,16 @@ async function defaultState() {
         type: 'text',
         value: '',
         id: 'opportunity-skills'
+      }
+    })),
+
+    remoteDesc: immutable(await ShortText.init({
+      errors: [],
+      validate: opportunityValidation.validateTitle,
+      child: {
+        type: 'text',
+        value: '',
+        id: 'opportunity-remote-desc'
       }
     })),
 
@@ -233,6 +248,7 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
       .update('reward',             s => FormField.setErrors(s, errors.reward             || []))
       .update('skills',             s => FormField.setErrors(s, errors.skills             || []))
       .update('description',        s => FormField.setErrors(s, errors.description        || []))
+      .update('remoteDesc',         s => FormField.setErrors(s, errors.remoteDesc         || []))
       .update('proposalDeadline',   s => FormField.setErrors(s, errors.proposalDeadline   || []))
       .update('startDate',          s => FormField.setErrors(s, errors.startDate          || []))
       .update('assignmentDate',     s => FormField.setErrors(s, errors.assignmentDate     || []))
@@ -257,8 +273,8 @@ function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportuni
   const result = {
     title:               FormField.getValue(state.title),
     teaser:              FormField.getValue(state.teaser),
-    remoteOk: true,
-    remoteDesc: 'TODO(Jesse): Some really great text goes here',
+    remoteOk:            state.remoteOk,
+    remoteDesc:          FormField.getValue(state.remoteDesc),
     location:            FormField.getValue(state.location),
     reward:              Number.parseInt(FormField.getValue(state.reward), 10),
     skills:              [FormField.getValue(state.skills)], // TODO(Jesse): How's this going to work?
@@ -311,6 +327,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
 
+    case 'remoteOk':
+      return[state.set('remoteOk', msg.value)];
+
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
 
@@ -357,6 +376,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: ShortText.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('skills', value)
+      });
+
+    case 'remoteDesc':
+      return updateComponentChild({
+        state,
+        childStatePath: ['remoteDesc'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('remoteDesc', value)
       });
 
     case 'description':
@@ -448,6 +476,32 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
 
+      <Col md='12' className='py-2'>
+        <div className=''><strong>Remote Ok?</strong></div>
+          <Radio
+            id='remote-ok-true'
+            label='Yes'
+            checked={state.remoteOk}
+            onClick={ () => { dispatch(adt('remoteOk' as const, true)); } } />
+          <Radio
+            id='remote-ok-false'
+            label='No'
+            checked={!state.remoteOk}
+            onClick={ () => { dispatch(adt('remoteOk' as const, false)); } } />
+      </Col>
+
+      { state.remoteOk ?
+          <Col xs='12'>
+            <ShortText.view
+              extraChildProps={{}}
+              label='Remote Description'
+              state={state.remoteDesc}
+              dispatch={mapComponentDispatch(dispatch, value => adt('remoteDesc' as const, value))} />
+          </Col>
+          :
+          null
+      }
+
       <Col md='8' xs='12'>
         <ShortText.view
           extraChildProps={{}}
@@ -479,7 +533,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const DescriptionView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const DescriptionView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
   return (
     <Row>
 
@@ -495,7 +549,7 @@ const DescriptionView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
   return (
     <Row>
 
@@ -568,7 +622,7 @@ const DetailsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const AttachmentsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -613,7 +667,7 @@ function renderTab(params: any, tabName: TabValues): JSX.Element {
   );
 }
 
-const view: ComponentView<State, Msg> = (params) => {
+const view: ComponentView<State,  Msg> = (params) => {
   const state = params.state;
   const dispatch = params.dispatch;
 
@@ -697,14 +751,14 @@ const view: ComponentView<State, Msg> = (params) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   init,
   update,
   view,
   sidebar: {
     size: 'large',
     color: 'light-blue',
-    view: makeInstructionalSidebar<State, Msg>({
+    view: makeInstructionalSidebar<State,  Msg>({
       getTitle: () => 'Create a Code With Us Opportunity',
       getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
@@ -718,3 +772,4 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     return makePageMetadata('Create Opportunity');
   }
 };
+;;
