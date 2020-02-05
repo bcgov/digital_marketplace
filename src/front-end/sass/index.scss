@@ -141,8 +141,9 @@ nav {
   $main-nav-top-height: 67px;
   $main-nav-bottom-navbar-height: 56px;
   &.main-nav {
-    position: relative;
     z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
+    position: sticky;
+    top: -1 * $main-nav-top-height;
 
     .main-nav-top-navbar-wrapper {
       position: relative;
@@ -197,11 +198,6 @@ nav {
         @extend .d-flex;
         @extend .d-md-none;
       }
-    }
-
-    @include media-breakpoint-up(md) {
-      position: sticky;
-      top: -1 * $main-nav-top-height;
     }
   }
 

@@ -1,6 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
@@ -40,5 +40,24 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata() {
     return makePageMetadata('Welcome');
+  },
+  getAlerts() {
+    return {
+      ...emptyPageAlerts(),
+      info: [
+        { text: 'first test alert' },
+        { text: 'second test alert' }
+      ],
+      errors: [
+        { text: 'first test alert' },
+        { text: 'second test alert' }
+      ]
+    };
+  },
+  getBreadcrumbs() {
+    return [
+      { text: 'First' },
+      { text: 'Second' }
+    ];
   }
 };
