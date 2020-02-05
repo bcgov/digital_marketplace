@@ -265,9 +265,9 @@ type Errors = ErrorTypeFrom<CWUOpportunityResource.CreateRequestBody>;
 function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): CWUOpportunityResource.CreateRequestBody {
 
   const proposalDeadline = FormField.getValue(state.proposalDeadline);
-  const startDate = FormField.getValue(state.startDate);
-  const assignmentDate = FormField.getValue(state.assignmentDate);
-  const completionDate = FormField.getValue(state.completionDate);
+  const startDate        = FormField.getValue(state.startDate);
+  const assignmentDate   = FormField.getValue(state.assignmentDate);
+  const completionDate   = FormField.getValue(state.completionDate);
 
   const result = {
     title:               FormField.getValue(state.title),
@@ -389,6 +389,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('proposalDeadline', value)
+      });
+
+    case 'startDate':
+      return updateComponentChild({
+        state,
+        childStatePath: ['startDate'],
+        childUpdate: DateField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('startDate', value)
       });
 
     case 'assignmentDate':
