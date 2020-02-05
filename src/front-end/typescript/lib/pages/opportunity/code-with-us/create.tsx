@@ -772,4 +772,3 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     return makePageMetadata('Create Opportunity');
   }
 };
-;;
