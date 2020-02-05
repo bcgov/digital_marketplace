@@ -3,6 +3,7 @@ import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation'
 import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
+import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -116,5 +117,25 @@ export async function validateCWUOpportunityId(connection: db.Connection, opport
 
   } catch (exception) {
     return invalid(['Please select a valid Code With Us opportunity.']);
+  }
+}
+
+export async function validateCWUProposalId(connection: db.Connection, proposalId: Id, session: Session): Promise<Validation<CWUProposal>> {
+  try {
+    const validatedId = validateUUID(proposalId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneCWUProposal(connection, proposalId, session);
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const proposal = dbResult.value;
+    if (!proposal) {
+      return invalid(['The specified proposal was not found.']);
+    }
+    return valid(proposal);
+  } catch (exception) {
+    return invalid(['Please select a valid proposal.']);
   }
 }

@@ -9,9 +9,10 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/code-with-us';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
+import { CWUIndividualProponent, CWUProposal, CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { Session } from 'shared/lib/resources/session';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end');
@@ -773,6 +774,27 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
   return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
 });
 
+export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim | null>(async (connection, session, oppId) => {
+  // Since slim opportunity requires the same joins, etc. as full to build, we query the full one, and reduce down to slim
+  const dbResult = await readOneCWUOpportunity(connection, session, oppId);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read opportunity');
+  }
+
+  const fullOpportunity = dbResult.value;
+  const { id, createdAt, createdBy, updatedAt, updatedBy, title, proposalDeadline, status } = fullOpportunity;
+  return valid({
+    id,
+    createdAt,
+    createdBy,
+    updatedAt,
+    updatedBy,
+    title,
+    proposalDeadline,
+    status
+  });
+});
+
 export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
   let query = connection<RawCWUOpportunity>('cwuOpportunities as opp')
     .where({ 'opp.id': id })
@@ -1087,3 +1109,133 @@ export const deleteCWUOpportunity = tryDb<[Id], CWUOpportunity>(async (connectio
     result.attachments = [];
     return valid(await rawCWUOpportunityToCWUOpportunity(connection, result));
 });
+
+interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'updatedBy' | 'proponent'> {
+  createdBy: Id;
+  updatedBy: Id;
+  proponentIndividual?: Id;
+  proponentOrganization?: Id;
+}
+
+async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: RawCWUProposalSlim): Promise<CWUProposalSlim> {
+  const { createdBy: createdById,
+          updatedBy: updatedById,
+          proponentIndividual: proponentIndividualId,
+          proponentOrganization: proponentOrganizationId
+        } = raw;
+
+  const createdBy = getValidValue(await readOneUser(connection, createdById), undefined);
+  const updatedBy = getValidValue(await readOneUser(connection, updatedById), undefined);
+  const proponentIndividual = proponentIndividualId ? getValidValue(await readOneCWUProponent(connection, proponentIndividualId), undefined) : null;
+  const proponentOrganization = proponentOrganizationId ? getValidValue(await readOneOrganization(connection, proponentOrganizationId), undefined) : null;
+
+  if (!createdBy || !updatedBy) {
+    throw new Error();
+  }
+
+  let proponent: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
+  if (proponentIndividual) {
+    proponent = adt('individual', proponentIndividual);
+  } else if (proponentOrganization) {
+    proponent = adt('organization', proponentOrganization);
+  } else {
+    throw new Error();
+  }
+
+  return {
+    ...raw,
+    createdBy,
+    updatedBy,
+    proponent
+  };
+}
+
+export const readManyCWUProposals = tryDb<[Id], CWUProposalSlim[]>(async (connection, id) => {
+  const results = await connection<RawCWUProposalSlim>('cwuProposals')
+    .where({ opportunity: id })
+    .select(
+      'id',
+      'createdBy',
+      'createdAt',
+      'updatedBy',
+      'updatedAt',
+      'proposalText',
+      'additionalComments',
+      'proponentIndividual',
+      'proponentOrganization',
+      'score',
+      'status'
+    );
+
+  if (!results) {
+    throw new Error('unable to read proposals');
+  }
+
+  return valid(await Promise.all(results.map(async result => await rawCWUProposalSlimToCWUProposalSlim(connection, result))));
+});
+
+export const readOneCWUProponent = tryDb<[Id], CWUIndividualProponent>(async (connection, id) => {
+  const result = await connection<CWUIndividualProponent>('cwuProponents')
+    .where({ id })
+    .first();
+
+  if (!result) {
+    throw new Error('unable to read proponent');
+  }
+
+  return valid(result);
+});
+
+interface RawCWUProposal extends Omit<CWUProposal, 'createdBy' | 'updatedBy' | 'proponent' | 'opportunity' | 'attachments'> {
+  createdBy: Id;
+  updatedBy: Id;
+  opportunity: Id;
+  proponentIndividual?: Id;
+  proponentOrganization?: Id;
+  attachments: Id[];
+}
+
+async function rawCWUProposalToCWUProposal(connection: Connection, session: Session, raw: RawCWUProposal): Promise<CWUProposal> {
+  const { opportunity: opportunityId, attachments: attachmentIds, ...restOfProposal } = raw;
+  const slimVersion = await rawCWUProposalSlimToCWUProposalSlim(connection, restOfProposal);
+  const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
+  if (!opportunity) {
+    throw new Error();
+  }
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error(); // to be caught by calling function
+    }
+    return result;
+  }));
+
+  return {
+    ...slimVersion,
+    opportunity,
+    attachments
+  };
+}
+
+export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connection, id, session) => {
+  const result = await connection<RawCWUProposal>('cwuProposals')
+    .where({ id })
+    .first();
+
+  if (!result) {
+    throw new Error('unable to read proposal');
+  }
+
+  return valid(await rawCWUProposalToCWUProposal(connection, session, result));
+});
+
+export async function isCWUProposalAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
+  try {
+    const result = await connection<RawCWUProposal>('cwuProposals')
+      .select('*')
+      .where({ id, createdBy: user.id });
+    return !!result && result.length > 0;
+  } catch (exception) {
+    return false;
+  }
+}
