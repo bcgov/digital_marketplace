@@ -92,14 +92,14 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
   const className = `${hasAlerts ? 'pb-5 mb-n4' : ''} ${hasBreadcrumbs ? 'pb-md-5 mb-md-n4' : ''} ${props.className || ''}`;
   if (container) {
     return (
-      <Container className={`${className} pt-5`}>
+      <Container className={className}>
         <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
         <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
       </Container>
     );
   } else {
     return (
-      <div className={`${className} ${hasAlerts || hasBreadcrumbs ? 'mt-md-n5' : ''}`}>
+      <div className={className}>
         <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
         <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
       </div>
@@ -145,7 +145,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     // No sidebar.
     return (
       <div className='d-flex flex-column flex-grow-1 page-container'>
-        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container />
+        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container className='pt-5' />
         <component.view {...viewProps} />
       </div>
     );
@@ -165,11 +165,11 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-5 d-flex flex-column align-items-stretch pt-5 pt-md-8 ${isEmptyOnMobile ? 'pb-md-5' : 'pb-5'}`}>
+                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-5 d-flex flex-column align-items-stretch pt-5 ${isEmptyOnMobile ? 'pb-md-5' : 'pb-5'}`}>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-md-none' />
                   <sidebar.view {...viewProps} />
                 </Col>
-                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pt-md-8 pb-5'>
+                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pt-md-5 pb-5'>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-none d-md-block' />
                   <component.view {...viewProps} />
                 </Col>
@@ -182,7 +182,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
       // No sidebar.
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
-          <Container className='pt-5 pt-md-8 pb-5'>
+          <Container className='py-5'>
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>

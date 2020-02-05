@@ -2,8 +2,7 @@ import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextu
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, ExtendProps as ExtendLinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
-//Use "Uncontrolled*" dropdowns because controlled reactstrap dropdowns have a bug.
-import { Col, Container, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner, UncontrolledButtonDropdown, UncontrolledDropdown } from 'reactstrap';
+import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
 
@@ -14,7 +13,9 @@ export interface State {
 }
 
 export type Msg
-  = ADT<'toggleMobileMenu', boolean | undefined>;
+  = ADT<'toggleMobileMenu', boolean | undefined>
+  | ADT<'toggleDesktopAccountDropdown', boolean | undefined>
+  | ADT<'toggleContextualDropdown', boolean | undefined>;
 
 export const init: Init<Params, State> = async () => {
   return {
@@ -28,6 +29,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'toggleMobileMenu':
       return [state.update('isMobileMenuOpen', v => msg.value === undefined ? !v : msg.value)];
+    case 'toggleDesktopAccountDropdown':
+      return [state.update('isDesktopAccountDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
+    case 'toggleContextualDropdown':
+      return [state.update('isContextualDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
   }
 };
 
@@ -38,6 +43,8 @@ type NavLinkProps = NavLink & { dispatch: Dispatch<Msg>; };
 const NavLink: View<NavLinkProps> = props => {
   const onClick = () => {
     props.dispatch(adt('toggleMobileMenu', false));
+    props.dispatch(adt('toggleDesktopAccountDropdown', false));
+    props.dispatch(adt('toggleContextualDropdown', false));
     if (props.onClick) { return props.onClick(); }
   };
   const linkProps = { ...props };
@@ -50,10 +57,10 @@ const NavLink: View<NavLinkProps> = props => {
   );
 };
 
-const ContextualDropdown: View<PageContextualDropdown & { dispatch: Dispatch<Msg>; }> = props => {
-  const { text, linkGroups, dispatch } = props;
+const ContextualDropdown: View<PageContextualDropdown & { isOpen: boolean; dispatch: Dispatch<Msg>; }> = props => {
+  const { text, linkGroups, isOpen, dispatch } = props;
   return (
-    <UncontrolledButtonDropdown>
+    <ButtonDropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleContextualDropdown'))}>
       <DropdownToggle
         caret
         style={{ cursor: 'pointer' }}
@@ -72,7 +79,7 @@ const ContextualDropdown: View<PageContextualDropdown & { dispatch: Dispatch<Msg
           </Fragment>
         ))}
       </DropdownMenu>
-    </UncontrolledButtonDropdown>
+    </ButtonDropdown>
   );
 };
 
@@ -80,10 +87,10 @@ export interface NavAccountDropdown extends PageContextualDropdown {
   imageUrl: string;
 }
 
-const NavAccountDropdown: View<NavAccountDropdown & { dispatch: Dispatch<Msg>; }> = props => {
-  const { text, imageUrl, linkGroups, dispatch } = props;
+const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch: Dispatch<Msg>; }> = props => {
+  const { text, imageUrl, linkGroups, isOpen, dispatch } = props;
   return (
-    <UncontrolledDropdown>
+    <Dropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleDesktopAccountDropdown'))}>
       <DropdownToggle caret tag='div' className='text-white text-hover-white' style={{ cursor: 'pointer' }}>
         <span className='mr-2 o-75'>{text}</span>
         <img
@@ -106,7 +113,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { dispatch: Dispatch<Msg>; }
           </Fragment>
         ))}
       </DropdownMenu>
-    </UncontrolledDropdown>
+    </Dropdown>
   );
 };
 
@@ -178,7 +185,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
 }
 
 const DesktopAccountMenu: View<Props> = props => {
-  const { accountMenus, dispatch } = props;
+  const { accountMenus, state, dispatch } = props;
   const menu = accountMenus.desktop;
   switch (menu.tag) {
     case 'unauthenticated':
@@ -198,6 +205,7 @@ const DesktopAccountMenu: View<Props> = props => {
         <Fragment>
           <NavAccountDropdown
             {...menu.value}
+            isOpen={state.isDesktopAccountDropdownOpen}
             dispatch={dispatch} />
         </Fragment>
       );
@@ -327,7 +335,7 @@ const TopNavbar: View<Props> = props => {
 };
 
 const ContextualLinks: View<Props> = props => {
-  const { contextualActions, dispatch } = props;
+  const { contextualActions, state, dispatch } = props;
   if (!contextualActions) { return null; }
   switch (contextualActions.tag) {
     case 'links':
@@ -344,7 +352,7 @@ const ContextualLinks: View<Props> = props => {
         </div>
       );
     case 'dropdown':
-      return (<div className='py-1 pr-1 mr-n1'><ContextualDropdown {...contextualActions.value} dispatch={dispatch} /></div>);
+      return (<div className='py-1 pr-1 mr-n1'><ContextualDropdown {...contextualActions.value} isOpen={state.isContextualDropdownOpen} dispatch={dispatch} /></div>);
   }
 };
 

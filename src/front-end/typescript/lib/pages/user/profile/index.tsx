@@ -4,7 +4,7 @@ import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import React from 'react';
 import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
@@ -169,6 +169,21 @@ function makeComponent<K extends UserSidebar.TabId>(): PageComponent<RouteParams
       } else {
         return makePageMetadata('Profile');
       }
+    },
+    getAlerts() {
+      return {
+        ...emptyPageAlerts(),
+        info: [
+          { text: 'first test alert' },
+          { text: 'second test alert' }
+        ]
+      };
+    },
+    getBreadcrumbs() {
+      return [
+        { text: 'First' },
+        { text: 'Second' }
+      ];
     }
   };
 }

@@ -15,5 +15,7 @@ start(app, element, debug)
     // Collapse nav menus on window resize.
     window.addEventListener('resize', () => {
       stateManager.dispatch(adt('nav', adt('toggleMobileMenu' as const, false)));
+      stateManager.dispatch(adt('nav', adt('toggleDesktopAccountDropdown' as const, false)));
+      stateManager.dispatch(adt('nav', adt('toggleContextualDropdown' as const, false)));
     });
   });
