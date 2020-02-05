@@ -1,3 +1,4 @@
+import { NODE_ENV } from 'front-end/config';
 import { BootstrapColor } from 'front-end/lib/types';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import { Placement } from 'front-end/lib/views/link';
@@ -77,6 +78,7 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
   const { childStatePath, childUpdate, childMsg, mapChildMsg } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
+  if (NODE_ENV === 'development') { console.assert(childState); }
   if (!childState) { return [state]; }
   const [newChildState, newAsyncChildState] = childUpdate({
     state: childState,

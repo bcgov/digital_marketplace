@@ -41,7 +41,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-
     case 'submit':
       return [
         state,

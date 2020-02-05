@@ -20,6 +20,7 @@ const Radio: View<RadioProps> = (props) => {
          name='{props.label}'
          checked={props.checked}
          value='ignored'
+         onChange={(evt) => evt} // No-op to shut react up
        ></input>
       <span className='pl-1'>{props.label}</span>
     </div>
