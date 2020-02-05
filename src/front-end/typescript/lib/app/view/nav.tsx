@@ -332,7 +332,7 @@ const ContextualLinks: View<Props> = props => {
   switch (contextualActions.tag) {
     case 'links':
       return (
-        <div className='d-flex flex-nowrap align-items-center flex-row-reverse' style={{ overflowX: 'auto' }}>
+        <div className='d-flex flex-nowrap align-items-center flex-row-reverse py-1 pr-1 mr-n1' style={{ overflowX: 'auto' }}>
           {contextualActions.value.map((link, i, links) => {
             const linkProps = {
               ...link,
@@ -344,7 +344,7 @@ const ContextualLinks: View<Props> = props => {
         </div>
       );
     case 'dropdown':
-      return (<ContextualDropdown {...contextualActions.value} dispatch={dispatch} />);
+      return (<div className='py-1 pr-1 mr-n1'><ContextualDropdown {...contextualActions.value} dispatch={dispatch} /></div>);
   }
 };
 
