@@ -88,7 +88,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'name',
         id: 'opportunity-individual-name'
       }
     })),
@@ -97,7 +97,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'email@thing.ding',
         id: 'opportunity-individual-email'
       }
     })),
@@ -106,7 +106,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: '9979989999',
         id: 'opportunity-individual-phone'
       }
     })),
@@ -115,7 +115,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'addresss',
         id: 'opportunity-individual-address'
       }
     })),
@@ -124,7 +124,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'addresss21',
         id: 'opportunity-individual-address2'
       }
     })),
@@ -133,7 +133,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'city',
         id: 'opportunity-individual-city'
       }
     })),
@@ -142,7 +142,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'province',
         id: 'opportunity-individual-province'
       }
     })),
@@ -151,7 +151,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'postal',
         id: 'opportunity-individual-postal'
       }
     })),
@@ -160,7 +160,7 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
+        value: 'country',
         id: 'opportunity-individual-country'
       }
     })),
@@ -169,8 +169,8 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
-        id: 'proposal-teaser'
+        value: 'proposal',
+        id: 'proposal-proposal'
       }
     })),
 
@@ -178,8 +178,8 @@ async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '',
-        id: 'proposal-teaser'
+        value: 'additional comments',
+        id: 'proposal-additional-comments'
       }
     }))
 
