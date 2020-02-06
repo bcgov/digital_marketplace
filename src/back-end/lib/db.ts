@@ -709,6 +709,17 @@ async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: Ra
   };
 }
 
+function processForRole<T extends RawCWUOpportunity | RawCWUOpportunitySlim>(result: T, session: Session) {
+  // Remove createdBy/updatedBy for non-admin or non-author
+  if (!session.user || (session.user.type !== UserType.Admin &&
+    session.user.id !== result.createdBy &&
+    session.user.id !== result.updatedBy)) {
+      delete result.createdBy;
+      delete result.updatedBy;
+  }
+  return result;
+}
+
 export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
   // Retrieve the opportunity and most recent opportunity status
 
@@ -743,14 +754,14 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
   if (!session.user || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses);
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
   } else if (session.user.type === UserType.Government) {
     // Gov users should only see private opportunities they own, and public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses)
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
       .orWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunitiesStatuses)
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
           .andWhere({ 'opp.createdBy': session.user?.id });
       });
   } else {
@@ -758,18 +769,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
     query = query
       .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
   }
-
-  const results = await query;
-  // Remove createdBy/updatedBy for non-admin or non-author
-  results.map(result => {
-    if (session?.user?.type !== UserType.Admin &&
-      session?.user?.id !== result.createdBy &&
-      session?.user?.id !== result.updatedBy) {
-        delete result.createdBy;
-        delete result.updatedBy;
-    }
-  });
-
+  const results = (await query).map(result => processForRole(result, session));
   return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
 });
 
@@ -819,14 +819,14 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
   if (!session.user || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses);
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
   } else if (session.user.type === UserType.Government) {
     // Gov users should only see private opportunities they own, and public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses)
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
       .orWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunitiesStatuses)
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
           .andWhere({ 'opp.createdBy': session.user?.id });
       });
   } else {
@@ -835,10 +835,11 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
   }
 
-  const result = await query.first();
+  let result = await query.first();
 
   // Query for attachment file ids
   if (result) {
+    result = processForRole(result, session);
     result.attachments = (await connection<{ id: Id }>('cwuOpportunityAttachments')
       .where({ opportunityVersion: result.id })
       .select('file')).map(row => row.id);
@@ -846,14 +847,6 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     result.addenda = (await connection<{ id: Id }>('cwuOpportunityAddenda')
       .where({ opportunity: id })
       .select('id')).map(row => row.id);
-
-    // Remove createdBy/updatedBy for non-admin or non-author
-    if (session?.user?.type !== UserType.Admin &&
-      session?.user?.id !== result.createdBy &&
-      session?.user?.id !== result.updatedBy) {
-        delete result.createdBy;
-        delete result.updatedBy;
-    }
   }
 
   return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);

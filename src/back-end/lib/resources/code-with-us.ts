@@ -6,7 +6,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateDraftRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
+import { CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -17,7 +17,7 @@ export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'status
   session: AuthenticatedSession;
 }
 
-interface ValidatedUpdateDraftRequestBody extends Omit<UpdateDraftRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
+interface ValidatedUpdateEditRequestBody extends Omit<UpdateEditRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
@@ -27,7 +27,7 @@ interface ValidatedUpdateDraftRequestBody extends Omit<UpdateDraftRequestBody, '
 
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
-  body: ADT<'edit', ValidatedUpdateDraftRequestBody>
+  body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'publish', string>
       | ADT<'startEvaluation', string>
       | ADT<'suspend', string>

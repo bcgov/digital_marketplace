@@ -1,51 +1,50 @@
-import { TRANSITION_DURATION } from 'front-end/config';
-import { ComponentViewProps, Dispatch, Init, Update, View } from 'front-end/lib/framework';
+import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { Dest, Props as LinkProps } from 'front-end/lib/views/link';
+import Link, { Dest, ExtendProps as ExtendLinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
-import { Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
+import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
 
 export interface State {
   isDesktopAccountDropdownOpen: boolean;
+  isContextualDropdownOpen: boolean;
   isMobileMenuOpen: boolean;
 }
 
 export type Msg
-  = ADT<'toggleDesktopAccountDropdown', boolean | undefined>
-  | ADT<'toggleMobileMenu', boolean | undefined>;
+  = ADT<'toggleMobileMenu', boolean | undefined>
+  | ADT<'toggleDesktopAccountDropdown', boolean | undefined>
+  | ADT<'toggleContextualDropdown', boolean | undefined>;
 
 export const init: Init<Params, State> = async () => {
   return {
     isDesktopAccountDropdownOpen: false,
+    isContextualDropdownOpen: false,
     isMobileMenuOpen: false
   };
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'toggleDesktopAccountDropdown':
-      return [state.update('isDesktopAccountDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
     case 'toggleMobileMenu':
       return [state.update('isMobileMenuOpen', v => msg.value === undefined ? !v : msg.value)];
+    case 'toggleDesktopAccountDropdown':
+      return [state.update('isDesktopAccountDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
+    case 'toggleContextualDropdown':
+      return [state.update('isContextualDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
   }
 };
 
-interface NavLinkInfo {
-  text: string;
-  active?: boolean;
-}
-
-export type NavLink = LinkProps & NavLinkInfo;
+export type NavLink = ExtendLinkProps<{ active?: boolean; }>;
 
 type NavLinkProps = NavLink & { dispatch: Dispatch<Msg>; };
 
 const NavLink: View<NavLinkProps> = props => {
-  const { text, active = false } = props;
   const onClick = () => {
     props.dispatch(adt('toggleMobileMenu', false));
     props.dispatch(adt('toggleDesktopAccountDropdown', false));
+    props.dispatch(adt('toggleContextualDropdown', false));
     if (props.onClick) { return props.onClick(); }
   };
   const linkProps = { ...props };
@@ -54,28 +53,44 @@ const NavLink: View<NavLinkProps> = props => {
     <Link
       {...linkProps}
       onClick={onClick}
-      className={`d-block ${props.className || ''} ${active ? 'font-weight-bold' : ''}`}>
-      {text}
-    </Link>
+      className={`text-nowrap ${props.className || ''} ${props.active ? 'font-weight-bold' : ''}`} />
   );
 };
 
-interface NavDropdownLinkGroup {
-  label?: string;
-  links: NavLink[];
-}
-
-interface NavDropdown {
-  text: string;
-  imageUrl: string;
-  linkGroups: NavDropdownLinkGroup[];
-}
-
-const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; }> = props => {
-  const { text, imageUrl, linkGroups, open, dispatch } = props;
-  const toggleOpen = () => dispatch(adt('toggleDesktopAccountDropdown'));
+const ContextualDropdown: View<PageContextualDropdown & { isOpen: boolean; dispatch: Dispatch<Msg>; }> = props => {
+  const { text, linkGroups, isOpen, dispatch } = props;
   return (
-    <Dropdown isOpen={open} toggle={toggleOpen}>
+    <ButtonDropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleContextualDropdown'))}>
+      <DropdownToggle
+        caret
+        style={{ cursor: 'pointer' }}
+        size='sm'
+        color='primary'>
+        {text}
+      </DropdownToggle>
+      <DropdownMenu right>
+        {linkGroups.map((group, i) => (
+          <Fragment key={`nav-contextual-dropdown-group-${i}`}>
+            {group.label ? (<DropdownItem header>{group.label}</DropdownItem>) : null}
+            {group.links.map((link, j) => (
+              <NavLink {...link} className={`${link.className || ''} dropdown-item`} button={false} color='body' dispatch={dispatch} key={`nav-contextual-dropdown-link-${i}-${j}`} />
+            ))}
+            {i < linkGroups.length - 1 ? (<DropdownItem divider />) : null}
+          </Fragment>
+        ))}
+      </DropdownMenu>
+    </ButtonDropdown>
+  );
+};
+
+export interface NavAccountDropdown extends PageContextualDropdown {
+  imageUrl: string;
+}
+
+const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch: Dispatch<Msg>; }> = props => {
+  const { text, imageUrl, linkGroups, isOpen, dispatch } = props;
+  return (
+    <Dropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleDesktopAccountDropdown'))}>
       <DropdownToggle caret tag='div' className='text-white text-hover-white' style={{ cursor: 'pointer' }}>
         <span className='mr-2 o-75'>{text}</span>
         <img
@@ -89,10 +104,10 @@ const NavDropdown: View<NavDropdown & { dispatch: Dispatch<Msg>; open: boolean; 
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (
-          <Fragment key={`nav-dropdown-group-${i}`}>
+          <Fragment key={`nav-account-dropdown-group-${i}`}>
             {group.label ? (<DropdownItem header>{group.label}</DropdownItem>) : null}
             {group.links.map((link, j) => (
-              <NavLink {...link} className={`${link.className || ''} dropdown-item`} button={false} color='body' dispatch={dispatch} key={`nav-dropdown-link-${i}-${j}`} />
+              <NavLink {...link} className={`${link.className || ''} dropdown-item`} button={false} color='body' dispatch={dispatch} key={`nav-account-dropdown-link-${i}-${j}`} />
             ))}
             {i < linkGroups.length - 1 ? (<DropdownItem divider />) : null}
           </Fragment>
@@ -146,7 +161,7 @@ const AccountAction: View<AccountActionProps> = ({ className = '', action, dispa
 type UnauthenticatedAccountMenu = ADT<'unauthenticated', AccountAction[]>;
 export const unauthenticatedAccountMenu = adtCurried<UnauthenticatedAccountMenu>('unauthenticated');
 
-type AuthenticatedDesktopAccountMenu = ADT<'authenticated', NavDropdown>;
+type AuthenticatedDesktopAccountMenu = ADT<'authenticated', NavAccountDropdown>;
 export const authenticatedDesktopAccountMenu = adtCurried<AuthenticatedDesktopAccountMenu>('authenticated');
 
 type AuthenticatedMobileAccountMenu = ADT<'authenticated', AccountAction[]>;
@@ -165,10 +180,8 @@ export interface Props extends ComponentViewProps<State, Msg> {
     mobile: MobileAccountMenu;
     desktop: DesktopAccountMenu;
   };
-  contextualLinks?: {
-    left: NavLink[];
-    right: NavLink[];
-  };
+  appLinks: NavLink[];
+  contextualActions?: PageContextualActions;
 }
 
 const DesktopAccountMenu: View<Props> = props => {
@@ -190,7 +203,10 @@ const DesktopAccountMenu: View<Props> = props => {
     case 'authenticated':
       return (
         <Fragment>
-          <NavDropdown {...menu.value} open={state.isDesktopAccountDropdownOpen} dispatch={dispatch} />
+          <NavAccountDropdown
+            {...menu.value}
+            isOpen={state.isDesktopAccountDropdownOpen}
+            dispatch={dispatch} />
         </Fragment>
       );
   }
@@ -233,7 +249,7 @@ const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) 
   <div className={className}>
     <NavLink
       dispatch={dispatch}
-      text={title}
+      children={title}
       color='white'
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : 'none' }}
@@ -241,108 +257,29 @@ const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) 
   </div>
 );
 
-const TopNavbar: View<Props> = props => {
-  const { state, dispatch, isLoading } = props;
-  return (
-    <div
-      className='main-nav-top bg-info border-bottom-gov w-100'>
-      <Container className='h-100'>
-        <Row className='h-100'>
-          <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
-            <div className='d-flex align-items-center flex-grow-1'>
-              <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
-                <img src={props.logoImageUrl} style={{ height: '44px' }} />
-              </Link>
-              <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
-              {isLoading
-                ? (<Spinner size='sm' color='info-alt' className='transition-indicator' />)
-                : null}
-            </div>
-            <div className='d-none d-md-flex align-items-center flex-shrink-0'>
-              <DesktopAccountMenu {...props} />
-            </div>
-            <div className='d-md-none'>
-              <Icon
-                hover
-                width={1.4}
-                height={1.4}
-                name={state.isMobileMenuOpen ? 'times' : 'bars'}
-                color='white'
-                onClick={() => dispatch(adt('toggleMobileMenu'))} />
-            </div>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  );
-};
-
-const DesktopBottomNavbar: View<Props> = props => {
-  const { contextualLinks } = props;
-  const linkClassName = (link: NavLink) => `${link.active && !link.button ? 'font-weight-bold' : ''}`;
-  if (!contextualLinks) { return null; }
-  return (
-    <div className='bg-info-alt py-3 d-none d-md-block shadow'>
-      <Container className='h-100'>
-        <Row className='h-100'>
-          <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
-            <div className='d-flex flex-nowrap'>
-              {contextualLinks.left.map((link, i) => (
-                <div className={`${i < contextualLinks.left.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`} key={`contextual-link-left-${i}`}>
-                  <NavLink
-                    {...link}
-                    dispatch={props.dispatch}
-                    color='white'
-                    className={linkClassName(link)} />
-                </div>
-              ))}
-            </div>
-            <div className='d-flex flex-nowrap'>
-              {contextualLinks.right.map((link, i) => (
-                <div className={`${i < contextualLinks.right.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`} key={`contextual-link-right-${i}`}>
-                  <NavLink
-                    {...link}
-                    dispatch={props.dispatch}
-                    color='white'
-                    className={linkClassName(link)} />
-                </div>
-              ))}
-            </div>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  );
-};
-
-const MobileBottomNavbar: View<Props> = props => {
+const MobileMenu: View<Props> = props => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
-  const { contextualLinks } = props;
+  const { appLinks } = props;
   const linkClassName = (link: NavLink, numLinks: number, i: number) => `${link.active && !link.button ? 'font-weight-bold' : ''} ${i < numLinks - 1 ? 'mb-3' : ''}`;
   return (
-    <div
-      className={`bg-info-alt ${isMobileMenuOpen ? 'py-4 shadow' : 'py-0'} d-md-none overflow-hidden`}
-      style={{
-        transition: `max-height linear ${TRANSITION_DURATION}ms, padding linear ${TRANSITION_DURATION}ms`,
-        maxHeight: isMobileMenuOpen ? '1000px' : 0
-      }}>
+    <div className={`main-nav-mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
       <Container>
         <Row>
           <Col xs='12'>
             <Title title={props.title} homeDest={props.homeDest} dispatch={props.dispatch} className='d-inline-block mb-4' />
           </Col>
         </Row>
-        {contextualLinks && contextualLinks.left.length
+        {appLinks.length
           ? (<Row>
               <Col xs='12'>
                 <div className='pb-4 border-bottom mb-4 d-flex flex-column align-items-start'>
-                  {contextualLinks.left.map((link, i) => (
+                  {appLinks.map((link, i) => (
                     <NavLink
                       {...link}
                       dispatch={props.dispatch}
                       color='white'
-                      className={linkClassName(link, contextualLinks.left.length, i)}
-                      key={`mobile-contextual-link-left-${i}`} />
+                      className={linkClassName(link, appLinks.length, i)}
+                      key={`mobile-app-link-${i}`} />
                   ))}
                 </div>
               </Col>
@@ -353,22 +290,111 @@ const MobileBottomNavbar: View<Props> = props => {
             <MobileAccountMenu {...props} />
           </Col>
         </Row>
-        {contextualLinks && contextualLinks.right.length
-          ? (<Row>
-              <Col xs='12'>
-                <div className='pt-4 border-top mt-4 d-flex flex-column align-items-start'>
-                  {contextualLinks.right.map((link, i) => (
-                    <NavLink
-                      {...link}
-                      dispatch={props.dispatch}
-                      color='white'
-                      className={linkClassName(link, contextualLinks.right.length, i)}
-                      key={`mobile-contextual-link-right-${i}`} />
-                  ))}
+      </Container>
+    </div>
+  );
+};
+
+const TopNavbar: View<Props> = props => {
+  const { state, dispatch, isLoading } = props;
+  return (
+    <div className='main-nav-top-navbar-wrapper'>
+      <div
+        className='main-nav-top-navbar'>
+        <Container className='h-100'>
+          <Row className='h-100'>
+            <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
+              <div className='d-flex align-items-center flex-grow-1'>
+                <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
+                  <img src={props.logoImageUrl} style={{ height: '44px' }} />
+                </Link>
+                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
+                {isLoading
+                  ? (<Spinner size='sm' color='info-alt' className='transition-indicator' />)
+                  : null}
+              </div>
+              <div className='d-none d-md-flex align-items-center flex-shrink-0'>
+                <DesktopAccountMenu {...props} />
+              </div>
+              <div className='d-md-none'>
+                <Icon
+                  hover
+                  width={1.4}
+                  height={1.4}
+                  name={state.isMobileMenuOpen ? 'times' : 'bars'}
+                  color='white'
+                  onClick={() => dispatch(adt('toggleMobileMenu'))} />
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      </div>
+      <MobileMenu {...props} />
+    </div>
+  );
+};
+
+const ContextualLinks: View<Props> = props => {
+  const { contextualActions, state, dispatch } = props;
+  if (!contextualActions) { return null; }
+  switch (contextualActions.tag) {
+    case 'links':
+      return (
+        <div className='d-flex flex-nowrap align-items-center flex-row-reverse py-1 pr-1 mr-n1' style={{ overflowX: 'auto' }}>
+          {contextualActions.value.map((link, i, links) => {
+            const linkProps = {
+              ...link,
+              size: link.button ? 'sm' : undefined,
+              className: `ml-3 ${link.button ? '' : 'font-size-small'}`
+            } as NavLink;
+            return (<NavLink {...linkProps} dispatch={dispatch} key={`contextual-link-${i}`} />);
+          })}
+        </div>
+      );
+    case 'dropdown':
+      return (<div className='py-1 pr-1 mr-n1'><ContextualDropdown {...contextualActions.value} isOpen={state.isContextualDropdownOpen} dispatch={dispatch} /></div>);
+  }
+};
+
+const DesktopBottomNavbar: View<Props> = props => {
+  const { appLinks, contextualActions } = props;
+  const linkClassName = (link: NavLink) => `${link.active && !link.button ? 'font-weight-bold' : ''}`;
+  if (!appLinks.length && !contextualActions) { return null; }
+  return (
+    <div className='main-nav-bottom-navbar desktop'>
+      <Container className='h-100'>
+        <Row className='h-100'>
+          <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
+            <div className='d-flex flex-nowrap'>
+              {appLinks.map((link, i) => (
+                <div className={`${i < appLinks.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`} key={`app-link-${i}`}>
+                  <NavLink
+                    {...link}
+                    dispatch={props.dispatch}
+                    color='white'
+                    className={linkClassName(link)} />
                 </div>
-              </Col>
-            </Row>)
-          : null}
+              ))}
+            </div>
+            <ContextualLinks {...props} />
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+const MobileBottomNavbar: View<Props> = props => {
+  const { contextualActions } = props;
+  if (!contextualActions || (contextualActions.tag === 'links' && !contextualActions.value.length)) { return null; }
+  return (
+    <div className='main-nav-bottom-navbar mobile'>
+      <Container className='h-100'>
+        <Row className='h-100'>
+          <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-end'>
+            <ContextualLinks {...props} />
+          </Col>
+        </Row>
       </Container>
     </div>
   );

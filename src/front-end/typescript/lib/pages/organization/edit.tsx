@@ -1,4 +1,4 @@
-import { getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
+import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
@@ -7,9 +7,7 @@ import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
-import FormButtonsContainer from 'front-end/lib/views/form-buttons-container';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
@@ -212,29 +210,13 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isArchiveLoading = state.archiveLoading > 0;
   const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
-  const isValid = OrgForm.isValid(state.orgForm);
   return (
     <div>
       <Row>
-        <Col xs='12' className='mb-5 d-flex flex-wrap flex-column flex-md-row align-items-start align-items-md-center'>
-          <h2 className='mr-md-3 mb-1'>{state.organization.legalName}</h2>
-          <div>
-          {state.isEditing
-            ? null
-            : (<LoadingButton
-                loading={isEditingLoading}
-                disabled={isLoading}
-                className='mb-1'
-                size='sm'
-                color='primary'
-                symbol_={leftPlacement(iconLinkSymbol('edit'))}
-                onClick={() => dispatch(adt('startEditing'))}>
-                Edit Organization
-              </LoadingButton>)}
-          </div>
+        <Col xs='12' className='mb-5'>
+          <h2>{state.organization.legalName}</h2>
         </Col>
       </Row>
-
       <Row>
         <Col xs='12'>
           <OrgForm.view
@@ -243,23 +225,6 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))} />
         </Col>
       </Row>
-
-      {state.isEditing
-        ? (<FormButtonsContainer className='mt-4'>
-            <LoadingButton
-              loading={isSaveChangesLoading}
-              color='primary'
-              symbol_={leftPlacement(iconLinkSymbol('check'))}
-              onClick={() => dispatch(adt('saveChanges'))}
-              disabled={!isValid || isLoading}>
-              Save Changes
-            </LoadingButton>
-            <Link onClick={() => dispatch(adt('cancelEditing'))} color='secondary' className='px-3' disabled={isLoading}>
-              Cancel
-            </Link>
-          </FormButtonsContainer>)
-        : null}
-
       <Row>
         <Col>
           <div className='mt-5 pt-5 border-top'>
@@ -270,9 +235,9 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
       </Row>
       <Row>
         <Col>
-          <LoadingButton loading={isArchiveLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('archive'))}>
+          <Link button loading={isArchiveLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('archive'))}>
             Archive Organization
-          </LoadingButton>
+          </Link>
         </Col>
       </Row>
 
@@ -339,5 +304,41 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       };
     }
     return null;
+  }),
+  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+    const isEditingLoading = state.editingLoading > 0;
+    const isSaveChangesLoading = state.saveChangesLoading > 0;
+    const isArchiveLoading = state.archiveLoading > 0;
+    const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
+    const isValid = OrgForm.isValid(state.orgForm);
+    if (!state.isEditing) {
+      return adt('links', [{
+        children: 'Edit Organization',
+        onClick: () => dispatch(adt('startEditing')),
+        button: true,
+        loading: isEditingLoading,
+        disabled: isLoading,
+        symbol_: leftPlacement(iconLinkSymbol('user-edit')),
+        color: 'primary'
+      }]);
+    } else {
+      return adt('links', [
+        {
+          children: 'Save Changes',
+          disabled: !isValid || isLoading,
+          onClick: () => dispatch(adt('saveChanges')),
+          button: true,
+          loading: isSaveChangesLoading,
+          symbol_: leftPlacement(iconLinkSymbol('check')),
+          color: 'primary'
+        },
+        {
+          children: 'Cancel',
+          disabled: isLoading,
+          onClick: () => dispatch(adt('cancelEditing')),
+          color: 'white'
+        }
+      ]);
+    }
   })
 };

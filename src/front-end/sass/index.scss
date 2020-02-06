@@ -81,7 +81,7 @@ $enable-validation-icons: false;
 
 // Custom variables.
 
-$fixed-bar-height: 71px;
+$transition-duration: 240ms;
 
 // Import Bootstrap.
 
@@ -121,9 +121,8 @@ input[type="time"] {
 }
 
 .app {
-  $page-transition-duration: 240ms;
   transition-property: filter, opacity;
-  transition-duration: $page-transition-duration;
+  transition-duration: $transition-duration;
   transition-timing-function: ease-out;
 
   .page-container {
@@ -140,16 +139,65 @@ input[type="time"] {
 nav {
 
   $main-nav-top-height: 67px;
+  $main-nav-bottom-navbar-height: 56px;
   &.main-nav {
+    z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
+    position: sticky;
+    top: -1 * $main-nav-top-height;
 
-    .main-nav-top {
-      height: $main-nav-top-height;
+    .main-nav-top-navbar-wrapper {
+      position: relative;
+      z-index: 2;
     }
 
-    @include media-breakpoint-up(md) {
-      position: sticky;
-      top: -1 * $main-nav-top-height;
-      z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
+    .main-nav-top-navbar {
+      @extend .bg-info;
+      @extend .border-bottom-gov;
+      width: 100%;
+      height: $main-nav-top-height;
+      position: relative;
+      z-index: 2;
+    }
+
+    .main-nav-mobile-menu {
+      @extend .bg-info-alt;
+      @extend .py-4;
+      @extend .d-md-none;
+      overflow: hidden;
+      position: absolute;
+      z-index: 1;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      transition: transform ease-out $transition-duration;
+      transform: translateY(-100%);
+
+      &.open {
+        @extend .shadow;
+        transform: translateY(0);
+      }
+    }
+
+    .main-nav-bottom-navbar {
+
+      &.mobile,
+      &.desktop {
+        @extend .bg-info-alt;
+        @extend .align-items-center;
+        @extend .shadow;
+        height: $main-nav-bottom-navbar-height;
+        z-index: 1;
+      }
+
+      &.desktop {
+        @extend .d-none;
+        @extend .d-md-flex;
+      }
+
+      &.mobile {
+        @extend .d-flex;
+        @extend .d-md-none;
+      }
     }
   }
 
@@ -215,6 +263,14 @@ table {
     @extend .text-uppercase;
     @extend .font-weight-bold;
     @extend .bg-light;
+  }
+
+  .table-show-on-hover {
+    display: none;
+  }
+
+  tr:hover .table-show-on-hover {
+    display: unset;
   }
 }
 
@@ -354,10 +410,6 @@ nav.navbar .nav-link:hover {
       top: 6rem;
     }
   }
-}
-
-.fixed-bar {
-  height: $fixed-bar-height;
 }
 
 .border-bottom-info-alt {

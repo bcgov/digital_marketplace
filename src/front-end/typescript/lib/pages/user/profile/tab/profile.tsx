@@ -8,9 +8,7 @@ import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTy
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
-import FormButtonsContainer from 'front-end/lib/views/form-buttons-container';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
 import { startCase } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -283,61 +281,12 @@ const ViewDetails: ComponentView<State, Msg> = props => {
 const ViewProfileFormHeading: ComponentView<State, Msg> = ({ state, dispatch }) => {
   // Admins can't edit other user profiles.
   if (isAdmin(state.viewerUser) && !usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
-  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
-  const isSavePermissionsLoading = state.savePermissionsLoading > 0;
-  const isAccountActivationLoading = state.accountActivationLoading > 0;
-  const isEditingForm = state.isEditingForm;
-  const isDisabled = isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   return (
     <Row>
-      <Col xs='12' className='mb-4 d-flex flex-wrap flex-column flex-md-row align-items-start align-items-md-center'>
-        <h3 className='mr-md-3 mb-1'>Profile Information</h3>
-        {isEditingForm
-          ? null
-          : (<LoadingButton
-              onClick={() => dispatch(adt('startEditingForm'))}
-              className='mb-1'
-              size='sm'
-              loading={isStartEditingFormLoading}
-              disabled={isDisabled}
-              symbol_={leftPlacement(iconLinkSymbol('user-edit'))}
-              color='primary'>
-              Edit Profile
-            </LoadingButton>)}
+      <Col xs='12' className='mb-4'>
+        <h3>Profile Information</h3>
       </Col>
     </Row>
-  );
-};
-
-const ViewProfileFormButtons: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const isEditingForm = state.isEditingForm;
-  // Admins can't edit other user profiles.
-  if (isAdmin(state.viewerUser) && !usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
-  if (!isEditingForm) { return null; }
-  const isSaveChangesLoading = state.saveChangesLoading > 0;
-  const isStartEditingFormLoading = state.startEditingFormLoading > 0;
-  const isSavePermissionsLoading = state.savePermissionsLoading > 0;
-  const isAccountActivationLoading = state.accountActivationLoading > 0;
-  const isDisabled = !isEditingForm || isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
-  const isValid = ProfileForm.isValid(state.profileForm);
-  return (
-    <FormButtonsContainer className='mt-4'>
-      <LoadingButton
-        disabled={!isValid || isDisabled}
-        onClick={() => dispatch(adt('saveChanges'))}
-        loading={isSaveChangesLoading}
-        symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-        color='primary'>
-        Save Changes
-      </LoadingButton>
-      <Link
-        disabled={isDisabled}
-        onClick={() => dispatch(adt('cancelEditingForm'))}
-        color='secondary'
-        className='px-3'>
-        Cancel
-      </Link>
-    </FormButtonsContainer>
   );
 };
 
@@ -355,7 +304,6 @@ const ViewProfileForm: ComponentView<State, Msg> = props => {
         disabled={isDisabled}
         state={state.profileForm}
         dispatch={mapComponentDispatch(dispatch, value => adt('profileForm' as const, value))} />
-      <ViewProfileFormButtons {...props} />
     </div>
   );
 };
@@ -384,14 +332,15 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({ state, dispatch }) =
               ? `Deactivating ${your} account means that ${you} will no longer have access to the Digital Marketplace.`
               : `Reactivate ${yourFull} account to enable ${your} access to the Digital Marketplace.`}
           </p>
-          <LoadingButton
+          <Link
+            button
             loading={isAccountActivationLoading}
             disabled={isLoading}
             onClick={() => dispatch(adt('toggleAccountActivation'))}
             symbol_={leftPlacement(iconLinkSymbol(isActive ? 'user-minus' : 'user-plus'))}
             color={isActive ? 'danger' : 'success'}>
             {title}
-          </LoadingButton>
+          </Link>
         </div>
       </Col>
     </Row>
@@ -457,5 +406,45 @@ export const component: Tab.Component<State, Msg> = {
       };
     }
     return null;
+  },
+  getContextualActions({ state, dispatch }) {
+    const isEditingForm = state.isEditingForm;
+    // Admins can't edit other user profiles.
+    if (isAdmin(state.viewerUser) && !usersAreEquivalent(state.profileUser, state.viewerUser)) { return null; }
+    const isSaveChangesLoading = state.saveChangesLoading > 0;
+    const isStartEditingFormLoading = state.startEditingFormLoading > 0;
+    const isSavePermissionsLoading = state.savePermissionsLoading > 0;
+    const isAccountActivationLoading = state.accountActivationLoading > 0;
+    const isValid = ProfileForm.isValid(state.profileForm);
+    const isDisabled = isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
+    if (!isEditingForm) {
+      return adt('links', [{
+        children: 'Edit Profile',
+        onClick: () => dispatch(adt('startEditingForm')),
+        button: true,
+        loading: isStartEditingFormLoading,
+        disabled: isDisabled,
+        symbol_: leftPlacement(iconLinkSymbol('user-edit')),
+        color: 'primary'
+      }]);
+    } else {
+      return adt('links', [
+        {
+          children: 'Save Changes',
+          disabled: !isValid || isDisabled,
+          onClick: () => dispatch(adt('saveChanges')),
+          button: true,
+          loading: isSaveChangesLoading,
+          symbol_: leftPlacement(iconLinkSymbol('user-check')),
+          color: 'primary'
+        },
+        {
+          children: 'Cancel',
+          disabled: isDisabled,
+          onClick: () => dispatch(adt('cancelEditingForm')),
+          color: 'white'
+        }
+      ]);
+    }
   }
 };

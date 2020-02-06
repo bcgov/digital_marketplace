@@ -1,4 +1,4 @@
-import { getModalValid, makePageMetadata, updateValid, viewValid, withValid } from 'front-end/lib';
+import { getContextualActionsValid, getModalValid, makePageMetadata, updateValid, viewValid, withValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
@@ -152,6 +152,15 @@ function makeComponent<K extends UserSidebar.TabId>(): PageComponent<RouteParams
         definition.component.getModal(state.tab[1]),
         v => adt('tab', v)
       );
+    }),
+    getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+      const tabId = state.tab[0];
+      const definition = UserSidebar.tabIdToTabDefinition(tabId);
+      if (!definition.component.getContextualActions) { return null; }
+      return definition.component.getContextualActions({
+        state: state.tab[1],
+        dispatch: mapComponentDispatch(dispatch, v => adt('tab' as const, v))
+      });
     }),
     //TODO getAlerts
     getMetadata(state) {

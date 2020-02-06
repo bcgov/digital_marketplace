@@ -147,7 +147,8 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
       },
       {
         children: (<LoadingButton disabled={isDisabled} loading={isDeleteLoading} size='sm' color='danger' symbol_={leftPlacement(iconLinkSymbol('user-times'))} onClick={() => dispatch(adt('deleteAffiliation', affiliation.id))}>Leave</LoadingButton>),
-        className: 'py-2'
+        className: 'py-2',
+        showOnHover: true
       }
     ];
   });
@@ -181,24 +182,14 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         : null}
       <Row>
         <Col xs='12'>
-          <div className='mt-4 mb-5 pb-5 border-bottom'>
-            <Link
-              dest={routeDest(adt('orgCreate', null))}
-              symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-              button
-              color='primary'
-              className='my-1'>Create Organization</Link>
+          <div className='mt-5 pt-5 border-top'>
+            <h2>Affiliated Organizations</h2>
+            <p className='mb-5'>
+              {state.affiliatedRecords.length
+                ? 'You\'ve given these companies permission to put you forward as a team member on proposals for opportunities.'
+                : 'You are not affiliated with any organizations'}
+            </p>
           </div>
-        </Col>
-      </Row>
-      <Row>
-        <Col xs='12'>
-          <h2>Affiliated Organizations</h2>
-          <p className='mb-5'>
-            {state.affiliatedRecords.length
-              ? 'You\'ve given these companies permission to put you forward as a team member on proposals for opportunities.'
-              : 'You are not affiliated with any organizations'}
-          </p>
         </Col>
       </Row>
       {state.affiliatedRecords.length
@@ -243,5 +234,14 @@ export const component: Tab.Component<State, Msg> = {
       };
     }
     return null;
+  },
+  getContextualActions({ state }) {
+    return adt('links', [{
+      children: 'Create Organization',
+      dest: routeDest(adt('orgCreate', null)),
+      button: true,
+      symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+      color: 'primary'
+    }]);
   }
 };

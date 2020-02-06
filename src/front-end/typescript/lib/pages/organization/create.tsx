@@ -1,4 +1,4 @@
-import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
@@ -6,9 +6,7 @@ import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/components/form';
-import FormButtonsContainer from 'front-end/lib/views/form-buttons-container';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
+import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -103,8 +101,6 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 });
 
 const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
-  const isSubmitLoading = state.submitLoading > 0;
-  const isValid = OrgForm.isValid(state.orgForm);
   return (
     <div>
       <Row>
@@ -120,19 +116,6 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
             dispatch={mapGlobalComponentDispatch(dispatch, value => adt('orgForm' as const, value))} />
         </Col>
       </Row>
-      <FormButtonsContainer className='mt-4'>
-        <LoadingButton
-          loading={isSubmitLoading}
-          color='primary'
-          symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-          onClick={() => dispatch(adt('submit')) }
-          disabled={!isValid || isSubmitLoading}>
-          Create Organization
-        </LoadingButton>
-        <Link dest={routeDest(adt('userProfile', { userId: state.user.id, tab: 'organizations' as const }))} color='secondary' className='px-3'>
-          Cancel
-        </Link>
-      </FormButtonsContainer>
     </div>
   );
 });
@@ -150,6 +133,29 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
     })
   },
+  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+    const isSubmitLoading = state.submitLoading > 0;
+    const isValid = OrgForm.isValid(state.orgForm);
+    return adt('links', [
+      {
+        children: 'Create Organization',
+        onClick: () => dispatch(adt('submit')),
+        button: true,
+        loading: isSubmitLoading,
+        disabled: !isValid || isSubmitLoading,
+        symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+        color: 'primary'
+      },
+      {
+        children: 'Cancel',
+        color: 'white',
+        dest: routeDest(adt('userProfile', {
+          userId: state.user.id,
+          tab: 'organizations' as const
+        }))
+      }
+    ]);
+  }),
   getMetadata() {
     return makePageMetadata('Create Organization');
   }

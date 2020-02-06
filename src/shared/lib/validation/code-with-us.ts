@@ -1,4 +1,5 @@
-import { invalid, isValid, valid, validateArray, validateGenericString, Validation } from 'shared/lib/validation';
+import { uniq } from 'lodash';
+import { ArrayValidation, invalid, mapValid, valid, validateArray, validateGenericString, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 
 export { validateDate } from 'shared/lib/validation';
@@ -27,9 +28,9 @@ export function validateReward(raw: number): Validation<number> {
   return (raw >= 0 && raw <= 70000) ? valid(raw) : invalid(['Reward not in required range.']);
 }
 
-export function validateSkills(raw: string[]): Validation<string[]> {
+export function validateSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, v => validateGenericString(v, 'Skill'));
-  return isValid(validatedArray) ? validatedArray : invalid(['Invalid skill provided.']);
+  return mapValid(validatedArray, skills => uniq(skills));
 }
 
 export function validateDescription(raw: string): Validation<string> {
