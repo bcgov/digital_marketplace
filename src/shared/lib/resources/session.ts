@@ -9,6 +9,10 @@ export interface Session {
   user?: User;
 }
 
+export interface AuthenticatedSession extends Omit<Session, 'user'> {
+  user: User;
+}
+
 export function hasAcceptedTermsOrIsAnonymous(session?: Session): boolean {
   return session && session.user
     ? !!session.user.acceptedTerms

@@ -4,17 +4,20 @@ import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/validation';
-import { get } from 'lodash';
+import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateDraftRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
+import { CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
-import { Session } from 'shared/lib/resources/session';
+import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
-export type ValidatedCreateRequestBody = Omit<CWUOpportunity, 'status' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
-interface ValidatedUpdateDraftRequestBody extends Omit<UpdateDraftRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
+export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'status' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> {
+  session: AuthenticatedSession;
+}
+
+interface ValidatedUpdateDraftRequestBody extends Omit<UpdateEditRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
@@ -22,13 +25,15 @@ interface ValidatedUpdateDraftRequestBody extends Omit<UpdateDraftRequestBody, '
   attachments: FileRecord[];
 }
 
-type ValidatedUpdateRequestBody
-  = ADT<'edit', ValidatedUpdateDraftRequestBody>
-  | ADT<'publish', string>
-  | ADT<'startEvaluation', string>
-  | ADT<'suspend', string>
-  | ADT<'cancel', string>
-  | ADT<'addAddendum', string>;
+interface ValidatedUpdateRequestBody {
+  session: AuthenticatedSession;
+  body: ADT<'edit', ValidatedUpdateDraftRequestBody>
+      | ADT<'publish', string>
+      | ADT<'startEvaluation', string>
+      | ADT<'suspend', string>
+      | ADT<'cancel', string>
+      | ADT<'addAddendum', string>;
+}
 
 type ValidatedDeleteRequestBody = Id;
 
@@ -166,6 +171,7 @@ const resource: Resource = {
               validatedAttachments
         ])) {
           return valid({
+            session: request.session,
             title: validatedTitle.value,
             teaser: validatedTeaser.value,
             remoteOk: validatedRemoteOk.value,
@@ -206,7 +212,7 @@ const resource: Resource = {
       },
       respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUOpportunity>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
-          const dbResult = await db.createCWUOpportunity(connection, request.body, request.session);
+          const dbResult = await db.createCWUOpportunity(connection, omit(request.body, 'session'), request.body.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
@@ -325,24 +331,27 @@ const resource: Resource = {
               validatedEvaluationCriteria,
               validatedAttachments
             ])) {
-              return valid(adt('edit' as const, {
-                title: validatedTitle.value,
-                teaser: validatedTeaser.value,
-                remoteOk: validatedRemoteOk.value,
-                remoteDesc: validatedRemoteDesc.value,
-                location: validatedLocation.value,
-                reward: validatedReward.value,
-                skills: validatedSkills.value,
-                description: validatedDescription.value,
-                proposalDeadline: validatedProposalDeadline.value,
-                assignmentDate: validatedAssignmentDate.value,
-                startDate: validatedStartDate.value,
-                completionDate: validatedCompletionDate.value,
-                submissionInfo: validatedSubmissionInfo.value,
-                acceptanceCriteria: validatedAcceptanceCriteria.value,
-                evaluationCriteria: validatedEvaluationCriteria.value,
-                attachments: validatedAttachments.value
-              }));
+              return valid({
+                session: request.session,
+                body: adt('edit' as const, {
+                  title: validatedTitle.value,
+                  teaser: validatedTeaser.value,
+                  remoteOk: validatedRemoteOk.value,
+                  remoteDesc: validatedRemoteDesc.value,
+                  location: validatedLocation.value,
+                  reward: validatedReward.value,
+                  skills: validatedSkills.value,
+                  description: validatedDescription.value,
+                  proposalDeadline: validatedProposalDeadline.value,
+                  assignmentDate: validatedAssignmentDate.value,
+                  startDate: validatedStartDate.value,
+                  completionDate: validatedCompletionDate.value,
+                  submissionInfo: validatedSubmissionInfo.value,
+                  acceptanceCriteria: validatedAcceptanceCriteria.value,
+                  evaluationCriteria: validatedEvaluationCriteria.value,
+                  attachments: validatedAttachments.value
+                })
+              });
             } else {
               return invalid({
                 opportunity: adt('edit' as const, {
@@ -373,7 +382,10 @@ const resource: Resource = {
             if (isInvalid(validatedPublishNote)) {
               return invalid({ opportunity: adt('publish' as const, validatedPublishNote.value) });
             }
-            return valid(adt('publish', validatedPublishNote.value));
+            return valid({
+              session: request.session,
+              body: adt('publish', validatedPublishNote.value)
+            });
           case 'suspend':
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Suspended)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -382,7 +394,10 @@ const resource: Resource = {
             if (isInvalid(validatedSuspendNote)) {
               return invalid({ opportunity: adt('suspend' as const, validatedSuspendNote.value) });
             }
-            return valid(adt('suspend', validatedSuspendNote.value));
+            return valid({
+              session: request.session,
+              body: adt('suspend', validatedSuspendNote.value)
+            });
           case 'cancel':
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Canceled)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -391,7 +406,10 @@ const resource: Resource = {
             if (isInvalid(validatedCancelNote)) {
               return invalid({ opportunity: adt('cancel' as const, validatedCancelNote.value) });
             }
-            return valid(adt('cancel', validatedCancelNote.value));
+            return valid({
+              session: request.session,
+              body: adt('cancel', validatedCancelNote.value)
+            });
           case 'addAddendum':
             if (validatedCWUOpportunity.value.status === CWUOpportunityStatus.Canceled) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -400,7 +418,10 @@ const resource: Resource = {
             if (isInvalid(validatedAddendumText)) {
               return invalid({ opportunity: adt('addAddendum' as const, validatedAddendumText.value) });
             }
-            return valid(adt('addAddendum', validatedAddendumText.value));
+            return valid({
+              session: request.session,
+              body: adt('addAddendum', validatedAddendumText.value)
+            });
           default:
             return invalid({ opportunity: adt('parseFailure' as const) });
         }
@@ -408,24 +429,25 @@ const resource: Resource = {
       respond: wrapRespond({
         valid: async request => {
           let dbResult: Validation<CWUOpportunity, null>;
-          switch (request.body.tag) {
+          const { session, body } = request.body;
+          switch (body.tag) {
             case 'edit':
-              dbResult = await db.updateCWUOpportunityVersion(connection, { ...request.body.value, id: request.params.id }, request.session);
+              dbResult = await db.updateCWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
               break;
             case 'publish':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, request.body.value, request.session);
+              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);
               break;
             case 'startEvaluation':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Evaluation, request.body.value, request.session);
+              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Evaluation, body.value, session);
               break;
             case 'suspend':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Suspended, request.body.value, request.session);
+              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Suspended, body.value, session);
               break;
             case 'cancel':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Canceled, request.body.value, request.session);
+              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Canceled, body.value, session);
               break;
             case 'addAddendum':
-              dbResult = await db.addCWUOpportunityAddendum(connection, request.params.id, request.body.value, request.session);
+              dbResult = await db.addCWUOpportunityAddendum(connection, request.params.id, body.value, session);
               break;
           }
           if (isInvalid(dbResult)) {

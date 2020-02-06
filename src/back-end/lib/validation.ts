@@ -7,7 +7,7 @@ import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { invalid, isInvalid, isValid, valid, validateArrayAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { ArrayValidation, invalid, isInvalid, valid, validateArrayAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -46,9 +46,8 @@ export async function validateFileRecord(connection: db.Connection, fileId: Id):
   }
 }
 
-export async function validateAttachments(connection: db.Connection, raw: string[]): Promise<Validation<FileRecord[]>> {
-  const validatedArray = await validateArrayAsync(raw, v => validateFileRecord(connection, v));
-  return isValid(validatedArray) ? validatedArray : invalid(['Invalid attachment specified.']);
+export async function validateAttachments(connection: db.Connection, raw: string[]): Promise<ArrayValidation<FileRecord>> {
+  return await validateArrayAsync(raw, v => validateFileRecord(connection, v));
 }
 
 export async function validateOrganizationId(connection: db.Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {

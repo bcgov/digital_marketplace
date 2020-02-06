@@ -10,7 +10,7 @@ import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpport
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CWUIndividualProponent, CWUProposal, CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
-import { Session } from 'shared/lib/resources/session';
+import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
@@ -710,6 +710,17 @@ async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: Ra
   };
 }
 
+function processForRole<T extends RawCWUOpportunity | RawCWUOpportunitySlim>(result: T, session: Session) {
+  // Remove createdBy/updatedBy for non-admin or non-author
+  if (!session.user || (session.user.type !== UserType.Admin &&
+    session.user.id !== result.createdBy &&
+    session.user.id !== result.updatedBy)) {
+      delete result.createdBy;
+      delete result.updatedBy;
+  }
+  return result;
+}
+
 export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
   // Retrieve the opportunity and most recent opportunity status
 
@@ -744,14 +755,14 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
   if (!session.user || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses);
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
   } else if (session.user.type === UserType.Government) {
     // Gov users should only see private opportunities they own, and public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses)
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
       .orWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunitiesStatuses)
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
           .andWhere({ 'opp.createdBy': session.user?.id });
       });
   } else {
@@ -759,18 +770,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
     query = query
       .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
   }
-
-  const results = await query;
-  // Remove createdBy/updatedBy for non-admin or non-author
-  results.map(result => {
-    if (session?.user?.type !== UserType.Admin &&
-      session?.user?.id !== result.createdBy &&
-      session?.user?.id !== result.updatedBy) {
-        delete result.createdBy;
-        delete result.updatedBy;
-    }
-  });
-
+  const results = (await query).map(result => processForRole(result, session));
   return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
 });
 
@@ -841,14 +841,14 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
   if (!session.user || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses);
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
   } else if (session.user.type === UserType.Government) {
     // Gov users should only see private opportunities they own, and public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses)
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
       .orWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunitiesStatuses)
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
           .andWhere({ 'opp.createdBy': session.user?.id });
       });
   } else {
@@ -857,10 +857,11 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
   }
 
-  const result = await query.first();
+  let result = await query.first();
 
   // Query for attachment file ids
   if (result) {
+    result = processForRole(result, session);
     result.attachments = (await connection<{ id: Id }>('cwuOpportunityAttachments')
       .where({ opportunityVersion: result.id })
       .select('file')).map(row => row.id);
@@ -868,14 +869,6 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     result.addenda = (await connection<{ id: Id }>('cwuOpportunityAddenda')
       .where({ opportunity: id })
       .select('id')).map(row => row.id);
-
-    // Remove createdBy/updatedBy for non-admin or non-author
-    if (session?.user?.type !== UserType.Admin &&
-      session?.user?.id !== result.createdBy &&
-      session?.user?.id !== result.updatedBy) {
-        delete result.createdBy;
-        delete result.updatedBy;
-    }
   }
 
   return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);
@@ -921,7 +914,7 @@ interface OpportunityVersionRecord extends CreateCWUOpportunityParams {
   createdBy: Id;
 }
 
-export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Session], CWUOpportunity>(async (connection, opportunity, session) => {
+export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
   // Create root opportunity record
   const now = new Date();
   const result = await connection.transaction(async trx => {
@@ -930,7 +923,7 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Session],
       .insert({
         id: generateUuid(),
         createdAt: now,
-        createdBy: session.user?.id
+        createdBy: session.user.id
       }, '*');
 
     if (!rootOppRecord) {
@@ -998,7 +991,7 @@ export async function isCWUOpportunityAuthor(connection: Connection, user: User,
 
 type UpdateCWUOpportunityParams = Partial<CWUOpportunity>;
 
-export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Session], CWUOpportunity>(async (connection, opportunity, session) => {
+export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
   const now = new Date();
   const { attachments, ...restOfOpportunity } = opportunity;
   return valid(await connection.transaction(async trx => {
@@ -1009,7 +1002,7 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Se
         opportunity: restOfOpportunity.id,
         id: generateUuid(),
         createdAt: now,
-        createdBy: session.user?.id
+        createdBy: session.user.id
       }, '*');
 
     if (!oppVersion) {
@@ -1042,14 +1035,14 @@ interface CWUOpportunityStatusRecord {
   note: string;
 }
 
-export const updateCWUOpportunityStatus = tryDb<[Id, CWUOpportunityStatus, string, Session], CWUOpportunity>(async (connection, id, status, note, session) => {
+export const updateCWUOpportunityStatus = tryDb<[Id, CWUOpportunityStatus, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, status, note, session) => {
   const now = new Date();
   const [result] = await connection<CWUOpportunityStatusRecord>('cwuOpportunityStatuses')
     .insert({
       id: generateUuid(),
       opportunity: id,
       createdAt: now,
-      createdBy: session.user?.id,
+      createdBy: session.user.id,
       status,
       note
     }, '*');
@@ -1074,14 +1067,14 @@ interface CWUOpportunityAddendumRecord {
   createdAt: Date;
 }
 
-export const addCWUOpportunityAddendum = tryDb<[Id, string, Session], CWUOpportunity>(async (connection, id, addendumText, session) => {
+export const addCWUOpportunityAddendum = tryDb<[Id, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, addendumText, session) => {
   const now = new Date();
   const [result] = await connection<CWUOpportunityAddendumRecord>('cwuOpportunityAddenda')
     .insert({
       id: generateUuid(),
       opportunity: id,
       description: addendumText,
-      createdBy: session.user?.id,
+      createdBy: session.user.id,
       createdAt: now
     }, '*');
 
