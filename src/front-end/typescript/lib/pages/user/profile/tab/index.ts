@@ -6,6 +6,6 @@ export interface Params {
   viewerUser: User;
 }
 
-export interface Component<State, Msg> extends Pick<PageComponent<never, never, State, Msg>, 'update' | 'view' | 'getAlerts' | 'getModal'> {
+export interface Component<State, Msg> extends Pick<PageComponent<never, never, State, Msg>, 'update' | 'view' | 'getAlerts' | 'getModal' | 'getContextualActions'> {
   init: Init<Params, State>;
 }

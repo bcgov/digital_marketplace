@@ -122,6 +122,7 @@ export interface TDSpec {
   className?: string;
   tooltipText?: string;
   colSpan?: number;
+  showOnHover?: true;
 }
 
 export interface TDProps extends TDSpec {
@@ -132,7 +133,7 @@ export interface TDProps extends TDSpec {
 }
 
 export function DefaultTDView(props: TDProps): ReactElement {
-  const { colSpan, id, style, className, children, index, tooltipText, dispatch, tooltipIsOpen } = props;
+  const { colSpan, id, style, className, children, index, tooltipText, dispatch, tooltipIsOpen, showOnHover } = props;
   const tooltipProps = !tooltipText
     ? undefined
     : {
@@ -143,12 +144,14 @@ export function DefaultTDView(props: TDProps): ReactElement {
       };
   return (
     <td key={id} style={style} className={className} colSpan={colSpan}>
-      {tooltipProps
-        ? (<div className='d-inline-block' id={id}>
-            {children}
-            <TableTooltip {...tooltipProps} />
-          </div>)
-        : children}
+      <div className={showOnHover ? 'table-show-on-hover' : ''}>
+        {tooltipProps
+          ? (<div className='d-inline-block' id={id}>
+              {children}
+              <TableTooltip {...tooltipProps} />
+            </div>)
+          : children}
+      </div>
     </td>
   );
 }
