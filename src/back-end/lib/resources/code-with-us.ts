@@ -481,7 +481,6 @@ const resource: Resource = {
       },
       respond: wrapRespond({
         valid: async request => {
-          // Mark the organization as inactive
           const dbResult = await db.deleteCWUOpportunity(connection, request.body);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));

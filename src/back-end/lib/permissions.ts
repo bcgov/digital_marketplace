@@ -1,4 +1,4 @@
-import { Connection, hasFilePermission, isCWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Connection, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
@@ -147,10 +147,34 @@ export function createCWUOpportunity(session: Session): boolean {
   return isAdmin(session) || isGovernment(session);
 }
 
-export async function editCWUOpportunity(connection: Connection, session: Session, opportunityId: string) {
-  return isAdmin(session) || (session.user && isGovernment(session) && await isCWUOpportunityAuthor(connection, session.user, opportunityId));
+export async function editCWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && isGovernment(session) && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
 }
 
-export async function deleteCWUOpportunity(connection: Connection, session: Session, opportunityId: string) {
-  return isAdmin(session) || (session.user && isGovernment(session) && await isCWUOpportunityAuthor(connection, session.user, opportunityId));
+export async function deleteCWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && isGovernment(session) && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+}
+
+// CWU Proposals.
+
+export async function readManyCWUProposals(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && isCWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+}
+
+export async function readOneCWUProposal(connection: Connection, session: Session, opportunityId: string, proposalId: string): Promise<boolean> {
+  return isAdmin(session) ||
+        (session.user && isCWUOpportunityAuthor(connection, session.user, opportunityId)) ||
+        (session.user && isCWUProposalAuthor(connection, session.user, proposalId)) || false;
+}
+
+export function createCWUProposal(session: Session): boolean {
+  return isVendor(session);
+}
+
+export async function editCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
+  return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
+export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
+  return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
 }

@@ -1,12 +1,15 @@
 import * as db from 'back-end/lib/db';
+import { get } from 'lodash';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization } from 'shared/lib/resources/organization';
+import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
-import { ArrayValidation, invalid, isInvalid, valid, validateArrayAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { adt, Id } from 'shared/lib/types';
+import { ArrayValidation, invalid, isInvalid, isValid, valid, validateArrayAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { validateIndividualProponent } from 'shared/lib/validation/proposal/code-with-us';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -115,5 +118,46 @@ export async function validateCWUOpportunityId(connection: db.Connection, opport
 
   } catch (exception) {
     return invalid(['Please select a valid Code With Us opportunity.']);
+  }
+}
+
+export async function validateCWUProposalId(connection: db.Connection, proposalId: Id, session: Session): Promise<Validation<CWUProposal>> {
+  try {
+    const validatedId = validateUUID(proposalId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneCWUProposal(connection, proposalId, session);
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const proposal = dbResult.value;
+    if (!proposal) {
+      return invalid(['The specified proposal was not found.']);
+    }
+    return valid(proposal);
+  } catch (exception) {
+    return invalid(['Please select a valid proposal.']);
+  }
+}
+
+type ValidatedCreateProponentRequestBody = CreateProponentRequestBody;
+
+export async function validateProponent(connection: db.Connection, raw: any): Promise<Validation<ValidatedCreateProponentRequestBody, CreateProponentValidationErrors>> {
+  switch (get(raw, 'tag')) {
+    case 'individual':
+      const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
+      if (isValid(validatedIndividualProponentRequestBody)) {
+        return valid(adt('individual', validatedIndividualProponentRequestBody.value));
+      }
+      return invalid(adt('individual', validatedIndividualProponentRequestBody.value));
+    case 'organization':
+      const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), false);
+      if (isValid(validatedOrganization)) {
+        return valid(adt('organization', validatedOrganization.value.id));
+      }
+      return invalid(adt('organization', validatedOrganization.value));
+    default:
+      return invalid(adt('parseFailure' as const, ['Invalid proponent provided.']));
   }
 }
