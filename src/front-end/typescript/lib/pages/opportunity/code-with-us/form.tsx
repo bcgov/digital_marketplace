@@ -237,8 +237,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   }
 });
 
-// TODO(Jesse): This doesn't need to be exported, but it shut the linter up about not being used.
-export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
+function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   if (errors) {
     return state
       .update('title',              s => FormField.setErrors(s, errors.title              || []))
@@ -306,7 +305,8 @@ export async function persist(state: State, status: CWUOpportunityResource.CWUOp
       return valid(state);
     case 'unhandled':
     case 'invalid':
-      return invalid(['TODO(Jesse): Error handling']);
+      setErrors(immutable(state), apiResult.value);
+      return invalid(['Error creating the Opportunity.']);
   }
 }
 
