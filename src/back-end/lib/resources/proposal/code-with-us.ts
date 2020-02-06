@@ -1,15 +1,25 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateCWUOpportunityId, validateCWUProposalId } from 'back-end/lib/validation';
-import { CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, DeleteValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
-import { Session } from 'shared/lib/resources/session';
+import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, validateProponent } from 'back-end/lib/validation';
+import { get, omit } from 'lodash';
+import { getString, getStringArray } from 'shared/lib';
+import { CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, DeleteValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
+import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { isInvalid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
+import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
 
-type ValidatedCreateRequestBody = Omit<CWUProposal, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status'>;
+interface ValidatedCreateRequestBody {
+  session: AuthenticatedSession;
+  opportunity: Id;
+  proposalText: string;
+  additionalComments: string;
+  proponent: CreateProponentRequestBody;
+  attachments: Id[];
+}
 
 type ValidatedUpdateRequestBody = UpdateRequestBody;
 
@@ -71,11 +81,95 @@ const resource: Resource = {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
       const dbResult = await db.readOneCWUProposal(connection, request.params.id, request.session);
-      if (isInvalid(dbResult)) {
+      if (isInvalid(dbResult) || !dbResult.value) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
       return respond(200, dbResult.value);
     });
+  },
+
+  create(connection) {
+    return {
+      async parseRequestBody(request) {
+        const body: unknown = request.body.tag === 'json' ? request.body.value : {};
+        return {
+          opportunity: getString(body, 'opportunity'),
+          proposalText: getString(body, 'proposalText'),
+          additionalComments: getString(body, 'additionalComments'),
+          proponent: get(body, 'proponent'),
+          attachments: getStringArray(body, 'attachments')
+        };
+      },
+      async validateRequestBody(request) {
+        const { opportunity,
+                proposalText,
+                additionalComments,
+                proponent,
+                attachments } = request.body;
+
+        if (!permissions.createCWUProposal(request.session)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+
+        const validatedCWUOpportunity = await validateCWUOpportunityId(connection, opportunity, request.session);
+        if (isInvalid(validatedCWUOpportunity)) {
+          return invalid({
+            notFound: ['The specified opportunity does not exist.']
+          });
+        }
+
+        // Check for existing proposal on this opportunity, authored by this user
+        const dbResult = await db.readOneProposalByOpportunityAndAuthor(connection, opportunity, request.session);
+        if (isInvalid(dbResult)) {
+          return invalid({
+            database: [db.ERROR_MESSAGE]
+          });
+        }
+        if (dbResult.value) {
+          return invalid({
+            conflict: ['You already have a proposal for this opportunity.']
+          });
+        }
+
+        const validatedProposalText = proposalValidation.validateProposalText(proposalText);
+        const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
+        const validatedProponent = await validateProponent(connection, proponent);
+        const validatedAttachments = await validateAttachments(connection, attachments);
+
+        if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
+          return valid({
+            session: request.session,
+            opportunity: validatedCWUOpportunity.value.id,
+            proposalText: validatedProposalText.value,
+            additionalComments: validatedAdditionalComments.value,
+            proponent: validatedProponent.value,
+            attachments: validatedAttachments.value
+          });
+        } else {
+          return invalid({
+            opportunity: getInvalidValue(validatedCWUOpportunity, undefined),
+            proposalText: getInvalidValue(validatedProposalText, undefined),
+            additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
+            proponent: getInvalidValue(validatedProponent, undefined),
+            attachments: getInvalidValue(validatedAttachments, undefined)
+          });
+        }
+      },
+      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUProposal>, JsonResponseBody<CreateValidationErrors>, Session>({
+        valid: (async request => {
+          const dbResult = await db.createCWUProposal(connection, omit(request.body, 'session'), request.body.session);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
+        }),
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        })
+      })
+    };
   }
 };
 

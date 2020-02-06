@@ -166,3 +166,7 @@ export async function readOneCWUProposal(connection: Connection, session: Sessio
         (session.user && isCWUOpportunityAuthor(connection, session.user, opportunityId)) ||
         (session.user && isCWUProposalAuthor(connection, session.user, proposalId)) || false;
 }
+
+export function createCWUProposal(session: Session): boolean {
+  return isVendor(session);
+}

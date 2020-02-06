@@ -5,7 +5,7 @@ import { User } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
-export enum ProposalStatus {
+export enum CWUProposalStatus {
   Draft = 'DRAFT',
   Submitted = 'SUBMITTED',
   Review = 'REVIEW',
@@ -26,7 +26,7 @@ export interface CWUProposal {
   additionalComments: string;
   proponent: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
   score: number;
-  status: ProposalStatus;
+  status: CWUProposalStatus;
   attachments: FileRecord[];
 }
 
@@ -45,20 +45,34 @@ export interface CWUIndividualProponent {
   country: string;
 }
 
+export type CreateProponentRequestBody
+  = ADT<'individual', CreateIndividualProponentRequestBody>
+  | ADT<'organization', Id>;
+
 export interface CreateRequestBody {
   opportunity: Id;
   proposalText: string;
   additionalComments: string;
-  proponent: ADT<'individual', CreateIndividualProponentRequestBody> | ADT<'organization', Id>;
+  proponent: CreateProponentRequestBody;
   attachments: Id[];
 }
 
 export type CreateIndividualProponentRequestBody = Omit<CWUIndividualProponent, 'id'>;
 
-export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
+export type CreateIndividualProponentValidationErrors = ErrorTypeFrom<CreateIndividualProponentRequestBody>;
+
+export type CreateProponentValidationErrors
+  = ADT<'individual', CreateIndividualProponentValidationErrors>
+  | ADT<'organization', string[]>
+  | ADT<'parseFailure', string[]>;
+
+export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'proponent' | 'attachments'> {
+  proponent?: CreateProponentValidationErrors;
+  attachments?: string[][];
+}
 
 export type UpdateRequestBody
-  = ADT<'edit', UpdateDraftRequestBody>
+  = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
   | ADT<'score', { note: string, score: number }>
   | ADT<'award', string>
@@ -66,10 +80,10 @@ export type UpdateRequestBody
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>;
 
-export type UpdateDraftRequestBody = CreateIndividualProponentRequestBody;
+export type UpdateEditRequestBody = CreateIndividualProponentRequestBody;
 
 type UpdateADTErrors
-  = ADT<'edit', UpdateDraftValidationErrors>
+  = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
   | ADT<'score', string[]>
   | ADT<'award', string[]>
@@ -77,7 +91,7 @@ type UpdateADTErrors
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>;
 
-export type UpdateDraftValidationErrors = ErrorTypeFrom<UpdateDraftRequestBody>;
+export type UpdateEditValidationErrors = ErrorTypeFrom<UpdateEditRequestBody>;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   proposal?: UpdateADTErrors;
