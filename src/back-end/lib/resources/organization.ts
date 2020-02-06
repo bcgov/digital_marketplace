@@ -3,7 +3,7 @@ import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, Request, Response, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateImageFile, validateOrganizationId } from 'back-end/lib/validation';
+import { validateFileRecord, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
 import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, OrganizationSlim, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
@@ -114,7 +114,7 @@ const resource: Resource = {
                 contactPhone } = request.body;
 
         const validatedLegalName = orgValidation.validateLegalName(legalName);
-        const validatedLogoImageFile = await optionalAsync(logoImageFile, v => validateImageFile(connection, v));
+        const validatedLogoImageFile = await optionalAsync(logoImageFile, v => validateFileRecord(connection, v));
         const validatedWebsiteUrl = orgValidation.validateWebsiteUrl(websiteUrl);
         const validatedStreetAddress1 = orgValidation.validateStreetAddress1(streetAddress1);
         const validatedStreetAddress2 = orgValidation.validateStreetAddress2(streetAddress2);
@@ -233,9 +233,15 @@ const resource: Resource = {
           contactEmail,
           contactPhone } = request.body;
 
+        if (!await permissions.updateOrganization(connection, request.session, request.params.id)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+
         const validatedOrganization = await validateOrganizationId(connection, request.params.id);
         const validatedLegalName = orgValidation.validateLegalName(legalName);
-        const validatedLogoImageFile = await optionalAsync(logoImageFile, v => validateImageFile(connection, v));
+        const validatedLogoImageFile = await optionalAsync(logoImageFile, v => validateFileRecord(connection, v));
         const validatedWebsiteUrl = orgValidation.validateWebsiteUrl(websiteUrl);
         const validatedStreetAddress1 = orgValidation.validateStreetAddress1(streetAddress1);
         const validatedStreetAddress2 = orgValidation.validateStreetAddress2(streetAddress2);
@@ -264,11 +270,6 @@ const resource: Resource = {
           validatedContactEmail,
           validatedContactPhone
         ])) {
-          if (!await permissions.updateOrganization(connection, request.session, request.params.id)) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
           return valid({
             id: (validatedOrganization.value as Organization).id,
             legalName: validatedLegalName.value,

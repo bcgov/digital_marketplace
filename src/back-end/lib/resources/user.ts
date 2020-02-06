@@ -4,7 +4,7 @@ import * as permissions from 'back-end/lib/permissions';
 import { signOut } from 'back-end/lib/resources/session';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateImageFile, validateUserId } from 'back-end/lib/validation';
+import { validateFileRecord, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
@@ -125,7 +125,7 @@ const resource: Resource = {
             const validatedName = userValidation.validateName(name);
             const validatedEmail = userValidation.validateEmail(email);
             const validatedJobTitle = userValidation.validateJobTitle(jobTitle);
-            const validatedAvatarImageFile = await optionalAsync(avatarImageFile, v => validateImageFile(connection, v));
+            const validatedAvatarImageFile = await optionalAsync(avatarImageFile, v => validateFileRecord(connection, v));
 
             if (allValid([validatedName, validatedEmail, validatedJobTitle, validatedAvatarImageFile])) {
               if (!permissions.updateUser(request.session, request.params.id)) {
