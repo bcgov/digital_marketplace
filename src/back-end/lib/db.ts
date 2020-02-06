@@ -774,9 +774,9 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
   return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
 });
 
-export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim | null>(async (connection, session, oppId) => {
+export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim | null>(async (connection, oppId, session) => {
   // Since slim opportunity requires the same joins, etc. as full to build, we query the full one, and reduce down to slim
-  const dbResult = await readOneCWUOpportunity(connection, session, oppId);
+  const dbResult = await readOneCWUOpportunity(connection, oppId, session);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error('unable to read opportunity');
   }
@@ -814,7 +814,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
           connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
             version2.opportunity = opp.id)'));
     })
-    .select<RawCWUOpportunity>([
+    .select<RawCWUOpportunity>(
       'opp.id',
       'opp.createdAt',
       'opp.createdBy',
@@ -836,7 +836,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       'version.acceptanceCriteria',
       'version.evaluationCriteria',
       'stat.status'
-    ]);
+    );
 
   if (!session.user || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
@@ -1231,6 +1231,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       'prop.id',
       'prop.createdBy',
       'prop.createdAt',
+      'prop.opportunity',
       'updatedBy',
       'updatedAt',
       'proposalText',
@@ -1282,24 +1283,30 @@ export interface CreateCWUProposalParams {
 }
 
 export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
+  const now = new Date();
   return valid(await connection.transaction(async trx => {
     // If proponent is individual, create that record first
-    let createProposalParamsWithProponent: Pick<RawCWUProposal, 'opportunity' | 'proponentIndividual' | 'proponentOrganization' | 'attachments'>;
-    if (proposal.proponent.tag === 'individual') {
+    const { attachments, proponent, ...restOfProposal } = proposal;
+    let createProposalParamsWithProponent: Pick<RawCWUProposal, 'opportunity' | 'proponentIndividual' | 'proponentOrganization'>;
+    if (proponent.tag === 'individual') {
       const [proponentId] = await connection('cwuProponents')
         .transacting(trx)
         .insert({
-          ...proposal.proponent.value,
-          id: generateUuid()
+          ...proponent.value,
+          id: generateUuid(),
+          createdAt: now,
+          createdBy: session.user.id,
+          updatedAt: now,
+          updatedBy: session.user.id
         }, 'id');
       createProposalParamsWithProponent = {
-        ...proposal,
+        ...restOfProposal,
         proponentIndividual: proponentId
       };
     } else {
       createProposalParamsWithProponent = {
-        ...proposal,
-        proponentOrganization: proposal.proponent.value
+        ...restOfProposal,
+        proponentOrganization: proponent.value
       };
     }
 
@@ -1307,7 +1314,12 @@ export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSe
     const [rootRecord] = await connection<RawCWUProposal>('cwuProposals')
       .transacting(trx)
       .insert({
-        ...createProposalParamsWithProponent
+        ...createProposalParamsWithProponent,
+        id: generateUuid(),
+        createdAt: now,
+        createdBy: session.user.id,
+        updatedAt: now,
+        updatedBy: session.user.id
       }, '*');
 
     if (!rootRecord) {
@@ -1315,7 +1327,6 @@ export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSe
     }
 
     // Create a DRAFT proposal status record
-    const now = new Date();
     await connection('cwuProposalStatuses')
       .transacting(trx)
       .insert({
@@ -1328,7 +1339,7 @@ export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSe
       }, '*');
 
     // Create attachment records
-    proposal.attachments?.forEach(async attachment => {
+    attachments?.forEach(async attachment => {
       await connection('cwuProposalAttachments')
         .transacting(trx)
         .insert({
@@ -1353,7 +1364,7 @@ interface UpdateCWUProposalParams extends Partial<Omit<CWUProposal, 'createdBy' 
 
 export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
   const now = new Date();
-  const { attachments, ...restOfProposal } = proposal;
+  const { attachments, proponent, ...restOfProposal } = proposal;
   return valid(await connection.transaction(async trx => {
     const [result] = await connection<RawCWUProposal>('cwuProposals')
       .transacting(trx)
@@ -1361,11 +1372,34 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
       .update({
         ...restOfProposal,
         updatedAt: now,
-        updatedBy: session.user.id
+        updatedBy: session.user.id,
+        proponentOrganization: proponent.tag === 'organization' ? proponent.value : undefined
       }, '*');
 
     if (!result) {
       throw new Error('unable to update proposal');
+    }
+
+    // Update proponent (few different cases here depending on what was selected previously)
+    if (proponent.tag === 'individual') {
+      if (result.proponentIndividual) {
+        await connection('cwuProponents')
+          .where({ id: result.proponentIndividual})
+          .update({
+            ...proponent.value,
+            updatedAt: now,
+            updatedBy: session.user.id
+          });
+      } else {
+        await connection('cwuProponents')
+          .insert({
+            id: generateUuid(),
+            createdAt: now,
+            createdBy: session.user.id,
+            updatedAt: now,
+            updatedBy: session.user.id
+          });
+      }
     }
 
     attachments?.forEach(async attachment => {
