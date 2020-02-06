@@ -363,6 +363,38 @@ const resource: Resource = {
         })
       })
     };
+  },
+
+  delete(connection) {
+    return {
+      async validateRequestBody(request) {
+        if (!(await permissions.deleteCWUProposal(connection, request.session, request.params.id))) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+        const validatedCWUProposal = await validateCWUProposalId(connection, request.params.id, request.session);
+        if (isInvalid(validatedCWUProposal)) {
+          return invalid({ notFound: ['Proposal not found.'] });
+        }
+        if (validatedCWUProposal.value.status !== CWUProposalStatus.Draft) {
+          return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+        }
+        return valid(validatedCWUProposal.value.id);
+      },
+      respond: wrapRespond({
+        valid: async request => {
+          const dbResult = await db.deleteCWUProposal(connection, request.body, request.session);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        },
+        invalid: async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }
+      })
+    };
   }
 };
 

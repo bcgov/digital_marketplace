@@ -172,5 +172,9 @@ export function createCWUProposal(session: Session): boolean {
 }
 
 export async function editCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
-  return session.user && isVendor(session) && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+  return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
+export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
+  return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
 }

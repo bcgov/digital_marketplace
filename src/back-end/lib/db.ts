@@ -1509,3 +1509,16 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
     return await rawCWUProposalToCWUProposal(connection, session, proposalRecord);
   }));
 });
+
+export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connection, id, session) => {
+  // Delete root record
+  const [result] = await connection<RawCWUProposal>('cwuProposals')
+    .where({ id })
+    .delete('*');
+
+  if (!result) {
+    throw new Error('unable to delete opportunity');
+  }
+  result.attachments = [];
+  return valid(await rawCWUProposalToCWUProposal(connection, session, result));
+});
