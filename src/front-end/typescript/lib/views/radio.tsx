@@ -11,10 +11,18 @@ interface RadioProps {
 const Radio: View<RadioProps> = (props) => {
   return (
     <div
-      id={props.id}
+      className='d-inline-block pr-3'
       onClick={ (evt) => { props.onClick(); } }
-    >
-      <span>{props.label}</span>
+     >
+       <input
+         id={props.id}
+         type='radio'
+         name='{props.label}'
+         checked={props.checked}
+         value='ignored'
+         onChange={(evt) => evt} // No-op to shut react up
+       ></input>
+      <span className='pl-1'>{props.label}</span>
     </div>
   );
 };
