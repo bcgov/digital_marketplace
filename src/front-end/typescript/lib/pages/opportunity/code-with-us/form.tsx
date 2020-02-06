@@ -17,7 +17,7 @@ import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { ErrorTypeFrom, invalid, valid, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/opportunity';
+import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
 
@@ -83,6 +83,16 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
+export function validateRewardString(raw: string): Validation<string> {
+  const validationResult = opportunityValidation.validateReward(parseInt(raw, 10));
+  if (validationResult.tag === 'valid') {
+    const value = validationResult.value.toString();
+    return({ tag: 'valid', value });
+  } else {
+    return validationResult;
+  }
+}
+
 export async function defaultState() {
   return {
     activeTab: 'Overview' as const,
@@ -100,7 +110,7 @@ export async function defaultState() {
 
     teaser: immutable(await LongText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateTeaser,
       child: {
         value: '',
         id: 'opportunity-teaser'
@@ -109,7 +119,7 @@ export async function defaultState() {
 
     location: immutable(await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateLocation,
       child: {
         type: 'text',
         value: '',
@@ -119,7 +129,7 @@ export async function defaultState() {
 
     reward: immutable(await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateFixedPriceAmount,
+      validate: validateRewardString,
       child: {
         type: 'text',
         value: '',
@@ -129,7 +139,7 @@ export async function defaultState() {
 
     skills: immutable(await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateTitle, // TODO(Dhruv): change to validateSkills during/after creation of skills component
       child: {
         type: 'text',
         value: '',
@@ -139,7 +149,7 @@ export async function defaultState() {
 
     remoteDesc: immutable(await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateRemoteDesc,
       child: {
         type: 'text',
         value: '',
@@ -149,7 +159,7 @@ export async function defaultState() {
 
     description: immutable(await LongText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateDescription,
       child: {
         value: '',
         id: 'opportunity-description'
@@ -194,7 +204,7 @@ export async function defaultState() {
 
     submissionInfo: immutable(await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateSubmissionInfo,
       child: {
         type: 'text',
         value: '',
@@ -204,7 +214,7 @@ export async function defaultState() {
 
     acceptanceCriteria: immutable(await LongText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateAcceptanceCriteria,
       child: {
         value: '',
         id: 'opportunity-acceptance-criteria'
@@ -213,7 +223,7 @@ export async function defaultState() {
 
     evaluationCriteria: immutable(await LongText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: opportunityValidation.validateEvaluationCriteria,
       child: {
         value: '',
         id: 'opportunity-evaluation-criteria'
