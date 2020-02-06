@@ -31,12 +31,15 @@ export interface AffiliationSlim {
 }
 
 export interface CreateRequestBody {
-  user: string;
+  userEmail: string;
   organization: string;
-  membershipType: string;
+  membershipType: MembershipType;
 }
 
-export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
+export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody>, BodyWithErrors {
+  inviteeNotRegistered?: string[];
+  affiliation?: string[];
+}
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   affiliation?: string[];

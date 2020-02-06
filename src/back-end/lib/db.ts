@@ -4,12 +4,15 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
+import { Addendum } from 'shared/lib/resources/addendum';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
+import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/code-with-us';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { Session } from 'shared/lib/resources/session';
-import { User, UserType } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
+import { User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end');
@@ -40,7 +43,7 @@ type CreateUserParams = Omit<Partial<User>, 'avatarImageFile'> & { createdAt?: D
 
 export const createUser = tryDb<[CreateUserParams], User>(async (connection, user) => {
   const now = new Date();
-  const [result] = await connection<RawUserToUserParams>('users')
+  const [result] = await connection<RawUser>('users')
     .insert({
       ...user,
       id: generateUuid(),
@@ -57,7 +60,7 @@ type UpdateUserParams = Omit<Partial<User>, 'avatarImageFile'> & { updatedAt?: D
 
 export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, user) => {
   const now = new Date();
-  const [result] = await connection<RawUserToUserParams>('users')
+  const [result] = await connection<RawUser>('users')
   .where({ id: user && user.id })
   .update({
     ...user,
@@ -70,22 +73,33 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
 });
 
 export const readOneUser = tryDb<[Id], User | null>(async (connection, id) => {
-  const result = await connection<RawUserToUserParams>('users')
+  const result = await connection<RawUser>('users')
     .where({ id })
     .first();
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 
+export const readOneUserByEmail = tryDb<[string, boolean?], User | null>(async (connection, email, allowInactive = false) => {
+  const where = {
+    email,
+    status: (allowInactive ? '*' : UserStatus.Active)
+  };
+  const result: RawUser = await connection('users')
+    .where(where)
+    .first();
+  return valid(result ? await rawUserToUser(connection, result) : null);
+});
+
 export const readManyUsers = tryDb<[], User[]>(async (connection) => {
-  const results = await connection<RawUserToUserParams>('users').select();
+  const results = await connection<RawUser>('users').select();
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-interface RawUserToUserParams extends Omit<User, 'avatarImageFile'> {
+interface RawUser extends Omit<User, 'avatarImageFile'> {
   avatarImageFile: Id | null;
 }
 
-export async function rawUserToUser(connection: Connection, params: RawUserToUserParams): Promise<User> {
+export async function rawUserToUser(connection: Connection, params: RawUser): Promise<User> {
   const { avatarImageFile: fileId, ...restOfRawUser } = params;
   const avatarImageFile = fileId ? getValidValue(await readOneFileById(connection, fileId), null) : null;
   return {
@@ -350,36 +364,21 @@ export const createAffiliation = tryDb<[CreateAffiliationParams], Affiliation>(a
   if (!affiliation) {
     throw new Error('unable to create affiliation');
   }
-  return await connection.transaction(async trx => {
-    const [result] = await connection<RawAffiliation>('affiliations')
-      .transacting(trx)
-      .insert({
-        ...affiliation,
-        id: generateUuid(),
-        createdAt: now,
-        updatedAt: now
-      } as RawAffiliation, '*');
 
-    if (!result) {
-      throw new Error('unable to create affiliation');
-    }
+  const [result] = await connection<RawAffiliation>('affiliations')
+    .insert({
+      ...affiliation,
+      id: generateUuid(),
+      createdAt: now,
+      updatedAt: now
+    } as RawAffiliation, '*');
 
-    // Mark any other affiliation for this user/org as INACTIVE
-    await connection('affiliations')
-      .transacting(trx)
-      .where({
-        user: affiliation.user,
-        organization: affiliation.organization
-      })
-      .andWhereNot({
-        id: result.id
-      })
-      .update({
-        membershipStatus: MembershipStatus.Inactive,
-        updatedAt: now
-      });
-    return valid(await rawAffiliationToAffiliation(connection, result));
-  });
+  if (!result) {
+    throw new Error('unable to create affiliation');
+  }
+
+  // TODO: send invitation email once emails notifications are in place.
+  return valid(await rawAffiliationToAffiliation(connection, result));
 });
 
 export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connection, userId) => {
@@ -658,3 +657,868 @@ export async function hasFilePermission(connection: Connection, session: Session
     return false;
   }
 }
+
+interface RawCWUOpportunitySlim extends Omit<CWUOpportunitySlim, 'createdBy' | 'updatedBy'> {
+  createdBy?: Id;
+  updatedBy?: Id;
+}
+
+async function rawCWUOpportunitySlimToCWUOpportunitySlim(connection: Connection, raw: RawCWUOpportunitySlim): Promise<CWUOpportunitySlim> {
+  const { createdBy: createdById, updatedBy: updatedById } = raw;
+  const createdBy = createdById && getValidValue(await readOneUser(connection, createdById), undefined) || undefined;
+  const updatedBy = updatedById && getValidValue(await readOneUser(connection, updatedById), undefined) || undefined;
+
+  return {
+    ...raw,
+    createdBy,
+    updatedBy
+  };
+}
+
+interface RawCWUOpportunity extends Omit<CWUOpportunity, 'createdBy' | 'updatedBy' | 'attachments' | 'addenda'> {
+  createdBy?: Id;
+  updatedBy?: Id;
+  attachments: Id[];
+  addenda: Id[];
+}
+
+async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: RawCWUOpportunity): Promise<CWUOpportunity> {
+  const { createdBy: createdById, updatedBy: updatedById, attachments: attachmentIds, addenda: addendaIds } = raw;
+  const createdBy = createdById ? getValidValue(await readOneUser(connection, createdById), undefined) : undefined;
+  const updatedBy = updatedById ? getValidValue(await readOneUser(connection, updatedById), undefined) : undefined;
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error(); // to be caught by calling function
+    }
+    return result;
+  }));
+  const addenda = await Promise.all(addendaIds.map(async id => {
+    const result = getValidValue(await readOneCWUOpportunityAddendum(connection, id), null);
+    if (!result) {
+      throw new Error(); // to be caught by calling function
+    }
+    return result;
+  }));
+
+  return {
+    ...raw,
+    createdBy: createdBy || undefined,
+    updatedBy: updatedBy || undefined,
+    attachments,
+    addenda
+  };
+}
+
+function processForRole<T extends RawCWUOpportunity | RawCWUOpportunitySlim>(result: T, session: Session) {
+  // Remove createdBy/updatedBy for non-admin or non-author
+  if (!session.user || (session.user.type !== UserType.Admin &&
+    session.user.id !== result.createdBy &&
+    session.user.id !== result.updatedBy)) {
+      delete result.createdBy;
+      delete result.updatedBy;
+  }
+  return result;
+}
+
+export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
+  // Retrieve the opportunity and most recent opportunity status
+
+  let query = connection<RawCWUOpportunitySlim>('cwuOpportunities as opp')
+    // Join on latest CWU status
+    .join<RawCWUOpportunitySlim>('cwuOpportunityStatuses as stat', function() {
+      this
+        .on('opp.id', '=', 'stat.opportunity')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
+            stat2.opportunity = opp.id)'));
+    })
+    // Join on latest CWU version
+    .join<RawCWUOpportunitySlim>('cwuOpportunityVersions as version', function() {
+      this
+        .on('opp.id', '=', 'version.opportunity')
+        .andOn('version.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
+            version2.opportunity = opp.id)'));
+    })
+    // Select fields for 'slim' opportunity
+    .select<RawCWUOpportunitySlim[]>(
+      'opp.id',
+      'version.title',
+      'opp.createdBy',
+      'opp.createdAt',
+      'version.createdAt as updatedAt',
+      'version.createdBy as updatedBy',
+      'stat.status'
+    );
+
+  if (!session.user || session.user.type === UserType.Vendor) {
+    // Anonymous users and vendors can only see public opportunities
+    query = query
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
+  } else if (session.user.type === UserType.Government) {
+    // Gov users should only see private opportunities they own, and public opportunities
+    query = query
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
+      .orWhere(function() {
+        this
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
+          .andWhere({ 'opp.createdBy': session.user?.id });
+      });
+  } else {
+    // Admin users can see both private and public opportunities
+    query = query
+      .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
+  }
+  const results = (await query).map(result => processForRole(result, session));
+  return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
+});
+
+export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim | null>(async (connection, session, oppId) => {
+  // Since slim opportunity requires the same joins, etc. as full to build, we query the full one, and reduce down to slim
+  const dbResult = await readOneCWUOpportunity(connection, session, oppId);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read opportunity');
+  }
+
+  const fullOpportunity = dbResult.value;
+  const { id, createdAt, createdBy, updatedAt, updatedBy, title, proposalDeadline, status } = fullOpportunity;
+  return valid({
+    id,
+    createdAt,
+    createdBy,
+    updatedAt,
+    updatedBy,
+    title,
+    proposalDeadline,
+    status
+  });
+});
+
+export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
+  let query = connection<RawCWUOpportunity>('cwuOpportunities as opp')
+    .where({ 'opp.id': id })
+    // Join on latest CWU status
+    .join<RawCWUOpportunity>('cwuOpportunityStatuses as stat', function() {
+      this
+        .on('opp.id', '=', 'stat.opportunity')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
+            stat2.opportunity = opp.id)'));
+    })
+    // Join on latest CWU version
+    .join<RawCWUOpportunity>('cwuOpportunityVersions as version', function() {
+      this
+        .on('opp.id', '=', 'version.opportunity')
+        .andOn('version.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
+            version2.opportunity = opp.id)'));
+    })
+    .select<RawCWUOpportunity>([
+      'opp.id',
+      'opp.createdAt',
+      'opp.createdBy',
+      'version.createdAt as updatedAt',
+      'version.createdBy as updatedBy',
+      'version.title',
+      'version.teaser',
+      'version.remoteOk',
+      'version.remoteDesc',
+      'version.location',
+      'version.reward',
+      'version.skills',
+      'version.description',
+      'version.proposalDeadline',
+      'version.assignmentDate',
+      'version.startDate',
+      'version.completionDate',
+      'version.submissionInfo',
+      'version.acceptanceCriteria',
+      'version.evaluationCriteria',
+      'stat.status'
+    ]);
+
+  if (!session.user || session.user.type === UserType.Vendor) {
+    // Anonymous users and vendors can only see public opportunities
+    query = query
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
+  } else if (session.user.type === UserType.Government) {
+    // Gov users should only see private opportunities they own, and public opportunities
+    query = query
+      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
+      .orWhere(function() {
+        this
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
+          .andWhere({ 'opp.createdBy': session.user?.id });
+      });
+  } else {
+    // Admin users can see both private and public opportunities
+    query = query
+      .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
+  }
+
+  let result = await query.first();
+
+  // Query for attachment file ids
+  if (result) {
+    result = processForRole(result, session);
+    result.attachments = (await connection<{ id: Id }>('cwuOpportunityAttachments')
+      .where({ opportunityVersion: result.id })
+      .select('file')).map(row => row.id);
+
+    result.addenda = (await connection<{ id: Id }>('cwuOpportunityAddenda')
+      .where({ opportunity: id })
+      .select('id')).map(row => row.id);
+  }
+
+  return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);
+});
+
+interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
+  createdBy?: Id;
+}
+
+async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection: Connection, raw: RawCWUOpportunityAddendum): Promise<Addendum> {
+  const { createdBy: createdById } = raw;
+  const createdBy = createdById ? getValidValue(await readOneUser(connection, createdById), undefined) : undefined;
+
+  return {
+    ...raw,
+    createdBy: createdBy || undefined
+  };
+}
+
+export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connection, id) => {
+  const result = await connection<RawCWUOpportunityAddendum>('cwuOpportunityAddenda')
+    .where({ id })
+    .first();
+
+  if (!result) {
+    throw new Error('unable to read addendum');
+  }
+
+  return valid(await rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection, result));
+});
+
+type CreateCWUOpportunityParams = Omit<CWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status'>;
+
+interface RootOpportunityRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: Id;
+}
+
+interface OpportunityVersionRecord extends CreateCWUOpportunityParams {
+  opportunity: Id;
+  createdAt: Date;
+  createdBy: Id;
+}
+
+export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
+  // Create root opportunity record
+  const now = new Date();
+  const result = await connection.transaction(async trx => {
+    const [rootOppRecord] = await connection<RootOpportunityRecord>('cwuOpportunities')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        createdAt: now,
+        createdBy: session.user.id
+      }, '*');
+
+    if (!rootOppRecord) {
+      throw new Error('unable to create opportunity root record');
+    }
+
+    // Create initial opportunity version
+    const { attachments, ...restOfOpportunity } = opportunity;
+    const [oppVersionRecord] = await connection<OpportunityVersionRecord>('cwuOpportunityVersions')
+      .transacting(trx)
+      .insert({
+        ...restOfOpportunity,
+        id: generateUuid(),
+        opportunity: rootOppRecord.id,
+        createdAt: now,
+        createdBy: session.user.id
+      }, '*');
+
+    if (!oppVersionRecord) {
+      throw new Error('unable to create opportunity version');
+    }
+
+    // Create initial opportunity status record (Draft)
+    await connection('cwuOpportunityStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: rootOppRecord.id,
+        createdAt: now,
+        createdBy: session.user.id,
+        status: CWUOpportunityStatus.Draft,
+        note: ''
+      }, '*');
+
+    // Create attachment records
+    attachments?.forEach(async attachment => {
+      await connection('cwuOpportunityAttachments')
+        .transacting(trx)
+        .insert({
+          opportunityVersion: oppVersionRecord.id,
+          file: attachment
+        }, '*');
+    });
+
+    const dbResult = await readOneCWUOpportunity(trx, rootOppRecord.id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to create opportunity');
+    }
+    return dbResult.value;
+  });
+
+  return valid(result);
+});
+
+export async function isCWUOpportunityAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
+  try {
+    const result = await connection<RawCWUOpportunity>('cwuOpportunities')
+      .select('*')
+      .where({ id, createdBy: user.id });
+    return !!result && result.length > 0;
+  } catch (exception) {
+    return false;
+  }
+}
+
+type UpdateCWUOpportunityParams = Partial<CWUOpportunity>;
+
+export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
+  const now = new Date();
+  const { attachments, ...restOfOpportunity } = opportunity;
+  return valid(await connection.transaction(async trx => {
+    const [oppVersion] = await connection<OpportunityVersionRecord>('cwuOpportunityVersions')
+      .transacting(trx)
+      .insert({
+        ...restOfOpportunity,
+        opportunity: restOfOpportunity.id,
+        id: generateUuid(),
+        createdAt: now,
+        createdBy: session.user.id
+      }, '*');
+
+    if (!oppVersion) {
+      throw new Error('unable to update opportunity');
+    }
+
+    attachments?.forEach(async attachment => {
+      await connection('cwuOpportunityAttachments')
+        .transacting(trx)
+        .insert({
+          opportunity: oppVersion.id,
+          file: attachment.id
+        });
+    });
+
+    const dbResult = await readOneCWUOpportunity(connection, oppVersion.opportunity, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update opportunity');
+    }
+    return dbResult.value;
+  }));
+});
+
+interface CWUOpportunityStatusRecord {
+  id: Id;
+  opportunity: Id;
+  createdAt: Date;
+  createdBy: Id;
+  status: CWUOpportunityStatus;
+  note: string;
+}
+
+export const updateCWUOpportunityStatus = tryDb<[Id, CWUOpportunityStatus, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, status, note, session) => {
+  const now = new Date();
+  const [result] = await connection<CWUOpportunityStatusRecord>('cwuOpportunityStatuses')
+    .insert({
+      id: generateUuid(),
+      opportunity: id,
+      createdAt: now,
+      createdBy: session.user.id,
+      status,
+      note
+    }, '*');
+
+  if (!result) {
+    throw new Error('unable to update opportunity');
+  }
+
+  const dbResult = await readOneCWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+
+  return valid(dbResult.value);
+});
+
+interface CWUOpportunityAddendumRecord {
+  id: Id;
+  opportunity: Id;
+  description: string;
+  createdBy: string;
+  createdAt: Date;
+}
+
+export const addCWUOpportunityAddendum = tryDb<[Id, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, addendumText, session) => {
+  const now = new Date();
+  const [result] = await connection<CWUOpportunityAddendumRecord>('cwuOpportunityAddenda')
+    .insert({
+      id: generateUuid(),
+      opportunity: id,
+      description: addendumText,
+      createdBy: session.user.id,
+      createdAt: now
+    }, '*');
+
+  if (!result) {
+    throw new Error('unable to add addendum');
+  }
+
+  const dbResult = await readOneCWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add addendum');
+  }
+  return valid(dbResult.value);
+});
+
+export const deleteCWUOpportunity = tryDb<[Id], CWUOpportunity>(async (connection, id) => {
+    // Delete root record - cascade relationships in database will cleanup versions/attachments/addenda automatically
+    const [result] = await connection<RawCWUOpportunity>('cwuOpportunities')
+      .where({ id })
+      .delete('*');
+
+    if (!result) {
+      throw new Error('unable to delete opportunity');
+    }
+    result.addenda = [];
+    result.attachments = [];
+    return valid(await rawCWUOpportunityToCWUOpportunity(connection, result));
+});
+
+interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'updatedBy' | 'proponent'> {
+  createdBy: Id;
+  updatedBy: Id;
+  proponentIndividual?: Id;
+  proponentOrganization?: Id;
+}
+
+async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: RawCWUProposalSlim): Promise<CWUProposalSlim> {
+  const { createdBy: createdById,
+          updatedBy: updatedById,
+          proponentIndividual: proponentIndividualId,
+          proponentOrganization: proponentOrganizationId
+        } = raw;
+
+  const createdBy = getValidValue(await readOneUser(connection, createdById), undefined);
+  const updatedBy = getValidValue(await readOneUser(connection, updatedById), undefined);
+  const proponentIndividual = proponentIndividualId ? getValidValue(await readOneCWUProponent(connection, proponentIndividualId), undefined) : null;
+  const proponentOrganization = proponentOrganizationId ? getValidValue(await readOneOrganization(connection, proponentOrganizationId), undefined) : null;
+
+  if (!createdBy || !updatedBy) {
+    throw new Error();
+  }
+
+  let proponent: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
+  if (proponentIndividual) {
+    proponent = adt('individual', proponentIndividual);
+  } else if (proponentOrganization) {
+    proponent = adt('organization', proponentOrganization);
+  } else {
+    throw new Error();
+  }
+
+  return {
+    ...raw,
+    createdBy,
+    updatedBy,
+    proponent
+  };
+}
+
+export const readManyCWUProposals = tryDb<[Id], CWUProposalSlim[]>(async (connection, id) => {
+  const results = await connection<RawCWUProposalSlim>('cwuProposals as prop')
+    .where({ opportunity: id })
+    .join<RawCWUProposalSlim>('cwuProposalStatuses as stat', function() {
+      this
+        .on('prop.id', '=', 'stat.proposal')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuProposalStatuses" as stat2 where \
+            stat2.proposal = prop.id)'));
+    })
+    .select<RawCWUProposalSlim[]>(
+      'prop.id',
+      'prop.createdBy',
+      'prop.createdAt',
+      'updatedBy',
+      'updatedAt',
+      'proposalText',
+      'additionalComments',
+      'proponentIndividual',
+      'proponentOrganization',
+      'score',
+      'stat.status'
+    );
+
+  if (!results) {
+    throw new Error('unable to read proposals');
+  }
+
+  return valid(await Promise.all(results.map(async result => await rawCWUProposalSlimToCWUProposalSlim(connection, result))));
+});
+
+export const readOneCWUProponent = tryDb<[Id], CWUIndividualProponent>(async (connection, id) => {
+  const result = await connection<CWUIndividualProponent>('cwuProponents')
+    .where({ id })
+    .first();
+
+  if (!result) {
+    throw new Error('unable to read proponent');
+  }
+
+  return valid(result);
+});
+
+interface RawCWUProposal extends Omit<CWUProposal, 'createdBy' | 'updatedBy' | 'proponent' | 'opportunity' | 'attachments'> {
+  createdBy: Id;
+  updatedBy: Id;
+  opportunity: Id;
+  proponentIndividual?: Id;
+  proponentOrganization?: Id;
+  attachments: Id[];
+}
+
+async function rawCWUProposalToCWUProposal(connection: Connection, session: Session, raw: RawCWUProposal): Promise<CWUProposal> {
+  const { opportunity: opportunityId, attachments: attachmentIds, ...restOfProposal } = raw;
+  const slimVersion = await rawCWUProposalSlimToCWUProposalSlim(connection, restOfProposal);
+  const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
+  if (!opportunity) {
+    throw new Error();
+  }
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error(); // to be caught by calling function
+    }
+    return result;
+  }));
+
+  return {
+    ...slimVersion,
+    opportunity,
+    attachments
+  };
+}
+
+export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async (connection, id, session) => {
+  const result = await connection<RawCWUProposal>('cwuProposals as prop')
+    .where({ 'prop.id': id })
+    .join<RawCWUProposal>('cwuProposalStatuses as stat', function() {
+      this
+        .on('prop.id', '=', 'stat.proposal')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "cwuProposalStatuses" as stat2 where \
+            stat2.proposal = prop.id)'));
+    })
+    .select<RawCWUProposal>(
+      'prop.id',
+      'prop.createdBy',
+      'prop.createdAt',
+      'updatedBy',
+      'updatedAt',
+      'proposalText',
+      'additionalComments',
+      'proponentIndividual',
+      'proponentOrganization',
+      'score',
+      'stat.status'
+    )
+    .first();
+
+  if (result) {
+    result.attachments = (await connection<{ id: Id }>('cwuProposalAttachments')
+      .where({ proposal: result.id })
+      .select('file')).map(row => row.id);
+  }
+
+  return valid(result ? await rawCWUProposalToCWUProposal(connection, session, result) : null);
+});
+
+export async function isCWUProposalAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
+  try {
+    const result = await connection<RawCWUProposal>('cwuProposals')
+      .select('*')
+      .where({ id, createdBy: user.id });
+    return !!result && result.length > 0;
+  } catch (exception) {
+    return false;
+  }
+}
+
+export const readOneProposalByOpportunityAndAuthor = tryDb<[Id, Session], CWUProposal | null>(async (connection, oppId, session) => {
+  if (!session.user) {
+    return valid(null);
+  }
+  const result = await connection<RawCWUProposal>('cwuProposals')
+    .where({ opportunity: oppId, createdBy: session.user.id })
+    .first();
+
+  return valid(result ? await rawCWUProposalToCWUProposal(connection, session, result) : null);
+});
+
+export interface CreateCWUProposalParams {
+  opportunity: Id;
+  proposalText: string;
+  additionalComments: string;
+  proponent: ADT<'individual', CreateIndividualProponentRequestBody> | ADT<'organization', Id>;
+  attachments: Id[];
+}
+
+export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
+  return valid(await connection.transaction(async trx => {
+    // If proponent is individual, create that record first
+    let createProposalParamsWithProponent: Pick<RawCWUProposal, 'opportunity' | 'proponentIndividual' | 'proponentOrganization' | 'attachments'>;
+    if (proposal.proponent.tag === 'individual') {
+      const [proponentId] = await connection('cwuProponents')
+        .transacting(trx)
+        .insert({
+          ...proposal.proponent.value,
+          id: generateUuid()
+        }, 'id');
+      createProposalParamsWithProponent = {
+        ...proposal,
+        proponentIndividual: proponentId
+      };
+    } else {
+      createProposalParamsWithProponent = {
+        ...proposal,
+        proponentOrganization: proposal.proponent.value
+      };
+    }
+
+    // Create root record for proposal
+    const [rootRecord] = await connection<RawCWUProposal>('cwuProposals')
+      .transacting(trx)
+      .insert({
+        ...createProposalParamsWithProponent
+      }, '*');
+
+    if (!rootRecord) {
+      throw new Error('unable to create proposal');
+    }
+
+    // Create a DRAFT proposal status record
+    const now = new Date();
+    await connection('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: rootRecord.id,
+        status: CWUProposalStatus.Draft,
+        createdAt: now,
+        createdBy: session.user.id,
+        note: ''
+      }, '*');
+
+    // Create attachment records
+    proposal.attachments?.forEach(async attachment => {
+      await connection('cwuProposalAttachments')
+        .transacting(trx)
+        .insert({
+          proposal: rootRecord.id,
+          file: attachment
+        }, '*');
+    });
+
+    const dbResult = await readOneCWUProposal(trx, rootRecord.id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to create proposal');
+    }
+    return dbResult.value;
+  }));
+});
+
+interface UpdateCWUProposalParams extends Partial<Omit<CWUProposal, 'createdBy' | 'updatedBy' | 'opportunity' | 'proponent'>> {
+  createdBy?: Id;
+  updatedBy?: Id;
+  proponent: UpdateProponentRequestBody;
+}
+
+export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
+  const now = new Date();
+  const { attachments, ...restOfProposal } = proposal;
+  return valid(await connection.transaction(async trx => {
+    const [result] = await connection<RawCWUProposal>('cwuProposals')
+      .transacting(trx)
+      .where({ id: proposal.id })
+      .update({
+        ...restOfProposal,
+        updatedAt: now,
+        updatedBy: session.user.id
+      }, '*');
+
+    if (!result) {
+      throw new Error('unable to update proposal');
+    }
+
+    attachments?.forEach(async attachment => {
+      await connection('cwuProposalAttachments')
+        .transacting(trx)
+        .insert({
+          proposal: result.id,
+          file: attachment.id
+        });
+    });
+
+    const dbResult = await readOneCWUProposal(trx, result.id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update proposal');
+    }
+    return dbResult.value;
+  }));
+});
+
+interface CWUProposalStatusRecord {
+  id: Id;
+  proposal: Id;
+  createdAt: Date;
+  createdBy: Id;
+  status: CWUProposalStatus;
+  note: string;
+}
+
+export const updateCWUProposalStatus = tryDb<[Id, CWUProposalStatus, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, status, note, session) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    const [result] = await connection<CWUProposalStatusRecord>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        status,
+        note
+      }, '*');
+
+    // Update updatedAt/By stamp on proposal root record
+    await connection('cwuProposals')
+      .transacting(trx)
+      .where({ id: proposalId })
+      .update({
+        updatedAt: now,
+        updatedBy: session.user.id
+      });
+
+    if (!result) {
+      throw new Error('unable to update proposal');
+    }
+
+    const dbResult = await readOneCWUProposal(trx, result.proposal, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update proposal');
+    }
+
+    return dbResult.value;
+  }));
+});
+
+export const updateCWUProposalScore = tryDb<[Id, number, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, score, note, session) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    // Update status for proposal first
+    const [result] = await connection<CWUProposalStatusRecord>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        status: CWUProposalStatus.Review,
+        note
+      }, '*');
+
+    // Update updatedAt/By stamp and score on proposal root record
+    await connection('cwuProposals')
+      .transacting(trx)
+      .where({ id: proposalId })
+      .update({
+        score,
+        updatedAt: now,
+        updatedBy: session.user.id
+      });
+
+    if (!result) {
+      throw new Error('unable to update proposal');
+    }
+
+    const dbResult = await readOneCWUProposal(trx, result.proposal, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update proposal');
+    }
+
+    return dbResult.value;
+  }));
+});
+
+export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, note, session) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    // Update status for awarded proposal first
+    await connection<CWUProposalStatusRecord>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        status: CWUProposalStatus.Awarded,
+        note
+      }, '*');
+
+    // Update proposal root record
+    const [proposalRecord] = await connection<RawCWUProposal>('cwuProposals')
+      .where({ id: proposalId })
+      .update({
+        updatedAt: now,
+        updatedBy: session.user.id
+      }, '*');
+
+    // Update all other proposals on opportunity to Not Awarded
+    await connection('cwuProposalStatuses')
+      .transacting(trx)
+      .whereIn('proposal', async () => {
+        await connection('cwuProposals')
+          .where({ opportunity: proposalRecord?.opportunity });
+      })
+      .andWhereNot({ proposal: proposalId })
+      .update({
+        status: CWUProposalStatus.NotAwarded
+      });
+
+    // Update opportunity
+    await updateCWUOpportunityStatus(trx, proposalRecord.opportunity, CWUOpportunityStatus.Awarded, 'Awarded', session);
+
+    return await rawCWUProposalToCWUProposal(connection, session, proposalRecord);
+  }));
+});
+
+export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connection, id, session) => {
+  // Delete root record
+  const [result] = await connection<RawCWUProposal>('cwuProposals')
+    .where({ id })
+    .delete('*');
+
+  if (!result) {
+    throw new Error('unable to delete opportunity');
+  }
+  result.attachments = [];
+  return valid(await rawCWUProposalToCWUProposal(connection, session, result));
+});
