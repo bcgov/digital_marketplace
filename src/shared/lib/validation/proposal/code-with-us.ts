@@ -1,3 +1,4 @@
+import { getString } from 'shared/lib';
 import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { allValid, getInvalidValue, invalid, optional, valid, validateGenericString, validatePhoneNumber, Validation } from 'shared/lib/validation';
 
@@ -18,16 +19,15 @@ export function validateScore(raw: number): Validation<number> {
 }
 
 export function validateIndividualProponent(raw: any): Validation<CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors> {
-  const { legalName, email, phone, street1, street2, city, region, mailCode, country } = raw;
-  const validatedLegalName = validateGenericString(legalName, 'Legal Name');
-  const validatedEmail = validateGenericString(email, 'Email');
-  const validatedPhone = optional(phone, v => validatePhoneNumber(v));
-  const validatedStreet1 = validateGenericString(street1, 'Street Address');
-  const validatedStreet2 = optional(street2, v => validateGenericString(v, 'Street Address'));
-  const validatedCity = validateGenericString(city, 'City');
-  const validatedRegion = validateGenericString(region, 'Province/State');
-  const validatedMailCode = validateGenericString(mailCode, 'Postal/Zip Code');
-  const validatedCountry  = validateGenericString(country, 'Country');
+  const validatedLegalName = validateGenericString(getString(raw, 'legalName'), 'Legal Name');
+  const validatedEmail = validateGenericString(getString(raw, 'email'), 'Email');
+  const validatedPhone = optional(getString(raw, 'phone'), v => validatePhoneNumber(v));
+  const validatedStreet1 = validateGenericString(getString(raw, 'street1'), 'Street Address');
+  const validatedStreet2 = optional(getString(raw, 'street2'), v => validateGenericString(v, 'Street Address'));
+  const validatedCity = validateGenericString(getString(raw, 'city'), 'City');
+  const validatedRegion = validateGenericString(getString(raw, 'region'), 'Province/State');
+  const validatedMailCode = validateGenericString(getString(raw, 'mailCode'), 'Postal/Zip Code');
+  const validatedCountry  = validateGenericString(getString(raw, 'country'), 'Country');
 
   if (allValid([
     validatedLegalName,

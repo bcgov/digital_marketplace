@@ -247,18 +247,20 @@ const resource: Resource = {
             if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
               return valid({
                 session: request.session,
-                proposalText: validatedProposalText.value,
-                additionalComments: validatedAdditionalComments.value,
-                proponent: validatedProponent.value,
-                attachments: validatedAttachments.value
+                body: adt('edit', {
+                  proposalText: validatedProposalText.value,
+                  additionalComments: validatedAdditionalComments.value,
+                  proponent: validatedProponent.value,
+                  attachments: validatedAttachments.value
+                })
               });
             } else {
-              return invalid({
+              return invalid(adt('edit', {
                 proposalText: getInvalidValue(validatedProposalText, undefined),
                 additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
                 proponent: getInvalidValue(validatedProponent, undefined),
                 attachments: getInvalidValue(validatedAttachments, undefined)
-              });
+              }));
             }
           case 'submit':
             if (!isValidStatusChange(validatedCWUProposal.value.status, CWUProposalStatus.Submitted)) {
