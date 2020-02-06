@@ -93,6 +93,15 @@ export function validateRewardString(raw: string): Validation<string> {
   }
 }
 
+export function validateDate(raw: DateField.Value): Validation<DateField.Value> {
+  const value = DateField.valueToString(raw);
+  if (opportunityValidation.validateDate(value).tag === 'valid') {
+    return valid(raw);
+  } else {
+    return invalid(['Please enter a valid date.']);
+  }
+}
+
 export async function defaultState() {
   return {
     activeTab: 'Overview' as const,
@@ -168,7 +177,7 @@ export async function defaultState() {
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      validate: validateDate,
       child: {
         value: null,
         id: 'opportunity-proposal-deadline'
@@ -177,7 +186,7 @@ export async function defaultState() {
 
     startDate: immutable(await DateField.init({
       errors: [],
-      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      validate: validateDate,
       child: {
         value: null,
         id: 'opportunity-start-date'
@@ -186,7 +195,7 @@ export async function defaultState() {
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      validate: validateDate,
       child: {
         value: null,
         id: 'opportunity-assignment-date'
@@ -195,7 +204,7 @@ export async function defaultState() {
 
     completionDate: immutable(await DateField.init({
       errors: [],
-      // validate: opportunityValidation.validateDate, // TODO(Jesse): How should this function work?
+      validate: validateDate,
       child: {
         value: null,
         id: 'opportunity-completion-date'
