@@ -10,13 +10,13 @@ import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
+import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
-// import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { ErrorTypeFrom, invalid, valid, Validation } from 'shared/lib/validation';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -263,7 +263,7 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
       .update('teaser',             s => FormField.setErrors(s, errors.teaser             || []))
       .update('location',           s => FormField.setErrors(s, errors.location           || []))
       .update('reward',             s => FormField.setErrors(s, errors.reward             || []))
-      .update('skills',             s => FormField.setErrors(s, errors.skills             || []))
+      .update('skills',             s => FormField.setErrors(s, errors.skills ? flatten(errors.skills) : []))
       .update('description',        s => FormField.setErrors(s, errors.description        || []))
       .update('remoteDesc',         s => FormField.setErrors(s, errors.remoteDesc         || []))
       .update('proposalDeadline',   s => FormField.setErrors(s, errors.proposalDeadline   || []))
@@ -278,7 +278,7 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   }
 }
 
-type Errors = ErrorTypeFrom<CWUOpportunityResource.CreateRequestBody>;
+type Errors = CWUOpportunityResource.CreateValidationErrors;
 
 function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): CWUOpportunityResource.CreateRequestBody {
 
