@@ -19,7 +19,7 @@ function ViewAlert<PageMsg>({ messages, dispatchPage, color, className = '' }: V
     <Alert color={color} className={`${className} p-0`} fade={false}>
       {messages.map(({ text, dismissMsg }, i)  => (
         <div key={`alert-${color}-${i}`}>
-          <div className='d-flex align-items-start p-3'>
+          <div className='d-flex align-items-start' style={{ padding: '0.75rem 1.25rem' }}>
             <div className='flex-grow-1 pr-3'>{text}</div>
             {dismissMsg
               ? (<Icon
@@ -53,7 +53,7 @@ function ViewAlerts<PageMsg>({ alerts, dispatchPage }: ViewAlertsProps<PageMsg>)
       <Col xs='12'>
         <ViewAlert messages={info} dispatchPage={dispatchPage} color='info' />
         <ViewAlert messages={warnings} dispatchPage={dispatchPage} color='warning' />
-        <ViewAlert messages={errors} dispatchPage={dispatchPage} color='danger' className='mb-0' />
+        <ViewAlert messages={errors} dispatchPage={dispatchPage} color='danger' />
       </Col>
     </Row>
   );
@@ -68,7 +68,7 @@ function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactEl
   const { dispatchPage, breadcrumbs } = props;
   if (!breadcrumbs.length) { return null; }
   return (
-    <Breadcrumb className='d-none d-md-block' listClassName='bg-transparent p-0'>
+    <Breadcrumb className='d-none d-md-block' listClassName='bg-transparent p-0 mb-3'>
       {breadcrumbs.map(({ text, onClickMsg }, i) => {
         const onClick = () => {
           if (onClickMsg) { dispatchPage(onClickMsg); }
@@ -89,19 +89,19 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
   const { dispatchPage, alerts, breadcrumbs, container = false } = props;
   const hasAlerts = alerts.info.length || alerts.warnings.length || alerts.errors.length;
   const hasBreadcrumbs = !!breadcrumbs.length;
-  const className = `${hasAlerts ? 'pb-5 mb-n4' : ''} ${hasBreadcrumbs ? 'pb-md-5 mb-md-n4' : ''} ${props.className || ''}`;
+  const className = `${hasAlerts || hasBreadcrumbs ? 'pb-5 mb-n3' : ''} ${props.className || ''}`;
   if (container) {
     return (
-      <Container className={`${className} pt-5`}>
-        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
+      <Container className={className}>
         <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
+        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
       </Container>
     );
   } else {
     return (
-      <div className={`${className} ${hasAlerts || hasBreadcrumbs ? 'mt-md-n5' : ''}`}>
-        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
+      <div className={className}>
         <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
+        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
       </div>
     );
   }
@@ -145,7 +145,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     // No sidebar.
     return (
       <div className='d-flex flex-column flex-grow-1 page-container'>
-        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container />
+        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container className='pt-6' />
         <component.view {...viewProps} />
       </div>
     );
@@ -165,11 +165,11 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-5 d-flex flex-column align-items-stretch pt-5 pt-md-8 ${isEmptyOnMobile ? 'pb-md-5' : 'pb-5'}`}>
+                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-6 d-flex flex-column align-items-stretch pt-6 ${isEmptyOnMobile ? 'pb-md-6' : 'pb-6'}`}>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-md-none' />
                   <sidebar.view {...viewProps} />
                 </Col>
-                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pt-md-8 pb-5'>
+                <Col xs='12' md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }} className='pt-md-6 pb-6'>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-none d-md-block' />
                   <component.view {...viewProps} />
                 </Col>
@@ -182,7 +182,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
       // No sidebar.
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
-          <Container className='pt-5 pt-md-8 pb-5'>
+          <Container className='py-6'>
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>

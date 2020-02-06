@@ -17,7 +17,7 @@ export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'status
   session: AuthenticatedSession;
 }
 
-interface ValidatedUpdateDraftRequestBody extends Omit<UpdateEditRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
+interface ValidatedUpdateEditRequestBody extends Omit<UpdateEditRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
@@ -27,7 +27,7 @@ interface ValidatedUpdateDraftRequestBody extends Omit<UpdateEditRequestBody, 'p
 
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
-  body: ADT<'edit', ValidatedUpdateDraftRequestBody>
+  body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'publish', string>
       | ADT<'startEvaluation', string>
       | ADT<'suspend', string>

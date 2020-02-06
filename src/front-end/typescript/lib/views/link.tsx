@@ -4,6 +4,7 @@ import { View, ViewElementChildren } from 'front-end/lib/framework';
 import { ButtonColor, TextColor } from 'front-end/lib/types';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import React, { CSSProperties, MouseEvent } from 'react';
+import { Spinner } from 'reactstrap';
 import { adt, ADT, adtCurried } from 'shared/lib/types';
 
 type RouteDest = ADT<'route', Route>;
@@ -25,6 +26,17 @@ export const imageLinkSymbol = adtCurried<ImageLinkSymbol>('image');
 
 type EmptyIconLinkSymbol = ADT<'emptyIcon'>;
 export const emptyIconLinkSymbol = () => adt('emptyIcon' as const);
+
+function makeEmptyLinkSymbol(s?: Placement<LinkSymbol>): Placement<LinkSymbol> | undefined {
+  if (s && s.value.tag === 'icon') {
+    return {
+      tag: s.tag,
+      value: emptyIconLinkSymbol()
+    };
+  } else {
+    return undefined;
+  }
+}
 
 export type LinkSymbol = IconLinkSymbol | ImageLinkSymbol | EmptyIconLinkSymbol;
 
@@ -85,11 +97,16 @@ export interface AnchorProps extends BaseProps {
 export interface ButtonProps extends BaseProps {
   button: true;
   outline?: boolean;
+  loading?: boolean;
   color?: ButtonColor;
   size?: 'sm' | 'md' | 'lg';
 }
 
 export type Props = AnchorProps | ButtonProps;
+
+export type OmitProps<OmitKeys extends keyof BaseProps | '' = ''> = Omit<AnchorProps, OmitKeys> | Omit<ButtonProps, OmitKeys>;
+
+export type ExtendProps<Extension> = AnchorProps & Extension | ButtonProps & Extension;
 
 function AnchorLink(props: AnchorProps) {
   // Initialize props.
@@ -143,19 +160,34 @@ function AnchorLink(props: AnchorProps) {
 export function ButtonLink(props: ButtonProps) {
   const {
     color,
-    size = 'md',
     className = '',
+    size = 'md',
     outline = false,
-    disabled
+    children,
+    loading,
+    symbol_
   } = props;
+  const disabled = props.disabled !== undefined ? props.disabled : loading;
   const anchorProps: AnchorProps = {
     ...props,
+    disabled,
+    symbol_: loading ? makeEmptyLinkSymbol(symbol_) : symbol_,
+    children: undefined,
     button: false,
     color: undefined,
-    className: `${className} btn btn-${size} ${color ? `btn-${!disabled && outline ? 'outline-' : ''}${color}` : ''}`
+    className: `${className} position-relative btn btn-${size} ${color ? `btn-${!disabled && outline ? 'outline-' : ''}${color}` : ''}`
   };
   return (
-    <AnchorLink {...anchorProps} />
+    <AnchorLink {...anchorProps}>
+      {loading
+        ? (<div>
+            <div className='position-absolute' style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+              <Spinner color='light' size='sm' />
+            </div>
+            <div className='o-0 d-inline-flex align-items-center flex-nowrap'>{children}</div>
+          </div>)
+        : children}
+    </AnchorLink>
   );
 }
 
