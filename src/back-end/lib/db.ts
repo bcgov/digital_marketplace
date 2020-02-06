@@ -9,7 +9,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/code-with-us';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -1342,5 +1342,170 @@ export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSe
       throw new Error('unable to create proposal');
     }
     return dbResult.value;
+  }));
+});
+
+interface UpdateCWUProposalParams extends Partial<Omit<CWUProposal, 'createdBy' | 'updatedBy' | 'opportunity' | 'proponent'>> {
+  createdBy?: Id;
+  updatedBy?: Id;
+  proponent: UpdateProponentRequestBody;
+}
+
+export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
+  const now = new Date();
+  const { attachments, ...restOfProposal } = proposal;
+  return valid(await connection.transaction(async trx => {
+    const [result] = await connection<RawCWUProposal>('cwuProposals')
+      .transacting(trx)
+      .where({ id: proposal.id })
+      .update({
+        ...restOfProposal,
+        updatedAt: now,
+        updatedBy: session.user.id
+      }, '*');
+
+    if (!result) {
+      throw new Error('unable to update proposal');
+    }
+
+    attachments?.forEach(async attachment => {
+      await connection('cwuProposalAttachments')
+        .transacting(trx)
+        .insert({
+          proposal: result.id,
+          file: attachment.id
+        });
+    });
+
+    const dbResult = await readOneCWUProposal(trx, result.id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update proposal');
+    }
+    return dbResult.value;
+  }));
+});
+
+interface CWUProposalStatusRecord {
+  id: Id;
+  proposal: Id;
+  createdAt: Date;
+  createdBy: Id;
+  status: CWUProposalStatus;
+  note: string;
+}
+
+export const updateCWUProposalStatus = tryDb<[Id, CWUProposalStatus, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, status, note, session) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    const [result] = await connection<CWUProposalStatusRecord>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        status,
+        note
+      }, '*');
+
+    // Update updatedAt/By stamp on proposal root record
+    await connection('cwuProposals')
+      .transacting(trx)
+      .where({ id: proposalId })
+      .update({
+        updatedAt: now,
+        updatedBy: session.user.id
+      });
+
+    if (!result) {
+      throw new Error('unable to update proposal');
+    }
+
+    const dbResult = await readOneCWUProposal(trx, result.proposal, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update proposal');
+    }
+
+    return dbResult.value;
+  }));
+});
+
+export const updateCWUProposalScore = tryDb<[Id, number, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, score, note, session) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    // Update status for proposal first
+    const [result] = await connection<CWUProposalStatusRecord>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        status: CWUProposalStatus.Review,
+        note
+      }, '*');
+
+    // Update updatedAt/By stamp and score on proposal root record
+    await connection('cwuProposals')
+      .transacting(trx)
+      .where({ id: proposalId })
+      .update({
+        score,
+        updatedAt: now,
+        updatedBy: session.user.id
+      });
+
+    if (!result) {
+      throw new Error('unable to update proposal');
+    }
+
+    const dbResult = await readOneCWUProposal(trx, result.proposal, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      throw new Error('unable to update proposal');
+    }
+
+    return dbResult.value;
+  }));
+});
+
+export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, note, session) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    // Update status for awarded proposal first
+    await connection<CWUProposalStatusRecord>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        status: CWUProposalStatus.Awarded,
+        note
+      }, '*');
+
+    // Update proposal root record
+    const [proposalRecord] = await connection<RawCWUProposal>('cwuProposals')
+      .where({ id: proposalId })
+      .update({
+        updatedAt: now,
+        updatedBy: session.user.id
+      }, '*');
+
+    // Update all other proposals on opportunity to Not Awarded
+    await connection('cwuProposalStatuses')
+      .transacting(trx)
+      .whereIn('proposal', async () => {
+        await connection('cwuProposals')
+          .where({ opportunity: proposalRecord?.opportunity });
+      })
+      .andWhereNot({ proposal: proposalId })
+      .update({
+        status: CWUProposalStatus.NotAwarded
+      });
+
+    // Update opportunity
+    await updateCWUOpportunityStatus(trx, proposalRecord.opportunity, CWUOpportunityStatus.Awarded, 'Awarded', session);
+
+    return await rawCWUProposalToCWUProposal(connection, session, proposalRecord);
   }));
 });

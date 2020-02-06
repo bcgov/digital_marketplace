@@ -49,6 +49,8 @@ export type CreateProponentRequestBody
   = ADT<'individual', CreateIndividualProponentRequestBody>
   | ADT<'organization', Id>;
 
+export type UpdateProponentRequestBody = CreateProponentRequestBody;
+
 export interface CreateRequestBody {
   opportunity: Id;
   proposalText: string;
@@ -76,18 +78,16 @@ export type UpdateRequestBody
   | ADT<'submit', string>
   | ADT<'score', { note: string, score: number }>
   | ADT<'award', string>
-  | ADT<'suspend', string>
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>;
 
-export type UpdateEditRequestBody = CreateIndividualProponentRequestBody;
+export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity'>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
-  | ADT<'score', string[]>
+  | ADT<'score', { score?: string[], note?: string[] }>
   | ADT<'award', string[]>
-  | ADT<'suspend', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>;
 
@@ -98,3 +98,18 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 }
 
 export type DeleteValidationErrors = BodyWithErrors;
+
+export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStatus): boolean {
+  switch (from) {
+    case CWUProposalStatus.Draft:
+      return to === CWUProposalStatus.Submitted;
+    case CWUProposalStatus.Submitted:
+      return [CWUProposalStatus.Withdrawn, CWUProposalStatus.Review].includes(to);
+    case CWUProposalStatus.Review:
+      return [CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to);
+    case CWUProposalStatus.Awarded:
+      return [CWUProposalStatus.Withdrawn].includes(to);
+    default:
+      return false;
+  }
+}

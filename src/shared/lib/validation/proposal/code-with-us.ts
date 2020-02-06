@@ -9,6 +9,14 @@ export function validateAdditionalComments(raw: string): Validation<string> {
   return validateGenericString(raw, 'Additional Comments', 0);
 }
 
+export function validateNote(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Note', 0);
+}
+
+export function validateScore(raw: number): Validation<number> {
+  return raw >= 0 ? valid(raw) : invalid(['Score not in valid range.']);
+}
+
 export function validateIndividualProponent(raw: any): Validation<CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors> {
   const { legalName, email, phone, street1, street2, city, region, mailCode, country } = raw;
   const validatedLegalName = validateGenericString(legalName, 'Legal Name');
