@@ -60,19 +60,22 @@ export interface CreateRequestBody {
   attachments: Id[];
 }
 
-export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
+export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'skills' | 'attachments'> {
+  skills?: string[][];
+  attachments?: string[][];
+}
 
 export type UpdateRequestBody
-  = ADT<'edit', UpdateDraftRequestBody>
+  = ADT<'edit', UpdateEditRequestBody>
   | ADT<'publish', string>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>;
 
-export type UpdateDraftRequestBody = CreateRequestBody;
+export type UpdateEditRequestBody = CreateRequestBody;
 
 type UpdateADTErrors
-  = ADT<'edit', UpdateDraftValidationErrors>
+  = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'publish', string[]>
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
@@ -84,7 +87,10 @@ export interface UpdateValidationErrors extends BodyWithErrors {
   proposal?: string[];
 }
 
-export type UpdateDraftValidationErrors = ErrorTypeFrom<UpdateDraftRequestBody>;
+export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'attachments' | 'skills'> {
+  attachments?: string[][];
+  skills?: string[][];
+}
 
 export type DeleteValidationErrors = BodyWithErrors;
 
@@ -103,6 +109,6 @@ export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportuni
   }
 }
 
-export const publicOpportunityStatuses = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
+export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
 
-export const privateOpportunitiesStatuses = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
+export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
