@@ -6,6 +6,7 @@ import * as DateField from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
+import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
@@ -15,11 +16,12 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+import SKILLS from 'shared/lib/data/skills';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, mapValid, valid, Validation } from 'shared/lib/validation';
+import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -32,7 +34,7 @@ export interface State {
   teaser: Immutable<LongText.State>;
   location: Immutable<ShortText.State>;
   reward: Immutable<NumberField.State>;
-  skills: Immutable<ShortText.State>;
+  skills: Immutable<SelectMulti.State>;
   remoteOk: boolean;
   // If remoteOk
   remoteDesc: Immutable<LongText.State>;
@@ -62,7 +64,7 @@ type InnerMsg
   | ADT<'teaser',            LongText.Msg>
   | ADT<'location',          ShortText.Msg>
   | ADT<'reward',            NumberField.Msg>
-  | ADT<'skills',            ShortText.Msg>
+  | ADT<'skills',            SelectMulti.Msg>
   | ADT<'remoteOk',          boolean>
   | ADT<'remoteDesc',        LongText.Msg>
 
@@ -140,13 +142,19 @@ export async function defaultState() {
       }
     })),
 
-    skills: immutable(await ShortText.init({
+    skills: immutable(await SelectMulti.init({
       errors: [],
-      validate: opportunityValidation.validateTitle, // TODO(Dhruv): change to validateSkills during/after creation of skills component
+      validate: v => {
+        const strings = v.map(({ value }) => value);
+        const validated0 = opportunityValidation.validateSkills(strings);
+        const validated1 = mapValid(validated0, () => v);
+        return mapInvalid(validated1, es => flatten(es));
+      },
       child: {
-        type: 'text',
-        value: '',
-        id: 'opportunity-skills'
+        value: [],
+        id: 'opportunity-skills',
+        creatable: true,
+        options: SelectMulti.stringsToOptions(SKILLS)
       }
     })),
 
@@ -320,7 +328,7 @@ export function getValues(state: Immutable<State>, status: CWUOpportunityResourc
     remoteDesc:          FormField.getValue(state.remoteDesc),
     location:            FormField.getValue(state.location),
     reward:              FormField.getValue(state.reward) || 0,
-    skills:              [FormField.getValue(state.skills)], // TODO(Jesse): How's this going to work?
+    skills:              SelectMulti.getValueAsStrings(state.skills), // TODO(Jesse): How's this going to work?
     description:         FormField.getValue(state.description),
 
     proposalDeadline:    DateField.valueToString(proposalDeadline),
@@ -403,7 +411,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['skills'],
-        childUpdate: ShortText.update,
+        childUpdate: SelectMulti.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('skills', value)
       });
@@ -568,7 +576,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
       </Col>
 
       <Col xs='12'>
-        <ShortText.view
+        <SelectMulti.view
           extraChildProps={{}}
           label='Required Skills'
           placeholder='Required Skills'
@@ -616,24 +624,24 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
         <DateField.view
           required
           extraChildProps={{}}
-          label='Start Date'
-          state={state.startDate}
-          dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
+          label='Assignment Date'
+          state={state.assignmentDate}
+          dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
       </Col>
 
       <Col xs='12' md='6'>
         <DateField.view
           required
           extraChildProps={{}}
-          label='Assignment Date'
-          state={state.assignmentDate}
-          dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
+          label='Proposed Start Date'
+          state={state.startDate}
+          dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
       </Col>
       <Col xs='12' md='6'>
         <DateField.view
           required
           extraChildProps={{}}
-          label='Assignment Date'
+          label='Completion Date'
           state={state.completionDate}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
       </Col>

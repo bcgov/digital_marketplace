@@ -1,5 +1,5 @@
 import * as FormField from 'front-end/lib/components/form-field';
-import Select, { coalesceOptions, Option, Options, SingleProps, SingleValue } from 'front-end/lib/components/form-field/lib/select';
+import Select, { coalesceOptions, MultiProps, MultiValue, Option, Options } from 'front-end/lib/components/form-field/lib/select';
 import { Immutable } from 'front-end/lib/framework';
 import { find } from 'lodash';
 import React from 'react';
@@ -7,12 +7,12 @@ import { ADT } from 'shared/lib/types';
 
 export { stringsToOptions, Options, OptionGroup, Option } from 'front-end/lib/components/form-field/lib/select';
 
-export type Value = SingleValue;
+export type Value = MultiValue;
 
 interface ChildState extends FormField.ChildStateBase<Value> {
   options: Options;
   creatable?: boolean;
-  formatGroupLabel?: SingleProps['formatGroupLabel'];
+  formatGroupLabel?: MultiProps['formatGroupLabel'];
 }
 
 type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'options' | 'creatable' | 'formatGroupLabel'>;
@@ -43,7 +43,9 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 
 const ChildView: ChildComponent['view'] = props => {
   const { state, dispatch, placeholder = '', className = '', validityClassName, disabled = false } = props;
-  const selectProps: SingleProps = {
+  const selectProps: MultiProps = {
+    multi: true,
+    creatable: state.creatable,
     name: state.id,
     id: state.id,
     placeholder,
@@ -75,21 +77,26 @@ export const view = component.view;
 
 export default component;
 
-export function setValueFromString(state: Immutable<ChildState>, value?: string): Immutable<ChildState> {
-  const options = coalesceOptions(state.options);
-  const found: Option | null = find(options, { value }) || null;
-  if (state.creatable && !found && value) {
-    return {
-      ...state,
-      value: {
+export function getValueAsStrings(state: Immutable<State>): string[] {
+  const value = FormField.getValue(state);
+  return value ? value.map(({ value }) => value) : [];
+}
+
+export function setValueFromStrings(state: Immutable<State>, values?: string[]): Immutable<State> {
+  const options = coalesceOptions(state.child.options);
+  if (!values) { return state; }
+  state = FormField.setValue(state, []);
+  return values.reduce((state, value) => {
+    const found: Option | null = find(options, { value }) || null;
+    if (state.child.creatable && !found && value) {
+      return FormField.updateValue(state, vs => vs.concat({
         value,
         label: value
-      }
-    };
-  } else {
-    return {
-      ...state,
-      value: found
-    };
-  }
+      }));
+    } else if (found) {
+      return FormField.updateValue(state, vs => vs.concat(found));
+    } else {
+      return state;
+    }
+  }, state);
 }

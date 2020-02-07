@@ -27,6 +27,7 @@ export function validateReward(raw: string | number): Validation<number> {
 }
 
 export function validateSkills(raw: string[]): ArrayValidation<string> {
+  if (!raw.length) { return invalid([['Please select at least one skill.']]); }
   const validatedArray = validateArray(raw, v => validateGenericString(v, 'Skill'));
   return mapValid(validatedArray, skills => uniq(skills));
 }

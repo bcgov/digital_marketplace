@@ -2,8 +2,8 @@ import { View } from 'front-end/lib/framework';
 import React from 'react';
 import Select from 'react-select';
 import { Props as SelectProps } from 'react-select/base';
-import { OptionTypeBase } from 'react-select/src/types';
-import { ADT } from 'shared/lib/types';
+import SelectCreatable from 'react-select/creatable';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface Option<Value = string> {
   value: Value;
@@ -19,6 +19,10 @@ export type Options
   = ADT<'options', Option[]>
   | ADT<'optionGroups', OptionGroup[]>;
 
+export function stringsToOptions(values: string[]): ADT<'options', Option[]> {
+  return adt('options', values.map(value => ({ value, label: value })));
+}
+
 export function coalesceOptions(options: Options): Option[] {
   switch (options.tag) {
     case 'options':
@@ -28,28 +32,43 @@ export function coalesceOptions(options: Options): Option[] {
   }
 }
 
-export type Value = Option | undefined | null;
+export type SingleValue = Option | undefined | null;
 
-export interface Props {
+export type MultiValue = Option[];
+
+export interface BaseProps {
   name: string;
   id: string;
   placeholder: string;
-  value: Value;
   disabled?: boolean;
   autoFocus?: boolean;
   options: Options;
   formatGroupLabel?: View<OptionGroup>;
   className?: string;
-  onChange(value: Value): void;
+  creatable?: boolean;
 }
 
+export interface SingleProps extends BaseProps {
+  multi?: false;
+  value: SingleValue;
+  onChange(value: SingleValue): void;
+}
+
+export interface MultiProps extends BaseProps {
+  multi: true;
+  value: MultiValue;
+  onChange(value: MultiValue): void;
+}
+
+export type Props = SingleProps | MultiProps;
+
 export const view: View<Props> = props => {
-  const { options, formatGroupLabel, disabled = false, className = '', onChange } = props;
-  const selectProps: SelectProps<Value & OptionTypeBase> = {
+  const { options, formatGroupLabel, disabled = false, className = '' } = props;
+  const baseProps = {
     ...props,
-    // Cast this type here because react-select's type definitions for this prop
-    // use record syntax, causing the type-system to not recognize the "label" property in OptionGroup.
-    formatGroupLabel: formatGroupLabel as SelectProps<Value & OptionTypeBase>['formatGroupLabel'],
+    value: undefined,
+    onChange: undefined,
+    formatGroupLabel,
     options: options.value,
     isSearchable: true,
     isClearable: true,
@@ -95,16 +114,46 @@ export const view: View<Props> = props => {
           color: undefined
         };
       }
-    },
-    onChange(value, action) {
-      if (value && Array.isArray(value)) {
-        onChange(value[0]);
-      } else {
-        onChange(value as Value);
-      }
     }
-  };
-  return (<Select {...selectProps} />);
+  } as SelectProps;
+  const selectProps = (() => {
+    if (props.multi) {
+      return {
+        ...baseProps,
+        isMulti: true,
+        value: props.value,
+        onChange(value, action) {
+          if (value && Array.isArray(value)) {
+            props.onChange(value);
+          } else if (value) {
+            props.onChange([value] as MultiValue);
+          } else {
+            props.onChange([]);
+          }
+        }
+      } as SelectProps;
+    } else {
+      return {
+        ...baseProps,
+        isMulti: false,
+        value: props.value,
+        onChange(value, action) {
+          if (value && Array.isArray(value)) {
+            props.onChange(value[0]);
+          } else if (value) {
+            props.onChange(value as SingleValue);
+          } else {
+            props.onChange(null);
+          }
+        }
+      } as SelectProps;
+    }
+  })();
+  if (props.creatable) {
+    return (<SelectCreatable {...selectProps} />);
+  } else {
+    return (<Select {...selectProps} />);
+  }
 };
 
 export default view;

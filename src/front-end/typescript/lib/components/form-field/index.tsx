@@ -232,6 +232,11 @@ export function setValue<Value, ChildState extends ChildStateBase<Value>>(state:
   return state.update('child', child => child.set('value', value));
 }
 
+export function updateValue<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>, fn: (_: Value) => Value): Immutable<State<Value, ChildState>> {
+  const value = getValue(state);
+  return setValue(state, fn(value));
+}
+
 export function setErrors<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>, errors: string[]): Immutable<State<Value, ChildState>> {
   return state.set('errors', errors);
 }
