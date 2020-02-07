@@ -3,7 +3,7 @@ import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
@@ -68,58 +68,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State,  Msg> = (params) => {
   const state = params.state;
   const dispatch = params.dispatch;
-
-  const saveButtonDisabled = true; // TODO(Jesse): How do we determine this?
   return (
     <div className='d-flex flex-column h-100 justify-content-between'>
-
       <Form.component.view
         state={state.formState}
         dispatch={mapComponentDispatch(dispatch, value => adt('opportunityForm' as const, value))}
       />
-
-      <div className='d-flex justify-content-between'>
-        <div>
-          <Link
-            disabled={saveButtonDisabled}
-            button
-            color='secondary'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-            onClick={() => dispatch(adt('submit', 'DRAFT' as CWUOpportunityResource.CWUOpportunityStatus)) }  // TODO(Jesse): Why must we cast here?
-          >
-            Save Draft
-          </Link>
-        </div>
-
-        <div>
-          <Link
-            button
-            className='mr-1'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-          >
-            Cancel
-          </Link>
-
-          <Link
-            button
-            className='mr-3'
-            color='secondary'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-          >
-            Prev
-          </Link>
-
-          <Link
-            button
-            color='primary'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-            onClick={() => dispatch(adt('submit', 'PUBLISHED' as CWUOpportunityResource.CWUOpportunityStatus)) }  // TODO(Jesse): Why must we cast here?
-          >
-            Publish
-          </Link>
-        </div>
-      </div>
-
     </div>
   );
 };
@@ -140,6 +94,26 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
         </span>
       )
     })
+  },
+  getContextualActions() {
+    return adt('links', [
+      {
+        children: 'Publish',
+        symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
+        button: true,
+        color: 'primary'
+      },
+      {
+        children: 'Save Draft',
+        symbol_: leftPlacement(iconLinkSymbol('save')),
+        button: true,
+        color: 'success'
+      },
+      {
+        children: 'Cancel',
+        color: 'white'
+      }
+    ]);
   },
   getMetadata() {
     return makePageMetadata('Create Opportunity');
