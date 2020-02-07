@@ -1,6 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
 import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
-import { Router } from 'front-end/lib/framework';
+import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import { getString } from 'shared/lib';
@@ -30,7 +30,7 @@ export function back() {
   }
 }
 
-const router: Router<Route> = {
+const router: Router.Router<Route> = {
 
   // Note(Jesse): @add_new_page_location
 
@@ -235,7 +235,7 @@ const router: Router<Route> = {
       }
     },
     {
-      path: '*',
+      path: '(.*)',
       makeRoute() {
         return {
           tag: 'notice',

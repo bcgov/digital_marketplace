@@ -120,6 +120,10 @@ input[type="time"] {
   }
 }
 
+textarea {
+  resize: none;
+}
+
 .app {
   transition-property: filter, opacity;
   transition-duration: $transition-duration;
@@ -235,7 +239,8 @@ button {
   }
 }
 
-a {
+a,
+.a {
   cursor: pointer;
 
   &.disabled {

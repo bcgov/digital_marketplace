@@ -2,10 +2,12 @@ import { MARKDOWN_HELP_URL } from 'front-end/config';
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/framework';
+import FileLink from 'front-end/lib/views/file-link';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { Spinner } from 'reactstrap';
+import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { ADT } from 'shared/lib/types';
 import { Validation } from 'shared/lib/validation';
 
@@ -177,7 +179,7 @@ interface ControlIconProps {
 
 const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '' }) => {
   return (
-    <Link color='secondary' className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ cursor: 'default', lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
+    <Link color='secondary' className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
       <Icon name={name} width={width} height={height} />
       {children ? children : ''}
     </Link>
@@ -191,12 +193,9 @@ const ControlSeparator: View<{}> = () => {
 const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false }) => {
   const isLoading = state.loading > 0;
   const isDisabled = disabled || isLoading;
-  const onSelectFile = (event: ChangeEvent<HTMLInputElement>) => {
+  const onSelectFile = (file: File) => {
     if (isDisabled) { return; }
-    const file = event.currentTarget.files && event.currentTarget.files[0];
-    if (file) {
-      dispatch({ tag: 'controlImage', value: file });
-    }
+    dispatch({ tag: 'controlImage', value: file });
   };
   return (
     <div className='bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 form-control border-0'>
@@ -246,21 +245,24 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         className='mr-3'
         onClick={() => dispatch({ tag: 'controlOrderedList', value: undefined })} />
       <ControlSeparator />
-      <ControlIcon name='image' disabled={isDisabled} width={1.1} height={1.1}>
-        <input
-          type='file'
-          className='position-absolute w-100 h-100'
-          style={{ top: '0px', left: '0px', opacity: 0 }}
-          value=''
-          onChange={onSelectFile} />
-      </ControlIcon>
-      <div className='ml-auto'>
+      <FileLink
+        className='p-0'
+        disabled={isDisabled}
+        style={{
+          pointerEvents: isDisabled ? 'none' : undefined
+        }}
+        onChange={onSelectFile}
+        accept={SUPPORTED_IMAGE_EXTENSIONS}
+        color='secondary'>
+        <Icon name='image' width={1.1} height={1.1} />
+      </FileLink>
+      <div className='ml-auto d-flex align-items-center'>
         <Spinner
           size='xs'
           color='secondary'
           className={`o-50 ${isLoading ? '' : 'd-none'}`} />
         <Link newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
-          <Icon name='markdown' />
+          <Icon name='markdown' width={1.25} height={1.25} />
         </Link>
       </div>
     </div>

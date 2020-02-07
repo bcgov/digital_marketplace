@@ -4,7 +4,7 @@ import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, U
 import * as api from 'front-end/lib/http/api';
 import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
 import { AvatarFiletype } from 'front-end/lib/types';
-import FileButton from 'front-end/lib/views/file-button';
+import FileLink from 'front-end/lib/views/file-link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
@@ -175,7 +175,8 @@ export const view: View<Props> = props => {
               src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(state.user)} />
             <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
               <div className='mb-2'><b>Profile Picture (Optional)</b></div>
-              <FileButton
+              <FileLink
+                button
                 outline
                 size='sm'
                 style={{
@@ -186,7 +187,7 @@ export const view: View<Props> = props => {
                 accept={SUPPORTED_IMAGE_EXTENSIONS}
                 color='primary'>
                 Choose Image
-              </FileButton>
+              </FileLink>
               {state.newAvatarImage && state.newAvatarImage.errors.length
                 ? (<div className='mt-2 small text-danger'>{state.newAvatarImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
                 : null}

@@ -76,7 +76,7 @@ export const users: CrudApi<UserResourceTypes> = {
   create: undefined
 };
 
-// CWUOpportunity
+// CodeWithUs Opportunities
 
 interface CWUOpportunityResourceSimpleResourceTypesParams {
   record: CWUOpportunityResource.CWUOpportunity;
@@ -100,11 +100,17 @@ interface CWUOpportunityResourceTypes extends Omit<SimpleResourceTypes<CWUOpport
 
 const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('code-with-us');
 
-export const cwuOpportunity: CrudApi<CWUOpportunityResourceTypes> = {
+const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = {
   ...makeSimpleCrudApi<CWUOpportunityResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
   readMany: makeReadMany<CWUOpportunityResourceTypes['readMany']>({
     routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
   })
+};
+
+// Opportunities
+
+export const opportunities = {
+  cwu: cwuOpportunities
 };
 
 // Organizations

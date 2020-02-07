@@ -4,8 +4,9 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
@@ -14,6 +15,7 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
+import { fileBlobPath } from 'shared/lib/resources/file';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -31,11 +33,11 @@ export interface State {
   reward: Immutable<ShortText.State>;
   skills: Immutable<ShortText.State>;
   remoteOk: boolean;
-    // If remoteOk
-    remoteDesc: Immutable<ShortText.State>;
+  // If remoteOk
+  remoteDesc: Immutable<LongText.State>;
 
   // Description Tab
-  description: Immutable<LongText.State>;
+  description: Immutable<RichMarkdownEditor.State>;
 
   // Details Tab
   proposalDeadline: Immutable<DateField.State>;
@@ -61,10 +63,10 @@ type InnerMsg
   | ADT<'reward',            ShortText.Msg>
   | ADT<'skills',            ShortText.Msg>
   | ADT<'remoteOk',          boolean>
-  | ADT<'remoteDesc',        ShortText.Msg>
+  | ADT<'remoteDesc',        LongText.Msg>
 
   // Description Tab
-  | ADT<'description',       LongText.Msg>
+  | ADT<'description',       RichMarkdownEditor.Msg>
 
   // Details Tab
   | ADT<'proposalDeadline',    DateField.Msg>
@@ -156,22 +158,38 @@ export async function defaultState() {
       }
     })),
 
-    remoteDesc: immutable(await ShortText.init({
+    remoteDesc: immutable(await LongText.init({
       errors: [],
       validate: opportunityValidation.validateRemoteDesc,
       child: {
-        type: 'text',
         value: '',
         id: 'opportunity-remote-desc'
       }
     })),
 
-    description: immutable(await LongText.init({
+    description: immutable(await RichMarkdownEditor.init({
       errors: [],
       validate: opportunityValidation.validateDescription,
       child: {
         value: '',
-        id: 'opportunity-description'
+        id: 'opportunity-description',
+        async uploadFile(file) {
+          const result = await api.files.create({
+            name: file.name,
+            file,
+            metadata: [adt('any')]
+          });
+          if (api.isValid(result)) {
+            return valid({
+              name: result.value.name,
+              url: fileBlobPath(result.value)
+            });
+          } else {
+            return invalid([
+              'Unable to upload file.'
+            ]);
+          }
+        }
       }
     })),
 
@@ -317,7 +335,7 @@ function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportuni
 
 export async function persist(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
   const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state, status);
-  const apiResult = await api.cwuOpportunity.create(formValues);
+  const apiResult = await api.opportunities.cwu.create(formValues);
 
   switch (apiResult.tag) {
     case 'valid':
@@ -396,7 +414,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['description'],
-        childUpdate: LongText.update,
+        childUpdate: RichMarkdownEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('description', value)
       });
@@ -477,6 +495,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <ShortText.view
           extraChildProps={{}}
           label='Title'
+          placeholder='Opportunity Title'
           required
           state={state.title}
           dispatch={mapComponentDispatch(dispatch, value => adt('title' as const, value))} />
@@ -486,40 +505,46 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <LongText.view
           extraChildProps={{}}
           label='Teaser'
+          placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
+          style={{ height: '160px' }}
           state={state.teaser}
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
 
-      <Col md='12' className='py-2'>
-        <div className=''><strong>Remote Ok?</strong></div>
-          <Radio
-            id='remote-ok-true'
-            label='Yes'
-            checked={state.remoteOk}
-            onClick={ () => { dispatch(adt('remoteOk' as const, true)); } } />
-          <Radio
-            id='remote-ok-false'
-            label='No'
-            checked={!state.remoteOk}
-            onClick={ () => { dispatch(adt('remoteOk' as const, false)); } } />
+      <Col md='12' className='pb-3'>
+        <div className=''>
+          <label className='font-weight-bold'>Remote OK?</label>
+          <FormField.ViewRequiredAsterisk />
+        </div>
+        <Radio
+          id='remote-ok-true'
+          label='Yes'
+          checked={state.remoteOk}
+          onClick={() => dispatch(adt('remoteOk' as const, true))} />
+        <Radio
+          id='remote-ok-false'
+          label='No'
+          checked={!state.remoteOk}
+          onClick={() => dispatch(adt('remoteOk' as const, false))} />
       </Col>
 
-      { state.remoteOk ?
-          <Col xs='12'>
-            <ShortText.view
+      {state.remoteOk
+        ? (<Col xs='12'>
+            <LongText.view
               extraChildProps={{}}
               label='Remote Description'
+              placeholder={`Provide further information about this opportunity's remote work options.`}
+              style={{ height: '120px' }}
               state={state.remoteDesc}
               dispatch={mapComponentDispatch(dispatch, value => adt('remoteDesc' as const, value))} />
-          </Col>
-          :
-          null
-      }
+          </Col>)
+        : null}
 
       <Col md='8' xs='12'>
         <ShortText.view
           extraChildProps={{}}
           label='Location'
+          placeholder='Location'
           required
           state={state.location}
           dispatch={mapComponentDispatch(dispatch, value => adt('location' as const, value))} />
@@ -529,6 +554,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <ShortText.view
           extraChildProps={{}}
           label='Fixed-Price Reward'
+          placeholder='Fixed-Price Reward'
           required
           state={state.reward}
           dispatch={mapComponentDispatch(dispatch, value => adt('reward' as const, value))} />
@@ -538,6 +564,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <ShortText.view
           extraChildProps={{}}
           label='Required Skills'
+          placeholder='Required Skills'
           required
           state={state.skills}
           dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
@@ -552,9 +579,12 @@ const DescriptionView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
     <Row>
 
       <Col xs='12'>
-        <LongText.view
+        <RichMarkdownEditor.view
           extraChildProps={{}}
+          required
           label='Description'
+          placeholder='Describe this opportunity.'
+          style={{ height: '60vh', minHeight: '400px' }}
           state={state.description}
           dispatch={mapComponentDispatch(dispatch, value => adt('description' as const, value))} />
       </Col>
@@ -568,41 +598,37 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
     <Row>
 
       <Col xs='12' md='6'>
-        <Col xs='12'>
-          <DateField.view
-            required
-            extraChildProps={{}}
-            label='Proposal Deadline'
-            state={state.proposalDeadline}
-            dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
-        </Col>
-        <Col xs='12'>
-          <DateField.view
-            required
-            extraChildProps={{}}
-            label='Start Date'
-            state={state.startDate}
-            dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
-        </Col>
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label='Proposal Deadline'
+          state={state.proposalDeadline}
+          dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
+      </Col>
+      <Col xs='12' md='6'>
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label='Start Date'
+          state={state.startDate}
+          dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
       </Col>
 
       <Col xs='12' md='6'>
-        <Col xs='12'>
-          <DateField.view
-            required
-            extraChildProps={{}}
-            label='Assignment Date'
-            state={state.assignmentDate}
-            dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
-        </Col>
-        <Col xs='12'>
-          <DateField.view
-            required
-            extraChildProps={{}}
-            label='Assignment Date'
-            state={state.completionDate}
-            dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
-        </Col>
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label='Assignment Date'
+          state={state.assignmentDate}
+          dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
+      </Col>
+      <Col xs='12' md='6'>
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label='Assignment Date'
+          state={state.completionDate}
+          dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
       </Col>
 
       <Col xs='12'>
@@ -665,56 +691,51 @@ const AttachmentsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
 };
 
 // @duplicated-tab-helper-functions
-function isActiveTab(state: State, activeTab: TabValues): boolean {
-  const Result: boolean = state.activeTab === activeTab;
-  return Result;
+function isActiveTab(state: State, tab: TabValues): boolean {
+  return state.activeTab === tab;
 }
 
 // @duplicated-tab-helper-functions
-function renderTab(params: any, tabName: TabValues): JSX.Element {
-  const state = params.state;
-  const dispatch = params.dispatch;
+const TabLink: View<ComponentViewProps<State, Msg> & { tab: TabValues; }> = ({ state, dispatch, tab }) => {
+  const isActive = isActiveTab(state, tab);
   return (
     <NavItem>
-      <NavLink active={isActiveTab(state, tabName)} onClick={() => {dispatch(adt('updateActiveTab', tabName)); }}> {tabName} </NavLink>
+      <NavLink active={isActive} className={`text-nowrap ${isActive ? '' : 'text-primary'}`} onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>{tab}</NavLink>
     </NavItem>
   );
-}
+};
 
-const view: ComponentView<State,  Msg> = (params) => {
-  const state = params.state;
+const view: ComponentView<State,  Msg> = props => {
+  const state = props.state;
 
-  let activeView = <div>No Active view selected</div>;
-  switch (state.activeTab) {
-    case 'Overview': {
-      activeView = <OverviewView {...params} /> ;
-      break;
+  const activeTab = (() => {
+    switch (state.activeTab) {
+      case 'Overview': {
+        return (<OverviewView {...props} />) ;
+        break;
+      }
+      case 'Description': {
+        return (<DescriptionView {...props} />) ;
+      }
+      case 'Details': {
+        return (<DetailsView {...props} />) ;
+      }
+      case 'Attachments': {
+        return (<AttachmentsView {...props} />) ;
+      }
     }
-    case 'Description': {
-      activeView = <DescriptionView {...params} /> ;
-      break;
-    }
-    case 'Details': {
-      activeView = <DetailsView {...params} /> ;
-      break;
-    }
-    case 'Attachments': {
-      activeView = <AttachmentsView {...params} /> ;
-      break;
-    }
-  }
+  })();
 
   return (
     <div className='d-flex flex-column h-100 justify-content-between'>
       <div>
-        <Nav tabs className='mb-5'>
-          {renderTab(params, 'Overview')}
-          {renderTab(params, 'Description')}
-          {renderTab(params, 'Details')}
-          {renderTab(params, 'Attachments')}
+        <Nav tabs className='mb-4'>
+          <TabLink {...props} tab='Overview' />
+          <TabLink {...props} tab='Description' />
+          <TabLink {...props} tab='Details' />
+          <TabLink {...props} tab='Attachments' />
         </Nav>
-
-        {activeView}
+        {activeTab}
       </div>
     </div>
   );
