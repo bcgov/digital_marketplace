@@ -113,6 +113,27 @@ export const view: View<Props> = props => {
           fontSize: undefined,
           color: undefined
         };
+      },
+      multiValue(styles) {
+        return {
+          ...styles,
+          backgroundColor: '#52489C'
+        };
+      },
+      multiValueLabel(styles) {
+        return {
+          ...styles,
+          color: 'white'
+        };
+      },
+      multiValueRemove(styles) {
+        return {
+          ...styles,
+          color: 'white',
+          ':hover': {
+            backgroundColor: '#DC3545'
+          }
+        };
       }
     }
   } as SelectProps;
