@@ -156,6 +156,22 @@ export function validateStringInArray(value: string, availableValues: immutable.
   }
 }
 
+export function validateNumber(raw: string | number, min?: number, max?: number, name = 'number', article = 'a'): Validation<number> {
+  const parsed = parseInt(`${raw}`, 10);
+  if (isNaN(parsed)) { return invalid([`Please enter a valid ${name}.`]); }
+  const errors: string[] = [];
+  if (min !== undefined && parsed < min) {
+    errors.push(`Please enter ${article} ${name} greater than or equal to ${min}.`);
+  }
+  if (max !== undefined && parsed > max) {
+    errors.push(`Please enter ${article} ${name} less than or equal to ${max}.`);
+  }
+  if (errors.length) {
+    return invalid(errors);
+  }
+  return valid(parsed);
+}
+
 // Date Validators.
 
 function parseDate(raw: string): Date | null {

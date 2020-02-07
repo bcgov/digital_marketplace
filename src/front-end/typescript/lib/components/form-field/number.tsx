@@ -2,17 +2,17 @@ import * as FormField from 'front-end/lib/components/form-field';
 import React from 'react';
 import { ADT } from 'shared/lib/types';
 
-export type Value = number | undefined;
+export type Value = number | null;
 
 export function parseValue(raw: string): Value {
   const parsed = parseInt(raw, 10);
-  if (isNaN(parsed)) { return undefined; }
+  if (isNaN(parsed)) { return null; }
   return parsed;
 }
 
 interface ChildState extends FormField.ChildStateBase<Value> {
-  min?: Value;
-  max?: Value;
+  min?: number;
+  max?: number;
 }
 
 type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'min' | 'max'>;
@@ -49,7 +49,7 @@ const ChildView: ChildComponent['view'] = props => {
       type='number'
       min={state.min}
       max={state.max}
-      value={state.value}
+      value={state.value === null ? undefined : state.value}
       className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = parseValue(e.currentTarget.value);

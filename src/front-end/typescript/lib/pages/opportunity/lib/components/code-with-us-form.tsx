@@ -4,6 +4,7 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
@@ -18,7 +19,7 @@ import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
+import { invalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
@@ -30,7 +31,7 @@ export interface State {
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
   location: Immutable<ShortText.State>;
-  reward: Immutable<ShortText.State>;
+  reward: Immutable<NumberField.State>;
   skills: Immutable<ShortText.State>;
   remoteOk: boolean;
   // If remoteOk
@@ -60,7 +61,7 @@ type InnerMsg
   | ADT<'title',             ShortText.Msg>
   | ADT<'teaser',            LongText.Msg>
   | ADT<'location',          ShortText.Msg>
-  | ADT<'reward',            ShortText.Msg>
+  | ADT<'reward',            NumberField.Msg>
   | ADT<'skills',            ShortText.Msg>
   | ADT<'remoteOk',          boolean>
   | ADT<'remoteDesc',        LongText.Msg>
@@ -85,23 +86,11 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-export function validateRewardString(raw: string): Validation<string> {
-  const validationResult = opportunityValidation.validateReward(parseInt(raw, 10));
-  if (validationResult.tag === 'valid') {
-    const value = validationResult.value.toString();
-    return({ tag: 'valid', value });
-  } else {
-    return validationResult;
-  }
-}
-
-export function validateDate(raw: DateField.Value): Validation<DateField.Value> {
-  const value = DateField.valueToString(raw);
-  if (opportunityValidation.validateDate(value).tag === 'valid') {
-    return valid(raw);
-  } else {
-    return invalid(['Please enter a valid date.']);
-  }
+function validateDate(validate: (_: string) => Validation<Date>): (value: DateField.Value) => Validation<DateField.Value> {
+  return raw => {
+    const value = DateField.valueToString(raw);
+    return mapValid(validate(value), () => raw);
+  };
 }
 
 export async function defaultState() {
@@ -138,13 +127,16 @@ export async function defaultState() {
       }
     })),
 
-    reward: immutable(await ShortText.init({
+    reward: immutable(await NumberField.init({
       errors: [],
-      validate: validateRewardString,
+      validate: v => {
+        if (v === null) { return valid(null); }
+        return opportunityValidation.validateReward(v);
+      },
       child: {
-        type: 'text',
-        value: '',
-        id: 'opportunity-reward'
+        value: null,
+        id: 'opportunity-reward',
+        min: 1
       }
     })),
 
@@ -195,7 +187,7 @@ export async function defaultState() {
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      validate: validateDate,
+      validate: validateDate(opportunityValidation.validateProposalDeadline),
       child: {
         value: null,
         id: 'opportunity-proposal-deadline'
@@ -204,7 +196,7 @@ export async function defaultState() {
 
     startDate: immutable(await DateField.init({
       errors: [],
-      validate: validateDate,
+      validate: validateDate(opportunityValidation.validateStartDate),
       child: {
         value: null,
         id: 'opportunity-start-date'
@@ -213,7 +205,7 @@ export async function defaultState() {
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      validate: validateDate,
+      validate: validateDate(opportunityValidation.validateAssignmentDate),
       child: {
         value: null,
         id: 'opportunity-assignment-date'
@@ -222,7 +214,7 @@ export async function defaultState() {
 
     completionDate: immutable(await DateField.init({
       errors: [],
-      validate: validateDate,
+      validate: validateDate(opportunityValidation.validateCompletionDate),
       child: {
         value: null,
         id: 'opportunity-completion-date'
@@ -298,7 +290,23 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
 
 type Errors = CWUOpportunityResource.CreateValidationErrors;
 
-function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): CWUOpportunityResource.CreateRequestBody {
+export function isValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.title)                      &&
+    FormField.isValid(state.teaser)                          &&
+    (!state.remoteOk || FormField.isValid(state.remoteDesc)) &&
+    FormField.isValid(state.location)                        &&
+    FormField.isValid(state.reward)                          &&
+    FormField.isValid(state.description)                     &&
+    FormField.isValid(state.proposalDeadline)                &&
+    FormField.isValid(state.assignmentDate)                  &&
+    FormField.isValid(state.startDate)                       &&
+    FormField.isValid(state.completionDate)                  &&
+    FormField.isValid(state.submissionInfo)                  &&
+    FormField.isValid(state.acceptanceCriteria)              &&
+    FormField.isValid(state.evaluationCriteria);
+}
+
+export function getValues(state: Immutable<State>, status: CWUOpportunityResource.CWUOpportunityStatus): CWUOpportunityResource.CreateRequestBody {
 
   const proposalDeadline = FormField.getValue(state.proposalDeadline);
   const startDate        = FormField.getValue(state.startDate);
@@ -311,7 +319,7 @@ function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportuni
     remoteOk:            state.remoteOk,
     remoteDesc:          FormField.getValue(state.remoteDesc),
     location:            FormField.getValue(state.location),
-    reward:              Number.parseInt(FormField.getValue(state.reward), 10),
+    reward:              FormField.getValue(state.reward) || 0,
     skills:              [FormField.getValue(state.skills)], // TODO(Jesse): How's this going to work?
     description:         FormField.getValue(state.description),
 
@@ -333,16 +341,15 @@ function getFormValues(state: State, status: CWUOpportunityResource.CWUOpportuni
   return result;
 }
 
-export async function persist(state: State, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
-  const formValues: CWUOpportunityResource.CreateRequestBody = getFormValues(state, status);
+export async function persist(state: Immutable<State>, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
+  const formValues: CWUOpportunityResource.CreateRequestBody = getValues(state, status);
   const apiResult = await api.opportunities.cwu.create(formValues);
-
   switch (apiResult.tag) {
     case 'valid':
       return valid(state);
     case 'unhandled':
     case 'invalid':
-      setErrors(immutable(state), apiResult.value);
+      setErrors(state, apiResult.value);
       return invalid(['Error creating the Opportunity.']);
   }
 }
@@ -387,7 +394,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['reward'],
-        childUpdate: ShortText.update,
+        childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('reward', value)
       });
@@ -506,7 +513,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Teaser'
           placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
-          style={{ height: '160px' }}
+          style={{ height: '200px' }}
           state={state.teaser}
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
@@ -534,7 +541,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
               extraChildProps={{}}
               label='Remote Description'
               placeholder={`Provide further information about this opportunity's remote work options.`}
-              style={{ height: '120px' }}
+              style={{ height: '160px' }}
               state={state.remoteDesc}
               dispatch={mapComponentDispatch(dispatch, value => adt('remoteDesc' as const, value))} />
           </Col>)
@@ -551,7 +558,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
       </Col>
 
       <Col md='8' xs='12'>
-        <ShortText.view
+        <NumberField.view
           extraChildProps={{}}
           label='Fixed-Price Reward'
           placeholder='Fixed-Price Reward'
@@ -635,6 +642,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
         <ShortText.view
           extraChildProps={{}}
           label='Project Submission Info'
+          placeholder='e.g. GitHub repository URL'
           state={state.submissionInfo}
           dispatch={mapComponentDispatch(dispatch, value => adt('submissionInfo' as const, value))} />
       </Col>
@@ -644,6 +652,8 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           required
           extraChildProps={{}}
           label='Acceptance Criteria'
+          placeholder={`Describe this opportunity's acceptance criteria.`}
+          style={{ height: '300px' }}
           state={state.acceptanceCriteria}
           dispatch={mapComponentDispatch(dispatch, value => adt('acceptanceCriteria' as const, value))} />
       </Col>
@@ -653,6 +663,8 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           required
           extraChildProps={{}}
           label='Evaluation Criteria'
+          placeholder={`Describe this opportunity's evaluation criteria.`}
+          style={{ height: '300px' }}
           state={state.evaluationCriteria}
           dispatch={mapComponentDispatch(dispatch, value => adt('evaluationCriteria' as const, value))} />
       </Col>

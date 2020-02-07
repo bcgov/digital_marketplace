@@ -2,13 +2,11 @@ import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
-// import * as api from 'front-end/lib/http/api';
-import * as Form from 'front-end/lib/pages/opportunity/code-with-us/form';
+import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
-// import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -16,10 +14,9 @@ export interface State {
   formState: Immutable<Form.State>;
 }
 
-type InnerMsg =
-    ADT<'submit', CWUOpportunityResource.CWUOpportunityStatus> |
-    ADT<'opportunityForm', Form.Msg>
-    ;
+type InnerMsg
+  = ADT<'submit', CWUOpportunityResource.CWUOpportunityStatus>
+  | ADT<'opportunityForm', Form.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 

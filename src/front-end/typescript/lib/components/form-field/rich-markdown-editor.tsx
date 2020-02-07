@@ -270,7 +270,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
   const isLoading = state.loading > 0;
   const isDisabled = disabled || isLoading;
   const onChangeSelection = (target: EventTarget & HTMLTextAreaElement) => {
@@ -287,6 +287,7 @@ const ChildView: ChildComponent['view'] = props => {
       <textarea
         id={state.id}
         value={state.value}
+        placeholder={placeholder}
         disabled={isDisabled}
         className={`${validityClassName} form-control flex-grow-1 border-left-0 border-right-0 border-bottom-0`}
         style={{
