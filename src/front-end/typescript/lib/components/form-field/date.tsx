@@ -1,7 +1,9 @@
 import * as FormField from 'front-end/lib/components/form-field';
+import { Immutable } from 'front-end/lib/framework';
 import { padStart } from 'lodash';
 import React from 'react';
 import { ADT } from 'shared/lib/types';
+import { mapValid, Validation } from 'shared/lib/validation';
 
 export type Value
   = [number, number, number] // [YYYY, MM, DD]
@@ -23,6 +25,17 @@ function prefixZero(n: number): string {
 
 export function valueToString(value?: Value): string {
   return value ? `${value[0]}-${prefixZero(value[1])}-${prefixZero(value[2])}` : '';
+}
+
+export function getValueAsString(state: Immutable<State>): string {
+  return valueToString(FormField.getValue(state));
+}
+
+export function validateDate(validate: (_: string) => Validation<Date>): (value: Value) => Validation<Value> {
+  return raw => {
+    const value = valueToString(raw);
+    return mapValid(validate(value), () => raw);
+  };
 }
 
 interface ChildState extends FormField.ChildStateBase<Value> {

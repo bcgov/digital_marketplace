@@ -1,4 +1,4 @@
-import { makePageMetadata } from 'front-end/lib';
+import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -6,16 +6,21 @@ import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 
-export interface State {
+interface ValidState {
+  publishLoading: number;
+  saveDraftLoading: number;
   formState: Immutable<Form.State>;
 }
 
+export type State = Validation<Immutable<ValidState>, null>;
+
 type InnerMsg
-  = ADT<'submit', CWUOpportunityResource.CWUOpportunityStatus>
+  = ADT<'publish'>
+  | ADT<'saveDraft'>
   | ADT<'opportunityForm', Form.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -25,29 +30,43 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
   async success() {
-    return {
+    return valid(immutable({
+      publishLoading: 0,
+      saveDraftLoading: 0,
       formState: immutable(await Form.defaultState())
-    };
+    }));
   },
   async fail() {
-    return {
-      formState: immutable(await Form.defaultState())
-    };
+    return invalid(null);
   }
 });
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const startPublishLoading = makeStartLoading<ValidState>('publishLoading');
+const stopPublishLoading = makeStopLoading<ValidState>('publishLoading');
+const startSaveDraftLoading = makeStartLoading<ValidState>('saveDraftLoading');
+const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
+
+const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
-    case 'submit':
+    case 'publish':
       return [
-        state,
+        startPublishLoading(state),
         async (state, dispatch) => {
-          const result = await Form.persist(state.formState, msg.value);
+          state = stopPublishLoading(state);
+          const result = await Form.persist(state.formState, adt('publish'));
           switch (result.tag) {
             case 'valid':
             case 'invalid':
               return state;
           }
+        }
+      ];
+
+    case 'saveDraft':
+      return [
+        startSaveDraftLoading(state),
+        async (state, dispatch) => {
+          return stopSaveDraftLoading(state);
         }
       ];
 
@@ -63,11 +82,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     default:
       return [state];
   }
-};
+});
 
-const view: ComponentView<State,  Msg> = (params) => {
-  const state = params.state;
-  const dispatch = params.dispatch;
+const view: ComponentView<State,  Msg> = viewValid(({ state, dispatch }) => {
   return (
     <div className='d-flex flex-column h-100 justify-content-between'>
       <Form.component.view
@@ -76,7 +93,7 @@ const view: ComponentView<State,  Msg> = (params) => {
       />
     </div>
   );
-};
+});
 
 export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   init,
@@ -95,26 +112,37 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       )
     })
   },
-  getContextualActions() {
+  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+    const isPublishLoading = state.publishLoading > 0;
+    const isSaveDraftLoading = state.saveDraftLoading > 0;
+    const isLoading = isPublishLoading || isSaveDraftLoading;
+    const isValid = Form.isValid(state.formState);
     return adt('links', [
       {
         children: 'Publish',
         symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
         button: true,
-        color: 'primary'
+        loading: isPublishLoading,
+        disabled: isLoading || !isValid,
+        color: 'primary',
+        onClick: () => dispatch(adt('publish'))
       },
       {
         children: 'Save Draft',
         symbol_: leftPlacement(iconLinkSymbol('save')),
+        loading: isSaveDraftLoading,
+        disabled: isLoading,
         button: true,
-        color: 'success'
+        color: 'success',
+        onClick: () => dispatch(adt('saveDraft'))
       },
       {
         children: 'Cancel',
-        color: 'white'
+        color: 'white',
+        disabled: isLoading
       }
     ]);
-  },
+  }),
   getMetadata() {
     return makePageMetadata('Create Opportunity');
   }

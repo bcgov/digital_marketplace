@@ -17,7 +17,7 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
-import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
+import { CreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/code-with-us';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
@@ -87,13 +87,6 @@ type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
-
-function validateDate(validate: (_: string) => Validation<Date>): (value: DateField.Value) => Validation<DateField.Value> {
-  return raw => {
-    const value = DateField.valueToString(raw);
-    return mapValid(validate(value), () => raw);
-  };
-}
 
 export async function defaultState() {
   return {
@@ -195,7 +188,7 @@ export async function defaultState() {
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      validate: validateDate(opportunityValidation.validateProposalDeadline),
+      validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
       child: {
         value: null,
         id: 'opportunity-proposal-deadline'
@@ -204,7 +197,7 @@ export async function defaultState() {
 
     startDate: immutable(await DateField.init({
       errors: [],
-      validate: validateDate(opportunityValidation.validateStartDate),
+      validate: DateField.validateDate(opportunityValidation.validateStartDate),
       child: {
         value: null,
         id: 'opportunity-start-date'
@@ -213,7 +206,7 @@ export async function defaultState() {
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      validate: validateDate(opportunityValidation.validateAssignmentDate),
+      validate: DateField.validateDate(opportunityValidation.validateAssignmentDate),
       child: {
         value: null,
         id: 'opportunity-assignment-date'
@@ -222,7 +215,7 @@ export async function defaultState() {
 
     completionDate: immutable(await DateField.init({
       errors: [],
-      validate: validateDate(opportunityValidation.validateCompletionDate),
+      validate: DateField.validateDate(opportunityValidation.validateCompletionDate),
       child: {
         value: null,
         id: 'opportunity-completion-date'
@@ -296,7 +289,7 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   }
 }
 
-type Errors = CWUOpportunityResource.CreateValidationErrors;
+type Errors = CreateValidationErrors;
 
 export function isValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.title)                      &&
@@ -315,14 +308,10 @@ export function isValid(state: Immutable<State>): boolean {
     FormField.isValid(state.evaluationCriteria);
 }
 
-export function getValues(state: Immutable<State>, status: CWUOpportunityResource.CWUOpportunityStatus): CWUOpportunityResource.CreateRequestBody {
+export type Values = CreateRequestBody;
 
-  const proposalDeadline = FormField.getValue(state.proposalDeadline);
-  const startDate        = FormField.getValue(state.startDate);
-  const assignmentDate   = FormField.getValue(state.assignmentDate);
-  const completionDate   = FormField.getValue(state.completionDate);
-
-  const result = {
+export function getValues(state: Immutable<State>): Values {
+  return {
     title:               FormField.getValue(state.title),
     teaser:              FormField.getValue(state.teaser),
     remoteOk:            state.remoteOk,
@@ -332,27 +321,26 @@ export function getValues(state: Immutable<State>, status: CWUOpportunityResourc
     skills:              SelectMulti.getValueAsStrings(state.skills),
     description:         FormField.getValue(state.description),
 
-    proposalDeadline:    DateField.valueToString(proposalDeadline),
-    assignmentDate:      DateField.valueToString(assignmentDate),
-    startDate:           DateField.valueToString(startDate),
-    completionDate:      DateField.valueToString(completionDate),
+    proposalDeadline:    DateField.getValueAsString(state.proposalDeadline),
+    assignmentDate:      DateField.getValueAsString(state.assignmentDate),
+    startDate:           DateField.getValueAsString(state.startDate),
+    completionDate:      DateField.getValueAsString(state.completionDate),
 
     submissionInfo:      FormField.getValue(state.submissionInfo),
     acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
     evaluationCriteria:  FormField.getValue(state.evaluationCriteria),
 
-    status,
-
-    attachments: [],
-    addenda: []
+    attachments: [] //TODO
   };
-
-  return result;
 }
 
-export async function persist(state: Immutable<State>, status: CWUOpportunityResource.CWUOpportunityStatus): Promise<Validation<State, string[]>> {
-  const formValues: CWUOpportunityResource.CreateRequestBody = getValues(state, status);
-  const apiResult = await api.opportunities.cwu.create(formValues);
+type PersistAction
+  = ADT<'draft'>
+  | ADT<'publish'>;
+
+export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<State, string[]>> {
+  const values: CreateRequestBody = getValues(state);
+  const apiResult = await api.opportunities.cwu.create(values);
   switch (apiResult.tag) {
     case 'valid':
       return valid(state);
@@ -733,7 +721,6 @@ const view: ComponentView<State,  Msg> = props => {
     switch (state.activeTab) {
       case 'Overview': {
         return (<OverviewView {...props} />) ;
-        break;
       }
       case 'Description': {
         return (<DescriptionView {...props} />) ;

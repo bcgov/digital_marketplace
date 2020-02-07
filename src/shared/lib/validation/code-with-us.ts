@@ -7,7 +7,7 @@ export function validateTitle(raw: string): Validation<string> {
 }
 
 export function validateTeaser(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Teaser', 1, 500);
+  return validateGenericString(raw, 'Teaser', 0, 500);
 }
 
 export function validateRemoteOk(raw: any): Validation<boolean> {
