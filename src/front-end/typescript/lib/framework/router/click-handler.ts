@@ -42,8 +42,11 @@ export default function clickHandler(dispatchUrl: (url: Url) => void): (e: Mouse
     // 2. rel="external" attribute
     if ((el as any).hasAttribute('download') || (el as any).getAttribute('rel') === 'external') { return; }
 
-    // Check for mailto: in the href
+    // Check if link is defined.
     const link = (el as any).getAttribute('href');
+    if (!link) { return; }
+
+    // Check for mailto: in the href
     if (link && link.indexOf('mailto:') > -1) { return; }
 
     // Check for file: in the href
