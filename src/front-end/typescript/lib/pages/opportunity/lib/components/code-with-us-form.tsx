@@ -124,7 +124,7 @@ export async function defaultState() {
       validate: opportunityValidation.validateLocation,
       child: {
         type: 'text',
-        value: '',
+        value: 'Victoria, BC',
         id: 'opportunity-location'
       }
     })),
@@ -304,6 +304,7 @@ export function isValid(state: Immutable<State>): boolean {
     (!state.remoteOk || FormField.isValid(state.remoteDesc)) &&
     FormField.isValid(state.location)                        &&
     FormField.isValid(state.reward)                          &&
+    FormField.isValid(state.skills)                          &&
     FormField.isValid(state.description)                     &&
     FormField.isValid(state.proposalDeadline)                &&
     FormField.isValid(state.assignmentDate)                  &&
@@ -328,7 +329,7 @@ export function getValues(state: Immutable<State>, status: CWUOpportunityResourc
     remoteDesc:          FormField.getValue(state.remoteDesc),
     location:            FormField.getValue(state.location),
     reward:              FormField.getValue(state.reward) || 0,
-    skills:              SelectMulti.getValueAsStrings(state.skills), // TODO(Jesse): How's this going to work?
+    skills:              SelectMulti.getValueAsStrings(state.skills),
     description:         FormField.getValue(state.description),
 
     proposalDeadline:    DateField.valueToString(proposalDeadline),
