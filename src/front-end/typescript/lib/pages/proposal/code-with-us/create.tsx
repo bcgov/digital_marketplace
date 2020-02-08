@@ -375,7 +375,35 @@ function getFormValues(state: State): Values {
 type Errors = CWUProposalResource.CreateValidationErrors;
 
 function setErrors(state: State, errors?: Errors): void {
-  // TODO(Jesse): Implement this
+  if (errors) {
+
+    if (errors.proponent) {
+      switch (errors.proponent.tag) {
+        case 'individual': {
+          if (errors.proponent.value.legalName) { FormField.setErrors(state.legalName, errors.proponent.value.legalName); }
+          if (errors.proponent.value.email)     { FormField.setErrors(state.email, errors.proponent.value.email); }
+          if (errors.proponent.value.phone)     { FormField.setErrors(state.phone, errors.proponent.value.phone); }
+          if (errors.proponent.value.street1)   { FormField.setErrors(state.street1, errors.proponent.value.street1); }
+          if (errors.proponent.value.street2)   { FormField.setErrors(state.street2, errors.proponent.value.street2); }
+          if (errors.proponent.value.city)      { FormField.setErrors(state.city, errors.proponent.value.city); }
+          if (errors.proponent.value.region)    { FormField.setErrors(state.region, errors.proponent.value.region); }
+          if (errors.proponent.value.mailCode)  { FormField.setErrors(state.mailCode, errors.proponent.value.mailCode); }
+          if (errors.proponent.value.country)   { FormField.setErrors(state.country, errors.proponent.value.country); }
+        }
+        case 'organization': {
+          // TODO(Jesse): Have an acutal field for this
+          // FormField.setErrors(state.organizationId, errors.proponent.value); }
+        }
+        case 'parseFailure': {
+          // TODO: Hard fail case from the backend??  Cry?
+        }
+      }
+    }
+
+    if (errors.attachments) {
+      // TODO(Jesse): What structrue do attachment errors take?
+    }
+  }
   return;
 }
 
