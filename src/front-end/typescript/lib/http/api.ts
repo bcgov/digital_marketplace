@@ -79,10 +79,6 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CWUProposal
 
-export const proposalss = {
-  cwu: cwuProposal
-};
-
 interface CWUProposalResourceSimpleResourceTypesParams {
   record: CWUProposalResource.CWUProposal;
   create: {
@@ -110,6 +106,10 @@ const cwuProposal: CrudApi<CWUProposalResourceTypes> = {
   readMany: makeReadMany<CWUProposalResourceTypes['readMany']>({
     routeNamespace: CWU_PROPOSAL_ROUTE_NAMESPACE
   })
+};
+
+export const proposals = {
+  cwu: cwuProposal
 };
 
 // CodeWithUs Opportunities

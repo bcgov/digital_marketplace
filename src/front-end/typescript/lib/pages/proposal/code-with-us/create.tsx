@@ -1,7 +1,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-// import * as FormField from 'front-end/lib/components/form-field';
+import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/long-text';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -27,20 +27,20 @@ export interface State {
   // Proponent Tab
   proponentIsIndividual: ProponentType;
     // Individual
-    name: Immutable<ShortText.State>;
+    legalName: Immutable<ShortText.State>;
     email: Immutable<ShortText.State>;
     phone: Immutable<ShortText.State>;
-    address: Immutable<ShortText.State>;
-    address2: Immutable<ShortText.State>;
+    street1: Immutable<ShortText.State>;
+    street2: Immutable<ShortText.State>;
     city: Immutable<ShortText.State>;
-    province: Immutable<ShortText.State>;
-    postal: Immutable<ShortText.State>;
+    region: Immutable<ShortText.State>;
+    mailCode: Immutable<ShortText.State>;
     country: Immutable<ShortText.State>;
     // Organziation
     orgId: Id;
 
   // Proposal Tab
-  proposal: Immutable<LongText.State>;
+  proposalText: Immutable<LongText.State>;
   additionalComments: Immutable<LongText.State>;
 
   // Attachments tab
@@ -57,18 +57,18 @@ type InnerMsg
   | ADT<'proponentIsIndividual', ProponentType>
 
   // Individual Proponent
-  | ADT<'name', ShortText.Msg>
+  | ADT<'legalName', ShortText.Msg>
   | ADT<'email', ShortText.Msg>
   | ADT<'phone', ShortText.Msg>
-  | ADT<'address', ShortText.Msg>
-  | ADT<'address2', ShortText.Msg>
+  | ADT<'street1', ShortText.Msg>
+  | ADT<'street2', ShortText.Msg>
   | ADT<'city', ShortText.Msg>
-  | ADT<'province', ShortText.Msg>
-  | ADT<'postal', ShortText.Msg>
+  | ADT<'region', ShortText.Msg>
+  | ADT<'mailCode', ShortText.Msg>
   | ADT<'country', ShortText.Msg>
 
   // Proposal Tab
-  | ADT<'proposal',           LongText.Msg>
+  | ADT<'proposalText',           LongText.Msg>
   | ADT<'additionalComments', LongText.Msg>
 
   // Attachments Tab
@@ -88,12 +88,12 @@ async function defaultState() {
     orgId: '',
 
     // Individual
-    name: immutable(await ShortText.init({
+    legalName: immutable(await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'name',
-        id: 'opportunity-individual-name'
+        value: 'legalName',
+        id: 'opportunity-individual-legalName'
       }
     })),
 
@@ -115,21 +115,21 @@ async function defaultState() {
       }
     })),
 
-    address: immutable( await ShortText.init({
+    street1: immutable( await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
         value: 'addresss',
-        id: 'opportunity-individual-address'
+        id: 'opportunity-individual-street1'
       }
     })),
 
-    address2: immutable( await ShortText.init({
+    street2: immutable( await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
         value: 'addresss21',
-        id: 'opportunity-individual-address2'
+        id: 'opportunity-individual-street2'
       }
     })),
 
@@ -142,21 +142,21 @@ async function defaultState() {
       }
     })),
 
-    province: immutable( await ShortText.init({
+    region: immutable( await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'province',
-        id: 'opportunity-individual-province'
+        value: 'region',
+        id: 'opportunity-individual-region'
       }
     })),
 
-    postal: immutable( await ShortText.init({
+    mailCode: immutable( await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'postal',
-        id: 'opportunity-individual-postal'
+        value: 'mailCode',
+        id: 'opportunity-individual-mailCode'
       }
     })),
 
@@ -169,12 +169,12 @@ async function defaultState() {
       }
     })),
 
-    proposal: immutable(await LongText.init({
+    proposalText: immutable(await LongText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'proposal',
-        id: 'proposal-proposal'
+        value: 'proposalText',
+        id: 'proposal-proposalText'
       }
     })),
 
@@ -222,13 +222,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'proponentIsIndividual':
       return [state.set('proponentIsIndividual', msg.value)];
 
-    case 'name':
+    case 'legalName':
       return updateComponentChild({
         state,
-        childStatePath: ['name'],
+        childStatePath: ['legalName'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('name', value)
+        mapChildMsg: (value) => adt('legalName', value)
       });
 
     case 'email':
@@ -249,22 +249,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('phone', value)
       });
 
-    case 'address':
+    case 'street1':
       return updateComponentChild({
         state,
-        childStatePath: ['address'],
+        childStatePath: ['street1'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('address', value)
+        mapChildMsg: (value) => adt('street1', value)
       });
 
-    case 'address2':
+    case 'street2':
       return updateComponentChild({
         state,
-        childStatePath: ['address2'],
+        childStatePath: ['street2'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('address2', value)
+        mapChildMsg: (value) => adt('street2', value)
       });
 
     case 'city':
@@ -276,22 +276,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('city', value)
       });
 
-    case 'province':
+    case 'region':
       return updateComponentChild({
         state,
-        childStatePath: ['province'],
+        childStatePath: ['region'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('province', value)
+        mapChildMsg: (value) => adt('region', value)
       });
 
-    case 'postal':
+    case 'mailCode':
       return updateComponentChild({
         state,
-        childStatePath: ['postal'],
+        childStatePath: ['mailCode'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('postal', value)
+        mapChildMsg: (value) => adt('mailCode', value)
       });
 
     case 'country':
@@ -303,13 +303,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('country', value)
       });
 
-    case 'proposal':
+    case 'proposalText':
       return updateComponentChild({
         state,
-        childStatePath: ['proposal'],
+        childStatePath: ['proposalText'],
         childUpdate: LongText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('proposal', value)
+        mapChildMsg: (value) => adt('proposalText', value)
       });
 
     case 'additionalComments':
@@ -326,27 +326,30 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function getFormValues(state: State): CWUProposalResource.CreateRequestBody {
-  return ({
-    opportunity:         '',
-    proposalText:        '',
-    additionalComments:  '',
+type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
+
+function getFormValues(state: State): Values {
+  const result = {
+    proposalText:        FormField.getValue(state.proposalText),
+    additionalComments:  FormField.getValue(state.additionalComments),
     proponent: {
-      tag: 'individual',
+      tag: 'individual' as const,
       value: {
-        legalName:  '',
-        email:      '',
-        phone:      '',
-        street1:    '',
-        street2:    '',
-        city:       '',
-        region:     '',
-        mailCode:   '',
-        country:    ''
+        legalName:  FormField.getValue(state.legalName),
+        email:      FormField.getValue(state.email),
+        phone:      FormField.getValue(state.phone),
+        street1:    FormField.getValue(state.street1),
+        street2:    FormField.getValue(state.street2),
+        city:       FormField.getValue(state.city),
+        region:     FormField.getValue(state.region),
+        mailCode:   FormField.getValue(state.mailCode),
+        country:    FormField.getValue(state.country)
       }
     },
-    attachments: ['']
-  });
+    attachments: []
+  };
+
+  return result;
 }
 
 type Errors = CWUProposalResource.CreateValidationErrors;
@@ -356,16 +359,22 @@ function setErrors(state: State, errors?: Errors): void {
   return;
 }
 
+function requestBodyFromValues(opportunityId: Id, formValues: Values): CWUProposalResource.CreateRequestBody {
+  return ({opportunity: opportunityId, ...formValues});
+}
+
 export async function persist(state: State): Promise<Validation<State, string[]>> {
-  const formValues: CWUProposalResource.CreateRequestBody = getFormValues(state);
-  const apiResult = await api.cwuProposal.create(formValues);
+  const opportunityId = '8fddb90e-d7fe-43bb-8234-6e58e856c259';
+  const formValues = getFormValues(state);
+  const requestBody = requestBodyFromValues(opportunityId, formValues);
+  const apiResult = await api.proposals.cwu.create(requestBody);
 
   switch (apiResult.tag) {
     case 'valid':
       return valid(state);
     case 'unhandled':
     case 'invalid':
-      setErrors(immutable(state), apiResult.value);
+      setErrors(state, apiResult.value);
       return invalid(['Error creating the Proposal.']);
   }
 }
@@ -377,8 +386,8 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         <ShortText.view
           extraChildProps={{}}
           label='Name'
-          state={state.name}
-          dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value)) }
+          state={state.legalName}
+          dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value)) }
         />
       </Col>
 
@@ -404,8 +413,8 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         <ShortText.view
           extraChildProps={{}}
           label='Address'
-          state={state.address}
-          dispatch={mapComponentDispatch(dispatch, value => adt('address' as const, value)) }
+          state={state.street1}
+          dispatch={mapComponentDispatch(dispatch, value => adt('street1' as const, value)) }
         />
       </Col>
 
@@ -413,8 +422,8 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         <ShortText.view
           extraChildProps={{}}
           label='Address'
-          state={state.address2}
-          dispatch={mapComponentDispatch(dispatch, value => adt('address2' as const, value)) }
+          state={state.street2}
+          dispatch={mapComponentDispatch(dispatch, value => adt('street2' as const, value)) }
         />
       </Col>
 
@@ -431,17 +440,17 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         <ShortText.view
           extraChildProps={{}}
           label='Province'
-          state={state.province}
-          dispatch={mapComponentDispatch(dispatch, value => adt('province' as const, value)) }
+          state={state.region}
+          dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value)) }
         />
       </Col>
 
       <Col xs='12'>
         <ShortText.view
           extraChildProps={{}}
-          label='Postal'
-          state={state.postal}
-          dispatch={mapComponentDispatch(dispatch, value => adt('postal' as const, value)) }
+          label='Mail Code'
+          state={state.mailCode}
+          dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value)) }
         />
       </Col>
 
@@ -523,8 +532,8 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <LongText.view
           extraChildProps={{}}
           label='Proposal'
-          state={state.proposal}
-          dispatch={mapComponentDispatch(dispatch, value => adt('proposal' as const, value))} />
+          state={state.proposalText}
+          dispatch={mapComponentDispatch(dispatch, value => adt('proposalText' as const, value))} />
       </Col>
 
       <Col xs='12'>
