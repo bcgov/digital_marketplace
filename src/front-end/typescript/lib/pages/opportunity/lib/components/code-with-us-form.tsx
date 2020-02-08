@@ -117,7 +117,7 @@ export async function defaultState() {
       validate: opportunityValidation.validateLocation,
       child: {
         type: 'text',
-        value: 'Victoria, BC',
+        value: 'Victoria',
         id: 'opportunity-location'
       }
     })),

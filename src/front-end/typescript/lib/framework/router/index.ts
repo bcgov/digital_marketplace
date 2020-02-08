@@ -178,11 +178,13 @@ export function start<Route>(routeManager: RouteManager<Route>): void {
   window.document.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, false)));
   // Handle popstate events.
   window.addEventListener('popstate', e => {
-    routeManager.dispatchUrl(parseUrl(e.state.url), false, true);
+    if (e.state && e.state.url) {
+      routeManager.dispatchUrl(parseUrl(e.state.url), false, true);
+    }
   });
   // Kick-start the router.
   routeManager.dispatchUrl({
     pathname: window.location.pathname,
     search: window.location.search
-  });
+  }, true);
 }

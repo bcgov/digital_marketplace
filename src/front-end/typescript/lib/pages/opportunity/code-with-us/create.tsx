@@ -104,7 +104,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     color: 'light-blue',
     view: makeInstructionalSidebar<State,  Msg>({
       getTitle: () => 'Create a Code With Us Opportunity',
-      getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
+      getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
         <span>
           Need help? <a href='# TODO(Jesse): Where does this point?'>Read the guide</a> for creating and managing a CWU opportunity
