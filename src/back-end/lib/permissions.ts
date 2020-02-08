@@ -13,10 +13,6 @@ export function isSignedOut(session: Session): boolean {
   return !isSignedIn(session);
 }
 
-export function isUser(session: Session): boolean {
-  return !!session.user;
-}
-
 export function isOwnAccount(session: Session, id: string): boolean {
   return !!session.user && session.user.id === id;
 }
@@ -30,7 +26,7 @@ export function isOwnSession(session: Session, id: string): boolean {
 }
 
 export function isVendor(session: Session): boolean {
-  return isUser(session) && session.user!.type === UserType.Vendor;
+  return isSignedIn(session) && session.user!.type === UserType.Vendor;
 }
 
 export function isAdmin(session: Session): boolean {
@@ -134,7 +130,7 @@ export async function deleteAffiliation(connection: Connection, session: Session
 // Files.
 
 export function createFile(session: Session): boolean {
-  return isUser(session);
+  return isSignedIn(session);
 }
 
 export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {

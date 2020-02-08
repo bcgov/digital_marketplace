@@ -1,15 +1,13 @@
 import { uniq } from 'lodash';
-import { ArrayValidation, invalid, mapValid, valid, validateArray, validateGenericString, Validation } from 'shared/lib/validation';
+import { ArrayValidation, invalid, mapValid, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 
-export { validateDate } from 'shared/lib/validation';
-
 export function validateTitle(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Title', 0);
+  return validateGenericString(raw, 'Title', 1);
 }
 
 export function validateTeaser(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Teaser', 0);
+  return validateGenericString(raw, 'Teaser', 0, 500);
 }
 
 export function validateRemoteOk(raw: any): Validation<boolean> {
@@ -17,42 +15,59 @@ export function validateRemoteOk(raw: any): Validation<boolean> {
 }
 
 export function validateRemoteDesc(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Remote Description', 0);
+  return validateGenericString(raw, 'Remote Description', 0, 500);
 }
 
 export function validateLocation(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Location', 0);
+  return validateGenericString(raw, 'Location', 1);
 }
 
-export function validateReward(raw: number): Validation<number> {
-  return (raw >= 0 && raw <= 70000) ? valid(raw) : invalid(['Reward not in required range.']);
+export function validateReward(raw: string | number): Validation<number> {
+  return validateNumber(raw, 1, 70000, 'reward', 'a');
 }
 
 export function validateSkills(raw: string[]): ArrayValidation<string> {
+  if (!raw.length) { return invalid([['Please select at least one skill.']]); }
   const validatedArray = validateArray(raw, v => validateGenericString(v, 'Skill'));
   return mapValid(validatedArray, skills => uniq(skills));
 }
 
 export function validateDescription(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Description');
+  return validateGenericString(raw, 'Description', 1, 10000);
+}
+
+export function validateProposalDeadline(raw: string): Validation<Date> {
+  return validateDate(raw, new Date());
+}
+
+export function validateStartDate(raw: string): Validation<Date> {
+  return validateDate(raw, new Date());
+}
+
+export function validateAssignmentDate(raw: string): Validation<Date> {
+  return validateDate(raw, new Date());
+}
+
+export function validateCompletionDate(raw: string): Validation<Date> {
+  return validateDate(raw, new Date());
 }
 
 export function validateSubmissionInfo(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Project Submission Info', 0);
+  return validateGenericString(raw, 'Project Submission Info', 0, 500);
 }
 
 export function validateAcceptanceCriteria(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Acceptance Criteria', 0);
+  return validateGenericString(raw, 'Acceptance Criteria', 1, 2000);
 }
 
 export function validateEvaluationCriteria(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Evaluation Criteria', 0);
+  return validateGenericString(raw, 'Evaluation Criteria', 1, 2000);
 }
 
 export function validateAddendumText(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Addendum');
+  return validateGenericString(raw, 'Addendum', 1, 5000);
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Status Note', 0);
+  return validateGenericString(raw, 'Status Note', 1, 1000);
 }

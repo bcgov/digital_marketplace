@@ -1,5 +1,6 @@
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
+import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import * as FileResource from 'shared/lib/resources/file';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
@@ -74,6 +75,43 @@ type UserResourceTypes = OmitCrudApi<UserSimpleResourceTypes, 'create'>;
 export const users: CrudApi<UserResourceTypes> = {
   ...makeSimpleCrudApi<UserSimpleResourceTypesParams>(apiNamespace('users')),
   create: undefined
+};
+
+// CodeWithUs Opportunities
+
+interface CWUOpportunityResourceSimpleResourceTypesParams {
+  record: CWUOpportunityResource.CWUOpportunity;
+  create: {
+    request: CWUOpportunityResource.CreateRequestBody;
+    invalidResponse: CWUOpportunityResource.CreateValidationErrors;
+  };
+  update: {
+    request: CWUOpportunityResource.UpdateRequestBody;
+    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+  };
+}
+
+interface CWUOpportunityResourceTypes extends Omit<SimpleResourceTypes<CWUOpportunityResourceSimpleResourceTypesParams>, 'readMany'> {
+  readMany: {
+    rawResponse: CWUOpportunityResource.CWUOpportunitySlim;
+    validResponse: CWUOpportunityResource.CWUOpportunitySlim;
+    invalidResponse: string[];
+  };
+}
+
+const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('code-with-us');
+
+const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = {
+  ...makeSimpleCrudApi<CWUOpportunityResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
+  readMany: makeReadMany<CWUOpportunityResourceTypes['readMany']>({
+    routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
+  })
+};
+
+// Opportunities
+
+export const opportunities = {
+  cwu: cwuOpportunities
 };
 
 // Organizations

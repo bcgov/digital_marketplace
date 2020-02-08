@@ -108,6 +108,8 @@ export type OmitProps<OmitKeys extends keyof BaseProps | '' = ''> = Omit<AnchorP
 
 export type ExtendProps<Extension> = AnchorProps & Extension | ButtonProps & Extension;
 
+export type ExtendAndOmitProps<Extension, OmitKeys extends keyof BaseProps> = Omit<AnchorProps, OmitKeys> & Extension | Omit<ButtonProps, OmitKeys> & Extension;
+
 function AnchorLink(props: AnchorProps) {
   // Initialize props.
   const {
@@ -126,26 +128,40 @@ function AnchorLink(props: AnchorProps) {
   } = props;
   const href: string | undefined = (() => {
     if (disabled) { return undefined; }
-    if (!dest) { return '#noop'; }
+    if (!dest) { return ''; }
     switch (dest.tag) {
       case 'route': return router.routeToUrl(dest.value);
       case 'external': return dest.value;
       case 'email': return `mailto:${dest.value}`;
     }
   })();
-  let finalClassName = 'd-inline-flex align-items-center flex-nowrap';
+  let finalClassName = 'a d-inline-flex align-items-center flex-nowrap';
   finalClassName += nav ? ' nav-link' : '';
   finalClassName += disabled ? ' disabled' : '';
   finalClassName += color ? ` text-${color}` : '';
+  finalClassName += color && !disabled ? ` text-hover-${color}` : '';
   finalClassName += ` ${className}`;
   const finalOnClick = !disabled && onClick
-    ? ((e: MouseEvent<HTMLAnchorElement>) => {
-        if (!dest || (!newTab && !e.ctrlKey && !e.metaKey)) { e.preventDefault(); }
+    ? ((e: MouseEvent<HTMLElement>): false | void => {
+        if (!newTab && !e.ctrlKey && !e.metaKey) { e.preventDefault(); }
         onClick();
       })
     : undefined;
+  // If no dest is provided, render as a div
+  // to avoid accidental routing.
+  const Tag = dest ? 'a' : 'div';
+  const isAnchor = Tag === 'a';
+  const finalProps = {
+    href: isAnchor ? href : undefined,
+    onClick: finalOnClick,
+    style,
+    className: finalClassName,
+    target: isAnchor && newTab ? '_blank' : undefined,
+    download: isAnchor ? download : undefined,
+    rel: isAnchor && dest && dest.tag === 'external' ? 'external' : undefined
+  };
   return (
-    <a href={href} onClick={finalOnClick} style={style} className={finalClassName} target={newTab ? '_blank' : undefined} download={download} rel={dest && dest.tag === 'external' ? 'external' : undefined}>
+    <Tag {...finalProps}>
       {symbol_ && symbol_.tag === 'left'
         ? (<LinkSymbol symbol_={symbol_.value} className={`mr-2 ${symbolClassName}`} />)
         : null}
@@ -153,7 +169,7 @@ function AnchorLink(props: AnchorProps) {
       {symbol_ && symbol_.tag === 'right'
         ? (<LinkSymbol symbol_={symbol_.value} className={`ml-2 ${symbolClassName}`} />)
         : null}
-    </a>
+    </Tag>
   );
 }
 

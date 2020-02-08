@@ -120,6 +120,10 @@ input[type="time"] {
   }
 }
 
+textarea {
+  resize: none;
+}
+
 .app {
   transition-property: filter, opacity;
   transition-duration: $transition-duration;
@@ -235,7 +239,8 @@ button {
   }
 }
 
-a {
+a,
+.a {
   cursor: pointer;
 
   &.disabled {
@@ -467,6 +472,8 @@ nav.navbar .nav-link:hover {
       @extend .form-control;
       @extend .p-0;
       display: flex;
+      min-height: $input-height;
+      height: auto;
 
       &--is-disabled {
         background-color: $input-disabled-bg;

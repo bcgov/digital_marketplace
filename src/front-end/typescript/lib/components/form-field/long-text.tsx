@@ -33,11 +33,12 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
   return (
     <textarea
       id={state.id}
       value={state.value}
+      placeholder={placeholder}
       className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = e.currentTarget.value;
