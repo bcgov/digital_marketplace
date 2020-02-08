@@ -25,7 +25,7 @@ export interface State {
   activeTab: TabValues;
 
   // Proponent Tab
-  proponentIsIndividual: ProponentType;
+  proponentType: ProponentType;
     // Individual
     legalName: Immutable<ShortText.State>;
     email: Immutable<ShortText.State>;
@@ -54,7 +54,7 @@ type InnerMsg
 
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
-  | ADT<'proponentIsIndividual', ProponentType>
+  | ADT<'proponentType', ProponentType>
 
   // Individual Proponent
   | ADT<'legalName', ShortText.Msg>
@@ -84,7 +84,7 @@ export type RouteParams = {
 async function defaultState() {
   return {
     activeTab: 'Proponent' as const,
-    proponentIsIndividual: null,
+    proponentType: null,
     orgId: '',
 
     // Individual
@@ -219,8 +219,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
 
-    case 'proponentIsIndividual':
-      return [state.set('proponentIsIndividual', msg.value)];
+    case 'proponentType':
+      return [state.set('proponentType', msg.value)];
 
     case 'legalName':
       return updateComponentChild({
@@ -328,24 +328,44 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
 
+function proponentFor(typeTag: ProponentType, state: State): CWUProposalResource.CreateProponentRequestBody {
+  switch (typeTag) {
+    case 'Individual': {
+      return ({
+        tag: 'individual',
+        value: {
+          legalName:  FormField.getValue(state.legalName),
+          email:      FormField.getValue(state.email),
+          phone:      FormField.getValue(state.phone),
+          street1:    FormField.getValue(state.street1),
+          street2:    FormField.getValue(state.street2),
+          city:       FormField.getValue(state.city),
+          region:     FormField.getValue(state.region),
+          mailCode:   FormField.getValue(state.mailCode),
+          country:    FormField.getValue(state.country)
+        }
+      });
+    }
+
+    // TODO(Jesse): How do we prevent null from being passed to this function at
+    // the type level?  ie: omit the default case here..
+    case 'Organization':
+    default:  {
+      return {
+        tag: 'organization' as const,
+        value: state.orgId
+      };
+    }
+  }
+
+}
+
 function getFormValues(state: State): Values {
+  const proponent = proponentFor(state.proponentType, state);
   const result = {
     proposalText:        FormField.getValue(state.proposalText),
     additionalComments:  FormField.getValue(state.additionalComments),
-    proponent: {
-      tag: 'individual' as const,
-      value: {
-        legalName:  FormField.getValue(state.legalName),
-        email:      FormField.getValue(state.email),
-        phone:      FormField.getValue(state.phone),
-        street1:    FormField.getValue(state.street1),
-        street2:    FormField.getValue(state.street2),
-        city:       FormField.getValue(state.city),
-        region:     FormField.getValue(state.region),
-        mailCode:   FormField.getValue(state.mailCode),
-        country:    FormField.getValue(state.country)
-      }
-    },
+    proponent,
     attachments: []
   };
 
@@ -479,7 +499,7 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
   const dispatch = params.dispatch;
 
   let activeView;
-  switch (state.proponentIsIndividual) {
+  switch (state.proponentType) {
     case 'Individual': {
       activeView = <IndividualProponent {...params} /> ;
       break;
@@ -504,8 +524,8 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
           <Radio
             id='proponenet-is-individual'
             label='Individual'
-            checked={state.proponentIsIndividual === 'Individual'}
-            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, 'Individual' as const)); } }
+            checked={state.proponentType === 'Individual'}
+            onClick={ () => { dispatch(adt('proponentType' as const, 'Individual' as const)); } }
           />
         </Col>
 
@@ -513,8 +533,8 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
           <Radio
             id='proponenet-is-org'
             label='Organization'
-            checked={state.proponentIsIndividual === 'Organization'}
-            onClick={ () => { dispatch(adt('proponentIsIndividual' as const, 'Organization' as const)); } }
+            checked={state.proponentType === 'Organization'}
+            onClick={ () => { dispatch(adt('proponentType' as const, 'Organization' as const)); } }
           />
         </Col>
       </Row>
