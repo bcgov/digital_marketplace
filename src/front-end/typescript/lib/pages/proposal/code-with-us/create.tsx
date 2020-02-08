@@ -5,13 +5,16 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import * as ShortText from 'front-end/lib/components/form-field/long-text';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
 type TabValues = 'Proponent' | 'Proposal' | 'Attachments';
@@ -47,6 +50,7 @@ export interface State {
 
 type InnerMsg
   = ADT<'updateActiveTab',   TabValues>
+  | ADT<'submit'>
 
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
@@ -203,6 +207,15 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
 
+    case 'submit':
+      return [
+        state,
+        async (state, dispatch) => {
+          await persist(state);
+          return state;
+        }
+      ];
+
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
 
@@ -313,6 +326,50 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+function getFormValues(state: State): CWUProposalResource.CreateRequestBody {
+  return ({
+    opportunity:         '',
+    proposalText:        '',
+    additionalComments:  '',
+    proponent: {
+      tag: 'individual',
+      value: {
+        legalName:  '',
+        email:      '',
+        phone:      '',
+        street1:    '',
+        street2:    '',
+        city:       '',
+        region:     '',
+        mailCode:   '',
+        country:    ''
+      }
+    },
+    attachments: ['']
+  });
+}
+
+type Errors = CWUProposalResource.CreateValidationErrors;
+
+function setErrors(state: State, errors?: Errors): void {
+  // TODO(Jesse): Implement this
+  return;
+}
+
+export async function persist(state: State): Promise<Validation<State, string[]>> {
+  const formValues: CWUProposalResource.CreateRequestBody = getFormValues(state);
+  const apiResult = await api.cwuProposal.create(formValues);
+
+  switch (apiResult.tag) {
+    case 'valid':
+      return valid(state);
+    case 'unhandled':
+    case 'invalid':
+      setErrors(immutable(state), apiResult.value);
+      return invalid(['Error creating the Proposal.']);
+  }
+}
+
 const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
@@ -412,7 +469,7 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
   const state = params.state;
   const dispatch = params.dispatch;
 
-  let activeView = <div>No Active view selected</div>;
+  let activeView;
   switch (state.proponentIsIndividual) {
     case 'Individual': {
       activeView = <IndividualProponent {...params} /> ;
@@ -453,9 +510,7 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
         </Col>
       </Row>
 
-      {
-        activeView
-      }
+      { activeView }
     </div>
   );
 };
@@ -532,6 +587,7 @@ function renderTab(params: any, tabName: TabValues): JSX.Element {
 
 const view: ComponentView<State, Msg> = (params) => {
   const state = params.state;
+  const dispatch = params.dispatch;
 
   let activeView = <div>No Active view selected</div>;
   switch (state.activeTab) {
@@ -597,6 +653,7 @@ const view: ComponentView<State, Msg> = (params) => {
             button
             color='primary'
             symbol_={leftPlacement(iconLinkSymbol('cog'))}
+            onClick={() => dispatch(adt('submit')) }
           >
             Publish
           </Link>

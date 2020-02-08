@@ -76,37 +76,6 @@ export const users: CrudApi<UserResourceTypes> = {
   create: undefined
 };
 
-// CWUProposal
-
-interface CWUProposalResourceSimpleResourceTypesParams {
-  record: CWUProposalResource.CWUProposal;
-  create: {
-    request: CWUProposalResource.CreateRequestBody;
-    invalidResponse: CWUProposalResource.CreateValidationErrors;
-  };
-  update: {
-    request: CWUProposalResource.UpdateRequestBody;
-    invalidResponse: CWUProposalResource.UpdateValidationErrors;
-  };
-}
-
-interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalResourceSimpleResourceTypesParams>, 'readMany'> {
-  readMany: {
-    rawResponse: CWUProposalResource.CWUProposalSlim;
-    validResponse: CWUProposalResource.CWUProposalSlim;
-    invalidResponse: string[];
-  };
-}
-
-const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('code-with-us');
-
-export const cwuProposal: CrudApi<CWUProposalResourceTypes> = {
-  ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
-  readMany: makeReadMany<CWUProposalResourceTypes['readMany']>({
-    routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
-  })
-};
-
 // Organizations
 
 interface OrganizationSimpleResourceTypesParams {
