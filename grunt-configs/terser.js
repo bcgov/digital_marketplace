@@ -1,10 +1,12 @@
 module.exports = {
   production: {
-    files: {
-      [gruntConfig.out.js]: [
-        gruntConfig.out.js
-      ]
+    options: {
+      output: {
+        comments: false
+      }
     },
-    options: {}
+    files: {
+      [gruntConfig.out.js]: [gruntConfig.out.js]
+    }
   }
 };
