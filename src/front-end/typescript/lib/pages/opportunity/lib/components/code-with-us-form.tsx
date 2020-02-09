@@ -700,8 +700,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
     <Row>
       <Col xs='12'>
         <p>
-          Upload any supporting material for your opportunity here. Accepted file
-          formats are pdf, jpeg, jpg.
+          Upload any supporting material for your opportunity here. Attachments must be smaller than 10MB.
         </p>
         <Attachments.view
           dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
