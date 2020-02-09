@@ -1,4 +1,5 @@
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { invalid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import * as FileResource from 'shared/lib/resources/file';
@@ -210,7 +211,7 @@ function rawFileRecordToFileRecord(raw: RawFileRecord): FileResource.FileRecord 
   };
 }
 
-interface CreateFileRequestBody {
+export interface CreateFileRequestBody {
   name: string;
   file: File;
   metadata: FileResource.FileUploadMetadata;
@@ -257,6 +258,37 @@ export const files: CrudApi<FileResourceTypes> = {
   ...fileCrudApi,
   create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
 };
+
+export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
+  const validResults: FileResource.FileRecord[] = [];
+  let isInvalid = false;
+  const invalidResults: FileResource.CreateValidationErrors[] = [];
+  for (const file of filesToUpload) {
+    if (isInvalid) {
+      //Skip uploading files if a validation error has occurred.
+      invalidResults.push({});
+      continue;
+    }
+    const result = await files.create(file);
+    switch (result.tag) {
+      case 'valid':
+        validResults.push(result.value);
+        invalidResults.push({});
+        break;
+      case 'invalid':
+        isInvalid = true;
+        invalidResults.push(result.value);
+        break;
+      case 'unhandled':
+        return result;
+    }
+  }
+  if (isInvalid) {
+    return invalid(invalidResults);
+  } else {
+    return valid(validResults);
+  }
+}
 
 type AvatarResourceTypes
   = Pick<FileResourceTypes, 'create'>

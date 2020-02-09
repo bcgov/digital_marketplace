@@ -1,6 +1,16 @@
-import { uniq } from 'lodash';
+import { includes, uniq } from 'lodash';
+import { CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
 import { ArrayValidation, invalid, mapValid, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
+
+export function validateCWUOpportunityStatus(raw: string, isOneOf: CWUOpportunityStatus[]): Validation<CWUOpportunityStatus> {
+  const parsed = parseCWUOpportunityStatus(raw);
+  if (!parsed) { return invalid([`"${raw}" is not a valid CodeWithUs opportunity status.`]); }
+  if (!includes(isOneOf, parsed)) {
+    return invalid([`"${raw}" is not one of: ${isOneOf.join(', ')}`]);
+  }
+  return valid(parsed);
+}
 
 export function validateTitle(raw: string): Validation<string> {
   return validateGenericString(raw, 'Title', 1);

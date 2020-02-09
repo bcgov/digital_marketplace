@@ -6,7 +6,7 @@ import { validateFilePermissions } from 'shared/lib/validation/file';
 
 export const MAX_MULTIPART_FILES_SIZE = megabytesToBytes(10);
 
-export const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
+export const SUPPORTED_IMAGE_EXTENSIONS: readonly string[] = ['.jpg', '.jpeg', '.png'];
 
 export interface FileRecord {
   id: Id;

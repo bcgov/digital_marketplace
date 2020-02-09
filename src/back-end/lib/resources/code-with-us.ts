@@ -5,15 +5,16 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
-import { getNumber, getString, getStringArray } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
+import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/code-with-us';
 
-export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'status' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> {
+export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> {
+  status: CreateCWUOpportunityStatus;
   session: AuthenticatedSession;
 }
 
@@ -40,7 +41,7 @@ type ValidatedDeleteRequestBody = Id;
 type Resource = crud.Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,
-  CreateRequestBody,
+  Omit<CreateRequestBody, 'status'> & { status: string; },
   ValidatedCreateRequestBody,
   CreateValidationErrors,
   null,
@@ -107,10 +108,17 @@ const resource: Resource = {
           submissionInfo: getString(body, 'submissionInfo'),
           acceptanceCriteria: getString(body, 'acceptanceCriteria'),
           evaluationCriteria: getString(body, 'evaluationCriteria'),
-          attachments: getStringArray(body, 'attachments')
+          attachments: getStringArray(body, 'attachments'),
+          status: getString(body, 'status')
         };
       },
       async validateRequestBody(request) {
+        if (!permissions.createCWUOpportunity(request.session)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+
         const { title,
                 teaser,
                 remoteOk,
@@ -129,9 +137,40 @@ const resource: Resource = {
                 attachments
               } = request.body;
 
-        if (!permissions.createCWUOpportunity(request.session)) {
+        const validatedStatus = opportunityValidation.validateCWUOpportunityStatus(request.body.status, [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published]);
+        if (isInvalid(validatedStatus)) {
           return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
+            status: validatedStatus.value
+          });
+        }
+
+        // Attachments must be validated for both drafts and published opportunities.
+        const validatedAttachments = await validateAttachments(connection, attachments);
+        if (isInvalid(validatedAttachments)) {
+          return invalid({
+            attachments: validatedAttachments.value
+          });
+        }
+        const attachmentIds = validatedAttachments.value.map(v => v.id);
+
+        const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
+        const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate);
+        const validatedStartDate = opportunityValidation.validateStartDate(startDate);
+        const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate);
+
+        // Do not validate other fields if the opportunity is a draft.
+        if (validatedStatus.value === CWUOpportunityStatus.Draft) {
+          const defaultDate = addDays(new Date(), 14);
+          return valid({
+            ...request.body,
+            session: request.session,
+            status: validatedStatus.value,
+            attachments: attachmentIds,
+            // Coerce validated dates to default values.
+            proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
+            assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
+            startDate: getValidValue(validatedStartDate, defaultDate),
+            completionDate: getValidValue(validatedCompletionDate, defaultDate)
           });
         }
 
@@ -143,14 +182,9 @@ const resource: Resource = {
         const validatedReward = opportunityValidation.validateReward(reward);
         const validatedSkills = opportunityValidation.validateSkills(skills);
         const validatedDescription = opportunityValidation.validateDescription(description);
-        const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
-        const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate);
-        const validatedStartDate = opportunityValidation.validateStartDate(startDate);
-        const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate);
         const validatedSubmissionInfo = opportunityValidation.validateSubmissionInfo(submissionInfo);
         const validatedAcceptanceCriteria = opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
         const validatedEvaluationCriteria = opportunityValidation.validateEvaluationCriteria(evaluationCriteria);
-        const validatedAttachments = await validateAttachments(connection, attachments);
 
         if (allValid([
               validatedTitle,
@@ -167,8 +201,7 @@ const resource: Resource = {
               validatedCompletionDate,
               validatedSubmissionInfo,
               validatedAcceptanceCriteria,
-              validatedEvaluationCriteria,
-              validatedAttachments
+              validatedEvaluationCriteria
         ])) {
           return valid({
             session: request.session,
@@ -187,7 +220,8 @@ const resource: Resource = {
             submissionInfo: validatedSubmissionInfo.value,
             acceptanceCriteria: validatedAcceptanceCriteria.value,
             evaluationCriteria: validatedEvaluationCriteria.value,
-            attachments: (validatedAttachments.value as FileRecord[]).map(v => v.id)
+            attachments: attachmentIds,
+            status: validatedStatus.value
           });
         } else {
           return invalid({

@@ -100,6 +100,10 @@ export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): numbe
   return moment(a).diff(moment(b), unit, true);
 }
 
+export function addDays(date: Date, days: number): Date {
+  return moment(date).add(days, 'days').toDate();
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(() => resolve(), ms));
 }

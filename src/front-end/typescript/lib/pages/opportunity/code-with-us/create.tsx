@@ -6,6 +6,7 @@ import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
+import { CWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -13,7 +14,7 @@ import { invalid, valid, Validation } from 'shared/lib/validation';
 interface ValidState {
   publishLoading: number;
   saveDraftLoading: number;
-  formState: Immutable<Form.State>;
+  form: Immutable<Form.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -28,12 +29,12 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
-  userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
+  userType: [UserType.Government, UserType.Admin],
   async success() {
     return valid(immutable({
       publishLoading: 0,
       saveDraftLoading: 0,
-      formState: immutable(await Form.defaultState())
+      form: immutable(await Form.init(null))
     }));
   },
   async fail() {
@@ -49,31 +50,29 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'publish':
+    case 'saveDraft':
+      const isPublish = msg.tag === 'publish';
       return [
-        startPublishLoading(state),
+        isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
-          state = stopPublishLoading(state);
-          const result = await Form.persist(state.formState, adt('publish'));
+          state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
+          const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published : CWUOpportunityStatus.Draft));
           switch (result.tag) {
             case 'valid':
+              //TODO redirect
+              return state.set('form', result.value[0]);
             case 'invalid':
+              state = state.set('form', result.value);
+              //TODO set error alert.
               return state;
           }
-        }
-      ];
-
-    case 'saveDraft':
-      return [
-        startSaveDraftLoading(state),
-        async (state, dispatch) => {
-          return stopSaveDraftLoading(state);
         }
       ];
 
     case 'opportunityForm':
       return updateComponentChild({
         state,
-        childStatePath: ['formState'],
+        childStatePath: ['form'],
         childUpdate: Form.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('opportunityForm', value)
@@ -85,11 +84,15 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 });
 
 const view: ComponentView<State,  Msg> = viewValid(({ state, dispatch }) => {
+  const isPublishLoading = state.publishLoading > 0;
+  const isSaveDraftLoading = state.saveDraftLoading > 0;
+  const isDisabled = isSaveDraftLoading || isPublishLoading;
   return (
     <div className='d-flex flex-column h-100 justify-content-between'>
-      <Form.component.view
-        state={state.formState}
+      <Form.view
+        state={state.form}
         dispatch={mapComponentDispatch(dispatch, value => adt('opportunityForm' as const, value))}
+        disabled={isDisabled}
       />
     </div>
   );
@@ -116,7 +119,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
     const isLoading = isPublishLoading || isSaveDraftLoading;
-    const isValid = Form.isValid(state.formState);
+    const isValid = Form.isValid(state.form);
     return adt('links', [
       {
         children: 'Publish',

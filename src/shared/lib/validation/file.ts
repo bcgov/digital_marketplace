@@ -9,7 +9,7 @@ export function validateAvatarFilename(name: string): Validation<string> {
   return validateFileName(name, SUPPORTED_IMAGE_EXTENSIONS);
 }
 
-export function validateFileName(name: string, validExtensions: string[] = []): Validation<string> {
+export function validateFileName(name: string, validExtensions: readonly string[] = []): Validation<string> {
   const validatedName = validateGenericString(name, 'File name');
   if (isValid(validatedName) && validExtensions.length > 0) {
     const extension = name.match(/\.([a-zA-Z0-9]+)$/);
