@@ -1,7 +1,7 @@
-import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
@@ -14,13 +14,15 @@ import { invalid, valid, Validation } from 'shared/lib/validation';
 interface ValidState {
   publishLoading: number;
   saveDraftLoading: number;
+  showErrorAlert: 'publish' | 'save' | null;
   form: Immutable<Form.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg
-  = ADT<'publish'>
+  = ADT<'dismissErrorAlert'>
+  | ADT<'publish'>
   | ADT<'saveDraft'>
   | ADT<'opportunityForm', Form.Msg>;
 
@@ -34,6 +36,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     return valid(immutable({
       publishLoading: 0,
       saveDraftLoading: 0,
+      showErrorAlert: null,
       form: immutable(await Form.init(null))
     }));
   },
@@ -49,6 +52,8 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
+    case 'dismissErrorAlert':
+      return [state.set('showErrorAlert', null)];
     case 'publish':
     case 'saveDraft':
       const isPublish = msg.tag === 'publish';
@@ -59,12 +64,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published : CWUOpportunityStatus.Draft));
           switch (result.tag) {
             case 'valid':
-              //TODO redirect
+              dispatch(newRoute(adt('opportunityCwuEdit', {
+                id: result.value[1].id
+              })));
               return state.set('form', result.value[0]);
             case 'invalid':
-              state = state.set('form', result.value);
-              //TODO set error alert.
-              return state;
+              return state
+                .set('showErrorAlert', isPublish ? 'publish' : 'save')
+                .set('form', result.value);
           }
         }
       ];
@@ -146,6 +153,15 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       }
     ]);
   }),
+  getAlerts: getAlertsValid(state => ({
+    ...emptyPageAlerts(),
+    errors: state.showErrorAlert
+    ? [{
+        text: `We were unable to ${state.showErrorAlert} your opportunity. Please fix the errors in the form below and try again.`,
+        dismissMsg: adt('dismissErrorAlert')
+      }]
+      : []
+  })),
   getMetadata() {
     return makePageMetadata('Create Opportunity');
   }
