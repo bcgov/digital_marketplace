@@ -65,8 +65,8 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published : CWUOpportunityStatus.Draft));
           switch (result.tag) {
             case 'valid':
-              dispatch(newRoute(adt('opportunityCwuEdit', {
-                id: result.value[1].id
+              dispatch(newRoute(adt('opportunityCwuEdit' as const, {
+                opportunityId: result.value[1].id
               })));
               return state.set('form', result.value[0]);
             case 'invalid':

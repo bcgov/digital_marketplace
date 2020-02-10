@@ -46,12 +46,12 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/:id/edit',
+      path: '/opportunities/code-with-us/:opportunityId/edit',
       makeRoute({params}) {
         return {
           tag: 'opportunityCwuEdit',
           value: {
-            id: params.id || ''
+            opportunityId: params.opportunityId || ''
           }
         };
       }
@@ -276,7 +276,7 @@ const router: Router.Router<Route> = {
       case 'opportunityCwuCreate':
         return '/opportunities/code-with-us/create';
       case 'opportunityCwuEdit':
-        return `/opportunities/code-with-us/${route.value.id}/edit`;
+        return `/opportunities/code-with-us/${route.value.opportunityId}/edit`;
       case 'opportunityCwuView':
         return `/opportunities/code-with-us/${route.value.id}/view`;
       case 'proposalCwuCreate':
