@@ -6,7 +6,7 @@ import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { CWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
+import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';

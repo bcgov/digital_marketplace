@@ -1,5 +1,5 @@
 import { includes, uniq } from 'lodash';
-import { CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
+import { CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { ArrayValidation, invalid, mapValid, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 

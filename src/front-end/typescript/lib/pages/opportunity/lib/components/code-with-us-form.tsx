@@ -13,11 +13,11 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { fileBlobPath } from 'shared/lib/resources/file';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/code-with-us';
+import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
 

@@ -1,8 +1,8 @@
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import { invalid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
-import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import * as FileResource from 'shared/lib/resources/file';
+import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
