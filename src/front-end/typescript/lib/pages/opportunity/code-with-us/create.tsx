@@ -1,7 +1,7 @@
 import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
@@ -40,7 +40,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       form: immutable(await Form.init(null))
     }));
   },
-  async fail() {
+  async fail({ dispatch }) {
+    dispatch(replaceRoute(adt('notice', adt('notFound' as const))));
     return invalid(null);
   }
 });
