@@ -154,9 +154,9 @@ const resource: Resource = {
         const attachmentIds = validatedAttachments.value.map(v => v.id);
 
         const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
-        const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate);
-        const validatedStartDate = opportunityValidation.validateStartDate(startDate);
-        const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate);
+        const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
+        const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
+        const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date()));
 
         // Do not validate other fields if the opportunity is a draft.
         if (validatedStatus.value === CWUOpportunityStatus.Draft) {
@@ -339,9 +339,9 @@ const resource: Resource = {
             const validatedSkills = opportunityValidation.validateSkills(skills);
             const validatedDescription = opportunityValidation.validateDescription(description);
             const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
-            const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate);
-            const validatedStartDate = opportunityValidation.validateStartDate(startDate);
-            const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate);
+            const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
+            const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
+            const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date()));
             const validatedSubmissionInfo = opportunityValidation.validateSubmissionInfo(submissionInfo);
             const validatedAcceptanceCriteria = opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
             const validatedEvaluationCriteria = opportunityValidation.validateEvaluationCriteria(evaluationCriteria);

@@ -188,7 +188,7 @@ export const init: Init<Params, State> = async () => {
 
     startDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateStartDate),
+      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, new Date())),
       child: {
         value: null,
         id: 'opportunity-start-date'
@@ -197,7 +197,7 @@ export const init: Init<Params, State> = async () => {
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateAssignmentDate),
+      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, new Date())),
       child: {
         value: null,
         id: 'opportunity-assignment-date'
@@ -206,7 +206,7 @@ export const init: Init<Params, State> = async () => {
 
     completionDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateCompletionDate),
+      validate: DateField.validateDate(v => opportunityValidation.validateCompletionDate(v, new Date())),
       child: {
         value: null,
         id: 'opportunity-completion-date'
