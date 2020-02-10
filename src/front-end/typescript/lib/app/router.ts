@@ -1,8 +1,8 @@
 import { Route } from 'front-end/lib/app/types';
-import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
 
@@ -147,7 +147,7 @@ const router: Router.Router<Route> = {
           tag: 'userProfile',
           value: {
             userId: params.id || '',
-            tab: UserSidebar.parseTabId(query.tab)
+            tab: UserProfileTab.parseTabId(query.tab) || undefined
           }
         };
       }

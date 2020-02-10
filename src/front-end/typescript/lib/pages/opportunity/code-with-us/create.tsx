@@ -41,7 +41,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     }));
   },
   async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice', adt('notFound' as const))));
+    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
     return invalid(null);
   }
 });

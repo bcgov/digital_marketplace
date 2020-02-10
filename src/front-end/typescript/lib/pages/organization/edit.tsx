@@ -3,10 +3,10 @@ import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
+import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -67,7 +67,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         user: shared.sessionUser,
         organization: result.value,
         sidebar: shared.sessionUser.type === UserType.Vendor
-                  ? await UserSidebar.makeSidebar(shared.sessionUser, shared.sessionUser, 'organizations')
+                  ? await makeSidebarState(shared.sessionUser, shared.sessionUser, 'organizations')
                   : immutable(await MenuSidebar.init({ links: [] })),
         orgForm: immutable(await OrgForm.init({organization: result.value }))
       }));
