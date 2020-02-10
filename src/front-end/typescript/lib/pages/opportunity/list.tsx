@@ -40,14 +40,19 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     return makePageMetadata('Opportunities');
   },
   getContextualActions() {
-    return adt('links', [
-      {
-        children: 'Create CodeWithUs Opportunity',
-        button: true,
-        color: 'primary',
-        symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
-        dest: routeDest(adt('opportunityCwuCreate', null))
-      }
-    ]);
+    return adt('dropdown', {
+      text: 'Actions',
+      linkGroups: [{
+        links: [
+          {
+            children: 'Create CodeWithUs Opportunity',
+            button: true,
+            color: 'primary' as const,
+            symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+            dest: routeDest(adt('opportunityCwuCreate', null))
+          }
+        ]
+      }]
+    });
   }
 };

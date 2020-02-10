@@ -3,7 +3,7 @@ import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
-import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
@@ -66,7 +66,8 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           switch (result.tag) {
             case 'valid':
               dispatch(newRoute(adt('opportunityCwuEdit' as const, {
-                opportunityId: result.value[1].id
+                opportunityId: result.value[1].id,
+                tab: isPublish ? 'summary' : 'opportunity'
               })));
               return state.set('form', result.value[0]);
             case 'invalid':
@@ -118,7 +119,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
         <span>
-          Need help? <a href='# TODO(Jesse): Where does this point?'>Read the guide</a> for creating and managing a CWU opportunity
+          Need help? <Link newTab color='primary' dest={routeDest(adt('content', 'code-with-us-opportunity-guide'))}>Read the guide</Link> for creating and managing a CWU opportunity
         </span>
       )
     })

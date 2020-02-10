@@ -36,9 +36,22 @@ export function setNewAttachmentErrors(state: Immutable<State>, errors: CreateVa
   return state.update('newAttachments', attachments => attachments.map((a, i) => ({ ...a, errors: errors[i].name || [] })));
 }
 
+function getExtension(name: string): string {
+  const match = name.match(/\.([^.\s]+)$/);
+  return match ? match[1] : '';
+}
+
+function enforceExtension(name: string, extension: string): string {
+  if (!name.match(new RegExp(`\\.${extension}$`))) {
+    return `${name}.${extension}`;
+  } else {
+    return name;
+  }
+}
+
 export function getNewAttachments(state: Immutable<State>): CreateFileRequestBody[] {
   return state.newAttachments.map(a => ({
-    name: a.newName || a.name,
+    name: a.newName ? enforceExtension(a.newName, getExtension(a.name)) : a.name,
     file: a.file,
     metadata: a.metadata
   }));
