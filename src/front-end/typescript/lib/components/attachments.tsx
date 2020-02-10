@@ -5,7 +5,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { FormText } from 'reactstrap';
-import { CreateValidationErrors, fileBlobPath, FileRecord, FileUploadMetadata } from 'shared/lib/resources/file';
+import { CreateValidationErrors, enforceExtension, fileBlobPath, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';
 import { adt, ADT } from 'shared/lib/types';
 
 interface NewAttachment extends CreateFileRequestBody {
@@ -34,19 +34,6 @@ export function isValid(state: Immutable<State>): boolean {
 
 export function setNewAttachmentErrors(state: Immutable<State>, errors: CreateValidationErrors[]): Immutable<State> {
   return state.update('newAttachments', attachments => attachments.map((a, i) => ({ ...a, errors: errors[i].name || [] })));
-}
-
-function getExtension(name: string): string {
-  const match = name.match(/\.([^.\s]+)$/);
-  return match ? match[1] : '';
-}
-
-function enforceExtension(name: string, extension: string): string {
-  if (!name.match(new RegExp(`\\.${extension}$`))) {
-    return `${name}.${extension}`;
-  } else {
-    return name;
-  }
 }
 
 export function getNewAttachments(state: Immutable<State>): CreateFileRequestBody[] {

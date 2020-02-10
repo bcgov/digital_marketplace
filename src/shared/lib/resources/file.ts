@@ -60,3 +60,16 @@ export function parseUserTypeList<UserType>(list: string[], parseOneUserType: (r
 export function fileBlobPath(file: FileRecord) {
   return `/api/files/${file.id}?type=blob`;
 }
+
+export function getExtension(name: string): string {
+  const match = name.match(/\.([^.\s]+)$/);
+  return match ? match[1] : '';
+}
+
+export function enforceExtension(name: string, extension: string): string {
+  if (!name.match(new RegExp(`\\.${extension}$`))) {
+    return `${name}.${extension}`;
+  } else {
+    return name;
+  }
+}
