@@ -24,7 +24,7 @@ type InnerMsg
   = ADT<'dismissErrorAlert'>
   | ADT<'publish'>
   | ADT<'saveDraft'>
-  | ADT<'opportunityForm', Form.Msg>;
+  | ADT<'form', Form.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -37,7 +37,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       publishLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
-      form: immutable(await Form.init(null))
+      form: immutable(await Form.init({}))
     }));
   },
   async fail({ dispatch }) {
@@ -78,13 +78,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         }
       ];
 
-    case 'opportunityForm':
+    case 'form':
       return updateComponentChild({
         state,
         childStatePath: ['form'],
         childUpdate: Form.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('opportunityForm', value)
+        mapChildMsg: (value) => adt('form', value)
       });
 
     default:
@@ -100,7 +100,7 @@ const view: ComponentView<State,  Msg> = viewValid(({ state, dispatch }) => {
     <div className='d-flex flex-column h-100 justify-content-between'>
       <Form.view
         state={state.form}
-        dispatch={mapComponentDispatch(dispatch, value => adt('opportunityForm' as const, value))}
+        dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
         disabled={isDisabled}
       />
     </div>

@@ -1,27 +1,38 @@
 import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { Dest, ExtendProps as ExtendLinkProps } from 'front-end/lib/views/link';
+import Link, { Dest, ExtendProps as ExtendLinkProps, iconLinkSymbol, rightPlacement } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
 import React, { Fragment } from 'react';
 import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
 
+const CARET_SIZE = 0.8; //rem
+
 export interface State {
   isDesktopAccountDropdownOpen: boolean;
-  isContextualDropdownOpen: boolean;
+  // Need to toggle each contextual dropdown for mobile/desktop
+  // separately because we use media queries (CSS) to hide/show them,
+  // which means their event listeners are always on.
+  // So, when trying to use the mobile dropdown, the desktop dropdown's
+  // handleDocumentClick function clobbers any onClick handlers that
+  // we have specified.
+  isDesktopContextualDropdownOpen: boolean;
+  isMobileContextualDropdownOpen: boolean;
   isMobileMenuOpen: boolean;
 }
 
 export type Msg
   = ADT<'toggleMobileMenu', boolean | undefined>
   | ADT<'toggleDesktopAccountDropdown', boolean | undefined>
-  | ADT<'toggleContextualDropdown', boolean | undefined>;
+  | ADT<'toggleDesktopContextualDropdown', boolean | undefined>
+  | ADT<'toggleMobileContextualDropdown', boolean | undefined>;
 
 export const init: Init<Params, State> = async () => {
   return {
     isDesktopAccountDropdownOpen: false,
-    isContextualDropdownOpen: false,
+    isDesktopContextualDropdownOpen: false,
+    isMobileContextualDropdownOpen: false,
     isMobileMenuOpen: false
   };
 };
@@ -32,8 +43,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return [state.update('isMobileMenuOpen', v => msg.value === undefined ? !v : msg.value)];
     case 'toggleDesktopAccountDropdown':
       return [state.update('isDesktopAccountDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
-    case 'toggleContextualDropdown':
-      return [state.update('isContextualDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
+    case 'toggleDesktopContextualDropdown':
+      return [state.update('isDesktopContextualDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
+    case 'toggleMobileContextualDropdown':
+      return [state.update('isMobileContextualDropdownOpen', v => msg.value === undefined ? !v : msg.value)];
   }
 };
 
@@ -45,7 +58,8 @@ const NavLink: View<NavLinkProps> = props => {
   const onClick = () => {
     props.dispatch(adt('toggleMobileMenu', false));
     props.dispatch(adt('toggleDesktopAccountDropdown', false));
-    props.dispatch(adt('toggleContextualDropdown', false));
+    props.dispatch(adt('toggleDesktopContextualDropdown', false));
+    props.dispatch(adt('toggleMobileContextualDropdown', false));
     if (props.onClick) { return props.onClick(); }
   };
   const linkProps = { ...props };
@@ -58,16 +72,21 @@ const NavLink: View<NavLinkProps> = props => {
   );
 };
 
-const ContextualDropdown: View<PageContextualDropdown & { isOpen: boolean; dispatch: Dispatch<Msg>; }> = props => {
-  const { text, linkGroups, isOpen, dispatch } = props;
+const ContextualDropdown: View<PageContextualDropdown & { isOpen: boolean; dispatch: Dispatch<Msg>; toggle(): void; }> = props => {
+  const { text, loading, linkGroups, isOpen, dispatch, toggle } = props;
   return (
-    <ButtonDropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleContextualDropdown'))}>
-      <DropdownToggle
-        caret
-        style={{ cursor: 'pointer' }}
-        size='sm'
-        color='primary'>
-        {text}
+    <ButtonDropdown isOpen={isOpen} toggle={() => toggle()}>
+      <DropdownToggle tag='div'>
+        <Link
+          symbol_={rightPlacement(iconLinkSymbol('caret'))}
+          symbolClassName='mr-n1'
+          iconSymbolSize={CARET_SIZE}
+          loading={loading}
+          button
+          size='sm'
+          color='primary'>
+          {text}
+        </Link>
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (
@@ -92,7 +111,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
   const { text, imageUrl, linkGroups, isOpen, dispatch } = props;
   return (
     <Dropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleDesktopAccountDropdown'))}>
-      <DropdownToggle caret tag='div' className='text-white text-hover-white' style={{ cursor: 'pointer' }}>
+      <DropdownToggle tag='div' className='text-white text-hover-white' style={{ cursor: 'pointer' }}>
         <span className='mr-2 o-75'>{text}</span>
         <img
           src={imageUrl}
@@ -102,6 +121,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
             height: '2.75rem',
             objectFit: 'cover'
           }} />
+        <Icon name='caret' color='white' className='ml-2' width={CARET_SIZE} height={CARET_SIZE} />
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (
@@ -335,8 +355,8 @@ const TopNavbar: View<Props> = props => {
   );
 };
 
-const ContextualLinks: View<Props> = props => {
-  const { contextualActions, state, dispatch } = props;
+const ContextualLinks: View<Props & { isOpen: boolean; toggle(): void; }> = props => {
+  const { contextualActions, dispatch, isOpen, toggle } = props;
   if (!contextualActions) { return null; }
   switch (contextualActions.tag) {
     case 'links':
@@ -353,7 +373,7 @@ const ContextualLinks: View<Props> = props => {
         </div>
       );
     case 'dropdown':
-      return (<div className='py-1 pr-1 mr-n1'><ContextualDropdown {...contextualActions.value} isOpen={state.isContextualDropdownOpen} dispatch={dispatch} /></div>);
+      return (<div className='py-1 pr-1 mr-n1'><ContextualDropdown {...contextualActions.value} isOpen={isOpen} dispatch={dispatch} toggle={toggle} /></div>);
   }
 };
 
@@ -380,7 +400,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                 </Fragment>
               ))}
             </div>
-            <ContextualLinks {...props} />
+            <ContextualLinks {...props} isOpen={props.state.isDesktopContextualDropdownOpen} toggle={() => props.dispatch(adt('toggleDesktopContextualDropdown'))} />
           </Col>
         </Row>
       </Container>
@@ -396,7 +416,7 @@ const MobileBottomNavbar: View<Props> = props => {
       <Container className='h-100'>
         <Row className='h-100'>
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-end'>
-            <ContextualLinks {...props} />
+            <ContextualLinks {...props} isOpen={props.state.isMobileContextualDropdownOpen} toggle={() => props.dispatch(adt('toggleMobileContextualDropdown'))} />
           </Col>
         </Row>
       </Container>

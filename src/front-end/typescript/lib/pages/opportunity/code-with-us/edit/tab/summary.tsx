@@ -1,18 +1,14 @@
 import { Route } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import { cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
+import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import Badge from 'front-end/lib/views/badge';
-import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
-import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { hasCWUOpportunityBeenPublished } from 'shared/lib/resources/opportunity/code-with-us';
-import { adt, ADT } from 'shared/lib/types';
+import { ADT } from 'shared/lib/types';
 
 export type State = Tab.Params;
 
@@ -30,69 +26,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const Heading: ComponentView<State, Msg> = ({ state }) => {
-  const createdBy = state.opportunity.createdBy;
-  const oppStatus = state.opportunity.status;
-  const hasBeenPublished = hasCWUOpportunityBeenPublished(state.opportunity);
-  const dates = [
-    hasBeenPublished
-      ? {
-          tag: 'date' as const,
-          date: state.opportunity.createdAt,
-          label: 'Published'
-        }
-      : null,
-    {
-      tag: 'date' as const,
-      date: state.opportunity.updatedAt,
-      label: 'Last updated'
-    }
-  ];
-  const items = [
-    {
-      name: 'Status',
-      children: (<Badge text={cwuOpportunityStatusToTitleCase(oppStatus)} color={cwuOpportunityStatusToColor(oppStatus)} />)
-    },
-    createdBy
-      ? {
-          name: 'Created By',
-          children: (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
-        }
-      : null
-  ];
-  return (
-    <div className='mb-5 pb-5 border-bottom'>
-      <Row className='mb-5'>
-        <Col xs='12'>
-          <div className='mb-2 font-weight-bold text-secondary text-uppercase'>Code-With-Us Opportunity</div>
-          <h2 className='mb-2'>{state.opportunity.title || 'Untitled'}</h2>
-          <DateMetadata dates={compact(dates)} />
-        </Col>
-      </Row>
-      <Row>
-        <Col xs='12'>
-          <DescriptionList items={compact(items)} />
-          {hasBeenPublished
-            ? (<Link
-                newTab
-                color='info'
-                className='mt-3'
-                dest={routeDest(adt('opportunityCWUView', { opportunityId: state.opportunity.id }))}
-                symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
-                View Published Opportunity
-              </Link>)
-            : null}
-        </Col>
-      </Row>
-    </div>
-  );
-};
-
 const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
   const successfulProponent = state.opportunity.successfulProponent;
   if (!successfulProponent) { return null; }
   return (
-    <div className='mb-5 pb-5 border-bottom'>
+    <div className='mt-5 pt-5 border-top'>
       <Row>
         <Col xs='12'>
           <h3 className='mb-4'>Successful Proponent</h3>
@@ -141,7 +79,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
     }
   ];
   return (
-    <div>
+    <div className='mt-5 pt-5 border-top'>
       <Row>
         <Col xs='12'>
           <h3 className='mb-4'>Details</h3>
@@ -178,7 +116,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
 const view: ComponentView<State, Msg> = props => {
   return (
     <div>
-      <Heading {...props} />
+      <EditTabHeader opportunity={props.state.opportunity} />
       <SuccessfulProponent {...props} />
       <Details {...props} />
     </div>

@@ -27,6 +27,14 @@ export function valueToString(value?: Value): string {
   return value ? `${value[0]}-${prefixZero(value[1])}-${prefixZero(value[2])}` : '';
 }
 
+export function dateToValue(date: Date): Value {
+  return [
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate()
+  ];
+}
+
 export function getValueAsString(state: Immutable<State>): string {
   return valueToString(FormField.getValue(state));
 }

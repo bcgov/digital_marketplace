@@ -47,6 +47,7 @@ $blue-dark: #003366;
 $blue-dark-alt: #38598A;
 $blue-dark-alt-2: #0F4C8B;
 $blue-light: #E7EDF3;
+$blue-light-alt: #E9F5FB;
 $white: #ffffff;
 $purple: #52489C;
 $yellow: #FCBA19;
@@ -60,6 +61,7 @@ $colors: (
   'blue-dark-alt': $blue-dark-alt,
   'blue-dark-alt-2': $blue-dark-alt-2,
   'blue-light': $blue-light,
+  'blue-light-alt': $blue-light-alt,
   'white': $white,
   'purple': $purple,
   'yellow': $yellow,
@@ -114,6 +116,10 @@ $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
 
 $badge-font-size: 75%;
+
+$border-radius-sm: 0.2rem;
+$border-radius: 0.3em;
+$border-radius-lg: 0.5rem;
 
 $enable-validation-icons: false;
 

@@ -77,19 +77,21 @@ export type Msg
   // Attachments tab
   | ADT<'attachments', Attachments.Msg>;
 
-export type Params = null;
+export interface Params {
+  opportunity?: CWUOpportunity;
+}
 
-export const init: Init<Params, State> = async () => {
+export const init: Init<Params, State> = async ({ opportunity }) => {
   return {
     activeTab: 'Overview' as const,
-    remoteOk: true,
+    remoteOk: opportunity ? opportunity.remoteOk : true,
 
     title: immutable(await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
         type: 'text',
-        value: '',
+        value: opportunity?.title || '',
         id: 'opportunity-title'
       }
     })),
@@ -98,7 +100,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: opportunityValidation.validateTeaser,
       child: {
-        value: '',
+        value: opportunity?.teaser || '',
         id: 'opportunity-teaser'
       }
     })),
@@ -108,7 +110,7 @@ export const init: Init<Params, State> = async () => {
       validate: opportunityValidation.validateLocation,
       child: {
         type: 'text',
-        value: 'Victoria',
+        value: opportunity?.location || 'Victoria',
         id: 'opportunity-location'
       }
     })),
@@ -120,7 +122,7 @@ export const init: Init<Params, State> = async () => {
         return opportunityValidation.validateReward(v);
       },
       child: {
-        value: null,
+        value: opportunity?.reward || null,
         id: 'opportunity-reward',
         min: 1
       }
@@ -135,7 +137,7 @@ export const init: Init<Params, State> = async () => {
         return mapInvalid(validated1, es => flatten(es));
       },
       child: {
-        value: [],
+        value: opportunity?.skills.map(value => ({ value, label: value })) || [],
         id: 'opportunity-skills',
         creatable: true,
         options: SelectMulti.stringsToOptions(SKILLS)
@@ -146,7 +148,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: opportunityValidation.validateRemoteDesc,
       child: {
-        value: '',
+        value: opportunity?.remoteDesc || '',
         id: 'opportunity-remote-desc'
       }
     })),
@@ -155,7 +157,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: opportunityValidation.validateDescription,
       child: {
-        value: '',
+        value: opportunity?.description || '',
         id: 'opportunity-description',
         async uploadFile(file) {
           const result = await api.files.create({
@@ -181,7 +183,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
         id: 'opportunity-proposal-deadline'
       }
     })),
@@ -190,7 +192,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, new Date())),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
         id: 'opportunity-start-date'
       }
     })),
@@ -199,7 +201,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, new Date())),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
         id: 'opportunity-assignment-date'
       }
     })),
@@ -208,7 +210,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: DateField.validateDate(v => opportunityValidation.validateCompletionDate(v, new Date())),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.completionDate) : null,
         id: 'opportunity-completion-date'
       }
     })),
@@ -218,7 +220,7 @@ export const init: Init<Params, State> = async () => {
       validate: opportunityValidation.validateSubmissionInfo,
       child: {
         type: 'text',
-        value: '',
+        value: opportunity?.submissionInfo || '',
         id: 'opportunity-submission-info'
       }
     })),
@@ -227,7 +229,7 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: opportunityValidation.validateAcceptanceCriteria,
       child: {
-        value: '',
+        value: opportunity?.acceptanceCriteria || '',
         id: 'opportunity-acceptance-criteria'
       }
     })),
@@ -236,13 +238,13 @@ export const init: Init<Params, State> = async () => {
       errors: [],
       validate: opportunityValidation.validateEvaluationCriteria,
       child: {
-        value: '',
+        value: opportunity?.evaluationCriteria || '',
         id: 'opportunity-evaluation-criteria'
       }
     })),
 
     attachments: immutable(await Attachments.init({
-      existingAttachments: [],
+      existingAttachments: opportunity?.attachments || [],
       newAttachmentMetadata: [adt('any')]
     }))
 
@@ -718,11 +720,11 @@ function isActiveTab(state: State, tab: TabValues): boolean {
 }
 
 // @duplicated-tab-helper-functions
-const TabLink: View<Props & { tab: TabValues; }> = ({ state, dispatch, disabled, tab }) => {
+const TabLink: View<Props & { tab: TabValues; }> = ({ state, dispatch, tab }) => {
   const isActive = isActiveTab(state, tab);
   return (
     <NavItem>
-      <NavLink active={isActive} className={`text-nowrap ${isActive ? '' : 'text-primary'}`} onClick={() => {dispatch(adt('updateActiveTab', tab)); }} disabled={disabled}>{tab}</NavLink>
+      <NavLink active={isActive} className={`text-nowrap ${isActive ? '' : 'text-primary'}`} onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>{tab}</NavLink>
     </NavItem>
   );
 };

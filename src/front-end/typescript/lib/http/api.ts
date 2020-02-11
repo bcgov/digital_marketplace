@@ -79,34 +79,71 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CodeWithUs Opportunities
 
-interface CWUOpportunityResourceSimpleResourceTypesParams {
-  record: CWUOpportunityResource.CWUOpportunity;
-  create: {
-    request: CWUOpportunityResource.CreateRequestBody;
-    invalidResponse: CWUOpportunityResource.CreateValidationErrors;
-  };
-  update: {
-    request: CWUOpportunityResource.UpdateRequestBody;
-    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt'> {
+  proposalDeadline: string;
+  assignmentDate: string;
+  startDate: string;
+  completionDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
+  return {
+    ...raw,
+    proposalDeadline: new Date(raw.proposalDeadline),
+    assignmentDate: new Date(raw.assignmentDate),
+    startDate: new Date(raw.startDate),
+    completionDate: new Date(raw.completionDate),
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt)
   };
 }
 
-interface CWUOpportunityResourceTypes extends Omit<SimpleResourceTypes<CWUOpportunityResourceSimpleResourceTypesParams>, 'readMany'> {
+interface CWUOpportunityResourceTypes {
+  create: {
+    request: CWUOpportunityResource.CreateRequestBody;
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.CreateValidationErrors;
+  };
   readMany: {
     rawResponse: CWUOpportunityResource.CWUOpportunitySlim;
     validResponse: CWUOpportunityResource.CWUOpportunitySlim;
     invalidResponse: string[];
   };
+  readOne: {
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+  };
+  update: {
+    request: null;
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.DeleteValidationErrors;
+  };
 }
 
-const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('opportunities/code-with-us');
-
-const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = {
-  ...makeSimpleCrudApi<CWUOpportunityResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
-  readMany: makeReadMany<CWUOpportunityResourceTypes['readMany']>({
-    routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
-  })
+const cwuOpportunityActionParams = {
+  transformValid: rawCWUOpportunityToCWUOpportunity
 };
+
+export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = makeCrudApi({
+  routeNamespace: apiNamespace('opportunities/code-with-us'),
+  create: cwuOpportunityActionParams,
+  readOne: cwuOpportunityActionParams,
+  update: cwuOpportunityActionParams,
+  delete: cwuOpportunityActionParams,
+  readMany: {
+    transformValid: a => a
+  }
+});
 
 // Opportunities
 

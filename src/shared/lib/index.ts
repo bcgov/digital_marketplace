@@ -40,6 +40,9 @@ export function flipCurried<A, B, C>(fn: CurriedFunction<A, B, C>): CurriedFunct
 export function formatAmount(amount: number, currency?: string, separateBy = 1000, separator = ','): string {
   let remaining = amount;
   let formatted = '';
+  if (!remaining) {
+    formatted = '0';
+  }
   while (remaining) {
     const remainder = remaining % separateBy;
     remaining = Math.floor(remaining / separateBy);

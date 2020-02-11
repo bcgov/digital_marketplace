@@ -266,6 +266,7 @@ export interface PageContextualDropdownLinkGroup {
 
 export interface PageContextualDropdown {
   text: string;
+  loading?: boolean;
   linkGroups: PageContextualDropdownLinkGroup[];
 }
 

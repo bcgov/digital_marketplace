@@ -15,7 +15,8 @@ start(app, element, debug)
     const hideNavMenus = debounce(() => {
       stateManager.dispatch(adt('nav', adt('toggleMobileMenu' as const, false)));
       stateManager.dispatch(adt('nav', adt('toggleDesktopAccountDropdown' as const, false)));
-      stateManager.dispatch(adt('nav', adt('toggleContextualDropdown' as const, false)));
+      stateManager.dispatch(adt('nav', adt('toggleDesktopContextualDropdown' as const, false)));
+      stateManager.dispatch(adt('nav', adt('toggleMobileContextualDropdown' as const, false)));
     }, 500, { leading: true });
     // Collapse nav menus on window resize.
     window.addEventListener('resize', hideNavMenus);

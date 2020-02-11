@@ -42,11 +42,12 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
   return (
     <input
       id={state.id}
       type='number'
+      placeholder={placeholder}
       min={state.min}
       max={state.max}
       value={state.value === null ? undefined : state.value}
