@@ -83,6 +83,7 @@ interface BaseProps {
   style?: CSSProperties;
   disabled?: boolean;
   newTab?: boolean;
+  focusable?: boolean;
   onClick?(): void;
 }
 
@@ -124,7 +125,8 @@ function AnchorLink(props: AnchorProps) {
     download = false,
     symbol_,
     symbolClassName = '',
-    iconSymbolSize
+    iconSymbolSize,
+    focusable = true
   } = props;
   const href: string | undefined = (() => {
     if (disabled) { return undefined; }
@@ -149,7 +151,7 @@ function AnchorLink(props: AnchorProps) {
     : undefined;
   const finalProps = {
     href,
-    tabIndex: !disabled && href === undefined ? 0 : undefined, //Ensure links are focusable
+    tabIndex: !disabled && focusable ? 0 : -1,
     onClick: finalOnClick,
     style,
     className: finalClassName,

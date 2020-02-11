@@ -175,7 +175,7 @@ const AccountAction: View<AccountActionProps> = ({ className = '', action, dispa
     case 'text':
       return (<div className={`${className} o-75 text-white`}>{action.value}</div>);
     case 'link':
-      return (<NavLink className={className} {...action.value} dispatch={dispatch} />);
+      return (<NavLink className={className} {...action.value} focusable={false} dispatch={dispatch} />);
   }
 };
 
@@ -271,6 +271,7 @@ const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) 
     <NavLink
       dispatch={dispatch}
       children={title}
+      focusable={false}
       color='white'
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : 'none' }}
@@ -297,6 +298,7 @@ const MobileMenu: View<Props> = props => {
                   {appLinks.map((link, i) => (
                     <NavLink
                       {...link}
+                      focusable={false}
                       dispatch={props.dispatch}
                       color='white'
                       className={linkClassName(link, appLinks.length, i)}
