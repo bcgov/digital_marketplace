@@ -3,7 +3,7 @@ import { ThemeColor } from 'front-end/lib/types';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import React from 'react';
 
-export interface Props {
+export interface ReportCard {
   icon: AvailableIcons;
   iconColor?: ThemeColor;
   name: string;
@@ -11,7 +11,7 @@ export interface Props {
   className?: string;
 }
 
-const ReportCard: View<Props> = ({ icon, iconColor = 'info', name, value, className = '' }) => {
+export const ReportCard: View<ReportCard> = ({ icon, iconColor = 'info', name, value, className = '' }) => {
   return (
     <div className={`p-4 bg-blue-light d-flex flex-nowrap align-items-center rounded ${className}`}>
       <div className='flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-white mr-3' style={{ width: '2.8rem', height: '2.8rem' }}>
@@ -25,4 +25,22 @@ const ReportCard: View<Props> = ({ icon, iconColor = 'info', name, value, classN
   );
 };
 
-export default ReportCard;
+export interface ReportCardList {
+  reportCards: ReportCard[];
+  className?: string;
+}
+
+export const ReportCardList: View<ReportCardList> = ({ reportCards, className = '' }) => {
+  return (
+    <div className='d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap'>
+      {reportCards.map((card, i) => (
+        <ReportCard
+          key={`report-card-${i}`}
+          className={`${i < reportCards.length - 1 ? 'mr-sm-4' : ''} mb-4`}
+          {...card} />
+      ))}
+    </div>
+  );
+};
+
+export default ReportCardList;

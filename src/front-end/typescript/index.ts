@@ -1,7 +1,7 @@
 import { NODE_ENV } from 'front-end/config';
 import app from 'front-end/lib/app/index';
 import { start } from 'front-end/lib/framework';
-import { set } from 'lodash';
+import { debounce, set } from 'lodash';
 import { adt } from 'shared/lib/types';
 
 const element = document.getElementById('main') || document.body;
@@ -12,10 +12,11 @@ start(app, element, debug)
     if (debug) {
       set(window, 'stateManager', stateManager);
     }
-    // Collapse nav menus on window resize.
-    window.addEventListener('resize', () => {
+    const hideNavMenus = debounce(() => {
       stateManager.dispatch(adt('nav', adt('toggleMobileMenu' as const, false)));
       stateManager.dispatch(adt('nav', adt('toggleDesktopAccountDropdown' as const, false)));
       stateManager.dispatch(adt('nav', adt('toggleContextualDropdown' as const, false)));
-    });
+    }, 500, { leading: true });
+    // Collapse nav menus on window resize.
+    window.addEventListener('resize', hideNavMenus);
   });

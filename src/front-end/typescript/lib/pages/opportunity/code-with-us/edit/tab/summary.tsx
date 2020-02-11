@@ -6,7 +6,7 @@ import Badge from 'front-end/lib/views/badge';
 import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import ReportCard from 'front-end/lib/views/report-card';
+import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -64,7 +64,7 @@ const Heading: ComponentView<State, Msg> = ({ state }) => {
     <div className='mb-5 pb-5 border-bottom'>
       <Row className='mb-5'>
         <Col xs='12'>
-          <div className='mb-2 font-weight-bold text-uppercase'>CWU Opportunity</div>
+          <div className='mb-2 font-weight-bold text-secondary text-uppercase'>Code-With-Us Opportunity</div>
           <h2 className='mb-2'>{state.opportunity.title || 'Untitled'}</h2>
           <DateMetadata dates={compact(dates)} />
         </Col>
@@ -123,6 +123,23 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
       children: formatDate(opportunity.startDate)
     }
   ];
+  const reportCards: ReportCard[] = [
+    {
+      icon: 'alarm-clock',
+      name: 'Proposals Due',
+      value: formatDate(opportunity.proposalDeadline)
+    },
+    {
+      icon: 'badge-dollar',
+      name: 'Value',
+      value: formatAmount(opportunity.reward * 10, '$')
+    },
+    {
+      icon: 'map-marker',
+      name: 'Location',
+      value: opportunity.location
+    }
+  ];
   return (
     <div>
       <Row>
@@ -131,10 +148,8 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <Row className='mb-3'>
-        <Col xs='12' className='d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap'>
-          <ReportCard icon='alarm-clock' name='Proposals Due' value={formatDate(opportunity.proposalDeadline)} className='mr-sm-4 mb-4' />
-          <ReportCard icon='badge-dollar' name='Value' value={formatAmount(opportunity.reward, '$')} className='mr-sm-4 mb-4' />
-          <ReportCard icon='map-marker' name='Location' value={opportunity.location} className='mb-4' />
+        <Col xs='12'>
+          <ReportCardList reportCards={reportCards} />
         </Col>
       </Row>
       <Row>
