@@ -3,7 +3,7 @@ import Link, { ExtendAndOmitProps as LinkProps } from 'front-end/lib/views/link'
 import React, { Fragment } from 'react';
 
 interface ExtraProps {
-  accept?: string[];
+  accept?: readonly string[];
   onChange(file: File): void;
 }
 

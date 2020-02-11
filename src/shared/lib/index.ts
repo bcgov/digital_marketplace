@@ -37,6 +37,23 @@ export function flipCurried<A, B, C>(fn: CurriedFunction<A, B, C>): CurriedFunct
   return (b: B) => (a: A) => fn(a)(b);
 }
 
+export function formatAmount(amount: number, currency?: string, separateBy = 1000, separator = ','): string {
+  let remaining = amount;
+  let formatted = '';
+  if (!remaining) {
+    formatted = '0';
+  }
+  while (remaining) {
+    const remainder = remaining % separateBy;
+    remaining = Math.floor(remaining / separateBy);
+    formatted = `${remainder}${formatted ? separator : ''}${formatted}`;
+  }
+  if (currency) {
+    formatted = `${currency} ${formatted}`;
+  }
+  return formatted;
+}
+
 const TIMEZONE = 'America/Vancouver';
 
 export function rawFormatDate(date: Date, formatType: string, withTimeZone: boolean): string {
@@ -53,6 +70,26 @@ export function formatDate(date: Date, withTimeZone = false): string {
 
 export function formatTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, 'LT', withTimeZone);
+}
+
+export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
+  const epochA = a.getTime();
+  const epochB = b.getTime();
+  if (epochA < epochB) {
+    return -1;
+  } else if (epochA > epochB) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): number {
+  return moment(a).diff(moment(b), unit, true);
+}
+
+export function addDays(date: Date, days: number): Date {
+  return moment(date).add(days, 'days').toDate();
 }
 
 export function formatTermsAndConditionsAgreementDate(date?: Date, you = 'You', have = 'have'): string {
@@ -82,22 +119,6 @@ export function bytesToMegabytes(bytes: number): number {
 
 export function megabytesToBytes(megabytes: number): number {
   return megabytes * 1024 * 1024;
-}
-
-export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
-  const epochA = a.getTime();
-  const epochB = b.getTime();
-  if (epochA < epochB) {
-    return -1;
-  } else if (epochA > epochB) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): number {
-  return moment(a).diff(moment(b), unit, true);
 }
 
 export function sleep(ms: number): Promise<void> {

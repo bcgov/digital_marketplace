@@ -6,8 +6,8 @@ import { readFile } from 'fs';
 import Knex from 'knex';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/code-with-us';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
+import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
@@ -900,7 +900,9 @@ export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connec
   return valid(await rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection, result));
 });
 
-type CreateCWUOpportunityParams = Omit<CWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status'>;
+interface CreateCWUOpportunityParams extends Omit<CWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status'> {
+  status: CreateCWUOpportunityStatus;
+}
 
 interface RootOpportunityRecord {
   id: Id;
@@ -908,7 +910,7 @@ interface RootOpportunityRecord {
   createdBy: Id;
 }
 
-interface OpportunityVersionRecord extends CreateCWUOpportunityParams {
+interface OpportunityVersionRecord extends Omit<CreateCWUOpportunityParams, 'status'> {
   opportunity: Id;
   createdAt: Date;
   createdBy: Id;
@@ -931,7 +933,7 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Authentic
     }
 
     // Create initial opportunity version
-    const { attachments, ...restOfOpportunity } = opportunity;
+    const { attachments, status, ...restOfOpportunity } = opportunity;
     const [oppVersionRecord] = await connection<OpportunityVersionRecord>('cwuOpportunityVersions')
       .transacting(trx)
       .insert({
@@ -954,7 +956,7 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Authentic
         opportunity: rootOppRecord.id,
         createdAt: now,
         createdBy: session.user.id,
-        status: CWUOpportunityStatus.Draft,
+        status,
         note: ''
       }, '*');
 

@@ -1,6 +1,4 @@
-import { makePageMetadata } from 'front-end/lib';
-import { isUserType } from 'front-end/lib/access-control';
-import { Route, SharedState } from 'front-end/lib/app/types';
+import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
@@ -8,21 +6,18 @@ import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
-import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
-import { CreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/code-with-us';
 import { fileBlobPath } from 'shared/lib/resources/file';
-import { UserType } from 'shared/lib/resources/user';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/code-with-us';
+import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
 type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
 
@@ -52,11 +47,10 @@ export interface State {
   evaluationCriteria: Immutable<LongText.State>;
 
   // Attachments tab
-  // TODO(Jesse): Do attachments @file-attachments
-  // attachments: File[];
+  attachments: Immutable<Attachments.State>;
 }
 
-type InnerMsg
+export type Msg
   = ADT<'updateActiveTab',   TabValues>
 
   // Details Tab
@@ -81,24 +75,24 @@ type InnerMsg
   | ADT<'evaluationCriteria',  LongText.Msg>
 
   // Attachments tab
-  // @file-attachments
-  ;
+  | ADT<'attachments', Attachments.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export interface Params {
+  opportunity?: CWUOpportunity;
+  activeTab?: TabValues;
+}
 
-export type RouteParams = null;
-
-export async function defaultState() {
+export const init: Init<Params, State> = async ({ opportunity, activeTab = 'Overview' }) => {
   return {
-    activeTab: 'Overview' as const,
-    remoteOk: true,
+    activeTab,
+    remoteOk: opportunity ? opportunity.remoteOk : true,
 
     title: immutable(await ShortText.init({
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
         type: 'text',
-        value: '',
+        value: opportunity?.title || '',
         id: 'opportunity-title'
       }
     })),
@@ -107,7 +101,7 @@ export async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateTeaser,
       child: {
-        value: '',
+        value: opportunity?.teaser || '',
         id: 'opportunity-teaser'
       }
     })),
@@ -117,7 +111,7 @@ export async function defaultState() {
       validate: opportunityValidation.validateLocation,
       child: {
         type: 'text',
-        value: 'Victoria, BC',
+        value: opportunity?.location || 'Victoria',
         id: 'opportunity-location'
       }
     })),
@@ -129,7 +123,7 @@ export async function defaultState() {
         return opportunityValidation.validateReward(v);
       },
       child: {
-        value: null,
+        value: opportunity?.reward || null,
         id: 'opportunity-reward',
         min: 1
       }
@@ -144,7 +138,7 @@ export async function defaultState() {
         return mapInvalid(validated1, es => flatten(es));
       },
       child: {
-        value: [],
+        value: opportunity?.skills.map(value => ({ value, label: value })) || [],
         id: 'opportunity-skills',
         creatable: true,
         options: SelectMulti.stringsToOptions(SKILLS)
@@ -155,7 +149,7 @@ export async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateRemoteDesc,
       child: {
-        value: '',
+        value: opportunity?.remoteDesc || '',
         id: 'opportunity-remote-desc'
       }
     })),
@@ -164,7 +158,7 @@ export async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateDescription,
       child: {
-        value: '',
+        value: opportunity?.description || '',
         id: 'opportunity-description',
         async uploadFile(file) {
           const result = await api.files.create({
@@ -190,34 +184,34 @@ export async function defaultState() {
       errors: [],
       validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
         id: 'opportunity-proposal-deadline'
       }
     })),
 
     startDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateStartDate),
+      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, new Date())),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
         id: 'opportunity-start-date'
       }
     })),
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateAssignmentDate),
+      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, new Date())),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
         id: 'opportunity-assignment-date'
       }
     })),
 
     completionDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateCompletionDate),
+      validate: DateField.validateDate(v => opportunityValidation.validateCompletionDate(v, new Date())),
       child: {
-        value: null,
+        value: opportunity ? DateField.dateToValue(opportunity.completionDate) : null,
         id: 'opportunity-completion-date'
       }
     })),
@@ -227,7 +221,7 @@ export async function defaultState() {
       validate: opportunityValidation.validateSubmissionInfo,
       child: {
         type: 'text',
-        value: '',
+        value: opportunity?.submissionInfo || '',
         id: 'opportunity-submission-info'
       }
     })),
@@ -236,7 +230,7 @@ export async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateAcceptanceCriteria,
       child: {
-        value: '',
+        value: opportunity?.acceptanceCriteria || '',
         id: 'opportunity-acceptance-criteria'
       }
     })),
@@ -245,29 +239,20 @@ export async function defaultState() {
       errors: [],
       validate: opportunityValidation.validateEvaluationCriteria,
       child: {
-        value: '',
+        value: opportunity?.evaluationCriteria || '',
         id: 'opportunity-evaluation-criteria'
       }
+    })),
+
+    attachments: immutable(await Attachments.init({
+      existingAttachments: opportunity?.attachments || [],
+      newAttachmentMetadata: [adt('any')]
     }))
 
   };
-}
+};
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
-  userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
-  async success() {
-    return {
-      ...(await defaultState())
-    };
-  },
-  async fail() {
-    return {
-      ...(await defaultState())
-    };
-  }
-});
-
-function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
+function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
   if (errors) {
     return state
       .update('title',              s => FormField.setErrors(s, errors.title              || []))
@@ -305,12 +290,13 @@ export function isValid(state: Immutable<State>): boolean {
     FormField.isValid(state.completionDate)                  &&
     FormField.isValid(state.submissionInfo)                  &&
     FormField.isValid(state.acceptanceCriteria)              &&
-    FormField.isValid(state.evaluationCriteria);
+    FormField.isValid(state.evaluationCriteria)              &&
+    Attachments.isValid(state.attachments);
 }
 
-export type Values = CreateRequestBody;
+export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
 
-export function getValues(state: Immutable<State>): Values {
+export function getValues(state: Immutable<State>, status?: CreateCWUOpportunityStatus): Values {
   return {
     title:               FormField.getValue(state.title),
     teaser:              FormField.getValue(state.teaser),
@@ -328,26 +314,47 @@ export function getValues(state: Immutable<State>): Values {
 
     submissionInfo:      FormField.getValue(state.submissionInfo),
     acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
-    evaluationCriteria:  FormField.getValue(state.evaluationCriteria),
-
-    attachments: [] //TODO
+    evaluationCriteria:  FormField.getValue(state.evaluationCriteria)
   };
 }
 
 type PersistAction
-  = ADT<'draft'>
-  | ADT<'publish'>;
+  = ADT<'create', CreateCWUOpportunityStatus>;
 
-export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<State, string[]>> {
-  const values: CreateRequestBody = getValues(state);
-  const apiResult = await api.opportunities.cwu.create(values);
-  switch (apiResult.tag) {
-    case 'valid':
-      return valid(state);
+export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUOpportunity], Immutable<State>>> {
+  const values = getValues(state);
+  const newAttachments = Attachments.getNewAttachments(state.attachments);
+  let attachments = state.attachments.existingAttachments.map(({ id }) => id);
+  // Upload new attachments if necessary.
+  if (newAttachments.length) {
+    const result = await api.uploadFiles(newAttachments);
+    switch (result.tag) {
+      case 'valid':
+        attachments = [...attachments, ...(result.value.map(({ id }) => id))];
+        break;
+      case 'invalid':
+        return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
+      case 'unhandled':
+        return invalid(state);
+    }
+  }
+  const actionResult = await (() => {
+    switch (action.tag) {
+        case 'create':
+          return api.opportunities.cwu.create({
+            ...values,
+            attachments,
+            status: action.value
+          });
+    }
+  })();
+  switch (actionResult.tag) {
     case 'unhandled':
+      return invalid(state);
     case 'invalid':
-      setErrors(state, apiResult.value);
-      return invalid(['Error creating the Opportunity.']);
+      return invalid(setErrors(state, actionResult.value));
+    case 'valid':
+      return valid([state, actionResult.value]);
   }
 }
 
@@ -486,12 +493,18 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('evaluationCriteria', value)
       });
 
-    default:
-      return [state];
+    case 'attachments':
+      return updateComponentChild({
+        state,
+        childStatePath: ['attachments'],
+        childUpdate: Attachments.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('attachments', value)
+      });
   }
 };
 
-const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -501,6 +514,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           label='Title'
           placeholder='Opportunity Title'
           required
+          disabled={disabled}
           state={state.title}
           dispatch={mapComponentDispatch(dispatch, value => adt('title' as const, value))} />
       </Col>
@@ -511,6 +525,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           label='Teaser'
           placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
           style={{ height: '200px' }}
+          disabled={disabled}
           state={state.teaser}
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
@@ -538,6 +553,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
               extraChildProps={{}}
               label='Remote Description'
               placeholder={`Provide further information about this opportunity's remote work options.`}
+              disabled={disabled}
               style={{ height: '160px' }}
               state={state.remoteDesc}
               dispatch={mapComponentDispatch(dispatch, value => adt('remoteDesc' as const, value))} />
@@ -550,6 +566,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           label='Location'
           placeholder='Location'
           required
+          disabled={disabled}
           state={state.location}
           dispatch={mapComponentDispatch(dispatch, value => adt('location' as const, value))} />
       </Col>
@@ -560,6 +577,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           label='Fixed-Price Reward'
           placeholder='Fixed-Price Reward'
           required
+          disabled={disabled}
           state={state.reward}
           dispatch={mapComponentDispatch(dispatch, value => adt('reward' as const, value))} />
       </Col>
@@ -570,6 +588,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           label='Required Skills'
           placeholder='Required Skills'
           required
+          disabled={disabled}
           state={state.skills}
           dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
       </Col>
@@ -578,7 +597,7 @@ const OverviewView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const DescriptionView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
+const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -589,6 +608,7 @@ const DescriptionView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           label='Description'
           placeholder='Describe this opportunity.'
           style={{ height: '60vh', minHeight: '400px' }}
+          disabled={disabled}
           state={state.description}
           dispatch={mapComponentDispatch(dispatch, value => adt('description' as const, value))} />
       </Col>
@@ -597,7 +617,7 @@ const DescriptionView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
   );
 };
 
-const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
+const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -607,6 +627,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Proposal Deadline'
           state={state.proposalDeadline}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
       </Col>
       <Col xs='12' md='6'>
@@ -615,6 +636,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Assignment Date'
           state={state.assignmentDate}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
       </Col>
 
@@ -624,6 +646,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Proposed Start Date'
           state={state.startDate}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
       </Col>
       <Col xs='12' md='6'>
@@ -632,6 +655,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           extraChildProps={{}}
           label='Completion Date'
           state={state.completionDate}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
       </Col>
 
@@ -641,6 +665,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           label='Project Submission Info'
           placeholder='e.g. GitHub repository URL'
           state={state.submissionInfo}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('submissionInfo' as const, value))} />
       </Col>
 
@@ -652,6 +677,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           placeholder={`Describe this opportunity's acceptance criteria.`}
           style={{ height: '300px' }}
           state={state.acceptanceCriteria}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('acceptanceCriteria' as const, value))} />
       </Col>
 
@@ -663,6 +689,7 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
           placeholder={`Describe this opportunity's evaluation criteria.`}
           style={{ height: '300px' }}
           state={state.evaluationCriteria}
+          disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('evaluationCriteria' as const, value))} />
       </Col>
 
@@ -671,29 +698,18 @@ const DetailsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: ComponentView<State,  Msg> = ({ state, dispatch }) => {
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
-
         <p>
-          Note(Jesse): Regarding the copy, I believe being exhaustive and
-          explicit on which file formats are accepted is better than having an
-          etc.
+          Upload any supporting material for your opportunity here. Attachments must be smaller than 10MB.
         </p>
-        <p>
-          Upload any supporting material for your opportunity here. Accepted file
-          formats are pdf, jpeg, jpg.
-        </p>
-
-        <Link
-          button
-          color='primary'
-          symbol_={leftPlacement(iconLinkSymbol('cog'))}
-        >
-          Add Attachment
-        </Link>
-
+        <Attachments.view
+          dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
+          state={state.attachments}
+          disabled={disabled}
+          className='mt-4' />
       </Col>
     </Row>
   );
@@ -705,7 +721,7 @@ function isActiveTab(state: State, tab: TabValues): boolean {
 }
 
 // @duplicated-tab-helper-functions
-const TabLink: View<ComponentViewProps<State, Msg> & { tab: TabValues; }> = ({ state, dispatch, tab }) => {
+const TabLink: View<Props & { tab: TabValues; }> = ({ state, dispatch, tab }) => {
   const isActive = isActiveTab(state, tab);
   return (
     <NavItem>
@@ -714,9 +730,12 @@ const TabLink: View<ComponentViewProps<State, Msg> & { tab: TabValues; }> = ({ s
   );
 };
 
-const view: ComponentView<State,  Msg> = props => {
-  const state = props.state;
+interface Props extends ComponentViewProps<State, Msg> {
+  disabled?: boolean;
+}
 
+export const view: View<Props> = props => {
+  const { state } = props;
   const activeTab = (() => {
     switch (state.activeTab) {
       case 'Overview': {
@@ -735,38 +754,22 @@ const view: ComponentView<State,  Msg> = props => {
   })();
 
   return (
-    <div className='d-flex flex-column h-100 justify-content-between'>
-      <div>
-        <Nav tabs className='mb-4'>
+    <div>
+      <div className='d-flex mb-5' style={{ overflowX: 'auto' }}>
+        <Nav tabs className='flex-grow-1 flex-nowrap'>
           <TabLink {...props} tab='Overview' />
           <TabLink {...props} tab='Description' />
           <TabLink {...props} tab='Details' />
           <TabLink {...props} tab='Attachments' />
         </Nav>
-        {activeTab}
       </div>
+      {activeTab}
     </div>
   );
 };
 
-export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
+export const component: Component<Params, State, Msg> = {
   init,
   update,
-  view,
-  sidebar: {
-    size: 'large',
-    color: 'light-blue',
-    view: makeInstructionalSidebar<State,  Msg>({
-      getTitle: () => 'Create a Code With Us Opportunity',
-      getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
-      getFooter: () => (
-        <span>
-          Need help? <a href='# TODO(Jesse): Where does this point?'>Read the guide</a> for creating and managing a CWU opportunity
-        </span>
-      )
-    })
-  },
-  getMetadata() {
-    return makePageMetadata('Create Opportunity');
-  }
+  view
 };

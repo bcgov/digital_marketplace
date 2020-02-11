@@ -13,6 +13,18 @@ export enum CWUOpportunityStatus {
   Canceled = 'CANCELED'
 }
 
+export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
+  switch (raw) {
+    case CWUOpportunityStatus.Draft: return CWUOpportunityStatus.Draft;
+    case CWUOpportunityStatus.Published: return CWUOpportunityStatus.Published;
+    case CWUOpportunityStatus.Evaluation: return CWUOpportunityStatus.Evaluation;
+    case CWUOpportunityStatus.Awarded: return CWUOpportunityStatus.Awarded;
+    case CWUOpportunityStatus.Suspended: return CWUOpportunityStatus.Suspended;
+    case CWUOpportunityStatus.Canceled: return CWUOpportunityStatus.Canceled;
+    default: return null;
+  }
+}
+
 export interface CWUOpportunity {
   id: Id;
   createdAt: Date;
@@ -20,6 +32,8 @@ export interface CWUOpportunity {
 
   createdBy?: User;
   updatedBy?: User;
+  // TODO
+  successfulProponent?: true;
 
   title: string;
   teaser: string;
@@ -41,7 +55,22 @@ export interface CWUOpportunity {
   addenda: Addendum[];
 }
 
+export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+
+export type CreateCWUOpportunityStatus
+  = CWUOpportunityStatus.Published
+  | CWUOpportunityStatus.Draft;
 
 export interface CreateRequestBody {
   title: string;
@@ -60,6 +89,7 @@ export interface CreateRequestBody {
   acceptanceCriteria: string;
   evaluationCriteria: string;
   attachments: Id[];
+  status: CreateCWUOpportunityStatus;
 }
 
 export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'skills' | 'attachments'> {
@@ -74,7 +104,7 @@ export type UpdateRequestBody
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>;
 
-export type UpdateEditRequestBody = CreateRequestBody;
+export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>

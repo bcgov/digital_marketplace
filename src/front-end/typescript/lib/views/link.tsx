@@ -29,10 +29,7 @@ export const emptyIconLinkSymbol = () => adt('emptyIcon' as const);
 
 function makeEmptyLinkSymbol(s?: Placement<LinkSymbol>): Placement<LinkSymbol> | undefined {
   if (s && s.value.tag === 'icon') {
-    return {
-      tag: s.tag,
-      value: emptyIconLinkSymbol()
-    };
+    return adt(s.tag, emptyIconLinkSymbol());
   } else {
     return undefined;
   }
@@ -42,20 +39,21 @@ export type LinkSymbol = IconLinkSymbol | ImageLinkSymbol | EmptyIconLinkSymbol;
 
 interface LinkSymbolProps {
   symbol_: LinkSymbol;
+  iconSymbolSize?: number;
   className?: string;
 }
 
 const ICON_SIZE = 1; //rem
 
-const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, className = '' }) => {
+const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, iconSymbolSize = ICON_SIZE, className = '' }) => {
   className = `${className} flex-shrink-0 flex-grow-0`;
   switch (symbol_.tag) {
     case 'icon':
-      return (<Icon name={symbol_.value} className={className} width={ICON_SIZE} height={ICON_SIZE} />);
+      return (<Icon name={symbol_.value} className={className} width={iconSymbolSize} height={iconSymbolSize} />);
     case 'image':
       return (<img src={symbol_.value} className={className} style={{ width: '1.75rem', height: '1.75rem', objectFit: 'cover', borderRadius: '50%' }} />);
     case 'emptyIcon':
-      return (<div style={{ width: `${ICON_SIZE}rem`, height: `${ICON_SIZE}rem` }} className={className}></div>);
+      return (<div style={{ width: `${iconSymbolSize}rem`, height: `${iconSymbolSize}rem` }} className={className}></div>);
   }
 };
 
@@ -79,10 +77,13 @@ interface BaseProps {
   dest?: Dest;
   symbol_?: Placement<LinkSymbol>;
   symbolClassName?: string;
+  iconSymbolSize?: number; //rem
   children?: ViewElementChildren;
   className?: string;
   style?: CSSProperties;
   disabled?: boolean;
+  newTab?: boolean;
+  focusable?: boolean;
   onClick?(): void;
 }
 
@@ -90,7 +91,6 @@ export interface AnchorProps extends BaseProps {
   button?: false | undefined;
   color?: TextColor;
   nav?: boolean;
-  newTab?: boolean;
   download?: boolean;
 }
 
@@ -124,11 +124,13 @@ function AnchorLink(props: AnchorProps) {
     newTab = false,
     download = false,
     symbol_,
-    symbolClassName = ''
+    symbolClassName = '',
+    iconSymbolSize,
+    focusable = true
   } = props;
   const href: string | undefined = (() => {
     if (disabled) { return undefined; }
-    if (!dest) { return ''; }
+    if (!dest) { return undefined; }
     switch (dest.tag) {
       case 'route': return router.routeToUrl(dest.value);
       case 'external': return dest.value;
@@ -147,29 +149,26 @@ function AnchorLink(props: AnchorProps) {
         onClick();
       })
     : undefined;
-  // If no dest is provided, render as a div
-  // to avoid accidental routing.
-  const Tag = dest ? 'a' : 'div';
-  const isAnchor = Tag === 'a';
   const finalProps = {
-    href: isAnchor ? href : undefined,
+    href,
+    tabIndex: !disabled && focusable ? 0 : -1,
     onClick: finalOnClick,
     style,
     className: finalClassName,
-    target: isAnchor && newTab ? '_blank' : undefined,
-    download: isAnchor ? download : undefined,
-    rel: isAnchor && dest && dest.tag === 'external' ? 'external' : undefined
+    target: newTab ? '_blank' : undefined,
+    download,
+    rel: dest && dest.tag === 'external' ? 'external' : undefined
   };
   return (
-    <Tag {...finalProps}>
+    <a {...finalProps}>
       {symbol_ && symbol_.tag === 'left'
-        ? (<LinkSymbol symbol_={symbol_.value} className={`mr-2 ${symbolClassName}`} />)
+        ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`mr-2 ${symbolClassName}`} />)
         : null}
       {children}
       {symbol_ && symbol_.tag === 'right'
-        ? (<LinkSymbol symbol_={symbol_.value} className={`ml-2 ${symbolClassName}`} />)
+        ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`ml-2 ${symbolClassName}`} />)
         : null}
-    </Tag>
+    </a>
   );
 }
 
@@ -197,7 +196,7 @@ export function ButtonLink(props: ButtonProps) {
     <AnchorLink {...anchorProps}>
       {loading
         ? (<div>
-            <div className='position-absolute' style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            <div className='position-absolute d-flex' style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
               <Spinner color='light' size='sm' />
             </div>
             <div className='o-0 d-inline-flex align-items-center flex-nowrap'>{children}</div>

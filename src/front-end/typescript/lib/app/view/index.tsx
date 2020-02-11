@@ -8,16 +8,16 @@ import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppD
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
-import * as PageOpportunityCwuCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
-import * as PageOpportunityCwuEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
-import * as PageOpportunityCwuView from 'front-end/lib/pages/opportunity/code-with-us/view';
+import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
+import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
+import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
-import * as PageProposalCwuCreate from 'front-end/lib/pages/proposal/code-with-us/create';
-import * as PageProposalCwuEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
-import * as PageProposalCwuView from 'front-end/lib/pages/proposal/code-with-us/view';
+import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
+import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -104,47 +104,47 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         value => ({ tag: 'pageOrgList', value })
       );
 
-    case 'opportunityCwuCreate':
+    case 'opportunityCWUCreate':
       return makeViewPageProps(
         props,
-        PageOpportunityCwuCreate.component,
-        state => state.pages.opportunityCwuCreate,
-        value => ({tag: 'pageOpportunityCwuCreate', value})
+        PageOpportunityCWUCreate.component,
+        state => state.pages.opportunityCWUCreate,
+        value => ({tag: 'pageOpportunityCWUCreate', value})
       );
-    case 'opportunityCwuEdit':
+    case 'opportunityCWUEdit':
       return makeViewPageProps(
         props,
-        PageOpportunityCwuEdit.component,
-        state => state.pages.opportunityCwuEdit,
-        value => ({tag: 'pageOpportunityCwuEdit', value})
+        PageOpportunityCWUEdit.component,
+        state => state.pages.opportunityCWUEdit,
+        value => ({tag: 'pageOpportunityCWUEdit', value})
       );
-    case 'opportunityCwuView':
+    case 'opportunityCWUView':
       return makeViewPageProps(
         props,
-        PageOpportunityCwuView.component,
-        state => state.pages.opportunityCwuView,
-        value => ({tag: 'pageOpportunityCwuView', value})
+        PageOpportunityCWUView.component,
+        state => state.pages.opportunityCWUView,
+        value => ({tag: 'pageOpportunityCWUView', value})
       );
-    case 'proposalCwuCreate':
+    case 'proposalCWUCreate':
       return makeViewPageProps(
         props,
-        PageProposalCwuCreate.component,
-        state => state.pages.proposalCwuCreate,
-        value => ({tag: 'pageProposalCwuCreate', value})
+        PageProposalCWUCreate.component,
+        state => state.pages.proposalCWUCreate,
+        value => ({tag: 'pageProposalCWUCreate', value})
       );
-    case 'proposalCwuEdit':
+    case 'proposalCWUEdit':
       return makeViewPageProps(
         props,
-        PageProposalCwuEdit.component,
-        state => state.pages.proposalCwuEdit,
-        value => ({tag: 'pageProposalCwuEdit', value})
+        PageProposalCWUEdit.component,
+        state => state.pages.proposalCWUEdit,
+        value => ({tag: 'pageProposalCWUEdit', value})
       );
-    case 'proposalCwuView':
+    case 'proposalCWUView':
       return makeViewPageProps(
         props,
-        PageProposalCwuView.component,
-        state => state.pages.proposalCwuView,
-        value => ({tag: 'pageProposalCwuView', value})
+        PageProposalCWUView.component,
+        state => state.pages.proposalCWUView,
+        value => ({tag: 'pageProposalCWUView', value})
       );
     case 'proposalList':
       return makeViewPageProps(

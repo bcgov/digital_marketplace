@@ -1,8 +1,8 @@
 import * as db from 'back-end/lib/db';
 import { get } from 'lodash';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
+import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
 import { Session } from 'shared/lib/resources/session';

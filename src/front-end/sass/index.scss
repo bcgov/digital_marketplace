@@ -30,34 +30,74 @@ $spacers: (
 
 $grid-gutter-width: $spacer * 2;
 
+// Grays.
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-600: #6C757D;
+$gray-800: #343a40;
+$gray-900: #25292F;
+
+// Body color.
+$body-color: $gray-900;
+
+// Colors.
+$blue: #0C99D6;
+$blue-alt: #17A2B8;
+$blue-dark: #003366;
+$blue-dark-alt: #38598A;
+$blue-dark-alt-2: #0F4C8B;
+$blue-light: #E7EDF3;
+$blue-light-alt: #E9F5FB;
+$white: #ffffff;
+$purple: #52489C;
+$yellow: #FCBA19;
+$red: #DC3545;
+$green: #2E8540;
+
+$colors: (
+  'blue': $blue,
+  'blue-alt': $blue-alt,
+  'blue-dark': $blue-dark,
+  'blue-dark-alt': $blue-dark-alt,
+  'blue-dark-alt-2': $blue-dark-alt-2,
+  'blue-light': $blue-light,
+  'blue-light-alt': $blue-light-alt,
+  'white': $white,
+  'purple': $purple,
+  'yellow': $yellow,
+  'red': $red,
+  'green': $green
+);
+
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
 // so we don't need to update the map at all.
-$primary: #0C99D6;
-$primary-alt: #17A2B8;
-$info: #003366;
-$info-alt: #38598A;
-$info-alt-2: #0F4C8B;
-$warn: #FCBA19;
-$danger: #DC3545;
-$success: #28A745;
-$light-blue: #E7EDF3;
-$white: #ffffff;
-$purple: #6610F2;
-$permissions: $purple;
+$primary:   $blue;
+$secondary: $gray-600;
+$info:      $blue-dark;
+$warning:   $yellow;
+$danger:    $red;
+$success:   $green;
+$body:      $body-color;
+$light:     $gray-100;
+$dark:      $gray-800;
 
-$gray-100: #f8f9fa;
-$gray-200: #e9ecef;
-
-$theme-colors: (
-  'white': $white,
-  'primary-alt': $primary-alt,
-  'info-alt': $info-alt,
-  'info-alt-2': $info-alt-2,
-  'light-blue': $light-blue,
-  'permissions': $permissions
+$theme-colors: map-merge(
+  (
+    'primary': $primary,
+    'secondary': $secondary,
+    'info': $info,
+    'warning': $warning,
+    'danger': $danger,
+    'success': $success,
+    'body': $body,
+    'light': $light,
+    'dark': $dark
+  ),
+  $colors
 );
 
+// Other overrides.
 $component-active-bg: $primary;
 $link-color: $primary;
 
@@ -77,6 +117,10 @@ $input-btn-padding-x-lg: 1.25rem;
 
 $badge-font-size: 75%;
 
+$border-radius-sm: 0.2rem;
+$border-radius: 0.3em;
+$border-radius-lg: 0.5rem;
+
 $enable-validation-icons: false;
 
 // Custom variables.
@@ -85,7 +129,7 @@ $transition-duration: 240ms;
 
 // Import Bootstrap.
 
-@import 'node_modules/bootstrap/scss/bootstrap.scss';
+@import 'bootstrap';
 
 // Global styles.
 
@@ -164,7 +208,7 @@ nav {
     }
 
     .main-nav-mobile-menu {
-      @extend .bg-info-alt;
+      @extend .bg-blue-dark-alt;
       @extend .py-4;
       @extend .d-md-none;
       overflow: hidden;
@@ -186,7 +230,7 @@ nav {
 
       &.mobile,
       &.desktop {
-        @extend .bg-info-alt;
+        @extend .bg-blue-dark-alt;
         @extend .align-items-center;
         @extend .shadow;
         height: $main-nav-bottom-navbar-height;
@@ -218,7 +262,7 @@ nav {
   }
 
   .dropdown-toggle:hover img {
-    border-color: $info-alt;
+    border-color: $blue-dark-alt;
   }
 }
 
@@ -370,13 +414,6 @@ nav.navbar .nav-link:hover {
     }
   }
 }
-@each $color, $value in $colors {
-  .text-hover-#{$color} {
-    @include hover {
-      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
-    }
-  }
-}
 @each $color, $value in $grays {
   .text-hover-gray-#{$color} {
     @include hover {
@@ -417,16 +454,12 @@ nav.navbar .nav-link:hover {
   }
 }
 
-.border-bottom-info-alt {
-  border-bottom: 1px solid darken($info-alt, 6%);
-}
-
 .border-bottom-gov {
-  border-bottom: 2px solid $warn;
+  border-bottom: 2px solid $warning;
 }
 
 .border-top-gov {
-  border-top: 2px solid $warn;
+  border-top: 2px solid $warning;
 }
 
 // Custom components

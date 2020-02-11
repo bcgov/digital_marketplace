@@ -1,7 +1,8 @@
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { invalid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
-import * as CWUOpportunityResource from 'shared/lib/resources/code-with-us';
 import * as FileResource from 'shared/lib/resources/file';
+import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
@@ -114,34 +115,71 @@ export const proposals = {
 
 // CodeWithUs Opportunities
 
-interface CWUOpportunityResourceSimpleResourceTypesParams {
-  record: CWUOpportunityResource.CWUOpportunity;
-  create: {
-    request: CWUOpportunityResource.CreateRequestBody;
-    invalidResponse: CWUOpportunityResource.CreateValidationErrors;
-  };
-  update: {
-    request: CWUOpportunityResource.UpdateRequestBody;
-    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt'> {
+  proposalDeadline: string;
+  assignmentDate: string;
+  startDate: string;
+  completionDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
+  return {
+    ...raw,
+    proposalDeadline: new Date(raw.proposalDeadline),
+    assignmentDate: new Date(raw.assignmentDate),
+    startDate: new Date(raw.startDate),
+    completionDate: new Date(raw.completionDate),
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt)
   };
 }
 
-interface CWUOpportunityResourceTypes extends Omit<SimpleResourceTypes<CWUOpportunityResourceSimpleResourceTypesParams>, 'readMany'> {
+interface CWUOpportunityResourceTypes {
+  create: {
+    request: CWUOpportunityResource.CreateRequestBody;
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.CreateValidationErrors;
+  };
   readMany: {
     rawResponse: CWUOpportunityResource.CWUOpportunitySlim;
     validResponse: CWUOpportunityResource.CWUOpportunitySlim;
     invalidResponse: string[];
   };
+  readOne: {
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+  };
+  update: {
+    request: null;
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawCWUOpportunity;
+    validResponse: CWUOpportunityResource.CWUOpportunity;
+    invalidResponse: CWUOpportunityResource.DeleteValidationErrors;
+  };
 }
 
-const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('code-with-us');
-
-const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = {
-  ...makeSimpleCrudApi<CWUOpportunityResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),
-  readMany: makeReadMany<CWUOpportunityResourceTypes['readMany']>({
-    routeNamespace: CWU_OPPORTUNITIES_ROUTE_NAMESPACE
-  })
+const cwuOpportunityActionParams = {
+  transformValid: rawCWUOpportunityToCWUOpportunity
 };
+
+export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = makeCrudApi({
+  routeNamespace: apiNamespace('opportunities/code-with-us'),
+  create: cwuOpportunityActionParams,
+  readOne: cwuOpportunityActionParams,
+  update: cwuOpportunityActionParams,
+  delete: cwuOpportunityActionParams,
+  readMany: {
+    transformValid: a => a
+  }
+});
 
 // Opportunities
 
@@ -246,7 +284,7 @@ function rawFileRecordToFileRecord(raw: RawFileRecord): FileResource.FileRecord 
   };
 }
 
-interface CreateFileRequestBody {
+export interface CreateFileRequestBody {
   name: string;
   file: File;
   metadata: FileResource.FileUploadMetadata;
@@ -293,6 +331,37 @@ export const files: CrudApi<FileResourceTypes> = {
   ...fileCrudApi,
   create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
 };
+
+export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
+  const validResults: FileResource.FileRecord[] = [];
+  let isInvalid = false;
+  const invalidResults: FileResource.CreateValidationErrors[] = [];
+  for (const file of filesToUpload) {
+    if (isInvalid) {
+      //Skip uploading files if a validation error has occurred.
+      invalidResults.push({});
+      continue;
+    }
+    const result = await files.create(file);
+    switch (result.tag) {
+      case 'valid':
+        validResults.push(result.value);
+        invalidResults.push({});
+        break;
+      case 'invalid':
+        isInvalid = true;
+        invalidResults.push(result.value);
+        break;
+      case 'unhandled':
+        return result;
+    }
+  }
+  if (isInvalid) {
+    return invalid(invalidResults);
+  } else {
+    return valid(validResults);
+  }
+}
 
 type AvatarResourceTypes
   = Pick<FileResourceTypes, 'create'>

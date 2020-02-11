@@ -1,41 +1,34 @@
-import { getContextualActionsValid, getModalValid, makePageMetadata, updateValid, viewValid, withValid } from 'front-end/lib';
+import { getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
-import { Route, SharedState } from 'front-end/lib/app/types';
-import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { SharedState } from 'front-end/lib/app/types';
+import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
+import { Immutable, immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import React from 'react';
+import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 
-interface ValidState<K extends UserSidebar.TabId> {
+interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   profileUser: User;
   viewerUser: User;
-  tab: UserSidebar.TabState<K>;
-  sidebar: Immutable<MenuSidebar.State>;
 }
 
-type State_<K extends UserSidebar.TabId> = Validation<Immutable<ValidState<K>>, null>;
+type State_<K extends Tab.TabId> = Validation<Immutable<ValidState<K>>, null>;
 
-export type State = State_<UserSidebar.TabId>;
+export type State = State_<Tab.TabId>;
 
-type InnerMsg<K extends UserSidebar.TabId>
-  = ADT<'tab', UserSidebar.TabMsg<K>>
-  | ADT<'sidebar', MenuSidebar.Msg>;
+export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, ADT<'noop'>>;
 
-type Msg_<K extends UserSidebar.TabId> = GlobalComponentMsg<InnerMsg<K>, Route>;
-
-export type Msg = Msg_<UserSidebar.TabId>;
+export type Msg = Msg_<Tab.TabId>;
 
 export interface RouteParams {
   userId: string;
-  tab?: UserSidebar.TabId;
+  tab?: Tab.TabId;
 }
 
-function makeInit<K extends UserSidebar.TabId>(): PageInit<RouteParams, SharedState, State_<K>, Msg_<K>> {
+function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, State_<K>, Msg_<K>> {
   return isSignedIn({
 
     async success({ routeParams, shared, dispatch }) {
@@ -67,13 +60,13 @@ function makeInit<K extends UserSidebar.TabId>(): PageInit<RouteParams, SharedSt
           return routeParams.tab || 'profile';
         }
       })();
-      const tabState = immutable(await UserSidebar.tabIdToTabDefinition(tabId).component.init({ profileUser, viewerUser }));
+      const tabState = immutable(await Tab.idToDefinition(tabId).component.init({ profileUser, viewerUser }));
       // Everything checks out, return valid state.
       return valid(immutable({
         viewerUser,
         profileUser,
         tab: [tabId, tabState],
-        sidebar: await UserSidebar.makeSidebar(profileUser, viewerUser, tabId)
+        sidebar: await Tab.makeSidebarState(profileUser, viewerUser, tabId)
       }));
     },
 
@@ -88,88 +81,21 @@ function makeInit<K extends UserSidebar.TabId>(): PageInit<RouteParams, SharedSt
   });
 }
 
-function makeUpdate<K extends UserSidebar.TabId>(): Update<State_<K>, Msg_<K>> {
-  return updateValid(({ state, msg }) => {
-    switch (msg.tag) {
-      case 'tab':
-        const tabId = state.tab[0];
-        const definition = UserSidebar.tabIdToTabDefinition(tabId);
-        return updateGlobalComponentChild({
-          state,
-          childStatePath: ['tab', '1'],
-          childUpdate: definition.component.update,
-          childMsg: msg.value,
-          mapChildMsg: value => adt('tab' as const, value as UserSidebar.TabMsg<K>)
-        });
-      case 'sidebar':
-        return updateComponentChild({
-          state,
-          childStatePath: ['sidebar'],
-          childUpdate: MenuSidebar.update,
-          childMsg: msg.value,
-          mapChildMsg: value => adt('sidebar', value)
-        });
-      default:
-        return [state];
-    }
-  });
-}
-
-function makeView<K extends UserSidebar.TabId>(): ComponentView<State_<K>, Msg_<K>> {
-  return viewValid(({ state, dispatch }) => {
-    const [tabId, tabState] = state.tab;
-    const definition = UserSidebar.tabIdToTabDefinition(tabId);
-    return (
-      <definition.component.view
-        dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, v))}
-        state={tabState} />
-    );
-  });
-}
-
-function makeComponent<K extends UserSidebar.TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
+function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
   return {
     init: makeInit(),
-    update: makeUpdate(),
-    view: makeView(),
-    sidebar: {
-      size: 'medium',
-      color: 'light',
-      isEmptyOnMobile: withValid(state => {
-        return !state.sidebar.links.length;
-      }, false),
-      view: viewValid(({ state, dispatch }) => {
-        return (<MenuSidebar.view
-          state={state.sidebar}
-          dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
-      })
-    },
-    getModal: getModalValid(state => {
-      const tabId = state.tab[0];
-      const definition = UserSidebar.tabIdToTabDefinition(tabId);
-      if (!definition.component.getModal) { return null; }
-      return mapPageModalMsg(
-        definition.component.getModal(state.tab[1]),
-        v => adt('tab', v)
-      );
-    }),
-    getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
-      const tabId = state.tab[0];
-      const definition = UserSidebar.tabIdToTabDefinition(tabId);
-      if (!definition.component.getContextualActions) { return null; }
-      return definition.component.getContextualActions({
-        state: state.tab[1],
-        dispatch: mapComponentDispatch(dispatch, v => adt('tab' as const, v))
-      });
-    }),
-    //TODO getAlerts
-    getMetadata(state) {
-      if (isValid(state)) {
-        return makePageMetadata(`${UserSidebar.tabIdToTabDefinition(state.value.tab[0]).title} — ${state.value.profileUser.name}`);
-      } else {
-        return makePageMetadata('Profile');
-      }
-    }
+    update: updateValid(TabbedPage.makeParentUpdate({
+      extraUpdate: ({ state }) => [state],
+      idToDefinition: Tab.idToDefinition
+    })),
+    view: viewValid(TabbedPage.makeParentView(Tab.idToDefinition)),
+    sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
+    getModal: getModalValid(TabbedPage.makeGetParentModal(Tab.idToDefinition)),
+    getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(Tab.idToDefinition)),
+    getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
+      idToDefinition: Tab.idToDefinition,
+      getTitleSuffix: state => state.profileUser.name
+    }), makePageMetadata('User Profile'))
   };
 }
 

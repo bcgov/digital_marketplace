@@ -1,4 +1,4 @@
-import { ComponentView, Immutable, PageGetContextualActions, PageGetModal, PageMetadata, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, Immutable, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
@@ -62,6 +62,22 @@ export function viewValid<ValidState, Msg>(view: ComponentView<ValidState, Msg>)
       state: state.value
     });
   };
+}
+
+export function sidebarValid<ValidState, Msg>(sidebar: PageSidebar<ValidState, Msg>): PageSidebar<ValidatedState<ValidState>, Msg> {
+  return {
+    ...sidebar,
+    isEmptyOnMobile: sidebar.isEmptyOnMobile !== undefined ? withValid(sidebar.isEmptyOnMobile, false) : undefined,
+    view: viewValid(sidebar.view)
+  };
+}
+
+export function getMetadataValid<ValidState>(getMetadata: PageGetMetadata<ValidState>, defaultMetadata: PageMetadata): PageGetMetadata<ValidatedState<ValidState>> {
+  return withValid(getMetadata, defaultMetadata);
+}
+
+export function getAlertsValid<ValidState, Msg>(getAlerts: PageGetAlerts<ValidState, Msg>): PageGetAlerts<ValidatedState<ValidState>, Msg> {
+  return withValid(getAlerts, emptyPageAlerts());
 }
 
 export function getModalValid<ValidState, Msg>(getModal: PageGetModal<ValidState, Msg>): PageGetModal<ValidatedState<ValidState>, Msg> {

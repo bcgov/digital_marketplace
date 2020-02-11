@@ -1,5 +1,5 @@
-import { CWUOpportunitySlim } from 'shared/lib/resources/code-with-us';
 import { FileRecord } from 'shared/lib/resources/file';
+import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
