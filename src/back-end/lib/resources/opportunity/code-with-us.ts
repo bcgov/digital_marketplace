@@ -56,7 +56,7 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'code-with-us',
+  routeNamespace: 'opportunities/code-with-us',
 
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<CWUOpportunitySlim[] | string[]>, Session>(async request => {

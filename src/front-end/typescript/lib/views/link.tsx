@@ -83,6 +83,7 @@ interface BaseProps {
   className?: string;
   style?: CSSProperties;
   disabled?: boolean;
+  newTab?: boolean;
   onClick?(): void;
 }
 
@@ -90,7 +91,6 @@ export interface AnchorProps extends BaseProps {
   button?: false | undefined;
   color?: TextColor;
   nav?: boolean;
-  newTab?: boolean;
   download?: boolean;
 }
 

@@ -2,7 +2,7 @@ import { Route } from 'front-end/lib/app/types';
 import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
-import * as CwuOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
@@ -41,7 +41,7 @@ const router: Router.Router<Route> = {
       path: '/opportunities/code-with-us/create',
       makeRoute() {
         return {
-          tag: 'opportunityCwuCreate',
+          tag: 'opportunityCWUCreate',
           value: null
         };
       }
@@ -50,21 +50,21 @@ const router: Router.Router<Route> = {
       path: '/opportunities/code-with-us/:opportunityId/edit',
       makeRoute({ params, query }) {
         return {
-          tag: 'opportunityCwuEdit',
+          tag: 'opportunityCWUEdit',
           value: {
             opportunityId: params.opportunityId || '',
-            tab: CwuOpportunityEditTab.parseTabId(query.tab) || undefined
+            tab: CWUOpportunityEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
     },
     {
-      path: '/opportunities/code-with-us/:id',
+      path: '/opportunities/code-with-us/:opportunityId',
       makeRoute({params}) {
         return {
-          tag: 'opportunityCwuView',
+          tag: 'opportunityCWUView',
           value: {
-            id: params.id || ''
+            opportunityId: params.opportunityId || ''
           }
         };
       }
@@ -73,7 +73,7 @@ const router: Router.Router<Route> = {
       path: '/opportunities/code-with-us/:opportunityId/proposals/create',
       makeRoute({ params }) {
         return {
-          tag: 'proposalCwuCreate',
+          tag: 'proposalCWUCreate',
           value: {
             opportunityId: params.opportunityId || ''
           }
@@ -84,7 +84,7 @@ const router: Router.Router<Route> = {
       path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit',
       makeRoute({params}) {
         return {
-          tag: 'proposalCwuEdit',
+          tag: 'proposalCWUEdit',
           value: {
             proposalId: params.proposalId || '',
             opportunityId: params.opportunityId || ''
@@ -96,7 +96,7 @@ const router: Router.Router<Route> = {
       path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId',
       makeRoute({ params }) {
         return {
-          tag: 'proposalCwuView',
+          tag: 'proposalCWUView',
           value: {
             proposalId: params.proposalId || '',
             opportunityId: params.opportunityId || ''
@@ -275,17 +275,17 @@ const router: Router.Router<Route> = {
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
-      case 'opportunityCwuCreate':
+      case 'opportunityCWUCreate':
         return '/opportunities/code-with-us/create';
-      case 'opportunityCwuEdit':
+      case 'opportunityCWUEdit':
         return `/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
-      case 'opportunityCwuView':
-        return `/opportunities/code-with-us/${route.value.id}/view`;
-      case 'proposalCwuCreate':
+      case 'opportunityCWUView':
+        return `/opportunities/code-with-us/${route.value.opportunityId}`;
+      case 'proposalCWUCreate':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
-      case 'proposalCwuEdit':
+      case 'proposalCWUEdit':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
-      case 'proposalCwuView':
+      case 'proposalCWUView':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
       case 'proposalList':
         return '/proposals';

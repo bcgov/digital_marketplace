@@ -1,5 +1,5 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
-import { BootstrapColor } from 'front-end/lib/types';
+import { ThemeColor } from 'front-end/lib/types';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 
@@ -99,7 +99,7 @@ export function userStatusToTitleCase(v: UserStatus): string {
   }
 }
 
-export function userStatusToColor(v: UserStatus): BootstrapColor {
+export function userStatusToColor(v: UserStatus): ThemeColor {
   switch (v) {
       case UserStatus.InactiveByAdmin:
       case UserStatus.InactiveByUser:

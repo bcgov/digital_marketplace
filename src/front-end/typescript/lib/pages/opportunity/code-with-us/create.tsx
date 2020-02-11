@@ -2,7 +2,7 @@ import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartL
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
+import * as Form from 'front-end/lib/pages/opportunity/code-with-us/lib/components/form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -65,7 +65,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published : CWUOpportunityStatus.Draft));
           switch (result.tag) {
             case 'valid':
-              dispatch(newRoute(adt('opportunityCwuEdit' as const, {
+              dispatch(newRoute(adt('opportunityCWUEdit' as const, {
                 opportunityId: result.value[1].id,
                 tab: isPublish ? 'summary' as const : 'opportunity' as const
               })));
@@ -113,7 +113,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   view,
   sidebar: {
     size: 'large',
-    color: 'light-blue',
+    color: 'blue-light',
     view: makeInstructionalSidebar<State,  Msg>({
       getTitle: () => 'Create a Code With Us Opportunity',
       getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',

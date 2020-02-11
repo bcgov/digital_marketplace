@@ -84,7 +84,7 @@ export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId)
     icon,
     text: title,
     active: activeTab === tab,
-    dest: routeDest(adt('opportunityCwuEdit', { opportunityId, tab }))
+    dest: routeDest(adt('opportunityCWUEdit', { opportunityId, tab }))
   };
 }
 
@@ -99,6 +99,7 @@ export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Pro
         icon: 'external-link',
         text: 'Read Guide',
         active: false,
+        newTab: true,
         dest: routeDest(adt('content', 'code-with-us-opportunity-guide'))
       }
     ]

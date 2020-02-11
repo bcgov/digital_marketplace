@@ -12,7 +12,7 @@ export interface State {
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
 export interface RouteParams {
-  id: Id;
+  opportunityId: Id;
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {

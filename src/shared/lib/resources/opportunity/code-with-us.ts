@@ -32,6 +32,8 @@ export interface CWUOpportunity {
 
   createdBy?: User;
   updatedBy?: User;
+  // TODO
+  successfulProponent?: true;
 
   title: string;
   teaser: string;
@@ -51,6 +53,17 @@ export interface CWUOpportunity {
   status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
+}
+
+export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;

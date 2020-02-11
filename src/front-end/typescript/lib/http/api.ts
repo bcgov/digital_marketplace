@@ -99,7 +99,7 @@ interface CWUOpportunityResourceTypes extends Omit<SimpleResourceTypes<CWUOpport
   };
 }
 
-const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('code-with-us');
+const CWU_OPPORTUNITIES_ROUTE_NAMESPACE = apiNamespace('opportunities/code-with-us');
 
 const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = {
   ...makeSimpleCrudApi<CWUOpportunityResourceSimpleResourceTypesParams>(CWU_OPPORTUNITIES_ROUTE_NAMESPACE),

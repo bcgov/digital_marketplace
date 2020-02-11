@@ -2,12 +2,13 @@ import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
+import { DescriptionItem } from 'front-end/lib/views/description-list';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { startCase } from 'lodash';
 import React from 'react';
@@ -188,35 +189,20 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-interface ViewDetailProps {
-  name: string;
-  children: ViewElementChildren;
-  className?: string;
-}
-
-const ViewDetail: View<ViewDetailProps> = ({ className = '', name, children }) => {
-  return (
-    <div className={`d-flex flex-row flex-nowrap align-items-stretch ${className}`}>
-      <div className='font-weight-bold align-self-start'>{name}:</div>
-      <div className='ml-3 d-flex align-items-center'>{children}</div>
-    </div>
-  );
-};
-
 const ViewPermissionsAsGovernment: ComponentView<State, Msg> = ({ state }) => {
   const permissions = userTypeToPermissions(state.profileUser.type);
   if (!permissions.length) { return null; }
   return (
-    <ViewDetail name='Permission(s)'>
+    <DescriptionItem name='Permission(s)'>
       {permissions.map((p, i) => (
         <Badge
           pill
           className={i === permissions.length ? '' : 'mr-2'}
           key={`user-permission-pill-${i}`}
           text={p}
-          color='permissions' />
+          color='purple' />
       ))}
-    </ViewDetail>
+    </DescriptionItem>
   );
 };
 
@@ -227,7 +213,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
   const isAccountActivationLoading = state.accountActivationLoading > 0;
   const isLoading = isSaveChangesLoading || isStartEditingFormLoading || isSavePermissionsLoading || isAccountActivationLoading;
   return (
-    <ViewDetail name='Permission(s)'>
+    <DescriptionItem name='Permission(s)'>
       <Checkbox.view
         extraChildProps={{
           inlineLabel: 'Admin',
@@ -237,7 +223,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
         disabled={isLoading}
         state={state.adminCheckbox}
         dispatch={mapComponentDispatch(dispatch, value => adt('adminCheckbox' as const, value))} />
-    </ViewDetail>
+    </DescriptionItem>
   );
 };
 
@@ -262,15 +248,15 @@ const ViewDetails: ComponentView<State, Msg> = props => {
       <Col xs='12'>
         <div className='pb-5 mb-5 border-bottom'>
           {isAdmin(props.state.viewerUser)
-            ? (<ViewDetail name='Status' className='mb-3'>
+            ? (<DescriptionItem name='Status' className='mb-3'>
                 <Badge
                   text={userStatusToTitleCase(profileUser.status)}
                   color={userStatusToColor(profileUser.status)} />
-              </ViewDetail>)
+              </DescriptionItem>)
             : null}
-          <ViewDetail name='Account Type'>
+          <DescriptionItem name='Account Type'>
             {userTypeToTitleCase(profileUser.type)}
-          </ViewDetail>
+          </DescriptionItem>
           <ViewPermissions {...props} />
         </div>
       </Col>

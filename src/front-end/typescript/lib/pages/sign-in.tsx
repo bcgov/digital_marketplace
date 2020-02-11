@@ -54,7 +54,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   sidebar: {
     size: 'large',
-    color: 'light-blue',
+    color: 'blue-light',
     view: makeInstructionalSidebar<State, Msg>({
       getTitle: () => 'Welcome Back to the Digital Marketplace',
       getDescription: () => 'Please sign in to access your Digital Marketplace account.',

@@ -1,6 +1,7 @@
 import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, ExtendProps as ExtendLinkProps } from 'front-end/lib/views/link';
+import Separator from 'front-end/lib/views/separator';
 import React, { Fragment } from 'react';
 import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
@@ -310,7 +311,7 @@ const TopNavbar: View<Props> = props => {
                 </Link>
                 <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
                 {isLoading
-                  ? (<Spinner size='sm' color='info-alt' className='transition-indicator' />)
+                  ? (<Spinner size='sm' color='blue-dark-alt' className='transition-indicator' />)
                   : null}
               </div>
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
@@ -367,13 +368,16 @@ const DesktopBottomNavbar: View<Props> = props => {
           <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
             <div className='d-flex flex-nowrap'>
               {appLinks.map((link, i) => (
-                <div className={`${i < appLinks.length - 1 ? 'pr-3 mr-3 border-right border-info' : ''}`} key={`app-link-${i}`}>
+                <Fragment key={`app-link-${i}`}>
                   <NavLink
                     {...link}
                     dispatch={props.dispatch}
                     color='white'
                     className={linkClassName(link)} />
-                </div>
+                  {i < appLinks.length - 1
+                    ? (<Separator spacing='2' color='info'>|</Separator>)
+                    : null}
+                </Fragment>
               ))}
             </div>
             <ContextualLinks {...props} />

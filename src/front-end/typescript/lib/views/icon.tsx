@@ -1,5 +1,5 @@
 import { View } from 'front-end/lib/framework';
-import { BootstrapColor } from 'front-end/lib/types';
+import { ThemeColor } from 'front-end/lib/types';
 import { CSSProperties, default as React, MouseEventHandler, ReactElement } from 'react';
 
 export type AvailableIcons
@@ -50,7 +50,7 @@ export type AvailableIcons
 
 interface Props {
   name: AvailableIcons;
-  color?: BootstrapColor;
+  color?: ThemeColor;
   hover?: boolean;
   width?: number | 'auto';
   height?: number | 'auto';
