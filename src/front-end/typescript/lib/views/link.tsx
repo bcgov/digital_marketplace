@@ -128,7 +128,7 @@ function AnchorLink(props: AnchorProps) {
   } = props;
   const href: string | undefined = (() => {
     if (disabled) { return undefined; }
-    if (!dest) { return ''; }
+    if (!dest) { return undefined; }
     switch (dest.tag) {
       case 'route': return router.routeToUrl(dest.value);
       case 'external': return dest.value;
@@ -147,21 +147,17 @@ function AnchorLink(props: AnchorProps) {
         onClick();
       })
     : undefined;
-  // If no dest is provided, render as a div
-  // to avoid accidental routing.
-  const Tag = dest ? 'a' : 'div';
-  const isAnchor = Tag === 'a';
   const finalProps = {
-    href: isAnchor ? href : undefined,
+    href,
     onClick: finalOnClick,
     style,
     className: finalClassName,
-    target: isAnchor && newTab ? '_blank' : undefined,
-    download: isAnchor ? download : undefined,
-    rel: isAnchor && dest && dest.tag === 'external' ? 'external' : undefined
+    target: newTab ? '_blank' : undefined,
+    download,
+    rel: dest && dest.tag === 'external' ? 'external' : undefined
   };
   return (
-    <Tag {...finalProps}>
+    <a {...finalProps}>
       {symbol_ && symbol_.tag === 'left'
         ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`mr-2 ${symbolClassName}`} />)
         : null}
@@ -169,7 +165,7 @@ function AnchorLink(props: AnchorProps) {
       {symbol_ && symbol_.tag === 'right'
         ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`ml-2 ${symbolClassName}`} />)
         : null}
-    </Tag>
+    </a>
   );
 }
 
