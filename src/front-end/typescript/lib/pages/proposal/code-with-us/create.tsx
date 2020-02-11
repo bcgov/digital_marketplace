@@ -728,7 +728,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   sidebar: {
     size: 'large',
-    color: 'light-blue',
+    color: 'blue-light',
     view: makeInstructionalSidebar<State, Msg>({
       getTitle: () => 'Create a Code With Us Proposal',
       getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
