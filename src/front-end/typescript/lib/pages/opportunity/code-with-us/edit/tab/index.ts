@@ -1,5 +1,5 @@
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ParseTabId, Tab, TabComponent, TabDefinition, TabId as TabId_, TabMsg as TabMsg_, TabState as TabState_ } from 'front-end/lib/components/sidebar/menu/tabbed-page';
+import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable } from 'front-end/lib/framework';
 import * as HistoryTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/history';
 import * as OpportunityTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity';
@@ -9,26 +9,34 @@ import { routeDest } from 'front-end/lib/views/link';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, Id } from 'shared/lib/types';
 
+// Parent page types & functions.
+
+export type ParentState<K extends TabId> = TabbedPage.ParentState<Tabs, K>;
+
+export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<Tabs, K, InnerMsg>;
+
+// Tab component types & functions.
+
 export interface Params {
   opportunity: CWUOpportunity;
 }
 
-export type Component<State, Msg> = TabComponent<Params, State, Msg>;
+export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 
 export interface Tabs {
-  summary: Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
-  opportunity: Tab<Params, OpportunityTab.State, OpportunityTab.InnerMsg>;
-  proposals: Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
-  history: Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
+  summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
+  opportunity: TabbedPage.Tab<Params, OpportunityTab.State, OpportunityTab.InnerMsg>;
+  proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
+  history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
 }
 
-export type TabId = TabId_<Tabs>;
+export type TabId = TabbedPage.TabId<Tabs>;
 
-export type TabState<K extends TabId> = TabState_<Tabs, K>;
+export type TabState<K extends TabId> = TabbedPage.TabState<Tabs, K>;
 
-export type TabMsg<K extends TabId> = TabMsg_<Tabs, K>;
+export type TabMsg<K extends TabId> = TabbedPage.TabMsg<Tabs, K>;
 
-export const parseTabId: ParseTabId<Tabs> = raw => {
+export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
   switch (raw) {
     case 'summary':
     case 'opportunity':
@@ -40,33 +48,33 @@ export const parseTabId: ParseTabId<Tabs> = raw => {
   }
 };
 
-export function idToDefinition<K extends TabId>(id: K): TabDefinition<Tabs, K> {
+export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition<Tabs, K> {
   switch (id) {
     case 'opportunity':
       return {
         component: OpportunityTab.component,
         icon: 'file-code',
         title: 'Opportunity'
-      } as TabDefinition<Tabs, K>;
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case 'proposals':
       return {
         component: ProposalsTab.component,
         icon: 'comment-dollar',
         title: 'Proposals'
-      } as TabDefinition<Tabs, K>;
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case 'history':
       return {
         component: HistoryTab.component,
         icon: 'history',
         title: 'History'
-      } as TabDefinition<Tabs, K>;
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case 'summary':
     default:
       return {
         component: SummaryTab.component,
         icon: 'clipboard-list',
         title: 'Summary'
-      } as TabDefinition<Tabs, K>;
+      } as TabbedPage.TabDefinition<Tabs, K>;
   }
 }
 

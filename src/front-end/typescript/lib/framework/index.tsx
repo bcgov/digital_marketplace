@@ -250,7 +250,7 @@ export function noPageModal<Msg>() {
   return null;
 }
 
-export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg>> {
+export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   size: 'medium' | 'large';
   color: BootstrapColor;
   view: View<Props>;

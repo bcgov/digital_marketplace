@@ -2,6 +2,7 @@ import { Route } from 'front-end/lib/app/types';
 import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
+import * as CwuOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
@@ -47,11 +48,12 @@ const router: Router.Router<Route> = {
     },
     {
       path: '/opportunities/code-with-us/:opportunityId/edit',
-      makeRoute({params}) {
+      makeRoute({ params, query }) {
         return {
           tag: 'opportunityCwuEdit',
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || '',
+            tab: CwuOpportunityEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -276,7 +278,7 @@ const router: Router.Router<Route> = {
       case 'opportunityCwuCreate':
         return '/opportunities/code-with-us/create';
       case 'opportunityCwuEdit':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/edit`;
+        return `/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'opportunityCwuView':
         return `/opportunities/code-with-us/${route.value.id}/view`;
       case 'proposalCwuCreate':

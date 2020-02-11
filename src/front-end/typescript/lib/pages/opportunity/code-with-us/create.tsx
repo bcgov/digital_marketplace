@@ -67,7 +67,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             case 'valid':
               dispatch(newRoute(adt('opportunityCwuEdit' as const, {
                 opportunityId: result.value[1].id,
-                tab: isPublish ? 'summary' : 'opportunity'
+                tab: isPublish ? 'summary' as const : 'opportunity' as const
               })));
               return state.set('form', result.value[0]);
             case 'invalid':
