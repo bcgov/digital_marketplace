@@ -137,7 +137,7 @@ const view: ComponentView<State, Msg> = props => {
     },
     {
       icon: 'comment-dollar',
-      name: 'Proposals Rec\'d',
+      name: 'Proposals',
       value: formatAmount(0) //TODO
     }
   ];
