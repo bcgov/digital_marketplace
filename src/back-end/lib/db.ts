@@ -1477,7 +1477,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, string, AuthenticatedSe
         proposal: proposalId,
         createdAt: now,
         createdBy: session.user.id,
-        status: CWUProposalStatus.Review,
+        status: CWUProposalStatus.Evaluated,
         note
       }, '*');
 
