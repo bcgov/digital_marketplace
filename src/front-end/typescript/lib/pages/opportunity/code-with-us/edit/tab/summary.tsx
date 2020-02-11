@@ -6,10 +6,11 @@ import Badge from 'front-end/lib/views/badge';
 import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import ReportCard from 'front-end/lib/views/report-card';
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatDate } from 'shared/lib';
+import { formatAmount, formatDate } from 'shared/lib';
 import { hasCWUOpportunityBeenPublished } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -129,15 +130,11 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
           <h3 className='mb-4'>Details</h3>
         </Col>
       </Row>
-      <Row className='mb-4'>
-        <Col xs='4'>
-          Proposals Due
-        </Col>
-        <Col xs='4'>
-          Value
-        </Col>
-        <Col xs='4'>
-          Location
+      <Row className='mb-3'>
+        <Col xs='12' className='d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap'>
+          <ReportCard icon='alarm-clock' name='Proposals Due' value={formatDate(opportunity.proposalDeadline)} className='mr-sm-4 mb-4' />
+          <ReportCard icon='badge-dollar' name='Value' value={formatAmount(opportunity.reward, '$')} className='mr-sm-4 mb-4' />
+          <ReportCard icon='map-marker' name='Location' value={opportunity.location} className='mb-4' />
         </Col>
       </Row>
       <Row>
