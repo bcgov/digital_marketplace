@@ -62,7 +62,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
           state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
-          const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published : CWUOpportunityStatus.Draft));
+          const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published as const : CWUOpportunityStatus.Draft as const));
           switch (result.tag) {
             case 'valid':
               dispatch(newRoute(adt('opportunityCWUEdit' as const, {

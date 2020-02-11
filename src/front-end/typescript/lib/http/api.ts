@@ -8,7 +8,7 @@ import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
 import { ClientHttpMethod } from 'shared/lib/types';
 
-export { getValid, getInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
+export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
 const deslash = (s: string) => s.replace(/^\/*/, '').replace(/\/*$/, '');
 const prefix = (a: string) => (b: string) => `/${deslash(a)}/${deslash(b)}`;
@@ -118,7 +118,7 @@ interface CWUOpportunityResourceTypes {
     invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
   };
   update: {
-    request: null;
+    request: CWUOpportunityResource.UpdateRequestBody;
     rawResponse: RawCWUOpportunity;
     validResponse: CWUOpportunityResource.CWUOpportunity;
     invalidResponse: CWUOpportunityResource.UpdateValidationErrors;

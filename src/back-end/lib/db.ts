@@ -9,7 +9,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, UpdateProponentRequestBody, CWUProposalStatusRecord } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, CWUProposalStatusRecord, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -996,7 +996,7 @@ type UpdateCWUOpportunityParams = Partial<CWUOpportunity>;
 export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
   const now = new Date();
   const { attachments, ...restOfOpportunity } = opportunity;
-  return valid(await connection.transaction(async trx => {
+  const oppVersion = await connection.transaction(async trx => {
     const [oppVersion] = await connection<OpportunityVersionRecord>('cwuOpportunityVersions')
       .transacting(trx)
       .insert({
@@ -1010,7 +1010,6 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Au
     if (!oppVersion) {
       throw new Error('unable to update opportunity');
     }
-
     attachments?.forEach(async attachment => {
       await connection('cwuOpportunityAttachments')
         .transacting(trx)
@@ -1019,13 +1018,13 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Au
           file: attachment.id
         });
     });
-
-    const dbResult = await readOneCWUOpportunity(connection, oppVersion.opportunity, session);
-    if (isInvalid(dbResult) || !dbResult.value) {
-      throw new Error('unable to update opportunity');
-    }
-    return dbResult.value;
-  }));
+    return oppVersion;
+  });
+  const dbResult = await readOneCWUOpportunity(connection, oppVersion.opportunity, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+  return valid(dbResult.value);
 });
 
 interface CWUOpportunityStatusRecord {

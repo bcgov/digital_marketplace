@@ -14,8 +14,8 @@ import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
 import { fileBlobPath } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { adt, ADT } from 'shared/lib/types';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
@@ -319,7 +319,8 @@ export function getValues(state: Immutable<State>, status?: CreateCWUOpportunity
 }
 
 type PersistAction
-  = ADT<'create', CreateCWUOpportunityStatus>;
+  = ADT<'create', CreateCWUOpportunityStatus>
+  | ADT<'update', Id>;
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUOpportunity], Immutable<State>>> {
   const values = getValues(state);
@@ -338,13 +339,25 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state);
     }
   }
-  const actionResult = await (() => {
+  const actionResult: api.ResponseValidation<CWUOpportunity, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
     switch (action.tag) {
         case 'create':
-          return api.opportunities.cwu.create({
+          return await api.opportunities.cwu.create({
             ...values,
             attachments,
             status: action.value
+          });
+        case 'update':
+          const updateResult = await api.opportunities.cwu.update(action.value, adt('edit' as const, {
+            ...values,
+            attachments
+          }));
+          return api.mapInvalid(updateResult, errors => {
+            if (errors.opportunity && errors.opportunity.tag === 'edit') {
+              return errors.opportunity.value;
+            } else {
+              return {};
+            }
           });
     }
   })();
@@ -354,6 +367,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
     case 'invalid':
       return invalid(setErrors(state, actionResult.value));
     case 'valid':
+      state = setErrors(state, {});
       return valid([state, actionResult.value]);
   }
 }

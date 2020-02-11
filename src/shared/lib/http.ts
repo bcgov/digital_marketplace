@@ -25,12 +25,26 @@ export function isUnhandled(v: ResponseValidation<unknown, unknown>): v is ADT<'
   return v.tag === 'unhandled';
 }
 
-export function getValid<T>(v: ResponseValidation<T, unknown>, fallback: T): T {
+export function getValidValue<T>(v: ResponseValidation<T, unknown>, fallback: T): T {
   return v.tag === 'valid' ? v.value : fallback;
 }
 
-export function getInvalid<T>(v: ResponseValidation<unknown, T>, fallback: T): T {
+export function getInvalidValue<T>(v: ResponseValidation<unknown, T>, fallback: T): T {
   return v.tag === 'invalid' ? v.value : fallback;
+}
+
+export function mapValid<A, B, C>(value: ResponseValidation<A, B>, fn: (b: A) => C): ResponseValidation<C, B> {
+  switch (value.tag) {
+    case 'valid': return valid(fn(value.value));
+    default: return value;
+  }
+}
+
+export function mapInvalid<A, B, C>(value: ResponseValidation<A, B>, fn: (b: B) => C): ResponseValidation<A, C> {
+  switch (value.tag) {
+    case 'invalid': return invalid(fn(value.value));
+    default: return value;
+  }
 }
 
 // HTTP Functions

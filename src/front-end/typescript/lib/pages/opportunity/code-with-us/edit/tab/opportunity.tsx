@@ -93,7 +93,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         startSaveChangesLoading(state),
         async state => {
           state = stopSaveChangesLoading(state);
-          return state;
+          const result = await Form.persist(state.form, adt('update', state.opportunity.id));
+          switch (result.tag) {
+            case 'valid':
+              return state
+                .set('form', result.value[0])
+                .set('opportunity', result.value[1])
+                .set('isEditing', false);
+            case 'invalid':
+              return state.set('form', result.value);
+          }
         }
       ];
     case 'publish':
@@ -172,7 +181,6 @@ export const component: Tab.Component<State, Msg> = {
     const isDeleteLoading = state.deleteLoading > 0;
     const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
     const oppStatus = state.opportunity.status;
-    const isDraft = oppStatus === CWUOpportunityStatus.Draft;
     if (state.isEditing) {
       return adt('links', [
         {
@@ -184,7 +192,7 @@ export const component: Tab.Component<State, Msg> = {
             }
           })(),
           disabled: (() => {
-            if (isDraft) {
+            if (oppStatus === CWUOpportunityStatus.Draft) {
               // No validation required, always possible to save a draft.
               return false;
             } else {
