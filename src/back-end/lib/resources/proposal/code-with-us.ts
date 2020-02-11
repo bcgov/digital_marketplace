@@ -59,7 +59,7 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'code-with-us/proposal',
+  routeNamespace: 'proposals/code-with-us',
 
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<CWUProposalSlim[] | string[]>, Session>(async request => {
@@ -203,18 +203,18 @@ const resource: Resource = {
               attachments: getStringArray(value, 'attachments')
             });
           case 'submit':
-            return adt('submit', String(value));
+            return adt('submit', getString(body, 'value', ''));
           case 'score':
             return adt('score', {
               score: getNumber<number>(value, 'score', -1),
               note: getString(value, 'note')
             });
           case 'award':
-            return adt('award', String(value));
+            return adt('award', getString(body, 'value', ''));
           case 'disqualify':
-            return adt('disqualify', String(value));
+            return adt('disqualify', getString(body, 'value', ''));
           case 'withdraw':
-            return adt('withdraw', String(value));
+            return adt('withdraw', getString(body, 'value', ''));
           default:
             return null;
         }

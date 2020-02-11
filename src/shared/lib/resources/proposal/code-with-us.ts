@@ -16,6 +16,14 @@ export enum CWUProposalStatus {
   Withdrawn = 'WITHDRAWN'
 }
 
+export interface CWUProposalStatusRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: User;
+  status: CWUProposalStatus;
+  note: string;
+}
+
 export interface CWUProposal {
   id: Id;
   createdBy: User;
@@ -29,6 +37,7 @@ export interface CWUProposal {
   score: number;
   status: CWUProposalStatus;
   attachments: FileRecord[];
+  statusHistory?: CWUProposalStatusRecord[];
 }
 
 export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;
