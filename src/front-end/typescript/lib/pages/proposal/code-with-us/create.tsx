@@ -22,6 +22,7 @@ type TabValues = 'Proponent' | 'Proposal' | 'Attachments';
 type ProponentType = 'Individual' | 'Organization' | null;
 
 export interface State {
+  opportunityId: Id;
   activeTab: TabValues;
 
   // Proponent Tab
@@ -81,8 +82,10 @@ export type RouteParams = {
   opportunityId: string;
 };
 
-async function defaultState() {
+async function defaultState(opportunityId: Id) {
   return {
+    opportunityId,
+
     activeTab: 'Proponent' as const,
     proponentType: null,
     orgId: '',
@@ -192,14 +195,14 @@ async function defaultState() {
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
-  async success() {
+  async success(params) {
     return {
-      ...(await defaultState())
+      ...(await defaultState(params.routeParams.opportunityId))
     };
   },
-  async fail() {
+  async fail(params) {
     return {
-      ...(await defaultState())
+      ...(await defaultState(params.routeParams.opportunityId))
     };
   }
 });
@@ -412,9 +415,8 @@ function requestBodyFromValues(opportunityId: Id, formValues: Values): CWUPropos
 }
 
 export async function persist(state: State): Promise<Validation<State, string[]>> {
-  const opportunityId = '8fddb90e-d7fe-43bb-8234-6e58e856c259';
   const formValues = getFormValues(state);
-  const requestBody = requestBodyFromValues(opportunityId, formValues);
+  const requestBody = requestBodyFromValues(state.opportunityId, formValues);
   const apiResult = await api.proposals.cwu.create(requestBody);
 
   switch (apiResult.tag) {
