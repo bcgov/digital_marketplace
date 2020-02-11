@@ -33,7 +33,7 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 async function resetForm(state: Immutable<State>, opportunity: CWUOpportunity): Promise<Immutable<State>> {
-  return state.set('form', immutable(await Form.init({ opportunity })));
+  return state.set('form', immutable(await Form.init({ opportunity, activeTab: state.form.activeTab })));
 }
 
 const init: Init<Tab.Params, State> = async params => ({

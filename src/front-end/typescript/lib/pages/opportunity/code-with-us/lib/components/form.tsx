@@ -79,11 +79,12 @@ export type Msg
 
 export interface Params {
   opportunity?: CWUOpportunity;
+  activeTab?: TabValues;
 }
 
-export const init: Init<Params, State> = async ({ opportunity }) => {
+export const init: Init<Params, State> = async ({ opportunity, activeTab = 'Overview' }) => {
   return {
-    activeTab: 'Overview' as const,
+    activeTab,
     remoteOk: opportunity ? opportunity.remoteOk : true,
 
     title: immutable(await ShortText.init({
