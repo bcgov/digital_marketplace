@@ -397,7 +397,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                     color='white'
                     className={linkClassName(link)} />
                   {i < appLinks.length - 1
-                    ? (<Separator spacing='2' color='info'>|</Separator>)
+                    ? (<Separator spacing='2' color='info' className='o-50'>|</Separator>)
                     : null}
                 </Fragment>
               ))}
