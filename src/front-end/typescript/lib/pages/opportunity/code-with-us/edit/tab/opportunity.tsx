@@ -82,7 +82,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'cancelEditing':
-      return [state.set('isEditing', false)];
+      return [
+        state,
+        async state => {
+          return await resetForm(state.set('isEditing', false), state.opportunity);
+        }
+      ];
     case 'saveChanges':
       return [
         startSaveChangesLoading(state),

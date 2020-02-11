@@ -149,6 +149,7 @@ function AnchorLink(props: AnchorProps) {
     : undefined;
   const finalProps = {
     href,
+    tabIndex: !disabled && href === undefined ? 0 : undefined, //Ensure links are focusable
     onClick: finalOnClick,
     style,
     className: finalClassName,
