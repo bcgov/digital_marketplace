@@ -141,14 +141,12 @@ export async function validateCWUProposalId(connection: db.Connection, proposalI
   }
 }
 
-type ValidatedCreateProponentRequestBody = CreateProponentRequestBody;
-
-export async function validateProponent(connection: db.Connection, raw: any): Promise<Validation<ValidatedCreateProponentRequestBody, CreateProponentValidationErrors>> {
+export async function validateProponent(connection: db.Connection, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
     case 'individual':
       const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
       if (isValid(validatedIndividualProponentRequestBody)) {
-        return valid(adt('individual', validatedIndividualProponentRequestBody.value));
+        return adt(validatedIndividualProponentRequestBody.tag, adt('individual' as const, validatedIndividualProponentRequestBody.value));
       }
       return invalid(adt('individual', validatedIndividualProponentRequestBody.value));
     case 'organization':

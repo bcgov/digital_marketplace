@@ -1,33 +1,69 @@
 import { getString } from 'shared/lib';
 import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
-import { allValid, getInvalidValue, invalid, optional, valid, validateGenericString, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
 
 export function validateProposalText(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Proposal Text', 0);
+  return validateGenericString(raw, 'Proposal Text', 1, 10000);
 }
 
 export function validateAdditionalComments(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Additional Comments', 0);
+  return validateGenericString(raw, 'Additional Comments', 0, 10000);
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Note', 0);
+  return validateGenericString(raw, 'Note', 0, 5000);
 }
 
 export function validateScore(raw: number): Validation<number> {
-  return raw >= 0 ? valid(raw) : invalid(['Score not in valid range.']);
+  return validateNumber(raw, 0, 100, 'score', 'a');
+}
+
+export function validateIndividualProponentLegalName(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Legal Name', 1);
+}
+
+export function validateIndividualProponentEmail(raw: string): Validation<string> {
+  return validateEmail(raw);
+}
+
+export function validateIndividualProponentPhone(raw: string): Validation<string> {
+  return validatePhoneNumber(raw);
+}
+
+export function validateIndividualProponentStreet1(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Street Address', 1);
+}
+
+export function validateIndividualProponentStreet2(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Street Address', 0);
+}
+
+export function validateIndividualProponentCity(raw: string): Validation<string> {
+  return validateGenericString(raw, 'City', 1);
+}
+
+export function validateIndividualProponentRegion(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Province/State', 1);
+}
+
+export function validateIndividualProponentMailCode(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Postal/Zip Code', 1);
+}
+
+export function validateIndividualProponentCountry(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Country', 1);
 }
 
 export function validateIndividualProponent(raw: any): Validation<CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors> {
-  const validatedLegalName = validateGenericString(getString(raw, 'legalName'), 'Legal Name');
-  const validatedEmail = validateGenericString(getString(raw, 'email'), 'Email');
-  const validatedPhone = optional(getString(raw, 'phone'), v => validatePhoneNumber(v));
-  const validatedStreet1 = validateGenericString(getString(raw, 'street1'), 'Street Address');
-  const validatedStreet2 = optional(getString(raw, 'street2'), v => validateGenericString(v, 'Street Address'));
-  const validatedCity = validateGenericString(getString(raw, 'city'), 'City');
-  const validatedRegion = validateGenericString(getString(raw, 'region'), 'Province/State');
-  const validatedMailCode = validateGenericString(getString(raw, 'mailCode'), 'Postal/Zip Code');
-  const validatedCountry  = validateGenericString(getString(raw, 'country'), 'Country');
+  const validatedLegalName = validateIndividualProponentLegalName(getString(raw, 'legalName'));
+  const validatedEmail = validateIndividualProponentEmail(getString(raw, 'email'));
+  const validatedPhone = optional(getString(raw, 'phone'), validateIndividualProponentPhone);
+  const validatedStreet1 = validateIndividualProponentStreet1(getString(raw, 'street1'));
+  const validatedStreet2 = optional(getString(raw, 'street2'), validateIndividualProponentStreet2);
+  const validatedCity = validateIndividualProponentCity(getString(raw, 'city'));
+  const validatedRegion = validateIndividualProponentRegion(getString(raw, 'region'));
+  const validatedMailCode = validateIndividualProponentMailCode(getString(raw, 'mailCode'));
+  const validatedCountry  = validateIndividualProponentCountry(getString(raw, 'country'));
 
   if (allValid([
     validatedLegalName,

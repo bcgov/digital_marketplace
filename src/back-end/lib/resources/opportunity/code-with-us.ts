@@ -286,13 +286,13 @@ const resource: Resource = {
               attachments: getStringArray(value, 'attachments')
             });
           case 'publish':
-            return adt('publish', String(value));
+            return adt('publish', getString(body, 'value', ''));
           case 'suspend':
-            return adt('suspend', String(value));
+            return adt('suspend', getString(body, 'value', ''));
           case 'cancel':
-            return adt('cancel', String(value));
+            return adt('cancel', getString(body, 'value', ''));
           case 'addAddendum':
-            return adt('addAddendum', String(value));
+            return adt('addAddendum', getString(body, 'value', ''));
           default:
             return null;
         }
