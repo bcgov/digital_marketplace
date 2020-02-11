@@ -1,8 +1,25 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
-import { CWUOpportunityStatus } from 'shared/lib/resources/code-with-us';
-import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+
+enum CWUOpportunityStatus {
+  Draft = 'DRAFT',
+  Published = 'PUBLISHED',
+  Evaluation = 'EVALUATION',
+  Awarded = 'AWARDED',
+  Suspended = 'SUSPENDED',
+  Canceled = 'CANCELED'
+}
+
+enum CWUProposalStatus {
+  Draft = 'DRAFT',
+  Submitted = 'SUBMITTED',
+  Review = 'REVIEW',
+  Awarded = 'AWARDED',
+  NotAwarded = 'NOT_AWARDED',
+  Disqualified = 'DISQUALIFIED',
+  Withdrawn = 'WITHDRAWN'
+}
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
