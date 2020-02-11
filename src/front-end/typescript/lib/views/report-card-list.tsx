@@ -36,7 +36,7 @@ export const ReportCardList: View<ReportCardList> = ({ reportCards, className = 
       {reportCards.map((card, i) => (
         <ReportCard
           key={`report-card-${i}`}
-          className={`${i < reportCards.length - 1 ? 'mr-sm-4' : ''} mb-4`}
+          className={`${i < reportCards.length - 1 ? 'mr-sm-4' : ''} mb-4 flex-grow-1`}
           {...card} />
       ))}
     </div>
