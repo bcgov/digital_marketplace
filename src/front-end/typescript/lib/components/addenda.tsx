@@ -151,7 +151,7 @@ export const view: View<Props> = props => {
           extraChildProps={{}}
           disabled={disabled}
           style={style}
-          label='Addendum'
+          label='New Addendum'
           required
           action={{
             icon: 'trash',
@@ -166,7 +166,8 @@ export const view: View<Props> = props => {
           extraChildProps={{}}
           disabled
           style={style}
-          hint={`Created at ${formatDateAndTime(addendum.createdAt)}`}
+          label='Existing Addendum'
+          hint={`Created ${formatDateAndTime(addendum.createdAt)}`}
           state={addendum.field}
           dispatch={mapComponentDispatch(dispatch, msg => adt('onChangeExistingAddendum', [i, msg]) as Msg)} />
       ))}

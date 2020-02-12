@@ -1,8 +1,9 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import { cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import * as Form from 'front-end/lib/pages/opportunity/code-with-us/lib/components/form';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -10,7 +11,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus, hasCWUOpportunityBeenPublished, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -19,11 +20,15 @@ export interface State extends Tab.Params {
   publishLoading: number;
   deleteLoading: number;
   isEditing: boolean;
+  infoAlerts: string[];
+  errorAlerts: string[];
   form: Immutable<Form.State>;
 }
 
 export type InnerMsg
   = ADT<'form', Form.Msg>
+  | ADT<'dismissInfoAlert', number>
+  | ADT<'dismissErrorAlert', number>
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
@@ -31,6 +36,29 @@ export type InnerMsg
   | ADT<'delete'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+
+function addInfoAlert(state: Immutable<State>, text: string): Immutable<State> {
+  return state.update('infoAlerts', alerts => alerts.concat(text));
+}
+
+function addErrorAlert(state: Immutable<State>, text: string): Immutable<State> {
+  return state.update('errorAlerts', alerts => alerts.concat(text));
+}
+
+function addErrorAlertsFromUpdate(state: Immutable<State>, errors: UpdateValidationErrors): Immutable<State> {
+  if (!errors.opportunity) { return state; }
+  switch (errors.opportunity.tag) {
+    case 'publish':
+    case 'suspend':
+    case 'cancel':
+      return errors.opportunity.value.reduce((state: Immutable<State>, error: string) => addErrorAlert(state, error), state);
+    case 'edit':
+    case 'addAddendum':
+      return addErrorAlert(state, 'Your changes could not be saved. Please review the form below, fix any errors and try again.');
+    case 'parseFailure':
+      return addErrorAlert(state, 'Sorry, a system error has occurred. Please contact us to report this issue.');
+  }
+}
 
 async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
   return immutable(await Form.init({
@@ -47,6 +75,8 @@ const init: Init<Tab.Params, State> = async params => ({
   publishLoading: 0,
   deleteLoading: 0,
   isEditing: false,
+  infoAlerts: [],
+  errorAlerts: [],
   form: await initForm(params.opportunity)
 });
 
@@ -69,6 +99,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('form', value)
       });
+    case 'dismissInfoAlert':
+      return [
+        state.update('infoAlerts', alerts => alerts.filter((a, i) => i !== msg.value))
+      ];
+    case 'dismissErrorAlert':
+      return [
+        state.update('errorAlerts', alerts => alerts.filter((a, i) => i !== msg.value))
+      ];
     case 'startEditing':
       return [
         startStartEditingLoading(state),
@@ -80,7 +118,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               .set('isEditing', true)
               .set('form', await initForm(result.value, state.form.activeTab));
           } else {
-            return state;
+            return addErrorAlert(state, 'This opportunity cannot currently be edited.');
           }
         }
       ];
@@ -101,11 +139,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const result = await Form.persist(state.form, adt('update', state.opportunity.id));
           switch (result.tag) {
             case 'valid':
-              return state
+              return addInfoAlert(state, `Your changes have been ${hasCWUOpportunityBeenPublished(state.opportunity) ? 'published' : 'saved'}.`)
                 .set('form', result.value[0])
                 .set('opportunity', result.value[1])
                 .set('isEditing', false);
             case 'invalid':
+              // "Mock" an edit error here. If `addErrorAlertsFromUpdate` is going to be
+              // updated with different semantics, this code will likely need to be updated too.
+              state = addErrorAlertsFromUpdate(state, {
+                opportunity: adt('edit', {})
+              });
               return state.set('form', result.value);
           }
         }
@@ -118,9 +161,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const result = await api.opportunities.cwu.update(state.opportunity.id, adt(msg.value, ''));
           switch (result.tag) {
             case 'valid':
-              return state
+              return addInfoAlert(state, `This opportunity's status has been updated to "${cwuOpportunityStatusToTitleCase(result.value.status)}".`)
                 .set('opportunity', result.value)
                 .set('form', await initForm(result.value, state.form.activeTab));
+            case 'invalid':
+              return addErrorAlertsFromUpdate(state, result.value);
             default:
               return state;
           }
@@ -129,9 +174,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'delete':
       return [
         startDeleteLoading(state),
-        async state => {
-          state = stopDeleteLoading(state);
-          return state;
+        async (state, dispatch) => {
+          const result = await api.opportunities.cwu.delete(state.opportunity.id);
+          switch (result.tag) {
+            case 'valid':
+              //TODO show delete success alert on opp list page.
+              dispatch(replaceRoute(adt('opportunities' as const, null)));
+              return state;
+            default:
+              return addErrorAlert(stopDeleteLoading(state), 'This opportunity cannot currently be deleted.');
+          }
         }
       ];
     default:
@@ -187,6 +239,19 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  getAlerts(state) {
+    return {
+      ...emptyPageAlerts(),
+      info: state.infoAlerts.map((text, i) => ({
+        text,
+        dismissMsg: adt('dismissInfoAlert', i)
+      })),
+      errors: state.errorAlerts.map((text, i) => ({
+        text,
+        dismissMsg: adt('dismissErrorAlert', i)
+      }))
+    };
+  },
   getContextualActions({ state, dispatch }) {
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
@@ -209,7 +274,7 @@ export const component: Tab.Component<State, Msg> = {
               // No validation required, always possible to save a draft.
               return false;
             } else {
-              return Form.isValid(state.form);
+              return !Form.isValid(state.form);
             }
           })(),
           onClick: () => dispatch(adt('saveChanges')),
@@ -285,7 +350,7 @@ export const component: Tab.Component<State, Msg> = {
               links: [
                 {
                   children: 'Suspend',
-                  symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+                  symbol_: leftPlacement(iconLinkSymbol('pause-circle')),
                   onClick: () => dispatch(adt('updateStatus', 'suspend' as const))
                 },
                 {
@@ -320,7 +385,7 @@ export const component: Tab.Component<State, Msg> = {
               links: [
                 {
                   children: 'Cancel',
-                  symbol_: leftPlacement(iconLinkSymbol('trash')),
+                  symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
                   onClick: () => dispatch(adt('updateStatus', 'cancel' as const))
                 }
               ]

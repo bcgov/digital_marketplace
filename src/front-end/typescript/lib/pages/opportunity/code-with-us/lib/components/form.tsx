@@ -4,12 +4,12 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as NumberField from 'front-end/lib/components/form-field/number';
+import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import Radio from 'front-end/lib/views/radio';
 import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
@@ -19,6 +19,10 @@ import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, 
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
+
+type RemoteOk = 'yes' | 'no';
+
+const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
 export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Addenda';
 
@@ -30,8 +34,8 @@ export interface State {
   location: Immutable<ShortText.State>;
   reward: Immutable<NumberField.State>;
   skills: Immutable<SelectMulti.State>;
-  remoteOk: boolean;
   // If remoteOk
+  remoteOk: Immutable<RadioGroup.State<RemoteOk>>;
   remoteDesc: Immutable<LongText.State>;
   // Description Tab
   description: Immutable<RichMarkdownEditor.State>;
@@ -57,7 +61,7 @@ export type Msg
   | ADT<'location',          ShortText.Msg>
   | ADT<'reward',            NumberField.Msg>
   | ADT<'skills',            SelectMulti.Msg>
-  | ADT<'remoteOk',          boolean>
+  | ADT<'remoteOk',          RadioGroup.Msg<RemoteOk>>
   | ADT<'remoteDesc',        LongText.Msg>
   // Description Tab
   | ADT<'description',       RichMarkdownEditor.Msg>
@@ -85,7 +89,6 @@ const DEFAULT_ACTIVE_TAB: TabId = 'Overview';
 export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
   return {
     activeTab: !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab,
-    remoteOk: opportunity ? opportunity.remoteOk : true,
 
     title: immutable(await ShortText.init({
       errors: [],
@@ -93,7 +96,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         type: 'text',
         value: opportunity?.title || '',
-        id: 'opportunity-title'
+        id: 'cwu-opportunity-title'
       }
     })),
 
@@ -102,7 +105,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: opportunityValidation.validateTeaser,
       child: {
         value: opportunity?.teaser || '',
-        id: 'opportunity-teaser'
+        id: 'cwu-opportunity-teaser'
       }
     })),
 
@@ -112,7 +115,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         type: 'text',
         value: opportunity?.location || 'Victoria',
-        id: 'opportunity-location'
+        id: 'cwu-opportunity-location'
       }
     })),
 
@@ -124,7 +127,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       },
       child: {
         value: opportunity?.reward || null,
-        id: 'opportunity-reward',
+        id: 'cwu-opportunity-reward',
         min: 1
       }
     })),
@@ -139,9 +142,30 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       },
       child: {
         value: opportunity?.skills.map(value => ({ value, label: value })) || [],
-        id: 'opportunity-skills',
+        id: 'cwu-opportunity-skills',
         creatable: true,
         options: SelectMulti.stringsToOptions(SKILLS)
+      }
+    })),
+
+    remoteOk: immutable(await RemoteOkRadioGroup.init({
+      errors: [],
+      validate: v => v === null ? invalid(['Please select an option.']) : valid(v),
+      child: {
+        id: 'cwu-opportunity-remote-ok',
+        value: (() => {
+          const existing = opportunity?.remoteOk;
+          if (existing === true) {
+            return 'yes' as const;
+          } else if (existing === false) {
+            return 'no' as const;
+          }
+          return null;
+        })(),
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' }
+        ]
       }
     })),
 
@@ -150,7 +174,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: opportunityValidation.validateRemoteDesc,
       child: {
         value: opportunity?.remoteDesc || '',
-        id: 'opportunity-remote-desc'
+        id: 'cwu-opportunity-remote-desc'
       }
     })),
 
@@ -159,7 +183,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: opportunityValidation.validateDescription,
       child: {
         value: opportunity?.description || '',
-        id: 'opportunity-description',
+        id: 'cwu-opportunity-description',
         uploadImage: api.uploadMarkdownImage
       }
     })),
@@ -169,7 +193,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
-        id: 'opportunity-proposal-deadline'
+        id: 'cwu-opportunity-proposal-deadline'
       }
     })),
 
@@ -178,7 +202,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
-        id: 'opportunity-start-date'
+        id: 'cwu-opportunity-start-date'
       }
     })),
 
@@ -187,7 +211,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
-        id: 'opportunity-assignment-date'
+        id: 'cwu-opportunity-assignment-date'
       }
     })),
 
@@ -196,7 +220,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: DateField.validateDate(v => opportunityValidation.validateCompletionDate(v, new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.completionDate) : null,
-        id: 'opportunity-completion-date'
+        id: 'cwu-opportunity-completion-date'
       }
     })),
 
@@ -206,7 +230,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         type: 'text',
         value: opportunity?.submissionInfo || '',
-        id: 'opportunity-submission-info'
+        id: 'cwu-opportunity-submission-info'
       }
     })),
 
@@ -215,7 +239,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: opportunityValidation.validateAcceptanceCriteria,
       child: {
         value: opportunity?.acceptanceCriteria || '',
-        id: 'opportunity-acceptance-criteria'
+        id: 'cwu-opportunity-acceptance-criteria'
       }
     })),
 
@@ -224,7 +248,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       validate: opportunityValidation.validateEvaluationCriteria,
       child: {
         value: opportunity?.evaluationCriteria || '',
-        id: 'opportunity-evaluation-criteria'
+        id: 'cwu-opportunity-evaluation-criteria'
       }
     })),
 
@@ -251,6 +275,7 @@ function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
       .update('reward',             s => FormField.setErrors(s, errors.reward             || []))
       .update('skills',             s => FormField.setErrors(s, errors.skills ? flatten(errors.skills) : []))
       .update('description',        s => FormField.setErrors(s, errors.description        || []))
+      .update('remoteOk',           s => FormField.setErrors(s, errors.remoteOk           || []))
       .update('remoteDesc',         s => FormField.setErrors(s, errors.remoteDesc         || []))
       .update('proposalDeadline',   s => FormField.setErrors(s, errors.proposalDeadline   || []))
       .update('startDate',          s => FormField.setErrors(s, errors.startDate          || []))
@@ -269,6 +294,7 @@ type Errors = CreateValidationErrors;
 export function isValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.title)                      &&
     FormField.isValid(state.teaser)                          &&
+    FormField.isValid(state.remoteOk)                        &&
     (!state.remoteOk || FormField.isValid(state.remoteDesc)) &&
     FormField.isValid(state.location)                        &&
     FormField.isValid(state.reward)                          &&
@@ -285,13 +311,12 @@ export function isValid(state: Immutable<State>): boolean {
     (!state.addenda || Addenda.isValid(state.addenda));
 }
 
-export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
+export type Values = Omit<CreateRequestBody, 'attachments' | 'status' | 'remoteOk'>;
 
 export function getValues(state: Immutable<State>, status?: CreateCWUOpportunityStatus): Values {
   return {
     title:               FormField.getValue(state.title),
     teaser:              FormField.getValue(state.teaser),
-    remoteOk:            state.remoteOk,
     remoteDesc:          FormField.getValue(state.remoteDesc),
     location:            FormField.getValue(state.location),
     reward:              FormField.getValue(state.reward) || 0,
@@ -315,6 +340,10 @@ type PersistAction
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUOpportunity], Immutable<State>>> {
   const values = getValues(state);
+  // Transform remoteOk
+  if (!RadioGroup.isChecked(state.remoteOk)) { return invalid(state); }
+  const remoteOk = RadioGroup.valueEquals(state.remoteOk, 'yes');
+  // Get new attachments to be uploaded.
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   let attachments = state.attachments.existingAttachments.map(({ id }) => id);
   // Upload new attachments if necessary.
@@ -373,12 +402,14 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         case 'create':
           return await api.opportunities.cwu.create({
             ...values,
+            remoteOk,
             attachments,
             status: action.value
           });
         case 'update':
           const updateResult = await api.opportunities.cwu.update(action.value, adt('edit' as const, {
             ...values,
+            remoteOk,
             attachments
           }));
           return api.mapInvalid(updateResult, errors => {
@@ -403,10 +434,6 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-
-    case 'remoteOk':
-      return[state.set('remoteOk', msg.value)];
-
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
 
@@ -453,6 +480,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: SelectMulti.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('skills', value)
+      });
+
+    case 'remoteOk':
+      return updateComponentChild({
+        state,
+        childStatePath: ['remoteOk'],
+        childUpdate: RemoteOkRadioGroup.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('remoteOk', value)
       });
 
     case 'remoteDesc':
@@ -582,24 +618,28 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
 
-      <Col md='12' className='pb-3'>
-        <div className=''>
-          <label className='font-weight-bold'>Remote OK?</label>
-          <FormField.ViewRequiredAsterisk />
-        </div>
-        <Radio
-          id='remote-ok-true'
-          label='Yes'
-          checked={state.remoteOk}
-          onClick={() => dispatch(adt('remoteOk' as const, true))} />
-        <Radio
-          id='remote-ok-false'
-          label='No'
-          checked={!state.remoteOk}
-          onClick={() => dispatch(adt('remoteOk' as const, false))} />
+      <Col xs='12'>
+        <SelectMulti.view
+          extraChildProps={{}}
+          label='Required Skills'
+          placeholder='Required Skills'
+          required
+          disabled={disabled}
+          state={state.skills}
+          dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
       </Col>
 
-      {state.remoteOk
+      <Col md='12'>
+        <RemoteOkRadioGroup.view
+          extraChildProps={{ inline: true }}
+          required
+          label='Remote OK?'
+          disabled={disabled}
+          state={state.remoteOk}
+          dispatch={mapComponentDispatch(dispatch, value => adt('remoteOk' as const, value))} />
+      </Col>
+
+      {RadioGroup.valueEquals(state.remoteOk, 'yes')
         ? (<Col xs='12'>
             <LongText.view
               extraChildProps={{}}
@@ -632,17 +672,6 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           disabled={disabled}
           state={state.reward}
           dispatch={mapComponentDispatch(dispatch, value => adt('reward' as const, value))} />
-      </Col>
-
-      <Col xs='12'>
-        <SelectMulti.view
-          extraChildProps={{}}
-          label='Required Skills'
-          placeholder='Required Skills'
-          required
-          disabled={disabled}
-          state={state.skills}
-          dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
       </Col>
 
     </Row>

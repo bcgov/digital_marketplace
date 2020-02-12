@@ -1,5 +1,6 @@
 import { Msg, Route, SharedState } from 'front-end/lib/app/types';
 import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 import Icon from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
@@ -9,7 +10,7 @@ import { adt } from 'shared/lib/types';
 interface ViewAlertProps<PageMsg> {
   messages: Array<PageAlert<GlobalComponentMsg<PageMsg, Route>>>;
   dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>>;
-  color: 'info' | 'warning' | 'danger';
+  color: ThemeColor;
   className?: string;
 }
 
@@ -51,7 +52,7 @@ function ViewAlerts<PageMsg>({ alerts, dispatchPage }: ViewAlertsProps<PageMsg>)
   return (
     <Row>
       <Col xs='12'>
-        <ViewAlert messages={info} dispatchPage={dispatchPage} color='info' />
+        <ViewAlert messages={info} dispatchPage={dispatchPage} color='primary' />
         <ViewAlert messages={warnings} dispatchPage={dispatchPage} color='warning' />
         <ViewAlert messages={errors} dispatchPage={dispatchPage} color='danger' />
       </Col>

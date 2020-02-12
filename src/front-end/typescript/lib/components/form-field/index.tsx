@@ -272,5 +272,7 @@ export function validateAndSetValue<Value, ChildState extends ChildStateBase<Val
 }
 
 export function isValid<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): boolean {
-  return state.validate ? isValidValidation(state.validate(getValue(state))) : !state.errors.length;
+  return state.validate
+    ? isValidValidation(state.validate(getValue(state))) && !state.errors.length
+    : !state.errors.length;
 }

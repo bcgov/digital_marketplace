@@ -1,4 +1,4 @@
-import { getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
@@ -69,6 +69,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     })),
     view: viewValid(TabbedPage.makeParentView(Tab.idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
+    getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(Tab.idToDefinition)),
     getModal: getModalValid(TabbedPage.makeGetParentModal(Tab.idToDefinition)),
     getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(Tab.idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({

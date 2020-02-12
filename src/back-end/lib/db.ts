@@ -845,11 +845,14 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
   } else if (session.user.type === UserType.Government) {
     // Gov users should only see private opportunities they own, and public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
-      .orWhere(function() {
+      .andWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
-          .andWhere({ 'opp.createdBy': session.user?.id });
+          .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
+          .orWhere(function() {
+            this
+              .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
+              .andWhere({ 'opp.createdBy': session.user?.id });
+          });
       });
   } else {
     // Admin users can see both private and public opportunities

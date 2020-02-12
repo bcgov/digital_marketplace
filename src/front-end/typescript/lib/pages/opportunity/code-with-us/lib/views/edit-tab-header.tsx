@@ -48,7 +48,7 @@ const EditTabHeader: View<Props> = ({ opportunity }) => {
     <div>
       <Row className='mb-5'>
         <Col xs='12'>
-          <div className='mb-2 font-weight-bold text-secondary text-uppercase'>Code-With-Us Opportunity</div>
+          <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code-With-Us Opportunity</div>
           <h2 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h2>
           <DateMetadata dates={compact(dates)} />
         </Col>

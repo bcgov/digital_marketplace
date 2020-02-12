@@ -132,7 +132,6 @@ type UpdateADTErrors
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
-  proposal?: string[];
 }
 
 export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'attachments' | 'skills'> {
