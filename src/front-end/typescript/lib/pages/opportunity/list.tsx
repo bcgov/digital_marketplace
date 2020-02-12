@@ -1,9 +1,10 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
   empty: true;
@@ -37,5 +38,21 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata() {
     return makePageMetadata('Opportunities');
+  },
+  getContextualActions() {
+    return adt('dropdown', {
+      text: 'Actions',
+      linkGroups: [{
+        links: [
+          {
+            children: 'Create CodeWithUs Opportunity',
+            button: true,
+            color: 'primary' as const,
+            symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+            dest: routeDest(adt('opportunityCWUCreate', null))
+          }
+        ]
+      }]
+    });
   }
 };

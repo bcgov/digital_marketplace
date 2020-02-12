@@ -1,32 +1,30 @@
 import * as immutable from 'immutable';
 import { isEmpty } from 'lodash';
 import moment from 'moment';
-import { compareDates, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
-import { ADT, Id } from 'shared/lib/types';
+import { compareDates, formatAmount, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
+import { adt, ADT, Id } from 'shared/lib/types';
 
 export type ErrorTypeFrom<T> = {
   [p in keyof T]?: string[];
 };
 
-export type Validation<Valid, Invalid = string[]>
-  = ADT<'valid', Valid>
-  | ADT<'invalid', Invalid>;
+export type Valid<T> = ADT<'valid', T>;
+
+export function valid<T>(value: T): Validation<T, any> {
+  return adt('valid', value);
+}
+
+export type Invalid<T> = ADT<'invalid', T>;
+
+export function invalid<T>(value: T): Validation<any, T> {
+  return adt('invalid', value);
+}
+
+export type Validation<A, B = string[]>
+  = Valid<A>
+  | Invalid<B>;
 
 export type ArrayValidation<Value, Errors = string[]> = Validation<Value[], Errors[]>;
-
-export function valid<Valid>(value: Valid): Validation<Valid, any> {
-  return {
-    tag: 'valid',
-    value
-  } as ADT<'valid', Valid>;
-}
-
-export function invalid<Invalid>(value: Invalid): Validation<any, Invalid> {
-  return {
-    tag: 'invalid',
-    value
-  } as ADT<'invalid', Invalid>;
-}
 
 export function isValid<Valid>(value: Validation<Valid, any>): value is ADT<'valid', Valid> {
   return value.tag === 'valid';
@@ -72,7 +70,7 @@ export function getInvalidValue<Invalid, Fallback = Invalid>(result: Validation<
   }
 }
 
-export function mapValid<A, B, C>(value: Validation<A, C>, fn: (a: A) => B): Validation<B, C> {
+export function mapValid<A, B, C>(value: Validation<A, B>, fn: (b: A) => C): Validation<C, B> {
   switch (value.tag) {
     case 'valid':
       return valid(fn(value.value));
@@ -154,6 +152,22 @@ export function validateStringInArray(value: string, availableValues: immutable.
   } else {
     return valid(value);
   }
+}
+
+export function validateNumber(raw: string | number, min?: number, max?: number, name = 'number', article = 'a', format = true): Validation<number> {
+  const parsed = parseInt(`${raw}`, 10);
+  if (isNaN(parsed)) { return invalid([`Please enter a valid ${name}.`]); }
+  const errors: string[] = [];
+  if (min !== undefined && parsed < min) {
+    errors.push(`Please enter ${article} ${name} greater than or equal to ${format ? formatAmount(min) : min}.`);
+  }
+  if (max !== undefined && parsed > max) {
+    errors.push(`Please enter ${article} ${name} less than or equal to ${format ? formatAmount(max) : max}.`);
+  }
+  if (errors.length) {
+    return invalid(errors);
+  }
+  return valid(parsed);
 }
 
 // Date Validators.

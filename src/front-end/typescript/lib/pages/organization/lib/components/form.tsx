@@ -5,7 +5,7 @@ import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { AvatarFiletype } from 'front-end/lib/types';
-import FileButton from 'front-end/lib/views/file-button';
+import FileLink from 'front-end/lib/views/file-link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
@@ -99,20 +99,20 @@ export function getValues(state: Immutable<State>): Values {
 
 export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
   if (errors) {
-  return state
-    .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
-    .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
-    .update('streetAddress2',  s => FormField.setErrors(s, errors.streetAddress2 || []))
-    .update('city',            s => FormField.setErrors(s, errors.city           || []))
-    .update('country',         s => FormField.setErrors(s, errors.country        || []))
-    .update('mailCode',        s => FormField.setErrors(s, errors.mailCode       || []))
-    .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle   || []))
-    .update('contactName',     s => FormField.setErrors(s, errors.contactName    || []))
-    .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
-    .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
-    .update('region',          s => FormField.setErrors(s, errors.region         || []))
-    .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
-    .update('newLogoImage', v => v && ({ ...v, errors: errors.newLogoImage   || []} ));
+    return state
+      .update('legalName',       s => FormField.setErrors(s, errors.legalName      || []))
+      .update('streetAddress1',  s => FormField.setErrors(s, errors.streetAddress1 || []))
+      .update('streetAddress2',  s => FormField.setErrors(s, errors.streetAddress2 || []))
+      .update('city',            s => FormField.setErrors(s, errors.city           || []))
+      .update('country',         s => FormField.setErrors(s, errors.country        || []))
+      .update('mailCode',        s => FormField.setErrors(s, errors.mailCode       || []))
+      .update('contactTitle',    s => FormField.setErrors(s, errors.contactTitle   || []))
+      .update('contactName',     s => FormField.setErrors(s, errors.contactName    || []))
+      .update('contactEmail',    s => FormField.setErrors(s, errors.contactEmail   || []))
+      .update('contactPhone',    s => FormField.setErrors(s, errors.contactPhone   || []))
+      .update('region',          s => FormField.setErrors(s, errors.region         || []))
+      .update('websiteUrl',      s => FormField.setErrors(s, errors.websiteUrl     || []))
+      .update('newLogoImage', v => v && ({ ...v, errors: errors.newLogoImage       || []}));
   } else {
     return state;
   }
@@ -371,7 +371,8 @@ export const view: View<Props> = props => {
             src={state.newLogoImage ? state.newLogoImage.path : orgLogoPath(state.organization)} />
           <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
             <div className='mb-2'><b>Profile Picture (Optional)</b></div>
-            <FileButton
+            <FileLink
+              button
               outline
               size='sm'
               style={{
@@ -382,7 +383,7 @@ export const view: View<Props> = props => {
               accept={SUPPORTED_IMAGE_EXTENSIONS}
               color='primary'>
               Choose Image
-            </FileButton>
+            </FileLink>
             {state.newLogoImage && state.newLogoImage.errors.length
               ? (<div className='mt-2 small text-danger'>{state.newLogoImage.errors.map((e, i) => (<div key={`org-logo-error-${i}`}>{e}</div>))}</div>)
               : null}

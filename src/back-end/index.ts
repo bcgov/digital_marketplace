@@ -7,9 +7,10 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import basicAuth from 'back-end/lib/map-routes/basic-auth';
 import affiliationResource from 'back-end/lib/resources/affiliation';
 import avatarResource from 'back-end/lib/resources/avatar';
-import codeWithUsOpportunityResource from 'back-end/lib/resources/code-with-us';
 import fileResource from 'back-end/lib/resources/file';
+import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';
 import organizationResource from 'back-end/lib/resources/organization';
+import codeWithUsProposalResource from 'back-end/lib/resources/proposal/code-with-us';
 import sessionResource from 'back-end/lib/resources/session';
 import userResource from 'back-end/lib/resources/user';
 import authRouter from 'back-end/lib/routers/auth';
@@ -58,6 +59,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     affiliationResource,
     avatarResource,
     codeWithUsOpportunityResource,
+    codeWithUsProposalResource,
     fileResource,
     organizationResource,
     sessionResource,

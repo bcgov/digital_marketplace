@@ -3,9 +3,9 @@ import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import * as UserSidebar from 'front-end/lib/components/sidebar/profile-org';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
-import * as OrgForm from 'front-end/lib/pages/organization/components/form';
+import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
+import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -39,7 +39,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       submitLoading: 0,
       user: shared.sessionUser,
       orgForm: immutable(await OrgForm.init({})),
-      sidebar: await UserSidebar.makeSidebar(shared.sessionUser, shared.sessionUser, 'organizations')
+      sidebar: await makeSidebarState(shared.sessionUser, shared.sessionUser, 'organizations')
     }));
   },
 

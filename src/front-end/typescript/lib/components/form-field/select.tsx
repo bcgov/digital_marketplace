@@ -1,17 +1,18 @@
 import * as FormField from 'front-end/lib/components/form-field';
-import Select, { coalesceOptions, Option, Options, Props as SelectProps, Value } from 'front-end/lib/components/form-field/lib/select';
-import SelectCreatable from 'front-end/lib/components/form-field/lib/select-creatable';
+import Select, { coalesceOptions, Option, Options, SingleProps, SingleValue } from 'front-end/lib/components/form-field/lib/select';
 import { Immutable } from 'front-end/lib/framework';
 import { find } from 'lodash';
 import React from 'react';
 import { ADT } from 'shared/lib/types';
 
-export { Options, OptionGroup, Option, Value } from 'front-end/lib/components/form-field/lib/select';
+export { stringsToOptions, Options, OptionGroup, Option } from 'front-end/lib/components/form-field/lib/select';
+
+export type Value = SingleValue;
 
 interface ChildState extends FormField.ChildStateBase<Value> {
   options: Options;
   creatable?: boolean;
-  formatGroupLabel?: SelectProps['formatGroupLabel'];
+  formatGroupLabel?: SingleProps['formatGroupLabel'];
 }
 
 type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'options' | 'creatable' | 'formatGroupLabel'>;
@@ -42,7 +43,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 
 const ChildView: ChildComponent['view'] = props => {
   const { state, dispatch, placeholder = '', className = '', validityClassName, disabled = false } = props;
-  const selectProps: SelectProps = {
+  const selectProps: SingleProps = {
     name: state.id,
     id: state.id,
     placeholder,
@@ -57,7 +58,7 @@ const ChildView: ChildComponent['view'] = props => {
     },
     formatGroupLabel: state.formatGroupLabel
   };
-  return state.creatable ? (<SelectCreatable {...selectProps} />) : (<Select {...selectProps} />);
+  return (<Select {...selectProps} />);
 };
 
 export const component = FormField.makeComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>({

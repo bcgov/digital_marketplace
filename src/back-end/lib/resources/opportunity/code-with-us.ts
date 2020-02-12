@@ -5,15 +5,16 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
-import { getNumber, getString, getStringArray } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/code-with-us';
+import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/code-with-us';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
+import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
-export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'status' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> {
+export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> {
+  status: CreateCWUOpportunityStatus;
   session: AuthenticatedSession;
 }
 
@@ -40,7 +41,7 @@ type ValidatedDeleteRequestBody = Id;
 type Resource = crud.Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,
-  CreateRequestBody,
+  Omit<CreateRequestBody, 'status'> & { status: string; },
   ValidatedCreateRequestBody,
   CreateValidationErrors,
   null,
@@ -55,7 +56,7 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'code-with-us',
+  routeNamespace: 'opportunities/code-with-us',
 
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<CWUOpportunitySlim[] | string[]>, Session>(async request => {
@@ -107,10 +108,17 @@ const resource: Resource = {
           submissionInfo: getString(body, 'submissionInfo'),
           acceptanceCriteria: getString(body, 'acceptanceCriteria'),
           evaluationCriteria: getString(body, 'evaluationCriteria'),
-          attachments: getStringArray(body, 'attachments')
+          attachments: getStringArray(body, 'attachments'),
+          status: getString(body, 'status')
         };
       },
       async validateRequestBody(request) {
+        if (!permissions.createCWUOpportunity(request.session)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+
         const { title,
                 teaser,
                 remoteOk,
@@ -129,9 +137,40 @@ const resource: Resource = {
                 attachments
               } = request.body;
 
-        if (!permissions.createCWUOpportunity(request.session)) {
+        const validatedStatus = opportunityValidation.validateCWUOpportunityStatus(request.body.status, [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published]);
+        if (isInvalid(validatedStatus)) {
           return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
+            status: validatedStatus.value
+          });
+        }
+
+        // Attachments must be validated for both drafts and published opportunities.
+        const validatedAttachments = await validateAttachments(connection, attachments);
+        if (isInvalid(validatedAttachments)) {
+          return invalid({
+            attachments: validatedAttachments.value
+          });
+        }
+        const attachmentIds = validatedAttachments.value.map(v => v.id);
+
+        const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
+        const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
+        const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
+        const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date()));
+
+        // Do not validate other fields if the opportunity is a draft.
+        if (validatedStatus.value === CWUOpportunityStatus.Draft) {
+          const defaultDate = addDays(new Date(), 14);
+          return valid({
+            ...request.body,
+            session: request.session,
+            status: validatedStatus.value,
+            attachments: attachmentIds,
+            // Coerce validated dates to default values.
+            proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
+            assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
+            startDate: getValidValue(validatedStartDate, defaultDate),
+            completionDate: getValidValue(validatedCompletionDate, defaultDate)
           });
         }
 
@@ -143,14 +182,9 @@ const resource: Resource = {
         const validatedReward = opportunityValidation.validateReward(reward);
         const validatedSkills = opportunityValidation.validateSkills(skills);
         const validatedDescription = opportunityValidation.validateDescription(description);
-        const validatedProposalDeadline = opportunityValidation.validateDate(proposalDeadline, new Date());
-        const validatedAssignmentDate = opportunityValidation.validateDate(assignmentDate, new Date());
-        const validatedStartDate = opportunityValidation.validateDate(startDate, new Date());
-        const validatedCompletionDate = opportunityValidation.validateDate(completionDate, new Date());
         const validatedSubmissionInfo = opportunityValidation.validateSubmissionInfo(submissionInfo);
         const validatedAcceptanceCriteria = opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
         const validatedEvaluationCriteria = opportunityValidation.validateEvaluationCriteria(evaluationCriteria);
-        const validatedAttachments = await validateAttachments(connection, attachments);
 
         if (allValid([
               validatedTitle,
@@ -167,8 +201,7 @@ const resource: Resource = {
               validatedCompletionDate,
               validatedSubmissionInfo,
               validatedAcceptanceCriteria,
-              validatedEvaluationCriteria,
-              validatedAttachments
+              validatedEvaluationCriteria
         ])) {
           return valid({
             session: request.session,
@@ -187,7 +220,8 @@ const resource: Resource = {
             submissionInfo: validatedSubmissionInfo.value,
             acceptanceCriteria: validatedAcceptanceCriteria.value,
             evaluationCriteria: validatedEvaluationCriteria.value,
-            attachments: (validatedAttachments.value as FileRecord[]).map(v => v.id)
+            attachments: attachmentIds,
+            status: validatedStatus.value
           });
         } else {
           return invalid({
@@ -252,23 +286,25 @@ const resource: Resource = {
               attachments: getStringArray(value, 'attachments')
             });
           case 'publish':
-            return adt('publish', String(value));
+            return adt('publish', getString(body, 'value', ''));
           case 'suspend':
-            return adt('suspend', String(value));
+            return adt('suspend', getString(body, 'value', ''));
           case 'cancel':
-            return adt('cancel', String(value));
+            return adt('cancel', getString(body, 'value', ''));
           case 'addAddendum':
-            return adt('addAddendum', String(value));
+            return adt('addAddendum', getString(body, 'value', ''));
           default:
             return null;
         }
       },
       async validateRequestBody(request) {
         if (!request.body) { return invalid({ opportunity: adt('parseFailure' as const) }); }
+
         const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.params.id, request.session);
         if (isInvalid(validatedCWUOpportunity)) {
           return invalid({ notFound: ['The specified opportunity does not exist.'] });
         }
+        const cwuOpportunity = validatedCWUOpportunity.value;
 
         if (!permissions.editCWUOpportunity(connection, request.session, request.params.id)) {
           return invalid({
@@ -296,6 +332,37 @@ const resource: Resource = {
                     attachments
             } = request.body.value;
 
+            // Attachments must be validated for both drafts and published opportunities.
+            const validatedAttachments = await validateAttachments(connection, attachments);
+            if (isInvalid(validatedAttachments)) {
+              return invalid({
+                attachments: validatedAttachments.value
+              });
+            }
+            const attachmentIds = validatedAttachments.value.map(v => v.id);
+
+            const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
+            const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
+            const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
+            const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date()));
+
+            // Do not validate other fields if the opportunity is a draft.
+            if (cwuOpportunity.status === CWUOpportunityStatus.Draft) {
+              const defaultDate = addDays(new Date(), 14);
+              return valid({
+                session: request.session,
+                body: adt('edit' as const, {
+                  ...request.body.value,
+                  attachments: attachmentIds,
+                  // Coerce validated dates to default values.
+                  proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
+                  assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
+                  startDate: getValidValue(validatedStartDate, defaultDate),
+                  completionDate: getValidValue(validatedCompletionDate, defaultDate)
+                })
+              });
+            }
+
             const validatedTitle = opportunityValidation.validateTitle(title);
             const validatedTeaser = opportunityValidation.validateTeaser(teaser);
             const validatedRemoteOk = opportunityValidation.validateRemoteOk(remoteOk);
@@ -304,14 +371,9 @@ const resource: Resource = {
             const validatedReward = opportunityValidation.validateReward(reward);
             const validatedSkills = opportunityValidation.validateSkills(skills);
             const validatedDescription = opportunityValidation.validateDescription(description);
-            const validatedProposalDeadline = opportunityValidation.validateDate(proposalDeadline, new Date());
-            const validatedAssignmentDate = opportunityValidation.validateDate(assignmentDate, new Date());
-            const validatedStartDate = opportunityValidation.validateDate(startDate, new Date());
-            const validatedCompletionDate = opportunityValidation.validateDate(completionDate, new Date());
             const validatedSubmissionInfo = opportunityValidation.validateSubmissionInfo(submissionInfo);
             const validatedAcceptanceCriteria = opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
             const validatedEvaluationCriteria = opportunityValidation.validateEvaluationCriteria(evaluationCriteria);
-            const validatedAttachments = await validateAttachments(connection, attachments);
 
             if (allValid([
               validatedTitle,
@@ -378,6 +440,25 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Published)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
+            // Perform validation on draft to ensure it's ready for publishing
+            if (!allValid([
+              opportunityValidation.validateTitle(validatedCWUOpportunity.value.title),
+              opportunityValidation.validateTeaser(validatedCWUOpportunity.value.teaser),
+              opportunityValidation.validateRemoteOk(validatedCWUOpportunity.value.remoteOk),
+              opportunityValidation.validateRemoteDesc(validatedCWUOpportunity.value.remoteDesc),
+              opportunityValidation.validateLocation(validatedCWUOpportunity.value.location),
+              opportunityValidation.validateReward(validatedCWUOpportunity.value.reward),
+              opportunityValidation.validateSkills(validatedCWUOpportunity.value.skills),
+              opportunityValidation.validateDescription(validatedCWUOpportunity.value.description),
+              opportunityValidation.validateSubmissionInfo(validatedCWUOpportunity.value.submissionInfo),
+              opportunityValidation.validateAcceptanceCriteria(validatedCWUOpportunity.value.acceptanceCriteria),
+              opportunityValidation.validateEvaluationCriteria(validatedCWUOpportunity.value.evaluationCriteria)
+            ])) {
+              return invalid({
+                opportunity: adt('publish', ['This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])
+              });
+            }
+
             const validatedPublishNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedPublishNote)) {
               return invalid({ opportunity: adt('publish' as const, validatedPublishNote.value) });
@@ -481,7 +562,6 @@ const resource: Resource = {
       },
       respond: wrapRespond({
         valid: async request => {
-          // Mark the organization as inactive
           const dbResult = await db.deleteCWUOpportunity(connection, request.body);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));

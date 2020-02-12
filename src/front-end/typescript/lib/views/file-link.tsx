@@ -1,17 +1,18 @@
 import { View } from 'front-end/lib/framework';
-import Link, { ButtonProps } from 'front-end/lib/views/link';
+import Link, { ExtendAndOmitProps as LinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
 
-export interface Props extends Omit<ButtonProps, 'button' | 'dest' | 'onClick'> {
-  accept?: string[];
+interface ExtraProps {
+  accept?: readonly string[];
   onChange(file: File): void;
 }
 
-const FileButton: View<Props> = props => {
+export type Props = LinkProps<ExtraProps, 'dest' | 'onClick'>;
+
+const FileLink: View<Props> = props => {
   return (
     <Link
       {...props}
-      button
       className={`${props.className || ''} position-relative overflow-hidden`}>
       <input
         accept={props.accept && props.accept.join(',')}
@@ -35,4 +36,4 @@ const FileButton: View<Props> = props => {
   );
 };
 
-export default FileButton;
+export default FileLink;

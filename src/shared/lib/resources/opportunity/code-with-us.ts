@@ -4,6 +4,10 @@ import { User } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
+export { Addendum } from 'shared/lib/resources/addendum';
+
+export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
+
 export enum CWUOpportunityStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
@@ -13,12 +17,37 @@ export enum CWUOpportunityStatus {
   Canceled = 'CANCELED'
 }
 
+export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
+  switch (raw) {
+    case CWUOpportunityStatus.Draft: return CWUOpportunityStatus.Draft;
+    case CWUOpportunityStatus.Published: return CWUOpportunityStatus.Published;
+    case CWUOpportunityStatus.Evaluation: return CWUOpportunityStatus.Evaluation;
+    case CWUOpportunityStatus.Awarded: return CWUOpportunityStatus.Awarded;
+    case CWUOpportunityStatus.Suspended: return CWUOpportunityStatus.Suspended;
+    case CWUOpportunityStatus.Canceled: return CWUOpportunityStatus.Canceled;
+    default: return null;
+  }
+}
+
+export interface CWUOpportunityStatusRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: User;
+  status: CWUOpportunityStatus;
+  note: string;
+}
+
 export interface CWUOpportunity {
   id: Id;
   createdAt: Date;
-  createdBy?: User;
   updatedAt: Date;
+
+  createdBy?: User;
   updatedBy?: User;
+
+  // TODO
+  successfulProponent?: true;
+
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -37,9 +66,44 @@ export interface CWUOpportunity {
   status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
+  statusHistory?: CWUOpportunityStatusRecord[];
+
+  // TODO
+  reporting?: {
+    numProposals: number;
+    numWatchers: number;
+    numViews: number;
+  };
+}
+
+export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Suspended:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+
+export type CreateCWUOpportunityStatus
+  = CWUOpportunityStatus.Published
+  | CWUOpportunityStatus.Draft;
 
 export interface CreateRequestBody {
   title: string;
@@ -58,6 +122,7 @@ export interface CreateRequestBody {
   acceptanceCriteria: string;
   evaluationCriteria: string;
   attachments: Id[];
+  status: CreateCWUOpportunityStatus;
 }
 
 export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'skills' | 'attachments'> {
@@ -72,7 +137,7 @@ export type UpdateRequestBody
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>;
 
-export type UpdateEditRequestBody = CreateRequestBody;
+export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
@@ -84,7 +149,6 @@ type UpdateADTErrors
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
-  proposal?: string[];
 }
 
 export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'attachments' | 'skills'> {

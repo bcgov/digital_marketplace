@@ -1,13 +1,15 @@
-import { BootstrapColor } from 'front-end/lib/types';
+import { NODE_ENV } from 'front-end/config';
+import * as Router from 'front-end/lib/framework/router';
+import { ThemeColor } from 'front-end/lib/types';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import * as Link from 'front-end/lib/views/link';
 import * as Immutable from 'immutable';
-import { get, remove } from 'lodash';
-import page from 'page';
-import qs from 'querystring';
+import { remove } from 'lodash';
 import { default as React, ReactElement } from 'react';
 import ReactDom from 'react-dom';
 import { ADT } from 'shared/lib/types';
+
+export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framework/router';
 
 // Base logic.
 
@@ -77,6 +79,8 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
   const { childStatePath, childUpdate, childMsg, mapChildMsg } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
+  // tslint:disable:next-line no-console
+  if (NODE_ENV === 'development') { console.assert(childState); }
   if (!childState) { return [state]; }
   const [newChildState, newAsyncChildState] = childUpdate({
     state: childState,
@@ -100,49 +104,7 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
 
 // Global Components.
 
-export type IncomingRouteMsg<Route> = ADT<'@incomingRoute', Route>;
-
-export type NewUrlMsg = ADT<'@newUrl', string>;
-
-export function newUrl(path: string): NewUrlMsg {
-  return {
-    tag: '@newUrl',
-    value: path
-  };
-}
-
-export type ReplaceUrlMsg = ADT<'@replaceUrl', string>;
-
-export function replaceUrl(path: string): ReplaceUrlMsg {
-  return {
-    tag: '@replaceUrl',
-    value: path
-  };
-}
-
-export type NewRouteMsg<Route> = ADT<'@newRoute', Route>;
-
-export function newRoute<Route>(route: Route): NewRouteMsg<Route> {
-  return {
-    tag: '@newRoute',
-    value: route
-  };
-}
-
-export type ReplaceRouteMsg<Route> = ADT<'@replaceRoute', Route>;
-
-export function replaceRoute<Route>(route: Route): ReplaceRouteMsg<Route> {
-  return {
-    tag: '@replaceRoute',
-    value: route
-  };
-}
-
-export type GlobalMsg<Route>
-  = NewRouteMsg<Route>
-  | ReplaceRouteMsg<Route>
-  | NewUrlMsg
-  | ReplaceUrlMsg;
+export type GlobalMsg<Route>  = Router.RouterMsg<Route>;
 
 export type GlobalComponentMsg<Msg, Route> = Msg | GlobalMsg<Route>;
 
@@ -288,9 +250,9 @@ export function noPageModal<Msg>() {
   return null;
 }
 
-export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg>> {
+export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   size: 'medium' | 'large';
-  color: BootstrapColor;
+  color: ThemeColor;
   view: View<Props>;
   // isEmpty tells the framework whether the sidebar is empty and should
   // adjust its padding for mobile viewports accordingly.
@@ -304,6 +266,7 @@ export interface PageContextualDropdownLinkGroup {
 
 export interface PageContextualDropdown {
   text: string;
+  loading?: boolean;
   linkGroups: PageContextualDropdownLinkGroup[];
 }
 
@@ -331,68 +294,12 @@ export function setPageMetadata(metadata: PageMetadata): void {
   document.title = metadata.title;
 }
 
-// Router.
-
-export type RouteParams = Record<string, string | undefined>;
-
-export type RouteQuery = Record<string, string | string[] | undefined>;
-
-export interface RouteDefinitionParams {
-  params: RouteParams;
-  query: RouteQuery;
-}
-
-export interface RouteDefinition<Route> {
-  path: string;
-  makeRoute(params: RouteDefinitionParams): Route;
-}
-
-export interface Router<Route> {
-  routes: Array<RouteDefinition<Route>>;
-  routeToUrl(route: Route): string;
-}
-
-export function startRouter<State, Msg, Route>(router: Router<Route>, stateManager: StateManager<State, AppMsg<Msg, Route>>): void {
-  // Parse the query string.
-  page((ctx, next) => {
-    ctx.query = qs.parse(ctx.querystring);
-    next();
-  });
-  // Bind all routes for pushState.
-  router.routes.forEach(({ path, makeRoute }) => {
-    page(path, ctx => {
-      // Do nothing if a hash is present in the path
-      // only if it isn't the initial load.
-      if (!ctx.init && ctx.hash) { return; }
-      const parsedRoute = makeRoute({
-        params: get(ctx, 'params', {}),
-        query: get(ctx, 'query', {})
-      });
-      return stateManager
-        .dispatch({
-          tag: '@incomingRoute',
-          value: parsedRoute
-        });
-    });
-  });
-  // Start the router.
-  page();
-}
-
-export function runNewUrl(url: string): void {
-  page(url);
-}
-
-export function runReplaceUrl(url: string): void {
-  page.redirect(url);
-}
-
 // App.
 
-export type AppMsg<Msg, Route> = GlobalComponentMsg<Msg, Route> | IncomingRouteMsg<Route>;
+export type AppMsg<Msg, Route> = GlobalComponentMsg<Msg, Route> | Router.IncomingRouteMsg<Route>;
 
 export interface AppComponent<State, Msg, Route> extends Component<null, State, AppMsg<Msg, Route>> {
-  router: Router<Route>;
+  router: Router.Router<Route>;
 }
 
 export function mapAppDispatch<ParentMsg, ChildMsg, Route>(dispatch: Dispatch<AppMsg<ParentMsg, Route>>, fn: (childMsg: GlobalComponentMsg<ChildMsg, Route>) => AppMsg<ParentMsg, Route>): Dispatch<GlobalComponentMsg<ChildMsg, Route>> {
@@ -549,26 +456,17 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
   // Initialize state mutation promise chain.
   // i.e. Mutate state sequentially in a single thread.
   let promise = Promise.resolve();
+  // Start handling routes in the app.
+  const routeManager = Router.makeRouteManager<State, Msg, Route>(app.router, dispatch);
   // Set up dispatch function to queue state mutations.
-  const dispatch: Dispatch<AppMsg<Msg, Route>> = msg => {
+  function dispatch(msg: AppMsg<Msg, Route>) {
     // Synchronous state changes should happen outside a promise chain
     // in the main thread. Otherwise real-time UI changes don't happen
     // (e.g. form input) causing a bad UX.
     notifyMsgSubscriptions(msg);
-    switch (msg.tag) {
-      case '@newUrl':
-        runNewUrl(msg.value);
-        break;
-      case '@replaceUrl':
-        runReplaceUrl(msg.value);
-        break;
-      case '@newRoute':
-        runNewUrl(app.router.routeToUrl(msg.value));
-        break;
-      case '@replaceRoute':
-        runReplaceUrl(app.router.routeToUrl(msg.value));
-        break;
-    }
+    // Handle routing as required.
+    routeManager.handleRouterMsg(msg as Router.RouterMsg<Route>);
+    // Update state.
     const [newState, promiseState] = app.update({ state, msg });
     state = newState;
     notifyStateSubscriptions();
@@ -595,7 +493,7 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
         });
     }
     return promise;
-  };
+  }
   // Render the view whenever state changes.
   const render = (state: Immutable<State>, dispatch: Dispatch<AppMsg<Msg, Route>>): void => {
     ReactDom.render(
@@ -627,8 +525,8 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
     msgUnsubscribe,
     getState
   };
-  // Start handling routes in the app.
-  startRouter(app.router, stateManager);
+  // Start the router.
+  Router.start(routeManager);
   // Return StateManager.
   return stateManager;
 }

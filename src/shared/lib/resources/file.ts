@@ -6,7 +6,7 @@ import { validateFilePermissions } from 'shared/lib/validation/file';
 
 export const MAX_MULTIPART_FILES_SIZE = megabytesToBytes(10);
 
-export const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
+export const SUPPORTED_IMAGE_EXTENSIONS: readonly string[] = ['.jpg', '.jpeg', '.png'];
 
 export interface FileRecord {
   id: Id;
@@ -59,4 +59,17 @@ export function parseUserTypeList<UserType>(list: string[], parseOneUserType: (r
 
 export function fileBlobPath(file: FileRecord) {
   return `/api/files/${file.id}?type=blob`;
+}
+
+export function getExtension(name: string): string {
+  const match = name.match(/\.([^.\s]+)$/);
+  return match ? match[1] : '';
+}
+
+export function enforceExtension(name: string, extension: string): string {
+  if (!name.match(new RegExp(`\\.${extension}$`))) {
+    return `${name}.${extension}`;
+  } else {
+    return name;
+  }
 }
