@@ -193,6 +193,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
+  const opportunity = state.opportunity;
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isPublishLoading = state.publishLoading > 0;
@@ -217,12 +218,16 @@ const view: ComponentView<State, Msg> = props => {
   ];
   return (
     <div>
-      <EditTabHeader opportunity={props.state.opportunity} />
-      <Row className='mt-5'>
-        <Col xs='12'>
-          <ReportCardList reportCards={reportCards} />
-        </Col>
-      </Row>
+      <EditTabHeader opportunity={opportunity} />
+      {opportunity.status === CWUOpportunityStatus.Draft
+        ? null
+        : (
+            <Row className='mt-5'>
+              <Col xs='12'>
+                <ReportCardList reportCards={reportCards} />
+              </Col>
+            </Row>
+          )}
       <Row className='mt-5'>
         <Col xs='12'>
           <Form.view

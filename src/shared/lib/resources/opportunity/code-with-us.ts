@@ -6,7 +6,7 @@ import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export { Addendum } from 'shared/lib/resources/addendum';
 
-export const DEFAULT_OPPORTUNITY_TITLE = 'Unititled';
+export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
 
 export enum CWUOpportunityStatus {
   Draft = 'DRAFT',

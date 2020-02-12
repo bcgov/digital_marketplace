@@ -15,7 +15,7 @@ import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
 import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
@@ -340,9 +340,14 @@ type PersistAction
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUOpportunity], Immutable<State>>> {
   const values = getValues(state);
+  const isRemoteOkChecked = RadioGroup.isChecked(state.remoteOk);
+  const isCreateDraft = action.tag === 'create' && action.value === CWUOpportunityStatus.Draft;
   // Transform remoteOk
-  if (!RadioGroup.isChecked(state.remoteOk)) { return invalid(state); }
-  const remoteOk = RadioGroup.valueEquals(state.remoteOk, 'yes');
+  if (!isRemoteOkChecked && !isCreateDraft) {
+    return invalid(state);
+  }
+  // Default remoteOk to true for drafts where it isn't defined.
+  const remoteOk = !isRemoteOkChecked && isCreateDraft ? true : RadioGroup.valueEquals(state.remoteOk, 'yes');
   // Get new attachments to be uploaded.
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   let attachments = state.attachments.existingAttachments.map(({ id }) => id);
