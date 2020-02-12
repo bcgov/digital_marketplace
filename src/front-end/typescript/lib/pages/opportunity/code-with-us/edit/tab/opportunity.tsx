@@ -1,6 +1,6 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
@@ -246,7 +246,9 @@ export const component: Tab.Component<State, Msg> = {
   view,
   getAlerts(state) {
     return {
-      ...emptyPageAlerts(),
+      warnings: state.opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(state.form)
+        ? [{ text: 'Please complete the form below in order to publish this opportunity.' }]
+        : [],
       info: state.infoAlerts.map((text, i) => ({
         text,
         dismissMsg: adt('dismissInfoAlert', i)
@@ -264,6 +266,7 @@ export const component: Tab.Component<State, Msg> = {
     const isDeleteLoading = state.deleteLoading > 0;
     const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
     const oppStatus = state.opportunity.status;
+    const isValid = () => Form.isValid(state.form);
     if (state.isEditing) {
       return adt('links', [
         {
@@ -279,7 +282,7 @@ export const component: Tab.Component<State, Msg> = {
               // No validation required, always possible to save a draft.
               return false;
             } else {
-              return !Form.isValid(state.form);
+              return !isValid();
             }
           })(),
           onClick: () => dispatch(adt('saveChanges')),
@@ -316,6 +319,7 @@ export const component: Tab.Component<State, Msg> = {
               links: [
                 {
                   children: 'Publish',
+                  disabled: !isValid(),
                   symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
                   onClick: () => dispatch(adt('updateStatus', 'publish' as const))
                 },
