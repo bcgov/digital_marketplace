@@ -103,7 +103,7 @@ interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalR
   };
 }
 
-const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('code-with-us/proposal');
+const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
 
 const cwuProposal: CrudApi<CWUProposalResourceTypes> = {
   ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_PROPOSAL_ROUTE_NAMESPACE),
