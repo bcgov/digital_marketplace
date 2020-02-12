@@ -7,7 +7,7 @@ import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -53,7 +53,8 @@ export interface ValidState {
 
 type InnerMsg
   = ADT<'updateActiveTab',   TabValues>
-  | ADT<'submit'>
+  | ADT<'publish'>
+  | ADT<'saveDraft'>
 
   // Proponent Tab
   // TODO(Jesse): Implement radio option @radio-option
@@ -226,7 +227,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
 
-    case 'submit':
+    case 'publish':
       return [
         state,
         async (state, dispatch) => {
@@ -476,7 +477,7 @@ export async function persist(state: ValidState): Promise<Validation<ValidState,
 
 const IndividualProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
-    <Row>
+    <Row className='pt-5 border-top'>
       <Col xs='12'>
         Please provide the following details for the proponent that will
         complete the work as outlined by the Acceptance Criteria of the
@@ -585,9 +586,9 @@ const IndividualProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }
 
 const OrganizationProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
-    <div>
+    <Row className='pt-5 border-top'>
       Organization
-    </div>
+    </Row>
   );
 };
 
@@ -609,7 +610,7 @@ const ProponentView: ComponentView<ValidState, Msg> = (params) => {
 
   return (
     <div>
-      <Row>
+      <Row className='pb-5'>
         <Col xs='12'>
           <p>
             Please select the type of proponent that will be submitting a
@@ -642,10 +643,19 @@ const ProponentView: ComponentView<ValidState, Msg> = (params) => {
 const ProposalView: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
-
+      <Col xs='12'>
+        Enter your proposal and any additional comments in the spaces provided
+        below.  Be sure to address the Proposal Evaluation Criteria.
+      </Col>
+      <Col xs='12'>
+        TODO(Jesse): How do we pull the proposal question point criteria for
+        the context bubble as per the designs?
+      </Col>
       <Col xs='12'>
         <LongText.view
+          required
           extraChildProps={{}}
+          style={{ height: '450px' }}
           label='Proposal'
           state={state.proposalText}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalText' as const, value))} />
@@ -653,12 +663,13 @@ const ProposalView: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
 
       <Col xs='12'>
         <LongText.view
+          required
           extraChildProps={{}}
+          style={{ height: '200px' }}
           label='Additional Comments'
           state={state.additionalComments}
           dispatch={mapComponentDispatch(dispatch, value => adt('additionalComments' as const, value))} />
       </Col>
-
     </Row>
   );
 };
@@ -704,8 +715,6 @@ function renderTab(params: any, tabName: TabValues): JSX.Element {
 
 const view: ComponentView<State, Msg> = viewValid((params) => {
   const state = params.state;
-  const dispatch = params.dispatch;
-
   let activeView = <div>No Active view selected</div>;
   switch (state.activeTab) {
     case 'Proponent': {
@@ -722,7 +731,6 @@ const view: ComponentView<State, Msg> = viewValid((params) => {
     }
   }
 
-  const saveButtonDisabled = true; // TODO(Jesse): How do we determine this?
   return (
     <div>
       <div>
@@ -733,49 +741,6 @@ const view: ComponentView<State, Msg> = viewValid((params) => {
         </Nav>
 
         {activeView}
-      </div>
-
-      <div className='d-flex justify-content-between'>
-        <div>
-
-          <Link
-            disabled={saveButtonDisabled}
-            button
-            color='secondary'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-          >
-            Save Draft
-          </Link>
-        </div>
-
-        <div>
-          <Link
-            button
-            className='mr-1'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-          >
-            Cancel
-          </Link>
-
-          <Link
-            button
-            className='mr-3'
-            color='secondary'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-          >
-            Prev
-          </Link>
-
-          <Link
-            button
-            color='primary'
-            symbol_={leftPlacement(iconLinkSymbol('cog'))}
-            onClick={() => dispatch(adt('submit')) }
-          >
-            Publish
-          </Link>
-
-        </div>
       </div>
 
     </div>
@@ -825,13 +790,13 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         disabled: isLoading,
         button: true,
         color: 'success',
-        // onClick: () => dispatch(adt('saveDraft'))
+        onClick: () => dispatch(adt('saveDraft'))
       },
       {
         children: 'Cancel',
         color: 'white',
         disabled: isLoading,
-        // dest: routeDest(adt('opportunities', null))
+        dest: routeDest(adt('opportunities', null))
       }
     ]);
   })
