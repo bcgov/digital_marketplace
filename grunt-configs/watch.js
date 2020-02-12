@@ -13,7 +13,7 @@ module.exports = {
       // TypeScript builds incrementally (faster).
       "shell:typescript",
       "browserify",
-      "compress"
+      "compress:gzip"
     ]
   },
   sass: {
@@ -23,7 +23,7 @@ module.exports = {
     tasks: [
       "sass",
       "postcss:prefix",
-      "compress"
+      "compress:gzip"
     ]
   },
   static: {
@@ -32,7 +32,7 @@ module.exports = {
     ],
     tasks: [
       "common",
-      "compress"
+      "compress:gzip"
     ]
   },
 };
