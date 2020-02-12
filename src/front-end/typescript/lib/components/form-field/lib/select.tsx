@@ -117,7 +117,8 @@ export const view: View<Props> = props => {
       multiValue(styles) {
         return {
           ...styles,
-          backgroundColor: '#52489C'
+          backgroundColor: '#52489C',
+          opacity: disabled ? 0.75 : undefined
         };
       },
       multiValueLabel(styles) {
