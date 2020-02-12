@@ -919,7 +919,7 @@ interface OpportunityVersionRecord extends Omit<CreateCWUOpportunityParams, 'sta
 export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
   // Create root opportunity record
   const now = new Date();
-  const result = await connection.transaction(async trx => {
+  const opportunityId = await connection.transaction(async trx => {
     const [rootOppRecord] = await connection<RootOpportunityRecord>('cwuOpportunities')
       .transacting(trx)
       .insert({
@@ -970,14 +970,14 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Authentic
         }, '*');
     });
 
-    const dbResult = await readOneCWUOpportunity(trx, rootOppRecord.id, session);
-    if (isInvalid(dbResult) || !dbResult.value) {
-      throw new Error('unable to create opportunity');
-    }
-    return dbResult.value;
+    return rootOppRecord.id;
   });
 
-  return valid(result);
+  const dbResult = await readOneCWUOpportunity(connection, opportunityId, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to create opportunity');
+  }
+  return valid(dbResult.value);
 });
 
 export async function isCWUOpportunityAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
