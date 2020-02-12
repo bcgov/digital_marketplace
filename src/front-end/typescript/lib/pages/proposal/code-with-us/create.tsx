@@ -465,9 +465,16 @@ export async function persist(state: State): Promise<Validation<State, string[]>
 
 const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <div>
+    <Row>
+      <Col xs='12'>
+        Please provide the following details for the proponent that will
+        complete the work as outlined by the Acceptance Criteria of the
+        opportunity.
+      </Col>
+
       <Col xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
           label='Name'
           state={state.legalName}
@@ -477,6 +484,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
           label='Email'
           state={state.email}
@@ -495,6 +503,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
           label='Address'
           state={state.street1}
@@ -511,8 +520,9 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col xs='12'>
+      <Col sm='8' xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
           label='City'
           state={state.city}
@@ -520,33 +530,36 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col xs='12'>
+      <Col sm='4' xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
-          label='Province'
+          label='Province / State'
           state={state.region}
           dispatch={mapComponentDispatch(dispatch, value => adt('region' as const, value)) }
         />
       </Col>
 
-      <Col xs='12'>
+      <Col sm='5' xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
-          label='Mail Code'
+          label='Postal / ZIP Code'
           state={state.mailCode}
           dispatch={mapComponentDispatch(dispatch, value => adt('mailCode' as const, value)) }
         />
       </Col>
 
-      <Col xs='12'>
+      <Col sm='7' xs='12'>
         <ShortText.view
+          required
           extraChildProps={{}}
           label='Country'
           state={state.country}
           dispatch={mapComponentDispatch(dispatch, value => adt('country' as const, value)) }
         />
       </Col>
-    </div>
+    </Row>
   );
 };
 
@@ -591,9 +604,7 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
             checked={state.proponentType === 'Individual'}
             onClick={ () => { dispatch(adt('proponentType' as const, 'Individual' as const)); } }
           />
-        </Col>
 
-        <Col xs='12'>
           <Radio
             id='proponenet-is-org'
             label='Organization'
@@ -693,7 +704,7 @@ const view: ComponentView<State, Msg> = (params) => {
 
   const saveButtonDisabled = true; // TODO(Jesse): How do we determine this?
   return (
-    <div className='d-flex flex-column h-100 justify-content-between'>
+    <div>
       <div>
         <Nav tabs className='mb-5'>
           {renderTab(params, 'Proponent')}
