@@ -61,7 +61,6 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return [
         isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
-          state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
           const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published as const : CWUOpportunityStatus.Draft as const));
           switch (result.tag) {
             case 'valid':
@@ -71,6 +70,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               })));
               return state.set('form', result.value[0]);
             case 'invalid':
+              state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
               return state
                 .set('showErrorAlert', isPublish ? 'publish' : 'save')
                 .set('form', result.value);

@@ -454,7 +454,9 @@ const resource: Resource = {
               opportunityValidation.validateAcceptanceCriteria(validatedCWUOpportunity.value.acceptanceCriteria),
               opportunityValidation.validateEvaluationCriteria(validatedCWUOpportunity.value.evaluationCriteria)
             ])) {
-              return invalid(adt('publish', ['Your opportunity could not be published because it is incomplete.  Please edit the form below, save your changes and try publishing again.']));
+              return invalid({
+                opportunity: adt('publish', ['This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])
+              });
             }
 
             const validatedPublishNote = opportunityValidation.validateNote(request.body.value);
