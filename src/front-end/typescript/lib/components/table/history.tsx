@@ -55,7 +55,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
-      children: 'Item Type',
+      children: 'Entry Type',
       className: 'text-nowrap',
       style: { width: '20%' }
     },
