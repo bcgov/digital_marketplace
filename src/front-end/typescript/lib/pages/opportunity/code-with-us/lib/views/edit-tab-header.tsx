@@ -40,7 +40,7 @@ const EditTabHeader: View<Props> = ({ opportunity }) => {
     createdBy
       ? {
           name: 'Created By',
-          children: (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+          children: (<Link newTab color='primary' symbol_={rightPlacement(iconLinkSymbol('external-link'))} dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
         }
       : null
   ];
