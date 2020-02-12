@@ -159,10 +159,32 @@ export function tryMakeFileResponseBody(path: string, contentType?: string, cont
   }
 }
 
-export function tryMakeFileResponseBodyWithGzip(filePath: string): FileResponseBody | null {
-  const compressedFilePath = filePath.replace(/(\.gz)*$/, '.gz');
-  const response = tryMakeFileResponseBody(compressedFilePath, lookup(filePath) || undefined, 'gzip');
+export function tryMakeGenericCompressedFileResponseBody(filePath: string, compressionExtension: string, encoding: string): FileResponseBody | null {
+  const compressedFilePath = filePath.replace(new RegExp(`(\\.${compressionExtension})?$`), `.${compressionExtension}`);
+  const response = tryMakeFileResponseBody(compressedFilePath, lookup(filePath) || undefined, encoding);
   return response || tryMakeFileResponseBody(filePath);
+}
+
+export function tryMakeGzipFileResponseBody(filePath: string): FileResponseBody | null {
+  return tryMakeGenericCompressedFileResponseBody(filePath, 'gz', 'gzip');
+}
+
+export function tryMakeBrotliFileResponseBody(filePath: string): FileResponseBody | null {
+  return tryMakeGenericCompressedFileResponseBody(filePath, 'br', 'br');
+}
+
+export function tryMakeAnyCompressedFileResponseBody(filePath: string, acceptEncodingHeader: string): FileResponseBody | null {
+  const accept = acceptEncodingHeader.split(/\s*,\s*/);
+  const responseBody: FileResponseBody | null = (() => {
+    if (accept.includes('br')) {
+      return tryMakeBrotliFileResponseBody(filePath);
+    } else if (accept.includes('gzip')) {
+      return tryMakeGzipFileResponseBody(filePath);
+    } else {
+      return null;
+    }
+  })();
+  return responseBody || tryMakeFileResponseBody(filePath);
 }
 
 export function mapFileResponse<Session>(response: Response<string, Session>): Response<FileResponseBody | null, Session> {
