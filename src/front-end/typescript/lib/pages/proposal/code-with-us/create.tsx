@@ -1,10 +1,11 @@
 import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/long-text';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
@@ -45,8 +46,7 @@ export interface State {
   additionalComments: Immutable<LongText.State>;
 
   // Attachments tab
-  // TODO(Jesse): Do attachments @file-attachments
-  // attachments: File[];
+  attachments: Immutable<Attachments.State>;
 }
 
 type InnerMsg
@@ -72,8 +72,8 @@ type InnerMsg
   | ADT<'proposalText',           LongText.Msg>
   | ADT<'additionalComments', LongText.Msg>
 
-  // Attachments Tab
-  // @file-attachments
+  // Attachments tab
+  | ADT<'attachments', Attachments.Msg>
   ;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -188,6 +188,11 @@ async function defaultState(opportunityId: Id) {
         value: 'additional comments',
         id: 'proposal-additional-comments'
       }
+    })),
+
+    attachments: immutable(await Attachments.init({
+      existingAttachments: [],
+      newAttachmentMetadata: [adt('any')]
     }))
 
   };
@@ -324,6 +329,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('additionalComments', value)
       });
 
+    case 'attachments':
+      return updateComponentChild({
+        state,
+        childStatePath: ['attachments'],
+        childUpdate: Attachments.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('attachments', value)
+      });
+
     default:
       return [state];
   }
@@ -369,13 +383,18 @@ function getFormValues(state: State): Values {
     proposalText:        FormField.getValue(state.proposalText),
     additionalComments:  FormField.getValue(state.additionalComments),
     proponent,
-    attachments: []
+    attachments: state.attachments.existingAttachments.map(({ id }) => id)
   };
 
   return result;
 }
 
 type Errors = CWUProposalResource.CreateValidationErrors;
+
+// TODO(Jesse): Implement this
+export function isValid(): boolean {
+  return true;
+}
 
 function setErrors(state: State, errors?: Errors): void {
   if (errors) {
@@ -411,11 +430,26 @@ function setErrors(state: State, errors?: Errors): void {
 }
 
 function requestBodyFromValues(opportunityId: Id, formValues: Values): CWUProposalResource.CreateRequestBody {
-  return ({opportunity: opportunityId, ...formValues});
+  return ({opportunity: opportunityId, ...formValues });
 }
 
 export async function persist(state: State): Promise<Validation<State, string[]>> {
   const formValues = getFormValues(state);
+
+  const newAttachments = Attachments.getNewAttachments(state.attachments);
+  // Upload new attachments if necessary.
+  if (newAttachments.length) {
+    const result = await api.uploadFiles(newAttachments);
+    switch (result.tag) {
+      case 'valid':
+        formValues.attachments = [...formValues.attachments, ...(result.value.map(({ id }) => id))];
+        break;
+      case 'invalid':
+      case 'unhandled':
+        return invalid(['Error updating attachments.']);
+    }
+  }
+
   const requestBody = requestBodyFromValues(state.opportunityId, formValues);
   const apiResult = await api.proposals.cwu.create(requestBody);
 
@@ -598,30 +632,23 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
+interface Props extends ComponentViewProps<State, Msg> {
+  disabled?: boolean;
+}
+
 // @duplicated-attachments-view
-const AttachmentsView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
-
         <p>
-          Note(Jesse): Regarding the copy, I believe being exhaustive and
-          explicit on which file formats are accepted is better than having an
-          etc.
+          Upload any supporting material for your opportunity here. Attachments must be smaller than 10MB.
         </p>
-        <p>
-          Upload any supporting material for your proposal here. Accepted file
-          formats are pdf, jpeg, jpg.
-        </p>
-
-        <Link
-          button
-          color='primary'
-          symbol_={leftPlacement(iconLinkSymbol('cog'))}
-        >
-          Add Attachment
-        </Link>
-
+        <Attachments.view
+          dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
+          state={state.attachments}
+          disabled={disabled}
+          className='mt-4' />
       </Col>
     </Row>
   );
