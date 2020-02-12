@@ -1,4 +1,4 @@
-import { makePageMetadata } from 'front-end/lib';
+import { getContextualActionsValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
@@ -22,7 +22,9 @@ type TabValues = 'Proponent' | 'Proposal' | 'Attachments';
 
 type ProponentType = 'Individual' | 'Organization' | null;
 
-export interface State {
+export type State = Validation<Immutable<ValidState>, null>;
+
+export interface ValidState {
   opportunityId: Id;
   activeTab: TabValues;
 
@@ -210,18 +212,18 @@ async function defaultState(opportunityId: Id) {
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
   async success(params) {
-    return {
-      ...(await defaultState(params.routeParams.opportunityId))
-    };
+    return valid(immutable(
+      await defaultState(params.routeParams.opportunityId)
+    ));
   },
   async fail(params) {
-    return {
-      ...(await defaultState(params.routeParams.opportunityId))
-    };
+    return invalid(immutable(
+      await defaultState(params.routeParams.opportunityId)
+    ));
   }
 });
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
 
     case 'submit':
@@ -350,11 +352,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     default:
       return [state];
   }
-};
+});
 
 type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
 
-function proponentFor(typeTag: ProponentType, state: State): CWUProposalResource.CreateProponentRequestBody {
+function proponentFor(typeTag: ProponentType, state: ValidState): CWUProposalResource.CreateProponentRequestBody {
   switch (typeTag) {
     case 'Individual': {
       return ({
@@ -386,7 +388,7 @@ function proponentFor(typeTag: ProponentType, state: State): CWUProposalResource
 
 }
 
-function getFormValues(state: State): Values {
+function getFormValues(state: ValidState): Values {
   const proponent = proponentFor(state.proponentType, state);
   const result = {
     proposalText:        FormField.getValue(state.proposalText),
@@ -405,7 +407,7 @@ export function isValid(): boolean {
   return true;
 }
 
-function setErrors(state: State, errors?: Errors): void {
+function setErrors(state: ValidState, errors?: Errors): void {
   if (errors) {
 
     if (errors.proponent) {
@@ -442,7 +444,7 @@ function requestBodyFromValues(opportunityId: Id, formValues: Values): CWUPropos
   return ({opportunity: opportunityId, ...formValues });
 }
 
-export async function persist(state: State): Promise<Validation<State, string[]>> {
+export async function persist(state: ValidState): Promise<Validation<ValidState, string[]>> {
   const formValues = getFormValues(state);
 
   const newAttachments = Attachments.getNewAttachments(state.attachments);
@@ -472,7 +474,7 @@ export async function persist(state: State): Promise<Validation<State, string[]>
   }
 }
 
-const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const IndividualProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -581,7 +583,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
   );
 };
 
-const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const OrganizationProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       Organization
@@ -589,7 +591,7 @@ const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) =
   );
 };
 
-const ProponentView: ComponentView<State, Msg> = (params) => {
+const ProponentView: ComponentView<ValidState, Msg> = (params) => {
   const state = params.state;
   const dispatch = params.dispatch;
 
@@ -637,7 +639,7 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
   );
 };
 
-const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const ProposalView: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
 
@@ -661,7 +663,7 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends ComponentViewProps<ValidState, Msg> {
   disabled?: boolean;
 }
 
@@ -684,7 +686,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 // @duplicated-tab-helper-functions
-function isActiveTab(state: State, activeTab: TabValues): boolean {
+function isActiveTab(state: ValidState, activeTab: TabValues): boolean {
   const Result: boolean = state.activeTab === activeTab;
   return Result;
 }
@@ -700,7 +702,7 @@ function renderTab(params: any, tabName: TabValues): JSX.Element {
   );
 }
 
-const view: ComponentView<State, Msg> = (params) => {
+const view: ComponentView<State, Msg> = viewValid((params) => {
   const state = params.state;
   const dispatch = params.dispatch;
 
@@ -778,7 +780,7 @@ const view: ComponentView<State, Msg> = (params) => {
 
     </div>
   );
-};
+});
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
@@ -799,5 +801,39 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   },
   getMetadata() {
     return makePageMetadata('Create Proposal');
-  }
+  },
+
+  getContextualActions: getContextualActionsValid( ({state, dispatch}) => {
+    const isPublishLoading   = false; // state.publishLoading > 0;
+    const isSaveDraftLoading = false; // state.saveDraftLoading > 0;
+    const isLoading          = false; // isPublishLoading || isSaveDraftLoading;
+    const isValid            = true; // Form.isValid(state.form);
+    return adt('links', [
+      {
+        children: 'Publish',
+        symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
+        button: true,
+        loading: isPublishLoading,
+        disabled: isLoading || !isValid,
+        color: 'primary',
+        onClick: () => dispatch(adt('publish'))
+      },
+      {
+        children: 'Save Draft',
+        symbol_: leftPlacement(iconLinkSymbol('save')),
+        loading: isSaveDraftLoading,
+        disabled: isLoading,
+        button: true,
+        color: 'success',
+        // onClick: () => dispatch(adt('saveDraft'))
+      },
+      {
+        children: 'Cancel',
+        color: 'white',
+        disabled: isLoading,
+        // dest: routeDest(adt('opportunities', null))
+      }
+    ]);
+  })
+
 };
