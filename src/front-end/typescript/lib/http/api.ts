@@ -95,7 +95,18 @@ function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
 
 // CodeWithUs Opportunities
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'addenda'> {
+interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityStatusRecord, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityStatusRecord {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'addenda' | 'statusHistory'> {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
@@ -103,6 +114,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 
   createdAt: string;
   updatedAt: string;
   addenda: RawAddendum[];
+  statusHistory?: RawCWUOpportunityStatusRecord[];
 }
 
 function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
@@ -114,7 +126,8 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     completionDate: new Date(raw.completionDate),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    addenda: raw.addenda.map(a => rawAddendumToAddendum(a))
+    addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
+    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
   };
 }
 

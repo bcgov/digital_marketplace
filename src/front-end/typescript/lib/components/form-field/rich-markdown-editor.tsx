@@ -179,7 +179,7 @@ interface ControlIconProps {
 
 const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '' }) => {
   return (
-    <Link color='secondary' className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
+    <Link color={disabled ? 'secondary' : 'dark'} className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
       <Icon name={name} width={width} height={height} />
       {children ? children : ''}
     </Link>

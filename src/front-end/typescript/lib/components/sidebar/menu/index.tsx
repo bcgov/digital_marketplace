@@ -50,7 +50,7 @@ const SidebarLink: View<SidebarLinkProps> = props => {
       onClick={onClick}
       newTab={newTab}
       symbol_={leftPlacement(iconLinkSymbol(icon))}
-      symbolClassName={`text-${active ? 'primary' : 'info'}`}
+      symbolClassName={`align-self-start mt-1 text-${active ? 'primary' : 'info'}`}
       color={active ? 'info' : 'light'}
       className={`${className} ta-left text-wrap ${active ? '' : 'text-primary'}`}>
       <span className={caret ? 'mr-2' : undefined}>{text}</span>
