@@ -10,7 +10,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -27,13 +27,17 @@ export type InnerMsg
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
-  | ADT<'publish'>
+  | ADT<'updateStatus', 'publish' | 'cancel' | 'suspend'>
   | ADT<'delete'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function resetForm(state: Immutable<State>, opportunity: CWUOpportunity): Promise<Immutable<State>> {
-  return state.set('form', immutable(await Form.init({ opportunity, activeTab: state.form.activeTab })));
+async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
+  return immutable(await Form.init({
+    opportunity,
+    activeTab,
+    showAddendaTab: canAddAddendumToCWUOpportunity(opportunity)
+  }));
 }
 
 const init: Init<Tab.Params, State> = async params => ({
@@ -43,9 +47,7 @@ const init: Init<Tab.Params, State> = async params => ({
   publishLoading: 0,
   deleteLoading: 0,
   isEditing: false,
-  form: immutable(await Form.init({
-    opportunity: params.opportunity
-  }))
+  form: await initForm(params.opportunity)
 });
 
 const startStartEditingLoading = makeStartLoading<State>('startEditingLoading');
@@ -74,8 +76,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           state = stopStartEditingLoading(state);
           const result = await api.opportunities.cwu.readOne(state.opportunity.id);
           if (api.isValid(result)) {
-            state = await resetForm(state, result.value);
-            return state.set('isEditing', true);
+            return state
+              .set('isEditing', true)
+              .set('form', await initForm(result.value, state.form.activeTab));
           } else {
             return state;
           }
@@ -85,7 +88,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         async state => {
-          return await resetForm(state.set('isEditing', false), state.opportunity);
+          return state
+            .set('isEditing', false)
+            .set('form', await initForm(state.opportunity, state.form.activeTab));
         }
       ];
     case 'saveChanges':
@@ -105,12 +110,20 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
         }
       ];
-    case 'publish':
+    case 'updateStatus':
       return [
         startPublishLoading(state),
         async state => {
           state = stopPublishLoading(state);
-          return state;
+          const result = await api.opportunities.cwu.update(state.opportunity.id, adt(msg.value, ''));
+          switch (result.tag) {
+            case 'valid':
+              return state
+                .set('opportunity', result.value)
+                .set('form', await initForm(result.value, state.form.activeTab));
+            default:
+              return state;
+          }
         }
       ];
     case 'delete':
@@ -222,36 +235,100 @@ export const component: Tab.Component<State, Msg> = {
           color: 'white'
         }
       ]);
-    } else {
-      return adt('dropdown', {
-        text: 'Actions',
-        loading: isLoading,
-        linkGroups: [
-          {
-            links: [
-              {
-                children: 'Publish',
-                symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
-                onClick: () => dispatch(adt('publish'))
-              },
-              {
-                children: 'Edit',
-                symbol_: leftPlacement(iconLinkSymbol('edit')),
-                onClick: () => dispatch(adt('startEditing'))
-              }
-            ]
-          },
-          {
-            links: [
-              {
-                children: 'Delete',
-                symbol_: leftPlacement(iconLinkSymbol('trash')),
-                onClick: () => dispatch(adt('delete'))
-              }
-            ]
-          }
-        ]
-      });
+    }
+    switch (oppStatus) {
+      case CWUOpportunityStatus.Draft:
+        return adt('dropdown', {
+          text: 'Actions',
+          loading: isLoading,
+          linkGroups: [
+            {
+              links: [
+                {
+                  children: 'Publish',
+                  symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
+                  onClick: () => dispatch(adt('updateStatus', 'publish' as const))
+                },
+                {
+                  children: 'Edit',
+                  symbol_: leftPlacement(iconLinkSymbol('edit')),
+                  onClick: () => dispatch(adt('startEditing'))
+                }
+              ]
+            },
+            {
+              links: [
+                {
+                  children: 'Delete',
+                  symbol_: leftPlacement(iconLinkSymbol('trash')),
+                  onClick: () => dispatch(adt('delete'))
+                }
+              ]
+            }
+          ]
+        });
+      case CWUOpportunityStatus.Published:
+        return adt('dropdown', {
+          text: 'Actions',
+          loading: isLoading,
+          linkGroups: [
+            {
+              links: [
+                {
+                  children: 'Edit',
+                  symbol_: leftPlacement(iconLinkSymbol('edit')),
+                  onClick: () => dispatch(adt('startEditing'))
+                }
+              ]
+            },
+            {
+              links: [
+                {
+                  children: 'Suspend',
+                  symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+                  onClick: () => dispatch(adt('updateStatus', 'suspend' as const))
+                },
+                {
+                  children: 'Cancel',
+                  symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
+                  onClick: () => dispatch(adt('updateStatus', 'cancel' as const))
+                }
+              ]
+            }
+          ]
+        });
+      case CWUOpportunityStatus.Suspended:
+        return adt('dropdown', {
+          text: 'Actions',
+          loading: isLoading,
+          linkGroups: [
+            {
+              links: [
+                {
+                  children: 'Publish',
+                  symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
+                  onClick: () => dispatch(adt('updateStatus', 'publish' as const))
+                },
+                {
+                  children: 'Edit',
+                  symbol_: leftPlacement(iconLinkSymbol('edit')),
+                  onClick: () => dispatch(adt('startEditing'))
+                }
+              ]
+            },
+            {
+              links: [
+                {
+                  children: 'Cancel',
+                  symbol_: leftPlacement(iconLinkSymbol('trash')),
+                  onClick: () => dispatch(adt('updateStatus', 'cancel' as const))
+                }
+              ]
+            }
+          ]
+        });
+      default:
+        return null;
     }
   }
 };

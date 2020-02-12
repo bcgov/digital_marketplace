@@ -4,6 +4,10 @@ import { User } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
+export { Addendum } from 'shared/lib/resources/addendum';
+
+export const DEFAULT_OPPORTUNITY_TITLE = 'Unititled';
+
 export enum CWUOpportunityStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
@@ -60,6 +64,18 @@ export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Suspended:
       return true;
     default:
       return false;

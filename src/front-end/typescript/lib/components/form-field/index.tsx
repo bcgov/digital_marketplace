@@ -1,7 +1,7 @@
 import { FORM_FIELD_DEBOUNCE_DURATION } from 'front-end/config';
 import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
 import * as framework from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import { debounce } from 'lodash';
 import React, { CSSProperties } from 'react';
 import { Alert, FormGroup, FormText, Label } from 'reactstrap';
@@ -58,6 +58,11 @@ export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, Inne
   placeholder?: string;
   label?: string;
   help?: ViewElementChildren;
+  hint?: string;
+  action?: {
+    icon: AvailableIcons;
+    onClick(): void;
+  };
 }
 
 export type Component<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<Params<Value, ChildParams>, State<Value, ChildState>, Msg<InnerChildMsg>, ViewProps<Value, ChildState, InnerChildMsg, ExtraChildProps>>;
@@ -140,16 +145,21 @@ export const ViewRequiredAsterisk: View<{}> = () => {
 };
 
 function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
-  const { state, label, required, disabled, labelClassName } = props;
-  const className = `font-weight-bold ${labelClassName || ''}`;
+  const { state, label, required, disabled, labelClassName, action } = props;
+  const className = `font-weight-bold d-flex flex-nowrap align-items-end ${labelClassName || ''}`;
   if (label) {
     return (
       <Label for={state.child.id} className={className}>
-        <span>
+        <div className='flex-grow-1 flex-shrink-0'>
           {label}
           {required && !disabled ? (<ViewRequiredAsterisk />) : null}
           <ConditionalHelpToggle {...props} />
-        </span>
+        </div>
+        {action && !disabled
+          ? (<div className='flex-shrink-0 ml-0'>
+              <Icon name={action.icon} color='info' hover onClick={action.onClick} />
+            </div>)
+          : null}
       </Label>
     );
   } else {
@@ -164,6 +174,18 @@ function ConditionalHelp<Value, ChildState extends ChildStateBase<Value>, InnerC
       <Alert color='info' style={{ whiteSpace: 'pre-line' }}>
         {help}
       </Alert>
+    );
+  } else {
+    return null;
+  }
+}
+
+function ConditionalHint<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+  if (props.hint) {
+    return (
+      <FormText color='secondary'>
+        {props.hint}
+      </FormText>
     );
   } else {
     return null;
@@ -209,6 +231,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
           placeholder={props.placeholder}
           dispatch={mapComponentDispatch(dispatch, value => ({ tag: 'child' as const, value }))}
           onChange={() => debouncedValidate(dispatch)} />
+        <ConditionalHint {...props} />
         <ConditionalErrors {...props} />
       </FormGroup>
     );

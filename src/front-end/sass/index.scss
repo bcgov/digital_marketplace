@@ -164,6 +164,19 @@ input[type="time"] {
   }
 }
 
+input,
+textarea {
+
+  &:disabled,
+  &.disabled {
+
+    &::placeholder {
+      color: transparent;
+      opacity: 0;
+    }
+  }
+}
+
 textarea {
   resize: none;
 }

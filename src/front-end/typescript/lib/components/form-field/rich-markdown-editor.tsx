@@ -13,17 +13,17 @@ import { Validation } from 'shared/lib/validation';
 
 export type Value = string;
 
-type UploadFile = (file: File) => Promise<Validation<{ name: string; url: string }>>;
+export type UploadImage = (file: File) => Promise<Validation<{ name: string; url: string }>>;
 
 interface ChildState extends FormField.ChildStateBase<Value> {
   loading: number;
   selectionStart: number;
   selectionEnd: number;
-  uploadFile: UploadFile;
+  uploadImage: UploadImage;
 }
 
 export interface ChildParams extends FormField.ChildParamsBase<Value> {
-  uploadFile: UploadFile;
+  uploadImage: UploadImage;
 }
 
 type InnerChildMsg
@@ -141,7 +141,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
         startLoading(state),
         async (state, dispatch) => {
           state = stopLoading(state);
-          const uploadResult = await state.uploadFile(msg.value);
+          const uploadResult = await state.uploadImage(msg.value);
           if (uploadResult.tag === 'invalid') { return state; }
           const result = insert(state, {
             text: () => `![${uploadResult.value.name}](${uploadResult.value.url})`

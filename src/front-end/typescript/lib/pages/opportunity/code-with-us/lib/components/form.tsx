@@ -1,3 +1,4 @@
+import * as Addenda from 'front-end/lib/components/addenda';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
@@ -13,17 +14,16 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
-import { fileBlobPath } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
-type TabValues = 'Overview' | 'Description' | 'Details' | 'Attachments';
+export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Addenda';
 
 export interface State {
-  activeTab: TabValues;
-
+  activeTab: TabId;
   // Overview Tab
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
@@ -33,10 +33,8 @@ export interface State {
   remoteOk: boolean;
   // If remoteOk
   remoteDesc: Immutable<LongText.State>;
-
   // Description Tab
   description: Immutable<RichMarkdownEditor.State>;
-
   // Details Tab
   proposalDeadline: Immutable<DateField.State>;
   startDate: Immutable<DateField.State>;
@@ -45,14 +43,14 @@ export interface State {
   submissionInfo: Immutable<ShortText.State>;
   acceptanceCriteria: Immutable<LongText.State>;
   evaluationCriteria: Immutable<LongText.State>;
-
   // Attachments tab
   attachments: Immutable<Attachments.State>;
+  // Attachments tab
+  addenda: Immutable<Addenda.State> | null;
 }
 
 export type Msg
-  = ADT<'updateActiveTab',   TabValues>
-
+  = ADT<'updateActiveTab',   TabId>
   // Details Tab
   | ADT<'title',             ShortText.Msg>
   | ADT<'teaser',            LongText.Msg>
@@ -61,10 +59,8 @@ export type Msg
   | ADT<'skills',            SelectMulti.Msg>
   | ADT<'remoteOk',          boolean>
   | ADT<'remoteDesc',        LongText.Msg>
-
   // Description Tab
   | ADT<'description',       RichMarkdownEditor.Msg>
-
   // Details Tab
   | ADT<'proposalDeadline',    DateField.Msg>
   | ADT<'startDate',           DateField.Msg>
@@ -73,18 +69,22 @@ export type Msg
   | ADT<'submissionInfo',      ShortText.Msg>
   | ADT<'acceptanceCriteria',  LongText.Msg>
   | ADT<'evaluationCriteria',  LongText.Msg>
-
   // Attachments tab
-  | ADT<'attachments', Attachments.Msg>;
+  | ADT<'attachments', Attachments.Msg>
+  // Addenda tab
+  | ADT<'addenda', Addenda.Msg>;
 
 export interface Params {
   opportunity?: CWUOpportunity;
-  activeTab?: TabValues;
+  activeTab?: TabId;
+  showAddendaTab?: boolean;
 }
 
-export const init: Init<Params, State> = async ({ opportunity, activeTab = 'Overview' }) => {
+const DEFAULT_ACTIVE_TAB: TabId = 'Overview';
+
+export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
   return {
-    activeTab,
+    activeTab: !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab,
     remoteOk: opportunity ? opportunity.remoteOk : true,
 
     title: immutable(await ShortText.init({
@@ -160,23 +160,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = 'Over
       child: {
         value: opportunity?.description || '',
         id: 'opportunity-description',
-        async uploadFile(file) {
-          const result = await api.files.create({
-            name: file.name,
-            file,
-            metadata: [adt('any')]
-          });
-          if (api.isValid(result)) {
-            return valid({
-              name: result.value.name,
-              url: fileBlobPath(result.value)
-            });
-          } else {
-            return invalid([
-              'Unable to upload file.'
-            ]);
-          }
-        }
+        uploadImage: api.uploadMarkdownImage
       }
     })),
 
@@ -247,7 +231,13 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = 'Over
     attachments: immutable(await Attachments.init({
       existingAttachments: opportunity?.attachments || [],
       newAttachmentMetadata: [adt('any')]
-    }))
+    })),
+
+    addenda: showAddendaTab
+      ? immutable(await Addenda.init({
+          existingAddenda: opportunity?.addenda || []
+        }))
+      : null
 
   };
 };
@@ -291,7 +281,8 @@ export function isValid(state: Immutable<State>): boolean {
     FormField.isValid(state.submissionInfo)                  &&
     FormField.isValid(state.acceptanceCriteria)              &&
     FormField.isValid(state.evaluationCriteria)              &&
-    Attachments.isValid(state.attachments);
+    Attachments.isValid(state.attachments)                   &&
+    (!state.addenda || Addenda.isValid(state.addenda));
 }
 
 export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
@@ -337,6 +328,44 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
       case 'unhandled':
         return invalid(state);
+    }
+  }
+  if (action.tag === 'update' && state.addenda) {
+    const newAddenda = Addenda.getNewAddenda(state.addenda);
+    if (newAddenda.length) {
+      let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
+      const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
+      //Persist each addendum.
+      for (const addendum of newAddenda) {
+        const addAddendumResult: api.ResponseValidation<CWUOpportunity, UpdateValidationErrors> = await api.opportunities.cwu.update(action.value, adt('addAddendum', addendum));
+        switch (addAddendumResult.tag) {
+          case 'valid':
+            updatedExistingAddenda = addAddendumResult.value.addenda;
+            break;
+          case 'invalid':
+            if (addAddendumResult.value.opportunity?.tag === 'addAddendum') {
+              updatedNewAddenda.push({
+                value: addendum,
+                errors: addAddendumResult.value.opportunity.value
+              });
+            }
+            break;
+          case 'unhandled':
+            updatedNewAddenda.push({
+              value: addendum,
+              errors: ['Unable to add addenda due to a system error.']
+            });
+        }
+      }
+      //Update the addenda field in state.
+      state = state.set('addenda', immutable(await Addenda.init({
+        existingAddenda: updatedExistingAddenda,
+        newAddenda: updatedNewAddenda
+      })));
+      //Check if any addenda failed.
+      if (updatedNewAddenda.length) {
+        return invalid(state);
+      }
     }
   }
   const actionResult: api.ResponseValidation<CWUOpportunity, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
@@ -514,6 +543,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Attachments.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('attachments', value)
+      });
+
+    case 'addenda':
+      return updateComponentChild({
+        state,
+        childStatePath: ['addenda'],
+        childUpdate: Addenda.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('addenda', value)
       });
   }
 };
@@ -729,13 +767,31 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
+const AddendaView: View<Props> = ({ state, dispatch, disabled }) => {
+  if (!state.addenda) { return null; }
+  return (
+    <Row>
+      <Col xs='12'>
+        <p>
+          Provide additional information here to clarify or support the information in the original opportunity.
+        </p>
+        <Addenda.view
+          dispatch={mapComponentDispatch(dispatch, msg => adt('addenda' as const, msg))}
+          state={state.addenda}
+          disabled={disabled}
+          className='mt-4' />
+      </Col>
+    </Row>
+  );
+};
+
 // @duplicated-tab-helper-functions
-function isActiveTab(state: State, tab: TabValues): boolean {
+function isActiveTab(state: State, tab: TabId): boolean {
   return state.activeTab === tab;
 }
 
 // @duplicated-tab-helper-functions
-const TabLink: View<Props & { tab: TabValues; }> = ({ state, dispatch, tab }) => {
+const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab }) => {
   const isActive = isActiveTab(state, tab);
   return (
     <NavItem>
@@ -752,18 +808,11 @@ export const view: View<Props> = props => {
   const { state } = props;
   const activeTab = (() => {
     switch (state.activeTab) {
-      case 'Overview': {
-        return (<OverviewView {...props} />) ;
-      }
-      case 'Description': {
-        return (<DescriptionView {...props} />) ;
-      }
-      case 'Details': {
-        return (<DetailsView {...props} />) ;
-      }
-      case 'Attachments': {
-        return (<AttachmentsView {...props} />) ;
-      }
+      case 'Overview':    return (<OverviewView {...props} />);
+      case 'Description': return (<DescriptionView {...props} />);
+      case 'Details':     return (<DetailsView {...props} />);
+      case 'Attachments': return (<AttachmentsView {...props} />);
+      case 'Addenda':     return (<AddendaView {...props} />);
     }
   })();
 
@@ -775,6 +824,9 @@ export const view: View<Props> = props => {
           <TabLink {...props} tab='Description' />
           <TabLink {...props} tab='Details' />
           <TabLink {...props} tab='Attachments' />
+          {state.addenda
+            ? (<TabLink {...props} tab='Addenda' />)
+            : null}
         </Nav>
       </div>
       {activeTab}
