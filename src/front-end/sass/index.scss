@@ -304,6 +304,10 @@ a,
     opacity: $btn-disabled-opacity;
     cursor: default;
   }
+
+  &.nav-link:focus {
+    outline: none;
+  }
 }
 
 .blockquote {

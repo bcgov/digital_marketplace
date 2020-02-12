@@ -1,7 +1,7 @@
 import * as immutable from 'immutable';
 import { isEmpty } from 'lodash';
 import moment from 'moment';
-import { compareDates, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
+import { compareDates, formatAmount, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
 import { adt, ADT, Id } from 'shared/lib/types';
 
 export type ErrorTypeFrom<T> = {
@@ -154,15 +154,15 @@ export function validateStringInArray(value: string, availableValues: immutable.
   }
 }
 
-export function validateNumber(raw: string | number, min?: number, max?: number, name = 'number', article = 'a'): Validation<number> {
+export function validateNumber(raw: string | number, min?: number, max?: number, name = 'number', article = 'a', format = true): Validation<number> {
   const parsed = parseInt(`${raw}`, 10);
   if (isNaN(parsed)) { return invalid([`Please enter a valid ${name}.`]); }
   const errors: string[] = [];
   if (min !== undefined && parsed < min) {
-    errors.push(`Please enter ${article} ${name} greater than or equal to ${min}.`);
+    errors.push(`Please enter ${article} ${name} greater than or equal to ${format ? formatAmount(min) : min}.`);
   }
   if (max !== undefined && parsed > max) {
-    errors.push(`Please enter ${article} ${name} less than or equal to ${max}.`);
+    errors.push(`Please enter ${article} ${name} less than or equal to ${format ? formatAmount(max) : max}.`);
   }
   if (errors.length) {
     return invalid(errors);

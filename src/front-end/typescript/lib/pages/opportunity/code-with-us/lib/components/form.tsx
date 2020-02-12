@@ -10,9 +10,10 @@ import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { flatten } from 'lodash';
 import React from 'react';
-import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+import { Col, Nav, NavItem, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
 import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
 import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
@@ -122,7 +123,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
     reward: immutable(await NumberField.init({
       errors: [],
       validate: v => {
-        if (v === null) { return valid(null); }
+        if (v === null) { return invalid(['Please enter a reward.']); }
         return opportunityValidation.validateReward(v);
       },
       child: {
@@ -291,24 +292,44 @@ function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
 
 type Errors = CreateValidationErrors;
 
-export function isValid(state: Immutable<State>): boolean {
+export function isOverviewTabValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.title)                      &&
     FormField.isValid(state.teaser)                          &&
     FormField.isValid(state.remoteOk)                        &&
     (!state.remoteOk || FormField.isValid(state.remoteDesc)) &&
     FormField.isValid(state.location)                        &&
     FormField.isValid(state.reward)                          &&
-    FormField.isValid(state.skills)                          &&
-    FormField.isValid(state.description)                     &&
-    FormField.isValid(state.proposalDeadline)                &&
-    FormField.isValid(state.assignmentDate)                  &&
-    FormField.isValid(state.startDate)                       &&
-    FormField.isValid(state.completionDate)                  &&
-    FormField.isValid(state.submissionInfo)                  &&
-    FormField.isValid(state.acceptanceCriteria)              &&
-    FormField.isValid(state.evaluationCriteria)              &&
-    Attachments.isValid(state.attachments)                   &&
-    (!state.addenda || Addenda.isValid(state.addenda));
+    FormField.isValid(state.skills);
+}
+
+export function isDescriptionTabValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.description);
+}
+
+export function isDetailsTabValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.proposalDeadline) &&
+    FormField.isValid(state.assignmentDate)        &&
+    FormField.isValid(state.startDate)             &&
+    FormField.isValid(state.completionDate)        &&
+    FormField.isValid(state.submissionInfo)        &&
+    FormField.isValid(state.acceptanceCriteria)    &&
+    FormField.isValid(state.evaluationCriteria);
+}
+
+export function isAttachmentsTabValid(state: Immutable<State>): boolean {
+  return Attachments.isValid(state.attachments);
+}
+
+export function isAddendaTabValid(state: Immutable<State>): boolean {
+  return (!state.addenda || Addenda.isValid(state.addenda));
+}
+
+export function isValid(state: Immutable<State>): boolean {
+  return isOverviewTabValid(state) &&
+    isDescriptionTabValid(state)   &&
+    isDetailsTabValid(state)       &&
+    isAttachmentsTabValid(state)   &&
+    isAddendaTabValid(state);
 }
 
 export type Values = Omit<CreateRequestBody, 'attachments' | 'status' | 'remoteOk'>;
@@ -825,11 +846,27 @@ function isActiveTab(state: State, tab: TabId): boolean {
 }
 
 // @duplicated-tab-helper-functions
-const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab }) => {
+const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab, disabled }) => {
   const isActive = isActiveTab(state, tab);
+  const isValid = () => {
+    switch (tab) {
+      case 'Overview':    return isOverviewTabValid(state);
+      case 'Description': return isDescriptionTabValid(state);
+      case 'Details':     return isDetailsTabValid(state);
+      case 'Attachments': return isAttachmentsTabValid(state);
+      case 'Addenda':     return isAddendaTabValid(state);
+    }
+  };
   return (
     <NavItem>
-      <NavLink active={isActive} className={`text-nowrap ${isActive ? '' : 'text-primary'}`} onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>{tab}</NavLink>
+      <Link
+        nav
+        symbol_={disabled || isValid() ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
+        symbolClassName='text-secondary'
+        className={`text-nowrap ${isActive ? 'active text-body' : 'text-primary'}`}
+        onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>
+        {tab}
+      </Link>
     </NavItem>
   );
 };
