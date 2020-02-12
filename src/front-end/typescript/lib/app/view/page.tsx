@@ -49,12 +49,13 @@ interface ViewAlertsProps<PageMsg> {
 
 function ViewAlerts<PageMsg>({ alerts, dispatchPage }: ViewAlertsProps<PageMsg>) {
   const { info, warnings, errors } = alerts;
+  //Show highest priority alerts first.
   return (
     <Row>
       <Col xs='12'>
-        <ViewAlert messages={info} dispatchPage={dispatchPage} color='primary' />
-        <ViewAlert messages={warnings} dispatchPage={dispatchPage} color='warning' />
         <ViewAlert messages={errors} dispatchPage={dispatchPage} color='danger' />
+        <ViewAlert messages={warnings} dispatchPage={dispatchPage} color='warning' />
+        <ViewAlert messages={info} dispatchPage={dispatchPage} color='primary' />
       </Col>
     </Row>
   );

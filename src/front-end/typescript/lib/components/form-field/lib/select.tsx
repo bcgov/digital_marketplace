@@ -75,6 +75,7 @@ export const view: View<Props> = props => {
     isDisabled: disabled,
     className: `${className} react-select-container`,
     classNamePrefix: 'react-select',
+    menuPlacement: 'auto',
     styles: {
       control(styles) {
         return {
