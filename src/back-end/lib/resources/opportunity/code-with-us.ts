@@ -440,6 +440,23 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Published)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
+            // Perform validation on draft to ensure it's ready for publishing
+            if (!allValid([
+              opportunityValidation.validateTitle(validatedCWUOpportunity.value.title),
+              opportunityValidation.validateTeaser(validatedCWUOpportunity.value.teaser),
+              opportunityValidation.validateRemoteOk(validatedCWUOpportunity.value.remoteOk),
+              opportunityValidation.validateRemoteDesc(validatedCWUOpportunity.value.remoteDesc),
+              opportunityValidation.validateLocation(validatedCWUOpportunity.value.location),
+              opportunityValidation.validateReward(validatedCWUOpportunity.value.reward),
+              opportunityValidation.validateSkills(validatedCWUOpportunity.value.skills),
+              opportunityValidation.validateDescription(validatedCWUOpportunity.value.description),
+              opportunityValidation.validateSubmissionInfo(validatedCWUOpportunity.value.submissionInfo),
+              opportunityValidation.validateAcceptanceCriteria(validatedCWUOpportunity.value.acceptanceCriteria),
+              opportunityValidation.validateEvaluationCriteria(validatedCWUOpportunity.value.evaluationCriteria)
+            ])) {
+              return invalid(adt('publish', ['Your opportunity could not be published because it is incomplete.  Please edit the form below, save your changes and try publishing again.']));
+            }
+
             const validatedPublishNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedPublishNote)) {
               return invalid({ opportunity: adt('publish' as const, validatedPublishNote.value) });
