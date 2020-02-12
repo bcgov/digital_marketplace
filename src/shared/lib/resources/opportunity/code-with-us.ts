@@ -44,6 +44,7 @@ export interface CWUOpportunity {
 
   createdBy?: User;
   updatedBy?: User;
+
   // TODO
   successfulProponent?: true;
 
@@ -66,6 +67,13 @@ export interface CWUOpportunity {
   attachments: FileRecord[];
   addenda: Addendum[];
   statusHistory?: CWUOpportunityStatusRecord[];
+
+  // TODO
+  reporting?: {
+    numProposals: number;
+    numWatchers: number;
+    numViews: number;
+  };
 }
 
 export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {

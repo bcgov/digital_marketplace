@@ -191,6 +191,37 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+const Reporting: ComponentView<State, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  const reporting = opportunity.reporting;
+  //TODO return null if reporting is undefined
+  if (opportunity.status === CWUOpportunityStatus.Draft) { return null; }
+  const reportCards: ReportCard[] = [
+    {
+      icon: 'binoculars',
+      name: 'Total Views',
+      value: formatAmount(reporting?.numViews || 0)
+    },
+    {
+      icon: 'eye',
+      name: 'Watching',
+      value: formatAmount(reporting?.numWatchers || 0)
+    },
+    {
+      icon: 'comment-dollar',
+      name: 'Proposals',
+      value: formatAmount(reporting?.numProposals || 0)
+    }
+  ];
+  return (
+    <Row className='mt-5'>
+      <Col xs='12'>
+        <ReportCardList reportCards={reportCards} />
+      </Col>
+    </Row>
+  );
+};
+
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   const opportunity = state.opportunity;
@@ -199,35 +230,10 @@ const view: ComponentView<State, Msg> = props => {
   const isPublishLoading = state.publishLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
   const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
-  const reportCards: ReportCard[] = [
-    {
-      icon: 'binoculars',
-      name: 'Total Views',
-      value: formatAmount(0) //TODO
-    },
-    {
-      icon: 'eye',
-      name: 'Watching',
-      value: formatAmount(0) //TODO
-    },
-    {
-      icon: 'comment-dollar',
-      name: 'Proposals',
-      value: formatAmount(0) //TODO
-    }
-  ];
   return (
     <div>
       <EditTabHeader opportunity={opportunity} />
-      {opportunity.status === CWUOpportunityStatus.Draft
-        ? null
-        : (
-            <Row className='mt-5'>
-              <Col xs='12'>
-                <ReportCardList reportCards={reportCards} />
-              </Col>
-            </Row>
-          )}
+      <Reporting {...props} />
       <Row className='mt-5'>
         <Col xs='12'>
           <Form.view
@@ -247,7 +253,7 @@ export const component: Tab.Component<State, Msg> = {
   getAlerts(state) {
     return {
       warnings: state.opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(state.form)
-        ? [{ text: 'Please complete the form below in order to publish this opportunity.' }]
+        ? [{ text: 'Please edit, complete and save the form below in order to publish this opportunity.' }]
         : [],
       info: state.infoAlerts.map((text, i) => ({
         text,
