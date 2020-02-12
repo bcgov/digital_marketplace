@@ -7,7 +7,7 @@ import Knex from 'knex';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, CWUOpportunityStatusRecord, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, CWUProposalStatusRecord, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
@@ -874,6 +874,15 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .select('id')).map(row => row.id);
   }
 
+  // If admin/owner, add on list of status histories
+  if (result && session.user && (session.user.type === UserType.Admin || result.createdBy === session.user.id)) {
+    const rawStatusArray = await connection<RawCWUOpportunityStatusRecord>('cwuOpportunityStatuses')
+      .where({ opportunity: result.id })
+      .orderBy('createdAt', 'desc');
+
+    result.statusHistory = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(connection, session, raw)));
+  }
+
   return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);
 });
 
@@ -1030,18 +1039,27 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Au
   return valid(dbResult.value);
 });
 
-interface CWUOpportunityStatusRecord {
-  id: Id;
-  opportunity: Id;
-  createdAt: Date;
+interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityStatusRecord, 'createdBy'> {
   createdBy: Id;
-  status: CWUOpportunityStatus;
-  note: string;
+}
+
+async function rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(connection: Connection, session: Session, raw: RawCWUOpportunityStatusRecord): Promise<CWUOpportunityStatusRecord> {
+  const { createdBy: createdById } = raw;
+  const createdBy = getValidValue(await readOneUser(connection, createdById), undefined);
+
+  if (!createdBy) {
+    throw new Error('unable to process opportunity status record');
+  }
+
+  return {
+    ...raw,
+    createdBy
+  };
 }
 
 export const updateCWUOpportunityStatus = tryDb<[Id, CWUOpportunityStatus, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, status, note, session) => {
   const now = new Date();
-  const [result] = await connection<CWUOpportunityStatusRecord>('cwuOpportunityStatuses')
+  const [result] = await connection<RawCWUOpportunityStatusRecord & { opportunity: Id }>('cwuOpportunityStatuses')
     .insert({
       id: generateUuid(),
       opportunity: id,
