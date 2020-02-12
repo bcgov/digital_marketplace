@@ -258,7 +258,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
       </FileLink>
       <div className='ml-auto d-flex align-items-center'>
         <Spinner
-          size='xs'
+          size='sm'
           color='secondary'
           className={`o-50 ${isLoading ? '' : 'd-none'}`} />
         <Link newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>

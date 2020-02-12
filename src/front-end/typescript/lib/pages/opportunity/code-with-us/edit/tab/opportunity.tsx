@@ -1,6 +1,6 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
@@ -191,6 +191,37 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+const Reporting: ComponentView<State, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  const reporting = opportunity.reporting;
+  //TODO return null if reporting is undefined
+  if (opportunity.status === CWUOpportunityStatus.Draft) { return null; }
+  const reportCards: ReportCard[] = [
+    {
+      icon: 'binoculars',
+      name: 'Total Views',
+      value: formatAmount(reporting?.numViews || 0)
+    },
+    {
+      icon: 'eye',
+      name: 'Watching',
+      value: formatAmount(reporting?.numWatchers || 0)
+    },
+    {
+      icon: 'comment-dollar',
+      name: 'Proposals',
+      value: formatAmount(reporting?.numProposals || 0)
+    }
+  ];
+  return (
+    <Row className='mt-5'>
+      <Col xs='12'>
+        <ReportCardList reportCards={reportCards} />
+      </Col>
+    </Row>
+  );
+};
+
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   const opportunity = state.opportunity;
@@ -199,35 +230,10 @@ const view: ComponentView<State, Msg> = props => {
   const isPublishLoading = state.publishLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
   const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
-  const reportCards: ReportCard[] = [
-    {
-      icon: 'binoculars',
-      name: 'Total Views',
-      value: formatAmount(0) //TODO
-    },
-    {
-      icon: 'eye',
-      name: 'Watching',
-      value: formatAmount(0) //TODO
-    },
-    {
-      icon: 'comment-dollar',
-      name: 'Proposals',
-      value: formatAmount(0) //TODO
-    }
-  ];
   return (
     <div>
       <EditTabHeader opportunity={opportunity} />
-      {opportunity.status === CWUOpportunityStatus.Draft
-        ? null
-        : (
-            <Row className='mt-5'>
-              <Col xs='12'>
-                <ReportCardList reportCards={reportCards} />
-              </Col>
-            </Row>
-          )}
+      <Reporting {...props} />
       <Row className='mt-5'>
         <Col xs='12'>
           <Form.view
@@ -246,7 +252,9 @@ export const component: Tab.Component<State, Msg> = {
   view,
   getAlerts(state) {
     return {
-      ...emptyPageAlerts(),
+      warnings: state.opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(state.form)
+        ? [{ text: 'Please edit, complete and save the form below in order to publish this opportunity.' }]
+        : [],
       info: state.infoAlerts.map((text, i) => ({
         text,
         dismissMsg: adt('dismissInfoAlert', i)
@@ -264,6 +272,7 @@ export const component: Tab.Component<State, Msg> = {
     const isDeleteLoading = state.deleteLoading > 0;
     const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
     const oppStatus = state.opportunity.status;
+    const isValid = () => Form.isValid(state.form);
     if (state.isEditing) {
       return adt('links', [
         {
@@ -279,7 +288,7 @@ export const component: Tab.Component<State, Msg> = {
               // No validation required, always possible to save a draft.
               return false;
             } else {
-              return !Form.isValid(state.form);
+              return !isValid();
             }
           })(),
           onClick: () => dispatch(adt('saveChanges')),
@@ -316,6 +325,7 @@ export const component: Tab.Component<State, Msg> = {
               links: [
                 {
                   children: 'Publish',
+                  disabled: !isValid(),
                   symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
                   onClick: () => dispatch(adt('updateStatus', 'publish' as const))
                 },
