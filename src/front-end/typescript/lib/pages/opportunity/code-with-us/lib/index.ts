@@ -3,11 +3,11 @@ import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with
 
 export function cwuOpportunityStatusToColor(s: CWUOpportunityStatus): ThemeColor {
   switch (s) {
-    case CWUOpportunityStatus.Draft: return 'primary';
+    case CWUOpportunityStatus.Draft: return 'secondary';
     case CWUOpportunityStatus.Published: return 'success';
     case CWUOpportunityStatus.Evaluation: return 'warning';
     case CWUOpportunityStatus.Awarded: return 'success';
-    case CWUOpportunityStatus.Suspended: return 'primary';
+    case CWUOpportunityStatus.Suspended: return 'secondary';
     case CWUOpportunityStatus.Canceled: return 'danger';
   }
 }
