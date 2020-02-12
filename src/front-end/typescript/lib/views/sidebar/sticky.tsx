@@ -12,7 +12,7 @@ export interface Props {
 
 export const view: View<Props> = ({ children }) => {
   return (
-    <div className='sticky'>
+    <div className='sticky-md'>
       {children}
     </div>
   );

@@ -20,12 +20,12 @@ $container-max-widths: (
 $spacer: 1rem;
 
 $spacers: (
-	n6: ($spacer * -4),
-	n7: ($spacer * -5),
-	n8: ($spacer * -6),
-	6: ($spacer * 4),
-	7: ($spacer * 5),
-	8: ($spacer * 6)
+	n6:     ($spacer * -4),
+	n7:     ($spacer * -5),
+	n8:     ($spacer * -6),
+	6:      ($spacer * 4),
+	7:      ($spacer * 5),
+	8:      ($spacer * 6)
 );
 
 $grid-gutter-width: $spacer * 2;
@@ -33,41 +33,56 @@ $grid-gutter-width: $spacer * 2;
 // Grays.
 $gray-100: #f8f9fa;
 $gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
 $gray-600: #6C757D;
+$gray-700: #495057;
 $gray-800: #343a40;
 $gray-900: #25292F;
 
-// Body color.
-$body-color: $gray-900;
-
 // Colors.
-$blue: #0C99D6;
-$blue-alt: #17A2B8;
-$blue-dark: #003366;
-$blue-dark-alt: #38598A;
+$white:           #ffffff;
+$black:           #000000;
+$blue:            #0C99D6;
+$blue-alt:        #17A2B8;
+$blue-dark:       #003366;
+$blue-dark-alt:   #38598A;
 $blue-dark-alt-2: #0F4C8B;
-$blue-light: #E7EDF3;
-$blue-light-alt: #E9F5FB;
-$white: #ffffff;
-$purple: #52489C;
-$yellow: #FCBA19;
-$red: #DC3545;
-$green: #2E8540;
+$blue-light:      #E7EDF3;
+$blue-light-alt:  #E9F5FB;
+$purple:          #52489C;
+$yellow:          #FCBA19;
+$red:             #DC3545;
+$green:           #2E8540;
 
-$colors: (
-  'blue': $blue,
-  'blue-alt': $blue-alt,
-  'blue-dark': $blue-dark,
-  'blue-dark-alt': $blue-dark-alt,
+$colors:             (
+  'white':           $white,
+  'black':           $black,
+  'blue':            $blue,
+  'blue-alt':        $blue-alt,
+  'blue-dark':       $blue-dark,
+  'blue-dark-alt':   $blue-dark-alt,
   'blue-dark-alt-2': $blue-dark-alt-2,
-  'blue-light': $blue-light,
-  'blue-light-alt': $blue-light-alt,
-  'white': $white,
-  'purple': $purple,
-  'yellow': $yellow,
-  'red': $red,
-  'green': $green
+  'blue-light':      $blue-light,
+  'blue-light-alt':  $blue-light-alt,
+  'purple':          $purple,
+  'yellow':          $yellow,
+  'red':             $red,
+  'green':           $green
 );
+
+// Utility colors.
+$body-color:                        $gray-900;
+$border-color:                      $gray-400;
+$nav-tabs-border-color:             $border-color;
+$nav-tabs-link-hover-border-color:  $gray-200 $gray-200 transparent;
+$nav-tabs-link-active-bg:           $gray-100;
+$nav-tabs-link-active-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
+$component-active-bg:               $blue;
+$link-color:                        $blue;
+$dropdown-link-hover-bg:            $gray-100;
+$dropdown-link-active-bg:           $gray-200;
 
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
@@ -82,43 +97,39 @@ $body:      $body-color;
 $light:     $gray-100;
 $dark:      $gray-800;
 
-$theme-colors: map-merge(
+$theme-colors:   map-merge(
   (
-    'primary': $primary,
+    'primary':   $primary,
     'secondary': $secondary,
-    'info': $info,
-    'warning': $warning,
-    'danger': $danger,
-    'success': $success,
-    'body': $body,
-    'light': $light,
-    'dark': $dark
+    'info':      $info,
+    'warning':   $warning,
+    'danger':    $danger,
+    'success':   $success,
+    'body':      $body,
+    'light':     $light,
+    'dark':      $dark
   ),
   $colors
 );
 
 // Other overrides.
-$component-active-bg: $primary;
-$link-color: $primary;
-
-$dropdown-link-hover-bg: $gray-100;
-$dropdown-link-active-bg: $gray-200;
+$border-width: 1px;
 
 $font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
-$font-weight-bold: 500;
-$font-weight-bolder: 700;
+$font-weight-bold:       500;
+$font-weight-bolder:     700;
 
 $font-size-base: 1rem;
-$h1-font-size: $font-size-base * 2.25;
+$h1-font-size:   $font-size-base * 2.25;
 
-$input-btn-padding-x: 1rem;
+$input-btn-padding-x:    1rem;
 $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
 
 $badge-font-size: 75%;
 
 $border-radius-sm: 0.2rem;
-$border-radius: 0.3em;
+$border-radius:    0.3em;
 $border-radius-lg: 0.5rem;
 
 $enable-validation-icons: false;
@@ -361,9 +372,13 @@ nav.navbar .nav-link:hover {
   text-decoration: underline;
 }
 
-.nav-tabs .nav-item .active {
-  cursor: default;
-  pointer-events: none;
+.nav-tabs .nav-item {
+  margin-bottom: 0;
+
+  .active {
+    cursor: default;
+    pointer-events: none;
+  }
 }
 
 .card-body {
@@ -443,34 +458,6 @@ nav.navbar .nav-link:hover {
   white-space: normal !important;
 }
 
-.vertical-line {
-  position: relative;
-
-  &:after {
-    content: ' ';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    bottom: 0;
-    border-right: $border-width solid $border-color;
-  }
-}
-
-.sidebar {
-
-  @include media-breakpoint-down(sm) {
-    background-color: $white !important;
-  }
-
-  .sticky {
-
-    @include media-breakpoint-up(md) {
-      position: sticky;
-      top: 6rem;
-    }
-  }
-}
-
 .border-bottom-gov {
   border-bottom: 2px solid $warning;
 }
@@ -479,7 +466,43 @@ nav.navbar .nav-link:hover {
   border-top: 2px solid $warning;
 }
 
+@each $breakpoint in map-keys($grid-breakpoints) {
+  $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+  @include media-breakpoint-up($breakpoint) {
+
+    .sticky#{$infix} {
+      position: sticky;
+      top: 6rem;
+      // Use padding and margin instead of top for vertical offset
+      // to preserve background color.
+      //padding-top: 6rem;
+      //margin-top: -6rem;
+      z-index: 2;
+
+      &:after {
+        content: " ";
+        position: absolute;
+        top: -100%;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: inherit;
+        background: inherit;
+      }
+    }
+  }
+}
+
 // Custom components
+
+.sidebar {
+
+  @include media-breakpoint-down(sm) {
+    background-color: $white !important;
+    z-index: 3;
+  }
+}
 
 .react-select-container {
   flex-grow: 1;

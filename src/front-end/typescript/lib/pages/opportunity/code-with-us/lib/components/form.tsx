@@ -889,16 +889,18 @@ export const view: View<Props> = props => {
 
   return (
     <div>
-      <div className='d-flex mb-5' style={{ overflowX: 'auto' }}>
-        <Nav tabs className='flex-grow-1 flex-nowrap'>
-          <TabLink {...props} tab='Overview' />
-          <TabLink {...props} tab='Description' />
-          <TabLink {...props} tab='Details' />
-          <TabLink {...props} tab='Attachments' />
-          {state.addenda
-            ? (<TabLink {...props} tab='Addenda' />)
-            : null}
-        </Nav>
+      <div className='sticky bg-white'>
+        <div className='d-flex mb-5' style={{ overflowX: 'auto' }}>
+          <Nav tabs className='flex-grow-1 flex-nowrap bg-white'>
+            <TabLink {...props} tab='Overview' />
+            <TabLink {...props} tab='Description' />
+            <TabLink {...props} tab='Details' />
+            <TabLink {...props} tab='Attachments' />
+            {state.addenda
+              ? (<TabLink {...props} tab='Addenda' />)
+              : null}
+          </Nav>
+        </div>
       </div>
       {activeTab}
     </div>

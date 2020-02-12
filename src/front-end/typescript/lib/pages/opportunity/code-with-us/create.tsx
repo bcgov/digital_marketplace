@@ -1,4 +1,4 @@
-import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -15,6 +15,7 @@ interface ValidState {
   publishLoading: number;
   saveDraftLoading: number;
   showErrorAlert: 'publish' | 'save' | null;
+  showPublishModal: boolean;
   form: Immutable<Form.State>;
 }
 
@@ -22,6 +23,7 @@ export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg
   = ADT<'dismissErrorAlert'>
+  | ADT<'hidePublishModal'>
   | ADT<'publish'>
   | ADT<'saveDraft'>
   | ADT<'form', Form.Msg>;
@@ -37,6 +39,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       publishLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
+      showPublishModal: false,
       form: immutable(await Form.init({}))
     }));
   },
@@ -55,9 +58,18 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'dismissErrorAlert':
       return [state.set('showErrorAlert', null)];
+    case 'hidePublishModal':
+      return [state.set('showPublishModal', false)];
     case 'publish':
     case 'saveDraft':
       const isPublish = msg.tag === 'publish';
+      if (isPublish) {
+        if (!state.showPublishModal) {
+          return [state.set('showPublishModal', true)];
+        } else {
+          state = state.set('showPublishModal', false);
+        }
+      }
       return [
         isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
@@ -165,6 +177,30 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       }]
       : []
   })),
+  getModal: getModalValid<ValidState, Msg>(state => {
+    if (state.showPublishModal) {
+      return {
+        title: 'Publish Code With Us Opportunity?',
+        body: 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
+        onCloseMsg: adt('hidePublishModal'),
+        actions: [
+          {
+            text: 'Publish Opportunity',
+            icon: 'bullhorn',
+            color: 'primary',
+            msg: adt('publish'),
+            button: true
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hidePublishModal')
+          }
+        ]
+      };
+    }
+    return null;
+  }),
   getMetadata() {
     return makePageMetadata('Create Opportunity');
   }
