@@ -49,7 +49,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             button: true,
             color: 'primary' as const,
             symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
-            dest: routeDest(adt('opportunityCwuCreate', null))
+            dest: routeDest(adt('opportunityCWUCreate', null))
           }
         ]
       }]

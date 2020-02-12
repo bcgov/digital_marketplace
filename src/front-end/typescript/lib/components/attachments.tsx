@@ -84,7 +84,7 @@ interface FileFieldProps {
   defaultName: string;
   value: string;
   disabled?: boolean;
-  url?: string;
+  url: string;
   errors?: string[];
   onChange?(value: string): void;
   onRemove(): void;
@@ -101,11 +101,9 @@ const FileField: View<FileFieldProps> = props => {
         disabled={disabled}
         className='form-control'
         onChange={onChange && (e => onChange(e.currentTarget.value))} />
-      {url
-        ? (<Link color='info' download dest={externalDest(url)} className='ml-3'>
-            <Icon name='download' />
-          </Link>)
-        : null}
+      <Link color='info' download dest={externalDest(url)} className='ml-3'>
+        <Icon name='download' />
+      </Link>
       {disabled
         ? null
         : (<Icon name='trash' color='info' hover onClick={onRemove} className='ml-3' />)}

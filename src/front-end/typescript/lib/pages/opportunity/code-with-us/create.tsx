@@ -2,7 +2,7 @@ import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartL
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as Form from 'front-end/lib/pages/opportunity/lib/components/code-with-us-form';
+import * as Form from 'front-end/lib/pages/opportunity/code-with-us/lib/components/form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -24,7 +24,7 @@ type InnerMsg
   = ADT<'dismissErrorAlert'>
   | ADT<'publish'>
   | ADT<'saveDraft'>
-  | ADT<'opportunityForm', Form.Msg>;
+  | ADT<'form', Form.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -37,7 +37,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       publishLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
-      form: immutable(await Form.init(null))
+      form: immutable(await Form.init({}))
     }));
   },
   async fail({ dispatch }) {
@@ -62,10 +62,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
           state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
-          const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published : CWUOpportunityStatus.Draft));
+          const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published as const : CWUOpportunityStatus.Draft as const));
           switch (result.tag) {
             case 'valid':
-              dispatch(newRoute(adt('opportunityCwuEdit' as const, {
+              dispatch(newRoute(adt('opportunityCWUEdit' as const, {
                 opportunityId: result.value[1].id,
                 tab: isPublish ? 'summary' as const : 'opportunity' as const
               })));
@@ -78,13 +78,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         }
       ];
 
-    case 'opportunityForm':
+    case 'form':
       return updateComponentChild({
         state,
         childStatePath: ['form'],
         childUpdate: Form.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('opportunityForm', value)
+        mapChildMsg: (value) => adt('form', value)
       });
 
     default:
@@ -100,7 +100,7 @@ const view: ComponentView<State,  Msg> = viewValid(({ state, dispatch }) => {
     <div className='d-flex flex-column h-100 justify-content-between'>
       <Form.view
         state={state.form}
-        dispatch={mapComponentDispatch(dispatch, value => adt('opportunityForm' as const, value))}
+        dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
         disabled={isDisabled}
       />
     </div>
@@ -113,7 +113,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   view,
   sidebar: {
     size: 'large',
-    color: 'light-blue',
+    color: 'blue-light',
     view: makeInstructionalSidebar<State,  Msg>({
       getTitle: () => 'Create a Code With Us Opportunity',
       getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',

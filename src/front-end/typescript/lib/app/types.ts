@@ -4,16 +4,16 @@ import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 // Note(Jesse): @add_new_page_location
-import * as PageOpportunityCwuCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
-import * as PageOpportunityCwuEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
-import * as PageOpportunityCwuView from 'front-end/lib/pages/opportunity/code-with-us/view';
+import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
+import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
+import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
-import * as PageProposalCwuCreate from 'front-end/lib/pages/proposal/code-with-us/create';
-import * as PageProposalCwuEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
-import * as PageProposalCwuView from 'front-end/lib/pages/proposal/code-with-us/view';
+import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
+import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -40,12 +40,12 @@ export type Route
   | ADT<'orgCreate',             PageOrgCreate.RouteParams>
   | ADT<'orgList',               PageOrgList.RouteParams>
   | ADT<'orgEdit',               PageOrgEdit.RouteParams>
-  | ADT<'opportunityCwuCreate',  PageOpportunityCwuCreate.RouteParams>
-  | ADT<'opportunityCwuEdit',    PageOpportunityCwuEdit.RouteParams>
-  | ADT<'opportunityCwuView',    PageOpportunityCwuView.RouteParams>
-  | ADT<'proposalCwuCreate',     PageProposalCwuCreate.RouteParams>
-  | ADT<'proposalCwuEdit',       PageProposalCwuEdit.RouteParams>
-  | ADT<'proposalCwuView',       PageProposalCwuView.RouteParams>
+  | ADT<'opportunityCWUCreate',  PageOpportunityCWUCreate.RouteParams>
+  | ADT<'opportunityCWUEdit',    PageOpportunityCWUEdit.RouteParams>
+  | ADT<'opportunityCWUView',    PageOpportunityCWUView.RouteParams>
+  | ADT<'proposalCWUCreate',     PageProposalCWUCreate.RouteParams>
+  | ADT<'proposalCWUEdit',       PageProposalCWUEdit.RouteParams>
+  | ADT<'proposalCWUView',       PageProposalCWUView.RouteParams>
   | ADT<'proposalList',          PageProposalList.RouteParams>
   ;
 
@@ -89,12 +89,12 @@ export interface State {
     orgCreate?: Immutable<PageOrgCreate.State>;
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
-    opportunityCwuCreate?: Immutable<PageOpportunityCwuCreate.State>;
-    opportunityCwuEdit?: Immutable<PageOpportunityCwuEdit.State>;
-    opportunityCwuView?: Immutable<PageOpportunityCwuView.State>;
-    proposalCwuCreate?: Immutable<PageProposalCwuCreate.State>;
-    proposalCwuEdit?: Immutable<PageProposalCwuEdit.State>;
-    proposalCwuView?: Immutable<PageProposalCwuView.State>;
+    opportunityCWUCreate?: Immutable<PageOpportunityCWUCreate.State>;
+    opportunityCWUEdit?: Immutable<PageOpportunityCWUEdit.State>;
+    opportunityCWUView?: Immutable<PageOpportunityCWUView.State>;
+    proposalCWUCreate?: Immutable<PageProposalCWUCreate.State>;
+    proposalCWUEdit?: Immutable<PageProposalCWUEdit.State>;
+    proposalCWUView?: Immutable<PageProposalCWUView.State>;
     proposalList?: Immutable<PageProposalList.State>;
   };
 }
@@ -117,12 +117,12 @@ type InnerMsg
   | ADT<'pageOrgCreate',            PageOrgCreate.Msg>
   | ADT<'pageOrgList',              PageOrgList.Msg>
   | ADT<'pageOrgEdit',              PageOrgEdit.Msg>
-  | ADT<'pageOpportunityCwuCreate', PageOpportunityCwuCreate.Msg>
-  | ADT<'pageOpportunityCwuEdit',   PageOpportunityCwuEdit.Msg>
-  | ADT<'pageOpportunityCwuView',   PageOpportunityCwuView.Msg>
-  | ADT<'pageProposalCwuCreate',    PageProposalCwuCreate.Msg>
-  | ADT<'pageProposalCwuEdit',      PageProposalCwuEdit.Msg>
-  | ADT<'pageProposalCwuView',      PageProposalCwuView.Msg>
+  | ADT<'pageOpportunityCWUCreate', PageOpportunityCWUCreate.Msg>
+  | ADT<'pageOpportunityCWUEdit',   PageOpportunityCWUEdit.Msg>
+  | ADT<'pageOpportunityCWUView',   PageOpportunityCWUView.Msg>
+  | ADT<'pageProposalCWUCreate',    PageProposalCWUCreate.Msg>
+  | ADT<'pageProposalCWUEdit',      PageProposalCWUEdit.Msg>
+  | ADT<'pageProposalCWUView',      PageProposalCWUView.Msg>
   | ADT<'pageProposalList',         PageProposalList.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;

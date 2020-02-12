@@ -1,6 +1,7 @@
 import { CONTACT_EMAIL, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import { View } from 'front-end/lib/framework';
 import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { adt } from 'shared/lib/types';
@@ -49,8 +50,11 @@ const Footer: View<{}> = () => {
         <Row>
           <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3'>
             {links.map((link, i) => (
-              <div key={`footer-link-${i}`} className={`mb-3 ${i < links.length - 1 ? 'pr-3 mr-3 border-right border-info-alt' : ''}`}>
+              <div key={`footer-link-${i}`} className='mb-3'>
                 <Link {...link} className='o-75' color='white' button={false} />
+                {i < links.length - 1
+                  ? (<Separator spacing='2' color='blue-dark-alt'>|</Separator>)
+                  : null}
               </div>
             ))}
           </Col>

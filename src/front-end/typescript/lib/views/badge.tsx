@@ -1,11 +1,11 @@
 import { View } from 'front-end/lib/framework';
-import { BootstrapColor } from 'front-end/lib/types';
+import { ThemeColor } from 'front-end/lib/types';
 import React from 'react';
 import * as reactstrap from 'reactstrap';
 
 export interface Props {
   text: string;
-  color: BootstrapColor;
+  color: ThemeColor;
   className?: string;
   pill?: boolean;
 }

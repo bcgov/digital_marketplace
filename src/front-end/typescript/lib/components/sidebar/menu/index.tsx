@@ -10,6 +10,7 @@ export interface SidebarLink {
   icon: AvailableIcons;
   active: boolean;
   dest?: Dest;
+  newTab?: boolean;
   onClick?(): void;
 }
 
@@ -41,12 +42,13 @@ interface SidebarLinkProps extends SidebarLink {
 }
 
 const SidebarLink: View<SidebarLinkProps> = props => {
-  const { caret, className = '', dest, onClick, icon, text, active } = props;
+  const { caret, className = '', dest, onClick, newTab, icon, text, active } = props;
   return (
     <Link
       button
       dest={dest}
       onClick={onClick}
+      newTab={newTab}
       symbol_={leftPlacement(iconLinkSymbol(icon))}
       symbolClassName={`text-${active ? 'primary' : 'info'}`}
       color={active ? 'info' : 'light'}

@@ -4,6 +4,10 @@ import { User } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
+export { Addendum } from 'shared/lib/resources/addendum';
+
+export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
+
 export enum CWUOpportunityStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
@@ -40,6 +44,8 @@ export interface CWUOpportunity {
 
   createdBy?: User;
   updatedBy?: User;
+  // TODO
+  successfulProponent?: true;
 
   title: string;
   teaser: string;
@@ -60,6 +66,29 @@ export interface CWUOpportunity {
   attachments: FileRecord[];
   addenda: Addendum[];
   statusHistory?: CWUOpportunityStatusRecord[];
+}
+
+export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Suspended:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
@@ -112,7 +141,6 @@ type UpdateADTErrors
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
-  proposal?: string[];
 }
 
 export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'attachments' | 'skills'> {

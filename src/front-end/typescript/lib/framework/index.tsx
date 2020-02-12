@@ -1,6 +1,6 @@
 import { NODE_ENV } from 'front-end/config';
 import * as Router from 'front-end/lib/framework/router';
-import { BootstrapColor } from 'front-end/lib/types';
+import { ThemeColor } from 'front-end/lib/types';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import * as Link from 'front-end/lib/views/link';
 import * as Immutable from 'immutable';
@@ -252,7 +252,7 @@ export function noPageModal<Msg>() {
 
 export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   size: 'medium' | 'large';
-  color: BootstrapColor;
+  color: ThemeColor;
   view: View<Props>;
   // isEmpty tells the framework whether the sidebar is empty and should
   // adjust its padding for mobile viewports accordingly.
@@ -266,6 +266,7 @@ export interface PageContextualDropdownLinkGroup {
 
 export interface PageContextualDropdown {
   text: string;
+  loading?: boolean;
   linkGroups: PageContextualDropdownLinkGroup[];
 }
 

@@ -139,11 +139,11 @@ interface MakeCrudApiParams<ResourceTypes extends BaseResourceTypes> {
 export function makeCrudApi<ResourceTypes extends BaseResourceTypes>(params: MakeCrudApiParams<ResourceTypes>): CrudApi<ResourceTypes> {
   const { routeNamespace } = params;
   return {
-    create: params.create && makeCreate({ routeNamespace }),
-    readMany: params.readMany && makeReadMany({ routeNamespace }),
-    readOne: params.readOne && makeReadOne({ routeNamespace }),
-    update: params.update && makeUpdate({ routeNamespace }),
-    delete: params.delete && makeDelete({ routeNamespace })
+    create: params.create && makeCreate({ ...params.create, routeNamespace }),
+    readMany: params.readMany && makeReadMany({ ...params.readMany, routeNamespace }),
+    readOne: params.readOne && makeReadOne({ ...params.readOne, routeNamespace }),
+    update: params.update && makeUpdate({ ...params.update, routeNamespace }),
+    delete: params.delete && makeDelete({ ...params.delete, routeNamespace })
   } as CrudApi<ResourceTypes>;
 }
 
