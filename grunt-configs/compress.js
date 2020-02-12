@@ -14,8 +14,9 @@ const files = ext => [{
   expand: true,
   filter: "isFile",
   src: [
-    `${gruntConfig.dir.build}/**/*`,
-    ...compressions.map(([_, ext]) => `!${gruntConfig.dir.build}/**/*.${ext}`)
+    `${gruntConfig.dir.build}/**/*`, //compress all build assets
+    `!${gruntConfig.dir.build}/**/*.woff2`, //woff2 fonts are already well-compressed
+    ...compressions.map(([_, ext]) => `!${gruntConfig.dir.build}/**/*.${ext}`) //don't recompress files
   ],
   dest: gruntConfig.dir.build,
   rename(_dest, src) {
