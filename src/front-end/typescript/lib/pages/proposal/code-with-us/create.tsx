@@ -3,8 +3,8 @@ import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
-import * as ShortText from 'front-end/lib/components/form-field/long-text';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -95,7 +95,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'legalName',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-legalName'
       }
     })),
@@ -104,7 +105,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'email@thing.ding',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-email'
       }
     })),
@@ -113,7 +115,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: '9979989999',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-phone'
       }
     })),
@@ -122,7 +125,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'addresss',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-street1'
       }
     })),
@@ -131,7 +135,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'addresss21',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-street2'
       }
     })),
@@ -140,7 +145,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'city',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-city'
       }
     })),
@@ -149,7 +155,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'region',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-region'
       }
     })),
@@ -158,7 +165,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'mailCode',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-mailCode'
       }
     })),
@@ -167,7 +175,8 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'country',
+        type: 'text',
+        value: '',
         id: 'opportunity-individual-country'
       }
     })),
@@ -176,7 +185,7 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'proposalText',
+        value: '',
         id: 'proposal-proposalText'
       }
     })),
@@ -185,7 +194,7 @@ async function defaultState(opportunityId: Id) {
       errors: [],
       validate: opportunityValidation.validateTitle,
       child: {
-        value: 'additional comments',
+        value: '',
         id: 'proposal-additional-comments'
       }
     })),
@@ -474,6 +483,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          placeholder='Vendor Name'
           required
           extraChildProps={{}}
           label='Name'
@@ -484,6 +494,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          placeholder='vendor@email.com'
           required
           extraChildProps={{}}
           label='Email'
@@ -494,6 +505,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          placeholder='Phone Number'
           extraChildProps={{}}
           label='Phone'
           state={state.phone}
@@ -503,6 +515,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          placeholder='Street Address'
           required
           extraChildProps={{}}
           label='Address'
@@ -513,6 +526,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          placeholder='Street Address'
           extraChildProps={{}}
           label='Address'
           state={state.street2}
@@ -522,6 +536,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col sm='8' xs='12'>
         <ShortText.view
+          placeholder='City'
           required
           extraChildProps={{}}
           label='City'
@@ -532,6 +547,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col sm='4' xs='12'>
         <ShortText.view
+          placeholder='Province / State'
           required
           extraChildProps={{}}
           label='Province / State'
@@ -542,6 +558,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col sm='5' xs='12'>
         <ShortText.view
+          placeholder='Postal / ZIP Code'
           required
           extraChildProps={{}}
           label='Postal / ZIP Code'
@@ -552,6 +569,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col sm='7' xs='12'>
         <ShortText.view
+          placeholder='Country'
           required
           extraChildProps={{}}
           label='Country'
