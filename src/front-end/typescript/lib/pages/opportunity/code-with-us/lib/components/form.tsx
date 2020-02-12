@@ -644,17 +644,6 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
       </Col>
 
-      <Col xs='12'>
-        <SelectMulti.view
-          extraChildProps={{}}
-          label='Required Skills'
-          placeholder='Required Skills'
-          required
-          disabled={disabled}
-          state={state.skills}
-          dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
-      </Col>
-
       <Col md='12'>
         <RemoteOkRadioGroup.view
           extraChildProps={{ inline: true }}
@@ -698,6 +687,17 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           disabled={disabled}
           state={state.reward}
           dispatch={mapComponentDispatch(dispatch, value => adt('reward' as const, value))} />
+      </Col>
+
+      <Col xs='12'>
+        <SelectMulti.view
+          extraChildProps={{}}
+          label='Required Skills'
+          placeholder='Required Skills'
+          required
+          disabled={disabled}
+          state={state.skills}
+          dispatch={mapComponentDispatch(dispatch, value => adt('skills' as const, value))} />
       </Col>
 
     </Row>

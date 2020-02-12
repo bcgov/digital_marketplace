@@ -52,7 +52,7 @@ module.exports = function (grunt) {
   ]);
   grunt.registerTask("development-build", [
     "common",
-    "compress"
+    "compress:gzip"
   ]);
   grunt.registerTask("development-watch", [
     "development-build",
@@ -63,7 +63,8 @@ module.exports = function (grunt) {
     "postcss:min",
     "terser:production",
     "htmlmin:production",
-    "compress"
+    "compress:gzip",
+    "compress:brotli"
   ]);
   grunt.registerTask("build", [ `${env}-build` ]);
   grunt.registerTask("default", [ "development-watch" ]);
