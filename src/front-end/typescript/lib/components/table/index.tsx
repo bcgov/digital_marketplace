@@ -181,7 +181,7 @@ const TBody: View<TBodyProps> = ({ id, rows, TDView, borderless }) => {
     );
   });
   return (
-    <tbody style={{ fontSize: '0.875rem' }} className={borderless ? 'table-borderless' : ''}>
+    <tbody className={`font-size-small ${borderless ? 'table-borderless' : ''}`}>
       {children}
     </tbody>
   );

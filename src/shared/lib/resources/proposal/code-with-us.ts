@@ -1,18 +1,27 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
-import { User } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export enum CWUProposalStatus {
   Draft = 'DRAFT',
   Submitted = 'SUBMITTED',
-  Review = 'REVIEW',
+  UnderReview = 'UNDER_REVIEW',
+  Evaluated = 'EVALUATED',
   Awarded = 'AWARDED',
   NotAwarded = 'NOT_AWARDED',
   Disqualified = 'DISQUALIFIED',
   Withdrawn = 'WITHDRAWN'
+}
+
+export interface CWUProposalStatusRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: User;
+  status: CWUProposalStatus;
+  note: string;
 }
 
 export interface CWUProposal {
@@ -28,6 +37,7 @@ export interface CWUProposal {
   score: number;
   status: CWUProposalStatus;
   attachments: FileRecord[];
+  statusHistory?: CWUProposalStatusRecord[];
 }
 
 export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;
@@ -99,16 +109,35 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 
 export type DeleteValidationErrors = BodyWithErrors;
 
-export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStatus): boolean {
+export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
+  const now = new Date();
   switch (from) {
     case CWUProposalStatus.Draft:
-      return to === CWUProposalStatus.Submitted;
+      return to === CWUProposalStatus.Submitted && userType === UserType.Vendor && now < proposalDeadline;
+
     case CWUProposalStatus.Submitted:
-      return [CWUProposalStatus.Withdrawn, CWUProposalStatus.Review].includes(to);
-    case CWUProposalStatus.Review:
-      return [CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to);
+      return (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
+             (to === CWUProposalStatus.UnderReview && userType !== UserType.Vendor && now > proposalDeadline);
+
+    case CWUProposalStatus.UnderReview:
+      return [CWUProposalStatus.Evaluated, CWUProposalStatus.Disqualified].includes(to) &&
+             userType !== UserType.Vendor &&
+             now > proposalDeadline;
+
+    case CWUProposalStatus.Evaluated:
+      return [CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) &&
+             userType !== UserType.Vendor &&
+             now > proposalDeadline;
+
     case CWUProposalStatus.Awarded:
-      return [CWUProposalStatus.Withdrawn].includes(to);
+      return ((to === CWUProposalStatus.Disqualified && userType !== UserType.Vendor) ||
+             (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
+             now > proposalDeadline;
+
+    case CWUProposalStatus.NotAwarded:
+      return [CWUProposalStatus.Awarded, CWUProposalStatus.Disqualified].includes(to) &&
+             userType !== UserType.Vendor &&
+             now > proposalDeadline;
     default:
       return false;
   }

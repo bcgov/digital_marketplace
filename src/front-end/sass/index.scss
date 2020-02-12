@@ -164,6 +164,19 @@ input[type="time"] {
   }
 }
 
+input,
+textarea {
+
+  &:disabled,
+  &.disabled {
+
+    &::placeholder {
+      color: transparent;
+      opacity: 0;
+    }
+  }
+}
+
 textarea {
   resize: none;
 }
@@ -290,6 +303,10 @@ a,
   &.disabled {
     opacity: $btn-disabled-opacity;
     cursor: default;
+  }
+
+  &.nav-link:focus {
+    outline: none;
   }
 }
 

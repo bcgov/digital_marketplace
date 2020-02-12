@@ -7,7 +7,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageComponent, PageGetContextualActions, PageGetMetadata, PageGetModal, PageSidebar, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, Init, mapComponentDispatch, mapPageAlerts, mapPageModalMsg, PageComponent, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageSidebar, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import React from 'react';
 import { adt, ADT } from 'shared/lib/types';
@@ -100,6 +100,23 @@ export function makeGetParentMetadata<
   >(params: MakeGetParentMetadataParams<T, K, ExtraState>): PageGetMetadata<ExtraState & ParentState<T, K>> {
   return state => {
     return makePageMetadata(`${params.idToDefinition(state.tab[0]).title} — ${params.getTitleSuffix(state)}`);
+  };
+}
+
+export function makeGetParentAlerts<
+  T extends TabsRecord<T>,
+  K extends TabId<T>,
+  ExtraState,
+  InnerMsg
+  >(idToDefinition: IdToDefinition<T, K>): PageGetAlerts<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+  return state => {
+    const tabId = state.tab[0];
+    const definition = idToDefinition(tabId);
+    if (!definition.component.getAlerts) { return emptyPageAlerts(); }
+    return mapPageAlerts(
+      definition.component.getAlerts(state.tab[1]),
+      msg => adt('tab' as const, msg)
+    );
   };
 }
 

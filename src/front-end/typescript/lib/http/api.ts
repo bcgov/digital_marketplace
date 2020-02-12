@@ -1,5 +1,7 @@
+import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
-import { invalid, ResponseValidation, valid } from 'shared/lib/http';
+import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
+import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as FileResource from 'shared/lib/resources/file';
 import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
@@ -7,9 +9,10 @@ import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
+import { adt } from 'shared/lib/types';
 import { ClientHttpMethod } from 'shared/lib/types';
 
-export { getValid, getInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
+export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
 const deslash = (s: string) => s.replace(/^\/*/, '').replace(/\/*$/, '');
 const prefix = (a: string) => (b: string) => `/${deslash(a)}/${deslash(b)}`;
@@ -113,15 +116,42 @@ export const proposals = {
   cwu: cwuProposal
 };
 
+//
+// Addenda
+
+interface RawAddendum extends Omit<AddendumResource.Addendum, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
 // CodeWithUs Opportunities
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt'> {
+interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityStatusRecord, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityStatusRecord {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'addenda' | 'statusHistory'> {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
   completionDate: string;
   createdAt: string;
   updatedAt: string;
+  addenda: RawAddendum[];
+  statusHistory?: RawCWUOpportunityStatusRecord[];
 }
 
 function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
@@ -132,7 +162,9 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     startDate: new Date(raw.startDate),
     completionDate: new Date(raw.completionDate),
     createdAt: new Date(raw.createdAt),
-    updatedAt: new Date(raw.updatedAt)
+    updatedAt: new Date(raw.updatedAt),
+    addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
+    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
   };
 }
 
@@ -154,7 +186,7 @@ interface CWUOpportunityResourceTypes {
     invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
   };
   update: {
-    request: null;
+    request: CWUOpportunityResource.UpdateRequestBody;
     rawResponse: RawCWUOpportunity;
     validResponse: CWUOpportunityResource.CWUOpportunity;
     invalidResponse: CWUOpportunityResource.UpdateValidationErrors;
@@ -362,6 +394,26 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
     return valid(validResults);
   }
 }
+
+export const uploadMarkdownImage: RichMarkdownEditor.UploadImage = async file => {
+  const result = await files.create({
+    name: file.name,
+    file,
+    metadata: [adt('any')]
+  });
+  if (isValid(result)) {
+    return valid({
+      name: result.value.name,
+      url: FileResource.fileBlobPath(result.value)
+    });
+  } else {
+    return invalid([
+      'Unable to upload file.'
+    ]);
+  }
+};
+
+// Avatars.
 
 type AvatarResourceTypes
   = Pick<FileResourceTypes, 'create'>

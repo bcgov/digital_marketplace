@@ -3,6 +3,8 @@ import { CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/reso
 import { ArrayValidation, invalid, mapValid, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 
+export { validateAddendumText } from 'shared/lib/validation/addendum';
+
 export function validateCWUOpportunityStatus(raw: string, isOneOf: CWUOpportunityStatus[]): Validation<CWUOpportunityStatus> {
   const parsed = parseCWUOpportunityStatus(raw);
   if (!parsed) { return invalid([`"${raw}" is not a valid CodeWithUs opportunity status.`]); }
@@ -74,10 +76,6 @@ export function validateEvaluationCriteria(raw: string): Validation<string> {
   return validateGenericString(raw, 'Evaluation Criteria', 1, 2000);
 }
 
-export function validateAddendumText(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Addendum', 1, 5000);
-}
-
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Status Note', 1, 1000);
+  return validateGenericString(raw, 'Status Note', 0, 1000);
 }

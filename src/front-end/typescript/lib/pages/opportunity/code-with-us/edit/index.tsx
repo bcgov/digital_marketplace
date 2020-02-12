@@ -1,11 +1,11 @@
-import { getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -69,11 +69,12 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     })),
     view: viewValid(TabbedPage.makeParentView(Tab.idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
+    getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(Tab.idToDefinition)),
     getModal: getModalValid(TabbedPage.makeGetParentModal(Tab.idToDefinition)),
     getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(Tab.idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition: Tab.idToDefinition,
-      getTitleSuffix: state => state.opportunity.title
+      getTitleSuffix: state => state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
     }), makePageMetadata('Edit CodeWithUs Opportunity'))
   };
 }

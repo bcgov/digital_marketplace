@@ -70,7 +70,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
     {
       icon: 'badge-dollar',
       name: 'Value',
-      value: formatAmount(opportunity.reward * 10, '$')
+      value: formatAmount(opportunity.reward, '$')
     },
     {
       icon: 'map-marker',

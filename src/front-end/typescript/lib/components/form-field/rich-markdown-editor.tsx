@@ -13,17 +13,17 @@ import { Validation } from 'shared/lib/validation';
 
 export type Value = string;
 
-type UploadFile = (file: File) => Promise<Validation<{ name: string; url: string }>>;
+export type UploadImage = (file: File) => Promise<Validation<{ name: string; url: string }>>;
 
 interface ChildState extends FormField.ChildStateBase<Value> {
   loading: number;
   selectionStart: number;
   selectionEnd: number;
-  uploadFile: UploadFile;
+  uploadImage: UploadImage;
 }
 
 export interface ChildParams extends FormField.ChildParamsBase<Value> {
-  uploadFile: UploadFile;
+  uploadImage: UploadImage;
 }
 
 type InnerChildMsg
@@ -141,7 +141,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
         startLoading(state),
         async (state, dispatch) => {
           state = stopLoading(state);
-          const uploadResult = await state.uploadFile(msg.value);
+          const uploadResult = await state.uploadImage(msg.value);
           if (uploadResult.tag === 'invalid') { return state; }
           const result = insert(state, {
             text: () => `![${uploadResult.value.name}](${uploadResult.value.url})`
@@ -179,7 +179,7 @@ interface ControlIconProps {
 
 const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '' }) => {
   return (
-    <Link color='secondary' className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
+    <Link color={disabled ? 'secondary' : 'dark'} className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
       <Icon name={name} width={width} height={height} />
       {children ? children : ''}
     </Link>
@@ -258,7 +258,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
       </FileLink>
       <div className='ml-auto d-flex align-items-center'>
         <Spinner
-          size='xs'
+          size='sm'
           color='secondary'
           className={`o-50 ${isLoading ? '' : 'd-none'}`} />
         <Link newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
