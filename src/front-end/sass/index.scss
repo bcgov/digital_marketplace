@@ -372,10 +372,10 @@ nav.navbar .nav-link:hover {
   text-decoration: underline;
 }
 
-.nav-tabs .nav-item {
-  margin-bottom: 0;
+.nav-tabs {
+  overflow: hidden;
 
-  .active {
+  .nav-item .active {
     cursor: default;
     pointer-events: none;
   }

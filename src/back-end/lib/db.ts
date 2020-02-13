@@ -108,13 +108,12 @@ export async function rawUserToUser(connection: Connection, params: RawUser): Pr
   };
 }
 
-export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | null>(async (connection, userType, idpUsername) => {
-  let query = connection<User>('users')
-    .where({ type: userType, idpUsername });
-
-  if (userType === UserType.Government) {
-    query = query.orWhere({ type: UserType.Admin });
-  }
+export const findOneUserByTypeAndUsername = tryDb<[UserType.Vendor | UserType.Government, string], User | null>(async (connection, userType, idpUsername) => {
+  const query = connection<User>('users')
+    .where({ type: userType, idpUsername })
+    // Support querying admin statuses even if the desired user could be a vendor.
+    // This is useful for development purposes.
+    .orWhere({ type: UserType.Admin, idpUsername });
   const result = await query.first();
   return valid(result ? result : null);
 });
