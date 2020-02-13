@@ -861,7 +861,7 @@ const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab, disabled
     <NavItem>
       <Link
         nav
-        symbol_={disabled || isValid() ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
+        symbol_={isValid() ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
         symbolClassName='text-warning'
         className={`text-nowrap ${isActive ? 'active text-body' : 'text-primary'}`}
         onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>
