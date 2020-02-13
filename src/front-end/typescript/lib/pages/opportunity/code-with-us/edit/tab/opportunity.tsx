@@ -283,7 +283,7 @@ export const component: Tab.Component<State, Msg> = {
               default: return 'Save Changes';
             }
           })(),
-          disabled: (() => {
+          disabled: isSaveChangesLoading || (() => {
             if (oppStatus === CWUOpportunityStatus.Draft) {
               // No validation required, always possible to save a draft.
               return false;
