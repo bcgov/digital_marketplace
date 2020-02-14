@@ -1,4 +1,4 @@
-import { getContextualActionsValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -15,6 +15,7 @@ export type State = Validation<Immutable<ValidState>, null>;
 export interface ValidState {
   opportunityId: Id;
   form: Form.State;
+  publishLoading: number;
 }
 
 type InnerMsg
@@ -32,6 +33,7 @@ export type RouteParams = {
 async function defaultState(opportunityId: Id) {
 
   return {
+    publishLoading: 0,
     opportunityId,
     form: await Form.init({opportunityId})
   };
@@ -51,14 +53,19 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   }
 });
 
+const startPublishLoading = makeStartLoading<ValidState>('publishLoading');
+const stopPublishLoading = makeStopLoading<ValidState>('publishLoading');
+
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
 
     case 'publish':
+      startPublishLoading(state);
       return [
         state,
         async (state, dispatch) => {
           await Form.persist(state.form);
+          stopPublishLoading(state);
           return state;
         }
       ];
@@ -113,10 +120,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   },
 
   getContextualActions: getContextualActionsValid( ({state, dispatch}) => {
-    const isPublishLoading   = false; // state.publishLoading > 0;
+    const isPublishLoading   = state.publishLoading > 0;
     const isSaveDraftLoading = false; // state.saveDraftLoading > 0;
-    const isLoading          = false; // isPublishLoading || isSaveDraftLoading;
-    const isValid            = true; // Form.isValid(state.form);
+    const isLoading          = isPublishLoading || isSaveDraftLoading;
+    const isValid            = Form.isValid(state.form);
     return adt('links', [
       {
         children: 'Publish',

@@ -447,7 +447,7 @@ export function AttachmentsTabIsValid(state: State): boolean {
   return Attachments.isValid(state.attachments);
 }
 
-export function formIsValid(state: State): boolean {
+export function isValid(state: State): boolean {
   return (
     ProponentTabIsValid(state) &&
     ProposalTabIsValid(state) &&
