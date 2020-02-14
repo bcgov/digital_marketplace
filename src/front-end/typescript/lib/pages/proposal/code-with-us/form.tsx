@@ -2,12 +2,14 @@ import { Route } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Radio from 'front-end/lib/views/radio';
 import React from 'react';
 import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+import { OrganizationSlim } from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -34,7 +36,7 @@ export interface State {
     mailCode: Immutable<ShortText.State>;
     country: Immutable<ShortText.State>;
     // Organziation
-    orgId: Id;
+    organization: Immutable<Select.State>;
 
   // Proposal Tab
   proposalText: Immutable<LongText.State>;
@@ -63,6 +65,8 @@ type InnerMsg
   | ADT<'region', ShortText.Msg>
   | ADT<'mailCode', ShortText.Msg>
   | ADT<'country', ShortText.Msg>
+  // Organization Proponent
+  | ADT<'organization', Select.Msg>
 
   // Proposal Tab
   | ADT<'proposalText',           LongText.Msg>
@@ -79,6 +83,13 @@ export type RouteParams = {
 };
 
 async function defaultState(opportunityId: Id) {
+
+  const orgApiResult = await api.organizations.readMany();
+
+  let organizations: OrganizationSlim[] = [];
+  if (orgApiResult.tag === 'valid') {
+    organizations = orgApiResult.value;
+  }
 
   return {
     opportunityId,
@@ -175,6 +186,15 @@ async function defaultState(opportunityId: Id) {
         type: 'text',
         value: '',
         id: 'opportunity-individual-country'
+      }
+    })),
+
+    organization: immutable(await Select.init({
+      errors: [],
+      child: {
+        value: { value: organizations[0].id, label: organizations[0].legalName },
+        id: 'proposal-organization-id',
+        options: adt( 'options', organizations.map( O => ({ value: O.id, label: O.legalName })) )
       }
     })),
 
@@ -368,10 +388,8 @@ function proponentFor(typeTag: ProponentType, state: State): CWUProposalResource
     // the type level?  ie: omit the default case here..
     case 'Organization':
     default:  {
-      return {
-        tag: 'organization' as const,
-        value: state.orgId
-      };
+      const fieldValue = FormField.getValue(state.organization);
+      return adt('organization', fieldValue ? fieldValue.value : '' );
     }
   }
 
@@ -575,7 +593,13 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row className='pt-5 border-top'>
-      Organization
+      <Select.view
+        extraChildProps={{}}
+        label='Organization'
+        placeholder='Organization'
+        required
+        state={state.organization}
+        dispatch={mapComponentDispatch(dispatch, value => adt('organization' as const, value))} />
     </Row>
   );
 };
