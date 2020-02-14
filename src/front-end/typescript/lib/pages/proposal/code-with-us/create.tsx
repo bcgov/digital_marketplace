@@ -2,9 +2,9 @@ import { getContextualActionsValid, makePageMetadata, updateValid, viewValid } f
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as Form from 'front-end/lib/pages/proposal/code-with-us/form';
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
-import * as Form from 'lib/pages/proposal/code-with-us/form';
 import React from 'react';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';

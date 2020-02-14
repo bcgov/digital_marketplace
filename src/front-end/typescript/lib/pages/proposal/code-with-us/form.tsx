@@ -383,8 +383,6 @@ function proponentFor(typeTag: ProponentType, state: State): CWUProposalResource
       });
     }
 
-    // TODO(Jesse): How do we prevent null from being passed to this function at
-    // the type level?  ie: omit the default case here..
     case 'Organization':
     default:  {
       const fieldValue = FormField.getValue(state.organization);
@@ -408,8 +406,53 @@ function getFormValues(state: State): Values {
 
 type Errors = CWUProposalResource.CreateValidationErrors;
 
-export function formIsValid(): boolean {
-  return true;
+export function ProponentTabIsValid(state: State): boolean {
+  let result = false;
+
+  switch (state.proponentType) {
+
+    case 'Individual': {
+      result = FormField.isValid(state.legalName) &&
+               FormField.isValid(state.email)     &&
+               FormField.isValid(state.phone)     &&
+               FormField.isValid(state.street1)   &&
+               FormField.isValid(state.street2)   &&
+               FormField.isValid(state.city)      &&
+               FormField.isValid(state.region)    &&
+               FormField.isValid(state.mailCode)  &&
+               FormField.isValid(state.country);
+      break;
+    }
+
+    case 'Organization': {
+      result = FormField.isValid(state.organization);
+      break;
+    }
+
+    default: {
+      break;
+    }
+  }
+
+  return result;
+}
+
+export function ProposalTabIsValid(state: State): boolean {
+  const result = FormField.isValid(state.proposalText) &&
+                 FormField.isValid(state.additionalComments);
+  return result;
+}
+
+export function AttachmentsTabIsValid(state: State): boolean {
+  return Attachments.isValid(state.attachments);
+}
+
+export function formIsValid(state: State): boolean {
+  return (
+    ProponentTabIsValid(state) &&
+    ProposalTabIsValid(state) &&
+    AttachmentsTabIsValid(state)
+  );
 }
 
 function setErrors(state: State, errors?: Errors): void {
