@@ -1,5 +1,5 @@
 import { getContextualActionsValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
-import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
+import * as Select from 'front-end/lib/components/form-field/select';
 import { OrganizationSlim }from 'shared/lib/resources/organization';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
@@ -43,7 +43,7 @@ export interface ValidState {
     mailCode: Immutable<ShortText.State>;
     country: Immutable<ShortText.State>;
     // Organziation
-    organization: Immutable<SelectMulti.State>;
+    organization: Immutable<Select.State>;
 
   // Proposal Tab
   proposalText: Immutable<LongText.State>;
@@ -73,7 +73,7 @@ type InnerMsg
   | ADT<'country', ShortText.Msg>
 
   // Organization Proponent
-  | ADT<'organization', SelectMulti.Msg>
+  | ADT<'organization', Select.Msg>
 
   // Proposal Tab
   | ADT<'proposalText',           LongText.Msg>
@@ -195,12 +195,11 @@ async function defaultState(opportunityId: Id) {
       }
     })),
 
-    organization: immutable(await SelectMulti.init({
+    organization: immutable(await Select.init({
       errors: [],
       child: {
-        value: organizations.map( O => ({ value: O.id, label: O.legalName })),
+        value: { value: organizations[0].id, label: organizations[0].legalName },
         id: 'proposal-organization-id',
-        creatable: false,
         options: adt( 'options', organizations.map( O => ({ value: O.id, label: O.legalName })) ),
       }
     })),
@@ -404,7 +403,7 @@ function proponentFor(typeTag: ProponentType, state: ValidState): CWUProposalRes
     default:  {
       return {
         tag: 'organization' as const,
-        value: FormField.getValue(state.organization).value
+        value: '' // FormField.getValue(state.organization)
 
       };
     }
@@ -610,7 +609,13 @@ const IndividualProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }
 const OrganizationProponent: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
     <Row className='pt-5 border-top'>
-      Organization
+      <Select.view
+        extraChildProps={{}}
+        label='Organization'
+        placeholder='Organization'
+        required
+        state={state.organization}
+        dispatch={mapComponentDispatch(dispatch, value => adt('organization' as const, value))} />
     </Row>
   );
 };
