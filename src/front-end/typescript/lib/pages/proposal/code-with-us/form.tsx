@@ -1,6 +1,4 @@
 import { getContextualActionsValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
-import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
-import { OrganizationSlim }from 'shared/lib/resources/organization';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
@@ -43,7 +41,7 @@ export interface ValidState {
     mailCode: Immutable<ShortText.State>;
     country: Immutable<ShortText.State>;
     // Organziation
-    organization: Immutable<SelectMulti.State>;
+    orgId: Id;
 
   // Proposal Tab
   proposalText: Immutable<LongText.State>;
@@ -59,6 +57,7 @@ type InnerMsg
   | ADT<'saveDraft'>
 
   // Proponent Tab
+  // TODO(Jesse): Implement radio option @radio-option
   | ADT<'proponentType', ProponentType>
 
   // Individual Proponent
@@ -71,9 +70,6 @@ type InnerMsg
   | ADT<'region', ShortText.Msg>
   | ADT<'mailCode', ShortText.Msg>
   | ADT<'country', ShortText.Msg>
-
-  // Organization Proponent
-  | ADT<'organization', SelectMulti.Msg>
 
   // Proposal Tab
   | ADT<'proposalText',           LongText.Msg>
@@ -91,18 +87,12 @@ export type RouteParams = {
 
 async function defaultState(opportunityId: Id) {
 
-  const orgApiResult = await api.organizations.readMany();
-
-  let organizations: OrganizationSlim[] = [];
-  if (orgApiResult.tag === 'valid') {
-    organizations = orgApiResult.value;
-  }
-
   return {
     opportunityId,
 
     activeTab: 'Proponent' as const,
     proponentType: null,
+    orgId: '',
 
     // Individual
     legalName: immutable(await ShortText.init({
@@ -194,17 +184,6 @@ async function defaultState(opportunityId: Id) {
         id: 'opportunity-individual-country'
       }
     })),
-
-    organization: immutable(await SelectMulti.init({
-      errors: [],
-      child: {
-        value: organizations.map( O => ({ value: O.id, label: O.legalName })),
-        id: 'proposal-organization-id',
-        creatable: false,
-        options: adt( 'options', organizations.map( O => ({ value: O.id, label: O.legalName })) ),
-      }
-    })),
-
 
     proposalText: immutable(await LongText.init({
       errors: [],
@@ -404,8 +383,7 @@ function proponentFor(typeTag: ProponentType, state: ValidState): CWUProposalRes
     default:  {
       return {
         tag: 'organization' as const,
-        value: FormField.getValue(state.organization).value
-
+        value: state.orgId
       };
     }
   }
@@ -427,7 +405,7 @@ function getFormValues(state: ValidState): Values {
 type Errors = CWUProposalResource.CreateValidationErrors;
 
 // TODO(Jesse): Implement this
-export function isValid(): boolean {
+export function formIsValid(): boolean {
   return true;
 }
 
@@ -795,7 +773,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const isPublishLoading   = false; // state.publishLoading > 0;
     const isSaveDraftLoading = false; // state.saveDraftLoading > 0;
     const isLoading          = false; // isPublishLoading || isSaveDraftLoading;
-    const isValid            = true; // Form.isValid(state.form);
+    const isValid            = true; // formIsValid(state.form);
     return adt('links', [
       {
         children: 'Publish',
