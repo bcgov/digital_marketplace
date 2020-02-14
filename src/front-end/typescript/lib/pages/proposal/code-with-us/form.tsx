@@ -52,7 +52,6 @@ type InnerMsg
   | ADT<'saveDraft'>
 
   // Proponent Tab
-  // TODO(Jesse): Implement radio option @radio-option
   | ADT<'proponentType', ProponentType>
 
   // Individual Proponent
@@ -409,7 +408,6 @@ function getFormValues(state: State): Values {
 
 type Errors = CWUProposalResource.CreateValidationErrors;
 
-// TODO(Jesse): Implement this
 export function formIsValid(): boolean {
   return true;
 }
@@ -429,19 +427,21 @@ function setErrors(state: State, errors?: Errors): void {
           if (errors.proponent.value.region)    { FormField.setErrors(state.region, errors.proponent.value.region); }
           if (errors.proponent.value.mailCode)  { FormField.setErrors(state.mailCode, errors.proponent.value.mailCode); }
           if (errors.proponent.value.country)   { FormField.setErrors(state.country, errors.proponent.value.country); }
+          break;
         }
         case 'organization': {
-          // TODO(Jesse): Have an acutal field for this
-          // FormField.setErrors(state.organizationId, errors.proponent.value); }
+          if (errors.proponent.value) { FormField.setErrors(state.organization, errors.proponent.value); }
+          break;
         }
         case 'parseFailure': {
-          // TODO: Hard fail case from the backend??  Cry?
+          // Note: Hard failure case from the backend.
+          break;
         }
       }
     }
 
     if (errors.attachments) {
-      // TODO(Jesse): What structrue do attachment errors take?
+      // TODO(Jesse): Do we ever actually get attachment errors?
     }
   }
   return;
@@ -745,16 +745,13 @@ export const view: View<Props> = props => {
 
   return (
     <div>
-      <div>
-        <Nav tabs className='mb-5'>
-          {renderTab(props, 'Proponent')}
-          {renderTab(props, 'Proposal')}
-          {renderTab(props, 'Attachments')}
-        </Nav>
+      <Nav tabs className='mb-5'>
+        {renderTab(props, 'Proponent')}
+        {renderTab(props, 'Proposal')}
+        {renderTab(props, 'Attachments')}
+      </Nav>
 
-        {activeView}
-      </div>
-
+      {activeView}
     </div>
   );
 };
