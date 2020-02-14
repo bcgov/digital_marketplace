@@ -32,7 +32,7 @@ export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | n
 export interface CWUOpportunityStatusRecord {
   id: Id;
   createdAt: Date;
-  createdBy: User;
+  createdBy: User | null;
   status: CWUOpportunityStatus;
   note: string;
 }
