@@ -39,7 +39,7 @@ export function getValueAsString(state: Immutable<State>): string {
   return valueToString(FormField.getValue(state));
 }
 
-export function validateDate(validate: (_: string) => Validation<Date>): (value: Value) => Validation<Value> {
+export function validateDate(validate: (_: string) => Validation<Date | null>): (value: Value) => Validation<Value> {
   return raw => {
     const value = valueToString(raw);
     return mapValid(validate(value), () => raw);

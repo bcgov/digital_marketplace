@@ -59,7 +59,7 @@ export interface CWUOpportunity {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
-  completionDate: Date;
+  completionDate: Date | null;
   submissionInfo: string;
   acceptanceCriteria: string;
   evaluationCriteria: string;
@@ -117,7 +117,7 @@ export interface CreateRequestBody {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
-  completionDate: string;
+  completionDate?: string;
   submissionInfo: string;
   acceptanceCriteria: string;
   evaluationCriteria: string;

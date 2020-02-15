@@ -1,5 +1,6 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import React from 'react';
+import { InputGroup, InputGroupAddon, InputGroupText } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
 export type Value = number | null;
@@ -11,16 +12,17 @@ export function parseValue(raw: string): Value {
 }
 
 interface ChildState extends FormField.ChildStateBase<Value> {
+  currency?: string;
   min?: number;
   max?: number;
 }
 
-type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'min' | 'max'>;
+type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'currency' | 'min' | 'max'>;
 
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+type ExtraChildProps = Pick<ChildState, 'currency'>;
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -42,8 +44,8 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
-  return (
+  const { currency, state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+  const input = (
     <input
       id={state.id}
       type='number'
@@ -59,6 +61,15 @@ const ChildView: ChildComponent['view'] = props => {
         props.onChange(value);
       }}
       disabled={disabled} />
+  );
+  if (!currency) { return input; }
+  return (
+    <InputGroup>
+      <InputGroupAddon addonType='prepend'>
+        <InputGroupText>{currency}</InputGroupText>
+      </InputGroupAddon>
+      {input}
+    </InputGroup>
   );
 };
 

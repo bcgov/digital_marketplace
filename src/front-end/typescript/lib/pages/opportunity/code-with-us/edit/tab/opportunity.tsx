@@ -1,6 +1,6 @@
-import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { AsyncWithState, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
@@ -8,6 +8,7 @@ import * as Form from 'front-end/lib/pages/opportunity/code-with-us/lib/componen
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
+import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
@@ -17,6 +18,7 @@ import { adt, ADT } from 'shared/lib/types';
 export interface State extends Tab.Params {
   startEditingLoading: number;
   saveChangesLoading: number;
+  saveChangesAndPublishLoading: number;
   publishLoading: number;
   deleteLoading: number;
   isEditing: boolean;
@@ -25,6 +27,8 @@ export interface State extends Tab.Params {
   form: Immutable<Form.State>;
 }
 
+type UpdateStatus = 'publish' | 'cancel' | 'suspend';
+
 export type InnerMsg
   = ADT<'form', Form.Msg>
   | ADT<'dismissInfoAlert', number>
@@ -32,7 +36,8 @@ export type InnerMsg
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
-  | ADT<'updateStatus', 'publish' | 'cancel' | 'suspend'>
+  | ADT<'saveChangesAndPublish'>
+  | ADT<'updateStatus', UpdateStatus>
   | ADT<'delete'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -72,6 +77,7 @@ const init: Init<Tab.Params, State> = async params => ({
   ...params,
   startEditingLoading: 0,
   saveChangesLoading: 0,
+  saveChangesAndPublishLoading: 0,
   publishLoading: 0,
   deleteLoading: 0,
   isEditing: false,
@@ -84,10 +90,42 @@ const startStartEditingLoading = makeStartLoading<State>('startEditingLoading');
 const stopStartEditingLoading = makeStopLoading<State>('startEditingLoading');
 const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
 const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
+const startSaveChangesAndPublishLoading = makeStartLoading<State>('saveChangesAndPublishLoading');
+const stopSaveChangesAndPublishLoading = makeStopLoading<State>('saveChangesAndPublishLoading');
 const startPublishLoading = makeStartLoading<State>('publishLoading');
 const stopPublishLoading = makeStopLoading<State>('publishLoading');
 const startDeleteLoading = makeStartLoading<State>('deleteLoading');
 const stopDeleteLoading = makeStopLoading<State>('deleteLoading');
+
+async function saveChanges(state: Immutable<State>, onValid?: AsyncWithState<State, [CWUOpportunity]>, onInvalid?: AsyncWithState<State>): Promise<Immutable<State>> {
+  const result = await Form.persist(state.form, adt('update', state.opportunity.id));
+  switch (result.tag) {
+    case 'valid':
+      state = state
+        .set('form', result.value[0])
+        .set('opportunity', result.value[1])
+        .set('isEditing', false);
+      return onValid ? await onValid(state, result.value[1]) : state;
+    case 'invalid':
+      state = state.set('form', result.value);
+      return onInvalid ? await onInvalid(state) : state;
+  }
+}
+
+async function updateStatus(state: Immutable<State>, newStatus: UpdateStatus, onValid?: AsyncWithState<State, [CWUOpportunity]>, onInvalid?: AsyncWithState<State, [UpdateValidationErrors?]>): Promise<Immutable<State>> {
+  const result = await api.opportunities.cwu.update(state.opportunity.id, adt(newStatus, ''));
+  switch (result.tag) {
+    case 'valid':
+      state = state
+        .set('opportunity', result.value)
+        .set('form', await initForm(result.value, state.form.activeTab));
+      return onValid ? await onValid(state, result.value) : state;
+    case 'invalid':
+      return onInvalid ? await onInvalid(state, result.value) : state;
+    case 'unhandled':
+      return onInvalid ? await onInvalid(state) : state;
+  }
+}
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -136,21 +174,27 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         startSaveChangesLoading(state),
         async state => {
           state = stopSaveChangesLoading(state);
-          const result = await Form.persist(state.form, adt('update', state.opportunity.id));
-          switch (result.tag) {
-            case 'valid':
-              return addInfoAlert(state, `Your changes have been ${hasCWUOpportunityBeenPublished(state.opportunity) ? 'published' : 'saved'}.`)
-                .set('form', result.value[0])
-                .set('opportunity', result.value[1])
-                .set('isEditing', false);
-            case 'invalid':
-              // "Mock" an edit error here. If `addErrorAlertsFromUpdate` is going to be
-              // updated with different semantics, this code will likely need to be updated too.
-              state = addErrorAlertsFromUpdate(state, {
-                opportunity: adt('edit', {})
-              });
-              return state.set('form', result.value);
-          }
+          return await saveChanges(
+            state,
+            async state1 => addInfoAlert(state1, `Your changes have been ${hasCWUOpportunityBeenPublished(state1.opportunity) ? 'published' : 'saved'}.`),
+            async state1 => addErrorAlertsFromUpdate(state1, { opportunity: adt('edit', {}) })
+          );
+        }
+      ];
+    case 'saveChangesAndPublish':
+      return [
+        startSaveChangesAndPublishLoading(state),
+        async state => {
+          state = stopSaveChangesAndPublishLoading(state);
+          return await saveChanges(
+            state,
+            state1 => updateStatus(state1, 'publish',
+              async state2 => addInfoAlert(state2, 'Your changes have been published.'),
+              async state2 => addErrorAlert(state2, 'Your changes were saved, but could not be published.')
+            ),
+            async state1 => addErrorAlertsFromUpdate(state1, { opportunity: adt('edit', {}) })
+          );
+          return state;
         }
       ];
     case 'updateStatus':
@@ -158,17 +202,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         startPublishLoading(state),
         async state => {
           state = stopPublishLoading(state);
-          const result = await api.opportunities.cwu.update(state.opportunity.id, adt(msg.value, ''));
-          switch (result.tag) {
-            case 'valid':
-              return addInfoAlert(state, `This opportunity's status has been updated to "${cwuOpportunityStatusToTitleCase(result.value.status)}".`)
-                .set('opportunity', result.value)
-                .set('form', await initForm(result.value, state.form.activeTab));
-            case 'invalid':
-              return addErrorAlertsFromUpdate(state, result.value);
-            default:
-              return state;
-          }
+          return await updateStatus(
+            state,
+            msg.value,
+            async (state1, opportunity) => addInfoAlert(state1, `This opportunity's status has been updated to "${cwuOpportunityStatusToTitleCase(opportunity.status)}".`),
+            async (state1, errors) => errors ? addErrorAlertsFromUpdate(state1, errors) : state
+          );
         }
       ];
     case 'delete':
@@ -268,13 +307,27 @@ export const component: Tab.Component<State, Msg> = {
   getContextualActions({ state, dispatch }) {
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
+    const isSaveChangesAndPublishLoading = state.saveChangesAndPublishLoading > 0;
     const isPublishLoading = state.publishLoading > 0;
     const isDeleteLoading = state.deleteLoading > 0;
     const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
     const oppStatus = state.opportunity.status;
     const isValid = () => Form.isValid(state.form);
     if (state.isEditing) {
-      return adt('links', [
+      return adt('links', compact([
+        // Publish button
+        oppStatus === CWUOpportunityStatus.Draft || oppStatus === CWUOpportunityStatus.Suspended
+          ? {
+              children: 'Publish Changes',
+              symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
+              button: true,
+              loading: isSaveChangesAndPublishLoading,
+              disabled: isSaveChangesAndPublishLoading || !isValid(),
+              color: 'primary',
+              onClick: () => dispatch(adt('saveChangesAndPublish'))
+            }
+          : null,
+        // Save changes button
         {
           children: (() => {
             switch (oppStatus) {
@@ -302,18 +355,22 @@ export const component: Tab.Component<State, Msg> = {
           })())),
           color: (() => {
             switch (oppStatus) {
-              case CWUOpportunityStatus.Draft: return 'success';
-              default: return 'primary';
+              case CWUOpportunityStatus.Draft:
+              case CWUOpportunityStatus.Suspended:
+                return 'success';
+              default:
+                return 'primary';
             }
           })()
         },
+        // Cancel link
         {
           children: 'Cancel',
           disabled: isLoading,
           onClick: () => dispatch(adt('cancelEditing')),
           color: 'white'
         }
-      ]);
+      ])) as PageContextualActions; //TypeScript type inference not good enough here
     }
     switch (oppStatus) {
       case CWUOpportunityStatus.Draft:

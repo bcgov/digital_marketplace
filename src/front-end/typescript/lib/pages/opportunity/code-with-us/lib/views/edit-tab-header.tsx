@@ -40,7 +40,7 @@ const EditTabHeader: View<Props> = ({ opportunity }) => {
     createdBy
       ? {
           name: 'Created By',
-          children: (<Link newTab color='primary' symbol_={rightPlacement(iconLinkSymbol('external-link'))} dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+          children: (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
         }
       : null
   ];
@@ -49,7 +49,7 @@ const EditTabHeader: View<Props> = ({ opportunity }) => {
       <Row className='mb-5'>
         <Col xs='12'>
           <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Opportunity</div>
-          <h2 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h2>
+          <h3 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h3>
           <DateMetadata dates={compact(dates)} />
         </Col>
       </Row>
