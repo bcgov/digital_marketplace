@@ -5,7 +5,7 @@ import Badge from 'front-end/lib/views/badge';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { compareDates, formatDate, formatTime } from 'shared/lib';
-import { User, UserType } from 'shared/lib/resources/user';
+import { User, UserSlim, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface Item {
@@ -15,7 +15,7 @@ export interface Item {
   };
   note?: string;
   createdAt: Date;
-  createdBy?: User;
+  createdBy?: UserSlim;
 }
 
 export interface Params {
