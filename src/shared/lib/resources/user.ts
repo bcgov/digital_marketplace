@@ -45,6 +45,11 @@ export interface User {
   deactivatedBy: Id | null;
 }
 
+export interface UserSlim {
+  id: Id;
+  name: string;
+}
+
 export function usersAreEquivalent(a: User, b: User): boolean {
   return a.id === b.id;
 }
