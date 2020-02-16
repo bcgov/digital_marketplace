@@ -32,12 +32,13 @@ function opportunityToHistoryItems({ statusHistory }: CWUOpportunity): History.I
     }));
 }
 
-const init: Init<Tab.Params, State> = async ({ opportunity }) => {
+const init: Init<Tab.Params, State> = async params => {
   return {
-    opportunity,
+    ...params,
     history: immutable(await History.init({
       idNamespace: 'cwu-opportunity-history',
-      items: opportunityToHistoryItems(opportunity)
+      items: opportunityToHistoryItems(params.opportunity),
+      viewerUser: params.viewerUser
     }))
   };
 };
@@ -60,7 +61,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
-      <EditTabHeader opportunity={state.opportunity} />
+      <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>

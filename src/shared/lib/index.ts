@@ -1,4 +1,4 @@
-import { get, isArray, isBoolean } from 'lodash';
+import { get, isArray, isBoolean, repeat } from 'lodash';
 import moment from 'moment-timezone';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -37,16 +37,22 @@ export function flipCurried<A, B, C>(fn: CurriedFunction<A, B, C>): CurriedFunct
   return (b: B) => (a: A) => fn(a)(b);
 }
 
-export function formatAmount(amount: number, currency?: string, separateBy = 1000, separator = ','): string {
+export function formatAmount(amount: number, currency?: string, baseTenSeparator = 3, separator = ','): string {
+  const separateBy = 10 ** baseTenSeparator;
   let remaining = amount;
   let formatted = '';
   if (!remaining) {
     formatted = '0';
   }
+  const prepend = (s: string | number) => `${s}${formatted ? separator : ''}${formatted}`;
   while (remaining) {
     const remainder = remaining % separateBy;
     remaining = Math.floor(remaining / separateBy);
-    formatted = `${remainder}${formatted ? separator : ''}${formatted}`;
+    if (remainder) {
+      formatted = prepend(remainder);
+    } else {
+      formatted = prepend(repeat('0', baseTenSeparator));
+    }
   }
   if (currency) {
     formatted = `${currency} ${formatted}`;

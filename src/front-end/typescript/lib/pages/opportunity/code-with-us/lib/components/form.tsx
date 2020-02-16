@@ -46,8 +46,8 @@ export interface State {
   assignmentDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   submissionInfo: Immutable<ShortText.State>;
-  acceptanceCriteria: Immutable<LongText.State>;
-  evaluationCriteria: Immutable<LongText.State>;
+  acceptanceCriteria: Immutable<RichMarkdownEditor.State>;
+  evaluationCriteria: Immutable<RichMarkdownEditor.State>;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
   // Attachments tab
@@ -72,8 +72,8 @@ export type Msg
   | ADT<'assignmentDate',      DateField.Msg>
   | ADT<'completionDate',      DateField.Msg>
   | ADT<'submissionInfo',      ShortText.Msg>
-  | ADT<'acceptanceCriteria',  LongText.Msg>
-  | ADT<'evaluationCriteria',  LongText.Msg>
+  | ADT<'acceptanceCriteria',  RichMarkdownEditor.Msg>
+  | ADT<'evaluationCriteria',  RichMarkdownEditor.Msg>
   // Attachments tab
   | ADT<'attachments', Attachments.Msg>
   // Addenda tab
@@ -123,7 +123,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
     reward: immutable(await NumberField.init({
       errors: [],
       validate: v => {
-        if (v === null) { return invalid(['Please enter a reward.']); }
+        if (v === null) { return invalid(['Please enter a valid reward.']); }
         return opportunityValidation.validateReward(v);
       },
       child: {
@@ -218,9 +218,14 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     completionDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateCompletionDate(v, new Date())),
+      validate: DateField.validateDate(v => {
+        return mapValid(
+          opportunityValidation.validateCompletionDate(v, new Date()),
+          w => w || null
+        );
+      }),
       child: {
-        value: opportunity ? DateField.dateToValue(opportunity.completionDate) : null,
+        value: opportunity?.completionDate ? DateField.dateToValue(opportunity.completionDate) : null,
         id: 'cwu-opportunity-completion-date'
       }
     })),
@@ -235,21 +240,23 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       }
     })),
 
-    acceptanceCriteria: immutable(await LongText.init({
+    acceptanceCriteria: immutable(await RichMarkdownEditor.init({
       errors: [],
       validate: opportunityValidation.validateAcceptanceCriteria,
       child: {
         value: opportunity?.acceptanceCriteria || '',
-        id: 'cwu-opportunity-acceptance-criteria'
+        id: 'cwu-opportunity-acceptance-criteria',
+        uploadImage: api.uploadMarkdownImage
       }
     })),
 
-    evaluationCriteria: immutable(await LongText.init({
+    evaluationCriteria: immutable(await RichMarkdownEditor.init({
       errors: [],
       validate: opportunityValidation.validateEvaluationCriteria,
       child: {
         value: opportunity?.evaluationCriteria || '',
-        id: 'cwu-opportunity-evaluation-criteria'
+        id: 'cwu-opportunity-evaluation-criteria',
+        uploadImage: api.uploadMarkdownImage
       }
     })),
 
@@ -584,7 +591,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['acceptanceCriteria'],
-        childUpdate: LongText.update,
+        childUpdate: RichMarkdownEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('acceptanceCriteria', value)
       });
@@ -593,7 +600,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['evaluationCriteria'],
-        childUpdate: LongText.update,
+        childUpdate: RichMarkdownEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('evaluationCriteria', value)
       });
@@ -680,7 +687,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
 
       <Col md='8' xs='12'>
         <NumberField.view
-          extraChildProps={{}}
+          extraChildProps={{ currency: '$' }}
           label='Fixed-Price Reward'
           placeholder='Fixed-Price Reward'
           required
@@ -758,7 +765,6 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
       </Col>
       <Col xs='12' md='6'>
         <DateField.view
-          required
           extraChildProps={{}}
           label='Completion Date'
           state={state.completionDate}
@@ -777,7 +783,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
       </Col>
 
       <Col xs='12'>
-        <LongText.view
+        <RichMarkdownEditor.view
           required
           extraChildProps={{}}
           label='Acceptance Criteria'
@@ -789,7 +795,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
       </Col>
 
       <Col xs='12'>
-        <LongText.view
+        <RichMarkdownEditor.view
           required
           extraChildProps={{}}
           label='Evaluation Criteria'

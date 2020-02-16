@@ -8,13 +8,15 @@ import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, hasCWUOpportunityBeenPublished } from 'shared/lib/resources/opportunity/code-with-us';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
 export interface Props {
   opportunity: CWUOpportunity;
+  viewerUser: User;
 }
 
-const EditTabHeader: View<Props> = ({ opportunity }) => {
+const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
   const createdBy = opportunity.createdBy;
   const oppStatus = opportunity.status;
   const hasBeenPublished = hasCWUOpportunityBeenPublished(opportunity);
@@ -40,7 +42,9 @@ const EditTabHeader: View<Props> = ({ opportunity }) => {
     createdBy
       ? {
           name: 'Created By',
-          children: (<Link newTab color='primary' symbol_={rightPlacement(iconLinkSymbol('external-link'))} dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+          children: viewerUser.type === UserType.Admin
+            ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+            : createdBy.name
         }
       : null
   ];
@@ -49,7 +53,7 @@ const EditTabHeader: View<Props> = ({ opportunity }) => {
       <Row className='mb-5'>
         <Col xs='12'>
           <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Opportunity</div>
-          <h2 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h2>
+          <h3 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h3>
           <DateMetadata dates={compact(dates)} />
         </Col>
       </Row>

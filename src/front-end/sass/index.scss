@@ -77,7 +77,7 @@ $body-color:                        $gray-900;
 $border-color:                      $gray-400;
 $nav-tabs-border-color:             $border-color;
 $nav-tabs-link-hover-border-color:  $gray-200 $gray-200 transparent;
-$nav-tabs-link-active-bg:           $gray-100;
+$nav-tabs-link-active-bg:           $white;
 $nav-tabs-link-active-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
 $component-active-bg:               $blue;
 $link-color:                        $blue;
@@ -126,7 +126,7 @@ $input-btn-padding-x:    1rem;
 $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
 
-$badge-font-size: 85%;
+$badge-font-size: 80%;
 
 $border-radius-sm: 0.2rem;
 $border-radius:    0.3em;
@@ -141,6 +141,19 @@ $transition-duration: 240ms;
 // Import Bootstrap.
 
 @import 'bootstrap';
+
+// Mixins.
+
+// Style an input's placeholder.
+// Supports regular placeholder, plus date/time input fields.
+@mixin placeholder() {
+  &[value=""]::-webkit-datetime-edit, //date/time selector
+  &:not([value])::-webkit-datetime-edit, //date/time selector
+  &::placeholder {
+    @content;
+  }
+}
+
 
 // Global styles.
 
@@ -178,13 +191,18 @@ input[type="time"] {
 input,
 textarea {
 
+  @include placeholder {
+    color: $secondary;
+  }
+
   &:disabled,
   &.disabled {
 
-    &::placeholder {
+    @include placeholder {
       color: transparent;
       opacity: 0;
     }
+
   }
 }
 
@@ -388,7 +406,7 @@ nav.navbar .nav-link:hover {
 .badge {
   display: inline-flex;
   padding: 0.35em 0.7em;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 .custom-radio,
@@ -481,7 +499,7 @@ nav.navbar .nav-link:hover {
       //margin-top: -6rem;
       z-index: 2;
 
-      &:after {
+      &::after {
         content: " ";
         position: absolute;
         top: -100%;

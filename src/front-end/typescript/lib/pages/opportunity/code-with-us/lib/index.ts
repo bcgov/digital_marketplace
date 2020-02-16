@@ -19,6 +19,6 @@ export function cwuOpportunityStatusToTitleCase(s: CWUOpportunityStatus): string
     case CWUOpportunityStatus.Evaluation: return 'Evaluation';
     case CWUOpportunityStatus.Awarded: return 'Awarded';
     case CWUOpportunityStatus.Suspended: return 'Suspended';
-    case CWUOpportunityStatus.Canceled: return 'Canceled';
+    case CWUOpportunityStatus.Canceled: return 'Cancelled'; // Use British spelling for copy.
   }
 }
