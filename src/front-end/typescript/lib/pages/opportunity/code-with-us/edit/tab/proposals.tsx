@@ -14,9 +14,9 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async ({ opportunity }) => {
+const init: Init<Tab.Params, State> = async params => {
   return {
-    opportunity,
+    ...params,
     empty: true
   };
 };

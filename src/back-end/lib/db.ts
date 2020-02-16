@@ -19,6 +19,8 @@ const logger = makeDomainLogger(consoleAdapter, 'back-end');
 
 export type Connection = Knex;
 
+type Transaction = Knex.Transaction;
+
 export const ERROR_MESSAGE = 'Database error.';
 
 type DatabaseValidation<Valid> = Validation<Valid, null>;
@@ -687,6 +689,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunity, 'createdBy' | 'updatedB
   updatedBy?: Id;
   attachments: Id[];
   addenda: Id[];
+  versionId: string;
 }
 
 async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: RawCWUOpportunity): Promise<CWUOpportunity> {
@@ -707,6 +710,8 @@ async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: Ra
     }
     return result;
   }));
+
+  delete raw.versionId;
 
   return {
     ...raw,
@@ -825,6 +830,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       'opp.id',
       'opp.createdAt',
       'opp.createdBy',
+      'version.id as versionId',
       'version.createdAt as updatedAt',
       'version.createdBy as updatedBy',
       'version.title',
@@ -872,10 +878,9 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
   // Query for attachment file ids
   if (result) {
     result = processForRole(result, session);
-    result.attachments = (await connection<{ id: Id }>('cwuOpportunityAttachments')
-      .where({ opportunityVersion: result.id })
-      .select('file')).map(row => row.id);
-
+    result.attachments = (await connection<{ file: Id }>('cwuOpportunityAttachments')
+      .where({ opportunityVersion: result.versionId })
+      .select('file')).map(row => row.file);
     result.addenda = (await connection<{ id: Id }>('cwuOpportunityAddenda')
       .where({ opportunity: id })
       .select('id')).map(row => row.id);
@@ -935,6 +940,20 @@ interface OpportunityVersionRecord extends Omit<CreateCWUOpportunityParams, 'sta
   createdBy: Id;
 }
 
+async function createCWUOpportunityAttachments(connection: Connection, trx: Transaction, oppVersionId: Id, attachments: FileRecord[]) {
+  for (const attachment of attachments) {
+    const [attachmentResult] = await connection('cwuOpportunityAttachments')
+      .transacting(trx)
+      .insert({
+        opportunityVersion: oppVersionId,
+        file: attachment.id
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create opportunity attachment');
+    }
+  }
+}
+
 export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, AuthenticatedSession], CWUOpportunity>(async (connection, opportunity, session) => {
   // Create root opportunity record
   const now = new Date();
@@ -980,14 +999,7 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Authentic
       }, '*');
 
     // Create attachment records
-    attachments?.forEach(async attachment => {
-      await connection('cwuOpportunityAttachments')
-        .transacting(trx)
-        .insert({
-          opportunityVersion: oppVersionRecord.id,
-          file: attachment
-        }, '*');
-    });
+    await createCWUOpportunityAttachments(connection, trx, oppVersionRecord.id, attachments);
 
     return rootOppRecord.id;
   });
@@ -1029,14 +1041,7 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Au
     if (!oppVersion) {
       throw new Error('unable to update opportunity');
     }
-    attachments?.forEach(async attachment => {
-      await connection('cwuOpportunityAttachments')
-        .transacting(trx)
-        .insert({
-          opportunity: oppVersion.id,
-          file: attachment.id
-        });
-    });
+    await createCWUOpportunityAttachments(connection, trx, oppVersion.id, attachments || []);
     return oppVersion;
   });
   const dbResult = await readOneCWUOpportunity(connection, oppVersion.opportunity, session);
@@ -1319,7 +1324,21 @@ export interface CreateCWUProposalParams {
   proposalText: string;
   additionalComments: string;
   proponent: ADT<'individual', CreateIndividualProponentRequestBody> | ADT<'organization', Id>;
-  attachments: Id[];
+  attachments: FileRecord[];
+}
+
+async function createCWUProposalAttachments(connection: Connection, trx: Transaction, proposalId: Id, attachments: FileRecord[]) {
+  for (const attachment of attachments) {
+    const [attachmentResult] = await connection('cwuProposalAttachments')
+      .transacting(trx)
+      .insert({
+        proposal: proposalId,
+        file: attachment
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create proposal attachment');
+    }
+  }
 }
 
 export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
@@ -1379,14 +1398,7 @@ export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSe
       }, '*');
 
     // Create attachment records
-    attachments?.forEach(async attachment => {
-      await connection('cwuProposalAttachments')
-        .transacting(trx)
-        .insert({
-          proposal: rootRecord.id,
-          file: attachment
-        }, '*');
-    });
+    await createCWUProposalAttachments(connection, trx, rootRecord.id, attachments);
 
     const dbResult = await readOneCWUProposal(trx, rootRecord.id, session);
     if (isInvalid(dbResult) || !dbResult.value) {
@@ -1442,14 +1454,7 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
       }
     }
 
-    attachments?.forEach(async attachment => {
-      await connection('cwuProposalAttachments')
-        .transacting(trx)
-        .insert({
-          proposal: result.id,
-          file: attachment.id
-        });
-    });
+    await createCWUProposalAttachments(connection, trx, result.id, attachments || []);
 
     const dbResult = await readOneCWUProposal(trx, result.id, session);
     if (isInvalid(dbResult) || !dbResult.value) {

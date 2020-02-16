@@ -19,7 +19,7 @@ interface ValidatedCreateRequestBody {
   proposalText: string;
   additionalComments: string;
   proponent: CreateProponentRequestBody;
-  attachments: Id[];
+  attachments: FileRecord[];
 }
 
 interface ValidatedUpdateEditRequestBody {

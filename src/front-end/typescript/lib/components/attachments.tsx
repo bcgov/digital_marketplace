@@ -101,12 +101,12 @@ const FileField: View<FileFieldProps> = props => {
         disabled={disabled}
         className='form-control'
         onChange={onChange && (e => onChange(e.currentTarget.value))} />
-      <Link color='info' download dest={externalDest(url)} className='ml-3'>
-        <Icon name='download' />
-      </Link>
       {disabled
         ? null
         : (<Icon name='trash' color='info' hover onClick={onRemove} className='ml-3' />)}
+      <Link color='info' download dest={externalDest(url)} className='ml-3'>
+        <Icon name='download' />
+      </Link>
       {errors.length
         ? (<FormText color='danger'>
             {errors.map((error, i) => (<div key={`form-field-conditional-errors-${i}`}>{error}</div>))}
@@ -123,6 +123,7 @@ interface Props extends ComponentViewProps<State, Msg> {
 }
 
 const AddButton: View<Props> = ({ addButtonClassName = '', dispatch, disabled }) => {
+  if (disabled) { return null; }
   return (
     <FileLink
       button

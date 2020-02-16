@@ -33,7 +33,7 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
     <div className='mt-5 pt-5 border-top'>
       <Row>
         <Col xs='12'>
-          <h3 className='mb-4'>Successful Proponent</h3>
+          <h4 className='mb-4'>Successful Proponent</h4>
         </Col>
       </Row>
       <Row>
@@ -82,10 +82,10 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
     <div className='mt-5 pt-5 border-top'>
       <Row>
         <Col xs='12'>
-          <h3 className='mb-4'>Details</h3>
+          <h4 className='mb-4'>Details</h4>
         </Col>
       </Row>
-      <Row className='mb-3'>
+      <Row className='mb-5'>
         <Col xs='12'>
           <ReportCardList reportCards={reportCards} />
         </Col>
@@ -116,7 +116,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
 const view: ComponentView<State, Msg> = props => {
   return (
     <div>
-      <EditTabHeader opportunity={props.state.opportunity} />
+      <EditTabHeader opportunity={props.state.opportunity} viewerUser={props.state.viewerUser} />
       <SuccessfulProponent {...props} />
       <Details {...props} />
     </div>

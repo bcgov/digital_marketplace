@@ -7,6 +7,7 @@ import * as ProposalsTab from 'front-end/lib/pages/opportunity/code-with-us/edit
 import * as SummaryTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/summary';
 import { routeDest } from 'front-end/lib/views/link';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 
 // Parent page types & functions.
@@ -19,6 +20,7 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<Tabs, K,
 
 export interface Params {
   opportunity: CWUOpportunity;
+  viewerUser: User;
 }
 
 export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
