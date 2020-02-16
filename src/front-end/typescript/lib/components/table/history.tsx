@@ -5,7 +5,7 @@ import Badge from 'front-end/lib/views/badge';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { compareDates, formatDate, formatTime } from 'shared/lib';
-import { User } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface Item {
@@ -21,17 +21,18 @@ export interface Item {
 export interface Params {
   idNamespace: string;
   items: Item[];
+  viewerUser: User;
 }
 
-export interface State {
-  items: Item[];
+export interface State extends Pick<Params, 'items' | 'viewerUser'> {
   table: Immutable<Table.State>;
 }
 
 export type Msg = ADT<'table', Table.Msg>;
 
-export const init: Init<Params, State> = async ({ idNamespace, items }) => {
+export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
+    viewerUser,
     items: items.sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
     table: immutable(await Table.init({
       idNamespace
@@ -95,9 +96,15 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
           <div>
             <div>{formatDate(item.createdAt)}</div>
             <div>{formatTime(item.createdAt, true)}</div>
-            {item.createdBy
-              ? (<Link color='primary' className='text-uppercase small' dest={routeDest(adt('userProfile', { userId: item.createdBy.id }))}>{item.createdBy.name}</Link>)
-              : (<div className='text-secondary text-uppercase small'>System</div>)}
+            {(() => {
+              if (!item.createdBy) {
+                return (<div className='text-secondary text-uppercase small'>System</div>);
+              }
+              if (state.viewerUser.type === UserType.Admin) {
+                return (<Link color='primary' className='text-uppercase small' dest={routeDest(adt('userProfile', { userId: item.createdBy.id }))}>{item.createdBy.name}</Link>);
+              }
+              return (<div className='text-secondary text-uppercase small'>{item.createdBy.name}</div>);
+            })()}
           </div>
         )
       }

@@ -116,7 +116,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
 const view: ComponentView<State, Msg> = props => {
   return (
     <div>
-      <EditTabHeader opportunity={props.state.opportunity} />
+      <EditTabHeader opportunity={props.state.opportunity} viewerUser={props.state.viewerUser} />
       <SuccessfulProponent {...props} />
       <Details {...props} />
     </div>

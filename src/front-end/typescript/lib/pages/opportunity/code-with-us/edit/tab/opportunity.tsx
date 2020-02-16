@@ -264,6 +264,7 @@ const Reporting: ComponentView<State, Msg> = ({ state }) => {
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
   const opportunity = state.opportunity;
+  const viewerUser = state.viewerUser;
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isPublishLoading = state.publishLoading > 0;
@@ -271,7 +272,7 @@ const view: ComponentView<State, Msg> = props => {
   const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
   return (
     <div>
-      <EditTabHeader opportunity={opportunity} />
+      <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
       <Reporting {...props} />
       <Row className='mt-5'>
         <Col xs='12'>
