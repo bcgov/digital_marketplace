@@ -887,6 +887,14 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .select('id')).map(row => row.id);
   }
 
+  // Add on subscription flag, if authenticated user
+  if (result && session.user) {
+    const subscription = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
+      .where({ opportunity: result.id, user: session.user.id })
+      .first();
+    result.subscribed = !!subscription;
+  }
+
   // If admin/owner, add on list of status histories
   if (result && session.user && (session.user.type === UserType.Admin || result.createdBy === session.user.id)) {
     const rawStatusArray = await connection<RawCWUOpportunityStatusRecord>('cwuOpportunityStatuses')
