@@ -423,6 +423,8 @@ export function wrapRespond<ValidReqB, InvalidReqB extends BodyWithErrors, Valid
           return respond(503, request.body.value);
         } else if (request.body.value.notFound) {
           return respond(404, request.body.value);
+        } else if (request.body.value.conflict) {
+          return respond(409, request.body.value);
         } else {
           return await responseValidation.invalid({
             ...request,

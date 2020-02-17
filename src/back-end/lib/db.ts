@@ -11,6 +11,7 @@ import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOppo
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, CWUProposalStatusRecord, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
+import { CWUOpportunitySubscriber } from 'shared/lib/resources/subscribers/code-with-us';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
@@ -1609,4 +1610,66 @@ export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connec
   }
   result.attachments = [];
   return valid(await rawCWUProposalToCWUProposal(connection, session, result));
+});
+
+interface RawCWUOpportunitySubscriber {
+  opportunity: Id;
+  user: Id;
+  createdAt: Date;
+}
+
+async function rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection: Connection, session: Session, raw: RawCWUOpportunitySubscriber): Promise<CWUOpportunitySubscriber> {
+  const { opportunity: opportunityId, user: userId } = raw;
+  const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
+  const user = getValidValue(await readOneUserSlim(connection, userId), null);
+  if (!opportunity || !user) {
+    throw new Error('unable to process subscription');
+  }
+  return {
+    ...raw,
+    opportunity,
+    user
+  };
+}
+
+export const readOneCWUSubscriberByOpportunityAndUser = tryDb<[Id, Id, Session], CWUOpportunitySubscriber | null>(async (connection, opportunityId, userId, session) => {
+  const result = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
+    .where({ opportunity: opportunityId, user: userId})
+    .first();
+
+  return valid(result ? await rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection, session, result) : null);
+});
+
+interface CreateCWUOpportunitySubscriberParams {
+  opportunity: Id;
+  user: Id;
+}
+
+export const createCWUOpportunitySubscriber = tryDb<[CreateCWUOpportunitySubscriberParams, Session], CWUOpportunitySubscriber>(async (connection, subscriber, session) => {
+  const now = new Date();
+  const [result] = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
+    .insert({
+      ...subscriber,
+      createdAt: now
+    }, '*');
+
+  if (!result) {
+    throw new Error('unable to create subscription');
+  }
+
+  return valid(await rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection, session, result));
+});
+
+type DeleteCWUOpportunitySubscriberParams = CreateCWUOpportunitySubscriberParams;
+
+export const deleteCWUOpportunitySubscriber = tryDb<[DeleteCWUOpportunitySubscriberParams, Session], CWUOpportunitySubscriber>(async (connection, subscriber, session) => {
+  const [result] = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
+    .where({ opportunity: subscriber.opportunity, user: subscriber.user })
+    .delete('*');
+
+  if (!result) {
+    throw new Error('unable to delete subscription');
+  }
+
+  return valid(await rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection, session, result));
 });
