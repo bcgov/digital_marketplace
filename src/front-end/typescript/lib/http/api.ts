@@ -1,5 +1,5 @@
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
@@ -9,7 +9,7 @@ import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
-import { adt } from 'shared/lib/types';
+import { adt, Id } from 'shared/lib/types';
 import { ClientHttpMethod } from 'shared/lib/types';
 
 export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
@@ -103,17 +103,25 @@ interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalR
   };
 }
 
+interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany'> {
+  readMany(opportunityId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readMany']>;
+}
+
 const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
 
-const cwuProposal: CrudApi<CWUProposalResourceTypes> = {
+const cwuProposals: CWUProposalCrudApi = {
   ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_PROPOSAL_ROUTE_NAMESPACE),
-  readMany: makeReadMany<CWUProposalResourceTypes['readMany']>({
-    routeNamespace: CWU_PROPOSAL_ROUTE_NAMESPACE
-  })
+  async readMany(opportunityId) {
+    return await makeRequest<ReadManyActionTypes<CWUProposalResourceTypes['readMany']> & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      body: null
+    });
+  }
 };
 
 export const proposals = {
-  cwu: cwuProposal
+  cwu: cwuProposals
 };
 
 //
