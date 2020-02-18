@@ -2,58 +2,57 @@ import { Route } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Radio from 'front-end/lib/views/radio';
 import React from 'react';
-import { Col, Nav, NavItem, NavLink, Row } from 'reactstrap';
+import { Col, Nav, NavItem, Row } from 'reactstrap';
+import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity';
 
-type TabValues = 'Proponent' | 'Proposal' | 'Attachments';
+type ProponentType = 'individual' | 'organization';
 
-type ProponentType = 'Individual' | 'Organization' | null;
+const ProponentTypeRadioGroup = RadioGroup.makeComponent<ProponentType>();
+
+type TabId = 'Proponent' | 'Proposal' | 'Attachments';
 
 export interface State {
-  opportunityId: Id;
-  activeTab: TabValues;
-
+  opportunity: CWUOpportunity;
+  activeTab: TabId;
   // Proponent Tab
-  proponentType: ProponentType;
-    // Individual
-    legalName: Immutable<ShortText.State>;
-    email: Immutable<ShortText.State>;
-    phone: Immutable<ShortText.State>;
-    street1: Immutable<ShortText.State>;
-    street2: Immutable<ShortText.State>;
-    city: Immutable<ShortText.State>;
-    region: Immutable<ShortText.State>;
-    mailCode: Immutable<ShortText.State>;
-    country: Immutable<ShortText.State>;
-    // Organziation
-    organization: Immutable<Select.State>;
-
+  proponentType: Immutable<RadioGroup.State<ProponentType>>;
+  // Individual
+  legalName: Immutable<ShortText.State>;
+  email: Immutable<ShortText.State>;
+  phone: Immutable<ShortText.State>;
+  street1: Immutable<ShortText.State>;
+  street2: Immutable<ShortText.State>;
+  city: Immutable<ShortText.State>;
+  region: Immutable<ShortText.State>;
+  mailCode: Immutable<ShortText.State>;
+  country: Immutable<ShortText.State>;
+  // Organziation
+  organization: Immutable<Select.State>;
   // Proposal Tab
   proposalText: Immutable<LongText.State>;
   additionalComments: Immutable<LongText.State>;
-
   // Attachments tab
   attachments: Immutable<Attachments.State>;
 }
 
 type InnerMsg
-  = ADT<'updateActiveTab',   TabValues>
-  | ADT<'publish'>
+  = ADT<'updateActiveTab',   TabId>
   | ADT<'saveDraft'>
-
   // Proponent Tab
-  | ADT<'proponentType', ProponentType>
-
+  | ADT<'proponentType', RadioGroup.Msg<ProponentType>>
   // Individual Proponent
   | ADT<'legalName', ShortText.Msg>
   | ADT<'email', ShortText.Msg>
@@ -66,36 +65,37 @@ type InnerMsg
   | ADT<'country', ShortText.Msg>
   // Organization Proponent
   | ADT<'organization', Select.Msg>
-
   // Proposal Tab
   | ADT<'proposalText',           LongText.Msg>
   | ADT<'additionalComments', LongText.Msg>
-
   // Attachments tab
-  | ADT<'attachments', Attachments.Msg>
-  ;
+  | ADT<'attachments', Attachments.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type RouteParams = {
-  opportunityId: string;
-};
+export interface Params {
+  opportunity: CWUOpportunity;
+  organizations: OrganizationSlim[];
+}
 
-async function defaultState(opportunityId: Id) {
-
-  const orgApiResult = await api.organizations.readMany();
-
-  let organizations: OrganizationSlim[] = [];
-  if (orgApiResult.tag === 'valid') {
-    organizations = orgApiResult.value;
-  }
-
+export const init: Init<Params, State> = async ({ opportunity, organizations }) => {
   return {
-    opportunityId,
-
-    activeTab: 'Proponent' as const,
-    proponentType: null,
+    opportunity,
+    activeTab: 'Proponent',
     orgId: '',
+
+    proponentType: immutable(await ProponentTypeRadioGroup.init({
+      errors: [],
+      validate: v => v === null ? invalid(['Please select a proponent type.']) : valid(v),
+      child: {
+        id: 'cwu-proposal-proponent-type',
+        value: null,
+        options: [
+          { label: 'Individual', value: 'individual' },
+          { label: 'Organization', value: 'organization' }
+        ]
+      }
+    })),
 
     // Individual
     legalName: immutable(await ShortText.init({
@@ -221,33 +221,21 @@ async function defaultState(opportunityId: Id) {
     }))
 
   };
-}
-
-type Params = {
-  opportunityId: Id;
-};
-
-export const init: Init<Params, State> = async (params) => {
-  return { ...(await defaultState(params.opportunityId)) };
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-
-    case 'publish':
-      return [
-        state,
-        async (state, dispatch) => {
-          await persist(state);
-          return state;
-        }
-      ];
-
     case 'updateActiveTab':
       return [state.set('activeTab', msg.value)];
 
     case 'proponentType':
-      return [state.set('proponentType', msg.value)];
+      return updateComponentChild({
+        state,
+        childStatePath: ['proponentType'],
+        childUpdate: ProponentTypeRadioGroup.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('proponentType', value)
+      });
 
     case 'legalName':
       return updateComponentChild({
@@ -364,36 +352,30 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
 type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
 
-function proponentFor(typeTag: ProponentType, state: State): CWUProposalResource.CreateProponentRequestBody {
-  switch (typeTag) {
-    case 'Individual': {
-      return ({
-        tag: 'individual',
-        value: {
-          legalName:  FormField.getValue(state.legalName),
-          email:      FormField.getValue(state.email),
-          phone:      FormField.getValue(state.phone),
-          street1:    FormField.getValue(state.street1),
-          street2:    FormField.getValue(state.street2),
-          city:       FormField.getValue(state.city),
-          region:     FormField.getValue(state.region),
-          mailCode:   FormField.getValue(state.mailCode),
-          country:    FormField.getValue(state.country)
-        }
+function proponentFor(proponentType: ProponentType, state: State): CWUProposalResource.CreateProponentRequestBody {
+  switch (proponentType) {
+    case 'individual':
+      return adt('individual', {
+        legalName:  FormField.getValue(state.legalName),
+        email:      FormField.getValue(state.email),
+        phone:      FormField.getValue(state.phone),
+        street1:    FormField.getValue(state.street1),
+        street2:    FormField.getValue(state.street2),
+        city:       FormField.getValue(state.city),
+        region:     FormField.getValue(state.region),
+        mailCode:   FormField.getValue(state.mailCode),
+        country:    FormField.getValue(state.country)
       });
-    }
-
-    case 'Organization':
-    default:  {
+    case 'organization':
       const fieldValue = FormField.getValue(state.organization);
       return adt('organization', fieldValue ? fieldValue.value : '' );
-    }
   }
-
 }
 
-function getFormValues(state: State): Values {
-  const proponent = proponentFor(state.proponentType, state);
+function getFormValues(state: State): Values | null {
+  const proponentType = FormField.getValue(state.proponentType);
+  if (!proponentType) { return null; }
+  const proponent = proponentFor(proponentType, state);
   const result = {
     proposalText:        FormField.getValue(state.proposalText),
     additionalComments:  FormField.getValue(state.additionalComments),
@@ -406,52 +388,40 @@ function getFormValues(state: State): Values {
 
 type Errors = CWUProposalResource.CreateValidationErrors;
 
-export function ProponentTabIsValid(state: State): boolean {
-  let result = false;
-
-  switch (state.proponentType) {
-
-    case 'Individual': {
-      result = FormField.isValid(state.legalName) &&
-               FormField.isValid(state.email)     &&
-               FormField.isValid(state.phone)     &&
-               FormField.isValid(state.street1)   &&
-               FormField.isValid(state.street2)   &&
-               FormField.isValid(state.city)      &&
-               FormField.isValid(state.region)    &&
-               FormField.isValid(state.mailCode)  &&
+export function isProponentTabValid(state: State): boolean {
+  const proponentType = FormField.getValue(state.proponentType);
+  if (!proponentType) { return false; }
+  switch (proponentType) {
+    case 'individual':
+      return FormField.isValid(state.legalName)  &&
+               FormField.isValid(state.email)    &&
+               FormField.isValid(state.phone)    &&
+               FormField.isValid(state.street1)  &&
+               FormField.isValid(state.street2)  &&
+               FormField.isValid(state.city)     &&
+               FormField.isValid(state.region)   &&
+               FormField.isValid(state.mailCode) &&
                FormField.isValid(state.country);
-      break;
-    }
-
-    case 'Organization': {
-      result = FormField.isValid(state.organization);
-      break;
-    }
-
-    default: {
-      break;
-    }
+    case 'organization':
+      return FormField.isValid(state.organization);
   }
-
-  return result;
 }
 
-export function ProposalTabIsValid(state: State): boolean {
+export function isProposalTabValid(state: State): boolean {
   const result = FormField.isValid(state.proposalText) &&
                  FormField.isValid(state.additionalComments);
   return result;
 }
 
-export function AttachmentsTabIsValid(state: State): boolean {
+export function isAttachmentsTabValid(state: State): boolean {
   return Attachments.isValid(state.attachments);
 }
 
 export function isValid(state: State): boolean {
   return (
-    ProponentTabIsValid(state) &&
-    ProposalTabIsValid(state) &&
-    AttachmentsTabIsValid(state)
+    isProponentTabValid(state) &&
+    isProposalTabValid(state) &&
+    isAttachmentsTabValid(state)
   );
 }
 
@@ -511,7 +481,7 @@ export async function persist(state: State): Promise<Validation<State, string[]>
     }
   }
 
-  const requestBody = requestBodyFromValues(state.opportunityId, formValues);
+  const requestBody = requestBodyFromValues(state.opportunity.id, formValues);
   const apiResult = await api.proposals.cwu.create(requestBody);
 
   switch (apiResult.tag) {
@@ -636,13 +606,15 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row className='pt-5 border-top'>
-      <Select.view
-        extraChildProps={{}}
-        label='Organization'
-        placeholder='Organization'
-        required
-        state={state.organization}
-        dispatch={mapComponentDispatch(dispatch, value => adt('organization' as const, value))} />
+      <Col xs='12'>
+        <Select.view
+          extraChildProps={{}}
+          label='Organization'
+          placeholder='Organization'
+          required
+          state={state.organization}
+          dispatch={mapComponentDispatch(dispatch, value => adt('organization' as const, value))} />
+      </Col>
     </Row>
   );
 };
@@ -654,11 +626,11 @@ const ProponentView: ComponentView<State, Msg> = (params) => {
   let activeView;
   switch (state.proponentType) {
     case 'Individual': {
-      activeView = <IndividualProponent {...params} /> ;
+      activeView = (<IndividualProponent {...params} />);
       break;
     }
     case 'Organization': {
-      activeView = <OrganizationProponent {...params} /> ;
+      activeView = (<OrganizationProponent {...params} />);
       break;
     }
   }
@@ -752,49 +724,56 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 // @duplicated-tab-helper-functions
-function isActiveTab(state: State, activeTab: TabValues): boolean {
-  const Result: boolean = state.activeTab === activeTab;
-  return Result;
+function isActiveTab(state: State, tab: TabId): boolean {
+  return state.activeTab === tab;
 }
 
 // @duplicated-tab-helper-functions
-function renderTab(params: any, tabName: TabValues): JSX.Element {
-  const state = params.state;
-  const dispatch = params.dispatch;
+const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab, disabled }) => {
+  const isActive = isActiveTab(state, tab);
+  const isValid = () => {
+    switch (tab) {
+      case 'Proponent':   return isProponentTabValid(state);
+      case 'Proposal':    return isProposalTabValid(state);
+      case 'Attachments': return isAttachmentsTabValid(state);
+    }
+  };
   return (
     <NavItem>
-      <NavLink active={isActiveTab(state, tabName)} onClick={() => {dispatch(adt('updateActiveTab', tabName)); }}> {tabName} </NavLink>
+      <Link
+        nav
+        symbol_={isValid() ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
+        symbolClassName='text-warning'
+        className={`text-nowrap ${isActive ? 'active text-body' : 'text-primary'}`}
+        onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>
+        {tab}
+      </Link>
     </NavItem>
   );
-}
+};
 
 export const view: View<Props> = props => {
-  const state = props.state;
-  let activeView = <div>No Active view selected</div>;
-  switch (state.activeTab) {
-    case 'Proponent': {
-      activeView = <ProponentView {...props} /> ;
-      break;
-    }
-    case 'Proposal': {
-      activeView = <ProposalView {...props} /> ;
-      break;
-    }
-    case 'Attachments': {
-      activeView = <AttachmentsView {...props} /> ;
-      break;
-    }
-  }
-
+  const { state } = props;
   return (
     <div>
       <Nav tabs className='mb-5'>
-        {renderTab(props, 'Proponent')}
-        {renderTab(props, 'Proposal')}
-        {renderTab(props, 'Attachments')}
+        <TabLink {...props} tab='Proponent' />
+        <TabLink {...props} tab='Proposal' />
+        <TabLink {...props} tab='Attachments' />
       </Nav>
-
-      {activeView}
+      {(() => {
+        switch (state.activeTab) {
+          case 'Proponent': {
+            return (<ProponentView {...props} />);
+          }
+          case 'Proposal': {
+            return (<ProposalView {...props} />);
+          }
+          case 'Attachments': {
+            return (<AttachmentsView {...props} />);
+          }
+        }
+      })()}
     </div>
   );
 };

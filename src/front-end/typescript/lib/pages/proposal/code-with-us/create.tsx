@@ -1,8 +1,9 @@
 import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as Form from 'front-end/lib/pages/proposal/code-with-us/form';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -14,7 +15,7 @@ export type State = Validation<Immutable<ValidState>, null>;
 
 export interface ValidState {
   opportunityId: Id;
-  form: Form.State;
+  form: Immutable<Form.State>;
   publishLoading: number;
 }
 
@@ -26,30 +27,33 @@ type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type RouteParams = {
+export interface RouteParams {
   opportunityId: string;
-};
-
-async function defaultState(opportunityId: Id) {
-
-  return {
-    publishLoading: 0,
-    opportunityId,
-    form: await Form.init({opportunityId})
-  };
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
-  userType: [UserType.Vendor, UserType.Government, UserType.Admin], // TODO(Jesse): Which users should be here?
-  async success(params) {
-    return valid(immutable(
-      await defaultState(params.routeParams.opportunityId)
-    ));
+  userType: [UserType.Vendor],
+  async success({ dispatch, routeParams }) {
+    const opportunityResult = await api.opportunities.cwu.readOne(routeParams.opportunityId);
+    const organizationsResult = await api.organizations.readMany();
+    if (!api.isValid(opportunityResult) || !api.isValid(organizationsResult)) {
+      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      return invalid(null);
+    }
+    const opportunity = opportunityResult.value;
+    const organizations = organizationsResult.value;
+    return valid(immutable({
+      publishLoading: 0,
+      opportunity,
+      form: immutable(await Form.init({
+        opportunity,
+        organizations
+      }))
+    }));
   },
-  async fail(params) {
-    return invalid(immutable(
-      await defaultState(params.routeParams.opportunityId)
-    ));
+  async fail({ dispatch }) {
+    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    return invalid(null);
   }
 });
 
@@ -90,7 +94,7 @@ const view: ComponentView<State, Msg> = viewValid((params) => {
   return (
     <div>
       <Form.view
-        state={immutable(state.form)}
+        state={state.form}
         dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
         disabled={false}
       />
