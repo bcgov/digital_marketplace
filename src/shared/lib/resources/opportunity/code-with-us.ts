@@ -46,6 +46,7 @@ export interface CWUOpportunity {
   updatedBy?: User;
 
   // TODO
+  // @successful-proponent
   successfulProponent?: true;
 
   title: string;
@@ -73,6 +74,7 @@ export interface CWUOpportunity {
     numProposals: number;
     numWatchers: number;
     numViews: number;
+    // avgScore: number; @avg-score-reporting
   };
 }
 
