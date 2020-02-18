@@ -1,7 +1,7 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
-import { User, UserType } from 'shared/lib/resources/user';
+import { UserSlim, UserType  } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
@@ -19,16 +19,16 @@ export enum CWUProposalStatus {
 export interface CWUProposalStatusRecord {
   id: Id;
   createdAt: Date;
-  createdBy: User;
+  createdBy: UserSlim;
   status: CWUProposalStatus;
   note: string;
 }
 
 export interface CWUProposal {
   id: Id;
-  createdBy: User;
+  createdBy: UserSlim;
   createdAt: Date;
-  updatedBy: User;
+  updatedBy: UserSlim;
   updatedAt: Date;
   opportunity: CWUOpportunitySlim;
   proposalText: string;
