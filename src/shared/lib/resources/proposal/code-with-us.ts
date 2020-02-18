@@ -6,14 +6,14 @@ import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export enum CWUProposalStatus {
-  Draft = 'DRAFT',
-  Submitted = 'SUBMITTED',
-  UnderReview = 'UNDER_REVIEW',
-  Evaluated = 'EVALUATED',
-  Awarded = 'AWARDED',
-  NotAwarded = 'NOT_AWARDED',
+  Draft        = 'DRAFT',
+  Submitted    = 'SUBMITTED',
+  UnderReview  = 'UNDER_REVIEW',
+  Evaluated    = 'EVALUATED',
+  Awarded      = 'AWARDED',
+  NotAwarded   = 'NOT_AWARDED',
   Disqualified = 'DISQUALIFIED',
-  Withdrawn = 'WITHDRAWN'
+  Withdrawn    = 'WITHDRAWN'
 }
 
 export interface CWUProposalStatusRecord {
