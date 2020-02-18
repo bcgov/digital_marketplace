@@ -111,7 +111,7 @@
     "markdown-toc": "^1.2.0",
     "mocha": "^5.2.0",
     "moment-timezone": "^0.5.23",
-    "node-sass": "^4.12.0",
+    "node-sass": "^4.13.1",
     "nodemon": "^1.19.0",
     "path-to-regexp": "^6.1.0",
     "pathmodify": "^0.5.0",

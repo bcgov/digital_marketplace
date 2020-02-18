@@ -2,7 +2,9 @@ import { ComponentView, emptyPageAlerts, Immutable, PageGetAlerts, PageGetContex
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
-export type WithState<State, Result = Immutable<State>> = (state: Immutable<State>) => Result;
+export type WithState<State, OtherArgs extends unknown[] = [], Result = Immutable<State>> = (state: Immutable<State>, ...otherArgs: OtherArgs) => Result;
+
+export type AsyncWithState<State, OtherArgs extends unknown[] = [], Result = Immutable<State>> = WithState<State, OtherArgs, Promise<Result>>;
 
 export function makeStartLoading<State>(key: keyof State): WithState<State> {
   return state => {
@@ -32,7 +34,7 @@ export function makeStopLoading<State>(key: keyof State): WithState<State> {
 
 export type ValidatedState<ValidState> = Validation<Immutable<ValidState>, null>;
 
-export function withValid<ValidState, Result>(fn: WithState<ValidState, Result>, defaultResult: Result): WithState<ValidatedState<ValidState>, Result> {
+export function withValid<ValidState, Result>(fn: WithState<ValidState, [], Result>, defaultResult: Result): WithState<ValidatedState<ValidState>, [], Result> {
   return state => getValidValue(mapValid(state, fn), defaultResult);
 }
 

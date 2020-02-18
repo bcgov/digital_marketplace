@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 import { CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { ArrayValidation, invalid, mapValid, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
+import { ArrayValidation, invalid, mapValid, optional, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 
 export { validateAddendumText } from 'shared/lib/validation/addendum';
@@ -60,8 +60,8 @@ export function validateStartDate(raw: string, assignmentDate: Date): Validation
   return validateDate(raw, assignmentDate);
 }
 
-export function validateCompletionDate(raw: string, startDate: Date): Validation<Date> {
-  return validateDate(raw, startDate);
+export function validateCompletionDate(raw: string | undefined, startDate: Date): Validation<Date | undefined> {
+  return optional(raw, v => validateDate(v, startDate));
 }
 
 export function validateSubmissionInfo(raw: string): Validation<string> {

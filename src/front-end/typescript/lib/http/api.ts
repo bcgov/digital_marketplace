@@ -147,7 +147,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
-  completionDate: string;
+  completionDate: string | null;
   createdAt: string;
   updatedAt: string;
   addenda: RawAddendum[];
@@ -160,7 +160,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     proposalDeadline: new Date(raw.proposalDeadline),
     assignmentDate: new Date(raw.assignmentDate),
     startDate: new Date(raw.startDate),
-    completionDate: new Date(raw.completionDate),
+    completionDate: raw.completionDate ? new Date(raw.completionDate) : null,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),

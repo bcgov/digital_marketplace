@@ -151,7 +151,6 @@ const resource: Resource = {
             attachments: validatedAttachments.value
           });
         }
-        const attachmentIds = validatedAttachments.value.map(v => v.id);
 
         const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
         const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
@@ -165,12 +164,12 @@ const resource: Resource = {
             ...request.body,
             session: request.session,
             status: validatedStatus.value,
-            attachments: attachmentIds,
+            attachments: validatedAttachments.value,
             // Coerce validated dates to default values.
             proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
             assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
             startDate: getValidValue(validatedStartDate, defaultDate),
-            completionDate: getValidValue(validatedCompletionDate, defaultDate)
+            completionDate: getValidValue(validatedCompletionDate, undefined)
           });
         }
 
@@ -220,7 +219,7 @@ const resource: Resource = {
             submissionInfo: validatedSubmissionInfo.value,
             acceptanceCriteria: validatedAcceptanceCriteria.value,
             evaluationCriteria: validatedEvaluationCriteria.value,
-            attachments: attachmentIds,
+            attachments: validatedAttachments.value,
             status: validatedStatus.value
           });
         } else {
@@ -339,7 +338,6 @@ const resource: Resource = {
                 attachments: validatedAttachments.value
               });
             }
-            const attachmentIds = validatedAttachments.value.map(v => v.id);
 
             const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
             const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
@@ -353,7 +351,7 @@ const resource: Resource = {
                 session: request.session,
                 body: adt('edit' as const, {
                   ...request.body.value,
-                  attachments: attachmentIds,
+                  attachments: validatedAttachments.value,
                   // Coerce validated dates to default values.
                   proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
                   assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),

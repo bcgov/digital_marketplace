@@ -44,7 +44,10 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       const opportunity = opportunityResult.value;
       // Set up the visible tab state.
       const tabId = routeParams.tab || 'summary';
-      const tabState = immutable(await Tab.idToDefinition(tabId).component.init({ opportunity }));
+      const tabState = immutable(await Tab.idToDefinition(tabId).component.init({
+        opportunity,
+        viewerUser: shared.sessionUser
+        }));
       // Everything checks out, return valid state.
       return valid(immutable({
         opportunity,
