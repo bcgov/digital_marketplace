@@ -3,7 +3,7 @@ import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-u
 import { Organization } from 'shared/lib/resources/organization';
 import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
+import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export enum CWUProposalStatus {
   Draft = 'DRAFT',

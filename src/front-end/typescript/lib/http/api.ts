@@ -6,6 +6,7 @@ import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as FileResource from 'shared/lib/resources/file';
 import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
+import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
@@ -80,6 +81,42 @@ export const users: CrudApi<UserResourceTypes> = {
   create: undefined
 };
 
+// CWUProposal
+
+interface CWUProposalResourceSimpleResourceTypesParams {
+  record: CWUProposalResource.CWUProposal;
+  create: {
+    request: CWUProposalResource.CreateRequestBody;
+    invalidResponse: CWUProposalResource.CreateValidationErrors;
+  };
+  update: {
+    request: CWUProposalResource.UpdateRequestBody;
+    invalidResponse: CWUProposalResource.UpdateValidationErrors;
+  };
+}
+
+interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalResourceSimpleResourceTypesParams>, 'readMany'> {
+  readMany: {
+    rawResponse: CWUProposalResource.CWUProposalSlim;
+    validResponse: CWUProposalResource.CWUProposalSlim;
+    invalidResponse: string[];
+  };
+}
+
+const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
+
+const cwuProposal: CrudApi<CWUProposalResourceTypes> = {
+  ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_PROPOSAL_ROUTE_NAMESPACE),
+  readMany: makeReadMany<CWUProposalResourceTypes['readMany']>({
+    routeNamespace: CWU_PROPOSAL_ROUTE_NAMESPACE
+  })
+};
+
+export const proposals = {
+  cwu: cwuProposal
+};
+
+//
 // Addenda
 
 interface RawAddendum extends Omit<AddendumResource.Addendum, 'createdAt'> {
