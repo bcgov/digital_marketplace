@@ -14,7 +14,7 @@ export type State = Validation<Immutable<ValidState>, null>;
 
 export interface ValidState {
   opportunityId: Id;
-  form: Form.State;
+  form: Immutable<Form.State>;
   publishLoading: number;
 }
 
@@ -35,7 +35,7 @@ async function defaultState(opportunityId: Id) {
   return {
     publishLoading: 0,
     opportunityId,
-    form: await Form.init({opportunityId})
+    form: immutable(await Form.init({opportunityId}))
   };
 }
 
@@ -90,7 +90,7 @@ const view: ComponentView<State, Msg> = viewValid((params) => {
   return (
     <div>
       <Form.view
-        state={immutable(state.form)}
+        state={state.form}
         dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
         disabled={false}
       />
