@@ -11,7 +11,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUProposalSlim, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { ADT, adt } from 'shared/lib/types';
 
 export type State = Tab.Params & {
@@ -25,18 +25,39 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: Init<Tab.Params, State> = async params => {
+  params.opportunity.status = CWUOpportunityStatus.Evaluation;
+
   const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
-
   let proposals: CWUProposalSlim[] = [];
-
   switch (proposalResult.tag) {
     case 'valid':
       proposals = proposalResult.value;
+      proposals[1] =  {...proposals[0]};
+      proposals[2] =  {...proposals[0]};
+      proposals[3] =  {...proposals[0]};
+      proposals[4] =  {...proposals[0]};
+      proposals[5] =  {...proposals[0]};
+      proposals[6] =  {...proposals[0]};
+      proposals[7] =  {...proposals[0]};
+      proposals[8] =  {...proposals[0]};
+      proposals[9] =  {...proposals[0]};
+      proposals[0].score = 10;
+      proposals[1].score = 63;
+      proposals[2].score = 90;
+
+      proposals[0].status = CWUProposalStatus.Draft        ;
+      proposals[1].status = CWUProposalStatus.Submitted    ;
+      proposals[2].status = CWUProposalStatus.UnderReview  ;
+      proposals[3].status = CWUProposalStatus.Evaluated    ;
+      proposals[4].status = CWUProposalStatus.Awarded      ;
+      proposals[5].status = CWUProposalStatus.NotAwarded   ;
+      proposals[6].status = CWUProposalStatus.Disqualified ;
+      proposals[7].status = CWUProposalStatus.Withdrawn    ;
       break;
-    // case 'invalid':
-    // case 'unhandled':
+    case 'invalid':
+    case 'unhandled':
       // TODO(Jesse): ??
-      // break;
+      break;
   }
 
   return {
@@ -65,10 +86,23 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const reportCards = (opportunity: CWUOpportunity): ReportCard[]  => {
-  const proposalsValue = opportunity.reporting ? opportunity.reporting.numProposals.toString() : '- -';
+const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[]): ReportCard[]  => {
+
+  const proposalsValue = proposals.length.toString();
   const winningScoreValue = '- -'; // TODO(Jesse): @successful-proponent
-  const avgScoreValue = '- -';
+
+  let scoredProposals = 0;
+  let avgScore = proposals.reduce( (acc, proposal) => {
+    if (proposal.score) {
+      ++scoredProposals;
+      return acc + proposal.score;
+    } else {
+      return acc;
+    }
+  }, 0);
+  avgScore /= scoredProposals;
+
+  const avgScoreDisplay = avgScore ? `${avgScore.toFixed(1)}%` : '- -';
   return [
     {
       icon: 'comment-dollar',
@@ -85,7 +119,7 @@ const reportCards = (opportunity: CWUOpportunity): ReportCard[]  => {
       icon: 'star-half',
       iconColor: 'yellow',
       name: 'Avg. Score',
-      value: avgScoreValue
+      value: avgScoreDisplay.toString()
     }
   ];
 };
@@ -149,8 +183,9 @@ const view: ComponentView<State, Msg> = (props) => {
   const dispatch = props.dispatch;
 
   const opportunity = state.opportunity;
-  const cards = reportCards(opportunity);
-  const status = CWUOpportunityStatus.Evaluation;
+  const cardData = makeCardData(opportunity, state.proposals);
+
+  const status = opportunity.status;
 
   let ActiveView = WaitForOpportunityToClose({state, dispatch});
 
@@ -171,7 +206,7 @@ const view: ComponentView<State, Msg> = (props) => {
       <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
       <Row>
         <Col className='py-5' xs='12'>
-          <ReportCardList reportCards={cards} />
+          <ReportCardList reportCards={cardData} />
         </Col>
       </Row>
       <Row>

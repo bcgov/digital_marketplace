@@ -74,7 +74,6 @@ export interface CWUOpportunity {
     numProposals: number;
     numWatchers: number;
     numViews: number;
-    // avgScore: number; @avg-score-reporting
   };
 }
 

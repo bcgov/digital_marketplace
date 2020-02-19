@@ -28,9 +28,9 @@ export function cwuProposalStatusToColor(s: CWUProposalStatus): ThemeColor {
     case CWUProposalStatus.Draft        : return 'secondary';
     case CWUProposalStatus.Submitted    : return 'success';
     case CWUProposalStatus.UnderReview  : return 'warning';
-    case CWUProposalStatus.Evaluated    : return 'success';
+    case CWUProposalStatus.Evaluated    : return 'blue';
     case CWUProposalStatus.Awarded      : return 'success';
-    case CWUProposalStatus.NotAwarded   : return 'danger';
+    case CWUProposalStatus.NotAwarded   : return 'blue';
     case CWUProposalStatus.Disqualified : return 'danger';
     case CWUProposalStatus.Withdrawn    : return 'danger';
   }
