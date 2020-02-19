@@ -361,11 +361,11 @@ table {
   }
 
   .table-show-on-hover {
-    display: none;
+    visibility: hidden;
   }
 
   tr:hover .table-show-on-hover {
-    display: unset;
+    visibility: visible;
   }
 }
 

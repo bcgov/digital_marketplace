@@ -7,11 +7,12 @@ import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import Badge from 'front-end/lib/views/badge';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposalSlim, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { ADT, adt } from 'shared/lib/types';
 
 export type State = Tab.Params & {
@@ -20,39 +21,41 @@ export type State = Tab.Params & {
 };
 
 export type InnerMsg
-  = ADT<'table', Table.Msg>;
+  = ADT<'table', Table.Msg>
+  | ADT<'award', CWUProposalSlim>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async params => {
-  params.opportunity.status = CWUOpportunityStatus.Evaluation;
-
-  const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
+async function fetchProposals(opportunity: CWUOpportunity): Promise<CWUProposalSlim[]> {
+  const proposalResult = await api.proposals.cwu.readMany(opportunity.id);
   let proposals: CWUProposalSlim[] = [];
+
   switch (proposalResult.tag) {
     case 'valid':
       proposals = proposalResult.value;
-      proposals[1] =  {...proposals[0]};
-      proposals[2] =  {...proposals[0]};
-      proposals[3] =  {...proposals[0]};
-      proposals[4] =  {...proposals[0]};
-      proposals[5] =  {...proposals[0]};
-      proposals[6] =  {...proposals[0]};
-      proposals[7] =  {...proposals[0]};
-      proposals[8] =  {...proposals[0]};
-      proposals[9] =  {...proposals[0]};
-      proposals[0].score = 10;
-      proposals[1].score = 63;
-      proposals[2].score = 90;
 
-      proposals[0].status = CWUProposalStatus.Draft        ;
-      proposals[1].status = CWUProposalStatus.Submitted    ;
-      proposals[2].status = CWUProposalStatus.UnderReview  ;
-      proposals[3].status = CWUProposalStatus.Evaluated    ;
-      proposals[4].status = CWUProposalStatus.Awarded      ;
-      proposals[5].status = CWUProposalStatus.NotAwarded   ;
-      proposals[6].status = CWUProposalStatus.Disqualified ;
-      proposals[7].status = CWUProposalStatus.Withdrawn    ;
+      // proposals[1] =  {...proposals[0]};
+      // proposals[2] =  {...proposals[0]};
+      // proposals[3] =  {...proposals[0]};
+      // proposals[4] =  {...proposals[0]};
+      // proposals[5] =  {...proposals[0]};
+      // proposals[6] =  {...proposals[0]};
+      // proposals[7] =  {...proposals[0]};
+      // proposals[8] =  {...proposals[0]};
+      // proposals[9] =  {...proposals[0]};
+      // proposals[0].score = 10;
+      // proposals[1].score = 63;
+      // proposals[2].score = 90;
+
+      // proposals[0].status = CWUProposalStatus.Draft        ;
+      // proposals[1].status = CWUProposalStatus.Submitted    ;
+      // proposals[2].status = CWUProposalStatus.UnderReview  ;
+      // proposals[3].status = CWUProposalStatus.Evaluated    ;
+      // proposals[4].status = CWUProposalStatus.Awarded      ;
+      // proposals[5].status = CWUProposalStatus.NotAwarded   ;
+      // proposals[6].status = CWUProposalStatus.Disqualified ;
+      // proposals[7].status = CWUProposalStatus.Withdrawn    ;
+
       break;
     case 'invalid':
     case 'unhandled':
@@ -60,10 +63,14 @@ const init: Init<Tab.Params, State> = async params => {
       break;
   }
 
+  return proposals;
+}
+
+const init: Init<Tab.Params, State> = async params => {
   return {
-    proposals,
+    proposals: await fetchProposals(params.opportunity),
     table: immutable(await Table.init({
-      idNamespace: '???'
+      idNamespace: 'proposal-table'
     })),
     ...params
   };
@@ -71,6 +78,23 @@ const init: Init<Tab.Params, State> = async params => {
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+
+    case 'award':
+      return [state,
+        async (state, dispatch) => {
+        const updateResult = await api.proposals.cwu.update(msg.value.id, adt('award', state.opportunity.id));
+
+        switch (updateResult.tag) {
+          case 'valid':
+            state.set('proposals', await fetchProposals(state.opportunity));
+          case 'invalid':
+          case 'unhandled':
+            // TODO(Jesse): ??
+            break;
+        }
+
+        return state;
+      }];
 
     case 'table':
       return updateComponentChild({
@@ -133,12 +157,37 @@ const WaitForOpportunityToClose: View<Props> = ({ state }) => {
   return (<div>Proposals will be displayed here once the opportunity has closed.</div>);
 };
 
-function evaluationTableBodyRows(state: State): Table.BodyRows  {
-  return state.proposals.map( (p) => {
+function contextMenu(proposal: CWUProposalSlim, dispatch: Dispatch<Msg>) {
+  return (
+    <div>
+      <Link
+        button
+        symbol_={leftPlacement(iconLinkSymbol('award'))}
+        color='primary'
+        onClick={() => dispatch(adt('award', proposal)) }
+      >
+        <small>Award</small>
+      </Link>
+    </div>
+  );
+}
+
+function proponentDisplay(proposal: CWUProposalSlim) {
+  return (
+    <div>
+      <div>{proposal.createdBy.name}</div>
+      <div><small>{proposal.proponent.value.legalName}</small></div>
+    </div>
+  );
+}
+
+function evaluationTableBodyRows(state: State, dispatch: Dispatch<Msg>): Table.BodyRows  {
+  return state.proposals.map( p => {
     return [
-      { children: <div>{p.proponent.value.legalName}</div> },
+      { children: proponentDisplay(p) },
       { children: <Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} /> },
-      { children: <div>{p.score ? p.score : '- -'}</div> }
+      { children: <div>{p.score ? p.score : '- -'}</div> },
+      { children: contextMenu(p, dispatch), showOnHover: true }
     ];
   });
 }
@@ -153,15 +202,17 @@ function evaluationTableHeadCells(state: State): Table.HeadCells {
     {
       children: 'Status',
       className: 'text-nowrap',
-      style: {
-        width: '25%',
-        minWidth: '200px'
-      }
+      style: { width: '20%' }
     },
     {
       children: 'Score',
       className: 'text-nowrap',
-      style: { width: '25%' }
+      style: { width: '15%' }
+    },
+    {
+      children: '',
+      className: 'text-nowrap',
+      style: { width: '15%' }
     }
   ];
 }
@@ -171,7 +222,7 @@ const EvaluationTable: View<Props> = ({ state, dispatch }) => {
     <div>
       <Table.view
         headCells={evaluationTableHeadCells(state)}
-        bodyRows={evaluationTableBodyRows(state)}
+        bodyRows={evaluationTableBodyRows(state, dispatch)}
         state={state.table}
         dispatch={mapComponentDispatch(dispatch, msg => adt('table' as const, msg))} />
     </div>
@@ -187,16 +238,14 @@ const view: ComponentView<State, Msg> = (props) => {
 
   const status = opportunity.status;
 
-  let ActiveView = WaitForOpportunityToClose({state, dispatch});
-
+  let ActiveView;
   switch (status) {
-
-    // case 'DRAFT':
-    //   ActiveView = WaitForOpportunityToClose({state});
-    //   break;
-
     case 'EVALUATION':
       ActiveView = EvaluationTable({state, dispatch});
+      break;
+
+    default:
+      ActiveView = WaitForOpportunityToClose({state, dispatch});
       break;
 
   }
