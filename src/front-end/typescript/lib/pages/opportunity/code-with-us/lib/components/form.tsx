@@ -185,7 +185,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.description || '',
         id: 'cwu-opportunity-description',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -246,7 +246,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.acceptanceCriteria || '',
         id: 'cwu-opportunity-acceptance-criteria',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -256,7 +256,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.evaluationCriteria || '',
         id: 'cwu-opportunity-evaluation-criteria',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 

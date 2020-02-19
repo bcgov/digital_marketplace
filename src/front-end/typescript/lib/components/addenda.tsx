@@ -1,7 +1,7 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import { uploadMarkdownImage } from 'front-end/lib/http/api';
+import { makeUploadMarkdownImage } from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { compareDates, formatDateAndTime } from 'shared/lib';
@@ -47,7 +47,7 @@ async function initAddendumField(id: string, value = '', errors: string[] = []):
     errors,
     validate: validateAddendumText,
     child: {
-      uploadImage: uploadMarkdownImage,
+      uploadImage: makeUploadMarkdownImage(),
       value,
       id
     }

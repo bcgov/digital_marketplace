@@ -1,22 +1,24 @@
 import { Route } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
-import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
+import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import Radio from 'front-end/lib/views/radio';
+import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
-import { Col, Nav, NavItem, Row } from 'reactstrap';
+import { Alert, Col, Nav, NavItem, Row } from 'reactstrap';
+import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { OrganizationSlim } from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
-import { adt, ADT, Id } from 'shared/lib/types';
+import { UserType } from 'shared/lib/resources/user';
+import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/opportunity';
+import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
 
 type ProponentType = 'individual' | 'organization';
 
@@ -42,8 +44,9 @@ export interface State {
   // Organziation
   organization: Immutable<Select.State>;
   // Proposal Tab
-  proposalText: Immutable<LongText.State>;
-  additionalComments: Immutable<LongText.State>;
+  showEvaluationCriteria: boolean;
+  proposalText: Immutable<RichMarkdownEditor.State>;
+  additionalComments: Immutable<RichMarkdownEditor.State>;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
 }
@@ -66,8 +69,9 @@ type InnerMsg
   // Organization Proponent
   | ADT<'organization', Select.Msg>
   // Proposal Tab
-  | ADT<'proposalText',           LongText.Msg>
-  | ADT<'additionalComments', LongText.Msg>
+  | ADT<'toggleEvaluationCriteria'>
+  | ADT<'proposalText',           RichMarkdownEditor.Msg>
+  | ADT<'additionalComments', RichMarkdownEditor.Msg>
   // Attachments tab
   | ADT<'attachments', Attachments.Msg>;
 
@@ -75,14 +79,15 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export interface Params {
   opportunity: CWUOpportunity;
-  organizations: OrganizationSlim[];
+  affiliations: AffiliationSlim[];
 }
 
-export const init: Init<Params, State> = async ({ opportunity, organizations }) => {
+export const init: Init<Params, State> = async ({ opportunity, affiliations }) => {
   return {
     opportunity,
     activeTab: 'Proponent',
     orgId: '',
+    showEvaluationCriteria: true,
 
     proponentType: immutable(await ProponentTypeRadioGroup.init({
       errors: [],
@@ -100,124 +105,145 @@ export const init: Init<Params, State> = async ({ opportunity, organizations }) 
     // Individual
     legalName: immutable(await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentLegalName,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-legalName'
+        id: 'cwu-proposal-individual-legalName'
       }
     })),
 
     email: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentEmail,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-email'
+        id: 'cwu-proposal-individual-email'
       }
     })),
 
     phone: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentPhone,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-phone'
+        id: 'cwu-proposal-individual-phone'
       }
     })),
 
     street1: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentStreet1,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-street1'
+        id: 'cwu-proposal-individual-street1'
       }
     })),
 
     street2: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentStreet2,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-street2'
+        id: 'cwu-proposal-individual-street2'
       }
     })),
 
     city: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentCity,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-city'
+        id: 'cwu-proposal-individual-city'
       }
     })),
 
     region: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentRegion,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-region'
+        id: 'cwu-proposal-individual-region'
       }
     })),
 
     mailCode: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentMailCode,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-mailCode'
+        id: 'cwu-proposal-individual-mailCode'
       }
     })),
 
     country: immutable( await ShortText.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateIndividualProponentCountry,
       child: {
         type: 'text',
         value: '',
-        id: 'opportunity-individual-country'
+        id: 'cwu-proposal-individual-country'
       }
     })),
 
     organization: immutable(await Select.init({
       errors: [],
+      validate: option => {
+        if (!option) { return invalid(['Please select an organization.']); }
+        return valid(option);
+      },
       child: {
-        value: { value: organizations[0].id, label: organizations[0].legalName },
-        id: 'proposal-organization-id',
-        options: adt( 'options', organizations.map( O => ({ value: O.id, label: O.legalName })) )
+        value: null,
+        id: 'cwu-proposal-organization-id',
+        options: adt('options', affiliations
+          .filter(a => a.membershipType === MembershipType.Owner)
+          .map(a => ({ value: a.organization.id, label: a.organization.legalName })))
       }
     })),
 
-    proposalText: immutable(await LongText.init({
+    proposalText: immutable(await RichMarkdownEditor.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateProposalText,
       child: {
         value: '',
-        id: 'proposal-proposalText'
+        id: 'cwu-proposal-proposalText',
+        //TODO need to figure out how to set permissions for markdown images here
+        //might require special back-end endpoint
+        uploadImage: api.makeUploadMarkdownImage([
+          adt('userType', UserType.Admin),
+          adt('userType', UserType.Government)
+        ])
       }
     })),
 
-    additionalComments: immutable(await LongText.init({
+    additionalComments: immutable(await RichMarkdownEditor.init({
       errors: [],
-      validate: opportunityValidation.validateTitle,
+      validate: proposalValidation.validateAdditionalComments,
       child: {
         value: '',
-        id: 'proposal-additional-comments'
+        id: 'cwu-proposal-additional-comments',
+        //TODO need to figure out how to set permissions for markdown images here
+        uploadImage: api.makeUploadMarkdownImage([
+          adt('userType', UserType.Admin),
+          adt('userType', UserType.Government)
+        ])
       }
     })),
 
     attachments: immutable(await Attachments.init({
       existingAttachments: [],
-      newAttachmentMetadata: [adt('any')]
+      //TODO need to figure out how to set permissions for proposal attachments here
+      newAttachmentMetadata: [
+        adt('userType', UserType.Admin),
+        adt('userType', UserType.Government)
+      ]
     }))
 
   };
@@ -318,11 +344,23 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('country', value)
       });
 
+    case 'organization':
+      return updateComponentChild({
+        state,
+        childStatePath: ['organization'],
+        childUpdate: Select.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('organization', value)
+      });
+
+    case 'toggleEvaluationCriteria':
+      return [state.update('showEvaluationCriteria', v => !v)];
+
     case 'proposalText':
       return updateComponentChild({
         state,
         childStatePath: ['proposalText'],
-        childUpdate: LongText.update,
+        childUpdate: RichMarkdownEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('proposalText', value)
       });
@@ -331,7 +369,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['additionalComments'],
-        childUpdate: LongText.update,
+        childUpdate: RichMarkdownEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('additionalComments', value)
       });
@@ -349,8 +387,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return [state];
   }
 };
-
-type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
 
 function proponentFor(proponentType: ProponentType, state: State): CWUProposalResource.CreateProponentRequestBody {
   switch (proponentType) {
@@ -372,45 +408,42 @@ function proponentFor(proponentType: ProponentType, state: State): CWUProposalRe
   }
 }
 
-function getFormValues(state: State): Values | null {
+type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
+
+function getValues(state: State): Values | null {
   const proponentType = FormField.getValue(state.proponentType);
   if (!proponentType) { return null; }
   const proponent = proponentFor(proponentType, state);
-  const result = {
-    proposalText:        FormField.getValue(state.proposalText),
-    additionalComments:  FormField.getValue(state.additionalComments),
+  return {
     proponent,
-    attachments: state.attachments.existingAttachments.map(({ id }) => id)
+    proposalText:       FormField.getValue(state.proposalText),
+    additionalComments: FormField.getValue(state.additionalComments),
+    attachments:        state.attachments.existingAttachments.map(({ id }) => id)
   };
-
-  return result;
 }
-
-type Errors = CWUProposalResource.CreateValidationErrors;
 
 export function isProponentTabValid(state: State): boolean {
   const proponentType = FormField.getValue(state.proponentType);
   if (!proponentType) { return false; }
   switch (proponentType) {
     case 'individual':
-      return FormField.isValid(state.legalName)  &&
-               FormField.isValid(state.email)    &&
-               FormField.isValid(state.phone)    &&
-               FormField.isValid(state.street1)  &&
-               FormField.isValid(state.street2)  &&
-               FormField.isValid(state.city)     &&
-               FormField.isValid(state.region)   &&
-               FormField.isValid(state.mailCode) &&
-               FormField.isValid(state.country);
+      return FormField.isValid(state.legalName) &&
+             FormField.isValid(state.email)     &&
+             FormField.isValid(state.phone)     &&
+             FormField.isValid(state.street1)   &&
+             FormField.isValid(state.street2)   &&
+             FormField.isValid(state.city)      &&
+             FormField.isValid(state.region)    &&
+             FormField.isValid(state.mailCode)  &&
+             FormField.isValid(state.country);
     case 'organization':
       return FormField.isValid(state.organization);
   }
 }
 
 export function isProposalTabValid(state: State): boolean {
-  const result = FormField.isValid(state.proposalText) &&
-                 FormField.isValid(state.additionalComments);
-  return result;
+  return FormField.isValid(state.proposalText) &&
+         FormField.isValid(state.additionalComments);
 }
 
 export function isAttachmentsTabValid(state: State): boolean {
@@ -425,47 +458,37 @@ export function isValid(state: State): boolean {
   );
 }
 
-function setErrors(state: State, errors?: Errors): void {
-  if (errors) {
+interface Errors extends CWUProposalResource.CreateValidationErrors {
+  proponentType?: string[];
+}
 
-    if (errors.proponent) {
-      switch (errors.proponent.tag) {
-        case 'individual': {
-          if (errors.proponent.value.legalName) { FormField.setErrors(state.legalName, errors.proponent.value.legalName); }
-          if (errors.proponent.value.email)     { FormField.setErrors(state.email, errors.proponent.value.email); }
-          if (errors.proponent.value.phone)     { FormField.setErrors(state.phone, errors.proponent.value.phone); }
-          if (errors.proponent.value.street1)   { FormField.setErrors(state.street1, errors.proponent.value.street1); }
-          if (errors.proponent.value.street2)   { FormField.setErrors(state.street2, errors.proponent.value.street2); }
-          if (errors.proponent.value.city)      { FormField.setErrors(state.city, errors.proponent.value.city); }
-          if (errors.proponent.value.region)    { FormField.setErrors(state.region, errors.proponent.value.region); }
-          if (errors.proponent.value.mailCode)  { FormField.setErrors(state.mailCode, errors.proponent.value.mailCode); }
-          if (errors.proponent.value.country)   { FormField.setErrors(state.country, errors.proponent.value.country); }
-          break;
-        }
-        case 'organization': {
-          if (errors.proponent.value) { FormField.setErrors(state.organization, errors.proponent.value); }
-          break;
-        }
-        case 'parseFailure': {
-          // Note: Hard failure case from the backend.
-          break;
-        }
-      }
-    }
+function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
+  const individualProponentErrors = errors && errors.proponent && errors.proponent.tag === 'individual' ? errors.proponent.value : {};
+  const organizationErrors = errors && errors.proponent && errors.proponent.tag === 'organization' ? errors.proponent.value : [];
+  return state
+    .update('proposalText', s => FormField.setErrors(s, errors?.proposalText || []))
+    .update('additionalComments', s => FormField.setErrors(s, errors?.additionalComments || []))
+    .update('proponentType', s => FormField.setErrors(s, errors?.proponentType || []))
+    .update('legalName', s => FormField.setErrors(s, individualProponentErrors.legalName || []))
+    .update('email', s => FormField.setErrors(s, individualProponentErrors.email || []))
+    .update('phone', s => FormField.setErrors(s, individualProponentErrors.phone || []))
+    .update('street1', s => FormField.setErrors(s, individualProponentErrors.street1 || []))
+    .update('street2', s => FormField.setErrors(s, individualProponentErrors.street2 || []))
+    .update('city', s => FormField.setErrors(s, individualProponentErrors.city || []))
+    .update('region', s => FormField.setErrors(s, individualProponentErrors.region || []))
+    .update('mailCode', s => FormField.setErrors(s, individualProponentErrors.mailCode || []))
+    .update('country', s => FormField.setErrors(s, individualProponentErrors.country || []))
+    .update('organization', s => FormField.setErrors(s, organizationErrors));
+}
 
-    if (errors.attachments) {
-      // TODO(Jesse): Do we ever actually get attachment errors?
-    }
+export async function persist(state: Immutable<State>): Promise<Validation<[Immutable<State>, CWUProposalResource.CWUProposal], Immutable<State>>> {
+  const formValues = getValues(state);
+
+  if (!formValues) {
+    return invalid(setErrors(state, {
+      proponentType: ['Please select a proponent type.']
+    }));
   }
-  return;
-}
-
-function requestBodyFromValues(opportunityId: Id, formValues: Values): CWUProposalResource.CreateRequestBody {
-  return ({opportunity: opportunityId, ...formValues });
-}
-
-export async function persist(state: State): Promise<Validation<State, string[]>> {
-  const formValues = getFormValues(state);
 
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   // Upload new attachments if necessary.
@@ -473,36 +496,35 @@ export async function persist(state: State): Promise<Validation<State, string[]>
     const result = await api.uploadFiles(newAttachments);
     switch (result.tag) {
       case 'valid':
-        formValues.attachments = [...formValues.attachments, ...(result.value.map(({ id }) => id))];
+        formValues.attachments = [
+          ...formValues.attachments,
+          ...(result.value.map(({ id }) => id))
+        ];
         break;
       case 'invalid':
+        return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
       case 'unhandled':
-        return invalid(['Error updating attachments.']);
+        return invalid(state);
     }
   }
 
-  const requestBody = requestBodyFromValues(state.opportunity.id, formValues);
-  const apiResult = await api.proposals.cwu.create(requestBody);
+  const apiResult = await api.proposals.cwu.create({
+    opportunity: state.opportunity.id,
+    ...formValues
+  });
 
   switch (apiResult.tag) {
     case 'valid':
-      return valid(state);
+      return valid([setErrors(state, {}), apiResult.value]);
     case 'unhandled':
     case 'invalid':
-      setErrors(state, apiResult.value);
-      return invalid(['Error creating the Proposal.']);
+      return invalid(setErrors(state, apiResult.value));
   }
 }
 
 const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <Row className='pt-5 border-top'>
-      <Col xs='12'>
-        Please provide the following details for the proponent that will
-        complete the work as outlined by the Acceptance Criteria of the
-        opportunity.
-      </Col>
-
+    <Row>
       <Col xs='12'>
         <ShortText.view
           placeholder='Vendor Name'
@@ -519,7 +541,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
           placeholder='vendor@email.com'
           required
           extraChildProps={{}}
-          label='Email'
+          label='Email Address'
           state={state.email}
           dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value)) }
         />
@@ -529,7 +551,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         <ShortText.view
           placeholder='Phone Number'
           extraChildProps={{}}
-          label='Phone'
+          label='Phone Number'
           state={state.phone}
           dispatch={mapComponentDispatch(dispatch, value => adt('phone' as const, value)) }
         />
@@ -540,7 +562,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
           placeholder='Street Address'
           required
           extraChildProps={{}}
-          label='Address'
+          label='Street Address'
           state={state.street1}
           dispatch={mapComponentDispatch(dispatch, value => adt('street1' as const, value)) }
         />
@@ -550,13 +572,13 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         <ShortText.view
           placeholder='Street Address'
           extraChildProps={{}}
-          label='Address'
+          label='Street Address'
           state={state.street2}
           dispatch={mapComponentDispatch(dispatch, value => adt('street2' as const, value)) }
         />
       </Col>
 
-      <Col sm='8' xs='12'>
+      <Col md='8' xs='12'>
         <ShortText.view
           placeholder='City'
           required
@@ -567,7 +589,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col sm='4' xs='12'>
+      <Col md='4' xs='12'>
         <ShortText.view
           placeholder='Province / State'
           required
@@ -578,7 +600,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col sm='5' xs='12'>
+      <Col md='5' xs='12'>
         <ShortText.view
           placeholder='Postal / ZIP Code'
           required
@@ -589,7 +611,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col sm='7' xs='12'>
+      <Col md='7' xs='12'>
         <ShortText.view
           placeholder='Country'
           required
@@ -605,7 +627,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
 const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <Row className='pt-5 border-top'>
+    <Row>
       <Col xs='12'>
         <Select.view
           extraChildProps={{}}
@@ -619,50 +641,54 @@ const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) =
   );
 };
 
-const ProponentView: ComponentView<State, Msg> = (params) => {
-  const state = params.state;
-  const dispatch = params.dispatch;
-
-  let activeView;
-  switch (state.proponentType) {
-    case 'Individual': {
-      activeView = (<IndividualProponent {...params} />);
-      break;
+const ProponentView: View<Props> = props => {
+  const { state, dispatch, disabled } = props;
+  const proponentType = FormField.getValue(state.proponentType);
+  const activeView = (() => {
+    switch (proponentType) {
+      case 'individual':
+        return (<IndividualProponent {...props} />);
+      case 'organization':
+        return (<OrganizationProponent {...props} />);
+      default:
+        return null;
     }
-    case 'Organization': {
-      activeView = (<OrganizationProponent {...params} />);
-      break;
-    }
-  }
+  })();
 
   return (
     <div>
-      <Row className='pb-5'>
+      <Row>
         <Col xs='12'>
-          <p>
+          <p className='mb-4'>
             Please select the type of proponent that will be submitting a
             proposal for the opportunity
           </p>
         </Col>
-
         <Col xs='12'>
-          <Radio
-            id='proponenet-is-individual'
-            label='Individual'
-            checked={state.proponentType === 'Individual'}
-            onClick={ () => { dispatch(adt('proponentType' as const, 'Individual' as const)); } }
-          />
-
-          <Radio
-            id='proponenet-is-org'
-            label='Organization'
-            checked={state.proponentType === 'Organization'}
-            onClick={ () => { dispatch(adt('proponentType' as const, 'Organization' as const)); } }
-          />
+          <ProponentTypeRadioGroup.view
+            extraChildProps={{ inline: true }}
+            className='mb-0'
+            required
+            disabled={disabled}
+            state={state.proponentType}
+            dispatch={mapComponentDispatch(dispatch, value => adt('proponentType' as const, value))} />
         </Col>
       </Row>
 
-      { activeView }
+      {activeView
+        ? (<div className='mt-5 pt-5 border-top'>
+            <Row>
+              <Col xs='12'>
+                <p className='mb-4'>
+                  Please provide the following details for the proponent that will
+                  complete the work as outlined by the Acceptance Criteria of the
+                  opportunity.
+                </p>
+              </Col>
+            </Row>
+            {activeView}
+          </div>)
+        : null}
     </div>
   );
 };
@@ -671,28 +697,35 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
       <Col xs='12'>
-        Enter your proposal and any additional comments in the spaces provided
-        below.  Be sure to address the Proposal Evaluation Criteria.
+        <p className='mb-4'>
+          Enter your proposal and any additional comments in the spaces provided
+          below.  Be sure to address the Proposal Evaluation Criteria.
+        </p>
       </Col>
       <Col xs='12'>
-        TODO(Jesse): How do we pull the proposal question point criteria for
-        the context bubble as per the designs?
+        <Alert color='blue-alt' className='mb-4'>
+          <Link color='inherit' className='font-weight-bold d-flex justify-content-between flex-nowrap align-items-center w-100' onClick={() => dispatch(adt('toggleEvaluationCriteria'))}>
+            Proposal Evaluation Criteria
+            <Icon name={state.showEvaluationCriteria ? 'chevron-up' : 'chevron-down'} className='o-75'/>
+          </Link>
+          {state.showEvaluationCriteria
+            ? (<Markdown source={state.opportunity.evaluationCriteria} className='mt-3' openLinksInNewTabs />)
+            : null}
+        </Alert>
       </Col>
       <Col xs='12'>
-        <LongText.view
+        <RichMarkdownEditor.view
           required
           extraChildProps={{}}
-          style={{ height: '450px' }}
+          style={{ height: '60vh', minHeight: '400px' }}
           label='Proposal'
           state={state.proposalText}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalText' as const, value))} />
       </Col>
-
       <Col xs='12'>
-        <LongText.view
-          required
+        <RichMarkdownEditor.view
           extraChildProps={{}}
-          style={{ height: '200px' }}
+          style={{ height: '300px' }}
           label='Additional Comments'
           state={state.additionalComments}
           dispatch={mapComponentDispatch(dispatch, value => adt('additionalComments' as const, value))} />
@@ -711,7 +744,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
     <Row>
       <Col xs='12'>
         <p>
-          Upload any supporting material for your opportunity here. Attachments must be smaller than 10MB.
+          Upload any supporting material for your proposal here. Attachments must be smaller than 10MB.
         </p>
         <Attachments.view
           dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
@@ -756,11 +789,15 @@ export const view: View<Props> = props => {
   const { state } = props;
   return (
     <div>
-      <Nav tabs className='mb-5'>
-        <TabLink {...props} tab='Proponent' />
-        <TabLink {...props} tab='Proposal' />
-        <TabLink {...props} tab='Attachments' />
-      </Nav>
+      <div className='sticky bg-white'>
+        <div className='d-flex mb-5' style={{ overflowX: 'auto' }}>
+          <Nav tabs className='flex-grow-1 flex-nowrap bg-white'>
+            <TabLink {...props} tab='Proponent' />
+            <TabLink {...props} tab='Proposal' />
+            <TabLink {...props} tab='Attachments' />
+          </Nav>
+        </div>
+      </div>
       {(() => {
         switch (state.activeTab) {
           case 'Proponent': {
