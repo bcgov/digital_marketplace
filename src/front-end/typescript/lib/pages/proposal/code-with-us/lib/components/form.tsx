@@ -1,11 +1,10 @@
-import { Route } from 'front-end/lib/app/types';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentView, ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentView, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -51,9 +50,8 @@ export interface State {
   attachments: Immutable<Attachments.State>;
 }
 
-type InnerMsg
+export type Msg
   = ADT<'updateActiveTab',   TabId>
-  | ADT<'saveDraft'>
   // Proponent Tab
   | ADT<'proponentType', RadioGroup.Msg<ProponentType>>
   // Individual Proponent
@@ -74,8 +72,6 @@ type InnerMsg
   | ADT<'additionalComments', RichMarkdownEditor.Msg>
   // Attachments tab
   | ADT<'attachments', Attachments.Msg>;
-
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export interface Params {
   opportunity: CWUOpportunity;
@@ -382,9 +378,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('attachments', value)
       });
-
-    default:
-      return [state];
   }
 };
 
@@ -626,6 +619,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 };
 
 const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  //TODO Create org button and flow
   return (
     <Row>
       <Col xs='12'>
