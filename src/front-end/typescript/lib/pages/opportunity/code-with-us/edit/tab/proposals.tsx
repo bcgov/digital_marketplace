@@ -7,7 +7,7 @@ import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import Badge from 'front-end/lib/views/badge';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -175,7 +175,7 @@ function contextMenu(proposal: CWUProposalSlim, dispatch: Dispatch<Msg>) {
 function proponentDisplay(proposal: CWUProposalSlim) {
   return (
     <div>
-      <div>{proposal.createdBy.name}</div>
+      <Link dest={routeDest(adt('userProfile', {userId: proposal.createdBy.id}))}>{proposal.createdBy.name}</Link>
       <div><small>{proposal.proponent.value.legalName}</small></div>
     </div>
   );
@@ -254,13 +254,24 @@ const view: ComponentView<State, Msg> = (props) => {
     <div>
       <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
       <Row>
-        <Col className='py-5' xs='12'>
+        <Col className='border-bottom py-5' xs='12'>
           <ReportCardList reportCards={cardData} />
         </Col>
       </Row>
       <Row>
-        <Col className='border-top py-5' xs='12'>
+        <Col className='pt-5' sm='6' xs='12'>
           <h4 className='pb-3'>Proposals</h4>
+        </Col>
+        <Col className='pt-sm-5 d-flex justify-content-sm-end' sm='6' xs='12'>
+          <Link
+            className='pb-3'
+            symbol_={rightPlacement(iconLinkSymbol('external-link'))}
+          >
+            { /* TODO(Jesse?) : Hook this up to the export path */ }
+            Export All Proposals
+          </Link>
+        </Col>
+        <Col xs='12'>
           { ActiveView }
         </Col>
       </Row>
