@@ -16,6 +16,20 @@ export enum CWUProposalStatus {
   Withdrawn = 'WITHDRAWN'
 }
 
+export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
+  switch (raw) {
+    case CWUProposalStatus.Draft: return CWUProposalStatus.Draft;
+    case CWUProposalStatus.Submitted: return CWUProposalStatus.Submitted;
+    case CWUProposalStatus.UnderReview: return CWUProposalStatus.UnderReview;
+    case CWUProposalStatus.Evaluated: return CWUProposalStatus.Evaluated;
+    case CWUProposalStatus.Awarded: return CWUProposalStatus.Awarded;
+    case CWUProposalStatus.NotAwarded: return CWUProposalStatus.NotAwarded;
+    case CWUProposalStatus.Disqualified: return CWUProposalStatus.Disqualified;
+    case CWUProposalStatus.Withdrawn: return CWUProposalStatus.Withdrawn;
+    default: return null;
+  }
+}
+
 export interface CWUProposalStatusRecord {
   id: Id;
   createdAt: Date;
@@ -61,12 +75,17 @@ export type CreateProponentRequestBody
 
 export type UpdateProponentRequestBody = CreateProponentRequestBody;
 
+export type CreateCWUProposalStatus
+  = CWUProposalStatus.Draft
+  | CWUProposalStatus.Submitted;
+
 export interface CreateRequestBody {
   opportunity: Id;
   proposalText: string;
   additionalComments: string;
   proponent: CreateProponentRequestBody;
   attachments: Id[];
+  status: CreateCWUProposalStatus;
 }
 
 export type CreateIndividualProponentRequestBody = Omit<CWUIndividualProponent, 'id'>;
@@ -91,7 +110,7 @@ export type UpdateRequestBody
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>;
 
-export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity'>;
+export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
