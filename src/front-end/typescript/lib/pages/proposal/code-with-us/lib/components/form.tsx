@@ -571,7 +571,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col md='8' xs='12'>
+      <Col md='7' xs='12'>
         <ShortText.view
           placeholder='City'
           required
@@ -582,7 +582,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
         />
       </Col>
 
-      <Col md='4' xs='12'>
+      <Col md='5' xs='12'>
         <ShortText.view
           placeholder='Province / State'
           required
@@ -619,7 +619,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 };
 
 const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  //TODO Create org button and flow
+  //TODO Add hint about creating an organization
   return (
     <Row>
       <Col xs='12'>
