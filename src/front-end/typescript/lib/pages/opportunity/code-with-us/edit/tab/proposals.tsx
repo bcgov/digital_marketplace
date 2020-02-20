@@ -172,10 +172,14 @@ function contextMenu(proposal: CWUProposalSlim, dispatch: Dispatch<Msg>) {
   );
 }
 
-function proponentDisplay(proposal: CWUProposalSlim) {
+function proponentDisplay(proposal: CWUProposalSlim, opportunity: CWUOpportunity) {
+  const proposalRouteParams = {
+    proposalId: proposal.id,
+    opportunityId: opportunity.id
+  };
   return (
     <div>
-      <Link dest={routeDest(adt('userProfile', {userId: proposal.createdBy.id}))}>{proposal.createdBy.name}</Link>
+      <Link dest={routeDest(adt('proposalCWUEdit', proposalRouteParams))}>{proposal.createdBy.name}</Link>
       <div><small>{proposal.proponent.value.legalName}</small></div>
     </div>
   );
@@ -184,7 +188,7 @@ function proponentDisplay(proposal: CWUProposalSlim) {
 function evaluationTableBodyRows(state: State, dispatch: Dispatch<Msg>): Table.BodyRows  {
   return state.proposals.map( p => {
     return [
-      { children: proponentDisplay(p) },
+      { children: proponentDisplay(p, state.opportunity) },
       { children: <Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} /> },
       { children: <div>{p.score ? p.score : '- -'}</div> },
       { children: contextMenu(p, dispatch), showOnHover: true }

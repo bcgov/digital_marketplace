@@ -1,13 +1,15 @@
 import { makePageMetadata } from 'front-end/lib';
+import * as api from 'front-end/lib/http/api';
+import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  opportunities: CWUOpportunitySlim[];
 }
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
@@ -15,7 +17,12 @@ export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  return { empty: true };
+  let result = { opportunities: [] as CWUOpportunitySlim[] }
+  const apiRequest = await api.opportunities.cwu.readMany();
+  if (apiRequest.tag === 'valid') {
+    result.opportunities = apiRequest.value;
+  }
+  return result;
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -26,7 +33,19 @@ const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        Opportunities page coming soon.
+        {
+          state.opportunities.map( o => {
+            return (
+              <div>
+                <Link
+                  dest={routeDest(adt('opportunityCWUEdit', {opportunityId: o.id}))}
+                >
+                  {o.title}
+                </Link>
+              </div>
+            );
+          })
+        }
       </Col>
     </Row>
   );
