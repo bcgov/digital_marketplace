@@ -636,6 +636,10 @@ nav.navbar .nav-link:hover {
     margin-bottom: 2*$spacer;
   }
 
+  & > *:last-child {
+    @extend .mb-0;
+  }
+
 }
 
 .vi-card {

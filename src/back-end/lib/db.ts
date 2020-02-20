@@ -11,7 +11,7 @@ import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOppo
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, CWUProposalStatusRecord, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
 
@@ -90,6 +90,14 @@ export const readOneUserByEmail = tryDb<[string, boolean?], User | null>(async (
     .where(where)
     .first();
   return valid(result ? await rawUserToUser(connection, result) : null);
+});
+
+export const readOneUserSlim = tryDb<[Id], UserSlim | null>(async (connection, id) => {
+  const result = await connection<UserSlim>('users')
+    .where({ id })
+    .select('id', 'name')
+    .first();
+  return valid(result ? result : null);
 });
 
 export const readManyUsers = tryDb<[], User[]>(async (connection) => {
@@ -666,8 +674,9 @@ interface RawCWUOpportunitySlim extends Omit<CWUOpportunitySlim, 'createdBy' | '
 
 async function rawCWUOpportunitySlimToCWUOpportunitySlim(connection: Connection, raw: RawCWUOpportunitySlim): Promise<CWUOpportunitySlim> {
   const { createdBy: createdById, updatedBy: updatedById } = raw;
-  const createdBy = createdById && getValidValue(await readOneUser(connection, createdById), undefined) || undefined;
-  const updatedBy = updatedById && getValidValue(await readOneUser(connection, updatedById), undefined) || undefined;
+  const createdBy = createdById && getValidValue(await readOneUserSlim(connection, createdById), undefined) || undefined;
+  const updatedBy = updatedById && getValidValue(await readOneUserSlim(connection, updatedById), undefined) || undefined;
+
   return {
     ...raw,
     createdBy,
@@ -685,8 +694,8 @@ interface RawCWUOpportunity extends Omit<CWUOpportunity, 'createdBy' | 'updatedB
 
 async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: RawCWUOpportunity): Promise<CWUOpportunity> {
   const { createdBy: createdById, updatedBy: updatedById, attachments: attachmentIds, addenda: addendaIds } = raw;
-  const createdBy = createdById ? getValidValue(await readOneUser(connection, createdById), undefined) : undefined;
-  const updatedBy = updatedById ? getValidValue(await readOneUser(connection, updatedById), undefined) : undefined;
+  const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
+  const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
   const attachments = await Promise.all(attachmentIds.map(async id => {
     const result = getValidValue(await readOneFileById(connection, id), null);
     if (!result) {
@@ -895,7 +904,7 @@ interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
 
 async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection: Connection, raw: RawCWUOpportunityAddendum): Promise<Addendum> {
   const { createdBy: createdById } = raw;
-  const createdBy = createdById ? getValidValue(await readOneUser(connection, createdById), undefined) : undefined;
+  const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
 
   return {
     ...raw,
@@ -1048,7 +1057,7 @@ interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityStatusRecord,
 
 async function rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(connection: Connection, session: Session, raw: RawCWUOpportunityStatusRecord): Promise<CWUOpportunityStatusRecord> {
   const { createdBy: createdById } = raw;
-  const createdBy = getValidValue(await readOneUser(connection, createdById), undefined);
+  const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
 
   if (!createdBy) {
     throw new Error('unable to process opportunity status record');
@@ -1142,8 +1151,8 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
           proponentOrganization: proponentOrganizationId
         } = raw;
 
-  const createdBy = getValidValue(await readOneUser(connection, createdById), undefined);
-  const updatedBy = getValidValue(await readOneUser(connection, updatedById), undefined);
+  const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
+  const updatedBy = getValidValue(await readOneUserSlim(connection, updatedById), undefined);
   const proponentIndividual = proponentIndividualId ? getValidValue(await readOneCWUProponent(connection, proponentIndividualId), undefined) : null;
   const proponentOrganization = proponentOrganizationId ? getValidValue(await readOneOrganization(connection, proponentOrganizationId), undefined) : null;
 
@@ -1461,7 +1470,7 @@ interface RawCWUProposalStatusRecord extends Omit<CWUProposalStatusRecord, 'crea
 
 async function rawCWUProposalStatusRecordToCWUProposalStatusRecord(connection: Connection, session: Session, raw: RawCWUProposalStatusRecord): Promise<CWUProposalStatusRecord> {
   const { createdBy: createdById } = raw;
-  const createdBy = getValidValue(await readOneUser(connection, createdById), undefined);
+  const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
 
   if (!createdBy) {
     throw new Error('unable to process proposal status record');

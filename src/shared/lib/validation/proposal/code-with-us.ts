@@ -1,6 +1,6 @@
 import { getString } from 'shared/lib';
 import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
-import { allValid, getInvalidValue, invalid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, mapValid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
 
 export function validateProposalText(raw: string): Validation<string> {
   return validateGenericString(raw, 'Proposal Text', 1, 10000);
@@ -26,8 +26,8 @@ export function validateIndividualProponentEmail(raw: string): Validation<string
   return validateEmail(raw);
 }
 
-export function validateIndividualProponentPhone(raw: string): Validation<string> {
-  return validatePhoneNumber(raw);
+export function validateIndividualProponentPhone(raw: string | undefined): Validation<string> {
+  return mapValid(optional(raw, v => validatePhoneNumber(v)), w => w || '');
 }
 
 export function validateIndividualProponentStreet1(raw: string): Validation<string> {

@@ -403,23 +403,25 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
   }
 }
 
-export const uploadMarkdownImage: RichMarkdownEditor.UploadImage = async file => {
-  const result = await files.create({
-    name: file.name,
-    file,
-    metadata: [adt('any')]
-  });
-  if (isValid(result)) {
-    return valid({
-      name: result.value.name,
-      url: FileResource.fileBlobPath(result.value)
+export function makeUploadMarkdownImage(metadata: FileResource.FileUploadMetadata = [adt('any')]): RichMarkdownEditor.UploadImage {
+  return async file => {
+    const result = await files.create({
+      name: file.name,
+      file,
+      metadata
     });
-  } else {
-    return invalid([
-      'Unable to upload file.'
-    ]);
-  }
-};
+    if (isValid(result)) {
+      return valid({
+        name: result.value.name,
+        url: FileResource.fileBlobPath(result.value)
+      });
+    } else {
+      return invalid([
+        'Unable to upload file.'
+      ]);
+    }
+  };
+}
 
 // Avatars.
 

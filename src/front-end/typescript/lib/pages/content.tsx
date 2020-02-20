@@ -16,7 +16,8 @@ export type ContentId
   | 'privacy'
   | 'accessibility'
   | 'copyright'
-  | 'code-with-us-opportunity-guide';
+  | 'code-with-us-opportunity-guide'
+  | 'code-with-us-proposal-guide';
 
 export function parseContentId(id: any): ContentId | null {
   if (includes(Object.keys(DEFINITIONS), id)) {
@@ -54,7 +55,10 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Copyright'
   },
   'code-with-us-opportunity-guide': {
-    title: 'CodeWithUs Opportunity Guide'
+    title: 'Code With Us Opportunity Guide'
+  },
+  'code-with-us-proposal-guide': {
+    title: 'Code With Us Proposal Guide'
   }
 };
 

@@ -1,6 +1,6 @@
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
-import { User } from 'shared/lib/resources/user';
+import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
@@ -32,7 +32,7 @@ export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | n
 export interface CWUOpportunityStatusRecord {
   id: Id;
   createdAt: Date;
-  createdBy: User;
+  createdBy: UserSlim | null;
   status: CWUOpportunityStatus;
   note: string;
 }
@@ -42,8 +42,8 @@ export interface CWUOpportunity {
   createdAt: Date;
   updatedAt: Date;
 
-  createdBy?: User;
-  updatedBy?: User;
+  createdBy?: UserSlim;
+  updatedBy?: UserSlim;
 
   // TODO
   // @successful-proponent
