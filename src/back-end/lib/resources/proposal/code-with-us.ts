@@ -3,7 +3,7 @@ import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, validateProponent } from 'back-end/lib/validation';
+import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, validateOrganizationId, validateProponent } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -45,7 +45,7 @@ type ValidatedDeleteRequestBody = Id;
 type Resource = crud.Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,
-  Omit<CreateRequestBody, 'status'> & { status: string },
+  Omit<CreateRequestBody, 'status' | 'proponent'> & { status: string; proponent: CreateProponentRequestBody; },
   ValidatedCreateRequestBody,
   CreateValidationErrors,
   null,
@@ -58,6 +58,46 @@ type Resource = crud.Resource<
   Session,
   db.Connection
 >;
+
+function createBlankIndividualProponent(): CreateProponentRequestBody  {
+  return adt('individual', {
+    legalName: '',
+    email: '',
+    phone: '',
+    street1: '',
+    street2: '',
+    city: '',
+    region: '',
+    mailCode: '',
+    country: ''
+  });
+}
+
+async function parseCreateProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
+  switch (raw.tag) {
+    case 'individual':
+      return adt('individual', {
+        legalName: getString(raw.value, 'legalName'),
+        email: getString(raw.value, 'email'),
+        phone: getString(raw.value, 'phone'),
+        street1: getString(raw.value, 'street1'),
+        street2: getString(raw.value, 'street2'),
+        city: getString(raw.value, 'city'),
+        region: getString(raw.value, 'region'),
+        mailCode: getString(raw.value, 'mailCode'),
+        country: getString(raw.value, 'country')
+      });
+    case 'organization':
+      // Validate the org id provided.  If not valid, default to blank individual proponent
+      const validatedOrganizationProponent = await validateOrganizationId(connection, raw.value);
+      if (isInvalid(validatedOrganizationProponent)) {
+        return createBlankIndividualProponent();
+      }
+      return adt('organization', validatedOrganizationProponent.value.id);
+    default:
+      return createBlankIndividualProponent();
+  }
+}
 
 const resource: Resource = {
   routeNamespace: 'proposals/code-with-us',
@@ -113,7 +153,7 @@ const resource: Resource = {
           opportunity: getString(body, 'opportunity'),
           proposalText: getString(body, 'proposalText'),
           additionalComments: getString(body, 'additionalComments'),
-          proponent: get(body, 'proponent'),
+          proponent: await parseCreateProponentRequestBody(get(body, 'proponent'), connection),
           attachments: getStringArray(body, 'attachments'),
           status: getString(body, 'status')
         };
