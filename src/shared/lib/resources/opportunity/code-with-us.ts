@@ -67,6 +67,7 @@ export interface CWUOpportunity {
   attachments: FileRecord[];
   addenda: Addendum[];
   statusHistory?: CWUOpportunityStatusRecord[];
+  publishedAt?: Date;
   subscribed?: boolean;
 
   // TODO
@@ -77,7 +78,7 @@ export interface CWUOpportunity {
   };
 }
 
-export function hasCWUOpportunityBeenPublished(o: CWUOpportunity): boolean {
+export function isCWUOpportunityPublic(o: CWUOpportunity): boolean {
   switch (o.status) {
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Evaluation:

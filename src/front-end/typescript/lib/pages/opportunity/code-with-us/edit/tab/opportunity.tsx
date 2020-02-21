@@ -12,7 +12,7 @@ import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus, hasCWUOpportunityBeenPublished, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -176,7 +176,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           state = stopSaveChangesLoading(state);
           return await saveChanges(
             state,
-            async state1 => addInfoAlert(state1, `Your changes have been ${hasCWUOpportunityBeenPublished(state1.opportunity) ? 'published' : 'saved'}.`),
+            async state1 => addInfoAlert(state1, `Your changes have been ${isCWUOpportunityPublic(state1.opportunity) ? 'published' : 'saved'}.`),
             async state1 => addErrorAlertsFromUpdate(state1, { opportunity: adt('edit', {}) })
           );
         }

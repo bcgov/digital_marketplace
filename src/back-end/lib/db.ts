@@ -887,6 +887,17 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .select('id')).map(row => row.id);
   }
 
+  // Get published date if applicable
+  if (result) {
+    const publishedDate = await connection<{ createdAt: Date}>('cwuOpportunityStatuses')
+      .where({ opportunity: result.id, status: CWUOpportunityStatus.Published })
+      .select('createdAt')
+      .orderBy('createdAt', 'asc')
+      .first();
+
+    result.publishedAt = publishedDate?.createdAt;
+  }
+
   // Add on subscription flag, if authenticated user
   if (result && session.user) {
     const subscription = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
