@@ -364,11 +364,11 @@ table {
   }
 
   .table-show-on-hover {
-    visibility: hidden;
+    display: none;
   }
 
   tr:hover .table-show-on-hover {
-    visibility: visible;
+    display: unset;
   }
 }
 

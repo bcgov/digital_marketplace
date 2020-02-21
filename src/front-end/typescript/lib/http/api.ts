@@ -151,13 +151,14 @@ function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunit
   };
 }
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'addenda' | 'statusHistory'> {
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'statusHistory'> {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
   completionDate: string | null;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   addenda: RawAddendum[];
   statusHistory?: RawCWUOpportunityStatusRecord[];
 }
@@ -171,6 +172,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     completionDate: raw.completionDate ? new Date(raw.completionDate) : null,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
+    publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
     statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
   };

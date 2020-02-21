@@ -13,3 +13,5 @@ export const DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH = '/images/default_organizatio
 export const TRANSITION_DURATION = 240; //ms
 
 export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'TODO';
+
+export const EMPTY_STRING = '—'; // emdash

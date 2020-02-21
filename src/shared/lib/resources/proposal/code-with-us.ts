@@ -42,7 +42,7 @@ export interface CWUProposal {
   statusHistory?: CWUProposalStatusRecord[];
 }
 
-export function getCWUProponentName(p: CWUProposal): string {
+export function getCWUProponentName(p: CWUProposal | CWUProposalSlim): string {
   switch (p.proponent.tag) {
     case 'individual': return p.proponent.value.legalName;
     case 'organization': return p.proponent.value.legalName;
@@ -147,6 +147,28 @@ export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStat
       return [CWUProposalStatus.Awarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
              now > proposalDeadline;
+    default:
+      return false;
+  }
+}
+
+export function canCWUProposalBeAwarded(p: CWUProposal | CWUProposalSlim): boolean {
+  switch (p.status) {
+    case CWUProposalStatus.NotAwarded:
+    case CWUProposalStatus.Evaluated:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isTerminalCWUProposalStatus(s: CWUProposalStatus): boolean {
+  switch (s) {
+    case CWUProposalStatus.Disqualified:
+    case CWUProposalStatus.Withdrawn:
+    case CWUProposalStatus.Awarded:
+    case CWUProposalStatus.NotAwarded:
+      return true;
     default:
       return false;
   }
