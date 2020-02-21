@@ -67,6 +67,7 @@ export interface CWUOpportunity {
   attachments: FileRecord[];
   addenda: Addendum[];
   statusHistory?: CWUOpportunityStatusRecord[];
+  publishedAt?: Date;
 
   // TODO
   reporting?: {

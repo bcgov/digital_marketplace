@@ -886,6 +886,16 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .select('id')).map(row => row.id);
   }
 
+  // Get published date if applicable
+  if (result) {
+    const publishedDate = await connection<{ createdAt: Date}>('cwuOpportunityStatuses')
+      .where({ opportunity: result.id, status: CWUOpportunityStatus.Published })
+      .select('createdAt')
+      .first();
+
+    result.publishedAt = publishedDate?.createdAt;
+  }
+
   // If admin/owner, add on list of status histories
   if (result && session.user && (session.user.type === UserType.Admin || result.createdBy === session.user.id)) {
     const rawStatusArray = await connection<RawCWUOpportunityStatusRecord>('cwuOpportunityStatuses')
