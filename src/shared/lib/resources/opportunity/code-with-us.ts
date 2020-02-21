@@ -68,6 +68,7 @@ export interface CWUOpportunity {
   addenda: Addendum[];
   statusHistory?: CWUOpportunityStatusRecord[];
   publishedAt?: Date;
+  subscribed?: boolean;
 
   // TODO
   reporting?: {
