@@ -49,4 +49,5 @@ export interface BodyWithErrors {
   permissions?: string[];
   database?: string[];
   notFound?: string[];
+  conflict?: string[];
 }
