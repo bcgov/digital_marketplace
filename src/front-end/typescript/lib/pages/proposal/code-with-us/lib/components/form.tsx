@@ -474,7 +474,10 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
     .update('organization', s => FormField.setErrors(s, organizationErrors));
 }
 
-export async function persist(state: Immutable<State>): Promise<Validation<[Immutable<State>, CWUProposalResource.CWUProposal], Immutable<State>>> {
+type PersistAction
+  = ADT<'create', CWUProposalResource.CWUProposalStatus>;
+
+export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUProposalResource.CWUProposal], Immutable<State>>> {
   const formValues = getValues(state);
 
   if (!formValues) {
