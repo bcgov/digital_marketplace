@@ -891,6 +891,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     const publishedDate = await connection<{ createdAt: Date}>('cwuOpportunityStatuses')
       .where({ opportunity: result.id, status: CWUOpportunityStatus.Published })
       .select('createdAt')
+      .orderBy('createdAt', 'asc')
       .first();
 
     result.publishedAt = publishedDate?.createdAt;
