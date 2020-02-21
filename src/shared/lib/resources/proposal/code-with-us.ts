@@ -2,7 +2,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { UserSlim, UserType  } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
+import { ADT, adt, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export enum CWUProposalStatus {
@@ -72,6 +72,20 @@ export interface CWUIndividualProponent {
 export type CreateProponentRequestBody
   = ADT<'individual', CreateIndividualProponentRequestBody>
   | ADT<'organization', Id>;
+
+export function createBlankIndividualProponent(): CreateProponentRequestBody  {
+  return adt('individual', {
+    legalName: '',
+    email: '',
+    phone: '',
+    street1: '',
+    street2: '',
+    city: '',
+    region: '',
+    mailCode: '',
+    country: ''
+  });
+}
 
 export type UpdateProponentRequestBody = CreateProponentRequestBody;
 

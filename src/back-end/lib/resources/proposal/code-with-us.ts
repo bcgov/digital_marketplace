@@ -7,7 +7,7 @@ import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, v
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
+import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
@@ -45,7 +45,7 @@ type ValidatedDeleteRequestBody = Id;
 type Resource = crud.Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,
-  Omit<CreateRequestBody, 'status' | 'proponent'> & { status: string; proponent: CreateProponentRequestBody; },
+  Omit<CreateRequestBody, 'status'> & { status: string; },
   ValidatedCreateRequestBody,
   CreateValidationErrors,
   null,
@@ -58,20 +58,6 @@ type Resource = crud.Resource<
   Session,
   db.Connection
 >;
-
-function createBlankIndividualProponent(): CreateProponentRequestBody  {
-  return adt('individual', {
-    legalName: '',
-    email: '',
-    phone: '',
-    street1: '',
-    street2: '',
-    city: '',
-    region: '',
-    mailCode: '',
-    country: ''
-  });
-}
 
 async function parseCreateProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
   switch (raw.tag) {
