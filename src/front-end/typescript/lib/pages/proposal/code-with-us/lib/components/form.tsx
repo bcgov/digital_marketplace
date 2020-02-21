@@ -697,7 +697,7 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
         </p>
       </Col>
       <Col xs='12'>
-        <Alert color='blue-alt' className='mb-4'>
+        <Alert color='blue-alt' fade={false} className='mb-4'>
           <Link color='inherit' className='font-weight-bold d-flex justify-content-between flex-nowrap align-items-center w-100' onClick={() => dispatch(adt('toggleEvaluationCriteria'))}>
             Proposal Evaluation Criteria
             <Icon name={state.showEvaluationCriteria ? 'chevron-up' : 'chevron-down'} className='o-75'/>

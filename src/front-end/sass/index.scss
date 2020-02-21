@@ -331,12 +331,15 @@ a,
 
   &.disabled {
     opacity: $btn-disabled-opacity;
-    cursor: default;
   }
 
   &.nav-link:focus {
     outline: none;
   }
+}
+
+.disabled {
+  cursor: not-allowed !important;
 }
 
 .blockquote {
