@@ -7,7 +7,7 @@ import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/v
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, hasCWUOpportunityBeenPublished } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityPublic } from 'shared/lib/resources/opportunity/code-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
@@ -19,12 +19,11 @@ export interface Props {
 const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
   const createdBy = opportunity.createdBy;
   const oppStatus = opportunity.status;
-  const hasBeenPublished = hasCWUOpportunityBeenPublished(opportunity);
   const dates = [
-    hasBeenPublished
+    opportunity.publishedAt
       ? {
           tag: 'date' as const,
-          date: opportunity.createdAt,
+          date: opportunity.publishedAt,
           label: 'Published'
         }
       : null,
@@ -60,7 +59,7 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
       <Row>
         <Col xs='12'>
           <DescriptionList items={compact(items)} />
-          {hasBeenPublished
+          {isCWUOpportunityPublic(opportunity)
             ? (<Link
                 newTab
                 color='info'
