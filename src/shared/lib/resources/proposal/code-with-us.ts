@@ -5,6 +5,8 @@ import { UserSlim, UserType  } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
+export const DEFAULT_CWU_PROPOSAL_TITLE = 'Untitled';
+
 export enum CWUProposalStatus {
   Draft        = 'DRAFT',
   Submitted    = 'SUBMITTED',
@@ -38,6 +40,13 @@ export interface CWUProposal {
   status: CWUProposalStatus;
   attachments: FileRecord[];
   statusHistory?: CWUProposalStatusRecord[];
+}
+
+export function getCWUProponentName(p: CWUProposal): string {
+  switch (p.proponent.tag) {
+    case 'individual': return p.proponent.value.legalName;
+    case 'organization': return p.proponent.value.legalName;
+  }
 }
 
 export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;

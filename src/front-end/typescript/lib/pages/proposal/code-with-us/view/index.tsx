@@ -4,14 +4,14 @@ import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
+import * as Tab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
+import { CWUProposal, DEFAULT_CWU_PROPOSAL_TITLE, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
-  opportunity: CWUOpportunity;
+  proposal: CWUProposal;
 }
 
 export type State_<K extends Tab.TabId> = Validation<Immutable<ValidState<K>>, null>;
@@ -24,6 +24,7 @@ export type Msg = Msg_<Tab.TabId>;
 
 export interface RouteParams {
   opportunityId: Id;
+  proposalId: Id;
   tab?: Tab.TabId;
 }
 
@@ -32,27 +33,26 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
     userType: [UserType.Government, UserType.Admin],
 
     async success({ routeParams, shared, dispatch }) {
-      // Get the opportunity.
-      const opportunityResult = await api.opportunities.cwu.readOne(routeParams.opportunityId);
+      // Get the proposal.
+      const proposalResult = await api.proposals.cwu.readOne(routeParams.proposalId);
       // If the request failed, then show the "Not Found" page.
       // The back-end will return a 404 if the viewer is a Government
-      // user and is not the owner.
-      if (!api.isValid(opportunityResult)) {
+      // user and is not the associated opportunity owner.
+      if (!api.isValid(proposalResult)) {
         dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
         return invalid(null);
       }
-      const opportunity = opportunityResult.value;
+      const proposal = proposalResult.value;
       // Set up the visible tab state.
-      const tabId = routeParams.tab || 'summary';
+      const tabId = routeParams.tab || 'proposal';
       const tabState = immutable(await Tab.idToDefinition(tabId).component.init({
-        opportunity,
-        viewerUser: shared.sessionUser
-        }));
+        proposal
+      }));
       // Everything checks out, return valid state.
       return valid(immutable({
-        opportunity,
+        proposal,
         tab: [tabId, tabState],
-        sidebar: await Tab.makeSidebarState(opportunity.id, tabId)
+        sidebar: await Tab.makeSidebarState(proposal.id, proposal.opportunity.id, tabId)
       }));
     },
 
@@ -77,8 +77,8 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(Tab.idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition: Tab.idToDefinition,
-      getTitleSuffix: state => state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
-    }), makePageMetadata('Edit Code With Us Opportunity'))
+      getTitleSuffix: state => getCWUProponentName(state.proposal) || DEFAULT_CWU_PROPOSAL_TITLE
+    }), makePageMetadata('View Code With Us Proposal'))
   };
 }
 

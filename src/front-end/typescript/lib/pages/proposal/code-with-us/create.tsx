@@ -79,7 +79,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }
-          dispatch(newRoute(adt('proposalCWUEdit', {
+          dispatch(newRoute(adt('proposalCWUEdit' as const, {
             proposalId: result.value[1].id,
             opportunityId: result.value[1].opportunity.id
           })));
@@ -101,17 +101,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   }
 });
 
-const view: ComponentView<State, Msg> = viewValid((params) => {
-  const state = params.state;
-  const dispatch = params.dispatch;
+const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
   return (
-    <div>
-      <Form.view
-        state={state.form}
-        dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
-        disabled={false}
-      />
-    </div>
+    <Form.view
+      state={state.form}
+      dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
+      disabled={false}
+    />
   );
 });
 
