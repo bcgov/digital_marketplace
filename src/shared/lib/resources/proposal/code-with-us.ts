@@ -2,10 +2,10 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { UserSlim, UserType  } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation/index';
+import { ADT, adt, BodyWithErrors, Id } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation';
 
-export const DEFAULT_CWU_PROPOSAL_TITLE = 'Untitled';
+export const DEFAULT_CWU_PROPOSAL_TITLE = 'Unknown';
 
 export enum CWUProposalStatus {
   Draft        = 'DRAFT',
@@ -16,6 +16,20 @@ export enum CWUProposalStatus {
   NotAwarded   = 'NOT_AWARDED',
   Disqualified = 'DISQUALIFIED',
   Withdrawn    = 'WITHDRAWN'
+}
+
+export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
+  switch (raw) {
+    case CWUProposalStatus.Draft: return CWUProposalStatus.Draft;
+    case CWUProposalStatus.Submitted: return CWUProposalStatus.Submitted;
+    case CWUProposalStatus.UnderReview: return CWUProposalStatus.UnderReview;
+    case CWUProposalStatus.Evaluated: return CWUProposalStatus.Evaluated;
+    case CWUProposalStatus.Awarded: return CWUProposalStatus.Awarded;
+    case CWUProposalStatus.NotAwarded: return CWUProposalStatus.NotAwarded;
+    case CWUProposalStatus.Disqualified: return CWUProposalStatus.Disqualified;
+    case CWUProposalStatus.Withdrawn: return CWUProposalStatus.Withdrawn;
+    default: return null;
+  }
 }
 
 export interface CWUProposalStatusRecord {
@@ -68,7 +82,25 @@ export type CreateProponentRequestBody
   = ADT<'individual', CreateIndividualProponentRequestBody>
   | ADT<'organization', Id>;
 
+export function createBlankIndividualProponent(): CreateProponentRequestBody  {
+  return adt('individual', {
+    legalName: '',
+    email: '',
+    phone: '',
+    street1: '',
+    street2: '',
+    city: '',
+    region: '',
+    mailCode: '',
+    country: ''
+  });
+}
+
 export type UpdateProponentRequestBody = CreateProponentRequestBody;
+
+export type CreateCWUProposalStatus
+  = CWUProposalStatus.Draft
+  | CWUProposalStatus.Submitted;
 
 export interface CreateRequestBody {
   opportunity: Id;
@@ -76,6 +108,7 @@ export interface CreateRequestBody {
   additionalComments: string;
   proponent: CreateProponentRequestBody;
   attachments: Id[];
+  status: CreateCWUProposalStatus;
 }
 
 export type CreateIndividualProponentRequestBody = Omit<CWUIndividualProponent, 'id'>;
@@ -100,7 +133,7 @@ export type UpdateRequestBody
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>;
 
-export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity'>;
+export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
