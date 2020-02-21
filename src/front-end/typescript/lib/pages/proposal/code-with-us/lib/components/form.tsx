@@ -401,7 +401,7 @@ function proponentFor(proponentType: ProponentType, state: State): CWUProposalRe
   }
 }
 
-type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
+type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity' | 'status'>;
 
 function getValues(state: State): Values | null {
   const proponentType = FormField.getValue(state.proponentType);
@@ -475,7 +475,7 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
 }
 
 type PersistAction
-  = ADT<'create', CWUProposalResource.CWUProposalStatus>;
+  = ADT<'create', CWUProposalResource.CreateCWUProposalStatus>;
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUProposalResource.CWUProposal], Immutable<State>>> {
   const formValues = getValues(state);
@@ -506,6 +506,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
 
   const apiResult = await api.proposals.cwu.create({
     opportunity: state.opportunity.id,
+    status: action.value,
     ...formValues
   });
 
