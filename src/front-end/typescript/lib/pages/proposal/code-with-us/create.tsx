@@ -1,13 +1,13 @@
-import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
@@ -18,12 +18,14 @@ export type State = Validation<Immutable<ValidState>, null>;
 export interface ValidState {
   opportunity: CWUOpportunity;
   form: Immutable<Form.State>;
+  showErrorAlert: 'submit' | 'save' | null;
   submitLoading: number;
   saveDraftLoading: number;
 }
 
 type InnerMsg
-  = ADT<'form', Form.Msg>
+  = ADT<'dismissErrorAlert'>
+  | ADT<'form', Form.Msg>
   | ADT<'submit'>
   | ADT<'saveDraft'>;
 
@@ -36,17 +38,37 @@ export interface RouteParams {
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor],
   async success({ dispatch, routeParams }) {
-    const opportunityResult = await api.opportunities.cwu.readOne(routeParams.opportunityId);
+    const { opportunityId } = routeParams;
+    // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
+    const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
+    if (api.isValid(proposalsResult) && proposalsResult.value.length) {
+      const existingProposal = proposalsResult.value[0];
+      dispatch(replaceRoute(adt('proposalCWUEdit', {
+        opportunityId,
+        proposalId: existingProposal.id
+      })));
+      return invalid(null);
+    }
+    // Fetch opportunity and affiliated organizations.
+    const opportunityResult = await api.opportunities.cwu.readOne(opportunityId);
     const affiliationsResult = await api.affiliations.readMany();
+    // Redirect to 404 page if there is a server error.
     if (!api.isValid(opportunityResult) || !api.isValid(affiliationsResult)) {
       dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
       return invalid(null);
     }
     const opportunity = opportunityResult.value;
+    // If the opportunity is not accepting proposals, redirect to opportunity page.
+    if (!isCWUOpportunityAcceptingProposals(opportunity)) {
+      dispatch(replaceRoute(adt('opportunityCWUView', { opportunityId })));
+      return invalid(null);
+    }
     const affiliations = affiliationsResult.value;
+    // Everything looks good, so state is valid.
     return valid(immutable({
       submitLoading: 0,
       saveDraftLoading: 0,
+      showErrorAlert: null,
       opportunity,
       form: immutable(await Form.init({
         opportunity,
@@ -67,6 +89,8 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
+    case 'dismissErrorAlert':
+      return [state.set('showErrorAlert', null)];
 
     case 'saveDraft':
     case 'submit':
@@ -165,6 +189,16 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         }))
       }
     ]);
-  })
+  }),
+
+  getAlerts: getAlertsValid(state => ({
+    ...emptyPageAlerts(),
+    errors: state.showErrorAlert
+    ? [{
+        text: `We were unable to ${state.showErrorAlert} your proposal. Please fix the errors in the form below and try again.`,
+        dismissMsg: adt('dismissErrorAlert')
+      }]
+      : []
+  }))
 
 };

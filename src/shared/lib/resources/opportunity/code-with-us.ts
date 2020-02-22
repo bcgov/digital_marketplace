@@ -1,3 +1,4 @@
+import { isDateInTheFuture } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
@@ -189,3 +190,7 @@ export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportuni
 export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
 
 export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
+
+export function isCWUOpportunityAcceptingProposals(o: CWUOpportunity): boolean {
+  return o.status === CWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+}

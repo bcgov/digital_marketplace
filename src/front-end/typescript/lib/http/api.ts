@@ -103,18 +103,28 @@ interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalR
   };
 }
 
-interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany'> {
+interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany' | 'readOne'> {
   readMany(opportunityId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readMany']>;
+  readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readOne']>;
 }
 
 const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
 
 const cwuProposals: CWUProposalCrudApi = {
   ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_PROPOSAL_ROUTE_NAMESPACE),
+
   async readMany(opportunityId) {
     return await makeRequest<ReadManyActionTypes<CWUProposalResourceTypes['readMany']> & { request: null; }>({
       method: ClientHttpMethod.Get,
       url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      body: null
+    });
+  },
+
+  async readOne(opportunityId, proposalId) {
+    return await makeRequest<CWUProposalResourceTypes['readOne'] & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(proposalId)}?opportunity=${window.encodeURIComponent(opportunityId)}`,
       body: null
     });
   }

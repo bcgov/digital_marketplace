@@ -34,7 +34,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
 
     async success({ routeParams, shared, dispatch }) {
       // Get the proposal.
-      const proposalResult = await api.proposals.cwu.readOne(routeParams.proposalId);
+      const proposalResult = await api.proposals.cwu.readOne(routeParams.opportunityId, routeParams.proposalId);
       // If the request failed, then show the "Not Found" page.
       if (!api.isValid(proposalResult)) {
         dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));

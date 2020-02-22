@@ -90,6 +90,18 @@ export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
   }
 }
 
+export function isDateInThePast(date: Date): boolean {
+  return compareDates(date, new Date()) === -1;
+}
+
+export function isDateThePresent(date: Date): boolean {
+  return compareDates(date, new Date()) === 0;
+}
+
+export function isDateInTheFuture(date: Date): boolean {
+  return compareDates(date, new Date()) === 1;
+}
+
 export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): number {
   return moment(a).diff(moment(b), unit, true);
 }

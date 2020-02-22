@@ -1,3 +1,4 @@
+import { isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
@@ -152,34 +153,34 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 export type DeleteValidationErrors = BodyWithErrors;
 
 export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
-  const now = new Date();
+  const hasProposalDeadlinePassed = isDateInThePast(proposalDeadline);
   switch (from) {
     case CWUProposalStatus.Draft:
-      return to === CWUProposalStatus.Submitted && userType === UserType.Vendor && now < proposalDeadline;
+      return to === CWUProposalStatus.Submitted && userType === UserType.Vendor && !hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Submitted:
       return (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
-             (to === CWUProposalStatus.UnderReview && userType !== UserType.Vendor && now > proposalDeadline);
+             (to === CWUProposalStatus.UnderReview && userType !== UserType.Vendor && hasProposalDeadlinePassed);
 
     case CWUProposalStatus.UnderReview:
       return [CWUProposalStatus.Evaluated, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Evaluated:
       return [CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Awarded:
       return ((to === CWUProposalStatus.Disqualified && userType !== UserType.Vendor) ||
              (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
 
     case CWUProposalStatus.NotAwarded:
       return [CWUProposalStatus.Awarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
     default:
       return false;
   }
