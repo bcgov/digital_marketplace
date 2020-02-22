@@ -43,7 +43,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
     if (api.isValid(proposalsResult) && proposalsResult.value.length) {
       const existingProposal = proposalsResult.value[0];
-      dispatch(replaceRoute(adt('proposalCWUEdit', {
+      dispatch(replaceRoute(adt('proposalCWUEdit' as const, {
         opportunityId,
         proposalId: existingProposal.id
       })));
