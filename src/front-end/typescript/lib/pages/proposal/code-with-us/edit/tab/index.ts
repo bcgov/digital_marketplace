@@ -4,6 +4,7 @@ import { immutable, Immutable } from 'front-end/lib/framework';
 import * as ProposalTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab/proposal';
 import { routeDest } from 'front-end/lib/views/link';
 import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
+import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 
 // Parent page types & functions.
@@ -16,6 +17,7 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<Tabs, K,
 
 export interface Params {
   proposal: CWUProposal;
+  viewerUser: User;
 }
 
 export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;

@@ -1,29 +1,79 @@
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg,  Init, Update } from 'front-end/lib/framework';
-import * as Tab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
+import * as History from 'front-end/lib/components/table/history';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
+import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
+// import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import React from 'react';
-import { ADT } from 'shared/lib/types';
+import { Col, Row } from 'reactstrap';
+import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
+import { adt, ADT } from 'shared/lib/types';
 
-export type State = Tab.Params;
+export interface State extends Tab.Params {
+  history: Immutable<History.State>;
+}
 
 export type InnerMsg
-  = ADT<'noop'>;
+  = ADT<'history', History.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
+function proposalToHistoryItems({ statusHistory }: CWUProposal): History.Item[] {
+  if (!statusHistory) { return []; }
+  return statusHistory
+    .map(s => ({
+      type: {
+        text: cwuProposalStatusToTitleCase(s.status),
+        color: cwuProposalStatusToColor(s.status)
+      },
+      note: s.note,
+      createdAt: s.createdAt,
+      createdBy: s.createdBy || undefined
+    }));
+}
+
 const init: Init<Tab.Params, State> = async params => {
-  return params;
+  return {
+    ...params,
+    history: immutable(await History.init({
+      idNamespace: 'cwu-proposal-history',
+      items: proposalToHistoryItems(params.proposal),
+      viewerUser: params.viewerUser
+    }))
+  };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'history':
+      return updateComponentChild({
+        state,
+        childStatePath: ['history'],
+        childUpdate: History.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'history', value })
+      });
     default:
       return [state];
   }
 };
 
-const view: ComponentView<State, Msg> = (props) => {
-  return (<div></div>);
+const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <div>
+      { /* <EditTabHeader proposal={state.proposal} viewerUser={state.viewerUser} /> */ }
+      <div className='mt-5 pt-5 border-top'>
+        <Row>
+          <Col xs='12'>
+            <h3 className='mb-4'>History</h3>
+            <History.view
+              state={state.history}
+              dispatch={mapComponentDispatch(dispatch, msg => adt('history' as const, msg))} />
+          </Col>
+        </Row>
+      </div>
+    </div>
+  );
 };
 
 export const component: Tab.Component<State, Msg> = {
