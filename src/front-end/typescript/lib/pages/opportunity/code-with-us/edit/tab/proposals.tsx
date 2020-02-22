@@ -11,7 +11,7 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { canCWUProposalBeAwarded, CWUProposalSlim, getCWUProponentName, isTerminalCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
@@ -19,6 +19,7 @@ import { ADT, adt, Id } from 'shared/lib/types';
 export interface State extends Tab.Params {
   awardLoading: Id | null;
   canProposalsBeAwarded: boolean;
+  canViewProposals: boolean;
   proposals: CWUProposalSlim[];
   table: Immutable<Table.State>;
 }
@@ -30,13 +31,21 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: Init<Tab.Params, State> = async params => {
-  const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
-  const proposals = api.getValidValue(proposalResult, []);
+  const canViewProposals = canViewCWUOpportunityProposals(params.opportunity);
+  let proposals: CWUProposalSlim[] = [];
+  if (canViewProposals) {
+    const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
+    proposals = api.getValidValue(proposalResult, []);
+  }
   return {
     awardLoading: null,
+    canViewProposals,
     // Determine whether the "Award" button should be shown at all.
     canProposalsBeAwarded: proposals.reduce((acc, p) =>
-      acc && (isTerminalCWUProposalStatus(p.status) || canCWUProposalBeAwarded(p)),
+      // Can be awarded if...
+      // - Opportunity has the appropriate status
+      // - All proposals have been Awarded/NotAwarded/Disqualified/Withdrawn/Evaluated.
+      acc && canCWUOpportunityBeAwarded(params.opportunity) && (isTerminalCWUProposalStatus(p.status) || canCWUProposalBeAwarded(p)),
       true as boolean
     ),
     proposals,
@@ -58,7 +67,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const updateResult = await api.proposals.cwu.update(msg.value, adt('award', state.opportunity.id));
           switch (updateResult.tag) {
             case 'valid':
-              return immutable(await init(state));
+              return immutable(await init({
+                opportunity: api.getValidValue(await api.opportunities.cwu.readOne(state.opportunity.id), state.opportunity),
+                viewerUser: state.viewerUser
+              }));
             case 'invalid':
             case 'unhandled':
               // TODO
@@ -94,19 +106,19 @@ const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[])
     {
       icon: 'comment-dollar',
       name: `Proposal${numProposals === 1 ? '' : 's'}`,
-      value: String(numProposals)
+      value: numProposals ? String(numProposals) : EMPTY_STRING
     },
     {
       icon: 'star-full',
       iconColor: 'yellow',
       name: 'Winning Score',
-      value: isAwarded ? String(highestScore) : EMPTY_STRING
+      value: isAwarded ? `${highestScore}%` : EMPTY_STRING
     },
     {
       icon: 'star-half',
       iconColor: 'yellow',
       name: 'Avg. Score',
-      value: isAwarded ? String(averageScore) : EMPTY_STRING
+      value: isAwarded ? `${averageScore}%` : EMPTY_STRING
     }
   ];
 };
@@ -169,7 +181,7 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
         )
       },
       { children: (<Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} />) },
-      { children: (<div>{p.score ? p.score : EMPTY_STRING}</div>) },
+      { children: (<div>{p.score ? `${p.score}%` : EMPTY_STRING}</div>) },
       ...(state.canProposalsBeAwarded
         ? [{
             showOnHover: true,
@@ -221,7 +233,6 @@ const view: ComponentView<State, Msg> = (props) => {
   const { state } = props;
   const opportunity = state.opportunity;
   const cardData = makeCardData(opportunity, state.proposals);
-  const canViewProposals = canViewCWUOpportunityProposals(opportunity);
   return (
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={state.viewerUser} />
@@ -234,7 +245,7 @@ const view: ComponentView<State, Msg> = (props) => {
         <Row>
           <Col xs='12' className='d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4'>
             <h4 className='mb-0'>Proposals</h4>
-            {canViewProposals
+            {state.canViewProposals
               ? (<Link
                   color='info'
                   className='mt-3 mt-md-0'
@@ -244,7 +255,7 @@ const view: ComponentView<State, Msg> = (props) => {
               : null}
           </Col>
           <Col xs='12'>
-            {canViewProposals
+            {state.canViewProposals
               ? (<EvaluationTable {...props} />)
               : (<WaitForOpportunityToClose {...props} />)}
           </Col>

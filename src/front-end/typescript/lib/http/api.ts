@@ -83,6 +83,8 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CWUProposal
 
+//TODO raw proposal to proposal
+
 interface CWUProposalResourceSimpleResourceTypesParams {
   record: CWUProposalResource.CWUProposal;
   create: {

@@ -104,13 +104,8 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
 }
 
 export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
-  switch (o.status) {
-    case CWUOpportunityStatus.Evaluation:
-    case CWUOpportunityStatus.Awarded:
-      return true;
-    default:
-      return false;
-  }
+  // Return true if the opportunity has ever had the `Evaluation` status.
+  return !!o.statusHistory && o.statusHistory.reduce((acc, record) => acc || record.status === CWUOpportunityStatus.Evaluation, false as boolean);
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
@@ -182,6 +177,16 @@ export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportuni
       return [CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended, CWUOpportunityStatus.Awarded].includes(to);
     case CWUOpportunityStatus.Suspended:
       return [CWUOpportunityStatus.Published, CWUOpportunityStatus.Canceled].includes(to);
+    default:
+      return false;
+  }
+}
+
+export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
     default:
       return false;
   }
