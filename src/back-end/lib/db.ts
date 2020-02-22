@@ -1,6 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
+import { readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
@@ -646,7 +647,7 @@ export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (conne
 export async function hasFilePermission(connection: Connection, session: Session, id: string): Promise<boolean> {
   try {
     const query = connection<FileRecord>('files')
-    .where({ id });
+      .where({ id });
 
     if (!session.user) {
       query
@@ -656,9 +657,9 @@ export async function hasFilePermission(connection: Connection, session: Session
         .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id')
         .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
         .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
-        .where({ 'u.user': session.user.id })
-        .orWhere({ 'ut.userType': session.user.type })
-        .orWhere({ 'files.createdBy': session.user.id });
+        .where({ 'u.user': session.user.id, 'u.file': id })
+        .orWhere({ 'ut.userType': session.user.type, 'ut.file': id })
+        .orWhere({ 'files.createdBy': session.user.id, 'files.id': id });
     }
 
     const results = await query;
@@ -666,6 +667,33 @@ export async function hasFilePermission(connection: Connection, session: Session
   } catch (exception) {
     return false;
   }
+}
+
+export async function hasAttachmentPermission(connection: Connection, session: Session, id: string): Promise<boolean> {
+  // If file is an attachment on a publicly viewable opportunity, allow
+  const results = await connection('cwuOpportunityAttachments as attachments')
+    .innerJoin('cwuOpportunityVersions as versions', 'versions.id', '=', 'attachments.opportunityVersion')
+    .innerJoin('cwuOpportunityStatuses as statuses', 'statuses.opportunity', '=' , 'versions.opportunity')
+    .whereIn('statuses.status', publicOpportunityStatuses as CWUOpportunityStatus[])
+    .andWhere({ 'attachments.file': id })
+    .select('attachments.*');
+
+  if (results.length > 0) {
+    return true;
+  }
+
+  // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
+  if (session.user) {
+    const proposals = await connection('cwuProposalAttachments as attachments')
+      .innerJoin('cwuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
+      .where({ 'attachments.file': id })
+      .select<RawCWUProposal[]>('proposals.*');
+
+    if (proposals.length > 0) {
+      return proposals.some(async proposal => await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id));
+    }
+  }
+  return false;
 }
 
 interface RawCWUOpportunitySlim extends Omit<CWUOpportunitySlim, 'createdBy' | 'updatedBy'> {
@@ -1303,9 +1331,9 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
     .first();
 
   if (result) {
-    result.attachments = (await connection<{ id: Id }>('cwuProposalAttachments')
+    result.attachments = (await connection<{ file: Id }>('cwuProposalAttachments')
       .where({ proposal: result.id })
-      .select('file')).map(row => row.id);
+      .select('file')).map(row => row.file);
 
     const rawProposalStasuses = await connection<RawCWUProposalStatusRecord>('cwuProposalStatuses')
       .where({ proposal: result.id })
@@ -1354,7 +1382,7 @@ async function createCWUProposalAttachments(connection: Connection, trx: Transac
       .transacting(trx)
       .insert({
         proposal: proposalId,
-        file: attachment
+        file: attachment.id
       }, '*');
     if (!attachmentResult) {
       throw new Error('Unable to create proposal attachment');
