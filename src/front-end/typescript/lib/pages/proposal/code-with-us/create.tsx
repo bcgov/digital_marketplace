@@ -60,7 +60,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     const opportunity = opportunityResult.value;
     // If the opportunity is not accepting proposals, redirect to opportunity page.
     if (!isCWUOpportunityAcceptingProposals(opportunity)) {
-      dispatch(replaceRoute(adt('opportunityCWUView', { opportunityId })));
+      dispatch(replaceRoute(adt('opportunityCWUView' as const, { opportunityId })));
       return invalid(null);
     }
     const affiliations = affiliationsResult.value;

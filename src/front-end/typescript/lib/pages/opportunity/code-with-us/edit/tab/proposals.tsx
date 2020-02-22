@@ -143,7 +143,7 @@ const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabl
   };
   return (
     <div>
-      <Link disabled={disabled} dest={routeDest(adt('proposalCWUEdit', proposalRouteParams))}>{getCWUProponentName(proposal)}</Link>
+      <Link disabled={disabled} dest={routeDest(adt('proposalCWUView', proposalRouteParams))}>{getCWUProponentName(proposal)}</Link>
       <div className='small text-secondary text-uppercase'>
         {linkToProfile
           ? (<Link disabled={disabled} color='secondary' dest={routeDest(adt('userProfile', { userId: proposal.createdBy.id }))}>
@@ -155,10 +155,11 @@ const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabl
   );
 };
 
-function evaluationTableBodyRows(state: State, dispatch: Dispatch<Msg>): Table.BodyRows  {
-  return state.proposals.map( p => {
+function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg>): Table.BodyRows  {
+  return state.proposals.map(p => {
     return [
       {
+        className: 'text-nowrap',
         children: (
           <ProponentCell
             proposal={p}
@@ -168,21 +169,23 @@ function evaluationTableBodyRows(state: State, dispatch: Dispatch<Msg>): Table.B
         )
       },
       { children: (<Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} />) },
-      { children: (<div>{p.score ? p.score : '- -'}</div>) },
-      {
-        showOnHover: true,
-        children: canCWUProposalBeAwarded(p) ? (<ContextMenuCell dispatch={dispatch} proposal={p} loading={state.awardLoading === p.id} />) : null
-      }
+      { children: (<div>{p.score ? p.score : EMPTY_STRING}</div>) },
+      ...(state.canProposalsBeAwarded
+        ? [{
+            showOnHover: true,
+            children: canCWUProposalBeAwarded(p) ? (<ContextMenuCell dispatch={dispatch} proposal={p} loading={state.awardLoading === p.id} />) : null
+          }]
+        : [])
     ];
   });
 }
 
-function evaluationTableHeadCells(state: State): Table.HeadCells {
+function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Proponent',
       className: 'text-nowrap',
-      style: { width: '50%' }
+      style: { width: '50%', minWidth: '120px' }
     },
     {
       children: 'Status',
@@ -194,11 +197,13 @@ function evaluationTableHeadCells(state: State): Table.HeadCells {
       className: 'text-nowrap',
       style: { width: '15%' }
     },
-    {
-      children: '',
-      className: 'text-nowrap text-right',
-      style: { width: '15%', minWidth: '120px' }
-    }
+    ...(state.canProposalsBeAwarded
+      ? [{
+          children: '',
+          className: 'text-nowrap text-right',
+          style: { width: '15%', minWidth: '120px' }
+        }]
+      : [])
   ];
 }
 
@@ -232,6 +237,7 @@ const view: ComponentView<State, Msg> = (props) => {
             {canViewProposals
               ? (<Link
                   color='info'
+                  className='mt-3 mt-md-0'
                   symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
                   Export All Proposals
                 </Link>)
@@ -241,7 +247,6 @@ const view: ComponentView<State, Msg> = (props) => {
             {canViewProposals
               ? (<EvaluationTable {...props} />)
               : (<WaitForOpportunityToClose {...props} />)}
-            })()}
           </Col>
         </Row>
       </div>

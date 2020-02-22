@@ -495,12 +495,8 @@ nav.navbar .nav-link:hover {
 
     .sticky#{$infix} {
       position: sticky;
-      top: 6rem;
-      // Use padding and margin instead of top for vertical offset
-      // to preserve background color.
-      //padding-top: 6rem;
-      //margin-top: -6rem;
       z-index: 2;
+      top: 6rem;
 
       &::after {
         content: " ";
@@ -511,6 +507,16 @@ nav.navbar .nav-link:hover {
         height: 100%;
         background-color: inherit;
         background: inherit;
+      }
+    }
+  }
+
+  @if ($breakpoint == 'xs') or ($breakpoint == 'sm') {
+
+    @include media-breakpoint-down(sm) {
+
+      .app:not(.contextual-actions-visible) .sticky#{$infix} {
+        top: 1rem;
       }
     }
   }

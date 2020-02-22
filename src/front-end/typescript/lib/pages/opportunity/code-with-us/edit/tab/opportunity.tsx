@@ -406,6 +406,7 @@ export const component: Tab.Component<State, Msg> = {
           ]
         });
       case CWUOpportunityStatus.Published:
+      case CWUOpportunityStatus.Evaluation:
         return adt('dropdown', {
           text: 'Actions',
           loading: isLoading,

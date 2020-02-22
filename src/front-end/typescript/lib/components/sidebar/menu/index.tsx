@@ -68,7 +68,7 @@ export const view: ComponentView<State, Msg> = props => {
   if (!state.links.length) { return null; }
   const [activeLink] = linksByActive(state.links, true);
   return (
-    <Sticky>
+    <Sticky className='d-print-none'>
       <div className='d-none d-md-flex flex-column flex-nowrap align-items-start'>
         {state.links.map((props, i) => (<SidebarLink {...props} className='mb-2' key={`desktop-sidebar-link-${i}`} />))}
       </div>

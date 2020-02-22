@@ -1,28 +1,33 @@
 import { makePageMetadata } from 'front-end/lib';
-import * as api from 'front-end/lib/http/api';
-import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { CWUOpportunitySlim, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
+import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
   opportunities: CWUOpportunitySlim[];
+  viewerUser?: User;
 }
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  let result = { opportunities: [] as CWUOpportunitySlim[] }
-  const apiRequest = await api.opportunities.cwu.readMany();
-  if (apiRequest.tag === 'valid') {
-    result.opportunities = apiRequest.value;
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
+  let opportunities: CWUOpportunitySlim[] = [];
+  const apiResult = await api.opportunities.cwu.readMany();
+  if (apiResult.tag === 'valid') {
+    opportunities = apiResult.value;
   }
-  return result;
+  return {
+    opportunities,
+    viewerUser: shared.session?.user
+  };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -34,13 +39,14 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <Row>
       <Col xs='12'>
         {
-          state.opportunities.map( o => {
+          state.opportunities.map(o => {
+            const route: Route = state.viewerUser && isAdmin(state.viewerUser)
+              ? adt('opportunityCWUEdit', { opportunityId: o.id })
+              : adt('opportunityCWUView', { opportunityId: o.id });
             return (
               <div>
-                <Link
-                  dest={routeDest(adt('opportunityCWUEdit', {opportunityId: o.id}))}
-                >
-                  {o.title}
+                <Link dest={routeDest(route)}>
+                  {o.status}: {o.title || DEFAULT_OPPORTUNITY_TITLE}
                 </Link>
               </div>
             );

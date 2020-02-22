@@ -440,7 +440,7 @@ const view: ComponentView<State, Msg> = props => {
       ? simpleNavProps(props)
       : regularNavProps(props);
     return (
-      <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
+      <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} ${navProps.contextualActions ? 'contextual-actions-visible' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}

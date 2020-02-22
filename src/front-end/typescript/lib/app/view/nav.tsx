@@ -428,7 +428,7 @@ const MobileBottomNavbar: View<Props> = props => {
 
 export const view: View<Props> = props => {
   return (
-    <nav className='main-nav'>
+    <nav className='main-nav d-print-none'>
       <TopNavbar {...props} />
       <DesktopBottomNavbar {...props} />
       <MobileBottomNavbar {...props} />
