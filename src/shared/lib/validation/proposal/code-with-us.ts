@@ -1,6 +1,15 @@
 import { getString } from 'shared/lib';
-import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors, CWUProposalStatus, parseCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { allValid, getInvalidValue, invalid, mapValid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+
+export function validateCWUProposalStatus(raw: string, isOneOf: CWUProposalStatus[]): Validation<CWUProposalStatus> {
+  const parsed = parseCWUProposalStatus(raw);
+  if (!parsed) { return invalid([`"${raw}" is not a valid CodeWithUs proposal status.`]); }
+  if (!isOneOf.includes(parsed)) {
+    return invalid([`"${raw}" is not one of: ${isOneOf.join(', ')}`]);
+  }
+  return valid(parsed);
+}
 
 export function validateProposalText(raw: string): Validation<string> {
   return validateGenericString(raw, 'Proposal Text', 1, 10000);

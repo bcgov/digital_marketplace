@@ -103,18 +103,28 @@ interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalR
   };
 }
 
-interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany'> {
+interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany' | 'readOne'> {
   readMany(opportunityId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readMany']>;
+  readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readOne']>;
 }
 
 const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
 
 const cwuProposals: CWUProposalCrudApi = {
   ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_PROPOSAL_ROUTE_NAMESPACE),
+
   async readMany(opportunityId) {
     return await makeRequest<ReadManyActionTypes<CWUProposalResourceTypes['readMany']> & { request: null; }>({
       method: ClientHttpMethod.Get,
       url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      body: null
+    });
+  },
+
+  async readOne(opportunityId, proposalId) {
+    return await makeRequest<CWUProposalResourceTypes['readOne'] & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(proposalId)}?opportunity=${window.encodeURIComponent(opportunityId)}`,
       body: null
     });
   }
@@ -151,13 +161,14 @@ function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunit
   };
 }
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'addenda' | 'statusHistory'> {
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'statusHistory'> {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
   completionDate: string | null;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   addenda: RawAddendum[];
   statusHistory?: RawCWUOpportunityStatusRecord[];
 }
@@ -171,6 +182,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     completionDate: raw.completionDate ? new Date(raw.completionDate) : null,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
+    publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
     statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
   };

@@ -1,7 +1,7 @@
+import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { Dispatch, View } from 'front-end/lib/framework';
-import { ComponentView, GlobalComponentMsg,  Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, Dispatch, GlobalComponentMsg, Immutable,  immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
@@ -11,64 +11,35 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
-import { ADT, adt } from 'shared/lib/types';
+import { canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { canCWUProposalBeAwarded, CWUProposalSlim, getCWUProponentName, isTerminalCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { isAdmin } from 'shared/lib/resources/user';
+import { ADT, adt, Id } from 'shared/lib/types';
 
-export type State = Tab.Params & {
+export interface State extends Tab.Params {
+  awardLoading: Id | null;
+  canProposalsBeAwarded: boolean;
   proposals: CWUProposalSlim[];
   table: Immutable<Table.State>;
-};
+}
 
 export type InnerMsg
   = ADT<'table', Table.Msg>
-  | ADT<'award', CWUProposalSlim>;
+  | ADT<'award', Id>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function fetchProposals(opportunity: CWUOpportunity): Promise<CWUProposalSlim[]> {
-  const proposalResult = await api.proposals.cwu.readMany(opportunity.id);
-  let proposals: CWUProposalSlim[] = [];
-
-  switch (proposalResult.tag) {
-    case 'valid':
-      proposals = proposalResult.value;
-
-      // proposals[1] =  {...proposals[0]};
-      // proposals[2] =  {...proposals[0]};
-      // proposals[3] =  {...proposals[0]};
-      // proposals[4] =  {...proposals[0]};
-      // proposals[5] =  {...proposals[0]};
-      // proposals[6] =  {...proposals[0]};
-      // proposals[7] =  {...proposals[0]};
-      // proposals[8] =  {...proposals[0]};
-      // proposals[9] =  {...proposals[0]};
-      // proposals[0].score = 10;
-      // proposals[1].score = 63;
-      // proposals[2].score = 90;
-
-      // proposals[0].status = CWUProposalStatus.Draft        ;
-      // proposals[1].status = CWUProposalStatus.Submitted    ;
-      // proposals[2].status = CWUProposalStatus.UnderReview  ;
-      // proposals[3].status = CWUProposalStatus.Evaluated    ;
-      // proposals[4].status = CWUProposalStatus.Awarded      ;
-      // proposals[5].status = CWUProposalStatus.NotAwarded   ;
-      // proposals[6].status = CWUProposalStatus.Disqualified ;
-      // proposals[7].status = CWUProposalStatus.Withdrawn    ;
-
-      break;
-    case 'invalid':
-    case 'unhandled':
-      // TODO(Jesse): ??
-      break;
-  }
-
-  return proposals;
-}
-
 const init: Init<Tab.Params, State> = async params => {
+  const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
+  const proposals = api.getValidValue(proposalResult, []);
   return {
-    proposals: await fetchProposals(params.opportunity),
+    awardLoading: null,
+    // Determine whether the "Award" button should be shown at all.
+    canProposalsBeAwarded: proposals.reduce((acc, p) =>
+      acc && (isTerminalCWUProposalStatus(p.status) || canCWUProposalBeAwarded(p)),
+      true as boolean
+    ),
+    proposals,
     table: immutable(await Table.init({
       idNamespace: 'proposal-table'
     })),
@@ -80,20 +51,19 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
 
     case 'award':
-      return [state,
+      return [
+        state.set('awardLoading', msg.value),
         async (state, dispatch) => {
-        const updateResult = await api.proposals.cwu.update(msg.value.id, adt('award', state.opportunity.id));
-
-        switch (updateResult.tag) {
-          case 'valid':
-            state.set('proposals', await fetchProposals(state.opportunity));
-          case 'invalid':
-          case 'unhandled':
-            // TODO(Jesse): ??
-            break;
-        }
-
-        return state;
+          state = state.set('awardLoading', null);
+          const updateResult = await api.proposals.cwu.update(msg.value, adt('award', state.opportunity.id));
+          switch (updateResult.tag) {
+            case 'valid':
+              return immutable(await init(state));
+            case 'invalid':
+            case 'unhandled':
+              // TODO
+              return state;
+          }
       }];
 
     case 'table':
@@ -111,87 +81,98 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[]): ReportCard[]  => {
-
-  const proposalsValue = proposals.length.toString();
-  const winningScoreValue = '- -'; // TODO(Jesse): @successful-proponent
-
-  let scoredProposals = 0;
-  let avgScore = proposals.reduce( (acc, proposal) => {
-    if (proposal.score) {
-      ++scoredProposals;
-      return acc + proposal.score;
-    } else {
-      return acc;
-    }
-  }, 0);
-  avgScore /= scoredProposals;
-
-  const avgScoreDisplay = avgScore ? `${avgScore.toFixed(1)}%` : '- -';
+  const numProposals = proposals.length;
+  const [highestScore, averageScore] = proposals.reduce(([highest, average], { score }, i) => {
+    if (!score) { return [highest, average]; }
+    return [
+      score > highest ? score : highest,
+      (average * i + score) / (i + 1)
+    ];
+  }, [0, 0]);
+  const isAwarded = opportunity.status === CWUOpportunityStatus.Awarded;
   return [
     {
       icon: 'comment-dollar',
-      name: 'Proposals',
-      value: proposalsValue
+      name: `Proposal${numProposals === 1 ? '' : 's'}`,
+      value: String(numProposals)
     },
     {
       icon: 'star-full',
       iconColor: 'yellow',
       name: 'Winning Score',
-      value: winningScoreValue
+      value: isAwarded ? String(highestScore) : EMPTY_STRING
     },
     {
       icon: 'star-half',
       iconColor: 'yellow',
       name: 'Avg. Score',
-      value: avgScoreDisplay.toString()
+      value: isAwarded ? String(averageScore) : EMPTY_STRING
     }
   ];
 };
 
-type Props = {
-  state: State;
-  dispatch: Dispatch<Msg>;
-};
-
-const WaitForOpportunityToClose: View<Props> = ({ state }) => {
+const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
   return (<div>Proposals will be displayed here once the opportunity has closed.</div>);
 };
 
-function contextMenu(proposal: CWUProposalSlim, dispatch: Dispatch<Msg>) {
+const ContextMenuCell: View<{ loading: boolean; proposal: CWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ loading, proposal, dispatch }) => {
   return (
-    <div>
-      <Link
-        button
-        symbol_={leftPlacement(iconLinkSymbol('award'))}
-        color='primary'
-        onClick={() => dispatch(adt('award', proposal)) }
-      >
-        <small>Award</small>
-      </Link>
-    </div>
+    <Link
+      button
+      symbol_={leftPlacement(iconLinkSymbol('award'))}
+      color='primary'
+      size='sm'
+      loading={loading}
+      onClick={() => dispatch(adt('award', proposal.id)) }>
+      Award
+    </Link>
   );
+};
+
+interface ProponentCellProps {
+  proposal: CWUProposalSlim;
+  opportunity: CWUOpportunity;
+  disabled: boolean;
+  linkToProfile: boolean;
 }
 
-function proponentDisplay(proposal: CWUProposalSlim, opportunity: CWUOpportunity) {
+const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabled, linkToProfile }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: opportunity.id
   };
   return (
     <div>
-      <Link dest={routeDest(adt('proposalCWUEdit', proposalRouteParams))}>{proposal.createdBy.name}</Link>
-      <div><small>{proposal.proponent.value.legalName}</small></div>
+      <Link disabled={disabled} dest={routeDest(adt('proposalCWUEdit', proposalRouteParams))}>{getCWUProponentName(proposal)}</Link>
+      <div className='small text-secondary text-uppercase'>
+        {linkToProfile
+          ? (<Link disabled={disabled} color='secondary' dest={routeDest(adt('userProfile', { userId: proposal.createdBy.id }))}>
+              {proposal.createdBy.name}
+            </Link>)
+          : proposal.createdBy.name}
+      </div>
     </div>
   );
-}
+};
 
 function evaluationTableBodyRows(state: State, dispatch: Dispatch<Msg>): Table.BodyRows  {
   return state.proposals.map( p => {
     return [
-      { children: proponentDisplay(p, state.opportunity) },
-      { children: <Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} /> },
-      { children: <div>{p.score ? p.score : '- -'}</div> },
-      { children: contextMenu(p, dispatch), showOnHover: true }
+      {
+        children: (
+          <ProponentCell
+            proposal={p}
+            opportunity={state.opportunity}
+            linkToProfile={isAdmin(state.viewerUser)}
+            disabled={!!state.awardLoading} />
+        )
+      },
+      { children: (<Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} />) },
+      { children: (<div>{p.score ? p.score : '- -'}</div>) },
+      {
+        showOnHover: true,
+        children: canCWUProposalBeAwarded(p) ? (<ContextMenuCell dispatch={dispatch} proposal={p} loading={state.awardLoading === p.id} />) : null
+      }
     ];
   });
 }
@@ -215,70 +196,55 @@ function evaluationTableHeadCells(state: State): Table.HeadCells {
     },
     {
       children: '',
-      className: 'text-nowrap',
-      style: { width: '15%' }
+      className: 'text-nowrap text-right',
+      style: { width: '15%', minWidth: '120px' }
     }
   ];
 }
 
-const EvaluationTable: View<Props> = ({ state, dispatch }) => {
+const EvaluationTable: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <div>
-      <Table.view
-        headCells={evaluationTableHeadCells(state)}
-        bodyRows={evaluationTableBodyRows(state, dispatch)}
-        state={state.table}
-        dispatch={mapComponentDispatch(dispatch, msg => adt('table' as const, msg))} />
-    </div>
+    <Table.view
+      headCells={evaluationTableHeadCells(state)}
+      bodyRows={evaluationTableBodyRows(state, dispatch)}
+      state={state.table}
+      dispatch={mapComponentDispatch(dispatch, msg => adt('table' as const, msg))} />
   );
 };
 
 const view: ComponentView<State, Msg> = (props) => {
-  const state = props.state;
-  const dispatch = props.dispatch;
-
+  const { state } = props;
   const opportunity = state.opportunity;
   const cardData = makeCardData(opportunity, state.proposals);
-
-  const status = opportunity.status;
-
-  let ActiveView;
-  switch (status) {
-    case 'EVALUATION':
-      ActiveView = EvaluationTable({state, dispatch});
-      break;
-
-    default:
-      ActiveView = WaitForOpportunityToClose({state, dispatch});
-      break;
-
-  }
-
+  const canViewProposals = canViewCWUOpportunityProposals(opportunity);
   return (
     <div>
-      <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
-      <Row>
-        <Col className='border-bottom py-5' xs='12'>
+      <EditTabHeader opportunity={opportunity} viewerUser={state.viewerUser} />
+      <Row className='mt-5'>
+        <Col xs='12'>
           <ReportCardList reportCards={cardData} />
         </Col>
       </Row>
-      <Row>
-        <Col className='pt-5' sm='6' xs='12'>
-          <h4 className='pb-3'>Proposals</h4>
-        </Col>
-        <Col className='pt-sm-5 d-flex justify-content-sm-end' sm='6' xs='12'>
-          <Link
-            className='pb-3'
-            symbol_={rightPlacement(iconLinkSymbol('external-link'))}
-          >
-            { /* TODO(Jesse?) : Hook this up to the export path */ }
-            Export All Proposals
-          </Link>
-        </Col>
-        <Col xs='12'>
-          { ActiveView }
-        </Col>
-      </Row>
+      <div className='border-top mt-5 pt-5'>
+        <Row>
+          <Col xs='12' className='d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4'>
+            <h4 className='mb-0'>Proposals</h4>
+            {canViewProposals
+              ? (<Link
+                  color='info'
+                  symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
+                  Export All Proposals
+                </Link>)
+              : null}
+          </Col>
+          <Col xs='12'>
+            {canViewProposals
+              ? (<EvaluationTable {...props} />)
+              : (<WaitForOpportunityToClose {...props} />)}
+            })()}
+          </Col>
+        </Row>
+      </div>
     </div>
   );
 };

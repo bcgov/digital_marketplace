@@ -3,11 +3,11 @@ import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, validateProponent } from 'back-end/lib/validation';
+import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, validateOrganizationId, validateProponent } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
+import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
@@ -20,6 +20,7 @@ interface ValidatedCreateRequestBody {
   additionalComments: string;
   proponent: CreateProponentRequestBody;
   attachments: FileRecord[];
+  status: CreateCWUProposalStatus;
 }
 
 interface ValidatedUpdateEditRequestBody {
@@ -44,7 +45,7 @@ type ValidatedDeleteRequestBody = Id;
 type Resource = crud.Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,
-  CreateRequestBody,
+  Omit<CreateRequestBody, 'status'> & { status: string; },
   ValidatedCreateRequestBody,
   CreateValidationErrors,
   null,
@@ -57,6 +58,32 @@ type Resource = crud.Resource<
   Session,
   db.Connection
 >;
+
+async function parseCreateProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
+  switch (raw.tag) {
+    case 'individual':
+      return adt('individual', {
+        legalName: getString(raw.value, 'legalName'),
+        email: getString(raw.value, 'email'),
+        phone: getString(raw.value, 'phone'),
+        street1: getString(raw.value, 'street1'),
+        street2: getString(raw.value, 'street2'),
+        city: getString(raw.value, 'city'),
+        region: getString(raw.value, 'region'),
+        mailCode: getString(raw.value, 'mailCode'),
+        country: getString(raw.value, 'country')
+      });
+    case 'organization':
+      // Validate the org id provided.  If not valid, default to blank individual proponent
+      const validatedOrganizationProponent = await validateOrganizationId(connection, raw.value);
+      if (isInvalid(validatedOrganizationProponent)) {
+        return createBlankIndividualProponent();
+      }
+      return adt('organization', validatedOrganizationProponent.value.id);
+    default:
+      return createBlankIndividualProponent();
+  }
+}
 
 const resource: Resource = {
   routeNamespace: 'proposals/code-with-us',
@@ -112,8 +139,9 @@ const resource: Resource = {
           opportunity: getString(body, 'opportunity'),
           proposalText: getString(body, 'proposalText'),
           additionalComments: getString(body, 'additionalComments'),
-          proponent: get(body, 'proponent'),
-          attachments: getStringArray(body, 'attachments')
+          proponent: await parseCreateProponentRequestBody(get(body, 'proponent'), connection),
+          attachments: getStringArray(body, 'attachments'),
+          status: getString(body, 'status')
         };
       },
       async validateRequestBody(request) {
@@ -126,6 +154,13 @@ const resource: Resource = {
         if (!permissions.createCWUProposal(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+
+        const validatedStatus = proposalValidation.validateCWUProposalStatus(request.body.status, [CWUProposalStatus.Draft, CWUProposalStatus.Submitted]);
+        if (isInvalid(validatedStatus)) {
+          return invalid({
+            status: validatedStatus.value
           });
         }
 
@@ -149,10 +184,28 @@ const resource: Resource = {
           });
         }
 
+        // Attachments must be validated for both drafts and published opportunities.
+        const validatedAttachments = await validateAttachments(connection, attachments);
+        if (isInvalid(validatedAttachments)) {
+          return invalid({
+            attachments: validatedAttachments.value
+          });
+        }
+
+        // Only validate other fields if not in draft
+        if (validatedStatus.value === CWUProposalStatus.Draft) {
+          return valid({
+            ...request.body,
+            session: request.session,
+            opportunity: validatedCWUOpportunity.value.id,
+            status: validatedStatus.value,
+            attachments: validatedAttachments.value
+          });
+        }
+
         const validatedProposalText = proposalValidation.validateProposalText(proposalText);
         const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
         const validatedProponent = await validateProponent(connection, proponent);
-        const validatedAttachments = await validateAttachments(connection, attachments);
 
         if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
           return valid({
@@ -161,7 +214,8 @@ const resource: Resource = {
             proposalText: validatedProposalText.value,
             additionalComments: validatedAdditionalComments.value,
             proponent: validatedProponent.value,
-            attachments: validatedAttachments.value
+            attachments: validatedAttachments.value,
+            status: validatedStatus.value
           });
         } else {
           return invalid({

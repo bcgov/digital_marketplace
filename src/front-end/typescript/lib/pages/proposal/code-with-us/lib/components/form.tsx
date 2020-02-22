@@ -401,12 +401,13 @@ function proponentFor(proponentType: ProponentType, state: State): CWUProposalRe
   }
 }
 
-type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity'>;
+type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity' | 'status'>;
 
-function getValues(state: State): Values | null {
+function getValues(state: State): Values {
   const proponentType = FormField.getValue(state.proponentType);
-  if (!proponentType) { return null; }
-  const proponent = proponentFor(proponentType, state);
+  const proponent = proponentType
+    ? proponentFor(proponentType, state)
+    : CWUProposalResource.createBlankIndividualProponent();
   return {
     proponent,
     proposalText:       FormField.getValue(state.proposalText),
@@ -475,16 +476,14 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
 }
 
 type PersistAction
-  = ADT<'create', CWUProposalResource.CWUProposalStatus>;
+  = ADT<'create', CWUProposalResource.CreateCWUProposalStatus>;
 
-export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUProposalResource.CWUProposal], Immutable<State>>> {
+type ValidPersistResult = [Immutable<State>, CWUProposalResource.CWUProposal];
+
+type InvalidPersistResult = Immutable<State>;
+
+export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<ValidPersistResult, InvalidPersistResult>> {
   const formValues = getValues(state);
-
-  if (!formValues) {
-    return invalid(setErrors(state, {
-      proponentType: ['Please select a proponent type.']
-    }));
-  }
 
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   // Upload new attachments if necessary.
@@ -506,6 +505,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
 
   const apiResult = await api.proposals.cwu.create({
     opportunity: state.opportunity.id,
+    status: action.value,
     ...formValues
   });
 
@@ -657,8 +657,7 @@ const ProponentView: View<Props> = props => {
       <Row>
         <Col xs='12'>
           <p className='mb-4'>
-            Please select the type of proponent that will be submitting a
-            proposal for the opportunity
+            Will you be submitting a proposal for this opportunity as an Individual or Organization?
           </p>
         </Col>
         <Col xs='12'>
