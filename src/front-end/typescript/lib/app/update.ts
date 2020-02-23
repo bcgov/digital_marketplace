@@ -16,6 +16,8 @@ import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
+import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -139,6 +141,30 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageProposalCWUView.component.getModal,
         mapChildMsg(value) {
           return {tag: 'pageProposalCWUView' as const, value};
+        }
+      });
+    case 'proposalCWUExportOne':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalCWUExportOne'],
+        childRouteParams: route.value,
+        childInit: PageProposalCWUExportOne.component.init,
+        childGetMetadata: PageProposalCWUExportOne.component.getMetadata,
+        childGetModal: PageProposalCWUExportOne.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalCWUExportOne' as const, value};
+        }
+      });
+    case 'proposalCWUExportAll':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalCWUExportAll'],
+        childRouteParams: route.value,
+        childInit: PageProposalCWUExportAll.component.init,
+        childGetMetadata: PageProposalCWUExportAll.component.getMetadata,
+        childGetModal: PageProposalCWUExportAll.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalCWUExportAll' as const, value};
         }
       });
     case 'proposalList':
@@ -454,6 +480,26 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageProposalCWUView.component.update,
         childGetMetadata: PageProposalCWUView.component.getMetadata,
         childGetModal: PageProposalCWUView.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageProposalCWUExportOne':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalCWUExportOne' as const, value}),
+        childStatePath: ['pages', 'proposalCWUExportOne'],
+        childUpdate: PageProposalCWUExportOne.component.update,
+        childGetMetadata: PageProposalCWUExportOne.component.getMetadata,
+        childGetModal: PageProposalCWUExportOne.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageProposalCWUExportAll':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalCWUExportAll' as const, value}),
+        childStatePath: ['pages', 'proposalCWUExportAll'],
+        childUpdate: PageProposalCWUExportAll.component.update,
+        childGetMetadata: PageProposalCWUExportAll.component.getMetadata,
+        childGetModal: PageProposalCWUExportAll.component.getModal,
         childMsg: msg.value
       });
     case 'pageProposalList':

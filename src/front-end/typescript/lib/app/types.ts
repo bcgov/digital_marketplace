@@ -13,6 +13,8 @@ import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
+import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -27,26 +29,28 @@ import { ADT } from 'shared/lib/types';
 
 // Note(Jesse): @add_new_page_location
 export type Route
-  = ADT<'landing',               PageLanding.RouteParams>
-  | ADT<'opportunities',         PageOpportunities.RouteParams>
-  | ADT<'content',               PageContent.RouteParams>
-  | ADT<'signOut',               PageSignOut.RouteParams>
-  | ADT<'signIn',                PageSignIn.RouteParams>
-  | ADT<'signUpStepOne',         PageSignUpStepOne.RouteParams>
-  | ADT<'signUpStepTwo',         PageSignUpStepTwo.RouteParams>
-  | ADT<'notice',                PageNotice.RouteParams>
-  | ADT<'userList',              PageUserList.RouteParams>
-  | ADT<'userProfile',           PageUserProfile.RouteParams>
-  | ADT<'orgCreate',             PageOrgCreate.RouteParams>
-  | ADT<'orgList',               PageOrgList.RouteParams>
-  | ADT<'orgEdit',               PageOrgEdit.RouteParams>
-  | ADT<'opportunityCWUCreate',  PageOpportunityCWUCreate.RouteParams>
-  | ADT<'opportunityCWUEdit',    PageOpportunityCWUEdit.RouteParams>
-  | ADT<'opportunityCWUView',    PageOpportunityCWUView.RouteParams>
-  | ADT<'proposalCWUCreate',     PageProposalCWUCreate.RouteParams>
-  | ADT<'proposalCWUEdit',       PageProposalCWUEdit.RouteParams>
-  | ADT<'proposalCWUView',       PageProposalCWUView.RouteParams>
-  | ADT<'proposalList',          PageProposalList.RouteParams>
+  = ADT<'landing',              PageLanding.RouteParams>
+  | ADT<'opportunities',        PageOpportunities.RouteParams>
+  | ADT<'content',              PageContent.RouteParams>
+  | ADT<'signOut',              PageSignOut.RouteParams>
+  | ADT<'signIn',               PageSignIn.RouteParams>
+  | ADT<'signUpStepOne',        PageSignUpStepOne.RouteParams>
+  | ADT<'signUpStepTwo',        PageSignUpStepTwo.RouteParams>
+  | ADT<'notice',               PageNotice.RouteParams>
+  | ADT<'userList',             PageUserList.RouteParams>
+  | ADT<'userProfile',          PageUserProfile.RouteParams>
+  | ADT<'orgCreate',            PageOrgCreate.RouteParams>
+  | ADT<'orgList',              PageOrgList.RouteParams>
+  | ADT<'orgEdit',              PageOrgEdit.RouteParams>
+  | ADT<'opportunityCWUCreate', PageOpportunityCWUCreate.RouteParams>
+  | ADT<'opportunityCWUEdit',   PageOpportunityCWUEdit.RouteParams>
+  | ADT<'opportunityCWUView',   PageOpportunityCWUView.RouteParams>
+  | ADT<'proposalCWUCreate',    PageProposalCWUCreate.RouteParams>
+  | ADT<'proposalCWUEdit',      PageProposalCWUEdit.RouteParams>
+  | ADT<'proposalCWUView',      PageProposalCWUView.RouteParams>
+  | ADT<'proposalCWUExportOne', PageProposalCWUExportOne.RouteParams>
+  | ADT<'proposalCWUExportAll', PageProposalCWUExportAll.RouteParams>
+  | ADT<'proposalList',         PageProposalList.RouteParams>
   ;
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
@@ -95,6 +99,8 @@ export interface State {
     proposalCWUCreate?: Immutable<PageProposalCWUCreate.State>;
     proposalCWUEdit?: Immutable<PageProposalCWUEdit.State>;
     proposalCWUView?: Immutable<PageProposalCWUView.State>;
+    proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
+    proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
     proposalList?: Immutable<PageProposalList.State>;
   };
 }
@@ -123,6 +129,8 @@ type InnerMsg
   | ADT<'pageProposalCWUCreate',    PageProposalCWUCreate.Msg>
   | ADT<'pageProposalCWUEdit',      PageProposalCWUEdit.Msg>
   | ADT<'pageProposalCWUView',      PageProposalCWUView.Msg>
+  | ADT<'pageProposalCWUExportOne', PageProposalCWUExportOne.Msg>
+  | ADT<'pageProposalCWUExportAll', PageProposalCWUExportAll.Msg>
   | ADT<'pageProposalList',         PageProposalList.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;

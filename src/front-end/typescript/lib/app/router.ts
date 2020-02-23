@@ -95,6 +95,19 @@ const router: Router.Router<Route> = {
         };
       }
     },
+    // This route needs to be matched before `proposalCWUView`,
+    // otherwise "export" gets parsed as a `proposalId`.
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/export',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'proposalCWUExportAll',
+          value: {
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
     {
       path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId',
       makeRoute({ params, query }) {
@@ -104,6 +117,18 @@ const router: Router.Router<Route> = {
             proposalId: params.proposalId || '',
             opportunityId: params.opportunityId || '',
             tab: CWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'proposalCWUExportOne',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
           }
         };
       }
@@ -291,6 +316,10 @@ const router: Router.Router<Route> = {
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'proposalCWUView':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+      case 'proposalCWUExportOne':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`;
+      case 'proposalCWUExportAll':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`;
       case 'proposalList':
         return '/proposals';
       case 'notice':

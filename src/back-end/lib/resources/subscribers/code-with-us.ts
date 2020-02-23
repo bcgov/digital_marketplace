@@ -54,7 +54,7 @@ const resource: Resource = {
       async validateRequestBody(request) {
         const { opportunity } = request.body;
 
-        if (!request.session.user) {
+        if (!permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -104,7 +104,7 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request) {
-        if (!request.session.user) {
+        if (!permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });

@@ -96,9 +96,11 @@ export function getContextualActionsValid<ValidState, Msg>(getContextualActions:
   };
 }
 
+export const TITLE_SEPARATOR = '—';
+
 export function makePageMetadata(title: string): PageMetadata {
   return {
-    title: `${title} — Digital Marketplace`
+    title: `${title} ${TITLE_SEPARATOR} Digital Marketplace`
   };
 }
 

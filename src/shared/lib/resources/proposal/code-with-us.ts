@@ -64,7 +64,14 @@ export function getCWUProponentName(p: CWUProposal | CWUProposalSlim): string {
   }
 }
 
-export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;
+export function getCWUProponentTypeTitleCase(p: CWUProposal | CWUProposalSlim): string {
+  switch (p.proponent.tag) {
+    case 'individual': return 'Individual';
+    case 'organization': return 'Organization';
+  }
+}
+
+export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'statusHistory' | 'opportunity' | 'attachments'>;
 
 export interface CWUIndividualProponent {
   id: Id;
@@ -142,15 +149,20 @@ type UpdateADTErrors
   | ADT<'score', { score?: string[], note?: string[] }>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
-  | ADT<'withdraw', string[]>;
+  | ADT<'withdraw', string[]>
+  | ADT<'parseFailure'>;
 
-export type UpdateEditValidationErrors = ErrorTypeFrom<UpdateEditRequestBody>;
+export interface UpdateEditValidationErrors extends ErrorTypeFrom<Omit<UpdateEditRequestBody, 'proponent'>> {
+  proponent?: CreateProponentValidationErrors;
+}
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   proposal?: UpdateADTErrors;
 }
 
-export type DeleteValidationErrors = BodyWithErrors;
+export interface DeleteValidationErrors extends BodyWithErrors {
+  status?: string[];
+}
 
 export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
   const hasProposalDeadlinePassed = isDateInThePast(proposalDeadline);

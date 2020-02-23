@@ -1,3 +1,4 @@
+import { EMPTY_STRING } from 'front-end/config';
 import * as Table from 'front-end/lib/components/table';
 import { Component, ComponentView, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import { ThemeColor } from 'front-end/lib/types';
@@ -88,7 +89,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         className: 'font-size-base text-nowrap'
       },
       {
-        children: item.note || ''
+        children: item.note || EMPTY_STRING
       },
       {
         className: 'text-nowrap',

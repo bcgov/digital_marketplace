@@ -17,14 +17,16 @@ export const DescriptionItem: View<DescriptionItem> = ({ className = '', name, c
 };
 
 export interface Props {
-  items: DescriptionItem[];
+  // Allow null values to simplify usage of dynamic DescriptionLists.
+  items: Array<DescriptionItem | null>;
   className?: string;
 }
 
 export const DescriptionList: View<Props> = ({ items, className }) => {
+  items = items.filter(i => !!i);
   return (
     <div className={className}>
-      {items.map((detail, i) => (
+      {items.map((detail, i) => detail && (
         <Fragment key={`description-list-items-${i}`}>
           <DescriptionItem {...detail} className={i < items.length - 1 ? 'mb-3' : ''} />
         </Fragment>

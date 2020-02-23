@@ -17,6 +17,8 @@ import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
+import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -145,6 +147,20 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageProposalCWUView.component,
         state => state.pages.proposalCWUView,
         value => ({tag: 'pageProposalCWUView', value})
+      );
+    case 'proposalCWUExportOne':
+      return makeViewPageProps(
+        props,
+        PageProposalCWUExportOne.component,
+        state => state.pages.proposalCWUExportOne,
+        value => ({tag: 'pageProposalCWUExportOne', value})
+      );
+    case 'proposalCWUExportAll':
+      return makeViewPageProps(
+        props,
+        PageProposalCWUExportAll.component,
+        state => state.pages.proposalCWUExportAll,
+        value => ({tag: 'pageProposalCWUExportAll', value})
       );
     case 'proposalList':
       return makeViewPageProps(

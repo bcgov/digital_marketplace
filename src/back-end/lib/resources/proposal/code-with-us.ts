@@ -151,7 +151,7 @@ const resource: Resource = {
                 proponent,
                 attachments } = request.body;
 
-        if (!permissions.createCWUProposal(request.session)) {
+        if (!permissions.isSignedIn(request.session) || !permissions.createCWUProposal(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -216,14 +216,12 @@ const resource: Resource = {
             proponent: validatedProponent.value,
             attachments: validatedAttachments.value,
             status: validatedStatus.value
-          });
+          } as ValidatedCreateRequestBody);
         } else {
           return invalid({
-            opportunity: getInvalidValue(validatedCWUOpportunity, undefined),
             proposalText: getInvalidValue(validatedProposalText, undefined),
             additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
-            proponent: getInvalidValue(validatedProponent, undefined),
-            attachments: getInvalidValue(validatedAttachments, undefined)
+            proponent: getInvalidValue(validatedProponent, undefined)
           });
         }
       },
@@ -280,7 +278,7 @@ const resource: Resource = {
           return invalid({ notFound: ['The specified proposal does not exist.'] });
         }
 
-        if (!permissions.editCWUProposal(connection, request.session, request.params.id)) {
+        if (!permissions.isSignedIn(request.session) || !permissions.editCWUProposal(connection, request.session, request.params.id)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -302,20 +300,21 @@ const resource: Resource = {
             if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
               return valid({
                 session: request.session,
-                body: adt('edit', {
+                body: adt('edit' as const, {
                   proposalText: validatedProposalText.value,
                   additionalComments: validatedAdditionalComments.value,
                   proponent: validatedProponent.value,
                   attachments: validatedAttachments.value
                 })
-              });
+              } as ValidatedUpdateRequestBody);
             } else {
-              return invalid(adt('edit', {
-                proposalText: getInvalidValue(validatedProposalText, undefined),
-                additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
-                proponent: getInvalidValue(validatedProponent, undefined),
-                attachments: getInvalidValue(validatedAttachments, undefined)
-              }));
+              return invalid({
+                proposal: adt('edit' as const, {
+                  proposalText: getInvalidValue(validatedProposalText, undefined),
+                  additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
+                  proponent: getInvalidValue(validatedProponent, undefined)
+                })
+              });
             }
           case 'submit':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
@@ -330,8 +329,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('submit', validatedSubmissionNote.value)
-            });
+              body: adt('submit' as const, validatedSubmissionNote.value)
+            } as ValidatedUpdateRequestBody);
           case 'score':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Evaluated,
@@ -346,8 +345,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('score', { score: validatedScore.value, note: validatedScoringNote.value })
-            });
+              body: adt('score' as const, { score: validatedScore.value, note: validatedScoringNote.value })
+            } as ValidatedUpdateRequestBody);
           case 'award':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Awarded,
@@ -361,8 +360,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('award', validatedAwardNote.value)
-            });
+              body: adt('award' as const, validatedAwardNote.value)
+            } as ValidatedUpdateRequestBody);
           case 'disqualify':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Disqualified,
@@ -378,8 +377,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('disqualify', validatedDisqualifyNote.value)
-            });
+              body: adt('disqualify' as const, validatedDisqualifyNote.value)
+            } as ValidatedUpdateRequestBody);
           case 'withdraw':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Withdrawn,
@@ -395,8 +394,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('withdraw', validatedWithdrawalNote.value)
-            });
+              body: adt('withdraw' as const, validatedWithdrawalNote.value)
+            } as ValidatedUpdateRequestBody);
           default:
             return invalid({ proposal: adt('parseFailure' as const) });
         }

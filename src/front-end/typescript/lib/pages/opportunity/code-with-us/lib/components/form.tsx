@@ -191,7 +191,9 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
+      validate: DateField.validateDate(v => {
+        return opportunityValidation.validateProposalDeadline(v, opportunity?.status === CWUOpportunityStatus.Draft ? new Date() : opportunity?.proposalDeadline);
+      }),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
         id: 'cwu-opportunity-proposal-deadline'
@@ -200,7 +202,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     startDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, new Date())),
+      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, opportunity?.assignmentDate || new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
         id: 'cwu-opportunity-start-date'
@@ -209,7 +211,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, new Date())),
+      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, opportunity?.proposalDeadline || new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
         id: 'cwu-opportunity-assignment-date'
@@ -220,7 +222,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       errors: [],
       validate: DateField.validateDate(v => {
         return mapValid(
-          opportunityValidation.validateCompletionDate(v, new Date()),
+          opportunityValidation.validateCompletionDate(v, opportunity?.startDate || new Date()),
           w => w || null
         );
       }),

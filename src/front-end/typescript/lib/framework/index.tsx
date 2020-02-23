@@ -14,9 +14,9 @@ export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framew
 // Base logic.
 
 // TODO replace Immutable with TypeScript's built-in Readonly
-export type Immutable<State> = Immutable.RecordOf<State>;
+export type Immutable<State = unknown> = Immutable.RecordOf<State>;
 
-export function immutable<State>(state: State): Immutable<State> {
+export function immutable<State = unknown>(state: State): Immutable<State> {
   return Immutable.Record(state)();
 }
 
