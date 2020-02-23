@@ -302,14 +302,18 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
   const userAvatar = sessionUser.avatarImageFile ? fileBlobPath(sessionUser.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH;
   return {
     mobile: Nav.authenticatedMobileAccountMenu([
-      Nav.linkAccountAction({
-        children: userIdentifier,
-        dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
-        symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
-        active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
-      }),
-      Nav.linkAccountAction(signOutLink),
-      Nav.linkAccountAction(procurementConciergeLink)
+      [
+        Nav.linkAccountAction({
+          children: userIdentifier,
+          dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
+          symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
+          active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
+        }),
+        Nav.linkAccountAction(signOutLink)
+      ],
+      [
+        Nav.linkAccountAction(procurementConciergeLink)
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,

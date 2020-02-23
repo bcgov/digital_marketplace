@@ -185,7 +185,7 @@ export const unauthenticatedAccountMenu = adtCurried<UnauthenticatedAccountMenu>
 type AuthenticatedDesktopAccountMenu = ADT<'authenticated', NavAccountDropdown>;
 export const authenticatedDesktopAccountMenu = adtCurried<AuthenticatedDesktopAccountMenu>('authenticated');
 
-type AuthenticatedMobileAccountMenu = ADT<'authenticated', AccountAction[]>;
+type AuthenticatedMobileAccountMenu = ADT<'authenticated', AccountAction[][]>;
 export const authenticatedMobileAccountMenu = adtCurried<AuthenticatedMobileAccountMenu>('authenticated');
 
 type DesktopAccountMenu = AuthenticatedDesktopAccountMenu | UnauthenticatedAccountMenu;
@@ -235,9 +235,9 @@ const DesktopAccountMenu: View<Props> = props => {
 
 const MobileAccountMenu: View<Props> = props => {
   const menu = props.accountMenus.mobile;
-  const actions = (marginClassName: string) => (
+  const viewActions = (actions: AccountAction[], marginClassName: string) => (
     <Fragment>
-      {menu.value.map((action, i) => {
+      {actions.map((action, i, arr) => {
         const clonedAction = { ...action };
         if (clonedAction.tag === 'link' && clonedAction.value.button) {
           clonedAction.value = { ...clonedAction.value, size: 'sm' };
@@ -247,7 +247,7 @@ const MobileAccountMenu: View<Props> = props => {
         return (
           <AccountAction
             action={clonedAction}
-            className={`${i !== menu.value.length - 1 ? marginClassName : ''} ${active && !button ? 'font-weight-bold' : ''}`}
+            className={`${i !== arr.length - 1 ? marginClassName : ''} ${active && !button ? 'font-weight-bold' : ''}`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`} />);
         })}
@@ -255,9 +255,19 @@ const MobileAccountMenu: View<Props> = props => {
   );
   switch (menu.tag) {
     case 'unauthenticated':
-      return (<div className='d-flex'>{actions('mr-3')}</div>);
+      return (<div className='d-flex'>{viewActions(menu.value, 'mr-3')}</div>);
     case 'authenticated':
-      return (<div className='d-flex flex-column align-items-start'>{actions('mb-3')}</div>);
+      return (
+        <div className='d-flex flex-column align-items-stretch'>
+          {menu.value.map((actions, i, arr) => {
+            return (
+              <div key={`mobile-account-menu-authenticated-actions-${i}`} className={`d-flex flex-column align-items-start ${i < arr.length - 1 ? 'pb-3 mb-3 border-bottom' : ''}`}>
+                {viewActions(actions, 'mb-3')}
+              </div>
+            );
+          })}
+        </div>
+      );
   }
 };
 
