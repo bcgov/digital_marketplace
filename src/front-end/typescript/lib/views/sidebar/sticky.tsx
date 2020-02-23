@@ -8,11 +8,12 @@ import React from 'react';
 
 export interface Props {
   children: ViewElementChildren;
+  className?: string;
 }
 
-export const view: View<Props> = ({ children }) => {
+export const view: View<Props> = ({ children, className = '' }) => {
   return (
-    <div className='sticky-md'>
+    <div className={`sticky-md ${className}`}>
       {children}
     </div>
   );

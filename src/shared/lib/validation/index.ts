@@ -10,13 +10,13 @@ export type ErrorTypeFrom<T> = {
 
 export type Valid<T> = ADT<'valid', T>;
 
-export function valid<T>(value: T): Validation<T, any> {
+export function valid<T>(value: T): Valid<T> {
   return adt('valid', value);
 }
 
 export type Invalid<T> = ADT<'invalid', T>;
 
-export function invalid<T>(value: T): Validation<any, T> {
+export function invalid<T>(value: T): Invalid<T> {
   return adt('invalid', value);
 }
 
@@ -114,9 +114,9 @@ export function validateArray<A, B>(raw: A[], validate: (v: A) => Validation<B>)
 export async function validateArrayAsync<A, B>(raw: A[], validate: (v: A) => Promise<Validation<B>>): Promise<ArrayValidation<B>> {
   const validations = await Promise.all(raw.map(v => validate(v)));
   if (allValid(validations)) {
-    return valid(validations.map(({ value }) => value as B));
+    return valid<B[]>(validations.map(({ value }) => value));
   } else {
-    return invalid(validations.map(validation => getInvalidValue(validation, [])));
+    return invalid<string[][]>(validations.map(validation => getInvalidValue(validation, [])));
   }
 }
 
@@ -128,7 +128,7 @@ export function optional<Value, Valid, Invalid>(v: Value | undefined, validate: 
 }
 
 export async function optionalAsync<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Promise<Validation<Valid, Invalid>>): Promise<Validation<Valid | undefined, Invalid>> {
-  return isEmpty(v) ? valid(undefined) : await validate(v as Value);
+  return isEmpty(v) ? valid<undefined>(undefined) : await validate(v as Value);
 }
 
 export function validateGenericString(value: string, name: string, min = 1, max = 100, characters = 'characters'): Validation<string> {

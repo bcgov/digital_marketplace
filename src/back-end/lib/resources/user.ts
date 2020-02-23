@@ -114,7 +114,7 @@ const resource: Resource = {
         }
       },
       async validateRequestBody(request) {
-        if (!request.body) { return invalid({ user: adt('parseFailure') }); }
+        if (!request.body) { return invalid({ user: adt('parseFailure' as const) }); }
         const validatedUser = await validateUserId(connection, request.params.id);
         if (isInvalid(validatedUser)) {
           return invalid({ notFound: ['The specified user does not exist.'] });
@@ -131,7 +131,7 @@ const resource: Resource = {
               if (!permissions.updateUser(request.session, request.params.id)) {
                 return invalid({ permissions: [permissions.ERROR_MESSAGE] });
               }
-              return valid(adt('updateProfile', {
+              return valid(adt('updateProfile' as const, {
                 name: validatedName.value,
                 email: validatedEmail.value,
                 jobTitle: validatedJobTitle.value,
@@ -139,7 +139,7 @@ const resource: Resource = {
               } as UpdateProfileRequestBody));
             } else {
               return invalid({
-                user: adt('updateProfile', {
+                user: adt('updateProfile' as const, {
                   name: getInvalidValue(validatedName, undefined),
                   email: getInvalidValue(validatedEmail, undefined),
                   jobTitle: getInvalidValue(validatedJobTitle, undefined),
@@ -153,21 +153,21 @@ const resource: Resource = {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             if (validatedUser.value.acceptedTerms) {
-              return invalid({ user: adt('acceptTerms', ['You have already accepted the terms of service.']) });
+              return invalid({ user: adt('acceptTerms' as const, ['You have already accepted the terms of service.']) });
             }
-            return valid(adt('acceptTerms'));
+            return valid(adt('acceptTerms' as const));
 
           case 'updateNotifications':
             if (!permissions.updateUser(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            return valid(adt('updateNotifications', notificationsBooleanToNotificationsOn(request.body.value)));
+            return valid(adt('updateNotifications' as const, notificationsBooleanToNotificationsOn(request.body.value)));
 
           case 'reactivateUser':
             if (!permissions.reactivateUser(request.session, request.params.id) || validatedUser.value.status !== UserStatus.InactiveByAdmin) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            return valid(adt('reactivateUser'));
+            return valid(adt('reactivateUser' as const));
 
           case 'updateAdminPermissions':
             const userType = adminPermissionsToUserType(request.body.value);
@@ -176,13 +176,13 @@ const resource: Resource = {
             }
             if (validatedUser.value.type === UserType.Vendor) {
               return invalid({
-                user: adt('updateAdminPermissions', ['Vendors cannot be granted admin permissions.'])
+                user: adt('updateAdminPermissions' as const, ['Vendors cannot be granted admin permissions.'])
               });
             }
-            return valid(adt('updateAdminPermissions', userType));
+            return valid(adt('updateAdminPermissions' as const, userType));
 
           default:
-            return invalid({ user: adt('parseFailure') });
+            return invalid({ user: adt('parseFailure' as const) });
         }
       },
       respond: wrapRespond({

@@ -10,10 +10,10 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, mapValid, valid, validateUUID, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
-export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> {
+export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'id' | 'addenda'> {
   status: CreateCWUOpportunityStatus;
   session: AuthenticatedSession;
 }
@@ -22,7 +22,7 @@ interface ValidatedUpdateEditRequestBody extends Omit<UpdateEditRequestBody, 'pr
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
-  completionDate: Date;
+  completionDate: Date | null;
   attachments: FileRecord[];
 }
 
@@ -113,11 +113,12 @@ const resource: Resource = {
         };
       },
       async validateRequestBody(request) {
-        if (!permissions.createCWUOpportunity(request.session)) {
+        if (!permissions.createCWUOpportunity(request.session) || !permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
+        const session: AuthenticatedSession = request.session;
 
         const { title,
                 teaser,
@@ -137,7 +138,7 @@ const resource: Resource = {
                 attachments
               } = request.body;
 
-        const validatedStatus = opportunityValidation.validateCWUOpportunityStatus(request.body.status, [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published]);
+        const validatedStatus = opportunityValidation.validateCreateCWUOpportunityStatus(request.body.status);
         if (isInvalid(validatedStatus)) {
           return invalid({
             status: validatedStatus.value
@@ -155,21 +156,24 @@ const resource: Resource = {
         const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
         const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
         const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
-        const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date()));
+        const validatedCompletionDate = mapValid(
+          opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date())),
+          v => v || null
+        );
 
         // Do not validate other fields if the opportunity is a draft.
         if (validatedStatus.value === CWUOpportunityStatus.Draft) {
           const defaultDate = addDays(new Date(), 14);
           return valid({
             ...request.body,
-            session: request.session,
+            session,
             status: validatedStatus.value,
             attachments: validatedAttachments.value,
             // Coerce validated dates to default values.
             proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
             assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
             startDate: getValidValue(validatedStartDate, defaultDate),
-            completionDate: getValidValue(validatedCompletionDate, undefined)
+            completionDate: getValidValue(validatedCompletionDate, null)
           });
         }
 
@@ -203,7 +207,7 @@ const resource: Resource = {
               validatedEvaluationCriteria
         ])) {
           return valid({
-            session: request.session,
+            session,
             title: validatedTitle.value,
             teaser: validatedTeaser.value,
             remoteOk: validatedRemoteOk.value,
@@ -221,7 +225,7 @@ const resource: Resource = {
             evaluationCriteria: validatedEvaluationCriteria.value,
             attachments: validatedAttachments.value,
             status: validatedStatus.value
-          });
+          } as ValidatedCreateRequestBody);
         } else {
           return invalid({
             title: getInvalidValue(validatedTitle, undefined),
@@ -238,8 +242,7 @@ const resource: Resource = {
             completionDate: getInvalidValue(validatedCompletionDate, undefined),
             submissionInfo: getInvalidValue(validatedSubmissionInfo, undefined),
             acceptanceCriteria: getInvalidValue(validatedAcceptanceCriteria, undefined),
-            evaluationCrtieria: getInvalidValue(validatedEvaluationCriteria, undefined),
-            attachments: getInvalidValue(validatedAttachments, undefined)
+            evaluationCrtieria: getInvalidValue(validatedEvaluationCriteria, undefined)
           });
         }
       },
@@ -305,7 +308,7 @@ const resource: Resource = {
         }
         const cwuOpportunity = validatedCWUOpportunity.value;
 
-        if (!permissions.editCWUOpportunity(connection, request.session, request.params.id)) {
+        if (!permissions.editCWUOpportunity(connection, request.session, request.params.id) || !permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -335,14 +338,19 @@ const resource: Resource = {
             const validatedAttachments = await validateAttachments(connection, attachments);
             if (isInvalid(validatedAttachments)) {
               return invalid({
-                attachments: validatedAttachments.value
+                opportunity: adt('edit' as const, {
+                  attachments: validatedAttachments.value
+                })
               });
             }
 
             const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
             const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
             const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
-            const validatedCompletionDate = opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date()));
+            const validatedCompletionDate = mapValid(
+              opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date())),
+              v => v || null
+            );
 
             // Do not validate other fields if the opportunity is a draft.
             if (cwuOpportunity.status === CWUOpportunityStatus.Draft) {
@@ -356,7 +364,7 @@ const resource: Resource = {
                   proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
                   assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
                   startDate: getValidValue(validatedStartDate, defaultDate),
-                  completionDate: getValidValue(validatedCompletionDate, defaultDate)
+                  completionDate: getValidValue(validatedCompletionDate, null)
                 })
               });
             }
@@ -411,7 +419,7 @@ const resource: Resource = {
                   evaluationCriteria: validatedEvaluationCriteria.value,
                   attachments: validatedAttachments.value
                 })
-              });
+              } as ValidatedUpdateRequestBody);
             } else {
               return invalid({
                 opportunity: adt('edit' as const, {
@@ -429,8 +437,7 @@ const resource: Resource = {
                   completionDate: getInvalidValue(validatedCompletionDate, undefined),
                   submissionInfo: getInvalidValue(validatedSubmissionInfo, undefined),
                   acceptanceCriteria: getInvalidValue(validatedAcceptanceCriteria, undefined),
-                  evaluationCrtieria: getInvalidValue(validatedEvaluationCriteria, undefined),
-                  attachments: getInvalidValue(validatedAttachments, undefined)
+                  evaluationCrtieria: getInvalidValue(validatedEvaluationCriteria, undefined)
                 })
               });
             }
@@ -453,7 +460,7 @@ const resource: Resource = {
               opportunityValidation.validateEvaluationCriteria(validatedCWUOpportunity.value.evaluationCriteria)
             ])) {
               return invalid({
-                opportunity: adt('publish', ['This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])
+                opportunity: adt('publish' as const, ['This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])
               });
             }
 
@@ -464,7 +471,7 @@ const resource: Resource = {
             return valid({
               session: request.session,
               body: adt('publish', validatedPublishNote.value)
-            });
+            } as ValidatedUpdateRequestBody);
           case 'suspend':
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Suspended)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -476,7 +483,7 @@ const resource: Resource = {
             return valid({
               session: request.session,
               body: adt('suspend', validatedSuspendNote.value)
-            });
+            } as ValidatedUpdateRequestBody);
           case 'cancel':
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Canceled)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -488,7 +495,7 @@ const resource: Resource = {
             return valid({
               session: request.session,
               body: adt('cancel', validatedCancelNote.value)
-            });
+            } as ValidatedUpdateRequestBody);
           case 'addAddendum':
             if (validatedCWUOpportunity.value.status === CWUOpportunityStatus.Canceled) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -500,7 +507,7 @@ const resource: Resource = {
             return valid({
               session: request.session,
               body: adt('addAddendum', validatedAddendumText.value)
-            });
+            } as ValidatedUpdateRequestBody);
           default:
             return invalid({ opportunity: adt('parseFailure' as const) });
         }

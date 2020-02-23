@@ -331,12 +331,15 @@ a,
 
   &.disabled {
     opacity: $btn-disabled-opacity;
-    cursor: default;
   }
 
   &.nav-link:focus {
     outline: none;
   }
+}
+
+.disabled {
+  cursor: not-allowed !important;
 }
 
 .blockquote {
@@ -492,12 +495,8 @@ nav.navbar .nav-link:hover {
 
     .sticky#{$infix} {
       position: sticky;
-      top: 6rem;
-      // Use padding and margin instead of top for vertical offset
-      // to preserve background color.
-      //padding-top: 6rem;
-      //margin-top: -6rem;
       z-index: 2;
+      top: 6rem;
 
       &::after {
         content: " ";
@@ -508,6 +507,16 @@ nav.navbar .nav-link:hover {
         height: 100%;
         background-color: inherit;
         background: inherit;
+      }
+    }
+  }
+
+  @if ($breakpoint == 'xs') or ($breakpoint == 'sm') {
+
+    @include media-breakpoint-down(sm) {
+
+      .app:not(.contextual-actions-visible) .sticky#{$infix} {
+        top: 1rem;
       }
     }
   }
@@ -634,6 +643,10 @@ nav.navbar .nav-link:hover {
   pre {
     margin-top: 2*$spacer;
     margin-bottom: 2*$spacer;
+  }
+
+  & > *:last-child {
+    @extend .mb-0;
   }
 
 }

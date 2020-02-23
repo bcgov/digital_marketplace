@@ -91,7 +91,7 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
   const { dispatchPage, alerts, breadcrumbs, container = false } = props;
   const hasAlerts = alerts.info.length || alerts.warnings.length || alerts.errors.length;
   const hasBreadcrumbs = !!breadcrumbs.length;
-  const className = `${hasAlerts || hasBreadcrumbs ? 'pb-5 mb-n3' : ''} ${props.className || ''}`;
+  const className = `${hasAlerts ? 'pb-5 mb-n3' : ''} ${!hasAlerts && hasBreadcrumbs ? 'pb-md-5 mb-md-n3' : ''} ${props.className || ''}`;
   if (container) {
     return (
       <Container className={className}>
@@ -167,7 +167,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
             <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
-                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-5 d-flex flex-column align-items-stretch pt-6 ${isEmptyOnMobile ? 'pb-md-6' : 'pb-6'}`}>
+                <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 ${isEmptyOnMobile ? 'pb-md-6' : 'pb-5'}`}>
                   <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} className='d-md-none' />
                   <sidebar.view {...viewProps} />
                 </Col>
@@ -184,7 +184,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
       // No sidebar.
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
-          <Container className='py-6'>
+          <Container className='pt-4 pt-md-6 pb-6'>
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>

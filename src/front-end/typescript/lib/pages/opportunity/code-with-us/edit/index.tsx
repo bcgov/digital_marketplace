@@ -53,7 +53,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
         opportunity,
         tab: [tabId, tabState],
         sidebar: await Tab.makeSidebarState(opportunity.id, tabId)
-      }));
+      })) as State_<K>;
     },
 
     async fail({ dispatch }) {
@@ -78,7 +78,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition: Tab.idToDefinition,
       getTitleSuffix: state => state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
-    }), makePageMetadata('Edit CodeWithUs Opportunity'))
+    }), makePageMetadata('Edit Code With Us Opportunity'))
   };
 }
 

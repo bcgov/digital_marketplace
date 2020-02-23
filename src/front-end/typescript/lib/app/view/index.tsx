@@ -17,6 +17,8 @@ import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
+import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -145,6 +147,20 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageProposalCWUView.component,
         state => state.pages.proposalCWUView,
         value => ({tag: 'pageProposalCWUView', value})
+      );
+    case 'proposalCWUExportOne':
+      return makeViewPageProps(
+        props,
+        PageProposalCWUExportOne.component,
+        state => state.pages.proposalCWUExportOne,
+        value => ({tag: 'pageProposalCWUExportOne', value})
+      );
+    case 'proposalCWUExportAll':
+      return makeViewPageProps(
+        props,
+        PageProposalCWUExportAll.component,
+        state => state.pages.proposalCWUExportAll,
+        value => ({tag: 'pageProposalCWUExportAll', value})
       );
     case 'proposalList':
       return makeViewPageProps(
@@ -286,14 +302,18 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
   const userAvatar = sessionUser.avatarImageFile ? fileBlobPath(sessionUser.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH;
   return {
     mobile: Nav.authenticatedMobileAccountMenu([
-      Nav.linkAccountAction({
-        children: userIdentifier,
-        dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
-        symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
-        active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
-      }),
-      Nav.linkAccountAction(signOutLink),
-      Nav.linkAccountAction(procurementConciergeLink)
+      [
+        Nav.linkAccountAction({
+          children: userIdentifier,
+          dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
+          symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
+          active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
+        }),
+        Nav.linkAccountAction(signOutLink)
+      ],
+      [
+        Nav.linkAccountAction(procurementConciergeLink)
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -440,7 +460,7 @@ const view: ComponentView<State, Msg> = props => {
       ? simpleNavProps(props)
       : regularNavProps(props);
     return (
-      <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
+      <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} ${navProps.contextualActions ? 'contextual-actions-visible' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}
