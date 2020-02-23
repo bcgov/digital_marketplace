@@ -690,7 +690,11 @@ export async function hasAttachmentPermission(connection: Connection, session: S
       .select<RawCWUProposal[]>('proposals.*');
 
     if (proposals.length > 0) {
-      return proposals.some(async proposal => await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id));
+      for (const proposal of proposals) {
+        if (await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id)) {
+          return true;
+        }
+      }
     }
   }
   return false;
