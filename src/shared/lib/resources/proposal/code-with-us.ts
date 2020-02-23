@@ -16,6 +16,10 @@ export enum CWUProposalStatus {
   Withdrawn = 'WITHDRAWN'
 }
 
+export enum CWUProposalEvent {
+  ScoreEntered = 'SCORE_ENTERED'
+}
+
 export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
   switch (raw) {
     case CWUProposalStatus.Draft: return CWUProposalStatus.Draft;
@@ -30,11 +34,11 @@ export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
   }
 }
 
-export interface CWUProposalStatusRecord {
+export interface CWUProposalHistoryRecord {
   id: Id;
   createdAt: Date;
   createdBy: UserSlim;
-  status: CWUProposalStatus;
+  type: ADT<'status', CWUProposalStatus> | ADT<'event', CWUProposalEvent>;
   note: string;
 }
 
@@ -51,7 +55,7 @@ export interface CWUProposal {
   score: number;
   status: CWUProposalStatus;
   attachments: FileRecord[];
-  statusHistory?: CWUProposalStatusRecord[];
+  statusHistory?: CWUProposalHistoryRecord[];
 }
 
 export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;

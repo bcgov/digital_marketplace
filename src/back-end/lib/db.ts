@@ -10,7 +10,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, CWUProposalStatusRecord, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { CWUOpportunitySubscriber } from 'shared/lib/resources/subscribers/code-with-us';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -1342,7 +1342,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
         .on('prop.id', '=', 'stat.proposal')
         .andOn('stat.createdAt', '=',
           connection.raw('(select max("createdAt") from "cwuProposalStatuses" as stat2 where \
-            stat2.proposal = prop.id)'));
+            stat2.proposal = prop.id and stat2.status is not null)'));
     })
     .select<RawCWUProposal>(
       'prop.id',
@@ -1365,11 +1365,11 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       .where({ proposal: result.id })
       .select('file')).map(row => row.file);
 
-    const rawProposalStasuses = await connection<RawCWUProposalStatusRecord>('cwuProposalStatuses')
+    const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
       .where({ proposal: result.id })
       .orderBy('createdAt', 'desc');
 
-    result.statusHistory = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalStatusRecordToCWUProposalStatusRecord(connection, session, raw)));
+    result.statusHistory = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
   }
 
   return valid(result ? await rawCWUProposalToCWUProposal(connection, session, result) : null);
@@ -1515,6 +1515,7 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
     if (proponent.tag === 'individual') {
       if (result.proponentIndividual) {
         await connection('cwuProponents')
+          .transacting(trx)
           .where({ id: result.proponentIndividual})
           .update({
             ...proponent.value,
@@ -1523,6 +1524,7 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
           });
       } else {
         await connection('cwuProponents')
+          .transacting(trx)
           .insert({
             id: generateUuid(),
             createdAt: now,
@@ -1543,28 +1545,31 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
   }));
 });
 
-interface RawCWUProposalStatusRecord extends Omit<CWUProposalStatusRecord, 'createdBy'> {
+interface RawCWUProposalHistoryRecord extends Omit<CWUProposalHistoryRecord, 'createdBy' | 'type'> {
   createdBy: Id;
+  status?: CWUProposalStatus;
+  event?: CWUProposalEvent;
 }
 
-async function rawCWUProposalStatusRecordToCWUProposalStatusRecord(connection: Connection, session: Session, raw: RawCWUProposalStatusRecord): Promise<CWUProposalStatusRecord> {
-  const { createdBy: createdById } = raw;
+async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection: Connection, session: Session, raw: RawCWUProposalHistoryRecord): Promise<CWUProposalHistoryRecord> {
+  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
   const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
 
-  if (!createdBy) {
+  if (!createdBy || (!status && !event)) {
     throw new Error('unable to process proposal status record');
   }
 
   return {
-    ...raw,
-    createdBy
+    ...restOfRaw,
+    createdBy,
+    type: status ? adt('status', status as CWUProposalStatus) : adt('event', event as CWUProposalEvent)
   };
 }
 
 export const updateCWUProposalStatus = tryDb<[Id, CWUProposalStatus, string, AuthenticatedSession], CWUProposal>(async (connection, proposalId, status, note, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
-    const [result] = await connection<RawCWUProposalStatusRecord & { proposal: Id }>('cwuProposalStatuses')
+    const [result] = await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
       .transacting(trx)
       .insert({
         id: generateUuid(),
@@ -1601,7 +1606,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, string, AuthenticatedSe
   const now = new Date();
   return valid(await connection.transaction(async trx => {
     // Update status for proposal first
-    const [result] = await connection<RawCWUProposalStatusRecord & { proposal: Id }>('cwuProposalStatuses')
+    const [result] = await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
       .transacting(trx)
       .insert({
         id: generateUuid(),
@@ -1626,6 +1631,18 @@ export const updateCWUProposalScore = tryDb<[Id, number, string, AuthenticatedSe
       throw new Error('unable to update proposal');
     }
 
+    // Create a history record for the score entry
+    await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: CWUProposalEvent.ScoreEntered,
+        note: ''
+      });
+
     const dbResult = await readOneCWUProposal(trx, result.proposal, session);
     if (isInvalid(dbResult) || !dbResult.value) {
       throw new Error('unable to update proposal');
@@ -1639,7 +1656,7 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
   const now = new Date();
   return valid(await connection.transaction(async trx => {
     // Update status for awarded proposal first
-    await connection<RawCWUProposalStatusRecord & { proposal: Id }>('cwuProposalStatuses')
+    await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
       .transacting(trx)
       .insert({
         id: generateUuid(),
