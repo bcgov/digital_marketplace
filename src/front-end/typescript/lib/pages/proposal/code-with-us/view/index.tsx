@@ -82,7 +82,13 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     }), makePageMetadata('View Code With Us Proposal')),
     getBreadcrumbs: getBreadcrumbsValid((state) => {
       return [
-        { text: 'All Proposals', onClickMsg: newRoute(adt('opportunityCWUEdit' as const, { opportunityId: state.proposal.opportunity.id })) },
+        {
+          text: 'All Proposals',
+          onClickMsg: newRoute(adt('opportunityCWUEdit' as const, {
+            opportunityId: state.proposal.opportunity.id,
+            tab: 'proposals' as const
+          }))
+        },
         { text: `Vendor Proposal — ${getCWUProponentName(state.proposal)}` }
       ];
     })
