@@ -8,7 +8,7 @@ import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { flatten } from 'lodash';
@@ -185,13 +185,15 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.description || '',
         id: 'cwu-opportunity-description',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
+      validate: DateField.validateDate(v => {
+        return opportunityValidation.validateProposalDeadline(v, opportunity?.status === CWUOpportunityStatus.Draft ? new Date() : opportunity?.proposalDeadline);
+      }),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
         id: 'cwu-opportunity-proposal-deadline'
@@ -200,7 +202,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     startDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, new Date())),
+      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, opportunity?.assignmentDate || new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
         id: 'cwu-opportunity-start-date'
@@ -209,7 +211,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     assignmentDate: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, new Date())),
+      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, opportunity?.proposalDeadline || new Date())),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
         id: 'cwu-opportunity-assignment-date'
@@ -220,7 +222,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       errors: [],
       validate: DateField.validateDate(v => {
         return mapValid(
-          opportunityValidation.validateCompletionDate(v, new Date()),
+          opportunityValidation.validateCompletionDate(v, opportunity?.startDate || new Date()),
           w => w || null
         );
       }),
@@ -246,7 +248,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.acceptanceCriteria || '',
         id: 'cwu-opportunity-acceptance-criteria',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -256,7 +258,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.evaluationCriteria || '',
         id: 'cwu-opportunity-evaluation-criteria',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -911,10 +913,4 @@ export const view: View<Props> = props => {
       {activeTab}
     </div>
   );
-};
-
-export const component: Component<Params, State, Msg> = {
-  init,
-  update,
-  view
 };

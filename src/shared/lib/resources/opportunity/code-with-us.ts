@@ -1,3 +1,4 @@
+import { isDateInTheFuture } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
@@ -51,6 +52,7 @@ export interface CWUOpportunity {
   updatedBy?: UserSlim;
 
   // TODO
+  // @successful-proponent
   successfulProponent?: true;
 
   title: string;
@@ -104,6 +106,11 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
     default:
       return false;
   }
+}
+
+export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
+  // Return true if the opportunity has ever had the `Evaluation` status.
+  return !!o.statusHistory && o.statusHistory.reduce((acc, record) => acc || record.status === CWUOpportunityStatus.Evaluation, false as boolean);
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
@@ -180,6 +187,20 @@ export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportuni
   }
 }
 
+export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
 
 export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
+
+export function isCWUOpportunityAcceptingProposals(o: CWUOpportunity): boolean {
+  return o.status === CWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+}

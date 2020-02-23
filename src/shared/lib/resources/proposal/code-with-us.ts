@@ -1,3 +1,4 @@
+import { isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
@@ -5,15 +6,17 @@ import { UserSlim, UserType  } from 'shared/lib/resources/user';
 import { ADT, adt, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
+export const DEFAULT_CWU_PROPOSAL_TITLE = 'Unknown';
+
 export enum CWUProposalStatus {
-  Draft = 'DRAFT',
-  Submitted = 'SUBMITTED',
-  UnderReview = 'UNDER_REVIEW',
-  Evaluated = 'EVALUATED',
-  Awarded = 'AWARDED',
-  NotAwarded = 'NOT_AWARDED',
+  Draft        = 'DRAFT',
+  Submitted    = 'SUBMITTED',
+  UnderReview  = 'UNDER_REVIEW',
+  Evaluated    = 'EVALUATED',
+  Awarded      = 'AWARDED',
+  NotAwarded   = 'NOT_AWARDED',
   Disqualified = 'DISQUALIFIED',
-  Withdrawn = 'WITHDRAWN'
+  Withdrawn    = 'WITHDRAWN'
 }
 
 export enum CWUProposalEvent {
@@ -58,7 +61,21 @@ export interface CWUProposal {
   history?: CWUProposalHistoryRecord[];
 }
 
-export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;
+export function getCWUProponentName(p: CWUProposal | CWUProposalSlim): string {
+  switch (p.proponent.tag) {
+    case 'individual': return p.proponent.value.legalName;
+    case 'organization': return p.proponent.value.legalName;
+  }
+}
+
+export function getCWUProponentTypeTitleCase(p: CWUProposal | CWUProposalSlim): string {
+  switch (p.proponent.tag) {
+    case 'individual': return 'Individual';
+    case 'organization': return 'Organization';
+  }
+}
+
+export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'statusHistory' | 'opportunity' | 'attachments'>;
 
 export interface CWUIndividualProponent {
   id: Id;
@@ -136,45 +153,72 @@ type UpdateADTErrors
   | ADT<'score', { score?: string[], note?: string[] }>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
-  | ADT<'withdraw', string[]>;
+  | ADT<'withdraw', string[]>
+  | ADT<'parseFailure'>;
 
-export type UpdateEditValidationErrors = ErrorTypeFrom<UpdateEditRequestBody>;
+export interface UpdateEditValidationErrors extends ErrorTypeFrom<Omit<UpdateEditRequestBody, 'proponent'>> {
+  proponent?: CreateProponentValidationErrors;
+}
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   proposal?: UpdateADTErrors;
 }
 
-export type DeleteValidationErrors = BodyWithErrors;
+export interface DeleteValidationErrors extends BodyWithErrors {
+  status?: string[];
+}
 
 export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
-  const now = new Date();
+  const hasProposalDeadlinePassed = isDateInThePast(proposalDeadline);
   switch (from) {
     case CWUProposalStatus.Draft:
-      return to === CWUProposalStatus.Submitted && userType === UserType.Vendor && now < proposalDeadline;
+      return to === CWUProposalStatus.Submitted && userType === UserType.Vendor && !hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Submitted:
       return (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
-             (to === CWUProposalStatus.UnderReview && userType !== UserType.Vendor && now > proposalDeadline);
+             (to === CWUProposalStatus.UnderReview && userType !== UserType.Vendor && hasProposalDeadlinePassed);
 
     case CWUProposalStatus.UnderReview:
       return [CWUProposalStatus.Evaluated, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Evaluated:
       return [CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Awarded:
       return ((to === CWUProposalStatus.Disqualified && userType !== UserType.Vendor) ||
              (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
 
     case CWUProposalStatus.NotAwarded:
       return [CWUProposalStatus.Awarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
-             now > proposalDeadline;
+             hasProposalDeadlinePassed;
+    default:
+      return false;
+  }
+}
+
+export function canCWUProposalBeAwarded(p: CWUProposal | CWUProposalSlim): boolean {
+  switch (p.status) {
+    case CWUProposalStatus.NotAwarded:
+    case CWUProposalStatus.Evaluated:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isTerminalCWUProposalStatus(s: CWUProposalStatus): boolean {
+  switch (s) {
+    case CWUProposalStatus.Disqualified:
+    case CWUProposalStatus.Withdrawn:
+    case CWUProposalStatus.Awarded:
+    case CWUProposalStatus.NotAwarded:
+      return true;
     default:
       return false;
   }

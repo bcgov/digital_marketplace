@@ -690,7 +690,11 @@ export async function hasAttachmentPermission(connection: Connection, session: S
       .select<RawCWUProposal[]>('proposals.*');
 
     if (proposals.length > 0) {
-      return proposals.some(async proposal => await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id));
+      for (const proposal of proposals) {
+        if (await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id)) {
+          return true;
+        }
+      }
     }
   }
   return false;
@@ -702,12 +706,11 @@ interface RawCWUOpportunitySlim extends Omit<CWUOpportunitySlim, 'createdBy' | '
 }
 
 async function rawCWUOpportunitySlimToCWUOpportunitySlim(connection: Connection, raw: RawCWUOpportunitySlim): Promise<CWUOpportunitySlim> {
-  const { createdBy: createdById, updatedBy: updatedById } = raw;
+  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
   const createdBy = createdById && getValidValue(await readOneUserSlim(connection, createdById), undefined) || undefined;
   const updatedBy = updatedById && getValidValue(await readOneUserSlim(connection, updatedById), undefined) || undefined;
-
   return {
-    ...raw,
+    ...restOfRaw,
     createdBy,
     updatedBy
   };
@@ -722,7 +725,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunity, 'createdBy' | 'updatedB
 }
 
 async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: RawCWUOpportunity): Promise<CWUOpportunity> {
-  const { createdBy: createdById, updatedBy: updatedById, attachments: attachmentIds, addenda: addendaIds } = raw;
+  const { createdBy: createdById, updatedBy: updatedById, attachments: attachmentIds, addenda: addendaIds, ...restOfRaw } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
   const attachments = await Promise.all(attachmentIds.map(async id => {
@@ -743,7 +746,7 @@ async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: Ra
   delete raw.versionId;
 
   return {
-    ...raw,
+    ...restOfRaw,
     createdBy: createdBy || undefined,
     updatedBy: updatedBy || undefined,
     attachments,
@@ -951,11 +954,11 @@ interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
 }
 
 async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection: Connection, raw: RawCWUOpportunityAddendum): Promise<Addendum> {
-  const { createdBy: createdById } = raw;
+  const { createdBy: createdById, ...restOfRaw } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
 
   return {
-    ...raw,
+    ...restOfRaw,
     createdBy: createdBy || undefined
   };
 }
@@ -972,7 +975,7 @@ export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connec
   return valid(await rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection, result));
 });
 
-interface CreateCWUOpportunityParams extends Omit<CWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status'> {
+interface CreateCWUOpportunityParams extends Omit<CWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status' | 'id' | 'addenda'> {
   status: CreateCWUOpportunityStatus;
 }
 
@@ -983,6 +986,7 @@ interface RootOpportunityRecord {
 }
 
 interface OpportunityVersionRecord extends Omit<CreateCWUOpportunityParams, 'status'> {
+  id: Id;
   opportunity: Id;
   createdAt: Date;
   createdBy: Id;
@@ -1226,7 +1230,8 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
   const { createdBy: createdById,
           updatedBy: updatedById,
           proponentIndividual: proponentIndividualId,
-          proponentOrganization: proponentOrganizationId
+          proponentOrganization: proponentOrganizationId,
+          ...restOfRaw
         } = raw;
 
   const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
@@ -1248,7 +1253,7 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
   }
 
   return {
-    ...raw,
+    ...restOfRaw,
     createdBy,
     updatedBy,
     proponent
@@ -1271,8 +1276,6 @@ export const readManyCWUProposals = tryDb<[Id], CWUProposalSlim[]>(async (connec
       'prop.createdAt',
       'updatedBy',
       'updatedAt',
-      'proposalText',
-      'additionalComments',
       'proponentIndividual',
       'proponentOrganization',
       'score',
@@ -1308,7 +1311,7 @@ interface RawCWUProposal extends Omit<CWUProposal, 'createdBy' | 'updatedBy' | '
 }
 
 async function rawCWUProposalToCWUProposal(connection: Connection, session: Session, raw: RawCWUProposal): Promise<CWUProposal> {
-  const { opportunity: opportunityId, attachments: attachmentIds, ...restOfProposal } = raw;
+  const { opportunity: opportunityId, attachments: attachmentIds, proposalText, additionalComments, history, ...restOfProposal } = raw;
   const slimVersion = await rawCWUProposalSlimToCWUProposalSlim(connection, restOfProposal);
   const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
   if (!opportunity) {
@@ -1329,8 +1332,11 @@ async function rawCWUProposalToCWUProposal(connection: Connection, session: Sess
 
   return {
     ...slimVersion,
+    proposalText,
+    additionalComments,
     opportunity,
-    attachments
+    attachments,
+    history
   };
 }
 
@@ -1721,14 +1727,14 @@ interface RawCWUOpportunitySubscriber {
 }
 
 async function rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection: Connection, session: Session, raw: RawCWUOpportunitySubscriber): Promise<CWUOpportunitySubscriber> {
-  const { opportunity: opportunityId, user: userId } = raw;
+  const { opportunity: opportunityId, user: userId, ...restOfRaw } = raw;
   const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
   const user = getValidValue(await readOneUserSlim(connection, userId), null);
   if (!opportunity || !user) {
     throw new Error('unable to process subscription');
   }
   return {
-    ...raw,
+    ...restOfRaw,
     opportunity,
     user
   };

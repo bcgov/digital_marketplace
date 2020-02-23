@@ -3,6 +3,8 @@ import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
+import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
@@ -82,11 +84,25 @@ const router: Router.Router<Route> = {
     },
     {
       path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit',
-      makeRoute({params}) {
+      makeRoute({ params, query }) {
         return {
           tag: 'proposalCWUEdit',
           value: {
             proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || '',
+            tab: CWUProposalEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    // This route needs to be matched before `proposalCWUView`,
+    // otherwise "export" gets parsed as a `proposalId`.
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/export',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'proposalCWUExportAll',
+          value: {
             opportunityId: params.opportunityId || ''
           }
         };
@@ -94,9 +110,22 @@ const router: Router.Router<Route> = {
     },
     {
       path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId',
-      makeRoute({ params }) {
+      makeRoute({ params, query }) {
         return {
           tag: 'proposalCWUView',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || '',
+            tab: CWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'proposalCWUExportOne',
           value: {
             proposalId: params.proposalId || '',
             opportunityId: params.opportunityId || ''
@@ -284,9 +313,13 @@ const router: Router.Router<Route> = {
       case 'proposalCWUCreate':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
       case 'proposalCWUEdit':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'proposalCWUView':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+      case 'proposalCWUExportOne':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`;
+      case 'proposalCWUExportAll':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`;
       case 'proposalList':
         return '/proposals';
       case 'notice':

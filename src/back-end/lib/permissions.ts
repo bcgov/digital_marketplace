@@ -1,11 +1,11 @@
 import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
-import { CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
+import { AuthenticatedSession, CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
 export const ERROR_MESSAGE = 'You do not have permission to perform this action.';
 
-export function isSignedIn(session: Session): boolean {
+export function isSignedIn(session: Session): session is AuthenticatedSession {
   return !!session.user;
 }
 

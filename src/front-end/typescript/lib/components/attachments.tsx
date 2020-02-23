@@ -7,6 +7,8 @@ import React from 'react';
 import { FormText } from 'reactstrap';
 import { CreateValidationErrors, enforceExtension, fileBlobPath, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';
 import { adt, ADT } from 'shared/lib/types';
+import { getInvalidValue, optional } from 'shared/lib/validation';
+import { validateFileName } from 'shared/lib/validation/file';
 
 interface NewAttachment extends CreateFileRequestBody {
   newName: string;
@@ -72,7 +74,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'onChangeNewAttachmentName':
       return [state.update('newAttachments', attachments => attachments.map((a, i) => {
         if (i === msg.value[0]) {
-          return { ...a, newName: msg.value[1] };
+          const errors = getInvalidValue(optional(msg.value[1], v => validateFileName(v)), []);
+          return {
+            ...a,
+            errors,
+            newName: msg.value[1]
+          };
         } else {
           return a;
         }
@@ -93,20 +100,22 @@ interface FileFieldProps {
 const FileField: View<FileFieldProps> = props => {
   const { defaultName, value, disabled, url, onChange, onRemove, errors = [] } = props;
   return (
-    <div className='d-flex flex-nowrap align-items-center form-group'>
-      <input
-        type='text'
-        placeholder={defaultName}
-        value={value}
-        disabled={disabled}
-        className='form-control'
-        onChange={onChange && (e => onChange(e.currentTarget.value))} />
-      {disabled
-        ? null
-        : (<Icon name='trash' color='info' hover onClick={onRemove} className='ml-3' />)}
-      <Link color='info' download dest={externalDest(url)} className='ml-3'>
-        <Icon name='download' />
-      </Link>
+    <div className='form-group'>
+      <div className='d-flex flex-nowrap align-items-center'>
+        <input
+          type='text'
+          placeholder={defaultName}
+          value={value}
+          disabled={disabled}
+          className={`form-control ${errors.length ? 'is-invalid' : ''}`}
+          onChange={onChange && (e => onChange(e.currentTarget.value))} />
+        {disabled
+          ? null
+          : (<Icon name='trash' color='info' hover onClick={onRemove} className='ml-3' />)}
+        <Link color='info' download dest={externalDest(url)} className='ml-3'>
+          <Icon name='download' />
+        </Link>
+      </div>
       {errors.length
         ? (<FormText color='danger'>
             {errors.map((error, i) => (<div key={`form-field-conditional-errors-${i}`}>{error}</div>))}

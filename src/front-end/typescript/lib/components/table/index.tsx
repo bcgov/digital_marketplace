@@ -122,7 +122,7 @@ export interface TDSpec {
   className?: string;
   tooltipText?: string;
   colSpan?: number;
-  showOnHover?: true;
+  showOnHover?: boolean;
 }
 
 export interface TDProps extends TDSpec {
