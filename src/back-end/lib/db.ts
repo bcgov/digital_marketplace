@@ -940,7 +940,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .where({ opportunity: result.id })
       .orderBy('createdAt', 'desc');
 
-    result.statusHistory = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
+    result.history = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
   }
 
   return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);
@@ -1369,7 +1369,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       .where({ proposal: result.id })
       .orderBy('createdAt', 'desc');
 
-    result.statusHistory = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+    result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
   }
 
   return valid(result ? await rawCWUProposalToCWUProposal(connection, session, result) : null);

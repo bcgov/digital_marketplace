@@ -55,7 +55,7 @@ export interface CWUProposal {
   score: number;
   status: CWUProposalStatus;
   attachments: FileRecord[];
-  statusHistory?: CWUProposalHistoryRecord[];
+  history?: CWUProposalHistoryRecord[];
 }
 
 export type CWUProposalSlim = Omit<CWUProposal, 'opportunity' | 'attachments'>;

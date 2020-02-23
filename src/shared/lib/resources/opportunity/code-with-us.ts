@@ -71,7 +71,7 @@ export interface CWUOpportunity {
   status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
-  statusHistory?: CWUOpportunityHistoryRecord[];
+  history?: CWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
 

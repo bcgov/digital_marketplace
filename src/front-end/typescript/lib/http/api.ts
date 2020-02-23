@@ -95,11 +95,11 @@ function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
 
 // CodeWithUs Opportunities
 
-interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityStatusRecord, 'createdAt'> {
+interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityHistoryRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityStatusRecord {
+function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
@@ -127,7 +127,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
-    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
+    history: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
   };
 }
 

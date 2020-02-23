@@ -18,9 +18,9 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-function opportunityToHistoryItems({ statusHistory }: CWUOpportunity): History.Item[] {
-  if (!statusHistory) { return []; }
-  return statusHistory
+function opportunityToHistoryItems({ history }: CWUOpportunity): History.Item[] {
+  if (!history) { return []; }
+  return history
     .map(s => ({
       type: {
         text: cwuOpportunityStatusToTitleCase(s.status),
