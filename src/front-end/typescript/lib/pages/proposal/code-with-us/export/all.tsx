@@ -76,8 +76,8 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
           <h1 className='mb-4'>{opportunity.title}</h1>
           <DescriptionList
             items={[
-              { name: 'Type', children: 'Code With Us' },
               { name: 'ID', children: opportunity.id },
+              { name: 'Type', children: 'Code With Us' },
               {
                 name: 'Status',
                 children: (<Badge text={cwuOpportunityStatusToTitleCase(opportunity.status)} color={cwuOpportunityStatusToColor(opportunity.status)} />)
