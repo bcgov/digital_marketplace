@@ -17,6 +17,11 @@ export enum CWUOpportunityStatus {
   Canceled = 'CANCELED'
 }
 
+export enum CWUOpportunityEvent {
+  Edited = 'EDITED',
+  AddendumAdded = 'ADDENDUM_ADDED'
+}
+
 export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
   switch (raw) {
     case CWUOpportunityStatus.Draft: return CWUOpportunityStatus.Draft;
@@ -29,11 +34,11 @@ export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | n
   }
 }
 
-export interface CWUOpportunityStatusRecord {
+export interface CWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
   createdBy: UserSlim | null;
-  status: CWUOpportunityStatus;
+  type: ADT<'status', CWUOpportunityStatus> | ADT<'event', CWUOpportunityEvent>;
   note: string;
 }
 
@@ -66,7 +71,7 @@ export interface CWUOpportunity {
   status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
-  statusHistory?: CWUOpportunityStatusRecord[];
+  statusHistory?: CWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
 

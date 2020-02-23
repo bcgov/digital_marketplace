@@ -8,7 +8,7 @@ import Knex from 'knex';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, CWUOpportunityStatusRecord, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalSlim, CWUProposalStatus, CWUProposalStatusRecord, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
@@ -845,7 +845,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
         .on('opp.id', '=', 'stat.opportunity')
         .andOn('stat.createdAt', '=',
           connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
-            stat2.opportunity = opp.id)'));
+            stat2.opportunity = opp.id and stat2.status is not null)'));
     })
     // Join on latest CWU version
     .join<RawCWUOpportunity>('cwuOpportunityVersions as version', function() {
@@ -934,13 +934,13 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     result.subscribed = !!subscription;
   }
 
-  // If admin/owner, add on list of status histories
+  // If admin/owner, add on list of change records
   if (result && session.user && (session.user.type === UserType.Admin || result.createdBy === session.user.id)) {
-    const rawStatusArray = await connection<RawCWUOpportunityStatusRecord>('cwuOpportunityStatuses')
+    const rawStatusArray = await connection<RawCWUOpportunityHistoryRecord>('cwuOpportunityStatuses')
       .where({ opportunity: result.id })
       .orderBy('createdAt', 'desc');
 
-    result.statusHistory = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(connection, session, raw)));
+    result.statusHistory = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
   }
 
   return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);
@@ -1090,6 +1090,18 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Au
       throw new Error('unable to update opportunity');
     }
     await createCWUOpportunityAttachments(connection, trx, oppVersion.id, attachments || []);
+
+    // Add an 'edit' change record
+    await connection<RawCWUOpportunityHistoryRecord & { opportunity: Id }>('cwuOpportunityStatuses')
+      .insert({
+        id: generateUuid(),
+        opportunity: restOfOpportunity.id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: CWUOpportunityEvent.Edited,
+        note: ''
+      });
+
     return oppVersion;
   });
   const dbResult = await readOneCWUOpportunity(connection, oppVersion.opportunity, session);
@@ -1099,27 +1111,30 @@ export const updateCWUOpportunityVersion = tryDb<[UpdateCWUOpportunityParams, Au
   return valid(dbResult.value);
 });
 
-interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityStatusRecord, 'createdBy'> {
+interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityHistoryRecord, 'createdBy' | 'type'> {
   createdBy: Id;
+  status?: CWUOpportunityStatus;
+  event?: CWUOpportunityEvent;
 }
 
-async function rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(connection: Connection, session: Session, raw: RawCWUOpportunityStatusRecord): Promise<CWUOpportunityStatusRecord> {
-  const { createdBy: createdById } = raw;
+async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection: Connection, session: Session, raw: RawCWUOpportunityHistoryRecord): Promise<CWUOpportunityHistoryRecord> {
+  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
   const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
 
-  if (!createdBy) {
+  if (!createdBy || (!status && !event)) {
     throw new Error('unable to process opportunity status record');
   }
 
   return {
-    ...raw,
-    createdBy
+    ...restOfRaw,
+    createdBy,
+    type: status ? adt('status', status as CWUOpportunityStatus) : adt('event', event as CWUOpportunityEvent)
   };
 }
 
 export const updateCWUOpportunityStatus = tryDb<[Id, CWUOpportunityStatus, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, status, note, session) => {
   const now = new Date();
-  const [result] = await connection<RawCWUOpportunityStatusRecord & { opportunity: Id }>('cwuOpportunityStatuses')
+  const [result] = await connection<RawCWUOpportunityHistoryRecord & { opportunity: Id }>('cwuOpportunityStatuses')
     .insert({
       id: generateUuid(),
       opportunity: id,
@@ -1151,18 +1166,33 @@ interface CWUOpportunityAddendumRecord {
 
 export const addCWUOpportunityAddendum = tryDb<[Id, string, AuthenticatedSession], CWUOpportunity>(async (connection, id, addendumText, session) => {
   const now = new Date();
-  const [result] = await connection<CWUOpportunityAddendumRecord>('cwuOpportunityAddenda')
-    .insert({
-      id: generateUuid(),
-      opportunity: id,
-      description: addendumText,
-      createdBy: session.user.id,
-      createdAt: now
-    }, '*');
+  await connection.transaction(async trx => {
+    const [addendum] = await connection<CWUOpportunityAddendumRecord>('cwuOpportunityAddenda')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        description: addendumText,
+        createdBy: session.user.id,
+        createdAt: now
+      }, '*');
 
-  if (!result) {
-    throw new Error('unable to add addendum');
-  }
+    if (!addendum) {
+      throw new Error('unable to add addendum');
+    }
+
+    // Add a history record for the addendum addition
+    await connection<RawCWUOpportunityHistoryRecord & { opportunity: Id }>('cwuOpportunityStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: CWUOpportunityEvent.AddendumAdded,
+        note: ''
+      });
+  });
 
   const dbResult = await readOneCWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
