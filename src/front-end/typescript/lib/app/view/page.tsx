@@ -91,7 +91,7 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
   const { dispatchPage, alerts, breadcrumbs, container = false } = props;
   const hasAlerts = alerts.info.length || alerts.warnings.length || alerts.errors.length;
   const hasBreadcrumbs = !!breadcrumbs.length;
-  const className = `${hasAlerts || hasBreadcrumbs ? 'pb-5 mb-n3' : ''} ${props.className || ''}`;
+  const className = `${hasAlerts ? 'pb-5 mb-n3' : ''} ${!hasAlerts && hasBreadcrumbs ? 'pb-md-5 mb-md-n3' : ''} ${props.className || ''}`;
   if (container) {
     return (
       <Container className={className}>

@@ -66,7 +66,8 @@ export type AvailableIcons
   | 'file-plus'
   | 'exclamation-circle'
   | 'chevron-down'
-  | 'chevron-up';
+  | 'chevron-up'
+  | 'print';
 
 interface Props {
   name: AvailableIcons;
@@ -232,6 +233,8 @@ const Icon: View<Props> = props => {
       return (<FontAwesome viewBox='0 0 448 512' {...props}><path fill='currentColor' d='M441.9 167.3l-19.8-19.8c-4.7-4.7-12.3-4.7-17 0L224 328.2 42.9 147.5c-4.7-4.7-12.3-4.7-17 0L6.1 167.3c-4.7 4.7-4.7 12.3 0 17l209.4 209.4c4.7 4.7 12.3 4.7 17 0l209.4-209.4c4.7-4.7 4.7-12.3 0-17z'></path></FontAwesome>);
     case 'chevron-up':
       return (<FontAwesome viewBox='0 0 448 512' {...props}><path fill='currentColor' d='M6.101 359.293L25.9 379.092c4.686 4.686 12.284 4.686 16.971 0L224 198.393l181.13 180.698c4.686 4.686 12.284 4.686 16.971 0l19.799-19.799c4.686-4.686 4.686-12.284 0-16.971L232.485 132.908c-4.686-4.686-12.284-4.686-16.971 0L6.101 342.322c-4.687 4.687-4.687 12.285 0 16.971z'></path></FontAwesome>);
+    case 'print':
+      return (<FontAwesome viewBox='0 0 512 512' {...props}><path fill='currentColor' d='M400 264c-13.25 0-24 10.74-24 24 0 13.25 10.75 24 24 24s24-10.75 24-24c0-13.26-10.75-24-24-24zm32-88V99.88c0-12.73-5.06-24.94-14.06-33.94l-51.88-51.88c-9-9-21.21-14.06-33.94-14.06H110.48C93.64 0 80 14.33 80 32v144c-44.18 0-80 35.82-80 80v128c0 8.84 7.16 16 16 16h64v96c0 8.84 7.16 16 16 16h320c8.84 0 16-7.16 16-16v-96h64c8.84 0 16-7.16 16-16V256c0-44.18-35.82-80-80-80zM128 48h192v48c0 8.84 7.16 16 16 16h48v64H128V48zm256 416H128v-64h256v64zm80-112H48v-96c0-17.64 14.36-32 32-32h352c17.64 0 32 14.36 32 32v96z'></path></FontAwesome>);
   }
 };
 

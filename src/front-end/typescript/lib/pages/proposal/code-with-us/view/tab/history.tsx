@@ -1,9 +1,9 @@
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-// import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
+import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
+import ViewTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
@@ -61,7 +61,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
-      { /* <EditTabHeader proposal={state.proposal} viewerUser={state.viewerUser} /> */ }
+      <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>

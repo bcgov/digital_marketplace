@@ -4,6 +4,7 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import ExportedProposal from 'front-end/lib/pages/proposal/code-with-us/lib/views/exported-proposal';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { CWUProposal, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { User } from 'shared/lib/resources/user';
@@ -62,5 +63,16 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata: getMetadataValid(state => {
     return makePageMetadata(`${getCWUProponentName(state.proposal)} ${TITLE_SEPARATOR} ${state.proposal.opportunity.title} ${TITLE_SEPARATOR} Exported Code With Us Proposal`);
-  }, makePageMetadata('Exported Code With Us Proposal'))
+  }, makePageMetadata('Exported Code With Us Proposal')),
+  getContextualActions({ state, dispatch }) {
+    return adt('links', [
+      {
+        children: 'Print',
+        symbol_: leftPlacement(iconLinkSymbol('print')),
+        color: 'primary',
+        button: true,
+        onClick: () => window.print()
+      }
+    ]);
+  }
 };

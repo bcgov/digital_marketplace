@@ -7,6 +7,7 @@ import { cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'fr
 import ExportedProposal from 'front-end/lib/pages/proposal/code-with-us/lib/views/exported-proposal';
 import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
@@ -104,5 +105,16 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata: getMetadataValid(state => {
     return makePageMetadata(`${state.opportunity.title} ${TITLE_SEPARATOR} Exported Code With Us Proposals`);
-  }, makePageMetadata('Exported Code With Us Proposals'))
+  }, makePageMetadata('Exported Code With Us Proposals')),
+  getContextualActions({ state, dispatch }) {
+    return adt('links', [
+      {
+        children: 'Print',
+        symbol_: leftPlacement(iconLinkSymbol('print')),
+        color: 'primary',
+        button: true,
+        onClick: () => window.print()
+      }
+    ]);
+  }
 };
