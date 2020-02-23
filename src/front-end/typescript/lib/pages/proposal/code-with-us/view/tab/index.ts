@@ -50,14 +50,14 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
       return {
         component: HistoryTab.component,
         icon: 'history',
-        title: 'History'
+        title: 'Proposal History'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'proposal':
     default:
       return {
         component: ProposalTab.component,
         icon: 'comment-dollar',
-        title: 'Proposal'
+        title: 'Proposal Details'
       } as TabbedPage.TabDefinition<Tabs, K>;
   }
 }
