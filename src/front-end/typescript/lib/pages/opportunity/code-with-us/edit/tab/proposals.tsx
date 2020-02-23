@@ -247,9 +247,11 @@ const view: ComponentView<State, Msg> = (props) => {
             <h4 className='mb-0'>Proposals</h4>
             {state.canViewProposals
               ? (<Link
+                  newTab
                   color='info'
                   className='mt-3 mt-md-0'
-                  symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
+                  symbol_={rightPlacement(iconLinkSymbol('external-link'))}
+                  dest={routeDest(adt('proposalCWUExportAll', { opportunityId: opportunity.id }))}>
                   Export All Proposals
                 </Link>)
               : null}
