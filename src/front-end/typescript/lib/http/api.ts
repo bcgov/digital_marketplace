@@ -83,25 +83,72 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CWUProposal
 
-//TODO raw proposal to proposal
+interface RawCWUProposalStatusRecord extends Omit<CWUProposalResource.CWUProposalStatusRecord, 'createdAt'> {
+  createdAt: string;
+}
 
-interface CWUProposalResourceSimpleResourceTypesParams {
-  record: CWUProposalResource.CWUProposal;
-  create: {
-    request: CWUProposalResource.CreateRequestBody;
-    invalidResponse: CWUProposalResource.CreateValidationErrors;
-  };
-  update: {
-    request: CWUProposalResource.UpdateRequestBody;
-    invalidResponse: CWUProposalResource.UpdateValidationErrors;
+function rawCWUProposalStatusRecordToCWUProposalStatusRecord(raw: RawCWUProposalStatusRecord): CWUProposalResource.CWUProposalStatusRecord {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
   };
 }
 
-interface CWUProposalResourceTypes extends Omit<SimpleResourceTypes<CWUProposalResourceSimpleResourceTypesParams>, 'readMany'> {
+interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'statusHistory'> {
+  createdAt: string;
+  updatedAt: string;
+  statusHistory?: RawCWUProposalStatusRecord[];
+}
+
+function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.CWUProposal {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt),
+    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUProposalStatusRecordToCWUProposalStatusRecord(s))
+  };
+}
+
+interface RawCWUProposalSlim extends Omit<CWUProposalResource.CWUProposalSlim, 'createdAt' | 'updatedAt'> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+function rawCWUProposalSlimToCWUProposalSlim(raw: RawCWUProposalSlim): CWUProposalResource.CWUProposalSlim {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt)
+  };
+}
+
+interface CWUProposalResourceTypes {
+  create: {
+    request: CWUProposalResource.CreateRequestBody;
+    rawResponse: RawCWUProposal;
+    validResponse: CWUProposalResource.CWUProposal;
+    invalidResponse: CWUProposalResource.CreateValidationErrors;
+  };
   readMany: {
-    rawResponse: CWUProposalResource.CWUProposalSlim;
+    rawResponse: RawCWUProposalSlim;
     validResponse: CWUProposalResource.CWUProposalSlim;
     invalidResponse: string[];
+  };
+  readOne: {
+    rawResponse: RawCWUProposal;
+    validResponse: CWUProposalResource.CWUProposal;
+    invalidResponse: CWUProposalResource.UpdateValidationErrors;
+  };
+  update: {
+    request: CWUProposalResource.UpdateRequestBody;
+    rawResponse: RawCWUProposal;
+    validResponse: CWUProposalResource.CWUProposal;
+    invalidResponse: CWUProposalResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawCWUProposal;
+    validResponse: CWUProposalResource.CWUProposal;
+    invalidResponse: CWUProposalResource.DeleteValidationErrors;
   };
 }
 
@@ -112,14 +159,26 @@ interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 're
 
 const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
 
+const cwuProposalActionParams = {
+  transformValid: rawCWUProposalToCWUProposal
+};
+
 const cwuProposals: CWUProposalCrudApi = {
-  ...makeSimpleCrudApi<CWUProposalResourceSimpleResourceTypesParams>(CWU_PROPOSAL_ROUTE_NAMESPACE),
+  ...makeCrudApi<Omit<CWUProposalResourceTypes, 'readMany' | 'readOne'> & Pick<UndefinedResourceTypes, 'readMany' | 'readOne'>>({
+    routeNamespace: CWU_PROPOSAL_ROUTE_NAMESPACE,
+    create: cwuProposalActionParams,
+    update: cwuProposalActionParams,
+    delete: cwuProposalActionParams,
+    readOne: undefined,
+    readMany: undefined
+  }),
 
   async readMany(opportunityId) {
     return await makeRequest<ReadManyActionTypes<CWUProposalResourceTypes['readMany']> & { request: null; }>({
       method: ClientHttpMethod.Get,
       url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
-      body: null
+      body: null,
+      transformValid: v => v.map(w => rawCWUProposalSlimToCWUProposalSlim(w))
     });
   },
 
@@ -127,7 +186,8 @@ const cwuProposals: CWUProposalCrudApi = {
     return await makeRequest<CWUProposalResourceTypes['readOne'] & { request: null; }>({
       method: ClientHttpMethod.Get,
       url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(proposalId)}?opportunity=${window.encodeURIComponent(opportunityId)}`,
-      body: null
+      body: null,
+      transformValid: rawCWUProposalToCWUProposal
     });
   }
 };
@@ -136,7 +196,6 @@ export const proposals = {
   cwu: cwuProposals
 };
 
-//
 // Addenda
 
 interface RawAddendum extends Omit<AddendumResource.Addendum, 'createdAt'> {
@@ -156,7 +215,7 @@ interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUO
   createdAt: string;
 }
 
-function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityStatusRecord {
+function rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityStatusRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
@@ -186,7 +245,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
-    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
+    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(s))
   };
 }
 

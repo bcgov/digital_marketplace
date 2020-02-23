@@ -64,7 +64,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         state.set('awardLoading', msg.value),
         async (state, dispatch) => {
           state = state.set('awardLoading', null);
-          const updateResult = await api.proposals.cwu.update(msg.value, adt('award', state.opportunity.id));
+          const updateResult = await api.proposals.cwu.update(msg.value, adt('award', ''));
           switch (updateResult.tag) {
             case 'valid':
               return immutable(await init({
