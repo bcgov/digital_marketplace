@@ -1,4 +1,4 @@
-import { ComponentView, emptyPageAlerts, Immutable, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, Immutable, PageGetAlerts, PageGetBreadcrumbs, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
@@ -76,6 +76,10 @@ export function sidebarValid<ValidState, Msg>(sidebar: PageSidebar<ValidState, M
 
 export function getMetadataValid<ValidState>(getMetadata: PageGetMetadata<ValidState>, defaultMetadata: PageMetadata): PageGetMetadata<ValidatedState<ValidState>> {
   return withValid(getMetadata, defaultMetadata);
+}
+
+export function getBreadcrumbsValid<ValidState, Msg>(getBreadcrumbs: PageGetBreadcrumbs<ValidState, Msg>): PageGetBreadcrumbs<ValidatedState<ValidState>, Msg> {
+  return withValid(getBreadcrumbs, emptyPageBreadcrumbs());
 }
 
 export function getAlertsValid<ValidState, Msg>(getAlerts: PageGetAlerts<ValidState, Msg>): PageGetAlerts<ValidatedState<ValidState>, Msg> {

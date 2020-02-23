@@ -1,8 +1,8 @@
-import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getBreadcrumbsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
+import { immutable, Immutable, newRoute, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
 import { CWUProposal, DEFAULT_CWU_PROPOSAL_TITLE, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
@@ -79,7 +79,13 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition: Tab.idToDefinition,
       getTitleSuffix: state => getCWUProponentName(state.proposal) || DEFAULT_CWU_PROPOSAL_TITLE
-    }), makePageMetadata('View Code With Us Proposal'))
+    }), makePageMetadata('View Code With Us Proposal')),
+    getBreadcrumbs: getBreadcrumbsValid((state) => {
+      return [
+        { text: 'All Proposals', onClickMsg: newRoute(adt('opportunityCWUEdit' as const, { opportunityId: state.proposal.opportunity.id })) },
+        { text: `Vendor Proposal — ${getCWUProponentName(state.proposal)}` }
+      ];
+    })
   };
 }
 
