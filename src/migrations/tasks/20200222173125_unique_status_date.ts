@@ -11,7 +11,7 @@ export async function up(connection: Knex): Promise<void> {
   logger.info('Added unique constraint to cwuOpportunityStatuses table.');
 
   await connection.schema.alterTable('cwuProposalStatuses', table => {
-    table.unique(['proposal', 'createdBy']);
+    table.unique(['proposal', 'createdAt']);
   });
   logger.info('Added unique constraint to cwuOpportunityProposals table.');
 }
@@ -23,7 +23,7 @@ export async function down(connection: Knex): Promise<void> {
   logger.info('Removed unique constraint on cwuOpportunityStatuses table.');
 
   await connection.schema.alterTable('cwuProposalStatuses', table => {
-    table.dropUnique(['proposal', 'createdBy']);
+    table.dropUnique(['proposal', 'createdAt']);
   });
   logger.info('Removed unique constraint on cwuProposalStatuses table.');
 }
