@@ -1,5 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as mailer from 'back-end/lib/mailer';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -10,7 +11,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, mapValid, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, mapValid, valid, validateUUID, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
 export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'id' | 'addenda'> {
@@ -54,6 +55,11 @@ type Resource = crud.Resource<
   Session,
   db.Connection
 >;
+
+async function notifyCWUPublished(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
+  const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
+  await Promise.all(subscribedUsers.map(async user => await mailer.newCWUOpportunityPublished(user, opportunity)));
+}
 
 const resource: Resource = {
   routeNamespace: 'opportunities/code-with-us',
@@ -251,6 +257,10 @@ const resource: Resource = {
           const dbResult = await db.createCWUOpportunity(connection, omit(request.body, 'session'), request.body.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          // If published, notify subscribed users
+          if (dbResult.value.status === CWUOpportunityStatus.Published) {
+            await notifyCWUPublished(connection, dbResult.value);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -522,6 +532,10 @@ const resource: Resource = {
               break;
             case 'publish':
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);
+              // Notify all users with notifications on of the new opportunity
+              if (isValid(dbResult)) {
+                await notifyCWUPublished(connection, dbResult.value);
+              }
               break;
             case 'startEvaluation':
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Evaluation, body.value, session);

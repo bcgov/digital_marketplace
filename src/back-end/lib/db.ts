@@ -107,6 +107,13 @@ export const readManyUsers = tryDb<[], User[]>(async (connection) => {
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
+export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection) => {
+  const results = await connection<RawUser>('users')
+    .whereNotNull('notificationsOn')
+    .select('*');
+  return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+});
+
 interface RawUser extends Omit<User, 'avatarImageFile'> {
   avatarImageFile: Id | null;
 }

@@ -28,7 +28,7 @@ const STYLE_LEVELS: StyleLevel[] = [0, 1, 2, 3, 4, 5];
 
 type StyleLevelUtilities = {
   [level in StyleLevel]: CSSProperties;
-}
+};
 
 const styles: Styles = (() => {
   const spacer = 16;
