@@ -110,7 +110,7 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
 
 export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
   // Return true if the opportunity has ever had the `Evaluation` status.
-  return !!o.statusHistory && o.statusHistory.reduce((acc, record) => acc || record.status === CWUOpportunityStatus.Evaluation, false as boolean);
+  return !!o.history && o.history.reduce((acc, record) => acc || record.type.tag === 'status' && record.type.value === CWUOpportunityStatus.Evaluation, false as boolean);
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
