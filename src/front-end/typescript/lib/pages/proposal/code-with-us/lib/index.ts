@@ -1,5 +1,5 @@
 import { ThemeColor } from 'front-end/lib/types';
-import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUProposalEvent, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 
 export function cwuProposalStatusToColor(s: CWUProposalStatus): ThemeColor {
   switch (s) {
@@ -14,6 +14,12 @@ export function cwuProposalStatusToColor(s: CWUProposalStatus): ThemeColor {
   }
 }
 
+export function cwuProposalEventToColor(e: CWUProposalEvent): ThemeColor {
+  switch (e) {
+    case CWUProposalEvent.ScoreEntered  : return 'success';
+  }
+}
+
 export function cwuProposalStatusToTitleCase(s: CWUProposalStatus): string {
   switch (s) {
     case CWUProposalStatus.Draft        : return 'Draft';
@@ -24,5 +30,11 @@ export function cwuProposalStatusToTitleCase(s: CWUProposalStatus): string {
     case CWUProposalStatus.NotAwarded   : return 'Not Awarded';
     case CWUProposalStatus.Disqualified : return 'Disqualified';
     case CWUProposalStatus.Withdrawn    : return 'Withdrawn';
+  }
+}
+
+export function cwuProposalEventToTitleCase(e: CWUProposalEvent): string {
+  switch (e) {
+    case CWUProposalEvent.ScoreEntered  : return 'Score Entered';
   }
 }
