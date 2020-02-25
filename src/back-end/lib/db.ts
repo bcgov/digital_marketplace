@@ -1788,3 +1788,12 @@ export const deleteCWUOpportunitySubscriber = tryDb<[DeleteCWUOpportunitySubscri
 
   return valid(await rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection, session, result));
 });
+
+export const readManyCWUSubscribedUsers = tryDb<[Id], User[]>(async (connection, opportunity) => {
+  const results = await connection<RawUser>('users')
+    .join('cwuOpportunitySubscribers as subscribers', 'users.id', '=', 'subscribers.user')
+    .where({ opportunity })
+    .select('users.*');
+
+  return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+});
