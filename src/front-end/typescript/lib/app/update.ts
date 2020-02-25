@@ -54,7 +54,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   switch (route.tag) {
 
     // Note(Jesse): @add_new_page_location
-      //
 
     case 'orgEdit':
       return await initAppChildPage({
