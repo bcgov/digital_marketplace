@@ -85,6 +85,7 @@ export function isCWUOpportunityPublic(o: CWUOpportunity): boolean {
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Canceled:
       return true;
     default:
       return false;

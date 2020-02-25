@@ -51,7 +51,8 @@ export interface CWUProposal {
   proposalText: string;
   additionalComments: string;
   proponent: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
-  score: number;
+  score?: number;
+  rank?: number;
   status: CWUProposalStatus;
   attachments: FileRecord[];
   statusHistory?: CWUProposalStatusRecord[];
