@@ -4,6 +4,7 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
+import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -65,6 +66,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageOrgEdit.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageOrgEdit' as const, value };
+        }
+      });
+
+    case 'opportunitySWUCreate':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunitySWUCreate'],
+        childRouteParams: route.value,
+        childInit: PageOpportunitySWUCreate.component.init,
+        childGetMetadata: PageOpportunitySWUCreate.component.getMetadata,
+        childGetModal: PageOpportunitySWUCreate.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageOpportunitySWUCreate' as const, value};
         }
       });
 
@@ -392,6 +406,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageOrgEdit.component.update,
         childGetMetadata: PageOrgEdit.component.getMetadata,
         childGetModal: PageOrgEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOpportunitySWUCreate':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunitySWUCreate' as const, value}),
+        childStatePath: ['pages', 'opportunitySWUCreate'],
+        childUpdate: PageOpportunitySWUCreate.component.update,
+        childGetMetadata: PageOpportunitySWUCreate.component.getMetadata,
+        childGetModal: PageOpportunitySWUCreate.component.getModal,
         childMsg: msg.value
       });
 

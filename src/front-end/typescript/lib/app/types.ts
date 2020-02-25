@@ -4,6 +4,7 @@ import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 // Note(Jesse): @add_new_page_location
+import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
@@ -40,6 +41,7 @@ export type Route
   | ADT<'orgCreate',             PageOrgCreate.RouteParams>
   | ADT<'orgList',               PageOrgList.RouteParams>
   | ADT<'orgEdit',               PageOrgEdit.RouteParams>
+  | ADT<'opportunitySWUCreate',  PageOpportunitySWUCreate.RouteParams>
   | ADT<'opportunityCWUCreate',  PageOpportunityCWUCreate.RouteParams>
   | ADT<'opportunityCWUEdit',    PageOpportunityCWUEdit.RouteParams>
   | ADT<'opportunityCWUView',    PageOpportunityCWUView.RouteParams>
@@ -89,6 +91,7 @@ export interface State {
     orgCreate?: Immutable<PageOrgCreate.State>;
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
+    opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunityCWUCreate?: Immutable<PageOpportunityCWUCreate.State>;
     opportunityCWUEdit?: Immutable<PageOpportunityCWUEdit.State>;
     opportunityCWUView?: Immutable<PageOpportunityCWUView.State>;
@@ -117,6 +120,7 @@ type InnerMsg
   | ADT<'pageOrgCreate',            PageOrgCreate.Msg>
   | ADT<'pageOrgList',              PageOrgList.Msg>
   | ADT<'pageOrgEdit',              PageOrgEdit.Msg>
+  | ADT<'pageOpportunitySWUCreate', PageOpportunitySWUCreate.Msg>
   | ADT<'pageOpportunityCWUCreate', PageOpportunityCWUCreate.Msg>
   | ADT<'pageOpportunityCWUEdit',   PageOpportunityCWUEdit.Msg>
   | ADT<'pageOpportunityCWUView',   PageOpportunityCWUView.Msg>

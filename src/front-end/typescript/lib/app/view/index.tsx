@@ -5,6 +5,7 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, View } from 'front-end/lib/framework';
 // Note(Jesse): @add_new_page_location
+import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -102,6 +103,14 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageOrgList.component,
         state => state.pages.orgList,
         value => ({ tag: 'pageOrgList', value })
+      );
+
+    case 'opportunitySWUCreate':
+      return makeViewPageProps(
+        props,
+        PageOpportunitySWUCreate.component,
+        state => state.pages.opportunitySWUCreate,
+        value => ({tag: 'pageOpportunitySWUCreate', value})
       );
 
     case 'opportunityCWUCreate':

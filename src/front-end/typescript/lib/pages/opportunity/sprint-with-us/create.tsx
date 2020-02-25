@@ -110,12 +110,15 @@ const view: ComponentView<State,  Msg> = viewValid(({ state, dispatch }) => {
   // const isDisabled = isSaveDraftLoading || isPublishLoading;
   return (
     <div className='d-flex flex-column h-100 justify-content-between'>
-      { /* <Form.view
+      Put sweet stuff here.
+      {
+      /*
+      <Form.view
         state={state.form}
         dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
-        disabled={isDisabled}
-         */ }
-      />
+        disabled={isDisabled} />
+       */
+      }
     </div>
   );
 });

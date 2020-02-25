@@ -38,6 +38,15 @@ const router: Router.Router<Route> = {
   routes: [
 
     {
+      path: '/opportunities/sprint-with-us/create',
+      makeRoute() {
+        return {
+          tag: 'opportunitySWUCreate',
+          value: null
+        };
+      }
+    },
+    {
       path: '/opportunities/code-with-us/create',
       makeRoute() {
         return {
@@ -275,6 +284,8 @@ const router: Router.Router<Route> = {
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
+      case 'opportunitySWUCreate':
+        return '/opportunities/sprint-with-us/create';
       case 'opportunityCWUCreate':
         return '/opportunities/code-with-us/create';
       case 'opportunityCWUEdit':
