@@ -512,7 +512,7 @@ const resource: Resource = {
               body: adt('cancel', validatedCancelNote.value)
             } as ValidatedUpdateRequestBody);
           case 'addAddendum':
-            if (validatedCWUOpportunity.value.status === CWUOpportunityStatus.Canceled) {
+            if (validatedCWUOpportunity.value.status === CWUOpportunityStatus.Draft) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             const validatedAddendumText = opportunityValidation.validateAddendumText(request.body.value);
