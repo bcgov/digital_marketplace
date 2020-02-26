@@ -1277,6 +1277,7 @@ export const readManyCWUProposals = tryDb<[Id], CWUProposalSlim[]>(async (connec
           connection.raw('(select max("createdAt") from "cwuProposalStatuses" as stat2 where \
             stat2.proposal = prop.id)'));
     })
+    .whereNot({ 'stat.status': CWUProposalStatus.Draft })
     .select<RawCWUProposalSlim[]>(
       'prop.id',
       'prop.createdBy',
