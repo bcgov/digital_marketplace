@@ -154,8 +154,8 @@ export function validateStringInArray(value: string, availableValues: immutable.
   }
 }
 
-export function validateNumber(raw: string | number, min?: number, max?: number, name = 'number', article = 'a', format = true): Validation<number> {
-  const parsed = parseInt(`${raw}`, 10);
+export function validateNumber(raw: string | number, min?: number, max?: number, name = 'number', article = 'a', format = true, integer = true): Validation<number> {
+  const parsed = integer ? parseInt(`${raw}`, 10) : parseFloat(`${raw}`);
   if (isNaN(parsed)) { return invalid([`Please enter a valid ${name}.`]); }
   const errors: string[] = [];
   if (min !== undefined && parsed < min) {

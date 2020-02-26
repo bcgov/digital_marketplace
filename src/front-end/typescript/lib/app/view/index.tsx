@@ -239,14 +239,16 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   return (
     <Modal isOpen={open} toggle={closeModal}>
       <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{content.title}</ModalHeader>
-      <ModalBody>{content.body}</ModalBody>
+      <ModalBody>{content.body(dispatch)}</ModalBody>
       <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
         <div className='p-3 d-flex flex-md-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
-          {content.actions.map(({ icon, button, text, color, msg }, i) => {
+          {content.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
             const props = {
               key: `modal-action-${i}`,
               symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
               color,
+              loading,
+              disabled,
               onClick: () => dispatch(msg),
               className: i === 0 ? 'mx-0' : 'ml-3 mr-0 ml-md-0 mr-md-3'
             };

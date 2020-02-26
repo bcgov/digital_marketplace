@@ -13,8 +13,9 @@ export function getStringArray(obj: any, keyPath: string | string[]): string[] {
   return value.map(v => v === undefined || value === null ? '' : String(v));
 }
 
-export function getNumber<Fallback>(obj: any, keyPath: string | string[], fallback: number | Fallback = 0): number | Fallback {
-  const result = parseInt(get(obj, keyPath), 10);
+export function getNumber<Fallback>(obj: any, keyPath: string | string[], fallback: number | Fallback = 0, integer = true): number | Fallback {
+  const raw = get(obj, keyPath);
+  const result = integer ? parseInt(raw, 10) : parseFloat(raw);
   return isNaN(result) ? fallback : result;
 }
 

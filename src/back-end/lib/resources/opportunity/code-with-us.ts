@@ -265,7 +265,7 @@ const resource: Resource = {
           }
           // If published, notify subscribed users
           if (dbResult.value.status === CWUOpportunityStatus.Published) {
-            await notifyCWUPublished(connection, dbResult.value);
+            notifyCWUPublished(connection, dbResult.value);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -539,35 +539,35 @@ const resource: Resource = {
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);
               // Notify all users with notifications on of the new opportunity
               if (isValid(dbResult)) {
-                await notifyCWUPublished(connection, dbResult.value);
+                notifyCWUPublished(connection, dbResult.value);
               }
               break;
             case 'startEvaluation':
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Evaluation, body.value, session);
               // Notify all subscribed users on the opportunity that the opportunity has closed
               if (isValid(dbResult)) {
-                await notifyCWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
+                notifyCWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
               }
               break;
             case 'suspend':
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Suspended, body.value, session);
               // Notify all subscribed users on the opportunity of the suspension
               if (isValid(dbResult)) {
-                await notifyCWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
+                notifyCWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
               }
               break;
             case 'cancel':
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Canceled, body.value, session);
               // Notify all subscribed users on the opportunity of the cancellation
               if (isValid(dbResult)) {
-                await notifyCWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
+                notifyCWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
               }
               break;
             case 'addAddendum':
               dbResult = await db.addCWUOpportunityAddendum(connection, request.params.id, body.value, session);
               // Notify all subscribed users on the opportunity of the addendum
               if (isValid(dbResult)) {
-                await notifyCWUUpdated(connection, dbResult.value, { tag: 'addendum', value: body.value });
+                notifyCWUUpdated(connection, dbResult.value, { tag: 'addendum', value: body.value });
               }
               break;
           }
