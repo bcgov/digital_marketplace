@@ -113,6 +113,12 @@ export function addDays(date: Date, days: number): Date {
   return moment(date).add(days, 'days').toDate();
 }
 
+export function dateToMidnight(date: Date): Date {
+  date = (new Date(date));
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 export function formatTermsAndConditionsAgreementDate(date?: Date, you = 'You', have = 'have'): string {
   if (date) {
     return `${you} agreed to the Terms and Conditions on ${formatDate(date)} at ${formatTime(date, true)}.`;
