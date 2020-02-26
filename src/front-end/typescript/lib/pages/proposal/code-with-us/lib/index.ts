@@ -14,12 +14,6 @@ export function cwuProposalStatusToColor(s: CWUProposalStatus): ThemeColor {
   }
 }
 
-export function cwuProposalEventToColor(e: CWUProposalEvent): ThemeColor {
-  switch (e) {
-    case CWUProposalEvent.ScoreEntered  : return 'success';
-  }
-}
-
 export function cwuProposalStatusToTitleCase(s: CWUProposalStatus): string {
   switch (s) {
     case CWUProposalStatus.Draft        : return 'Draft';

@@ -215,14 +215,14 @@ interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUO
   createdAt: string;
 }
 
-function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
+function rawCWUHistoryRecordToCWUHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'statusHistory'> {
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history'> {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
@@ -231,7 +231,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 
   updatedAt: string;
   publishedAt?: string;
   addenda: RawAddendum[];
-  statusHistory?: RawCWUOpportunityStatusRecord[];
+  history?: RawCWUOpportunityStatusRecord[];
 }
 
 function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
@@ -245,7 +245,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
-    history: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
+    history: raw.history && raw.history.map(s => rawCWUHistoryRecordToCWUHistoryRecord(s))
   };
 }
 
