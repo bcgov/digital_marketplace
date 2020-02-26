@@ -2,7 +2,7 @@ import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-import { cwuProposalEventToColor, cwuProposalEventToTitleCase, cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
+import { cwuProposalEventToTitleCase, cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
 import ViewTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -24,7 +24,7 @@ function proposalToHistoryItems({ history }: CWUProposal): History.Item[] {
     .map(s => ({
       type: {
         text: s.type.tag === 'status' ? cwuProposalStatusToTitleCase(s.type.value) : cwuProposalEventToTitleCase(s.type.value),
-        color: s.type.tag === 'status' ? cwuProposalStatusToColor(s.type.value) : cwuProposalEventToColor(s.type.value)
+        color: s.type.tag === 'status' ? cwuProposalStatusToColor(s.type.value) : undefined
       },
       note: s.note,
       createdAt: s.createdAt,
