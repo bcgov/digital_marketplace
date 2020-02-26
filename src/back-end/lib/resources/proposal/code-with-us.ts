@@ -59,23 +59,24 @@ type Resource = crud.Resource<
   db.Connection
 >;
 
-async function parseCreateProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
-  switch (raw.tag) {
+async function parseProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
+  const value = get(raw, 'value');
+  switch (getString(raw, 'tag')) {
     case 'individual':
       return adt('individual', {
-        legalName: getString(raw.value, 'legalName'),
-        email: getString(raw.value, 'email'),
-        phone: getString(raw.value, 'phone'),
-        street1: getString(raw.value, 'street1'),
-        street2: getString(raw.value, 'street2'),
-        city: getString(raw.value, 'city'),
-        region: getString(raw.value, 'region'),
-        mailCode: getString(raw.value, 'mailCode'),
-        country: getString(raw.value, 'country')
+        legalName: getString(value, 'legalName'),
+        email: getString(value, 'email'),
+        phone: getString(value, 'phone'),
+        street1: getString(value, 'street1'),
+        street2: getString(value, 'street2'),
+        city: getString(value, 'city'),
+        region: getString(value, 'region'),
+        mailCode: getString(value, 'mailCode'),
+        country: getString(value, 'country')
       });
     case 'organization':
       // Validate the org id provided.  If not valid, default to blank individual proponent
-      const validatedOrganizationProponent = await validateOrganizationId(connection, raw.value);
+      const validatedOrganizationProponent = await validateOrganizationId(connection, value);
       if (isInvalid(validatedOrganizationProponent)) {
         return createBlankIndividualProponent();
       }
@@ -139,7 +140,7 @@ const resource: Resource = {
           opportunity: getString(body, 'opportunity'),
           proposalText: getString(body, 'proposalText'),
           additionalComments: getString(body, 'additionalComments'),
-          proponent: await parseCreateProponentRequestBody(get(body, 'proponent'), connection),
+          proponent: await parseProponentRequestBody(get(body, 'proponent'), connection),
           attachments: getStringArray(body, 'attachments'),
           status: getString(body, 'status')
         };
@@ -251,7 +252,7 @@ const resource: Resource = {
             return adt('edit', {
               proposalText: getString(value, 'proposalText'),
               additionalComments: getString(value, 'additionalComments'),
-              proponent: get(value, 'proponent'),
+              proponent: await parseProponentRequestBody(get(value, 'proponent'), connection),
               attachments: getStringArray(value, 'attachments')
             });
           case 'submit':
@@ -289,10 +290,30 @@ const resource: Resource = {
                     proponent,
                     attachments } = request.body.value;
 
+            // Attachments must be validated for both drafts and published opportunities.
+            const validatedAttachments = await validateAttachments(connection, attachments);
+            if (isInvalid(validatedAttachments)) {
+              return invalid({
+                proposal: adt('edit' as const, {
+                  attachments: validatedAttachments.value
+                })
+              });
+            }
+
+            // Do not validate other fields if the proposal is a draft.
+            if (validatedCWUProposal.value.status === CWUProposalStatus.Draft) {
+              return valid({
+                session: request.session,
+                body: adt('edit' as const, {
+                  ...request.body.value,
+                  attachments: validatedAttachments.value
+                })
+              });
+            }
+
             const validatedProposalText = proposalValidation.validateProposalText(proposalText);
             const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
             const validatedProponent = await validateProponent(connection, proponent);
-            const validatedAttachments = await validateAttachments(connection, attachments);
 
             if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
               return valid({

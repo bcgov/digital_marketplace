@@ -4,7 +4,6 @@ import Badge from 'front-end/lib/views/badge';
 import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityPublic } from 'shared/lib/resources/opportunity/code-with-us';
@@ -53,12 +52,12 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
         <Col xs='12'>
           <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Opportunity</div>
           <h3 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h3>
-          <DateMetadata dates={compact(dates)} />
+          <DateMetadata dates={dates} />
         </Col>
       </Row>
       <Row>
         <Col xs='12'>
-          <DescriptionList items={compact(items)} />
+          <DescriptionList items={items} />
           {isCWUOpportunityPublic(opportunity)
             ? (<Link
                 newTab

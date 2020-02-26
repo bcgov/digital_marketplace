@@ -79,16 +79,18 @@ export function formatTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, 'LT', withTimeZone);
 }
 
-export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
-  const epochA = a.getTime();
-  const epochB = b.getTime();
-  if (epochA < epochB) {
+export function compareNumbers(a: number, b: number): -1 | 0 | 1 {
+  if (a < b) {
     return -1;
-  } else if (epochA > epochB) {
+  } else if (a > b) {
     return 1;
   } else {
     return 0;
   }
+}
+
+export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
+  return compareNumbers(a.getTime(), b.getTime());
 }
 
 export function isDateInThePast(date: Date): boolean {
@@ -109,6 +111,12 @@ export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): numbe
 
 export function addDays(date: Date, days: number): Date {
   return moment(date).add(days, 'days').toDate();
+}
+
+export function dateToMidnight(date: Date): Date {
+  date = (new Date(date));
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 export function formatTermsAndConditionsAgreementDate(date?: Date, you = 'You', have = 'have'): string {

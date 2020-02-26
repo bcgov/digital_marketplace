@@ -41,6 +41,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
     }));
   },
   async fail({ dispatch }) {
+    dispatch(replaceRoute(adt('notice' as const, adt('notFound'as const))));
     return invalid(null);
   }
 });

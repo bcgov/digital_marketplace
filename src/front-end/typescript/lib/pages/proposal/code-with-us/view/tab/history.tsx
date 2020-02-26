@@ -2,11 +2,12 @@ import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-import { cwuProposalEventToColor, cwuProposalEventToTitleCase, cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
+import { cwuProposalEventToTitleCase, cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
 import ViewTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
+import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -18,13 +19,13 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-function proposalToHistoryItems({ history }: CWUProposal): History.Item[] {
+function getHistoryItems({ history }: CWUProposal, viewerUserType: UserType): History.Item[] {
   if (!history) { return []; }
   return history
     .map(s => ({
       type: {
-        text: s.type.tag === 'status' ? cwuProposalStatusToTitleCase(s.type.value) : cwuProposalEventToTitleCase(s.type.value),
-        color: s.type.tag === 'status' ? cwuProposalStatusToColor(s.type.value) : cwuProposalEventToColor(s.type.value)
+        text: s.type.tag === 'status' ? cwuProposalStatusToTitleCase(s.type.value, viewerUserType) : cwuProposalEventToTitleCase(s.type.value),
+        color: s.type.tag === 'status' ? cwuProposalStatusToColor(s.type.value, viewerUserType) : undefined
       },
       note: s.note,
       createdAt: s.createdAt,
@@ -37,7 +38,7 @@ const init: Init<Tab.Params, State> = async params => {
     ...params,
     history: immutable(await History.init({
       idNamespace: 'cwu-proposal-history',
-      items: proposalToHistoryItems(params.proposal),
+      items: getHistoryItems(params.proposal, params.viewerUser.type),
       viewerUser: params.viewerUser
     }))
   };

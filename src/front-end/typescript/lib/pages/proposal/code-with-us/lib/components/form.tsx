@@ -14,9 +14,9 @@ import { Alert, Col, Nav, NavItem, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
+import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
 
@@ -24,7 +24,7 @@ type ProponentType = 'individual' | 'organization';
 
 const ProponentTypeRadioGroup = RadioGroup.makeComponent<ProponentType>();
 
-type TabId = 'Proponent' | 'Proposal' | 'Attachments';
+export type TabId = 'Proponent' | 'Proposal' | 'Attachments';
 
 export interface State {
   opportunity: CWUOpportunity;
@@ -76,12 +76,19 @@ export type Msg
 
 export interface Params {
   opportunity: CWUOpportunity;
-  proposal?: CWUProposalResource.CWUProposal;
+  proposal?: CWUProposal;
   activeTab?: TabId;
   affiliations: AffiliationSlim[];
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Proponent';
+
+function getProponent(proposal: CWUProposal | undefined, proponentType: CWUProposal['proponent']['tag'], k: string, fallback = ''): string {
+  if (proposal && proponentType === proposal.proponent.tag) {
+    return getString(proposal.proponent.value, k, fallback);
+  }
+  return fallback;
+}
 
 export const init: Init<Params, State> = async ({ opportunity, proposal, affiliations, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const selectedOrganizationOption: Select.Option | null = (() => {
@@ -116,7 +123,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentLegalName,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'legalName']),
+        value: getProponent(proposal, 'individual', 'legalName'),
         id: 'cwu-proposal-individual-legalName'
       }
     })),
@@ -126,7 +133,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentEmail,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'email']),
+        value: getProponent(proposal, 'individual', 'email'),
         id: 'cwu-proposal-individual-email'
       }
     })),
@@ -136,7 +143,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentPhone,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'phone']),
+        value: getProponent(proposal, 'individual', 'phone'),
         id: 'cwu-proposal-individual-phone'
       }
     })),
@@ -146,7 +153,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentStreet1,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'street1']),
+        value: getProponent(proposal, 'individual', 'street1'),
         id: 'cwu-proposal-individual-street1'
       }
     })),
@@ -156,7 +163,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentStreet2,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'street2']),
+        value: getProponent(proposal, 'individual', 'street2'),
         id: 'cwu-proposal-individual-street2'
       }
     })),
@@ -166,7 +173,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentCity,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'city']),
+        value: getProponent(proposal, 'individual', 'city'),
         id: 'cwu-proposal-individual-city'
       }
     })),
@@ -176,7 +183,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentRegion,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'region']),
+        value: getProponent(proposal, 'individual', 'region'),
         id: 'cwu-proposal-individual-region'
       }
     })),
@@ -186,7 +193,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentMailCode,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'mailCode']),
+        value: getProponent(proposal, 'individual', 'mailCode'),
         id: 'cwu-proposal-individual-mailCode'
       }
     })),
@@ -196,7 +203,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
       validate: proposalValidation.validateIndividualProponentCountry,
       child: {
         type: 'text',
-        value: getString(proposal, ['proponent', 'value', 'country']),
+        value: getProponent(proposal, 'individual', 'country'),
         id: 'cwu-proposal-individual-country'
       }
     })),
@@ -212,6 +219,7 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
         id: 'cwu-proposal-organization-id',
         options: adt('options', affiliations
           .filter(a => a.membershipType === MembershipType.Owner)
+          .sort((a, b) => a.organization.legalName.localeCompare(b.organization.legalName))
           .map(a => ({ value: a.organization.id, label: a.organization.legalName })))
       }
     })),
@@ -393,7 +401,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function proponentFor(proponentType: ProponentType, state: State): CWUProposalResource.CreateProponentRequestBody {
+function proponentFor(proponentType: ProponentType, state: State): CreateProponentRequestBody {
   switch (proponentType) {
     case 'individual':
       return adt('individual', {
@@ -413,13 +421,13 @@ function proponentFor(proponentType: ProponentType, state: State): CWUProposalRe
   }
 }
 
-type Values = Omit<CWUProposalResource.CreateRequestBody, 'opportunity' | 'status'>;
+type Values = Omit<CreateRequestBody, 'opportunity' | 'status'>;
 
 function getValues(state: State): Values {
   const proponentType = FormField.getValue(state.proponentType);
   const proponent = proponentType
     ? proponentFor(proponentType, state)
-    : CWUProposalResource.createBlankIndividualProponent();
+    : createBlankIndividualProponent();
   return {
     proponent,
     proposalText:       FormField.getValue(state.proposalText),
@@ -464,7 +472,7 @@ export function isValid(state: State): boolean {
   );
 }
 
-interface Errors extends CWUProposalResource.CreateValidationErrors {
+interface Errors extends CreateValidationErrors, UpdateEditValidationErrors {
   proponentType?: string[];
 }
 
@@ -488,9 +496,10 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
 }
 
 type PersistAction
-  = ADT<'create', CWUProposalResource.CreateCWUProposalStatus>;
+  = ADT<'create', CreateCWUProposalStatus>
+  | ADT<'update', Id>;
 
-type ValidPersistResult = [Immutable<State>, CWUProposalResource.CWUProposal];
+type ValidPersistResult = [Immutable<State>, CWUProposal];
 
 type InvalidPersistResult = Immutable<State>;
 
@@ -515,18 +524,32 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
     }
   }
 
-  const apiResult = await api.proposals.cwu.create({
-    opportunity: state.opportunity.id,
-    status: action.value,
-    ...formValues
-  });
+  const actionResult: api.ResponseValidation<CWUProposal, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
+    switch (action.tag) {
+        case 'create':
+          return await api.proposals.cwu.create({
+            ...formValues,
+            opportunity: state.opportunity.id,
+            status: action.value
+          });
+        case 'update':
+          const updateResult = await api.proposals.cwu.update(action.value, adt('edit' as const, formValues));
+          return api.mapInvalid(updateResult, errors => {
+            if (errors.proposal && errors.proposal.tag === 'edit') {
+              return errors.proposal.value;
+            } else {
+              return {};
+            }
+          });
+    }
+  })();
 
-  switch (apiResult.tag) {
+  switch (actionResult.tag) {
     case 'valid':
-      return valid([setErrors(state, {}), apiResult.value]);
+      return valid([setErrors(state, {}), actionResult.value]);
     case 'unhandled':
     case 'invalid':
-      return invalid(setErrors(state, apiResult.value));
+      return invalid(setErrors(state, actionResult.value));
   }
 }
 
