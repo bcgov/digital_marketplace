@@ -362,7 +362,7 @@ export const component: Tab.Component<State, Msg> = {
       const action = isActive ? 'deactivate' : 'reactivate';
       return {
         title: `${startCase(action)} ${your} account?`,
-        body: (() => {
+        body: () => {
           if (!isOwner && isActive) {
             // Admin deactivating user.
             return 'Are you sure you want to deactivate this user’s account? They will no longer be able to access the Digital Marketplace.';
@@ -373,7 +373,7 @@ export const component: Tab.Component<State, Msg> = {
             // User deactivating self.
             return 'Are you sure you want to deactivate your account? You will no longer be able to access the Digital Marketplace.';
           }
-        })(),
+        },
         onCloseMsg: adt('hideActivationModal'),
         actions: [
           {
