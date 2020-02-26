@@ -5,6 +5,7 @@ import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, upd
 import * as api from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
 import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
+import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
@@ -66,6 +67,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageOrgEdit.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageOrgEdit' as const, value };
+        }
+      });
+
+    case 'opportunitySWUEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunitySWUEdit'],
+        childRouteParams: route.value,
+        childInit: PageOpportunitySWUEdit.component.init,
+        childGetMetadata: PageOpportunitySWUEdit.component.getMetadata,
+        childGetModal: PageOpportunitySWUEdit.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageOpportunitySWUEdit' as const, value};
         }
       });
 
@@ -406,6 +420,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageOrgEdit.component.update,
         childGetMetadata: PageOrgEdit.component.getMetadata,
         childGetModal: PageOrgEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOpportunitySWUEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunitySWUEdit' as const, value}),
+        childStatePath: ['pages', 'opportunitySWUEdit'],
+        childUpdate: PageOpportunitySWUEdit.component.update,
+        childGetMetadata: PageOpportunitySWUEdit.component.getMetadata,
+        childGetModal: PageOpportunitySWUEdit.component.getModal,
         childMsg: msg.value
       });
 

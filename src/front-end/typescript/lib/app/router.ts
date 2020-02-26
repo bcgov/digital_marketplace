@@ -38,6 +38,17 @@ const router: Router.Router<Route> = {
   routes: [
 
     {
+      path: '/opportunities/sprint-with-us/:opportunityId/edit',
+      makeRoute({ params }) {
+        return {
+          tag: 'opportunitySWUEdit',
+          value: {
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
       path: '/opportunities/sprint-with-us/create',
       makeRoute() {
         return {
@@ -46,6 +57,7 @@ const router: Router.Router<Route> = {
         };
       }
     },
+
     {
       path: '/opportunities/code-with-us/create',
       makeRoute() {
@@ -284,20 +296,26 @@ const router: Router.Router<Route> = {
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
+
       case 'opportunitySWUCreate':
         return '/opportunities/sprint-with-us/create';
+      case 'opportunitySWUEdit':
+        return `/opportunities/code-with-us/${route.value.opportunityId}/edit`;
+
       case 'opportunityCWUCreate':
         return '/opportunities/code-with-us/create';
       case 'opportunityCWUEdit':
         return `/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'opportunityCWUView':
         return `/opportunities/code-with-us/${route.value.opportunityId}`;
+
       case 'proposalCWUCreate':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
       case 'proposalCWUEdit':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
       case 'proposalCWUView':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
+
       case 'proposalList':
         return '/proposals';
       case 'notice':
