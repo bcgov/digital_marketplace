@@ -1379,8 +1379,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       'proposalText',
       'additionalComments',
       'proponentIndividual',
-      'proponentOrganization',
-      'score'
+      'proponentOrganization'
     )
     .first();
 
@@ -1407,15 +1406,24 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
 
     result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
 
-    if (isRankableCWUProposalStatus(result.status) &&
-        await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
-      const ranks = await connection
-        .from('cwuProposals as proposals')
-        .join('cwuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
-        .whereIn('statuses.status', [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded])
-        .andWhere({ opportunity: result.opportunity })
-        .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY score DESC) rank'));
-      result.rank = ranks.find(r => r.id === result.id)?.rank;
+    // Check for permissions on viewing score and rank
+    if (await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
+      // Add score to proposal
+      result.score = (await connection<{ score: number}>('cwuProposals')
+        .where({ id })
+        .select('score')
+        .first())?.score;
+
+      // Add rank to proposal (if rankable)
+      if (isRankableCWUProposalStatus(result.status)) {
+        const ranks = await connection
+          .from('cwuProposals as proposals')
+          .join('cwuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
+          .whereIn('statuses.status', [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded])
+          .andWhere({ opportunity: result.opportunity })
+          .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY score DESC) rank'));
+        result.rank = ranks.find(r => r.id === result.id)?.rank;
+      }
     }
   }
 
