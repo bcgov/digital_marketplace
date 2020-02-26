@@ -250,7 +250,7 @@ const view: ComponentView<State, Msg> = (props) => {
                   newTab
                   color='info'
                   className='mt-3 mt-md-0'
-                  symbol_={rightPlacement(iconLinkSymbol('external-link'))}
+                  symbol_={rightPlacement(iconLinkSymbol('file-export'))}
                   dest={routeDest(adt('proposalCWUExportAll', { opportunityId: opportunity.id }))}>
                   Export All Proposals
                 </Link>)

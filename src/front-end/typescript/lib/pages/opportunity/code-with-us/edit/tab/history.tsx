@@ -2,7 +2,7 @@ import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import { cwuOpportunityEventToColor, cwuOpportunityEventToTitleCase, cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
+import { cwuOpportunityEventToTitleCase, cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -24,7 +24,7 @@ function opportunityToHistoryItems({ history }: CWUOpportunity): History.Item[] 
     .map(s => ({
       type: {
         text: s.type.tag === 'status' ? cwuOpportunityStatusToTitleCase(s.type.value) : cwuOpportunityEventToTitleCase(s.type.value),
-        color: s.type.tag === 'status' ? cwuOpportunityStatusToColor(s.type.value) : cwuOpportunityEventToColor(s.type.value)
+        color: s.type.tag === 'status' ? cwuOpportunityStatusToColor(s.type.value) : undefined
       },
       note: s.note,
       createdAt: s.createdAt,
