@@ -83,21 +83,21 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CWUProposal
 
-interface RawCWUProposalStatusRecord extends Omit<CWUProposalResource.CWUProposalStatusRecord, 'createdAt'> {
+interface RawCWUProposalStatusRecord extends Omit<CWUProposalResource.CWUProposalHistoryRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawCWUProposalStatusRecordToCWUProposalStatusRecord(raw: RawCWUProposalStatusRecord): CWUProposalResource.CWUProposalStatusRecord {
+function rawCWUProposalStatusRecordToCWUProposalStatusRecord(raw: RawCWUProposalStatusRecord): CWUProposalResource.CWUProposalHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'statusHistory'> {
+interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'history'> {
   createdAt: string;
   updatedAt: string;
-  statusHistory?: RawCWUProposalStatusRecord[];
+  history?: RawCWUProposalStatusRecord[];
 }
 
 function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.CWUProposal {
@@ -105,7 +105,7 @@ function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.C
     ...raw,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUProposalStatusRecordToCWUProposalStatusRecord(s))
+    history: raw.history && raw.history.map(s => rawCWUProposalStatusRecordToCWUProposalStatusRecord(s))
   };
 }
 
@@ -211,11 +211,11 @@ function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
 
 // CodeWithUs Opportunities
 
-interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityStatusRecord, 'createdAt'> {
+interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityHistoryRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityStatusRecord {
+function rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
@@ -245,7 +245,7 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
-    statusHistory: raw.statusHistory && raw.statusHistory.map(s => rawCWUOpportunityStatusRecordToCWUOpportunityStatusRecord(s))
+    history: raw.statusHistory && raw.statusHistory.map(s => rawCWUStatusHistoryRecordToCWUStatusHistoryRecord(s))
   };
 }
 

@@ -18,6 +18,11 @@ export enum CWUOpportunityStatus {
   Canceled = 'CANCELED'
 }
 
+export enum CWUOpportunityEvent {
+  Edited = 'EDITED',
+  AddendumAdded = 'ADDENDUM_ADDED'
+}
+
 export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
   switch (raw) {
     case CWUOpportunityStatus.Draft: return CWUOpportunityStatus.Draft;
@@ -30,11 +35,11 @@ export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | n
   }
 }
 
-export interface CWUOpportunityStatusRecord {
+export interface CWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
   createdBy: UserSlim | null;
-  status: CWUOpportunityStatus;
+  type: ADT<'status', CWUOpportunityStatus> | ADT<'event', CWUOpportunityEvent>;
   note: string;
 }
 
@@ -68,7 +73,7 @@ export interface CWUOpportunity {
   status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
-  statusHistory?: CWUOpportunityStatusRecord[];
+  history?: CWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
 
@@ -106,7 +111,7 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
 
 export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
   // Return true if the opportunity has ever had the `Evaluation` status.
-  return !!o.statusHistory && o.statusHistory.reduce((acc, record) => acc || record.status === CWUOpportunityStatus.Evaluation, false as boolean);
+  return !!o.history && o.history.reduce((acc, record) => acc || record.type.tag === 'status' && record.type.value === CWUOpportunityStatus.Evaluation, false as boolean);
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
