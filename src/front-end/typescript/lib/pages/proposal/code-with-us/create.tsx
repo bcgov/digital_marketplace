@@ -8,7 +8,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateCWUProposalStatus, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
@@ -99,7 +99,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         isSubmit ? startSubmitLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
           state = isSubmit ? stopSubmitLoading(state) : stopSaveDraftLoading(state);
-          const result = await Form.persist(state.form, adt('create', isSubmit ? CWUProposalStatus.Submitted : CWUProposalStatus.Draft));
+          const result = await Form.persist(state.form, adt('create', (isSubmit ? CWUProposalStatus.Submitted : CWUProposalStatus.Draft) as CreateCWUProposalStatus));
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }

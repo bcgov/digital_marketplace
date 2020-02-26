@@ -1229,8 +1229,8 @@ export const deleteCWUOpportunity = tryDb<[Id], CWUOpportunity>(async (connectio
 interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'updatedBy' | 'proponent'> {
   createdBy: Id;
   updatedBy: Id;
-  proponentIndividual?: Id;
-  proponentOrganization?: Id;
+  proponentIndividual?: Id | null;
+  proponentOrganization?: Id | null;
 }
 
 async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: RawCWUProposalSlim): Promise<CWUProposalSlim> {
@@ -1313,8 +1313,8 @@ interface RawCWUProposal extends Omit<CWUProposal, 'createdBy' | 'updatedBy' | '
   createdBy: Id;
   updatedBy: Id;
   opportunity: Id;
-  proponentIndividual?: Id;
-  proponentOrganization?: Id;
+  proponentIndividual?: Id | null;
+  proponentOrganization?: Id | null;
   attachments: Id[];
 }
 
@@ -1422,14 +1422,25 @@ export interface CreateCWUProposalParams {
 
 async function createCWUProposalAttachments(connection: Connection, trx: Transaction, proposalId: Id, attachments: FileRecord[]) {
   for (const attachment of attachments) {
-    const [attachmentResult] = await connection('cwuProposalAttachments')
-      .transacting(trx)
-      .insert({
+    // Check to see for existing attachment relation.
+    const existing = await connection('cwuProposalAttachments')
+      .where({
         proposal: proposalId,
         file: attachment.id
-      }, '*');
-    if (!attachmentResult) {
-      throw new Error('Unable to create proposal attachment');
+      })
+      .select('*')
+      .first();
+    // If it doesn't exist, create relation.
+    if (!existing) {
+      const [attachmentResult] = await connection('cwuProposalAttachments')
+        .transacting(trx)
+        .insert({
+          proposal: proposalId,
+          file: attachment.id
+        }, '*');
+      if (!attachmentResult) {
+        throw new Error('Unable to create proposal attachment');
+      }
     }
   }
 }
@@ -1510,7 +1521,44 @@ interface UpdateCWUProposalParams extends Partial<Omit<CWUProposal, 'createdBy' 
 export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSession], CWUProposal>(async (connection, proposal, session) => {
   const now = new Date();
   const { attachments, proponent, ...restOfProposal } = proposal;
+  let proponentIndividualId: Id | null = null;
   return valid(await connection.transaction(async trx => {
+    const proposalResult = await connection('cwuProposals')
+      .where({ id: proposal.id })
+      .select<RawCWUProposal>('proponentIndividual')
+      .first();
+    if (!proposalResult) { throw new Error('unable to update proposal'); }
+    // Update/create individual proponent first to satisfy constraints.
+    if (proponent.tag === 'individual') {
+      if (proposalResult.proponentIndividual) {
+        // Update existing proponent individual.
+        await connection('cwuProponents')
+          .transacting(trx)
+          .where({
+            id: proposalResult.proponentIndividual
+          })
+          .update({
+            ...proponent.value,
+            updatedAt: now,
+            updatedBy: session.user.id
+          });
+        proponentIndividualId = proposalResult.proponentIndividual;
+      } else {
+        // No existing individual proponent, so create one instead.
+        const [result] = await connection('cwuProponents')
+          .transacting(trx)
+          .insert({
+            ...proponent.value,
+            id: generateUuid(),
+            createdAt: now,
+            createdBy: session.user.id,
+            updatedAt: now,
+            updatedBy: session.user.id
+          }, '*');
+        proponentIndividualId = result.id;
+      }
+    }
+    // Update proposal
     const [result] = await connection<RawCWUProposal>('cwuProposals')
       .transacting(trx)
       .where({ id: proposal.id })
@@ -1518,35 +1566,13 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
         ...restOfProposal,
         updatedAt: now,
         updatedBy: session.user.id,
-        proponentOrganization: proponent.tag === 'organization' ? proponent.value : undefined
+        // Update proponent
+        proponentIndividual: proponentIndividualId,
+        proponentOrganization: proponent.tag === 'organization' ? proponent.value : null
       }, '*');
 
     if (!result) {
       throw new Error('unable to update proposal');
-    }
-
-    // Update proponent (few different cases here depending on what was selected previously)
-    if (proponent.tag === 'individual') {
-      if (result.proponentIndividual) {
-        await connection('cwuProponents')
-          .transacting(trx)
-          .where({ id: result.proponentIndividual})
-          .update({
-            ...proponent.value,
-            updatedAt: now,
-            updatedBy: session.user.id
-          });
-      } else {
-        await connection('cwuProponents')
-          .transacting(trx)
-          .insert({
-            id: generateUuid(),
-            createdAt: now,
-            createdBy: session.user.id,
-            updatedAt: now,
-            updatedBy: session.user.id
-          });
-      }
     }
 
     await createCWUProposalAttachments(connection, trx, result.id, attachments || []);

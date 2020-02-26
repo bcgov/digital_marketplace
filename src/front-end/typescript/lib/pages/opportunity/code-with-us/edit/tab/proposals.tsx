@@ -11,8 +11,9 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { compareNumbers } from 'shared/lib';
 import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { canCWUProposalBeAwarded, CWUProposalSlim, getCWUProponentName, isTerminalCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName, isTerminalCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -35,7 +36,29 @@ const init: Init<Tab.Params, State> = async params => {
   let proposals: CWUProposalSlim[] = [];
   if (canViewProposals) {
     const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
-    proposals = api.getValidValue(proposalResult, []);
+    proposals = api
+      .getValidValue(proposalResult, [])
+      .sort((a, b) => {
+        // Disqualified and Withdrawn statuses come last.
+        if (a.status === CWUProposalStatus.Disqualified || a.status === CWUProposalStatus.Withdrawn) {
+          if (b.status === CWUProposalStatus.Disqualified || b.status === CWUProposalStatus.Withdrawn) {
+            return 0;
+          } else {
+            return 1;
+          }
+        }
+        // Compare by score.
+        // Give precendence to unscored proposals.
+        if (a.score === undefined && b.score !== undefined) { return -1; }
+        if (a.score !== undefined && b.score === undefined) { return 1; }
+        if (a.score !== undefined && b.score !== undefined) {
+          // If scores are not the same, sort by score.
+          const result = compareNumbers(a.score, b.score);
+          if (result) { return result; }
+        }
+        // Fallback to sorting by proponent name.
+        return getCWUProponentName(a).localeCompare(getCWUProponentName(b));
+      });
   }
   return {
     awardLoading: null,
@@ -180,7 +203,7 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
             disabled={!!state.awardLoading} />
         )
       },
-      { children: (<Badge text={cwuProposalStatusToTitleCase(p.status)} color={cwuProposalStatusToColor(p.status)} />) },
+      { children: (<Badge text={cwuProposalStatusToTitleCase(p.status, state.viewerUser.type)} color={cwuProposalStatusToColor(p.status, state.viewerUser.type)} />) },
       { children: (<div>{p.score ? `${p.score}%` : EMPTY_STRING}</div>) },
       ...(state.canProposalsBeAwarded
         ? [{

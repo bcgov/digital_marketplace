@@ -31,21 +31,24 @@ type SingleDate
   | DateDefinition<'dateAndTime'>;
 
 export interface Props {
-  dates: SingleDate[];
+  dates: Array<SingleDate | null>;
   className?: string;
 }
 
 export const DateMetadata: View<Props> = ({ dates, className = '' }) => {
   return (
     <div className={`small text-secondary d-flex flex-nowrap flex-column flex-md-row ${className}`}>
-      {dates.map((date, i) => (
-        <Fragment key={`date-metadata-${i}`}>
-          <SingleDate {...date} />
-          {i < dates.length - 1
-            ? (<Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>)
-            : null}
-        </Fragment>
-      ))}
+      {dates.map((date, i) => {
+        if (!date) { return null; }
+        return (
+          <Fragment key={`date-metadata-${i}`}>
+            <SingleDate {...date} />
+            {i < dates.length - 1
+              ? (<Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>)
+              : null}
+          </Fragment>
+        );
+      })}
     </div>
   );
 };

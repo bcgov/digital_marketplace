@@ -94,9 +94,10 @@ function rawCWUProposalStatusRecordToCWUProposalStatusRecord(raw: RawCWUProposal
   };
 }
 
-interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'history'> {
+interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'submittedAt' | 'history'> {
   createdAt: string;
   updatedAt: string;
+  submittedAt?: string;
   history?: RawCWUProposalStatusRecord[];
 }
 
@@ -105,6 +106,7 @@ function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.C
     ...raw,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
+    submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
     history: raw.history && raw.history.map(s => rawCWUProposalStatusRecordToCWUProposalStatusRecord(s))
   };
 }

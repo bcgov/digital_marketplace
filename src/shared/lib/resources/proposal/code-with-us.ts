@@ -51,6 +51,7 @@ export interface CWUProposal {
   createdAt: Date;
   updatedBy: UserSlim;
   updatedAt: Date;
+  submittedAt?: Date;
   opportunity: CWUOpportunitySlim;
   proposalText: string;
   additionalComments: string;
@@ -157,8 +158,9 @@ type UpdateADTErrors
   | ADT<'withdraw', string[]>
   | ADT<'parseFailure'>;
 
-export interface UpdateEditValidationErrors extends ErrorTypeFrom<Omit<UpdateEditRequestBody, 'proponent'>> {
+export interface UpdateEditValidationErrors extends ErrorTypeFrom<Omit<UpdateEditRequestBody, 'proponent' | 'attachments'>> {
   proponent?: CreateProponentValidationErrors;
+  attachments?: string[][];
 }
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -180,13 +182,13 @@ export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStat
              (to === CWUProposalStatus.UnderReview && userType !== UserType.Vendor && hasProposalDeadlinePassed);
 
     case CWUProposalStatus.UnderReview:
-      return [CWUProposalStatus.Evaluated, CWUProposalStatus.Disqualified].includes(to) &&
-             userType !== UserType.Vendor &&
+      return (([CWUProposalStatus.Evaluated, CWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
              hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Evaluated:
-      return [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) &&
-             userType !== UserType.Vendor &&
+      return (([CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === CWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
              hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Awarded:
