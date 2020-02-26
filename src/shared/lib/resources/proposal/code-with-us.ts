@@ -137,7 +137,7 @@ export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequest
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
-  | ADT<'score', { note: string, score: number }>
+  | ADT<'score', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>;
@@ -147,7 +147,7 @@ export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'sta
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
-  | ADT<'score', { score?: string[], note?: string[] }>
+  | ADT<'score', string[]>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>
@@ -181,7 +181,7 @@ export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStat
              hasProposalDeadlinePassed;
 
     case CWUProposalStatus.Evaluated:
-      return [CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) &&
+      return [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
              hasProposalDeadlinePassed;
 

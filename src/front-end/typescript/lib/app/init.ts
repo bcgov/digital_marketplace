@@ -10,7 +10,7 @@ const init: Init<null, State> = async () => {
       open: false,
       content: {
         title: '',
-        body: '',
+        body: () => '',
         onCloseMsg: { tag: 'noop', value: undefined },
         actions: []
       }

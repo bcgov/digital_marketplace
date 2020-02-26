@@ -6,23 +6,29 @@ import { ADT } from 'shared/lib/types';
 export type Value = number | null;
 
 export function parseValue(raw: string): Value {
-  const parsed = parseInt(raw, 10);
+  const parsed = parseFloat(raw);
   if (isNaN(parsed)) { return null; }
   return parsed;
 }
 
 interface ChildState extends FormField.ChildStateBase<Value> {
-  currency?: string;
   min?: number;
   max?: number;
+  step: number;
 }
 
-type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'currency' | 'min' | 'max'>;
+type ChildParams
+  = FormField.ChildParamsBase<Value>
+  & Pick<ChildState, | 'min' | 'max'>
+  & { step?: number };
 
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = Pick<ChildState, 'currency'>;
+interface ExtraChildProps {
+  prefix?: string;
+  suffix?: string;
+}
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -32,7 +38,10 @@ export type Params = FormField.Params<Value, ChildParams>;
 
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: ChildComponent['init'] = async params => params;
+const childInit: ChildComponent['init'] = async params => ({
+  ...params,
+  step: params.step === undefined ? 1 : params.step
+});
 
 const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
   switch (msg.tag) {
@@ -44,7 +53,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { currency, state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+  const { prefix, suffix, state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
   const input = (
     <input
       id={state.id}
@@ -52,6 +61,7 @@ const ChildView: ChildComponent['view'] = props => {
       placeholder={placeholder}
       min={state.min}
       max={state.max}
+      step={state.step}
       value={state.value === null ? undefined : state.value}
       className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
@@ -62,13 +72,20 @@ const ChildView: ChildComponent['view'] = props => {
       }}
       disabled={disabled} />
   );
-  if (!currency) { return input; }
+  if (!prefix && !suffix) { return input; }
   return (
     <InputGroup>
-      <InputGroupAddon addonType='prepend'>
-        <InputGroupText>{currency}</InputGroupText>
-      </InputGroupAddon>
+      {prefix
+        ? (<InputGroupAddon addonType='prepend'>
+            <InputGroupText>{prefix}</InputGroupText>
+          </InputGroupAddon>)
+        : null}
       {input}
+      {suffix
+        ? (<InputGroupAddon addonType='append'>
+            <InputGroupText>{suffix}</InputGroupText>
+          </InputGroupAddon>)
+        : null}
     </InputGroup>
   );
 };
