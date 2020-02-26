@@ -55,6 +55,7 @@ $purple:          #52489C;
 $yellow:          #FCBA19;
 $red:             #DC3545;
 $green:           #2E8540;
+$orange:          #FD7E14;
 
 $colors:             (
   'white':           $white,
@@ -83,6 +84,7 @@ $component-active-bg:               $blue;
 $link-color:                        $blue;
 $dropdown-link-hover-bg:            $gray-100;
 $dropdown-link-active-bg:           $gray-200;
+$table-hover-bg: $blue-light-alt;
 
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
@@ -90,7 +92,7 @@ $dropdown-link-active-bg:           $gray-200;
 $primary:   $blue;
 $secondary: $gray-600;
 $info:      $blue-dark;
-$warning:   $yellow;
+$warning:   $orange;
 $danger:    $red;
 $success:   $green;
 $body:      $body-color;
@@ -485,11 +487,11 @@ nav.navbar .nav-link:hover {
 }
 
 .border-bottom-gov {
-  border-bottom: 2px solid $warning;
+  border-bottom: 2px solid $yellow;
 }
 
 .border-top-gov {
-  border-top: 2px solid $warning;
+  border-top: 2px solid $yellow;
 }
 
 @each $breakpoint in map-keys($grid-breakpoints) {

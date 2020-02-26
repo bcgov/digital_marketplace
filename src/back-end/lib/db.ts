@@ -1768,6 +1768,7 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
       }, '*');
 
     // Update all other proposals on opportunity to Not Awarded
+    // TODO andrew this should not be an update. should insert a new NotAwarded status
     await connection('cwuProposalStatuses')
       .transacting(trx)
       .whereIn('proposal', async function() {
