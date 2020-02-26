@@ -4,13 +4,14 @@ import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentView, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Alert, Col, Nav, NavItem, Row } from 'reactstrap';
+import { getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
@@ -75,13 +76,24 @@ export type Msg
 
 export interface Params {
   opportunity: CWUOpportunity;
+  proposal?: CWUProposalResource.CWUProposal;
+  activeTab?: TabId;
   affiliations: AffiliationSlim[];
 }
 
-export const init: Init<Params, State> = async ({ opportunity, affiliations }) => {
+const DEFAULT_ACTIVE_TAB: TabId = 'Proponent';
+
+export const init: Init<Params, State> = async ({ opportunity, proposal, affiliations, activeTab = DEFAULT_ACTIVE_TAB }) => {
+  const selectedOrganizationOption: Select.Option | null = (() => {
+    if (proposal?.proponent.tag !== 'organization') { return null; }
+    return {
+      value: proposal.proponent.value.id,
+      label: proposal.proponent.value.legalName
+    };
+  })();
   return {
+    activeTab,
     opportunity,
-    activeTab: 'Proponent',
     orgId: '',
     showEvaluationCriteria: true,
 
@@ -90,7 +102,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: v => v === null ? invalid(['Please select a proponent type.']) : valid(v),
       child: {
         id: 'cwu-proposal-proponent-type',
-        value: null,
+        value: proposal?.proponent.tag || null,
         options: [
           { label: 'Individual', value: 'individual' },
           { label: 'Organization', value: 'organization' }
@@ -104,7 +116,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentLegalName,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'legalName']),
         id: 'cwu-proposal-individual-legalName'
       }
     })),
@@ -114,7 +126,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentEmail,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'email']),
         id: 'cwu-proposal-individual-email'
       }
     })),
@@ -124,7 +136,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentPhone,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'phone']),
         id: 'cwu-proposal-individual-phone'
       }
     })),
@@ -134,7 +146,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentStreet1,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'street1']),
         id: 'cwu-proposal-individual-street1'
       }
     })),
@@ -144,7 +156,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentStreet2,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'street2']),
         id: 'cwu-proposal-individual-street2'
       }
     })),
@@ -154,7 +166,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentCity,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'city']),
         id: 'cwu-proposal-individual-city'
       }
     })),
@@ -164,7 +176,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentRegion,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'region']),
         id: 'cwu-proposal-individual-region'
       }
     })),
@@ -174,7 +186,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentMailCode,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'mailCode']),
         id: 'cwu-proposal-individual-mailCode'
       }
     })),
@@ -184,7 +196,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       validate: proposalValidation.validateIndividualProponentCountry,
       child: {
         type: 'text',
-        value: '',
+        value: getString(proposal, ['proponent', 'value', 'country']),
         id: 'cwu-proposal-individual-country'
       }
     })),
@@ -196,7 +208,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
         return valid(option);
       },
       child: {
-        value: null,
+        value: selectedOrganizationOption,
         id: 'cwu-proposal-organization-id',
         options: adt('options', affiliations
           .filter(a => a.membershipType === MembershipType.Owner)
@@ -208,7 +220,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       errors: [],
       validate: proposalValidation.validateProposalText,
       child: {
-        value: '',
+        value: proposal?.proposalText || '',
         id: 'cwu-proposal-proposalText',
         //TODO need to figure out how to set permissions for markdown images here
         //might require special back-end endpoint
@@ -223,7 +235,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
       errors: [],
       validate: proposalValidation.validateAdditionalComments,
       child: {
-        value: '',
+        value: proposal?.additionalComments || '',
         id: 'cwu-proposal-additional-comments',
         //TODO need to figure out how to set permissions for markdown images here
         uploadImage: api.makeUploadMarkdownImage([
@@ -234,7 +246,7 @@ export const init: Init<Params, State> = async ({ opportunity, affiliations }) =
     })),
 
     attachments: immutable(await Attachments.init({
-      existingAttachments: [],
+      existingAttachments: proposal?.attachments || [],
       //TODO need to figure out how to set permissions for proposal attachments here
       newAttachmentMetadata: [
         adt('userType', UserType.Admin),
@@ -518,11 +530,12 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
   }
 }
 
-const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Vendor Name'
           required
           extraChildProps={{}}
@@ -534,6 +547,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='vendor@email.com'
           required
           extraChildProps={{}}
@@ -545,6 +559,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Phone Number'
           extraChildProps={{}}
           label='Phone Number'
@@ -555,6 +570,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Street Address'
           required
           extraChildProps={{}}
@@ -566,6 +582,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Street Address'
           extraChildProps={{}}
           label='Street Address'
@@ -576,6 +593,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col md='7' xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='City'
           required
           extraChildProps={{}}
@@ -587,6 +605,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col md='5' xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Province / State'
           required
           extraChildProps={{}}
@@ -598,6 +617,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col md='5' xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Postal / ZIP Code'
           required
           extraChildProps={{}}
@@ -609,6 +629,7 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
 
       <Col md='7' xs='12'>
         <ShortText.view
+          disabled={disabled}
           placeholder='Country'
           required
           extraChildProps={{}}
@@ -621,12 +642,13 @@ const IndividualProponent: ComponentView<State, Msg> = ({ state, dispatch }) => 
   );
 };
 
-const OrganizationProponent: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
   //TODO Add hint about creating an organization
   return (
     <Row>
       <Col xs='12'>
         <Select.view
+          disabled={disabled}
           extraChildProps={{}}
           label='Organization'
           placeholder='Organization'
@@ -689,7 +711,7 @@ const ProponentView: View<Props> = props => {
   );
 };
 
-const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -711,6 +733,7 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
       </Col>
       <Col xs='12'>
         <RichMarkdownEditor.view
+          disabled={disabled}
           required
           extraChildProps={{}}
           style={{ height: '60vh', minHeight: '400px' }}
@@ -720,6 +743,7 @@ const ProposalView: ComponentView<State, Msg> = ({ state, dispatch }) => {
       </Col>
       <Col xs='12'>
         <RichMarkdownEditor.view
+          disabled={disabled}
           extraChildProps={{}}
           style={{ height: '300px' }}
           label='Additional Comments'

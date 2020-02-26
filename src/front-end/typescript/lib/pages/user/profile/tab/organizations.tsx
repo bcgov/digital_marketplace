@@ -215,7 +215,7 @@ export const component: Tab.Component<State, Msg> = {
     if (state.showDeleteAffiliationModal) {
       return {
         title: 'Leave Organization?',
-        body: 'Are you sure you want to leave this organization? You will no longer be able to be included as a team member in its opportunity proposals.',
+        body: () => 'Are you sure you want to leave this organization? You will no longer be able to be included as a team member in its opportunity proposals.',
         onCloseMsg: adt('hideDeleteAffiliationModal'),
         actions: [
           {

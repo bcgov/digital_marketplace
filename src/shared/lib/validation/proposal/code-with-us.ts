@@ -23,8 +23,12 @@ export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, 'Note', 0, 5000);
 }
 
+export function validateDisqualificationReason(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Disqualification Reason', 1, 5000);
+}
+
 export function validateScore(raw: number): Validation<number> {
-  return validateNumber(raw, 0, 100, 'score', 'a');
+  return validateNumber(raw, 0, 100, 'score', 'a', false, false);
 }
 
 export function validateIndividualProponentLegalName(raw: string): Validation<string> {

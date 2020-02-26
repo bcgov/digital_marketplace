@@ -76,14 +76,7 @@ export async function makeSidebarState(proposalId: Id, opportunityId: Id, active
   return immutable(await MenuSidebar.init({
     links: [
       makeSidebarLink('proposal', proposalId, opportunityId, activeTab),
-      makeSidebarLink('history', proposalId, opportunityId, activeTab),
-      {
-        icon: 'external-link',
-        text: 'Read Guide',
-        active: false,
-        newTab: true,
-        dest: routeDest(adt('content', 'code-with-us-proposal-guide'))
-      }
+      makeSidebarLink('history', proposalId, opportunityId, activeTab)
     ]
   }));
 }

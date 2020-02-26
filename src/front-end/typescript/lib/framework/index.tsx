@@ -220,20 +220,23 @@ export interface ModalAction<Msg> {
   color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
   msg: Msg;
   button?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
   icon?: AvailableIcons;
 }
 
 export interface PageModal<Msg> {
   title: string;
-  body: ViewElementChildren;
   onCloseMsg: Msg;
   actions: Array<ModalAction<Msg>>;
+  body(dispatch: Dispatch<Msg>): ViewElementChildren;
 }
 
 export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<GlobalComponentMsg<MsgA, Route>> | null, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageModal<GlobalComponentMsg<MsgB, Route>> | null {
   if (!modal) { return null; }
   return {
     ...modal,
+    body: dispatch => modal.body(mapComponentDispatch(dispatch, mapMsg)),
     onCloseMsg: mapGlobalComponentMsg(modal.onCloseMsg, mapMsg),
     actions: modal.actions.map(action => {
       return {

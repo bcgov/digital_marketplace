@@ -31,6 +31,7 @@ export const ExportedPropsal: View<Props> = ({ proposal, showOpportunityInformat
               { name: 'Proponent', children: getCWUProponentName(proposal) },
               { name: 'Proponent Type', children: getCWUProponentTypeTitleCase(proposal) },
               { name: 'Vendor', children: proposal.createdBy.name },
+              proposal.score ? { name: 'Score', children: `${proposal.score}%` } : null,
               exportedBy ? { name: 'Exported By', children: exportedBy.name } : null,
               exportedAt ? { name: 'Exported On', children: formatDateAndTime(exportedAt) } : null
             ]}

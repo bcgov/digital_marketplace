@@ -147,7 +147,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
 
             // If email present, notify of successful account creation
             if (user && user.email) {
-              await userAccountRegistered(user);
+              userAccountRegistered(user);
             }
           } else if (user.status === UserStatus.InactiveByUser) {
             const { id } = user;
