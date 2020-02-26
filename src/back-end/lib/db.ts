@@ -1630,7 +1630,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, AuthenticatedSession], 
           createdAt: now,
           createdBy: session.user.id,
           status: CWUProposalStatus.Evaluated,
-          note: `Proposal evaluated with a score of ${score}%.`
+          note: ''
         }, '*');
     }
 
@@ -1653,7 +1653,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, AuthenticatedSession], 
         createdAt: now,
         createdBy: session.user.id,
         event: CWUProposalEvent.ScoreEntered,
-        note: ''
+        note: `A score of "${score}%" was entered.`
       }, '*');
 
     if (!result) {
@@ -1707,7 +1707,7 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
       });
 
     // Update opportunity
-    await updateCWUOpportunityStatus(trx, proposalRecord.opportunity, CWUOpportunityStatus.Awarded, 'Awarded', session);
+    await updateCWUOpportunityStatus(trx, proposalRecord.opportunity, CWUOpportunityStatus.Awarded, '', session);
 
     const dbResult = await readOneCWUProposal(trx, proposalRecord.id, session);
     if (isInvalid(dbResult) || !dbResult.value) {

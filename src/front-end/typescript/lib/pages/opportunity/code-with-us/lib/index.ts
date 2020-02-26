@@ -12,13 +12,6 @@ export function cwuOpportunityStatusToColor(s: CWUOpportunityStatus): ThemeColor
   }
 }
 
-export function cwuOpportunityEventToColor(e: CWUOpportunityEvent): ThemeColor {
-  switch (e) {
-    case CWUOpportunityEvent.AddendumAdded: return 'warning';
-    case CWUOpportunityEvent.Edited: return 'secondary';
-  }
-}
-
 export function cwuOpportunityStatusToTitleCase(s: CWUOpportunityStatus): string {
   switch (s) {
     case CWUOpportunityStatus.Draft: return 'Draft';
