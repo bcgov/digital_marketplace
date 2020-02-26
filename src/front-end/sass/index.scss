@@ -163,6 +163,10 @@ $transition-duration: 240ms;
 
 html {
   background: $info;
+
+  @media print {
+    background: none;
+  }
 }
 
 body {
