@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
+import { readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
@@ -10,7 +10,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { CWUOpportunitySubscriber } from 'shared/lib/resources/subscribers/code-with-us';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -1270,14 +1270,6 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
 export const readManyCWUProposals = tryDb<[Id], CWUProposalSlim[]>(async (connection, id) => {
   const results = await connection<RawCWUProposalSlim>('cwuProposals as prop')
     .where({ opportunity: id })
-    .join<RawCWUProposalSlim>('cwuProposalStatuses as stat', function() {
-      this
-        .on('prop.id', '=', 'stat.proposal')
-        .andOn('stat.createdAt', '=',
-          connection.raw('(select max("createdAt") from "cwuProposalStatuses" as stat2 where \
-            stat2.proposal = prop.id)'));
-    })
-    .whereNot({ 'stat.status': CWUProposalStatus.Draft })
     .select<RawCWUProposalSlim[]>(
       'prop.id',
       'prop.createdBy',
@@ -1286,12 +1278,38 @@ export const readManyCWUProposals = tryDb<[Id], CWUProposalSlim[]>(async (connec
       'updatedAt',
       'proponentIndividual',
       'proponentOrganization',
-      'score',
-      'stat.status'
+      'score'
     );
 
   if (!results) {
     throw new Error('unable to read proposals');
+  }
+
+  // Read latest status for each proposal
+  for (const proposal of results) {
+    const statusResult = await connection<{ status: CWUProposalStatus }>('cwuProposalStatuses')
+      .where({ proposal: proposal.id })
+      .whereNotNull('status')
+      .orderBy('createdAt', 'desc')
+      .first();
+
+    if (!statusResult) {
+      throw new Error('unable to read proposal status');
+    }
+    proposal.status = statusResult.status;
+  }
+
+  // Read ranks for rankable proposals and apply to existing result set
+  const rankableProposals = results.filter(result => isRankableCWUProposalStatus(result.status));
+  const ranks = await connection
+    .from('cwuProposals')
+    .whereIn('id', rankableProposals.map(r => r.id))
+    .andWhere({ opportunity: id })
+    .select(connection.raw('id, RANK () OVER (ORDER BY score DESC) rank'));
+
+  for (const result of results) {
+    const match = ranks.find(r => r.id === result.id);
+    result.rank = match ? match.rank : undefined;
   }
 
   return valid(await Promise.all(results.map(async result => await rawCWUProposalSlimToCWUProposalSlim(connection, result))));
@@ -1351,13 +1369,6 @@ async function rawCWUProposalToCWUProposal(connection: Connection, session: Sess
 export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async (connection, id, session) => {
   const result = await connection<RawCWUProposal>('cwuProposals as prop')
     .where({ 'prop.id': id })
-    .join<RawCWUProposal>('cwuProposalStatuses as stat', function() {
-      this
-        .on('prop.id', '=', 'stat.proposal')
-        .andOn('stat.createdAt', '=',
-          connection.raw('(select max("createdAt") from "cwuProposalStatuses" as stat2 where \
-            stat2.proposal = prop.id and stat2.status is not null)'));
-    })
     .select<RawCWUProposal>(
       'prop.id',
       'prop.createdBy',
@@ -1368,13 +1379,23 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       'proposalText',
       'additionalComments',
       'proponentIndividual',
-      'proponentOrganization',
-      'score',
-      'stat.status'
+      'proponentOrganization'
     )
     .first();
 
   if (result) {
+    // Fetch latest status for this proposal
+    const statusResult = await connection<{ status: CWUProposalStatus }>('cwuProposalStatuses')
+      .where({ proposal: result.id })
+      .whereNotNull('status')
+      .orderBy('createdAt', 'desc')
+      .first();
+
+    if (!statusResult) {
+      throw new Error('unable to read proposal status');
+    }
+    result.status = statusResult.status;
+
     result.attachments = (await connection<{ file: Id }>('cwuProposalAttachments')
       .where({ proposal: result.id })
       .select('file')).map(row => row.file);
@@ -1384,6 +1405,26 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       .orderBy('createdAt', 'desc');
 
     result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+
+    // Check for permissions on viewing score and rank
+    if (await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
+      // Add score to proposal
+      result.score = (await connection<{ score: number}>('cwuProposals')
+        .where({ id })
+        .select('score')
+        .first())?.score;
+
+      // Add rank to proposal (if rankable)
+      if (isRankableCWUProposalStatus(result.status)) {
+        const ranks = await connection
+          .from('cwuProposals as proposals')
+          .join('cwuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
+          .whereIn('statuses.status', [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded])
+          .andWhere({ opportunity: result.opportunity })
+          .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY score DESC) rank'));
+        result.rank = ranks.find(r => r.id === result.id)?.rank;
+      }
+    }
   }
 
   return valid(result ? await rawCWUProposalToCWUProposal(connection, session, result) : null);

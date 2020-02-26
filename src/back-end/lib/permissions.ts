@@ -1,5 +1,6 @@
 import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
+import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -163,6 +164,13 @@ export async function readOneCWUProposal(connection: Connection, session: Sessio
   return isAdmin(session) ||
         (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) ||
         (session.user && await isCWUProposalAuthor(connection, session.user, proposalId)) || false;
+}
+
+export async function readCWUProposalScore(connection: Connection, session: Session, opportunityId: string, proposalId: string, proposalStatus: CWUProposalStatus): Promise<boolean> {
+  return isAdmin(session) ||
+         (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId) ||
+         (session.user && await isCWUProposalAuthor(connection, session.user, proposalId) &&
+          (proposalStatus === CWUProposalStatus.Awarded || proposalStatus === CWUProposalStatus.NotAwarded) || false));
 }
 
 export function createCWUProposal(session: Session): boolean {

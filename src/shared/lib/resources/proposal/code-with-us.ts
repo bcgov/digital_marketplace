@@ -226,3 +226,14 @@ export function isTerminalCWUProposalStatus(s: CWUProposalStatus): boolean {
       return false;
   }
 }
+
+export function isRankableCWUProposalStatus(s: CWUProposalStatus): boolean {
+  switch (s) {
+    case CWUProposalStatus.Evaluated:
+    case CWUProposalStatus.Awarded:
+    case CWUProposalStatus.NotAwarded:
+      return true;
+    default:
+      return false;
+  }
+}
