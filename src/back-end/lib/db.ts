@@ -107,6 +107,13 @@ export const readManyUsers = tryDb<[], User[]>(async (connection) => {
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
+export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection) => {
+  const results = await connection<RawUser>('users')
+    .whereNotNull('notificationsOn')
+    .select('*');
+  return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+});
+
 interface RawUser extends Omit<User, 'avatarImageFile'> {
   avatarImageFile: Id | null;
 }
@@ -1791,4 +1798,13 @@ export const deleteCWUOpportunitySubscriber = tryDb<[DeleteCWUOpportunitySubscri
   }
 
   return valid(await rawCWUOpportunitySubscriberToCWUOpportunitySubscriber(connection, session, result));
+});
+
+export const readManyCWUSubscribedUsers = tryDb<[Id], User[]>(async (connection, opportunity) => {
+  const results = await connection<RawUser>('users')
+    .join('cwuOpportunitySubscribers as subscribers', 'users.id', '=', 'subscribers.user')
+    .where({ opportunity })
+    .select('users.*');
+
+  return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
