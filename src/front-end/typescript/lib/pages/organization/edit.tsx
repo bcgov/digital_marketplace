@@ -265,7 +265,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     if (state.showArchiveModal) {
       return {
         title: 'Archive Organization?',
-        body: 'Are you sure you want to archive this organization?',
+        body: () => 'Are you sure you want to archive this organization?',
         onCloseMsg: adt('hideArchiveModal'),
         actions: [
           {
@@ -285,7 +285,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     } else if (state.showSaveChangesModal) {
       return {
         title: 'Save Changes?',
-        body: 'Are you sure you want to save the changes you\'ve made to this organization?',
+        body: () => 'Are you sure you want to save the changes you\'ve made to this organization?',
         onCloseMsg: adt('hideSaveChangesModal'),
         actions: [
           {

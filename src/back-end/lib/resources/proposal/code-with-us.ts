@@ -34,7 +34,7 @@ interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submit', string>
-      | ADT<'score', { note: string, score: number }>
+      | ADT<'score', number>
       | ADT<'award', string>
       | ADT<'disqualify', string>
       | ADT<'withdraw', string>;
@@ -257,10 +257,7 @@ const resource: Resource = {
           case 'submit':
             return adt('submit', getString(body, 'value', ''));
           case 'score':
-            return adt('score', {
-              score: getNumber<number>(value, 'score', -1),
-              note: getString(value, 'note')
-            });
+            return adt('score', getNumber<number>(body, 'value', -1, false));
           case 'award':
             return adt('award', getString(body, 'value', ''));
           case 'disqualify':
@@ -338,14 +335,13 @@ const resource: Resource = {
                                                               proposalDeadline)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedScore = proposalValidation.validateScore(request.body.value.score);
-            const validatedScoringNote = proposalValidation.validateNote(request.body.value.note);
-            if (isInvalid(validatedScoringNote) || isInvalid(validatedScore)) {
-              return invalid({ proposal: adt('score' as const, { score: getInvalidValue(validatedScore, undefined), note: getInvalidValue(validatedScoringNote, undefined) }) });
+            const validatedScore = proposalValidation.validateScore(request.body.value);
+            if (isInvalid(validatedScore)) {
+              return invalid({ proposal: adt('score' as const, getInvalidValue(validatedScore, [])) });
             }
             return valid({
               session: request.session,
-              body: adt('score' as const, { score: validatedScore.value, note: validatedScoringNote.value })
+              body: adt('score' as const, validatedScore.value)
             } as ValidatedUpdateRequestBody);
           case 'award':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
@@ -371,7 +367,7 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            const validatedDisqualifyNote = proposalValidation.validateNote(request.body.value);
+            const validatedDisqualifyNote = proposalValidation.validateDisqualificationReason(request.body.value);
             if (isInvalid(validatedDisqualifyNote)) {
               return invalid({ proposal: adt('disqualify' as const, validatedDisqualifyNote.value) });
             }
@@ -412,7 +408,7 @@ const resource: Resource = {
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Submitted, body.value, session);
               break;
             case 'score':
-              dbResult = await db.updateCWUProposalScore(connection, request.params.id, body.value.score, body.value.note, session);
+              dbResult = await db.updateCWUProposalScore(connection, request.params.id, body.value, session);
               break;
             case 'award':
               dbResult = await db.awardCWUProposal(connection, request.params.id, body.value, session);
