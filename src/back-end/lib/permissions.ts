@@ -165,6 +165,10 @@ export async function readOneCWUProposal(connection: Connection, session: Sessio
         (session.user && await isCWUProposalAuthor(connection, session.user, proposalId)) || false;
 }
 
+export async function canSeeCWUProposalScore(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId) || false);
+}
+
 export function createCWUProposal(session: Session): boolean {
   return isVendor(session);
 }

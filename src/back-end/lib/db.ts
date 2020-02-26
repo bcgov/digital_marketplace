@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
+import { canSeeCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
@@ -1407,7 +1407,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
 
     result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
 
-    if (isRankableCWUProposalStatus(result.status)) {
+    if (isRankableCWUProposalStatus(result.status) && await canSeeCWUProposalScore(connection, session, result.opportunity)) {
       const ranks = await connection
         .from('cwuProposals as proposals')
         .join('cwuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
