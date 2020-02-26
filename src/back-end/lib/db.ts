@@ -1620,7 +1620,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, AuthenticatedSession], 
       .select('status')
       .first();
 
-    if (statusResult?.status !== CWUProposalStatus.Evaluated) {
+    if (statusResult?.status === CWUProposalStatus.UnderReview) {
       // Add new EVALUATED status for proposal
       await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
         .transacting(trx)
