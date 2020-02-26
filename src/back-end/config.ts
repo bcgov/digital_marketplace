@@ -58,7 +58,19 @@ export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
 export const FRONT_END_BUILD_DIR = resolve(REPOSITORY_ROOT_DIR, 'build/front-end');
 
-export const MAILER_CONFIG = {
+const productionMailerConfigOptions = {
+  host: get('MAILER_HOST', ''),
+  port: parseInt(get('MAILER_PORT', '25'), 10),
+  secure: false,
+  connectionTimeout: 5000,
+  greetingTimeout: 5000,
+  ignoreTLS: false,
+  tls: {
+    rejectUnauthorized: false
+  }
+};
+
+const developmentMailerConfigOptions = {
   service: 'gmail',
   auth: {
     user: get('MAILER_GMAIL_USER', ''),
@@ -68,6 +80,8 @@ export const MAILER_CONFIG = {
     rejectUnauthorized: false
   }
 };
+
+export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
 
 export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
 

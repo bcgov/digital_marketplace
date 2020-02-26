@@ -13,7 +13,7 @@ interface ActionWithBodyTypes extends ActionTypes {
   request: unknown;
 }
 
-interface ReadManyActionTypes<T extends ActionTypes> {
+export interface ReadManyActionTypes<T extends ActionTypes> {
   rawResponse: Array<T['rawResponse']>;
   validResponse: Array<T['validResponse']>;
   invalidResponse: T['invalidResponse'];

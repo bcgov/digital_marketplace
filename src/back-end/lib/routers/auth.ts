@@ -1,5 +1,6 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
 import { Connection, createUser, findOneUserByTypeAndUsername, updateSession, updateUser } from 'back-end/lib/db';
+import { userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
@@ -143,6 +144,11 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
               jobTitle: '',
               idpUsername
             }), null);
+
+            // If email present, notify of successful account creation
+            if (user && user.email) {
+              userAccountRegistered(user);
+            }
           } else if (user.status === UserStatus.InactiveByUser) {
             const { id } = user;
             await updateUser(connection, { id, status: UserStatus.Active });

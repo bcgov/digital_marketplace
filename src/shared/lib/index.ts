@@ -13,8 +13,9 @@ export function getStringArray(obj: any, keyPath: string | string[]): string[] {
   return value.map(v => v === undefined || value === null ? '' : String(v));
 }
 
-export function getNumber<Fallback>(obj: any, keyPath: string | string[], fallback: number | Fallback = 0): number | Fallback {
-  const result = parseInt(get(obj, keyPath), 10);
+export function getNumber<Fallback>(obj: any, keyPath: string | string[], fallback: number | Fallback = 0, integer = true): number | Fallback {
+  const raw = get(obj, keyPath);
+  const result = integer ? parseInt(raw, 10) : parseFloat(raw);
   return isNaN(result) ? fallback : result;
 }
 
@@ -78,16 +79,30 @@ export function formatTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, 'LT', withTimeZone);
 }
 
-export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
-  const epochA = a.getTime();
-  const epochB = b.getTime();
-  if (epochA < epochB) {
+export function compareNumbers(a: number, b: number): -1 | 0 | 1 {
+  if (a < b) {
     return -1;
-  } else if (epochA > epochB) {
+  } else if (a > b) {
     return 1;
   } else {
     return 0;
   }
+}
+
+export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
+  return compareNumbers(a.getTime(), b.getTime());
+}
+
+export function isDateInThePast(date: Date): boolean {
+  return compareDates(date, new Date()) === -1;
+}
+
+export function isDateThePresent(date: Date): boolean {
+  return compareDates(date, new Date()) === 0;
+}
+
+export function isDateInTheFuture(date: Date): boolean {
+  return compareDates(date, new Date()) === 1;
 }
 
 export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): number {

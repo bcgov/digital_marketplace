@@ -14,9 +14,9 @@ export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framew
 // Base logic.
 
 // TODO replace Immutable with TypeScript's built-in Readonly
-export type Immutable<State> = Immutable.RecordOf<State>;
+export type Immutable<State = unknown> = Immutable.RecordOf<State>;
 
-export function immutable<State>(state: State): Immutable<State> {
+export function immutable<State = unknown>(state: State): Immutable<State> {
   return Immutable.Record(state)();
 }
 
@@ -220,20 +220,23 @@ export interface ModalAction<Msg> {
   color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
   msg: Msg;
   button?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
   icon?: AvailableIcons;
 }
 
 export interface PageModal<Msg> {
   title: string;
-  body: ViewElementChildren;
   onCloseMsg: Msg;
   actions: Array<ModalAction<Msg>>;
+  body(dispatch: Dispatch<Msg>): ViewElementChildren;
 }
 
 export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<GlobalComponentMsg<MsgA, Route>> | null, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageModal<GlobalComponentMsg<MsgB, Route>> | null {
   if (!modal) { return null; }
   return {
     ...modal,
+    body: dispatch => modal.body(mapComponentDispatch(dispatch, mapMsg)),
     onCloseMsg: mapGlobalComponentMsg(modal.onCloseMsg, mapMsg),
     actions: modal.actions.map(action => {
       return {

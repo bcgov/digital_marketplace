@@ -1,5 +1,5 @@
 import { ThemeColor } from 'front-end/lib/types';
-import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunityEvent, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 
 export function cwuOpportunityStatusToColor(s: CWUOpportunityStatus): ThemeColor {
   switch (s) {
@@ -20,5 +20,12 @@ export function cwuOpportunityStatusToTitleCase(s: CWUOpportunityStatus): string
     case CWUOpportunityStatus.Awarded: return 'Awarded';
     case CWUOpportunityStatus.Suspended: return 'Suspended';
     case CWUOpportunityStatus.Canceled: return 'Cancelled'; // Use British spelling for copy.
+  }
+}
+
+export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
+  switch (e) {
+    case CWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
+    case CWUOpportunityEvent.Edited: return 'Edited';
   }
 }

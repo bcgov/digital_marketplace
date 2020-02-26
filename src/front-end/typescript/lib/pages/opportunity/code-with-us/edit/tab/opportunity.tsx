@@ -233,7 +233,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const Reporting: ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
   const reporting = opportunity.reporting;
-  //TODO return null if reporting is undefined
   if (opportunity.status === CWUOpportunityStatus.Draft) { return null; }
   const reportCards: ReportCard[] = [
     {
@@ -312,12 +311,13 @@ export const component: Tab.Component<State, Msg> = {
     const isPublishLoading = state.publishLoading > 0;
     const isDeleteLoading = state.deleteLoading > 0;
     const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
-    const oppStatus = state.opportunity.status;
+    const opp = state.opportunity;
+    const oppStatus = opp.status;
     const isValid = () => Form.isValid(state.form);
     if (state.isEditing) {
       return adt('links', compact([
         // Publish button
-        oppStatus === CWUOpportunityStatus.Draft || oppStatus === CWUOpportunityStatus.Suspended
+        !isCWUOpportunityPublic(opp)
           ? {
               children: 'Publish Changes',
               symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
@@ -330,13 +330,7 @@ export const component: Tab.Component<State, Msg> = {
           : null,
         // Save changes button
         {
-          children: (() => {
-            switch (oppStatus) {
-              case CWUOpportunityStatus.Draft: return 'Save Draft';
-              case CWUOpportunityStatus.Published: return 'Publish Changes';
-              default: return 'Save Changes';
-            }
-          })(),
+          children: isCWUOpportunityPublic(opp) ? 'Publish Changes' : 'Save Changes',
           disabled: isSaveChangesLoading || (() => {
             if (oppStatus === CWUOpportunityStatus.Draft) {
               // No validation required, always possible to save a draft.
@@ -348,21 +342,8 @@ export const component: Tab.Component<State, Msg> = {
           onClick: () => dispatch(adt('saveChanges')),
           button: true,
           loading: isSaveChangesLoading,
-          symbol_: leftPlacement(iconLinkSymbol((() => {
-            switch (oppStatus) {
-              case CWUOpportunityStatus.Published: return 'bullhorn';
-              default: return 'save';
-            }
-          })())),
-          color: (() => {
-            switch (oppStatus) {
-              case CWUOpportunityStatus.Draft:
-              case CWUOpportunityStatus.Suspended:
-                return 'success';
-              default:
-                return 'primary';
-            }
-          })()
+          symbol_: leftPlacement(iconLinkSymbol(isCWUOpportunityPublic(opp) ? 'bullhorn' : 'save')),
+          color: isCWUOpportunityPublic(opp) ? 'primary' : 'success'
         },
         // Cancel link
         {
@@ -406,6 +387,7 @@ export const component: Tab.Component<State, Msg> = {
           ]
         });
       case CWUOpportunityStatus.Published:
+      case CWUOpportunityStatus.Evaluation:
         return adt('dropdown', {
           text: 'Actions',
           loading: isLoading,
@@ -465,8 +447,15 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
-      default:
-        return null;
+      case CWUOpportunityStatus.Awarded:
+      case CWUOpportunityStatus.Canceled:
+        return adt('links', [
+          {
+            children: 'Edit',
+            symbol_: leftPlacement(iconLinkSymbol('edit')),
+            onClick: () => dispatch(adt('startEditing'))
+          }
+        ]);
     }
   }
 };

@@ -34,7 +34,7 @@ interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submit', string>
-      | ADT<'score', { note: string, score: number }>
+      | ADT<'score', number>
       | ADT<'award', string>
       | ADT<'disqualify', string>
       | ADT<'withdraw', string>;
@@ -59,23 +59,24 @@ type Resource = crud.Resource<
   db.Connection
 >;
 
-async function parseCreateProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
-  switch (raw.tag) {
+async function parseProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
+  const value = get(raw, 'value');
+  switch (getString(raw, 'tag')) {
     case 'individual':
       return adt('individual', {
-        legalName: getString(raw.value, 'legalName'),
-        email: getString(raw.value, 'email'),
-        phone: getString(raw.value, 'phone'),
-        street1: getString(raw.value, 'street1'),
-        street2: getString(raw.value, 'street2'),
-        city: getString(raw.value, 'city'),
-        region: getString(raw.value, 'region'),
-        mailCode: getString(raw.value, 'mailCode'),
-        country: getString(raw.value, 'country')
+        legalName: getString(value, 'legalName'),
+        email: getString(value, 'email'),
+        phone: getString(value, 'phone'),
+        street1: getString(value, 'street1'),
+        street2: getString(value, 'street2'),
+        city: getString(value, 'city'),
+        region: getString(value, 'region'),
+        mailCode: getString(value, 'mailCode'),
+        country: getString(value, 'country')
       });
     case 'organization':
       // Validate the org id provided.  If not valid, default to blank individual proponent
-      const validatedOrganizationProponent = await validateOrganizationId(connection, raw.value);
+      const validatedOrganizationProponent = await validateOrganizationId(connection, value);
       if (isInvalid(validatedOrganizationProponent)) {
         return createBlankIndividualProponent();
       }
@@ -139,7 +140,7 @@ const resource: Resource = {
           opportunity: getString(body, 'opportunity'),
           proposalText: getString(body, 'proposalText'),
           additionalComments: getString(body, 'additionalComments'),
-          proponent: await parseCreateProponentRequestBody(get(body, 'proponent'), connection),
+          proponent: await parseProponentRequestBody(get(body, 'proponent'), connection),
           attachments: getStringArray(body, 'attachments'),
           status: getString(body, 'status')
         };
@@ -151,7 +152,7 @@ const resource: Resource = {
                 proponent,
                 attachments } = request.body;
 
-        if (!permissions.createCWUProposal(request.session)) {
+        if (!permissions.isSignedIn(request.session) || !permissions.createCWUProposal(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -216,14 +217,12 @@ const resource: Resource = {
             proponent: validatedProponent.value,
             attachments: validatedAttachments.value,
             status: validatedStatus.value
-          });
+          } as ValidatedCreateRequestBody);
         } else {
           return invalid({
-            opportunity: getInvalidValue(validatedCWUOpportunity, undefined),
             proposalText: getInvalidValue(validatedProposalText, undefined),
             additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
-            proponent: getInvalidValue(validatedProponent, undefined),
-            attachments: getInvalidValue(validatedAttachments, undefined)
+            proponent: getInvalidValue(validatedProponent, undefined)
           });
         }
       },
@@ -253,16 +252,13 @@ const resource: Resource = {
             return adt('edit', {
               proposalText: getString(value, 'proposalText'),
               additionalComments: getString(value, 'additionalComments'),
-              proponent: get(value, 'proponent'),
+              proponent: await parseProponentRequestBody(get(value, 'proponent'), connection),
               attachments: getStringArray(value, 'attachments')
             });
           case 'submit':
             return adt('submit', getString(body, 'value', ''));
           case 'score':
-            return adt('score', {
-              score: getNumber<number>(value, 'score', -1),
-              note: getString(value, 'note')
-            });
+            return adt('score', getNumber<number>(body, 'value', -1, false));
           case 'award':
             return adt('award', getString(body, 'value', ''));
           case 'disqualify':
@@ -280,7 +276,7 @@ const resource: Resource = {
           return invalid({ notFound: ['The specified proposal does not exist.'] });
         }
 
-        if (!permissions.editCWUProposal(connection, request.session, request.params.id)) {
+        if (!permissions.isSignedIn(request.session) || !permissions.editCWUProposal(connection, request.session, request.params.id)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -294,28 +290,49 @@ const resource: Resource = {
                     proponent,
                     attachments } = request.body.value;
 
+            // Attachments must be validated for both drafts and published opportunities.
+            const validatedAttachments = await validateAttachments(connection, attachments);
+            if (isInvalid(validatedAttachments)) {
+              return invalid({
+                proposal: adt('edit' as const, {
+                  attachments: validatedAttachments.value
+                })
+              });
+            }
+
+            // Do not validate other fields if the proposal is a draft.
+            if (validatedCWUProposal.value.status === CWUProposalStatus.Draft) {
+              return valid({
+                session: request.session,
+                body: adt('edit' as const, {
+                  ...request.body.value,
+                  attachments: validatedAttachments.value
+                })
+              });
+            }
+
             const validatedProposalText = proposalValidation.validateProposalText(proposalText);
             const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
             const validatedProponent = await validateProponent(connection, proponent);
-            const validatedAttachments = await validateAttachments(connection, attachments);
 
             if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
               return valid({
                 session: request.session,
-                body: adt('edit', {
+                body: adt('edit' as const, {
                   proposalText: validatedProposalText.value,
                   additionalComments: validatedAdditionalComments.value,
                   proponent: validatedProponent.value,
                   attachments: validatedAttachments.value
                 })
-              });
+              } as ValidatedUpdateRequestBody);
             } else {
-              return invalid(adt('edit', {
-                proposalText: getInvalidValue(validatedProposalText, undefined),
-                additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
-                proponent: getInvalidValue(validatedProponent, undefined),
-                attachments: getInvalidValue(validatedAttachments, undefined)
-              }));
+              return invalid({
+                proposal: adt('edit' as const, {
+                  proposalText: getInvalidValue(validatedProposalText, undefined),
+                  additionalComments: getInvalidValue(validatedAdditionalComments, undefined),
+                  proponent: getInvalidValue(validatedProponent, undefined)
+                })
+              });
             }
           case 'submit':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
@@ -330,8 +347,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('submit', validatedSubmissionNote.value)
-            });
+              body: adt('submit' as const, validatedSubmissionNote.value)
+            } as ValidatedUpdateRequestBody);
           case 'score':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Evaluated,
@@ -339,15 +356,14 @@ const resource: Resource = {
                                                               proposalDeadline)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedScore = proposalValidation.validateScore(request.body.value.score);
-            const validatedScoringNote = proposalValidation.validateNote(request.body.value.note);
-            if (isInvalid(validatedScoringNote) || isInvalid(validatedScore)) {
-              return invalid({ proposal: adt('score' as const, { score: getInvalidValue(validatedScore, undefined), note: getInvalidValue(validatedScoringNote, undefined) }) });
+            const validatedScore = proposalValidation.validateScore(request.body.value);
+            if (isInvalid(validatedScore)) {
+              return invalid({ proposal: adt('score' as const, getInvalidValue(validatedScore, [])) });
             }
             return valid({
               session: request.session,
-              body: adt('score', { score: validatedScore.value, note: validatedScoringNote.value })
-            });
+              body: adt('score' as const, validatedScore.value)
+            } as ValidatedUpdateRequestBody);
           case 'award':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Awarded,
@@ -361,8 +377,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('award', validatedAwardNote.value)
-            });
+              body: adt('award' as const, validatedAwardNote.value)
+            } as ValidatedUpdateRequestBody);
           case 'disqualify':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Disqualified,
@@ -372,14 +388,14 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            const validatedDisqualifyNote = proposalValidation.validateNote(request.body.value);
+            const validatedDisqualifyNote = proposalValidation.validateDisqualificationReason(request.body.value);
             if (isInvalid(validatedDisqualifyNote)) {
               return invalid({ proposal: adt('disqualify' as const, validatedDisqualifyNote.value) });
             }
             return valid({
               session: request.session,
-              body: adt('disqualify', validatedDisqualifyNote.value)
-            });
+              body: adt('disqualify' as const, validatedDisqualifyNote.value)
+            } as ValidatedUpdateRequestBody);
           case 'withdraw':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Withdrawn,
@@ -395,8 +411,8 @@ const resource: Resource = {
             }
             return valid({
               session: request.session,
-              body: adt('withdraw', validatedWithdrawalNote.value)
-            });
+              body: adt('withdraw' as const, validatedWithdrawalNote.value)
+            } as ValidatedUpdateRequestBody);
           default:
             return invalid({ proposal: adt('parseFailure' as const) });
         }
@@ -413,7 +429,7 @@ const resource: Resource = {
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Submitted, body.value, session);
               break;
             case 'score':
-              dbResult = await db.updateCWUProposalScore(connection, request.params.id, body.value.score, body.value.note, session);
+              dbResult = await db.updateCWUProposalScore(connection, request.params.id, body.value, session);
               break;
             case 'award':
               dbResult = await db.awardCWUProposal(connection, request.params.id, body.value, session);

@@ -1,6 +1,6 @@
 import { getString } from 'shared/lib';
 import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors, CWUProposalStatus, parseCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
-import { allValid, getInvalidValue, invalid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, mapValid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
 
 export function validateCWUProposalStatus(raw: string, isOneOf: CWUProposalStatus[]): Validation<CWUProposalStatus> {
   const parsed = parseCWUProposalStatus(raw);
@@ -23,8 +23,12 @@ export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, 'Note', 0, 5000);
 }
 
+export function validateDisqualificationReason(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Disqualification Reason', 1, 5000);
+}
+
 export function validateScore(raw: number): Validation<number> {
-  return validateNumber(raw, 0, 100, 'score', 'a');
+  return validateNumber(raw, 0, 100, 'score', 'a', false, false);
 }
 
 export function validateIndividualProponentLegalName(raw: string): Validation<string> {
@@ -35,8 +39,8 @@ export function validateIndividualProponentEmail(raw: string): Validation<string
   return validateEmail(raw);
 }
 
-export function validateIndividualProponentPhone(raw: string): Validation<string> {
-  return validatePhoneNumber(raw);
+export function validateIndividualProponentPhone(raw: string | undefined): Validation<string> {
+  return mapValid(optional(raw, v => validatePhoneNumber(v)), w => w || '');
 }
 
 export function validateIndividualProponentStreet1(raw: string): Validation<string> {
