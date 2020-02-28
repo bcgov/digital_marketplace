@@ -1280,8 +1280,8 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
       'proponentOrganization'
     );
 
-  // If vendor user, scope results to those proposals they have authored
-  // If vendor is admin/gov, we don't scope, but include scores
+  // If user is vendor, scope results to those proposals they have authored
+  // If user is admin/gov, we don't scope, and include scores
   if (session.user && session.user.type === UserType.Vendor) {
     query.andWhere({ createdBy: session.user.id });
   } else {
