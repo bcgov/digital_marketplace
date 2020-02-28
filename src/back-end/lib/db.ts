@@ -691,14 +691,15 @@ export async function hasAttachmentPermission(connection: Connection, session: S
 
   // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
   if (session.user) {
-    const proposals = await connection('cwuProposalAttachments as attachments')
+    const rawProposals = await connection('cwuProposalAttachments as attachments')
       .innerJoin('cwuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
       .where({ 'attachments.file': id })
       .select<RawCWUProposal[]>('proposals.*');
 
-    if (proposals.length > 0) {
-      for (const proposal of proposals) {
-        if (await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id)) {
+    if (rawProposals.length > 0) {
+      for (const rawProposal of rawProposals) {
+        const proposal = await rawCWUProposalToCWUProposal(connection, session, rawProposal);
+        if (await hasReadPermissionCWUProposal(connection, session, proposal)) {
           return true;
         }
       }
@@ -1288,7 +1289,7 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
     query.select('score');
   }
 
-  const results = await query;
+  let results = await query;
 
   if (!results) {
     throw new Error('unable to read proposals');
@@ -1306,6 +1307,11 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
       throw new Error('unable to read proposal status');
     }
     proposal.status = statusResult.status;
+  }
+
+  // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
+  if (session.user && session.user.type !== UserType.Vendor) {
+    results = results.filter(result => ![CWUProposalStatus.Draft, CWUProposalStatus.Submitted].includes(result.status));
   }
 
   // Read ranks for rankable proposals and apply to existing result set

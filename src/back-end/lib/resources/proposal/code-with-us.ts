@@ -97,7 +97,7 @@ const resource: Resource = {
        return respond(404, ['Code With Us opportunity not found.']);
       }
 
-      if (!await permissions.readManyCWUProposals(connection, request.session, request.query.opportunity)) {
+      if (!await permissions.readManyCWUProposals(connection, request.session, validatedCWUOpportunity.value)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
       const dbResult = await db.readManyCWUProposals(connection, request.session, request.query.opportunity);
@@ -121,7 +121,7 @@ const resource: Resource = {
         return respond(404, ['Proposal not found.']);
       }
 
-      if (!await permissions.readOneCWUProposal(connection, request.session, request.query.opportunity, request.params.id)) {
+      if (!await permissions.readOneCWUProposal(connection, request.session, validatedCWUProposal.value)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
       const dbResult = await db.readOneCWUProposal(connection, request.params.id, request.session);
