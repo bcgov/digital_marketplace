@@ -183,6 +183,20 @@ export function getConfigErrors(): string[] {
     errors.push('TMP_DIR does not exist and this process was unable to create it.');
   }
 
+  if (ENV === 'production' && (!productionMailerConfigOptions.host || !isPositiveInteger(productionMailerConfigOptions.port))) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for production.',
+      'MAILER_HOST and MAILER_PORT (positive integer) must all be specified.'
+    ]);
+  }
+
+  if (ENV === 'development' && (!developmentMailerConfigOptions.auth.user || !developmentMailerConfigOptions.auth.pass)) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for development.',
+      'MAILER_GMAIL_USER and MAILER_GMAIL_PASS must both be specified.'
+    ]);
+  }
+
   if (!MAILER_FROM || !MAILER_FROM.match(/^[^<>@]+<[^@]+@[^@]+\.[^@]+>$/)) {
     errors.push('MAILER_FROM must be specified using the format: "Name <email@domain.tld>".');
   }
