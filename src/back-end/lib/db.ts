@@ -1768,11 +1768,13 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
       }, '*');
 
     // Update all other proposals on opportunity to Not Awarded
-    const otherProposalIds = (await connection<{ id: Id }>('cwuProposals')
+    const otherProposalIds = (await connection<{ id: Id }>('cwuProposals as proposals')
       .transacting(trx)
-      .where({ opportunity: proposalRecord.opportunity })
-      .andWhereNot({ id: proposalId })
-      .select('id'))?.map(result => result.id) || [];
+      .join('cwuProposalStatuses as statuses', 'statuses.proposal', '=', 'proposals.id')
+      .whereIn('statuses.status', [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded])
+      .andWhere({ 'proposals.opportunity': proposalRecord.opportunity })
+      .andWhereNot({ 'proposals.id': proposalId })
+      .select('proposals.id'))?.map(result => result.id) || [];
 
     for (const id of otherProposalIds) {
       await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
