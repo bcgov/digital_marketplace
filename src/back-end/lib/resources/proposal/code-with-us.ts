@@ -100,7 +100,7 @@ const resource: Resource = {
       if (!await permissions.readManyCWUProposals(connection, request.session, request.query.opportunity)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
-      const dbResult = await db.readManyCWUProposals(connection, request.query.opportunity);
+      const dbResult = await db.readManyCWUProposals(connection, request.session, request.query.opportunity);
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
