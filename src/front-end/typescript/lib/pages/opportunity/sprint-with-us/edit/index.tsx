@@ -4,7 +4,7 @@ import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -78,7 +78,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition: Tab.idToDefinition,
       getTitleSuffix: state => state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
-    }), makePageMetadata('Edit CodeWithUs Opportunity'))
+    }), makePageMetadata('Edit SprintWithUs Opportunity'))
   };
 }
 
