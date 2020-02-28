@@ -1768,19 +1768,24 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
       }, '*');
 
     // Update all other proposals on opportunity to Not Awarded
-    // TODO andrew this should not be an update. should insert a new NotAwarded status
-    await connection('cwuProposalStatuses')
+    const otherProposalIds = (await connection<{ id: Id }>('cwuProposals')
       .transacting(trx)
-      .whereIn('proposal', async function() {
-        this
-          .select('id')
-          .from('cwuProposals')
-          .where({ opportunity: proposalRecord.opportunity });
-      })
-      .andWhereNot({ proposal: proposalId })
-      .update({
-        status: CWUProposalStatus.NotAwarded
-      });
+      .where({ opportunity: proposalRecord.opportunity })
+      .andWhereNot({ id: proposalId })
+      .select('id'))?.map(result => result.id) || [];
+
+    for (const id of otherProposalIds) {
+      await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
+        .transacting(trx)
+        .insert({
+          id: generateUuid(),
+          proposal: id,
+          createdAt: now,
+          createdBy: session.user.id,
+          status: CWUProposalStatus.NotAwarded,
+          note: ''
+        });
+    }
 
     // Update opportunity
     await updateCWUOpportunityStatus(trx, proposalRecord.opportunity, CWUOpportunityStatus.Awarded, '', session);
