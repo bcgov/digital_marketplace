@@ -38,6 +38,17 @@ const router: Router.Router<Route> = {
   routes: [
 
     {
+      path: '/opportunities/sprint-with-us/:opportunityId',
+      makeRoute({params}) {
+        return {
+          tag: 'opportunitySWUView',
+          value: {
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
       path: '/opportunities/sprint-with-us/:opportunityId/edit',
       makeRoute({ params }) {
         return {
@@ -54,6 +65,42 @@ const router: Router.Router<Route> = {
         return {
           tag: 'opportunitySWUCreate',
           value: null
+        };
+      }
+    },
+
+    {
+      path: '/opportunities/sprint-with-us/:opportunityId/proposals/create',
+      makeRoute({ params }) {
+        return {
+          tag: 'proposalSWUCreate',
+          value: {
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/edit',
+      makeRoute({params}) {
+        return {
+          tag: 'proposalSWUEdit',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
+    {
+      path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId',
+      makeRoute({ params }) {
+        return {
+          tag: 'proposalSWUView',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
         };
       }
     },
@@ -90,6 +137,7 @@ const router: Router.Router<Route> = {
         };
       }
     },
+
     {
       path: '/opportunities/code-with-us/:opportunityId/proposals/create',
       makeRoute({ params }) {
@@ -125,6 +173,7 @@ const router: Router.Router<Route> = {
         };
       }
     },
+
     {
       path: '/proposals',
       makeRoute() {
@@ -297,10 +346,19 @@ const router: Router.Router<Route> = {
       case 'orgCreate':
         return '/organizations/create';
 
+      case 'proposalSWUCreate':
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;
+      case 'proposalSWUEdit':
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
+      case 'proposalSWUView':
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
+
       case 'opportunitySWUCreate':
         return '/opportunities/sprint-with-us/create';
       case 'opportunitySWUEdit':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/edit`;
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/edit`;
+      case 'opportunitySWUView':
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}`;
 
       case 'opportunityCWUCreate':
         return '/opportunities/code-with-us/create';

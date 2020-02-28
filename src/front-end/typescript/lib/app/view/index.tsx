@@ -5,18 +5,29 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, View } from 'front-end/lib/framework';
 // Note(Jesse): @add_new_page_location
+
+import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
+import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
+
 import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
+import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
+
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
+
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
+
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
@@ -89,7 +100,6 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.orgEdit,
         value => ({ tag: 'pageOrgEdit', value })
       );
-
     case 'orgCreate':
       return makeViewPageProps(
         props,
@@ -97,13 +107,34 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.orgCreate,
         value => ({ tag: 'pageOrgCreate', value })
       );
-
     case 'orgList':
       return makeViewPageProps(
         props,
         PageOrgList.component,
         state => state.pages.orgList,
         value => ({ tag: 'pageOrgList', value })
+      );
+
+    case 'proposalSWUCreate':
+      return makeViewPageProps(
+        props,
+        PageProposalSWUCreate.component,
+        state => state.pages.proposalSWUCreate,
+        value => ({tag: 'pageProposalSWUCreate', value})
+      );
+    case 'proposalSWUEdit':
+      return makeViewPageProps(
+        props,
+        PageProposalSWUEdit.component,
+        state => state.pages.proposalSWUEdit,
+        value => ({tag: 'pageProposalSWUEdit', value})
+      );
+    case 'proposalSWUView':
+      return makeViewPageProps(
+        props,
+        PageProposalSWUView.component,
+        state => state.pages.proposalSWUView,
+        value => ({tag: 'pageProposalSWUView', value})
       );
 
     case 'opportunitySWUCreate':
@@ -113,13 +144,19 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.opportunitySWUCreate,
         value => ({tag: 'pageOpportunitySWUCreate', value})
       );
-
     case 'opportunitySWUEdit':
       return makeViewPageProps(
         props,
         PageOpportunitySWUEdit.component,
         state => state.pages.opportunitySWUEdit,
         value => ({tag: 'pageOpportunitySWUEdit', value})
+      );
+    case 'opportunitySWUView':
+      return makeViewPageProps(
+        props,
+        PageOpportunitySWUView.component,
+        state => state.pages.opportunitySWUView,
+        value => ({tag: 'pageOpportunitySWUView', value})
       );
 
     case 'opportunityCWUCreate':
@@ -143,6 +180,7 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.opportunityCWUView,
         value => ({tag: 'pageOpportunityCWUView', value})
       );
+
     case 'proposalCWUCreate':
       return makeViewPageProps(
         props,
@@ -164,6 +202,7 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.proposalCWUView,
         value => ({tag: 'pageProposalCWUView', value})
       );
+
     case 'proposalList':
       return makeViewPageProps(
         props,
