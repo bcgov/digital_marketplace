@@ -1295,7 +1295,7 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
     throw new Error('unable to read proposals');
   }
 
-  // Read latest status for each proposal
+  // Read latest status for each proposal, and get submittedDate if it exists
   for (const proposal of results) {
     const statusResult = await connection<{ status: CWUProposalStatus }>('cwuProposalStatuses')
       .where({ proposal: proposal.id })
@@ -1307,6 +1307,12 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
       throw new Error('unable to read proposal status');
     }
     proposal.status = statusResult.status;
+
+    proposal.submittedAt = (await connection<{ submittedAt: Date }>('cwuProposalStatuses')
+      .where({ proposal: proposal.id, status: CWUProposalStatus.Submitted })
+      .orderBy('createdAt', 'desc')
+      .select('createdAt as submittedAt')
+      .first())?.submittedAt;
   }
 
   // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
@@ -1423,6 +1429,13 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
 
       result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
     }
+
+    // Fetch submittedAt date if it exists (get most recent submitted status)
+    result.submittedAt = (await connection<{ submittedAt: Date }>('cwuProposalStatuses')
+      .where({ proposal: result.id, status: CWUProposalStatus.Submitted })
+      .orderBy('createdAt', 'desc')
+      .select('createdAt as submittedAt')
+      .first())?.submittedAt;
 
     // Check for permissions on viewing score and rank
     if (await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
