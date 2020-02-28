@@ -111,10 +111,6 @@ const resource: Resource = {
   readOne(connection) {
     return nullRequestBodyHandler<JsonResponseBody<CWUProposal | string[]>, Session>(async request => {
       const respond = (code: number, body: CWUProposal | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-      const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.query.opportunity, request.session);
-      if (isInvalid(validatedCWUOpportunity)) {
-        return respond(404, ['Code With Us opportunity not found.']);
-      }
 
       const validatedCWUProposal = await validateCWUProposalId(connection, request.params.id, request.session);
       if (isInvalid(validatedCWUProposal)) {

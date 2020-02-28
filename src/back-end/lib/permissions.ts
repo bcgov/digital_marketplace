@@ -188,6 +188,11 @@ export async function readCWUProposalScore(connection: Connection, session: Sess
           (proposalStatus === CWUProposalStatus.Awarded || proposalStatus === CWUProposalStatus.NotAwarded) || false));
 }
 
+export async function readCWUProposalHistory(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) ||
+    (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+}
+
 export function createCWUProposal(session: Session): boolean {
   return isVendor(session);
 }
