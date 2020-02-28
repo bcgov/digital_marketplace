@@ -3,6 +3,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
 import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
+import url from 'url';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config');
 
@@ -180,6 +181,15 @@ export function getConfigErrors(): string[] {
   } catch (error) {
     logger.error('error caught trying to create TMP_DIR', errorToJson(error));
     errors.push('TMP_DIR does not exist and this process was unable to create it.');
+  }
+
+  if (!MAILER_FROM || !MAILER_FROM.match(/^[^<>@]+<[^@]+@[^@]+\.[^@]+>$/)) {
+    errors.push('MAILER_FROM must be specified using the format: "Name <email@domain.tld>".');
+  }
+
+  const mailerRootUrl = url.parse(MAILER_ROOT_URL);
+  if (!MAILER_ROOT_URL || !mailerRootUrl.protocol || !mailerRootUrl.host) {
+    errors.push('MAILER_ROOT_URL must be specified as a valid URL with a protocol and host.');
   }
 
   return errors;
