@@ -10,7 +10,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { CWUOpportunitySubscriber } from 'shared/lib/resources/subscribers/code-with-us';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -1309,7 +1309,7 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
 
   // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
   if (session.user && session.user.type !== UserType.Vendor) {
-    results = results.filter(result => ![CWUProposalStatus.Draft, CWUProposalStatus.Submitted].includes(result.status));
+    results = results.filter(result => isCWUProposalStatusVisibleToGovernment(result.status));
   }
 
   // Read ranks for rankable proposals and apply to existing result set
