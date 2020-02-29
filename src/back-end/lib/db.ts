@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
+import { readCWUProposalHistory, readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
@@ -1400,11 +1400,14 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       .where({ proposal: result.id })
       .select('file')).map(row => row.file);
 
-    const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
-      .where({ proposal: result.id })
-      .orderBy('createdAt', 'desc');
+    // Include proposal history for admins/opportunity owners
+    if (await readCWUProposalHistory(connection, session, result.opportunity)) {
+      const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
+        .where({ proposal: result.id })
+        .orderBy('createdAt', 'desc');
 
-    result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+      result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+    }
 
     // Check for permissions on viewing score and rank
     if (await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
