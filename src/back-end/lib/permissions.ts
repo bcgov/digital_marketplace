@@ -157,7 +157,10 @@ export async function deleteCWUOpportunity(connection: Connection, session: Sess
 // CWU Proposals.
 
 export async function readManyCWUProposals(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
-  return isAdmin(session) || (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+  return isAdmin(session) ||
+    (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) ||
+    isVendor(session) || // If a vendor, only proposals they have authored will be returned
+    false;
 }
 
 export async function readOneCWUProposal(connection: Connection, session: Session, opportunityId: string, proposalId: string): Promise<boolean> {
