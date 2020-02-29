@@ -696,12 +696,10 @@ export async function hasAttachmentPermission(connection: Connection, session: S
       .where({ 'attachments.file': id })
       .select<RawCWUProposal[]>('proposals.*');
 
-    if (rawProposals.length > 0) {
-      for (const rawProposal of rawProposals) {
-        const proposal = await rawCWUProposalToCWUProposal(connection, session, rawProposal);
-        if (await hasReadPermissionCWUProposal(connection, session, proposal)) {
-          return true;
-        }
+    for (const rawProposal of rawProposals) {
+      const proposal = await rawCWUProposalToCWUProposal(connection, session, rawProposal);
+      if (await hasReadPermissionCWUProposal(connection, session, proposal)) {
+        return true;
       }
     }
   }
