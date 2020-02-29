@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
+import { readCWUProposalHistory, readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { hashFile } from 'back-end/lib/resources/file';
 import { readFile } from 'fs';
 import Knex from 'knex';
@@ -1409,11 +1409,14 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       .where({ proposal: result.id })
       .select('file')).map(row => row.file);
 
-    const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
-      .where({ proposal: result.id })
-      .orderBy('createdAt', 'desc');
+    // Include proposal history for admins/opportunity owners
+    if (await readCWUProposalHistory(connection, session, result.opportunity)) {
+      const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
+        .where({ proposal: result.id })
+        .orderBy('createdAt', 'desc');
 
-    result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+      result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+    }
 
     // Check for permissions on viewing score and rank
     if (await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
@@ -1776,20 +1779,35 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
         updatedBy: session.user.id
       }, '*');
 
-    // Update all other proposals on opportunity to Not Awarded
-    // TODO andrew this should not be an update. should insert a new NotAwarded status
-    await connection('cwuProposalStatuses')
+    // Update all other proposals on opportunity to Not Awarded where their status is Evaluated/Awarded
+    const otherProposalIds = (await connection<{ id: Id }>('cwuProposals')
       .transacting(trx)
-      .whereIn('proposal', async function() {
-        this
-          .select('id')
-          .from('cwuProposals')
-          .where({ opportunity: proposalRecord.opportunity });
-      })
-      .andWhereNot({ proposal: proposalId })
-      .update({
-        status: CWUProposalStatus.NotAwarded
-      });
+      .andWhere({ opportunity: proposalRecord.opportunity })
+      .andWhereNot({ id: proposalId })
+      .select('id'))?.map(result => result.id) || [];
+
+    for (const id of otherProposalIds) {
+      // Get latest status for proposal and check equal to Evaluated/Awarded
+      const currentStatus = (await connection<{ status: CWUProposalStatus }>('cwuProposalStatuses')
+        .whereNotNull('status')
+        .andWhere({ proposal: id })
+        .select('status')
+        .orderBy('createdAt', 'desc')
+        .first())?.status;
+
+      if (currentStatus && [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded].includes(currentStatus)) {
+        await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
+          .transacting(trx)
+          .insert({
+            id: generateUuid(),
+            proposal: id,
+            createdAt: now,
+            createdBy: session.user.id,
+            status: CWUProposalStatus.NotAwarded,
+            note: ''
+          });
+      }
+    }
 
     // Update opportunity
     await updateCWUOpportunityStatus(trx, proposalRecord.opportunity, CWUOpportunityStatus.Awarded, '', session);
