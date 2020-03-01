@@ -1268,6 +1268,14 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
   };
 }
 
+async function getCWUProposalSubmittedAt(connection: Connection, proposal: RawCWUProposal | RawCWUProposalSlim): Promise<Date | undefined> {
+  return (await connection<{ submittedAt: Date }>('cwuProposalStatuses')
+    .where({ proposal: proposal.id, status: CWUProposalStatus.Submitted })
+    .orderBy('createdAt', 'desc')
+    .select('createdAt as submittedAt')
+    .first())?.submittedAt;
+}
+
 export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposalSlim[]>(async (connection, session, id) => {
   const query = connection<RawCWUProposalSlim>('cwuProposals as prop')
     .where({ opportunity: id })
@@ -1308,11 +1316,7 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
     }
     proposal.status = statusResult.status;
 
-    proposal.submittedAt = (await connection<{ submittedAt: Date }>('cwuProposalStatuses')
-      .where({ proposal: proposal.id, status: CWUProposalStatus.Submitted })
-      .orderBy('createdAt', 'desc')
-      .select('createdAt as submittedAt')
-      .first())?.submittedAt;
+    proposal.submittedAt = await getCWUProposalSubmittedAt(connection, proposal);
   }
 
   // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
@@ -1431,16 +1435,12 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
     }
 
     // Fetch submittedAt date if it exists (get most recent submitted status)
-    result.submittedAt = (await connection<{ submittedAt: Date }>('cwuProposalStatuses')
-      .where({ proposal: result.id, status: CWUProposalStatus.Submitted })
-      .orderBy('createdAt', 'desc')
-      .select('createdAt as submittedAt')
-      .first())?.submittedAt;
+    result.submittedAt = await getCWUProposalSubmittedAt(connection, result);
 
     // Check for permissions on viewing score and rank
     if (await readCWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
       // Add score to proposal
-      result.score = (await connection<{ score: number}>('cwuProposals')
+      result.score = (await connection<{ score: number }>('cwuProposals')
         .where({ id })
         .select('score')
         .first())?.score;
