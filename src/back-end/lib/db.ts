@@ -1266,7 +1266,7 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
   };
 }
 
-export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(async (connection, session, id) => {
+export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposalSlim[]>(async (connection, session, id) => {
   const query = connection<RawCWUProposalSlim>('cwuProposals as prop')
     .where({ opportunity: id })
     .select<RawCWUProposalSlim[]>(
@@ -1281,7 +1281,7 @@ export const readManyCWUProposals = tryDb<[Session, Id], CWUProposalSlim[]>(asyn
 
   // If user is vendor, scope results to those proposals they have authored
   // If user is admin/gov, we don't scope, and include scores
-  if (session.user && session.user.type === UserType.Vendor) {
+  if (session.user.type === UserType.Vendor) {
     query.andWhere({ createdBy: session.user.id });
   } else {
     query.select('score');
