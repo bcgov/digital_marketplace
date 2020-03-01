@@ -1,7 +1,7 @@
 import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUProposal, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -160,7 +160,7 @@ export async function deleteCWUOpportunity(connection: Connection, session: Sess
 export async function readManyCWUProposals(connection: Connection, session: Session, opportunity: CWUOpportunity): Promise<boolean> {
   if (isAdmin(session) || (session.user && await isCWUOpportunityAuthor(connection, session.user, opportunity.id))) {
     // Only provide permission to admins/gov owners if opportunity is not in draft or published
-    return ![CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published].includes(opportunity.status);
+    return doesCWUOpportunityStatusAllowGovToViewProposals(opportunity.status);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return true;
@@ -172,8 +172,8 @@ export async function readOneCWUProposal(connection: Connection, session: Sessio
   if (isAdmin(session) || (session.user && await isCWUOpportunityAuthor(connection, session.user, proposal.opportunity.id))) {
     // Only provide permission to admins/gov owners if opportunity is not in draft/published
     // And proposal is not in draft/submitted
-    return ![CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published].includes(proposal.opportunity.status) &&
-          ![CWUProposalStatus.Draft, CWUProposalStatus.Submitted].includes(proposal.status);
+    return doesCWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
+          isCWUProposalStatusVisibleToGovernment(proposal.status);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return (session.user && await isCWUProposalAuthor(connection, session.user, proposal.id)) || false;
