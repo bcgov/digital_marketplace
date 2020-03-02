@@ -9,7 +9,7 @@ import { isInvalid, isValid, Validation } from 'shared/lib/validation';
 
 const logger = makeDomainLogger(consoleAdapter, 'hooks');
 
-const createCrudHook: (connection: db.Connection) => RouteHook<unknown, unknown, unknown, unknown, number, Session> = (connection: db.Connection) => {
+const createCrudHook: (connection: db.Connection) => RouteHook<unknown, unknown, unknown, unknown, null, Session> = (connection: db.Connection) => {
   const throttledBefore = throttle(() => {
     logger.info(`Invoked cwuCrudHook at ${new Date()}`);
     db.closeCWUOpportunities(connection)
@@ -27,7 +27,7 @@ const createCrudHook: (connection: db.Connection) => RouteHook<unknown, unknown,
   return {
     async before() {
       throttledBefore();
-      return Date.now();
+      return null;
     }
   };
 };
