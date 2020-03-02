@@ -1956,7 +1956,7 @@ export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
           createdAt: now,
           opportunity: lapsedOpportunityId,
           status: CWUOpportunityStatus.Evaluation,
-          note: 'Opportunity closed'
+          note: 'This opportunity has closed.'
         });
 
       // Get a list of SUBMITTED proposals for this opportunity
@@ -1985,7 +1985,7 @@ export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
             createdAt: now,
             proposal: proposalId,
             status: CWUProposalStatus.UnderReview,
-            note: 'Proposal under review'
+            note: ''
           });
       }
     }
