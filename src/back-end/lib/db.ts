@@ -1921,3 +1921,74 @@ export const readManyCWUSubscribedUsers = tryDb<[Id], User[]>(async (connection,
 
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
+
+export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    const lapsedOpportunitiesIds = (await connection<{ id: Id }>('cwuOpportunities as opportunities')
+      .transacting(trx)
+      .join('cwuOpportunityStatuses as statuses', function() {
+        this
+          .on('opportunities.id', '=', 'statuses.opportunity')
+          .andOn('statuses.createdAt', '=',
+            connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as statuses2 where \
+              statuses2.opportunity = opportunities.id and statuses2.status is not null)'));
+      })
+      .join('cwuOpportunityVersions as versions', function() {
+        this
+          .on('opportunities.id', '=', 'versions.opportunity')
+          .andOn('versions.createdAt', '=',
+            connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as versions2 where \
+              versions2.opportunity = opportunities.id)'));
+      })
+      .where({
+        'statuses.status': CWUOpportunityStatus.Published
+      })
+      .andWhere('versions.proposalDeadline', '<=', now)
+      .select<Array<{ id: Id }>>('opportunities.id'))?.map(result => result.id) || [];
+
+    for (const lapsedOpportunityId of lapsedOpportunitiesIds) {
+      // Set the opportunity to EVALUATION status
+      await connection('cwuOpportunityStatuses')
+        .transacting(trx)
+        .insert({
+          id: generateUuid(),
+          createdAt: now,
+          opportunity: lapsedOpportunityId,
+          status: CWUOpportunityStatus.Evaluation,
+          note: 'This opportunity has closed.'
+        });
+
+      // Get a list of SUBMITTED proposals for this opportunity
+      const proposalIds = (await connection<{ id: Id }>('cwuProposals as proposals')
+        .transacting(trx)
+        .join('cwuProposalStatuses as statuses', function() {
+          this
+            .on('proposals.id', '=', 'statuses.proposal')
+            .andOnNotNull('statuses.status')
+            .andOn('statuses.createdAt', '=',
+              connection.raw('(select max("createdAt") from "cwuProposalStatuses" as statuses2 where \
+                statuses2.proposal = proposals.id and statuses2.status is not null)'));
+        })
+        .where({
+          'proposals.opportunity': lapsedOpportunityId,
+          'statuses.status': CWUProposalStatus.Submitted
+        })
+        .select<Array<{ id: Id }>>('proposals.id'))?.map(result => result.id) || [];
+
+      for (const proposalId of proposalIds) {
+        // Set the proposal to UNDER_REVIEW status
+        await connection('cwuProposalStatuses')
+          .transacting(trx)
+          .insert({
+            id: generateUuid(),
+            createdAt: now,
+            proposal: proposalId,
+            status: CWUProposalStatus.UnderReview,
+            note: ''
+          });
+      }
+    }
+    return lapsedOpportunitiesIds.length;
+  }));
+});
