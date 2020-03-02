@@ -47,7 +47,7 @@ export function connectToDatabase(postgresUrl: string): Connection {
   });
 }
 
-const hooks = [
+const globalHooks = [
   loggerHook
 ];
 
@@ -95,7 +95,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
     // Add global hooks to all routes.
-    addHooks(hooks)
+    addHooks(globalHooks)
   ])([]);
 
   if (BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD_HASH) {
@@ -114,7 +114,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
     // Front-end router.
     flippedConcat(frontEndRouter('downtime.html')),
     // Add global hooks to all routes.
-    addHooks(hooks)
+    addHooks(globalHooks)
   ])([]);
 }
 
