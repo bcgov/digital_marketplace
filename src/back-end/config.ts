@@ -99,6 +99,12 @@ export const KEYCLOAK_CLIENT_ID = get('KEYCLOAK_CLIENT_ID', 'dm-auth-web');
 
 export const KEYCLOAK_CLIENT_SECRET = get('KEYCLOAK_CLIENT_SECRET', '');
 
+// Knex debugging
+export const KNEX_DEBUG = get('KNEX_DEBUG', '') === 'true';
+
+// Configuration for CWU/SWU auto-update hooks
+export const UPDATE_HOOK_THROTTLE = parseInt(get('UPDATE_HOOK_THROTTLE', '60000'), 10);
+
 // Temp storage for file uploads
 const fileStorageDir = get('FILE_STORAGE_DIR', '.');
 export const FILE_STORAGE_DIR = fileStorageDir && resolve(REPOSITORY_ROOT_DIR, fileStorageDir);

@@ -1,6 +1,7 @@
-import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, getConfigErrors, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
+import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib/db';
+import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
 import loggerHook from 'back-end/lib/hooks/logger';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
@@ -17,7 +18,7 @@ import userResource from 'back-end/lib/resources/user';
 import authRouter from 'back-end/lib/routers/auth';
 import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
-import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, Router } from 'back-end/lib/server';
+import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, RouteHook, Router } from 'back-end/lib/server';
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import Knex from 'knex';
@@ -41,7 +42,8 @@ export function connectToDatabase(postgresUrl: string): Connection {
     connection: postgresUrl,
     migrations: {
       tableName: DB_MIGRATIONS_TABLE_NAME
-    }
+    },
+    debug: KNEX_DEBUG
   });
 }
 
@@ -49,7 +51,8 @@ const hooks = [
   loggerHook
 ];
 
-const addHooks: (_: BasicRoute[]) => BasicRoute[] = map((route: BasicRoute) => addHooksToRoute(hooks, route));
+const addHooks: (hooks: Array<RouteHook<unknown, unknown, unknown, unknown, number, Session>>) => (_: BasicRoute[]) => BasicRoute[]
+  = (hooks: Array<RouteHook<unknown, unknown, unknown, unknown, number, Session>>) => map((route: BasicRoute) => addHooksToRoute(hooks, route));
 
 // We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.
 const flippedConcat = flipCurried(concat);
@@ -79,7 +82,8 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     // Respond with a standard 404 JSON response if API route is not handled.
     flippedConcat(notFoundJsonRoute),
     // Namespace all CRUD routes with '/api'.
-    map((route: BasicRoute) => namespaceRoute('/api', route))
+    map((route: BasicRoute) => namespaceRoute('/api', route)),
+    addHooks([codeWithUsHook(connection)])
   ])(resources);
 
   // Collect all routes.
@@ -91,7 +95,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
     // Add global hooks to all routes.
-    addHooks
+    addHooks(hooks)
   ])([]);
 
   if (BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD_HASH) {
@@ -110,7 +114,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
     // Front-end router.
     flippedConcat(frontEndRouter('downtime.html')),
     // Add global hooks to all routes.
-    addHooks
+    addHooks(hooks)
   ])([]);
 }
 
