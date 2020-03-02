@@ -4,21 +4,34 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 // Note(Jesse): @add_new_page_location
+
+import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
+import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
+
+import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
+import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
+import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
+
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
+
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
+
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
 import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
 import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
+
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -56,7 +69,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   switch (route.tag) {
 
     // Note(Jesse): @add_new_page_location
-      //
 
     case 'orgEdit':
       return await initAppChildPage({
@@ -68,6 +80,80 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageOrgEdit.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageOrgEdit' as const, value };
+        }
+      });
+
+    case 'proposalSWUEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalSWUEdit'],
+        childRouteParams: route.value,
+        childInit: PageProposalSWUEdit.component.init,
+        childGetMetadata: PageProposalSWUEdit.component.getMetadata,
+        childGetModal: PageProposalSWUEdit.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalSWUEdit' as const, value};
+        }
+      });
+    case 'proposalSWUCreate':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalSWUCreate'],
+        childRouteParams: route.value,
+        childInit: PageProposalSWUCreate.component.init,
+        childGetMetadata: PageProposalSWUCreate.component.getMetadata,
+        childGetModal: PageProposalSWUCreate.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalSWUCreate' as const, value};
+        }
+      });
+    case 'proposalSWUView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalSWUView'],
+        childRouteParams: route.value,
+        childInit: PageProposalSWUView.component.init,
+        childGetMetadata: PageProposalSWUView.component.getMetadata,
+        childGetModal: PageProposalSWUView.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalSWUView' as const, value};
+        }
+      });
+
+    case 'opportunitySWUEdit':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunitySWUEdit'],
+        childRouteParams: route.value,
+        childInit: PageOpportunitySWUEdit.component.init,
+        childGetMetadata: PageOpportunitySWUEdit.component.getMetadata,
+        childGetModal: PageOpportunitySWUEdit.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageOpportunitySWUEdit' as const, value};
+        }
+      });
+    case 'opportunitySWUCreate':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunitySWUCreate'],
+        childRouteParams: route.value,
+        childInit: PageOpportunitySWUCreate.component.init,
+        childGetMetadata: PageOpportunitySWUCreate.component.getMetadata,
+        childGetModal: PageOpportunitySWUCreate.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageOpportunitySWUCreate' as const, value};
+        }
+      });
+    case 'opportunitySWUView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunitySWUView'],
+        childRouteParams: route.value,
+        childInit: PageOpportunitySWUView.component.init,
+        childGetMetadata: PageOpportunitySWUView.component.getMetadata,
+        childGetModal: PageOpportunitySWUView.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageOpportunitySWUView' as const, value};
         }
       });
 
@@ -107,6 +193,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return {tag: 'pageOpportunityCWUView' as const, value};
         }
       });
+
     case 'proposalCWUCreate':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -143,6 +230,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return {tag: 'pageProposalCWUView' as const, value};
         }
       });
+
     case 'proposalCWUExportOne':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -167,6 +255,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return {tag: 'pageProposalCWUExportAll' as const, value};
         }
       });
+
     case 'proposalList':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -422,6 +511,69 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value
       });
 
+    case 'pageProposalSWUCreate':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalSWUCreate' as const, value}),
+        childStatePath: ['pages', 'proposalSWUCreate'],
+        childUpdate: PageProposalSWUCreate.component.update,
+        childGetMetadata: PageProposalSWUCreate.component.getMetadata,
+        childGetModal: PageProposalSWUCreate.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageProposalSWUEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalSWUEdit' as const, value}),
+        childStatePath: ['pages', 'proposalSWUEdit'],
+        childUpdate: PageProposalSWUEdit.component.update,
+        childGetMetadata: PageProposalSWUEdit.component.getMetadata,
+        childGetModal: PageProposalSWUEdit.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageProposalSWUView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalSWUView' as const, value}),
+        childStatePath: ['pages', 'proposalSWUView'],
+        childUpdate: PageProposalSWUView.component.update,
+        childGetMetadata: PageProposalSWUView.component.getMetadata,
+        childGetModal: PageProposalSWUView.component.getModal,
+        childMsg: msg.value
+      });
+
+
+    case 'pageOpportunitySWUEdit':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunitySWUEdit' as const, value}),
+        childStatePath: ['pages', 'opportunitySWUEdit'],
+        childUpdate: PageOpportunitySWUEdit.component.update,
+        childGetMetadata: PageOpportunitySWUEdit.component.getMetadata,
+        childGetModal: PageOpportunitySWUEdit.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageOpportunitySWUCreate':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunitySWUCreate' as const, value}),
+        childStatePath: ['pages', 'opportunitySWUCreate'],
+        childUpdate: PageOpportunitySWUCreate.component.update,
+        childGetMetadata: PageOpportunitySWUCreate.component.getMetadata,
+        childGetModal: PageOpportunitySWUCreate.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageOpportunitySWUView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunitySWUView' as const, value}),
+        childStatePath: ['pages', 'opportunitySWUView'],
+        childUpdate: PageOpportunitySWUView.component.update,
+        childGetMetadata: PageOpportunitySWUView.component.getMetadata,
+        childGetModal: PageOpportunitySWUView.component.getModal,
+        childMsg: msg.value
+      });
+
     case 'pageOpportunityCWUCreate':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
@@ -452,6 +604,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageOpportunityCWUView.component.getModal,
         childMsg: msg.value
       });
+
     case 'pageProposalCWUCreate':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
@@ -482,6 +635,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageProposalCWUView.component.getModal,
         childMsg: msg.value
       });
+
     case 'pageProposalCWUExportOne':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
@@ -502,6 +656,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageProposalCWUExportAll.component.getModal,
         childMsg: msg.value
       });
+
     case 'pageProposalList':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
