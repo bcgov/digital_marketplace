@@ -8,12 +8,12 @@ export async function up(connection: Knex): Promise<void> {
   await connection.schema.alterTable('cwuOpportunityStatuses', table => {
     table.uuid('createdBy').nullable().alter();
   });
-  logger.info('Completed modifying users table.');
+  logger.info('Completed modifying cwuOpportunityStatuses table.');
 }
 
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.alterTable('cwuOpportunityStatuses', table => {
     table.uuid('createdBy').notNullable().alter();
   });
-  logger.info('Completed reverting users table.');
+  logger.info('Completed reverting cwuOpportunityStatuses table.');
 }
