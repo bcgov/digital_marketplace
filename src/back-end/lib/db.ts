@@ -10,7 +10,7 @@ import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from '
 import { FileBlob, FilePermissions, FileRecord } from 'shared/lib/resources/file';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { CWUOpportunitySubscriber } from 'shared/lib/resources/subscribers/code-with-us';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -691,16 +691,15 @@ export async function hasAttachmentPermission(connection: Connection, session: S
 
   // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
   if (session.user) {
-    const proposals = await connection('cwuProposalAttachments as attachments')
+    const rawProposals = await connection('cwuProposalAttachments as attachments')
       .innerJoin('cwuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
       .where({ 'attachments.file': id })
       .select<RawCWUProposal[]>('proposals.*');
 
-    if (proposals.length > 0) {
-      for (const proposal of proposals) {
-        if (await hasReadPermissionCWUProposal(connection, session, proposal.opportunity, proposal.id)) {
-          return true;
-        }
+    for (const rawProposal of rawProposals) {
+      const proposal = await rawCWUProposalToCWUProposal(connection, session, rawProposal);
+      if (await hasReadPermissionCWUProposal(connection, session, proposal)) {
+        return true;
       }
     }
   }
@@ -1288,7 +1287,7 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
     query.select('score');
   }
 
-  const results = await query;
+  let results = await query;
 
   if (!results) {
     throw new Error('unable to read proposals');
@@ -1306,6 +1305,11 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
       throw new Error('unable to read proposal status');
     }
     proposal.status = statusResult.status;
+  }
+
+  // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
+  if (session.user && session.user.type !== UserType.Vendor) {
+    results = results.filter(result => isCWUProposalStatusVisibleToGovernment(result.status));
   }
 
   // Read ranks for rankable proposals and apply to existing result set

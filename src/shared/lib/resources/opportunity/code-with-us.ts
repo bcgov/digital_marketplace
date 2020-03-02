@@ -205,3 +205,13 @@ export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CW
 export function isCWUOpportunityAcceptingProposals(o: CWUOpportunity): boolean {
   return o.status === CWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
 }
+
+export function doesCWUOpportunityStatusAllowGovToViewProposals(s: CWUOpportunityStatus): boolean {
+  switch (s) {
+    case CWUOpportunityStatus.Draft:
+    case CWUOpportunityStatus.Published:
+      return false;
+    default:
+      return true;
+  }
+}
