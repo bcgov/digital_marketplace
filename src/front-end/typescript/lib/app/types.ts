@@ -22,6 +22,8 @@ import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
+import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -66,7 +68,9 @@ export type Route
   | ADT<'proposalCWUEdit',       PageProposalCWUEdit.RouteParams>
   | ADT<'proposalCWUView',       PageProposalCWUView.RouteParams>
 
-  | ADT<'proposalList',          PageProposalList.RouteParams>
+  | ADT<'proposalCWUExportOne', PageProposalCWUExportOne.RouteParams>
+  | ADT<'proposalCWUExportAll', PageProposalCWUExportAll.RouteParams>
+  | ADT<'proposalList',         PageProposalList.RouteParams>
   ;
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
@@ -125,7 +129,12 @@ export interface State {
     proposalCWUCreate?: Immutable<PageProposalCWUCreate.State>;
     proposalCWUEdit?: Immutable<PageProposalCWUEdit.State>;
     proposalCWUView?: Immutable<PageProposalCWUView.State>;
+<<<<<<< HEAD
 
+=======
+    proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
+    proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
+>>>>>>> development
     proposalList?: Immutable<PageProposalList.State>;
   };
 }
@@ -164,7 +173,12 @@ type InnerMsg
   | ADT<'pageProposalCWUCreate',    PageProposalCWUCreate.Msg>
   | ADT<'pageProposalCWUEdit',      PageProposalCWUEdit.Msg>
   | ADT<'pageProposalCWUView',      PageProposalCWUView.Msg>
+<<<<<<< HEAD
 
+=======
+  | ADT<'pageProposalCWUExportOne', PageProposalCWUExportOne.Msg>
+  | ADT<'pageProposalCWUExportAll', PageProposalCWUExportAll.Msg>
+>>>>>>> development
   | ADT<'pageProposalList',         PageProposalList.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;

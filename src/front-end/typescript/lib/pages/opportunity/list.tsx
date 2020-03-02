@@ -1,21 +1,33 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
-import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import * as api from 'front-end/lib/http/api';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { CWUOpportunitySlim, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
+import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  opportunities: CWUOpportunitySlim[];
+  viewerUser?: User;
 }
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  return { empty: true };
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
+  let opportunities: CWUOpportunitySlim[] = [];
+  const apiResult = await api.opportunities.cwu.readMany();
+  if (apiResult.tag === 'valid') {
+    opportunities = apiResult.value;
+  }
+  return {
+    opportunities,
+    viewerUser: shared.session?.user
+  };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -26,7 +38,20 @@ const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        Opportunities page coming soon.
+        {
+          state.opportunities.map(o => {
+            const route: Route = state.viewerUser && isAdmin(state.viewerUser)
+              ? adt('opportunityCWUEdit', { opportunityId: o.id })
+              : adt('opportunityCWUView', { opportunityId: o.id });
+            return (
+              <div>
+                <Link dest={routeDest(route)}>
+                  {o.status}: {o.title || DEFAULT_OPPORTUNITY_TITLE}
+                </Link>
+              </div>
+            );
+          })
+        }
       </Col>
     </Row>
   );

@@ -26,19 +26,22 @@ export const ReportCard: View<ReportCard> = ({ icon, iconColor = 'info', name, v
 };
 
 export interface ReportCardList {
-  reportCards: ReportCard[];
+  reportCards: Array<ReportCard | null>;
   className?: string;
 }
 
 export const ReportCardList: View<ReportCardList> = ({ reportCards, className = '' }) => {
   return (
     <div className='d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap mb-n4'>
-      {reportCards.map((card, i) => (
-        <ReportCard
-          key={`report-card-${i}`}
-          className={`${i < reportCards.length - 1 ? 'mr-sm-4' : ''} mb-4`}
-          {...card} />
-      ))}
+      {reportCards.map((card, i) => {
+        if (!card) { return null; }
+        return (
+          <ReportCard
+            key={`report-card-${i}`}
+            className={`${i < reportCards.length - 1 ? 'mr-sm-4' : ''} mb-4`}
+            {...card} />
+          );
+      })}
     </div>
   );
 };

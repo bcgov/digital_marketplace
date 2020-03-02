@@ -1,4 +1,4 @@
-import { ComponentView, emptyPageAlerts, Immutable, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, Immutable, PageGetAlerts, PageGetBreadcrumbs, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
@@ -78,6 +78,10 @@ export function getMetadataValid<ValidState>(getMetadata: PageGetMetadata<ValidS
   return withValid(getMetadata, defaultMetadata);
 }
 
+export function getBreadcrumbsValid<ValidState, Msg>(getBreadcrumbs: PageGetBreadcrumbs<ValidState, Msg>): PageGetBreadcrumbs<ValidatedState<ValidState>, Msg> {
+  return withValid(getBreadcrumbs, emptyPageBreadcrumbs());
+}
+
 export function getAlertsValid<ValidState, Msg>(getAlerts: PageGetAlerts<ValidState, Msg>): PageGetAlerts<ValidatedState<ValidState>, Msg> {
   return withValid(getAlerts, emptyPageAlerts());
 }
@@ -96,9 +100,11 @@ export function getContextualActionsValid<ValidState, Msg>(getContextualActions:
   };
 }
 
+export const TITLE_SEPARATOR = '—';
+
 export function makePageMetadata(title: string): PageMetadata {
   return {
-    title: `${title} — Digital Marketplace`
+    title: `${title} ${TITLE_SEPARATOR} Digital Marketplace`
   };
 }
 

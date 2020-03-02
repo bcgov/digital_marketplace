@@ -122,7 +122,7 @@ export interface TDSpec {
   className?: string;
   tooltipText?: string;
   colSpan?: number;
-  showOnHover?: true;
+  showOnHover?: boolean;
 }
 
 export interface TDProps extends TDSpec {
@@ -230,7 +230,7 @@ export const view: View<ViewProps> = props => {
     borderless
   };
   return (
-    <Table className={className} style={style} responsive>
+    <Table className={className} style={style} responsive hover>
       <THead {...headProps} />
       <TBody {...bodyProps} />
     </Table>

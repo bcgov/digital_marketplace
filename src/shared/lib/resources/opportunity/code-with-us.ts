@@ -1,3 +1,4 @@
+import { isDateInTheFuture } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
@@ -17,6 +18,11 @@ export enum CWUOpportunityStatus {
   Canceled = 'CANCELED'
 }
 
+export enum CWUOpportunityEvent {
+  Edited = 'EDITED',
+  AddendumAdded = 'ADDENDUM_ADDED'
+}
+
 export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
   switch (raw) {
     case CWUOpportunityStatus.Draft: return CWUOpportunityStatus.Draft;
@@ -29,11 +35,11 @@ export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | n
   }
 }
 
-export interface CWUOpportunityStatusRecord {
+export interface CWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
   createdBy: UserSlim | null;
-  status: CWUOpportunityStatus;
+  type: ADT<'status', CWUOpportunityStatus> | ADT<'event', CWUOpportunityEvent>;
   note: string;
 }
 
@@ -46,6 +52,7 @@ export interface CWUOpportunity {
   updatedBy?: UserSlim;
 
   // TODO
+  // @successful-proponent
   successfulProponent?: true;
 
   title: string;
@@ -66,7 +73,7 @@ export interface CWUOpportunity {
   status: CWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
-  statusHistory?: CWUOpportunityStatusRecord[];
+  history?: CWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
 
@@ -83,6 +90,7 @@ export function isCWUOpportunityPublic(o: CWUOpportunity): boolean {
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Canceled:
       return true;
     default:
       return false;
@@ -99,6 +107,11 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
     default:
       return false;
   }
+}
+
+export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
+  // Return true if the opportunity has ever had the `Evaluation` status.
+  return !!o.history && o.history.reduce((acc, record) => acc || record.type.tag === 'status' && record.type.value === CWUOpportunityStatus.Evaluation, false as boolean);
 }
 
 export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
@@ -175,6 +188,20 @@ export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportuni
   }
 }
 
+export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
 
 export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
+
+export function isCWUOpportunityAcceptingProposals(o: CWUOpportunity): boolean {
+  return o.status === CWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+}

@@ -10,6 +10,7 @@ export type Color
   | 'white'
   | 'purple'
   | 'yellow'
+  | 'orange'
   | 'red'
   | 'green';
 

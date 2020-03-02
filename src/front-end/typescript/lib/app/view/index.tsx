@@ -30,6 +30,8 @@ import * as PageOrgList from 'front-end/lib/pages/organization/list';
 
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
+import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
+import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
@@ -203,6 +205,21 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         value => ({tag: 'pageProposalCWUView', value})
       );
 
+    case 'proposalCWUExportOne':
+      return makeViewPageProps(
+        props,
+        PageProposalCWUExportOne.component,
+        state => state.pages.proposalCWUExportOne,
+        value => ({tag: 'pageProposalCWUExportOne', value})
+      );
+    case 'proposalCWUExportAll':
+      return makeViewPageProps(
+        props,
+        PageProposalCWUExportAll.component,
+        state => state.pages.proposalCWUExportAll,
+        value => ({tag: 'pageProposalCWUExportAll', value})
+      );
+
     case 'proposalList':
       return makeViewPageProps(
         props,
@@ -280,14 +297,16 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   return (
     <Modal isOpen={open} toggle={closeModal}>
       <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{content.title}</ModalHeader>
-      <ModalBody>{content.body}</ModalBody>
+      <ModalBody>{content.body(dispatch)}</ModalBody>
       <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
         <div className='p-3 d-flex flex-md-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
-          {content.actions.map(({ icon, button, text, color, msg }, i) => {
+          {content.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
             const props = {
               key: `modal-action-${i}`,
               symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
               color,
+              loading,
+              disabled,
               onClick: () => dispatch(msg),
               className: i === 0 ? 'mx-0' : 'ml-3 mr-0 ml-md-0 mr-md-3'
             };
@@ -343,14 +362,18 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
   const userAvatar = sessionUser.avatarImageFile ? fileBlobPath(sessionUser.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH;
   return {
     mobile: Nav.authenticatedMobileAccountMenu([
-      Nav.linkAccountAction({
-        children: userIdentifier,
-        dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
-        symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
-        active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
-      }),
-      Nav.linkAccountAction(signOutLink),
-      Nav.linkAccountAction(procurementConciergeLink)
+      [
+        Nav.linkAccountAction({
+          children: userIdentifier,
+          dest: routeDest(adt('userProfile', { userId: sessionUser.id })),
+          symbol_: leftPlacement(imageLinkSymbol(userAvatar)),
+          active: !!sessionUser && state.activeRoute.tag === 'userProfile' && state.activeRoute.value.userId === sessionUser.id
+        }),
+        Nav.linkAccountAction(signOutLink)
+      ],
+      [
+        Nav.linkAccountAction(procurementConciergeLink)
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -497,7 +520,7 @@ const view: ComponentView<State, Msg> = props => {
       ? simpleNavProps(props)
       : regularNavProps(props);
     return (
-      <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
+      <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} ${navProps.contextualActions ? 'contextual-actions-visible' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}

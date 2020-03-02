@@ -32,7 +32,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RouteParams, State, Msg>({
   userType: [UserType.Government, UserType.Admin],
   async success() {
     return valid(immutable({
@@ -181,7 +181,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     if (state.showPublishModal) {
       return {
         title: 'Publish Code With Us Opportunity?',
-        body: 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
+        body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
         onCloseMsg: adt('hidePublishModal'),
         actions: [
           {

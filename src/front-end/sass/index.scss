@@ -55,6 +55,7 @@ $purple:          #52489C;
 $yellow:          #FCBA19;
 $red:             #DC3545;
 $green:           #2E8540;
+$orange:          #FD7E14;
 
 $colors:             (
   'white':           $white,
@@ -83,6 +84,7 @@ $component-active-bg:               $blue;
 $link-color:                        $blue;
 $dropdown-link-hover-bg:            $gray-100;
 $dropdown-link-active-bg:           $gray-200;
+$table-hover-bg: $blue-light-alt;
 
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
@@ -90,7 +92,7 @@ $dropdown-link-active-bg:           $gray-200;
 $primary:   $blue;
 $secondary: $gray-600;
 $info:      $blue-dark;
-$warning:   $yellow;
+$warning:   $orange;
 $danger:    $red;
 $success:   $green;
 $body:      $body-color;
@@ -163,6 +165,10 @@ $transition-duration: 240ms;
 
 html {
   background: $info;
+
+  @media print {
+    background: none;
+  }
 }
 
 body {
@@ -331,12 +337,15 @@ a,
 
   &.disabled {
     opacity: $btn-disabled-opacity;
-    cursor: default;
   }
 
   &.nav-link:focus {
     outline: none;
   }
+}
+
+.disabled {
+  cursor: not-allowed !important;
 }
 
 .blockquote {
@@ -478,11 +487,11 @@ nav.navbar .nav-link:hover {
 }
 
 .border-bottom-gov {
-  border-bottom: 2px solid $warning;
+  border-bottom: 2px solid $yellow;
 }
 
 .border-top-gov {
-  border-top: 2px solid $warning;
+  border-top: 2px solid $yellow;
 }
 
 @each $breakpoint in map-keys($grid-breakpoints) {
@@ -492,12 +501,8 @@ nav.navbar .nav-link:hover {
 
     .sticky#{$infix} {
       position: sticky;
-      top: 6rem;
-      // Use padding and margin instead of top for vertical offset
-      // to preserve background color.
-      //padding-top: 6rem;
-      //margin-top: -6rem;
       z-index: 2;
+      top: 6rem;
 
       &::after {
         content: " ";
@@ -508,6 +513,16 @@ nav.navbar .nav-link:hover {
         height: 100%;
         background-color: inherit;
         background: inherit;
+      }
+    }
+  }
+
+  @if ($breakpoint == 'xs') or ($breakpoint == 'sm') {
+
+    @include media-breakpoint-down(sm) {
+
+      .app:not(.contextual-actions-visible) .sticky#{$infix} {
+        top: 1rem;
       }
     }
   }
@@ -634,6 +649,10 @@ nav.navbar .nav-link:hover {
   pre {
     margin-top: 2*$spacer;
     margin-bottom: 2*$spacer;
+  }
+
+  & > *:last-child {
+    @extend .mb-0;
   }
 
 }

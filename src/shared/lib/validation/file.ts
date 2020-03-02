@@ -36,7 +36,7 @@ export function validateFilePermissions(raw: any): ArrayValidation<FilePermissio
 export function validateFilePermission(raw: any): Validation<FilePermissions<Id, UserType>> {
   switch (get(raw, 'tag')) {
     case 'any':
-      return valid(adt('any'));
+      return valid<FilePermissions<Id, UserType>>(adt('any'));
     case 'user':
       if (isString(raw.value)) {
         return mapValid(validateUUID(raw.value), v => adt('user', v));
@@ -44,7 +44,7 @@ export function validateFilePermission(raw: any): Validation<FilePermissions<Id,
     case 'userType':
       const userType = parseUserType(raw.value);
       if (userType) {
-        return valid(adt('userType', userType));
+        return valid<FilePermissions<Id, UserType>>(adt('userType', userType));
       } else {
         return invalid(['Not a valid user type.']);
       }

@@ -3,6 +3,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
 import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
+import url from 'url';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config');
 
@@ -58,7 +59,19 @@ export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
 export const FRONT_END_BUILD_DIR = resolve(REPOSITORY_ROOT_DIR, 'build/front-end');
 
-export const MAILER_CONFIG = {
+const productionMailerConfigOptions = {
+  host: get('MAILER_HOST', ''),
+  port: parseInt(get('MAILER_PORT', '25'), 10),
+  secure: false,
+  connectionTimeout: 5000,
+  greetingTimeout: 5000,
+  ignoreTLS: false,
+  tls: {
+    rejectUnauthorized: false
+  }
+};
+
+const developmentMailerConfigOptions = {
   service: 'gmail',
   auth: {
     user: get('MAILER_GMAIL_USER', ''),
@@ -68,6 +81,8 @@ export const MAILER_CONFIG = {
     rejectUnauthorized: false
   }
 };
+
+export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
 
 export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
 
@@ -166,6 +181,29 @@ export function getConfigErrors(): string[] {
   } catch (error) {
     logger.error('error caught trying to create TMP_DIR', errorToJson(error));
     errors.push('TMP_DIR does not exist and this process was unable to create it.');
+  }
+
+  if (ENV === 'production' && (!productionMailerConfigOptions.host || !isPositiveInteger(productionMailerConfigOptions.port))) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for production.',
+      'MAILER_HOST and MAILER_PORT (positive integer) must all be specified.'
+    ]);
+  }
+
+  if (ENV === 'development' && (!developmentMailerConfigOptions.auth.user || !developmentMailerConfigOptions.auth.pass)) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for development.',
+      'MAILER_GMAIL_USER and MAILER_GMAIL_PASS must both be specified.'
+    ]);
+  }
+
+  if (!MAILER_FROM || !MAILER_FROM.match(/^[^<>@]+<[^@]+@[^@]+\.[^@]+>$/)) {
+    errors.push('MAILER_FROM must be specified using the format: "Name <email@domain.tld>".');
+  }
+
+  const mailerRootUrl = url.parse(MAILER_ROOT_URL);
+  if (!MAILER_ROOT_URL || !mailerRootUrl.protocol || !mailerRootUrl.host) {
+    errors.push('MAILER_ROOT_URL must be specified as a valid URL with a protocol and host.');
   }
 
   return errors;

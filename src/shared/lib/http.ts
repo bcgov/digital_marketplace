@@ -35,14 +35,14 @@ export function getInvalidValue<T>(v: ResponseValidation<unknown, T>, fallback: 
 
 export function mapValid<A, B, C>(value: ResponseValidation<A, B>, fn: (b: A) => C): ResponseValidation<C, B> {
   switch (value.tag) {
-    case 'valid': return valid(fn(value.value));
+    case 'valid': return valid<C>(fn(value.value));
     default: return value;
   }
 }
 
 export function mapInvalid<A, B, C>(value: ResponseValidation<A, B>, fn: (b: B) => C): ResponseValidation<A, C> {
   switch (value.tag) {
-    case 'invalid': return invalid(fn(value.value));
+    case 'invalid': return invalid<C>(fn(value.value));
     default: return value;
   }
 }

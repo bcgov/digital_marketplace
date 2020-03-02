@@ -1,5 +1,6 @@
 import { uniq } from 'lodash';
-import { CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { dateToMidnight } from 'shared/lib';
+import { CreateCWUOpportunityStatus, CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { ArrayValidation, invalid, mapValid, optional, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 
@@ -12,6 +13,10 @@ export function validateCWUOpportunityStatus(raw: string, isOneOf: CWUOpportunit
     return invalid([`"${raw}" is not one of: ${isOneOf.join(', ')}`]);
   }
   return valid(parsed);
+}
+
+export function validateCreateCWUOpportunityStatus(raw: string): Validation<CreateCWUOpportunityStatus> {
+  return validateCWUOpportunityStatus(raw, [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published]) as Validation<CreateCWUOpportunityStatus>;
 }
 
 export function validateTitle(raw: string): Validation<string> {
@@ -48,8 +53,8 @@ export function validateDescription(raw: string): Validation<string> {
   return validateGenericString(raw, 'Description', 1, 10000);
 }
 
-export function validateProposalDeadline(raw: string): Validation<Date> {
-  return validateDate(raw, new Date());
+export function validateProposalDeadline(raw: string, minDate: Date = new Date()): Validation<Date> {
+  return validateDate(raw, dateToMidnight(minDate));
 }
 
 export function validateAssignmentDate(raw: string, proposalDeadline: Date): Validation<Date> {

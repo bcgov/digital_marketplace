@@ -89,7 +89,7 @@ interface BaseProps {
 
 export interface AnchorProps extends BaseProps {
   button?: false | undefined;
-  color?: TextColor;
+  color?: TextColor | 'inherit';
   nav?: boolean;
   download?: boolean;
 }
@@ -140,8 +140,8 @@ function AnchorLink(props: AnchorProps) {
   let finalClassName = 'a d-inline-flex align-items-center flex-nowrap';
   finalClassName += nav ? ' nav-link' : '';
   finalClassName += disabled ? ' disabled' : '';
-  finalClassName += color ? ` text-${color}` : '';
-  finalClassName += color && !disabled ? ` text-hover-${color}` : '';
+  finalClassName += color && color !== 'inherit' ? ` text-${color}` : '';
+  finalClassName += color && color !== 'inherit' && !disabled ? ` text-hover-${color}` : '';
   finalClassName += ` ${className}`;
   const finalOnClick = !disabled && onClick
     ? ((e: MouseEvent<HTMLElement>): false | void => {
@@ -153,7 +153,18 @@ function AnchorLink(props: AnchorProps) {
     href,
     tabIndex: !disabled && focusable ? 0 : -1,
     onClick: finalOnClick,
-    style,
+    style: {
+      ...style,
+      color: (() => {
+        if (color === 'inherit') {
+          return 'inherit';
+        } else if (style && style.color) {
+          return style.color;
+        } else {
+          return undefined;
+        }
+      })()
+    },
     className: finalClassName,
     target: newTab ? '_blank' : undefined,
     download,
