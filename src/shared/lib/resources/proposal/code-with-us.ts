@@ -237,3 +237,13 @@ export function isRankableCWUProposalStatus(s: CWUProposalStatus): boolean {
       return false;
   }
 }
+
+export function isCWUProposalStatusVisibleToGovernment(s: CWUProposalStatus): boolean {
+  switch (s) {
+    case CWUProposalStatus.Draft:
+    case CWUProposalStatus.Submitted:
+      return false;
+    default:
+      return true;
+  }
+}
