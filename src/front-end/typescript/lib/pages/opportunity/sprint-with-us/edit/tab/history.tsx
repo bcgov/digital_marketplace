@@ -2,11 +2,10 @@ import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import { cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { opportunityToHistoryItems } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -17,20 +16,6 @@ export type InnerMsg
   = ADT<'history', History.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
-
-function opportunityToHistoryItems({ statusHistory }: CWUOpportunity): History.Item[] {
-  if (!statusHistory) { return []; }
-  return statusHistory
-    .map(s => ({
-      type: {
-        text: cwuOpportunityStatusToTitleCase(s.status),
-        color: cwuOpportunityStatusToColor(s.status)
-      },
-      note: s.note,
-      createdAt: s.createdAt,
-      createdBy: s.createdBy || undefined
-    }));
-}
 
 const init: Init<Tab.Params, State> = async params => {
   return {

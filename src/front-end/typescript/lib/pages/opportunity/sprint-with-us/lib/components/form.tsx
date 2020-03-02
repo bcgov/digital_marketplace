@@ -185,7 +185,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.description || '',
         id: 'cwu-opportunity-description',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -246,7 +246,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.acceptanceCriteria || '',
         id: 'cwu-opportunity-acceptance-criteria',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -256,7 +256,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       child: {
         value: opportunity?.evaluationCriteria || '',
         id: 'cwu-opportunity-evaluation-criteria',
-        uploadImage: api.uploadMarkdownImage
+        uploadImage: api.makeUploadMarkdownImage()
       }
     })),
 
@@ -687,7 +687,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
 
       <Col md='8' xs='12'>
         <NumberField.view
-          extraChildProps={{ currency: '$' }}
+          extraChildProps={{ prefix: '$' }}
           label='Fixed-Price Reward'
           placeholder='Fixed-Price Reward'
           required
