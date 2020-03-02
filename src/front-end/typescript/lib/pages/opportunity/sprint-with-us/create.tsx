@@ -32,7 +32,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RouteParams, State, Msg>({
   userType: [UserType.Government, UserType.Admin],
   async success() {
     return valid(immutable({

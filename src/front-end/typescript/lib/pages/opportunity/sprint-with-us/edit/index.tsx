@@ -53,7 +53,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
         opportunity,
         tab: [tabId, tabState],
         sidebar: await Tab.makeSidebarState(opportunity.id, tabId)
-      }));
+      })) as State_<K>;
     },
 
     async fail({ dispatch }) {
