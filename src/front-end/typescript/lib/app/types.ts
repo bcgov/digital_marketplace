@@ -129,12 +129,9 @@ export interface State {
     proposalCWUCreate?: Immutable<PageProposalCWUCreate.State>;
     proposalCWUEdit?: Immutable<PageProposalCWUEdit.State>;
     proposalCWUView?: Immutable<PageProposalCWUView.State>;
-<<<<<<< HEAD
 
-=======
     proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
     proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
->>>>>>> development
     proposalList?: Immutable<PageProposalList.State>;
   };
 }
@@ -173,12 +170,9 @@ type InnerMsg
   | ADT<'pageProposalCWUCreate',    PageProposalCWUCreate.Msg>
   | ADT<'pageProposalCWUEdit',      PageProposalCWUEdit.Msg>
   | ADT<'pageProposalCWUView',      PageProposalCWUView.Msg>
-<<<<<<< HEAD
 
-=======
   | ADT<'pageProposalCWUExportOne', PageProposalCWUExportOne.Msg>
   | ADT<'pageProposalCWUExportAll', PageProposalCWUExportAll.Msg>
->>>>>>> development
   | ADT<'pageProposalList',         PageProposalList.Msg>;
 
 export type Msg = AppMsg<InnerMsg, Route>;

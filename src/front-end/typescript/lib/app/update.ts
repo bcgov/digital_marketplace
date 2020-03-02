@@ -635,9 +635,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageProposalCWUView.component.getModal,
         childMsg: msg.value
       });
-<<<<<<< HEAD
 
-=======
     case 'pageProposalCWUExportOne':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
@@ -658,7 +656,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageProposalCWUExportAll.component.getModal,
         childMsg: msg.value
       });
->>>>>>> development
+
     case 'pageProposalList':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
