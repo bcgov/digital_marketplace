@@ -1,5 +1,3 @@
-import * as History from 'front-end/lib/components/table/history';
-import { cwuOpportunityEventToTitleCase, cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import { isDateInTheFuture } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -35,20 +33,6 @@ export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | n
     case CWUOpportunityStatus.Canceled: return CWUOpportunityStatus.Canceled;
     default: return null;
   }
-}
-
-export function opportunityToHistoryItems({ history }: CWUOpportunity): History.Item[] {
-  if (!history) { return []; }
-  return history
-    .map(s => ({
-      type: {
-        text: s.type.tag === 'status' ? cwuOpportunityStatusToTitleCase(s.type.value) : cwuOpportunityEventToTitleCase(s.type.value),
-        color: s.type.tag === 'status' ? cwuOpportunityStatusToColor(s.type.value) : undefined
-      },
-      note: s.note,
-      createdAt: s.createdAt,
-      createdBy: s.createdBy || undefined
-    }));
 }
 
 export interface CWUOpportunityHistoryRecord {

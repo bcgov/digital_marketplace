@@ -1,5 +1,6 @@
+import * as History from 'front-end/lib/components/table/history';
 import { ThemeColor } from 'front-end/lib/types';
-import { CWUOpportunityEvent, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, CWUOpportunityEvent, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 
 export function cwuOpportunityStatusToColor(s: CWUOpportunityStatus): ThemeColor {
   switch (s) {
@@ -28,4 +29,18 @@ export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
     case CWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
     case CWUOpportunityEvent.Edited: return 'Edited';
   }
+}
+
+export function opportunityToHistoryItems({ history }: CWUOpportunity): History.Item[] {
+  if (!history) { return []; }
+  return history
+    .map(s => ({
+      type: {
+        text: s.type.tag === 'status' ? cwuOpportunityStatusToTitleCase(s.type.value) : cwuOpportunityEventToTitleCase(s.type.value),
+        color: s.type.tag === 'status' ? cwuOpportunityStatusToColor(s.type.value) : undefined
+      },
+      note: s.note,
+      createdAt: s.createdAt,
+      createdBy: s.createdBy || undefined
+    }));
 }
