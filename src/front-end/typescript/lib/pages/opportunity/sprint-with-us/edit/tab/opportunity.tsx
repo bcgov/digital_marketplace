@@ -98,7 +98,7 @@ const startDeleteLoading = makeStartLoading<State>('deleteLoading');
 const stopDeleteLoading = makeStopLoading<State>('deleteLoading');
 
 async function saveChanges(state: Immutable<State>, onValid?: AsyncWithState<State, [CWUOpportunity]>, onInvalid?: AsyncWithState<State>): Promise<Immutable<State>> {
-  const result = await Form.persist(state.form, adt('update', state.opportunity.id));
+  const result = await Form.persist(state.form, adt('update'));
   switch (result.tag) {
     case 'valid':
       state = state

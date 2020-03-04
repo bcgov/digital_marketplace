@@ -2,6 +2,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import { Immutable } from 'front-end/lib/framework';
 import { padStart } from 'lodash';
 import React from 'react';
+import { parseDate } from 'shared/lib';
 import { ADT } from 'shared/lib/types';
 import { mapValid, Validation } from 'shared/lib/validation';
 
@@ -25,6 +26,12 @@ function prefixZero(n: number): string {
 
 export function valueToString(value?: Value): string {
   return value ? `${value[0]}-${prefixZero(value[1])}-${prefixZero(value[2])}` : '';
+}
+
+export function getDate(state: Immutable<State>): Date | undefined {
+  const s = valueToString(FormField.getValue(state));
+  if (!s) { return undefined; }
+  return parseDate(s) || undefined;
 }
 
 export function dateToValue(date: Date): Value {
