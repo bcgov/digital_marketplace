@@ -9,10 +9,6 @@ export function validateCounterName(raw: string): Validation<string, string[]> {
   }
 }
 
-export function validateCounterNames(raw: Record<string, string>): Validation<string[], string[][]> {
-  if (!('counters' in raw)) {
-    return valid([]); // No query string should return all, so valid
-  }
-  const names = raw.counters?.split(',');
-  return validateArray(names, validateCounterName);
+export function validateCounterNames(raw: string[]): Validation<string[], string[][]> {
+  return validateArray(raw, validateCounterName);
 }

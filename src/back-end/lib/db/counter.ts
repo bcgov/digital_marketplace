@@ -1,14 +1,10 @@
 import { tryDb } from 'back-end/lib/db';
 import { valid } from 'shared/lib/http';
-
-interface ViewCounter {
-  name: string;
-  count: number;
-}
+import { Counter } from 'shared/lib/resources/counter';
 
 export const incrementCounters = tryDb<[string[]], Record<string, number>>(async (connection, names) => {
   // Update existing counters
-  const existingCounters = await connection<ViewCounter>('viewCounters')
+  const existingCounters = await connection<Counter>('viewCounters')
     .whereIn('name', names)
     .increment('count')
     .update({}, 'name');
@@ -16,7 +12,7 @@ export const incrementCounters = tryDb<[string[]], Record<string, number>>(async
   // Create new counters where applicable
   for (const name of names) {
     if (!existingCounters.includes(name)) {
-      await connection<ViewCounter>('viewCounters')
+      await connection<Counter>('viewCounters')
         .insert({
           name,
           count: 1
@@ -29,7 +25,7 @@ export const incrementCounters = tryDb<[string[]], Record<string, number>>(async
 
 export const decrementCounters = tryDb<[string[]], Record<string, number>>(async (connection, names) => {
   // Update existing counters
-  const existingCounters = await connection<ViewCounter>('viewCounters')
+  const existingCounters = await connection<Counter>('viewCounters')
     .whereIn('name', names)
     .decrement('count')
     .update({}, 'name');
@@ -37,7 +33,7 @@ export const decrementCounters = tryDb<[string[]], Record<string, number>>(async
   // Create new counters where applicable
   for (const name of names) {
     if (!existingCounters.includes(name)) {
-      await connection<ViewCounter>('viewCounters')
+      await connection<Counter>('viewCounters')
         .insert({
           name,
           count: 0
@@ -49,7 +45,7 @@ export const decrementCounters = tryDb<[string[]], Record<string, number>>(async
 });
 
 export const getCounters = tryDb<[string[]], Record<string, number>>(async (connection, names) => {
-  let query = connection<ViewCounter>('viewCounters')
+  let query = connection<Counter>('viewCounters')
     .select('*');
 
   if (names.length > 0) {

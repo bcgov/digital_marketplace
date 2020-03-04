@@ -33,8 +33,12 @@ const resource: Resource = {
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<Record<string, number> | string[]>, Session>(async request => {
       const respond = (code: number, body: Record<string, number> | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      if (!permissions.readManyCounters(request.session)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
 
-      const validatedCounterNames = validateCounterNames(request.query);
+      const names = request.query.counters?.split(',') || [];
+      const validatedCounterNames = validateCounterNames(names);
       if (isInvalid(validatedCounterNames)) {
         return respond(400, ['Invalid counter names provided']);
       }
