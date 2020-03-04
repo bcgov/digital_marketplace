@@ -1,36 +1,46 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import * as TeamQuestions from 'front-end/lib/components/team-questions';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+// import { Col, Row } from 'reactstrap';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  teamQs: Immutable<TeamQuestions.State>;
 }
 
-type InnerMsg
-  = ADT<'noop'>;
+type InnerMsg = ADT<'updateTeamQs', TeamQuestions.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  empty: true
+  teamQs: immutable(await TeamQuestions.init({}))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+  switch (msg.tag) {
+    case 'updateTeamQs':
+      return updateComponentChild({
+        state,
+        childStatePath: ['teamQs'],
+        childUpdate: TeamQuestions.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'updateTeamQs', value })
+      });
+    default:
+      return [state];
+  }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
-    <Row>
-      <Col xs='12'>
-        Landing page coming soon.
-      </Col>
-    </Row>
+    <TeamQuestions.view
+      state={state.teamQs}
+      dispatch={mapComponentDispatch(dispatch, msg => adt('updateTeamQs' as const, msg))}
+    />
   );
 };
 
