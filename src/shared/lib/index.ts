@@ -38,7 +38,16 @@ export function flipCurried<A, B, C>(fn: CurriedFunction<A, B, C>): CurriedFunct
   return (b: B) => (a: A) => fn(a)(b);
 }
 
-export function formatAmount(amount: number, currency?: string, baseTenSeparator = 3, separator = ','): string {
+export function getOrdinalSuffix(position: number): string {
+  switch (position % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default : return 'th';
+  }
+}
+
+export function formatAmount(amount: number, currency?: string, ordinal?: boolean, baseTenSeparator = 3, separator = ','): string {
   const separateBy = 10 ** baseTenSeparator;
   let remaining = amount;
   let formatted = '';
@@ -57,6 +66,9 @@ export function formatAmount(amount: number, currency?: string, baseTenSeparator
   }
   if (currency) {
     formatted = `${currency} ${formatted}`;
+  }
+  if (ordinal) {
+    formatted = `${formatted}${getOrdinalSuffix(amount)}`;
   }
   return formatted;
 }

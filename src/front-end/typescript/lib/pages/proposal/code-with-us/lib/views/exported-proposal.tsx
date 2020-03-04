@@ -41,14 +41,14 @@ export const ExportedPropsal: View<Props> = ({ proposal, showOpportunityInformat
       <Row className='mt-5'>
         <Col xs='12'>
           <h5 className='mb-4'>Proposal:</h5>
-          <div><Markdown source={proposal.proposalText} openLinksInNewTabs /></div>
+          <div><Markdown box source={proposal.proposalText} openLinksInNewTabs /></div>
         </Col>
       </Row>
       {proposal.additionalComments
         ? (<Row className='mt-5'>
             <Col xs='12'>
               <h5 className='mb-4'>Additional Comments:</h5>
-              <div><Markdown source={proposal.proposalText} openLinksInNewTabs /></div>
+              <div><Markdown box source={proposal.proposalText} openLinksInNewTabs /></div>
             </Col>
           </Row>)
         : null}

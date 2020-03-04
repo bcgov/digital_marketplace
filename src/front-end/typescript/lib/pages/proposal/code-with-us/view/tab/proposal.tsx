@@ -13,6 +13,7 @@ import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { formatAmount } from 'shared/lib';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
@@ -218,7 +219,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
       icon: 'trophy',
       iconColor: 'yellow',
       name: 'Ranking',
-      value: proposal.rank ? String(proposal.rank) : EMPTY_STRING
+      value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
     }
   ];
   return (

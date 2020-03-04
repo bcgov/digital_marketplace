@@ -40,16 +40,15 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   async success({ dispatch, routeParams }) {
     const { opportunityId } = routeParams;
     // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
-    // TODO uncomment this once the backend supports cwu propsals readMany for vendors
-    //const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
-    //if (api.isValid(proposalsResult) && proposalsResult.value.length) {
-      //const existingProposal = proposalsResult.value[0];
-      //dispatch(replaceRoute(adt('proposalCWUEdit' as const, {
-        //opportunityId,
-        //proposalId: existingProposal.id
-      //})));
-      //return invalid(null);
-    //}
+    const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
+    if (api.isValid(proposalsResult) && proposalsResult.value.length) {
+      const existingProposal = proposalsResult.value[0];
+      dispatch(replaceRoute(adt('proposalCWUEdit' as const, {
+        opportunityId,
+        proposalId: existingProposal.id
+      })));
+      return invalid(null);
+    }
     // Fetch opportunity and affiliated organizations.
     const opportunityResult = await api.opportunities.cwu.readOne(opportunityId);
     const affiliationsResult = await api.affiliations.readMany();

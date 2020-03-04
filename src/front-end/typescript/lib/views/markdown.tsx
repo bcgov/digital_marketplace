@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 
 interface Props {
   source: string;
+  box?: boolean;
   className?: string;
   escapeHtml?: boolean;
   openLinksInNewTabs?: boolean;
@@ -20,9 +21,9 @@ function linkTarget(url: string): string {
   }
 }
 
-const Markdown: View<Props> = ({ source, className = '', escapeHtml = true, openLinksInNewTabs = false }) => {
+const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true, openLinksInNewTabs = false }) => {
   return (
-    <div className={`markdown ${className}`}>
+    <div className={`markdown ${box ? 'p-4 bg-light border rounded' : ''} ${className}`}>
       <ReactMarkdown
         source={source}
         escapeHtml={escapeHtml}

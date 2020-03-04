@@ -239,7 +239,7 @@ nav {
   &.main-nav {
     z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
     position: sticky;
-    top: -1 * $main-nav-top-height;
+    top: -1 * $main-nav-top-height - 1px;
 
     .main-nav-top-navbar-wrapper {
       position: relative;
@@ -416,6 +416,10 @@ nav.navbar .nav-link:hover {
   display: inline-flex;
   padding: 0.35em 0.7em;
   letter-spacing: 0.5px;
+
+  &-warning {
+    color: $white !important;
+  }
 }
 
 .custom-radio,
