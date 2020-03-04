@@ -15,9 +15,8 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Nav, NavItem, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
-import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
-import { adt, ADT, Id } from 'shared/lib/types';
+import { Addendum, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
 
@@ -29,6 +28,7 @@ export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Ad
 
 export interface State {
   activeTab: TabId;
+  opportunity?: CWUOpportunity;
   // Overview Tab
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
@@ -87,9 +87,48 @@ export interface Params {
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Overview';
 
+async function initAssignmentDate(value: DateField.Value, proposalDeadline?: Date): Promise<Immutable<DateField.State>> {
+  return immutable(await DateField.init({
+    errors: [],
+    validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, proposalDeadline || new Date())),
+    child: {
+      value,
+      id: 'cwu-opportunity-assignment-date'
+    }
+  }));
+}
+
+async function initStartDate(value: DateField.Value, assignmentDate?: Date): Promise<Immutable<DateField.State>> {
+  return immutable(await DateField.init({
+    errors: [],
+    validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, assignmentDate || new Date())),
+    child: {
+      value,
+      id: 'cwu-opportunity-start-date'
+    }
+  }));
+}
+
+async function initCompletionDate(value: DateField.Value, startDate?: Date): Promise<Immutable<DateField.State>> {
+  return immutable(await DateField.init({
+    errors: [],
+    validate: DateField.validateDate(v => {
+      return mapValid(
+        opportunityValidation.validateCompletionDate(v, startDate || new Date()),
+        w => w || null
+      );
+    }),
+    child: {
+      value,
+      id: 'cwu-opportunity-completion-date'
+    }
+  }));
+}
+
 export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
   return {
     activeTab: !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab,
+    opportunity,
 
     title: immutable(await ShortText.init({
       errors: [],
@@ -191,46 +230,16 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(v => {
-        return opportunityValidation.validateProposalDeadline(v, opportunity?.status === CWUOpportunityStatus.Draft ? new Date() : opportunity?.proposalDeadline);
-      }),
+      validate: DateField.validateDate(v => opportunityValidation.validateProposalDeadline(v, opportunity)),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
         id: 'cwu-opportunity-proposal-deadline'
       }
     })),
 
-    startDate: immutable(await DateField.init({
-      errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, opportunity?.assignmentDate || new Date())),
-      child: {
-        value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
-        id: 'cwu-opportunity-start-date'
-      }
-    })),
-
-    assignmentDate: immutable(await DateField.init({
-      errors: [],
-      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, opportunity?.proposalDeadline || new Date())),
-      child: {
-        value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
-        id: 'cwu-opportunity-assignment-date'
-      }
-    })),
-
-    completionDate: immutable(await DateField.init({
-      errors: [],
-      validate: DateField.validateDate(v => {
-        return mapValid(
-          opportunityValidation.validateCompletionDate(v, opportunity?.startDate || new Date()),
-          w => w || null
-        );
-      }),
-      child: {
-        value: opportunity?.completionDate ? DateField.dateToValue(opportunity.completionDate) : null,
-        id: 'cwu-opportunity-completion-date'
-      }
-    })),
+    assignmentDate: await initAssignmentDate(opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null, opportunity?.proposalDeadline),
+    startDate: await initStartDate(opportunity ? DateField.dateToValue(opportunity.startDate) : null, opportunity?.assignmentDate),
+    completionDate: await initCompletionDate(opportunity?.completionDate ? DateField.dateToValue(opportunity.completionDate) : null, opportunity?.startDate),
 
     submissionInfo: immutable(await ShortText.init({
       errors: [],
@@ -366,12 +375,13 @@ export function getValues(state: Immutable<State>, status?: CreateCWUOpportunity
 
 type PersistAction
   = ADT<'create', CreateCWUOpportunityStatus>
-  | ADT<'update', Id>;
+  | ADT<'update'>;
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, CWUOpportunity], Immutable<State>>> {
   const values = getValues(state);
   const isRemoteOkChecked = RadioGroup.isChecked(state.remoteOk);
   const isCreateDraft = action.tag === 'create' && action.value === CWUOpportunityStatus.Draft;
+  const shouldUploadAttachmentsAndUpdate = action.tag === 'create' || (action.tag === 'update' && !!state.opportunity && canCWUOpportunityDetailsBeEdited(state.opportunity));
   // Transform remoteOk
   if (!isRemoteOkChecked && !isCreateDraft) {
     return invalid(state);
@@ -382,7 +392,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   let attachments = state.attachments.existingAttachments.map(({ id }) => id);
   // Upload new attachments if necessary.
-  if (newAttachments.length) {
+  if (shouldUploadAttachmentsAndUpdate && newAttachments.length) {
     const result = await api.uploadFiles(newAttachments);
     switch (result.tag) {
       case 'valid':
@@ -394,14 +404,15 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state);
     }
   }
-  if (action.tag === 'update' && state.addenda) {
+  // Always add addenda.
+  if (action.tag === 'update' && state.opportunity && state.addenda) {
     const newAddenda = Addenda.getNewAddenda(state.addenda);
     if (newAddenda.length) {
       let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
       const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
       //Persist each addendum.
       for (const addendum of newAddenda) {
-        const addAddendumResult: api.ResponseValidation<CWUOpportunity, UpdateValidationErrors> = await api.opportunities.cwu.update(action.value, adt('addAddendum', addendum));
+        const addAddendumResult: api.ResponseValidation<CWUOpportunity, UpdateValidationErrors> = await api.opportunities.cwu.update(state.opportunity.id, adt('addAddendum', addendum));
         switch (addAddendumResult.tag) {
           case 'valid':
             updatedExistingAddenda = addAddendumResult.value.addenda;
@@ -442,18 +453,25 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
             status: action.value
           });
         case 'update':
-          const updateResult = await api.opportunities.cwu.update(action.value, adt('edit' as const, {
-            ...values,
-            remoteOk,
-            attachments
-          }));
-          return api.mapInvalid(updateResult, errors => {
-            if (errors.opportunity && errors.opportunity.tag === 'edit') {
-              return errors.opportunity.value;
-            } else {
-              return {};
-            }
-          });
+          if (state.opportunity && shouldUploadAttachmentsAndUpdate) {
+            const updateResult = await api.opportunities.cwu.update(state.opportunity.id, adt('edit' as const, {
+              ...values,
+              remoteOk,
+              attachments
+            }));
+            return api.mapInvalid(updateResult, errors => {
+              if (errors.opportunity && errors.opportunity.tag === 'edit') {
+                return errors.opportunity.value;
+              } else {
+                return {};
+              }
+            });
+          } else if (state.opportunity) {
+            return valid(state.opportunity);
+          } else {
+            // Should never happen.
+            return invalid({});
+          }
     }
   })();
   switch (actionResult.tag) {
@@ -544,32 +562,65 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('description', value)
       });
 
-    case 'proposalDeadline':
-      return updateComponentChild({
+    case 'proposalDeadline': {
+      const result = updateComponentChild({
         state,
         childStatePath: ['proposalDeadline'],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('proposalDeadline', value)
+        mapChildMsg: (value) => adt('proposalDeadline' as const, value)
       });
+      return [
+        result[0],
+        async (state, dispatch) => {
+          if (result[1]) {
+            state = await result[1](state, dispatch) || state;
+          }
+          return state
+            .set('assignmentDate', await initAssignmentDate(FormField.getValue(state.assignmentDate), DateField.getDate(state.proposalDeadline)));
+        }
+      ];
+    }
 
-    case 'startDate':
-      return updateComponentChild({
-        state,
-        childStatePath: ['startDate'],
-        childUpdate: DateField.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt('startDate', value)
-      });
-
-    case 'assignmentDate':
-      return updateComponentChild({
+    case 'assignmentDate': {
+      const result = updateComponentChild({
         state,
         childStatePath: ['assignmentDate'],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('assignmentDate', value)
+        mapChildMsg: value => adt('assignmentDate' as const, value)
       });
+      return [
+        result[0],
+        async (state, dispatch) => {
+          if (result[1]) {
+            state = await result[1](state, dispatch) || state;
+          }
+          return state
+            .set('startDate', await initStartDate(FormField.getValue(state.startDate), DateField.getDate(state.assignmentDate)));
+        }
+      ];
+    }
+
+    case 'startDate': {
+      const result = updateComponentChild({
+        state,
+        childStatePath: ['startDate'],
+        childUpdate: DateField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('startDate' as const, value)
+      });
+      return [
+        result[0],
+        async (state, dispatch) => {
+          if (result[1]) {
+            state = await result[1](state, dispatch) || state;
+          }
+          return state
+            .set('completionDate', await initCompletionDate(FormField.getValue(state.completionDate), DateField.getDate(state.startDate)));
+        }
+      ];
+    }
 
     case 'completionDate':
       return updateComponentChild({
@@ -627,7 +678,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
+function areDetailsDisabled(opportunity?: CWUOpportunity, disabledProp?: boolean): boolean {
+  return disabledProp || (!!opportunity && !canCWUOpportunityDetailsBeEdited(opportunity));
+}
+
+const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -713,7 +769,8 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
+const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -733,7 +790,8 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
+const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -813,7 +871,8 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
   return (
     <Row>
       <Col xs='12'>

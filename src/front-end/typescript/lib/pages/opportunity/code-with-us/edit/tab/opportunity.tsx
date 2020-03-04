@@ -98,7 +98,7 @@ const startDeleteLoading = makeStartLoading<State>('deleteLoading');
 const stopDeleteLoading = makeStopLoading<State>('deleteLoading');
 
 async function saveChanges(state: Immutable<State>, onValid?: AsyncWithState<State, [CWUOpportunity]>, onInvalid?: AsyncWithState<State>): Promise<Immutable<State>> {
-  const result = await Form.persist(state.form, adt('update', state.opportunity.id));
+  const result = await Form.persist(state.form, adt('update' as const));
   switch (result.tag) {
     case 'valid':
       state = state
@@ -387,7 +387,6 @@ export const component: Tab.Component<State, Msg> = {
           ]
         });
       case CWUOpportunityStatus.Published:
-      case CWUOpportunityStatus.Evaluation:
         return adt('dropdown', {
           text: 'Actions',
           loading: isLoading,
@@ -447,13 +446,16 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
+      case CWUOpportunityStatus.Evaluation:
       case CWUOpportunityStatus.Awarded:
       case CWUOpportunityStatus.Canceled:
         return adt('links', [
           {
             children: 'Edit',
             symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing'))
+            onClick: () => dispatch(adt('startEditing')),
+            button: true,
+            color: 'primary'
           }
         ]);
     }

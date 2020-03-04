@@ -47,7 +47,7 @@ interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'update
 }
 
 interface RawCWUProposalHistoryRecord extends Omit<CWUProposalHistoryRecord, 'createdBy' | 'type'> {
-  createdBy: Id;
+  createdBy: Id | null;
   status?: CWUProposalStatus;
   event?: CWUProposalEvent;
 }
@@ -151,9 +151,9 @@ async function createCWUProposalAttachments(connection: Connection, trx: Transac
 
 async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection: Connection, session: Session, raw: RawCWUProposalHistoryRecord): Promise<CWUProposalHistoryRecord> {
   const { createdBy: createdById, status, event, ...restOfRaw } = raw;
-  const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
+  const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), null) : null;
 
-  if (!createdBy || (!status && !event)) {
+  if (!status && !event) {
     throw new Error('unable to process proposal status record');
   }
 

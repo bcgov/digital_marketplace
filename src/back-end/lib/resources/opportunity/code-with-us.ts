@@ -359,11 +359,19 @@ const resource: Resource = {
               });
             }
 
-            const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
-            const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
-            const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
+            /**
+             * If the existing proposal deadline is in the past,
+             * updates should be validated against that deadline.
+             * The exception to this rule is if the opportunity is
+             * a draft, then the proposal deadline should be validated
+             * against the current date.
+             */
+            const now = new Date();
+            const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline, cwuOpportunity);
+            const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, now));
+            const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, now));
             const validatedCompletionDate = mapValid(
-              opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date())),
+              opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, now)),
               v => v || null
             );
 

@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
-import { dateToMidnight } from 'shared/lib';
-import { CreateCWUOpportunityStatus, CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { dateToMidnight, isDateInThePast } from 'shared/lib';
+import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { ArrayValidation, invalid, mapValid, optional, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
 
@@ -53,7 +53,12 @@ export function validateDescription(raw: string): Validation<string> {
   return validateGenericString(raw, 'Description', 1, 10000);
 }
 
-export function validateProposalDeadline(raw: string, minDate: Date = new Date()): Validation<Date> {
+export function validateProposalDeadline(raw: string, opportunity?: CWUOpportunity): Validation<Date> {
+  const now = new Date();
+  let minDate = now;
+  if (opportunity && opportunity.status !== CWUOpportunityStatus.Draft) {
+    minDate = isDateInThePast(opportunity.proposalDeadline) ? opportunity.proposalDeadline : now;
+  }
   return validateDate(raw, dateToMidnight(minDate));
 }
 

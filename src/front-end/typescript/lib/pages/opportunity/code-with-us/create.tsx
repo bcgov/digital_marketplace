@@ -202,6 +202,6 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     return null;
   }),
   getMetadata() {
-    return makePageMetadata('Create Opportunity');
+    return makePageMetadata('Create Code With Us Opportunity');
   }
 };

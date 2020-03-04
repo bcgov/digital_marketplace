@@ -40,7 +40,7 @@ export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
 export interface CWUProposalHistoryRecord {
   id: Id;
   createdAt: Date;
-  createdBy: UserSlim;
+  createdBy: UserSlim | null;
   type: ADT<'status', CWUProposalStatus> | ADT<'event', CWUProposalEvent>;
   note: string;
 }

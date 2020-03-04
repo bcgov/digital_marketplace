@@ -61,6 +61,14 @@ export function formatAmount(amount: number, currency?: string, baseTenSeparator
   return formatted;
 }
 
+export function parseDate(raw: string): Date | null {
+  try {
+    return moment(raw).toDate();
+  } catch (e) {
+    return null;
+  }
+}
+
 const TIMEZONE = 'America/Vancouver';
 
 export function rawFormatDate(date: Date, formatType: string, withTimeZone: boolean): string {
