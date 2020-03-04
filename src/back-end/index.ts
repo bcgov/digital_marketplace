@@ -8,6 +8,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import basicAuth from 'back-end/lib/map-routes/basic-auth';
 import affiliationResource from 'back-end/lib/resources/affiliation';
 import avatarResource from 'back-end/lib/resources/avatar';
+import counterResource from 'back-end/lib/resources/counter';
 import fileResource from 'back-end/lib/resources/file';
 import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';
 import organizationResource from 'back-end/lib/resources/organization';
@@ -66,6 +67,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     codeWithUsProposalResource,
     codeWithUsSubscriberResource,
     fileResource,
+    counterResource,
     organizationResource,
     sessionResource,
     userResource

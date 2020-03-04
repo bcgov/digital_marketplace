@@ -204,3 +204,13 @@ export async function editCWUProposal(connection: Connection, session: Session, 
 export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
   return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
 }
+
+// Metrics.
+
+export function readAllCounters(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function readManyCounters(session: Session): boolean {
+  return isAdmin(session) || isGovernment(session);
+}
