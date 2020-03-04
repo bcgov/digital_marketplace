@@ -31,6 +31,7 @@ export function tryDb<Args extends unknown[], Valid>(fn: DbFn<Args, Valid>): DbF
 
 export * from 'back-end/lib/db/affiliation';
 export * from 'back-end/lib/db/file';
+export * from 'back-end/lib/db/counter';
 export * from 'back-end/lib/db/opportunity/code-with-us';
 export * from 'back-end/lib/db/organization';
 export * from 'back-end/lib/db/proposal/code-with-us';
