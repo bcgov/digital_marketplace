@@ -3,7 +3,7 @@ import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { UpdateValidationErrors } from 'shared/lib/resources/counter';
+import { UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/counter';
 import { Session } from 'shared/lib/resources/session';
 import { getInvalidValue, invalid, isInvalid, isValid } from 'shared/lib/validation';
 import { validateCounterName, validateCounterNames } from 'shared/lib/validation/counter';
@@ -18,7 +18,7 @@ type Resource = crud.Resource<
   null,
   null,
   null,
-  null,
+  UpdateRequestBody,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
   null,
