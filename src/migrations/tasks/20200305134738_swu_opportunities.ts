@@ -7,7 +7,9 @@ const logger = makeDomainLogger(consoleAdapter, 'migrations');
 enum SWUOpportunityStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
-  Evaluation = 'EVALUATION',
+  EvaluationTeamQuestions = 'EVAL_QUESTIONS',
+  EvaluationCodeChallenge = 'EVAL_CC',
+  EvaluationTeamScenario = 'EVAL_SCENARIO',
   Awarded = 'AWARDED',
   Suspended = 'SUSPENDED',
   Canceled = 'CANCELED'
@@ -22,6 +24,18 @@ enum SWUOpportunityPhaseType {
   Inception = 'INCEPTION',
   Prototype = 'PROTOTYPE',
   Implementation = 'IMPLEMENTATION'
+}
+
+enum TeamCapabilities {
+  AgileCoaching = 'Agile Coaching',
+  DeliveryManagement = 'Delivery Management',
+  FrontendDevelopment = 'Frontend Development',
+  TechnicalArchitecture = 'Technical Architecture',
+  UserResearch = 'User Research',
+  BackendDevelopment = 'Backend Development',
+  DevOpsEngineering = 'DevOps Engineering',
+  SecurityEngineering = 'Security Engineering',
+  UserExperienceDesign = 'User Experience Design'
 }
 
 export async function up(connection: Knex): Promise<void> {
@@ -113,7 +127,7 @@ export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable('swuPhaseCapabilities', table => {
     table.uuid('id').primary().unique().notNullable();
     table.uuid('phase').references('id').inTable('swuOpportunityPhases').notNullable().onDelete('CASCADE');
-    table.uuid('capability').references('id').inTable('teamCapabilities').notNullable();
+    table.enum('capability', Object.values(TeamCapabilities)).notNullable();
     table.boolean('fullTime').defaultTo(false).notNullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdBy').references('id').inTable('users').notNullable();
@@ -123,16 +137,17 @@ export async function up(connection: Knex): Promise<void> {
   logger.info('Created swuPhaseCapabilities table.');
 
   await connection.schema.createTable('swuTeamQuestions', table => {
-    table.uuid('id').primary().unique().notNullable();
     table.uuid('opportunityVersion').references('id').inTable('swuOpportunityVersions').notNullable().onDelete('CASCADE');
     table.string('question', 1000).notNullable();
     table.string('guideline', 1000).notNullable();
     table.integer('score').notNullable();
     table.integer('wordLimit').notNullable();
+    table.integer('order').notNullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdBy').references('id').inTable('users').notNullable();
     table.timestamp('updatedAt').notNullable();
     table.uuid('updatedBy').references('id').inTable('users').notNullable();
+    table.primary(['order', 'opportunityVersion']);
   });
   logger.info('Created swuTeamQuestions table.');
 }
