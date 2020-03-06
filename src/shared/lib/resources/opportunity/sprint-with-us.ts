@@ -1,7 +1,8 @@
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
-import { ADT, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
+import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
 
@@ -116,3 +117,76 @@ export interface SWUTeamQuestion {
   updatedAt: Date;
   updatedBy: UserSlim;
 }
+
+export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+
+export type CreateSWUOpportunityStatus
+  = SWUOpportunityStatus.Published
+  | SWUOpportunityStatus.Draft;
+
+export interface CreateRequestBody {
+  title: string;
+  teaser: string;
+  remoteOk: boolean;
+  remoteDesc: string;
+  location: string;
+  totalMaxBudget: number;
+  mandatorySkills: string[];
+  optionalSkills: string[];
+  description: string;
+  proposalDeadline: string;
+  assignmentDate: string;
+  questionsWeight: number;
+  codeChallengeWeight: number;
+  scenarioWeight: number;
+  priceWeight: number;
+  attachments: Id[];
+  status: CreateSWUOpportunityStatus;
+  phases: SWUOpportunityPhase[];
+  teamQuestions: SWUTeamQuestion[];
+}
+
+export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'mandatorySkills' | 'optionalSkills' | 'phases' | 'teamQuestions' | 'attachments'> {
+  mandatorySkills?: string[][];
+  optionalSkills?: string[][];
+  phases?: string[][];
+  teamQuestions?: string[][];
+  attachments?: string[][];
+}
+
+export type UpdateRequestBody
+  = ADT<'edit', UpdateEditRequestBody>
+  | ADT<'publish', string>
+  | ADT<'evaluateQuestions', string>
+  | ADT<'evaluateCodeChallenge', string>
+  | ADT<'evaluateTeamScenario', string>
+  | ADT<'suspend', string>
+  | ADT<'cancel', string>
+  | ADT<'addAddendum', string>;
+
+export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
+
+type UpdateADTErrors
+  = ADT<'edit', UpdateEditValidationErrors>
+  | ADT<'publish', string[]>
+  | ADT<'evaluateQuestions', string[]>
+  | ADT<'evaluateCodeChallenge', string[]>
+  | ADT<'evaluateTeamScenario', string[]>
+  | ADT<'suspend', string[]>
+  | ADT<'cancel', string[]>
+  | ADT<'addAddendum', string[]>
+  | ADT<'parseFailure'>;
+
+export interface UpdateEditValidationErrors extends BodyWithErrors {
+  opportunity?: UpdateADTErrors;
+}
+
+export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'phases' | 'teamQuestions' | 'attachments'> {
+  mandatorySkills?: string[][];
+  optionalSkills?: string[][];
+  phases?: string[][];
+  teamQuestions?: string[][];
+  attachments?: string[][];
+}
+
+export type DeleteValidationErrors = BodyWithErrors;
