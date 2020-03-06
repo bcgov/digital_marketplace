@@ -61,10 +61,10 @@ export async function up(connection: Knex): Promise<void> {
     table.string('description', 10000).notNullable();
     table.timestamp('proposalDeadline').notNullable();
     table.timestamp('assignmentDate').notNullable();
-    table.float('questionsWeight').notNullable();
-    table.float('codeChallengeWeight').notNullable();
-    table.float('scenarioWeight').notNullable();
-    table.float('priceWeight').notNullable();
+    table.integer('questionsWeight').notNullable();
+    table.integer('codeChallengeWeight').notNullable();
+    table.integer('scenarioWeight').notNullable();
+    table.integer('priceWeight').notNullable();
   });
   logger.info('Created swuOpportunityVersions table.');
 
