@@ -26,17 +26,15 @@ enum SWUOpportunityPhaseType {
   Implementation = 'IMPLEMENTATION'
 }
 
-enum TeamCapabilities {
-  AgileCoaching = 'Agile Coaching',
-  DeliveryManagement = 'Delivery Management',
-  FrontendDevelopment = 'Frontend Development',
-  TechnicalArchitecture = 'Technical Architecture',
-  UserResearch = 'User Research',
-  BackendDevelopment = 'Backend Development',
-  DevOpsEngineering = 'DevOps Engineering',
-  SecurityEngineering = 'Security Engineering',
-  UserExperienceDesign = 'User Experience Design'
-}
+const SKILLS = [
+  'Delivery Management',
+  'Front-End Development',
+  'Back-End Development',
+  'DevOps',
+  'User Experience Design',
+  'User Interface Design',
+  'User Research'
+];
 
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable('swuOpportunities', table => {
@@ -127,7 +125,7 @@ export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable('swuPhaseCapabilities', table => {
     table.uuid('id').primary().unique().notNullable();
     table.uuid('phase').references('id').inTable('swuOpportunityPhases').notNullable().onDelete('CASCADE');
-    table.enum('capability', Object.values(TeamCapabilities)).notNullable();
+    table.enum('capability', SKILLS).notNullable();
     table.boolean('fullTime').defaultTo(false).notNullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdBy').references('id').inTable('users').notNullable();
