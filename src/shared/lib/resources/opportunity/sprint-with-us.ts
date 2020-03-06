@@ -21,7 +21,7 @@ export enum SWUOpportunityEvent {
   AddendumAdded = 'ADDENDUM_ADDED'
 }
 
-enum SWUOpportunityPhaseType {
+export enum SWUOpportunityPhaseType {
   Inception = 'INCEPTION',
   Prototype = 'PROTOTYPE',
   Implementation = 'IMPLEMENTATION'
