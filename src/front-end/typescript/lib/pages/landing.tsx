@@ -1,36 +1,46 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import * as Phases from 'front-end/lib/components/phases';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+// import { Col, Row } from 'reactstrap';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  phases: Immutable<Phases.State>;
 }
 
-type InnerMsg
-  = ADT<'noop'>;
+type InnerMsg = ADT<'updatePhases', Phases.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  empty: true
+  phases: immutable(await Phases.init({}))
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+  switch (msg.tag) {
+    case 'updatePhases':
+      return updateComponentChild({
+        state,
+        childStatePath: ['phases'],
+        childUpdate: Phases.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'updatePhases', value })
+      });
+    default:
+      return [state];
+  }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
-    <Row>
-      <Col xs='12'>
-        Landing page coming soon.
-      </Col>
-    </Row>
+    <Phases.view
+      state={state.phases}
+      dispatch={mapComponentDispatch(dispatch, msg => adt('updatePhases' as const, msg))}
+    />
   );
 };
 
