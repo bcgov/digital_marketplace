@@ -40,6 +40,7 @@ const view: ComponentView<State, Msg> = ({state, dispatch}) => {
     <Phases.view
       state={state.phases}
       dispatch={mapComponentDispatch(dispatch, msg => adt('updatePhases' as const, msg))}
+      disabled={false}
     />
   );
 };
