@@ -123,7 +123,6 @@ export async function up(connection: Knex): Promise<void> {
   logger.info('Created swuOpportunityPhases table.');
 
   await connection.schema.createTable('swuPhaseCapabilities', table => {
-    table.uuid('id').primary().unique().notNullable();
     table.uuid('phase').references('id').inTable('swuOpportunityPhases').notNullable().onDelete('CASCADE');
     table.enum('capability', SKILLS).notNullable();
     table.boolean('fullTime').defaultTo(false).notNullable();
@@ -131,6 +130,7 @@ export async function up(connection: Knex): Promise<void> {
     table.uuid('createdBy').references('id').inTable('users').notNullable();
     table.timestamp('updatedAt').notNullable();
     table.uuid('updatedBy').references('id').inTable('users').notNullable();
+    table.primary(['phase', 'capability']);
   });
   logger.info('Created swuPhaseCapabilities table.');
 
