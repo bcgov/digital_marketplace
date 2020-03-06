@@ -11,7 +11,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatDate } from 'shared/lib';
+import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
@@ -247,7 +247,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
           icon: 'trophy',
           iconColor: 'yellow',
           name: 'Ranking',
-          value: proposal.rank ? String(proposal.rank) : EMPTY_STRING
+          value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
         }
       : null
   ];
