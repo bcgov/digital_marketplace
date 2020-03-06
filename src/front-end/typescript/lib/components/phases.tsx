@@ -4,6 +4,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import { Dispatch, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 // import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -140,40 +141,133 @@ type Props = {
   disabled: boolean;
 };
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+const StartingPhaseView: View<Props> = ({ state, dispatch, disabled }) => {
+  return (
+    <div className='pb-5 mb-3 border-bottom' >
+      Starting Phase select goes here!
+    </div>
+  );
+};
+
+const TeamCapabilitiesView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
-
       <Col>
+        <h4>Team Capabilities</h4>
+        <p>Select the capabilities that you will need during this phase and
+          indicate whether you expect the need to be for part-time or
+          full-time.</p>
+        <div>TODO(Jesse): How should this piece be implemented.  Checkboxes?</div>
+      </Col>
+    </Row>
+  );
+};
+
+const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
+  return (
+    <Row className='py-4'>
+      <Col sm='12'>
+        <h4>Details</h4>
+      </Col>
+
+      <Col md='6' sm='12'>
         <DateField.view
           required
           extraChildProps={{}}
-          label='StartDate'
+          label='Phase start date'
           state={state.startDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
       </Col>
 
-      <Col>
+      <Col md='6' sm='12'>
         <DateField.view
-          required
           extraChildProps={{}}
-          label='CompletionDate'
+          label='Phase completion date'
           state={state.completionDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
       </Col>
 
-      <Col>
+      <Col sm='8'>
         <NumberField.view
           required
           extraChildProps={{}}
-          label='MaxBudget'
+          label='Phase max budget'
           state={state.maxBudget}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('maxBudget' as const, value))} />
       </Col>
 
     </Row>
+  );
+};
+
+interface AccordionProps extends Props {
+  title: string;
+  description: string;
+  commonDeliverables: string[];
+  collapsed: boolean;
+}
+
+const AccordionInteriorView: View<AccordionProps> = (props) => {
+  return (
+    <div className='pb-4 pt-3'>
+
+      <div>
+        <Icon name='paperclip' />
+        <span className='pl-3 h3'>{props.title}</span>
+      </div>
+
+      <div className={`${ props.collapsed ? 'd-none' : null }`}>
+        <div className='pt-3'>
+          <p>{props.description}</p>
+        </div>
+
+        <div>
+          <Icon name='paperclip' />
+          <span className='pl-2 h6'>Common Deliverables</span>
+        </div>
+
+        <div>
+          <ul>
+          {
+            props.commonDeliverables.map( (deliverable) => {
+              return <li>{deliverable}</li>;
+            })
+          }
+          </ul>
+          <DetailsView {...props} />
+          <TeamCapabilitiesView {...props} />
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export const view: View<Props> = (props) => {
+  return (
+    <div>
+      <StartingPhaseView {...props} />
+      <AccordionInteriorView
+        collapsed={true}
+        title='Inception'
+        description='During Inception you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
+        commonDeliverables={['Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release']}
+        {...props} />
+      <AccordionInteriorView
+        collapsed={false}
+        title='Proof Of Concept'
+        description='During Proof of Concept you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!'
+        commonDeliverables={['Alpha release of the product', 'a build/buy/licence decision', 'Product Roadmap', 'Resourcing plan for Implementation']}
+        {...props} />
+      <AccordionInteriorView
+        collapsed={false}
+        title='Implementation'
+        description='As you reach the Implementation phase you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.'
+        commonDeliverables={['Delivery of the function components in the Product Roadmap']}
+        {...props} />
+    </div>
   );
 };
