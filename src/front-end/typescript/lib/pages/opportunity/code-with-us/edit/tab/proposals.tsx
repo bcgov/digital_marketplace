@@ -17,7 +17,10 @@ import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProp
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 
+type ModalId = ADT<'award', Id>;
+
 export interface State extends Tab.Params {
+  showModal: ModalId | null;
   awardLoading: Id | null;
   canProposalsBeAwarded: boolean;
   canViewProposals: boolean;
@@ -27,6 +30,8 @@ export interface State extends Tab.Params {
 
 export type InnerMsg
   = ADT<'table', Table.Msg>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
   | ADT<'award', Id>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -62,6 +67,7 @@ const init: Init<Tab.Params, State> = async params => {
   }
   return {
     awardLoading: null,
+    showModal: null,
     canViewProposals,
     // Determine whether the "Award" button should be shown at all.
     canProposalsBeAwarded: proposals.reduce((acc, p) =>
@@ -83,6 +89,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
 
     case 'award':
+      state = state.set('showModal', null);
       return [
         state.set('awardLoading', msg.value),
         async (state, dispatch) => {
@@ -100,6 +107,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               return state;
           }
       }];
+
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [state.set('showModal', null)];
 
     case 'table':
       return updateComponentChild({
@@ -158,7 +171,7 @@ const ContextMenuCell: View<{ loading: boolean; proposal: CWUProposalSlim; dispa
       color='primary'
       size='sm'
       loading={loading}
-      onClick={() => dispatch(adt('award', proposal.id)) }>
+      onClick={() => dispatch(adt('showModal', adt('award' as const, proposal.id))) }>
       Award
     </Link>
   );
@@ -293,5 +306,31 @@ const view: ComponentView<State, Msg> = (props) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+
+  getModal: state => {
+    if (!state.showModal) { return null; }
+    switch (state.showModal.tag) {
+      case 'award':
+        return {
+          title: 'Award Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Award Opportunity',
+              icon: 'award',
+              color: 'primary',
+              button: true,
+              msg: adt('award', state.showModal.value)
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all susbscribers and vendors with submitted proposals will be notified accordingly.'
+        };
+    }
+  }
 };

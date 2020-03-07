@@ -632,7 +632,7 @@ export const awardCWUProposal = tryDb<[Id, string, AuthenticatedSession], CWUPro
         .orderBy('createdAt', 'desc')
         .first())?.status;
 
-      if (currentStatus && [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded].includes(currentStatus)) {
+      if (currentStatus && [CWUProposalStatus.UnderReview, CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded].includes(currentStatus)) {
         await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
           .transacting(trx)
           .insert({

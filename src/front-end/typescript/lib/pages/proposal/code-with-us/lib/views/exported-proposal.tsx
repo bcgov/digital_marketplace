@@ -48,7 +48,7 @@ export const ExportedPropsal: View<Props> = ({ proposal, showOpportunityInformat
         ? (<Row className='mt-5'>
             <Col xs='12'>
               <h5 className='mb-4'>Additional Comments:</h5>
-              <div><Markdown box source={proposal.proposalText} openLinksInNewTabs /></div>
+              <div><Markdown box source={proposal.additionalComments} openLinksInNewTabs /></div>
             </Col>
           </Row>)
         : null}

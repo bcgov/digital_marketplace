@@ -141,7 +141,7 @@ function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, 
 }
 
 export const ViewRequiredAsterisk: View<{}> = () => {
-  return (<span className='font-weight-bold text-warning ml-1'>*</span>);
+  return (<span className='font-weight-bold text-yellow ml-1'>*</span>);
 };
 
 function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
