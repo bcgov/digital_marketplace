@@ -217,7 +217,7 @@ export function mapPageBreadcrumbsMsg<MsgA, MsgB, Route>(breadcrumbs: PageBreadc
 
 export interface ModalAction<Msg> {
   text: string;
-  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
+  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success' | 'warning';
   msg: Msg;
   button?: boolean;
   disabled?: boolean;

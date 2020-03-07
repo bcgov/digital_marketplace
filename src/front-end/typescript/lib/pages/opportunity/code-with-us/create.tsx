@@ -11,11 +11,13 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
+type ModalId = 'publish' | 'cancel';
+
 interface ValidState {
+  showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
   showErrorAlert: 'publish' | 'save' | null;
-  showPublishModal: boolean;
   form: Immutable<Form.State>;
 }
 
@@ -23,7 +25,8 @@ export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg
   = ADT<'dismissErrorAlert'>
-  | ADT<'hidePublishModal'>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
   | ADT<'publish'>
   | ADT<'saveDraft'>
   | ADT<'form', Form.Msg>;
@@ -36,10 +39,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
   userType: [UserType.Government, UserType.Admin],
   async success() {
     return valid(immutable({
+      showModal: null,
       publishLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
-      showPublishModal: false,
       form: immutable(await Form.init({}))
     }));
   },
@@ -58,18 +61,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'dismissErrorAlert':
       return [state.set('showErrorAlert', null)];
-    case 'hidePublishModal':
-      return [state.set('showPublishModal', false)];
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal':
+      return [state.set('showModal', null)];
     case 'publish':
     case 'saveDraft':
       const isPublish = msg.tag === 'publish';
-      if (isPublish) {
-        if (!state.showPublishModal) {
-          return [state.set('showPublishModal', true)];
-        } else {
-          state = state.set('showPublishModal', false);
-        }
-      }
+      state = state.set('showModal', null);
       return [
         isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
@@ -149,7 +148,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
         loading: isPublishLoading,
         disabled: isLoading || !isValid,
         color: 'primary',
-        onClick: () => dispatch(adt('publish'))
+        onClick: () => dispatch(adt('showModal', 'publish' as const))
       },
       {
         children: 'Save Draft',
@@ -164,7 +163,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
         children: 'Cancel',
         color: 'white',
         disabled: isLoading,
-        dest: routeDest(adt('opportunities', null))
+        onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }
     ]);
   }),
@@ -178,28 +177,49 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       : []
   })),
   getModal: getModalValid<ValidState, Msg>(state => {
-    if (state.showPublishModal) {
-      return {
-        title: 'Publish Code With Us Opportunity?',
-        body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
-        onCloseMsg: adt('hidePublishModal'),
-        actions: [
-          {
-            text: 'Publish Opportunity',
-            icon: 'bullhorn',
-            color: 'primary',
-            msg: adt('publish'),
-            button: true
-          },
-          {
-            text: 'Cancel',
-            color: 'secondary',
-            msg: adt('hidePublishModal')
-          }
-        ]
-      };
+    switch (state.showModal) {
+      case 'publish':
+        return {
+          title: 'Publish Code With Us Opportunity?',
+          body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Publish Opportunity',
+              icon: 'bullhorn',
+              color: 'primary',
+              msg: adt('publish'),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'cancel':
+        return {
+          title: 'Cancel New Code With Us Opportunity?',
+          body: () => 'Are you sure you want to cancel? Any information you may have entered will be lost if you do so.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Yes, I want to cancel',
+              color: 'danger',
+              msg: newRoute(adt('opportunities' as const, null)),
+              button: true
+            },
+            {
+              text: 'Go Back',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case null:
+        return null;
     }
-    return null;
   }),
   getMetadata() {
     return makePageMetadata('Create Code With Us Opportunity');
