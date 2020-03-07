@@ -9,36 +9,31 @@ import Icon from 'front-end/lib/views/icon';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
 
-interface Phase {
-  nothing: true;
-}
+interface PhaseState {
+  title: string;
+  description: string;
 
-export async function defaultPhase(): Promise<Phase> {
-  return {
-    nothing: true
-  };
-}
-
-type Params = {};
-
-export interface State extends Params {
+  commonDeliverables: string[];
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
+
+  collapsed: boolean;
 }
 
-export type InnerMsg =
-  ADT<'startDate', DateField.Msg> |
-  ADT<'completionDate', DateField.Msg> |
-  ADT<'maxBudget', NumberField.Msg>;
+interface AccordionProps {
+  title: string;
+  collapsed: boolean;
+  children: ViewElementChildren;
+}
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
-
-export const init: Init<Params, State> = async (initParams) => {
+export async function InitPhase(title: string, description: string, commonDeliverables: string[]): Promise<PhaseState> {
   return {
-
+    title,
+    description,
+    commonDeliverables,
+    collapsed: false,
     startDate: immutable(await DateField.init({
       errors: [],
       child: {
@@ -63,6 +58,42 @@ export const init: Init<Params, State> = async (initParams) => {
       }
     }))
   };
+}
+
+type Params = {};
+
+export interface State extends Params {
+  phases: PhaseState[];
+}
+
+export type InnerMsg =
+  ADT<'startDate', DateField.Msg> |
+  ADT<'completionDate', DateField.Msg> |
+  ADT<'maxBudget', NumberField.Msg>;
+
+export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+
+export const init: Init<Params, State> = async (initParams) => {
+  return {
+    phases: [
+      await InitPhase(
+        'Inception',
+        'During Inception you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.',
+        ['Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release']
+      ),
+      await InitPhase(
+        'Proof of Concept',
+        'During Proof of Concept you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!',
+        ['Alpha release of the product', 'a build/buy/licence decision', 'Product Roadmap', 'Resourcing plan for Implementation']
+      ),
+      await InitPhase(
+        'Implementation',
+        'As you reach the Implementation phase you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.',
+        ['Delivery of the function components in the Product Roadmap']
+      )
+    ]
+  };
+
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
@@ -106,26 +137,27 @@ interface Values {
   maxBudget: NumberField.Value;
 }
 
-type Errors = ErrorTypeFrom<Values>;
-
-export function getValues(state: Immutable<State>): Values {
+export function getValues(state: Immutable<State>, phaseIndex: number): Values {
   return {
-    startDate: FormField.getValue(state.startDate),
-    completionDate: FormField.getValue(state.completionDate),
-    maxBudget: FormField.getValue(state.maxBudget)
+    startDate: FormField.getValue(state.phases[phaseIndex].startDate),
+    completionDate: FormField.getValue(state.phases[phaseIndex].completionDate),
+    maxBudget: FormField.getValue(state.phases[phaseIndex].maxBudget)
   };
 }
 
-export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
-  if (errors) {
-    return state
-    .update('startDate', s => FormField.setErrors(s, errors.startDate || []))
-    .update('completionDate', s => FormField.setErrors(s, errors.completionDate || []))
-    .update('maxBudget', s => FormField.setErrors(s, errors.maxBudget || []));
-  } else {
-    return state;
-  }
-}
+// import { ErrorTypeFrom } from 'shared/lib/validation';
+// type Errors = ErrorTypeFrom<Values>;
+//
+// export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
+//   if (errors) {
+//     return state
+//     .update('phases.startDate', s => FormField.setErrors(s, errors.startDate || []))
+//     .update('completionDate', s => FormField.setErrors(s, errors.completionDate || []))
+//     .update('maxBudget', s => FormField.setErrors(s, errors.maxBudget || []));
+//   } else {
+//     return state;
+//   }
+// }
 
 type Props = {
   state: State;
@@ -155,7 +187,7 @@ const TeamCapabilitiesView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
+const PhaseDetailsView: View<PhaseState & Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row className='py-4'>
       <Col sm='12'>
@@ -167,7 +199,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           extraChildProps={{}}
           label='Phase start date'
-          state={state.startDate}
+          state={state.phases[0].startDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
       </Col>
@@ -176,7 +208,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
         <DateField.view
           extraChildProps={{}}
           label='Phase completion date'
-          state={state.completionDate}
+          state={state.phases[0].completionDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
       </Col>
@@ -186,7 +218,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           extraChildProps={{}}
           label='Phase max budget'
-          state={state.maxBudget}
+          state={state.phases[0].maxBudget}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('maxBudget' as const, value))} />
       </Col>
@@ -194,19 +226,6 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
     </Row>
   );
 };
-
-interface AccordionProps {
-  title: string;
-  collapsed: boolean;
-  children: ViewElementChildren;
-}
-
-interface PhaseProps extends Props {
-  description: string;
-  commonDeliverables: string[];
-}
-
-export type PhaseAccordionState = Omit<PhaseProps & AccordionProps, 'children'>;
 
 export const AccordionView: View<AccordionProps> = (props) => {
   return (
@@ -225,11 +244,11 @@ export const AccordionView: View<AccordionProps> = (props) => {
   );
 };
 
-const PhaseView: View<PhaseProps> = (props) => {
+const PhaseView: View<PhaseState & Props> = (state) => {
   return (
     <div>
       <div className='pt-3'>
-        <p>{props.description}</p>
+        <p>{state.description}</p>
       </div>
 
       <div>
@@ -239,33 +258,29 @@ const PhaseView: View<PhaseProps> = (props) => {
 
       <div>
         <ul>
-        {
-          props.commonDeliverables.map( (deliverable) => {
-            return <li>{deliverable}</li>;
-          })
-        }
+          {
+            state.commonDeliverables.map( (deliverable) => {
+              return <li>{deliverable}</li>;
+            })
+          }
         </ul>
-        <DetailsView {...props} />
-        <TeamCapabilitiesView {...props} />
+
+        <PhaseDetailsView {...state} />
+
+        <TeamCapabilitiesView {...state} />
+
       </div>
     </div>
   );
 };
 
-const PhaseAccordionView: View<PhaseAccordionState> = (state) => {
+const PhaseAccordionView: View<PhaseState & Props> = (state) => {
   return (
     <AccordionView
       title={state.title}
-      collapsed={state.collapsed}>
-
-      <PhaseView
-        description='During Inception you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
-        commonDeliverables={['Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release']}
-        state={state.state}
-        dispatch={state.dispatch}
-        disabled={state.disabled}
-      />
-
+      collapsed={state.collapsed}
+    >
+      <PhaseView {...state} />
     </AccordionView>
   );
 };
@@ -275,29 +290,17 @@ export const view: View<Props> = (props) => {
     <div>
       <StartingPhaseView {...props} />
 
-      <PhaseAccordionView
-        title='Inception'
-        collapsed={false}
-        description='During Inception you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
-        commonDeliverables={['Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release']}
-        {...props}
-      />
-
-      <PhaseAccordionView
-        title='Proof of Concept'
-        collapsed={true}
-        description='During Proof of Concept you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!'
-        commonDeliverables={['Alpha release of the product', 'a build/buy/licence decision', 'Product Roadmap', 'Resourcing plan for Implementation']}
-        {...props}
-      />
-
-      <PhaseAccordionView
-        title='Implementation'
-        collapsed={false}
-        description='As you reach the Implementation phase you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.'
-        commonDeliverables={['Delivery of the function components in the Product Roadmap']}
-        {...props}
-      />
+      { props.state.phases.map( (phase) => {
+          return (
+            <PhaseAccordionView
+              dispatch={props.dispatch}
+              state={props.state}
+              disabled={false}
+              {...phase}
+            />
+          );
+        })
+      }
 
     </div>
   );
