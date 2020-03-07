@@ -20,7 +20,10 @@ import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import { validateDisqualificationReason, validateScore } from 'shared/lib/validation/proposal/code-with-us';
 
-type ModalId = 'score' | 'disqualify';
+type ModalId
+  = 'score'
+  | 'disqualify'
+  | 'award';
 
 interface ValidState extends Tab.Params {
   scoreLoading: number;
@@ -258,6 +261,26 @@ export const component: Tab.Component<State, Msg> = {
     const isScoreLoading = state.scoreLoading > 0;
     const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
+      case 'award':
+        return {
+          title: 'Award Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Award Opportunity',
+              icon: 'award',
+              color: 'primary',
+              button: true,
+              msg: adt('award')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all of this opportunity\'s susbscribers and vendors with submitted proposals will be notified accordingly.'
+        };
       case 'score':
         return {
           title: 'Enter Score',
@@ -366,7 +389,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Award',
                   symbol_: leftPlacement(iconLinkSymbol('award')),
-                  onClick: () => dispatch(adt('award'))
+                  onClick: () => dispatch(adt('showModal', 'award' as const))
                 },
                 {
                   children: 'Edit Score',
@@ -393,7 +416,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('award')),
             button: true,
             color: 'primary',
-            onClick: () => dispatch(adt('award'))
+            onClick: () => dispatch(adt('showModal', 'award' as const))
           }
         ]);
       default:

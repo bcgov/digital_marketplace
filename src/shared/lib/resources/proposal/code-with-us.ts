@@ -200,6 +200,11 @@ export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStat
       return [CWUProposalStatus.Awarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
              hasProposalDeadlinePassed;
+
+    case CWUProposalStatus.Withdrawn:
+      return userType === UserType.Vendor &&
+             !hasProposalDeadlinePassed &&
+             to === CWUProposalStatus.Submitted;
     default:
       return false;
   }
