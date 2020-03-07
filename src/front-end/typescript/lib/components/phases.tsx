@@ -3,7 +3,7 @@ import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as NumberField from 'front-end/lib/components/form-field/number';
-import { Dispatch, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { Dispatch, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 // import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
@@ -20,14 +20,6 @@ export async function defaultPhase(): Promise<Phase> {
     nothing: true
   };
 }
-
-interface PhaseViewProps {
-  empty: true;
-}
-
-export const PhaseView: View<PhaseViewProps> = props => {
-  return ( <div> </div>);
-};
 
 type Params = {};
 
@@ -203,14 +195,20 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-interface AccordionProps extends Props {
+interface AccordionProps {
   title: string;
-  description: string;
-  commonDeliverables: string[];
   collapsed: boolean;
+  children: ViewElementChildren;
 }
 
-const AccordionInteriorView: View<AccordionProps> = (props) => {
+interface PhaseProps extends Props {
+  description: string;
+  commonDeliverables: string[];
+}
+
+export type PhaseAccordionState = Omit<PhaseProps & AccordionProps, 'children'>;
+
+export const AccordionView: View<AccordionProps> = (props) => {
   return (
     <div className='pb-4 pt-3'>
 
@@ -220,29 +218,55 @@ const AccordionInteriorView: View<AccordionProps> = (props) => {
       </div>
 
       <div className={`${ props.collapsed ? 'd-none' : null }`}>
-        <div className='pt-3'>
-          <p>{props.description}</p>
-        </div>
-
-        <div>
-          <Icon name='paperclip' />
-          <span className='pl-2 h6'>Common Deliverables</span>
-        </div>
-
-        <div>
-          <ul>
-          {
-            props.commonDeliverables.map( (deliverable) => {
-              return <li>{deliverable}</li>;
-            })
-          }
-          </ul>
-          <DetailsView {...props} />
-          <TeamCapabilitiesView {...props} />
-        </div>
+        {props.children}
       </div>
 
     </div>
+  );
+};
+
+const PhaseView: View<PhaseProps> = (props) => {
+  return (
+    <div>
+      <div className='pt-3'>
+        <p>{props.description}</p>
+      </div>
+
+      <div>
+        <Icon name='paperclip' />
+        <span className='pl-2 h6'>Common Deliverables</span>
+      </div>
+
+      <div>
+        <ul>
+        {
+          props.commonDeliverables.map( (deliverable) => {
+            return <li>{deliverable}</li>;
+          })
+        }
+        </ul>
+        <DetailsView {...props} />
+        <TeamCapabilitiesView {...props} />
+      </div>
+    </div>
+  );
+};
+
+const PhaseAccordionView: View<PhaseAccordionState> = (state) => {
+  return (
+    <AccordionView
+      title={state.title}
+      collapsed={state.collapsed}>
+
+      <PhaseView
+        description='During Inception you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
+        commonDeliverables={['Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release']}
+        state={state.state}
+        dispatch={state.dispatch}
+        disabled={state.disabled}
+      />
+
+    </AccordionView>
   );
 };
 
@@ -250,24 +274,31 @@ export const view: View<Props> = (props) => {
   return (
     <div>
       <StartingPhaseView {...props} />
-      <AccordionInteriorView
-        collapsed={true}
+
+      <PhaseAccordionView
         title='Inception'
+        collapsed={false}
         description='During Inception you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
         commonDeliverables={['Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release']}
-        {...props} />
-      <AccordionInteriorView
-        collapsed={false}
-        title='Proof Of Concept'
+        {...props}
+      />
+
+      <PhaseAccordionView
+        title='Proof of Concept'
+        collapsed={true}
         description='During Proof of Concept you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!'
         commonDeliverables={['Alpha release of the product', 'a build/buy/licence decision', 'Product Roadmap', 'Resourcing plan for Implementation']}
-        {...props} />
-      <AccordionInteriorView
-        collapsed={false}
+        {...props}
+      />
+
+      <PhaseAccordionView
         title='Implementation'
+        collapsed={false}
         description='As you reach the Implementation phase you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.'
         commonDeliverables={['Delivery of the function components in the Product Roadmap']}
-        {...props} />
+        {...props}
+      />
+
     </div>
   );
 };
