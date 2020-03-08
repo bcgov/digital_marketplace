@@ -55,6 +55,7 @@ export interface SWUProposal {
   implementationPhase: SWUProposalPhase;
   references: SWUProposalReference[];
   attachments: FileRecord[];
+  teamQuestionResponses: SWUProposalTeamQuestionResponse[];
   questionsScore?: number;
   challengeScore?: number;
   scenarioScore?: number;
@@ -77,6 +78,11 @@ export interface SWUProposalReference {
   company: string;
   phone: string;
   email: string;
+  order: number;
+}
+
+export interface SWUProposalTeamQuestionResponse {
+  response: string;
   order: number;
 }
 
@@ -109,6 +115,8 @@ export interface CreateSWUProposalPhaseBody {
 
 export type CreateSWUProposalReferenceBody = SWUProposalReference;
 
+export type CreateSWUProposalTeamQuestionResponseBody = SWUProposalTeamQuestionResponse;
+
 export interface CreateRequestBody {
   opportunity: Id;
   inceptionPhase?: CreateSWUProposalPhaseBody;
@@ -116,6 +124,7 @@ export interface CreateRequestBody {
   implementationPhase: CreateSWUProposalPhaseBody;
   references: CreateSWUProposalReferenceBody[];
   attachments: Id[];
+  teamQuestionResponses: CreateSWUProposalTeamQuestionResponseBody[];
   status: CreateSWUProposalStatus;
 }
 
@@ -126,7 +135,13 @@ export interface CreateSWUProposalPhaseValidationErrors {
 
 export type CreateSWUProposalTeamMemberValidationErrors = ErrorTypeFrom<CreateSWUProposalTeamMemberBody>;
 
-export type CreateSWUProposalReferenceValidationErrors = ErrorTypeFrom<CreateSWUProposalReferenceBody>;
+export interface CreateSWUProposalReferenceValidationErrors extends ErrorTypeFrom<CreateSWUProposalReferenceBody> {
+  parseFailure?: string[];
+}
+
+export interface CreateSWUProposalTeamQuestionResponseValidationErrors extends ErrorTypeFrom<CreateSWUProposalTeamQuestionResponseBody> {
+  parseFailure?: string[];
+}
 
 export interface CreateValidationErrors extends BodyWithErrors {
   attachments?: string[][];
@@ -134,6 +149,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   prototypePhase?: CreateSWUProposalPhaseValidationErrors;
   implementationPhase?: CreateSWUProposalPhaseValidationErrors;
   references?: CreateSWUProposalReferenceValidationErrors[];
+  teamQuestionResponses?: CreateSWUProposalTeamQuestionResponseValidationErrors[];
   opportunity?: string[];
   status?: string[];
 }
