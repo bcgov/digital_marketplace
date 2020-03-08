@@ -22,12 +22,6 @@ export enum SWUOpportunityEvent {
   AddendumAdded = 'ADDENDUM_ADDED'
 }
 
-export enum SWUOpportunityPhaseType {
-  Inception = 'INCEPTION',
-  Prototype = 'PROTOTYPE',
-  Implementation = 'IMPLEMENTATION'
-}
-
 export interface SWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
@@ -80,7 +74,9 @@ export interface SWUOpportunity {
   status: SWUOpportunityStatus;
   attachments: FileRecord[];
   addenda: Addendum[];
-  phases: SWUOpportunityPhase[];
+  inceptionPhase?: SWUOpportunityPhase;
+  prototypePhase?: SWUOpportunityPhase;
+  implementationPhase?: SWUOpportunityPhase;
   teamQuestions: SWUTeamQuestion[];
   history?: SWUOpportunityHistoryRecord[];
   publishedAt: Date;
@@ -95,7 +91,6 @@ export interface SWUOpportunity {
 }
 
 export interface SWUOpportunityPhase {
-  type: SWUOpportunityPhaseType;
   startDate: Date;
   completionDate: Date;
   maxBudget: number;
@@ -120,9 +115,18 @@ export interface SWUTeamQuestion {
 
 export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
 
+// Create.
+
 export type CreateSWUOpportunityStatus
   = SWUOpportunityStatus.Published
   | SWUOpportunityStatus.Draft;
+
+export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate'> {
+  startDate: string;
+  completionDate: string;
+}
+
+export type CreateSWUTeamQuestionBody = Omit<SWUTeamQuestion, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
 
 export interface CreateRequestBody {
   title: string;
@@ -131,6 +135,7 @@ export interface CreateRequestBody {
   remoteDesc: string;
   location: string;
   totalMaxBudget: number;
+  minTeamMembers: number;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;
@@ -142,17 +147,31 @@ export interface CreateRequestBody {
   priceWeight: number;
   attachments: Id[];
   status: CreateSWUOpportunityStatus;
-  phases: SWUOpportunityPhase[];
-  teamQuestions: SWUTeamQuestion[];
+  inceptionPhase?: CreateSWUOpportunityPhaseBody;
+  prototypePhase?: CreateSWUOpportunityPhaseBody;
+  implementationPhase: CreateSWUOpportunityPhaseBody;
+  teamQuestions: CreateSWUTeamQuestionBody[];
 }
 
-export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'mandatorySkills' | 'optionalSkills' | 'phases' | 'teamQuestions' | 'attachments'> {
+export interface CreateSWUOpportunityPhaseValidationErrors extends Omit<ErrorTypeFrom<CreateSWUOpportunityPhaseBody>, 'requiredCapabilities'> {
+  requiredCapabilities?: string[][];
+}
+
+export interface CreateSWUTeamQuestionValidationErrors extends ErrorTypeFrom<CreateSWUTeamQuestionBody> {
+  parseFailure?: string[];
+}
+
+export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
-  phases?: string[][];
-  teamQuestions?: string[][];
+  inceptionPhase?: CreateSWUOpportunityPhaseValidationErrors;
+  prototypePhase?: CreateSWUOpportunityPhaseValidationErrors;
+  implementationPhase?: CreateSWUOpportunityPhaseValidationErrors;
+  teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
 }
+
+// Update.
 
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
@@ -181,12 +200,18 @@ export interface UpdateEditValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
 }
 
-export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'phases' | 'teamQuestions' | 'attachments'> {
+export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
-  phases?: string[][];
-  teamQuestions?: string[][];
+  inceptionPhase?: CreateSWUOpportunityPhaseValidationErrors;
+  prototypePhase?: CreateSWUOpportunityPhaseValidationErrors;
+  implementationPhase?: CreateSWUOpportunityPhaseValidationErrors;
+  teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
 }
 
-export type DeleteValidationErrors = BodyWithErrors;
+// Delete.
+
+export interface DeleteValidationErrors extends BodyWithErrors {
+  status?: string[];
+}
