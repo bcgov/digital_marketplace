@@ -22,12 +22,6 @@ export enum SWUOpportunityEvent {
   AddendumAdded = 'ADDENDUM_ADDED'
 }
 
-export enum SWUOpportunityPhaseType {
-  Inception = 'INCEPTION',
-  Prototype = 'PROTOTYPE',
-  Implementation = 'IMPLEMENTATION'
-}
-
 export interface SWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
