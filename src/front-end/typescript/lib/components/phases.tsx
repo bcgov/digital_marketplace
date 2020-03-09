@@ -67,9 +67,9 @@ export interface State extends Params {
 }
 
 export type InnerMsg =
-  ADT<'startDate', DateField.Msg> |
-  ADT<'completionDate', DateField.Msg> |
-  ADT<'maxBudget', NumberField.Msg>;
+  ADT<'startDate',       { childMsg: DateField.Msg; phaseIndex: number }> |
+  ADT<'completionDate',  { childMsg: DateField.Msg; phaseIndex: number }> |
+  ADT<'maxBudget',       { childMsg: NumberField.Msg; phaseIndex: number }>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -97,33 +97,33 @@ export const init: Init<Params, State> = async (initParams) => {
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
-  switch (msg.tag) {
 
+  switch (msg.tag) {
     case 'startDate':
       return updateComponentChild({
         state,
-        childStatePath: ['startDate'],
+        childStatePath: ['phases', `${msg.value.phaseIndex}`, 'startDate'],
         childUpdate: DateField.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt('startDate', value)
+        childMsg: msg.value.childMsg,
+        mapChildMsg: (value) => adt('startDate', { childMsg: value, phaseIndex: msg.value.phaseIndex } )
       });
 
     case 'completionDate':
       return updateComponentChild({
         state,
-        childStatePath: ['completionDate'],
+        childStatePath: ['phases', `${msg.value.phaseIndex}`, 'completionDate'],
         childUpdate: DateField.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt('completionDate', value)
+        childMsg: msg.value.childMsg,
+        mapChildMsg: (value) => adt('completionDate', { childMsg: value, phaseIndex: msg.value.phaseIndex } )
       });
 
     case 'maxBudget':
       return updateComponentChild({
         state,
-        childStatePath: ['maxBudget'],
+        childStatePath: ['phases', `${msg.value.phaseIndex}`, 'maxBudget'],
         childUpdate: NumberField.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt('maxBudget', value)
+        childMsg: msg.value.childMsg,
+        mapChildMsg: (value) => adt('maxBudget', { childMsg: value, phaseIndex: msg.value.phaseIndex } )
       });
 
     default:
@@ -159,13 +159,22 @@ export function getValues(state: Immutable<State>, phaseIndex: number): Values {
 //   }
 // }
 
-type Props = {
+type PublicProps = {
   state: State;
   dispatch: Dispatch<Msg>;
+
   disabled: boolean;
 };
 
-const StartingPhaseView: View<Props> = ({ state, dispatch, disabled }) => {
+type ChildProps = {
+  state: State;
+  dispatch: Dispatch<Msg>;
+
+  disabled: boolean;
+  phaseIndex: number;
+};
+
+const StartingPhaseView: View<PublicProps> = ({ state, dispatch, disabled }) => {
   return (
     <div className='pb-5 mb-3 border-bottom' >
       Starting Phase select goes here!
@@ -173,7 +182,7 @@ const StartingPhaseView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const TeamCapabilitiesView: View<Props> = ({ state, dispatch, disabled }) => {
+const TeamCapabilitiesView: View<ChildProps> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col>
@@ -187,7 +196,7 @@ const TeamCapabilitiesView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const PhaseDetailsView: View<PhaseState & Props> = ({ state, dispatch, disabled }) => {
+const PhaseDetailsView: View<PhaseState & ChildProps> = ({ state, dispatch, disabled, phaseIndex}) => {
   return (
     <Row className='py-4'>
       <Col sm='12'>
@@ -199,18 +208,18 @@ const PhaseDetailsView: View<PhaseState & Props> = ({ state, dispatch, disabled 
           required
           extraChildProps={{}}
           label='Phase start date'
-          state={state.phases[0].startDate}
+          state={state.phases[phaseIndex].startDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
+          dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, { childMsg: value, phaseIndex } ))} />
       </Col>
 
       <Col md='6' sm='12'>
         <DateField.view
           extraChildProps={{}}
           label='Phase completion date'
-          state={state.phases[0].completionDate}
+          state={state.phases[phaseIndex].completionDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
+          dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, { childMsg: value, phaseIndex } ))} />
       </Col>
 
       <Col sm='8'>
@@ -218,9 +227,9 @@ const PhaseDetailsView: View<PhaseState & Props> = ({ state, dispatch, disabled 
           required
           extraChildProps={{}}
           label='Phase max budget'
-          state={state.phases[0].maxBudget}
+          state={state.phases[phaseIndex].maxBudget}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, value => adt('maxBudget' as const, value))} />
+          dispatch={mapComponentDispatch(dispatch, value => adt('maxBudget' as const, { childMsg: value, phaseIndex } ))} />
       </Col>
 
     </Row>
@@ -244,7 +253,7 @@ export const AccordionView: View<AccordionProps> = (props) => {
   );
 };
 
-const PhaseView: View<PhaseState & Props> = (state) => {
+const PhaseView: View<PhaseState & ChildProps> = (state) => {
   return (
     <div>
       <div className='pt-3'>
@@ -259,40 +268,48 @@ const PhaseView: View<PhaseState & Props> = (state) => {
       <div>
         <ul>
           {
-            state.commonDeliverables.map( (deliverable) => {
-              return <li>{deliverable}</li>;
+            state.commonDeliverables.map( (deliverable, index) => {
+              return <li key={index}>{deliverable}</li>;
             })
           }
         </ul>
 
-        <PhaseDetailsView {...state} />
+    <PhaseDetailsView
+      phaseIndex={state.phaseIndex}
+      {...state} />
 
-        <TeamCapabilitiesView {...state} />
+        <TeamCapabilitiesView
+          phaseIndex={state.phaseIndex}
+          {...state} />
 
       </div>
     </div>
   );
 };
 
-const PhaseAccordionView: View<PhaseState & Props> = (state) => {
+const PhaseAccordionView: View<PhaseState & ChildProps> = (state) => {
+  const phaseIndex = state.phaseIndex;
+
   return (
     <AccordionView
       title={state.title}
       collapsed={state.collapsed}
     >
-      <PhaseView {...state} />
+      <PhaseView phaseIndex={phaseIndex} {...state} />
     </AccordionView>
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: View<PublicProps> = (props) => {
   return (
     <div>
       <StartingPhaseView {...props} />
 
-      { props.state.phases.map( (phase) => {
+      { props.state.phases.map( (phase, index) => {
           return (
             <PhaseAccordionView
+              key={index}
+              phaseIndex={index}
               dispatch={props.dispatch}
               state={props.state}
               disabled={false}
