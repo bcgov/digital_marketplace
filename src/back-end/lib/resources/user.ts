@@ -6,9 +6,9 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateFileRecord, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
-import { getString } from 'shared/lib';
+import { getString, getStringArray } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { DeleteValidationErrors } from 'shared/lib/resources/user';
+import { DeleteValidationErrors, UpdateCapabilitiesRequestBody } from 'shared/lib/resources/user';
 import { adminPermissionsToUserType, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
@@ -18,6 +18,7 @@ type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 export type ValidatedUpdateRequestBody
   = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'updateCapabilities', UpdateCapabilitiesRequestBody>
   | ADT<'acceptTerms'>
   | ADT<'updateNotifications', Date | null>
   | ADT<'reactivateUser'>
@@ -89,6 +90,11 @@ const resource: Resource = {
               avatarImageFile: getString(value, 'avatarImageFile') || undefined
             });
 
+          case 'updateCapabilities':
+            return adt('updateCapabilities', {
+              capabilities: getStringArray(value, 'capabilities')
+            });
+
           case 'acceptTerms':
             return adt('acceptTerms');
 
@@ -148,6 +154,24 @@ const resource: Resource = {
               });
             }
 
+          case 'updateCapabilities':
+            if (!permissions.updateUser(request.session, request.params.id)) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            const { capabilities } = request.body.value;
+            const validatedCapabilities = userValidation.validateCapabilities(capabilities);
+            if (isValid(validatedCapabilities)) {
+              return valid(adt('updateCapabilities' as const, {
+                capabilities: validatedCapabilities.value
+              }));
+            } else {
+              return invalid({
+                user: adt('updateCapabilities' as const, {
+                  capabilities: getInvalidValue(validatedCapabilities, undefined)
+                })
+              });
+            }
+
           case 'acceptTerms':
             if (!permissions.acceptTerms(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -190,6 +214,9 @@ const resource: Resource = {
           let dbResult: Validation<User, null>;
           switch (request.body.tag) {
             case 'updateProfile':
+              dbResult = await db.updateUser(connection, {...request.body.value, id: request.params.id });
+              break;
+            case 'updateCapabilities':
               dbResult = await db.updateUser(connection, {...request.body.value, id: request.params.id });
               break;
             case 'acceptTerms':

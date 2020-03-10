@@ -1,5 +1,7 @@
+import { uniq } from 'lodash';
+import SKILLS from 'shared/lib/data/skills';
 import { parseUserStatus, parseUserType, UserStatus, UserType } from 'shared/lib/resources/user';
-import { invalid, valid, validateGenericString, Validation } from 'shared/lib/validation';
+import { ArrayValidation, invalid, mapValid, valid, validateArray, validateGenericString, Validation } from 'shared/lib/validation';
 
 export { validateEmail } from 'shared/lib/validation';
 
@@ -19,4 +21,13 @@ export function validateUserType(type: string): Validation<UserType> {
 export function validateUserStatus(status: string): Validation<UserStatus> {
   const userStatus = parseUserStatus(status);
   return userStatus ? valid(userStatus) : invalid(['Invalid user status specified']);
+}
+
+export function validateCapability(raw: string): Validation<string> {
+  return SKILLS.includes(raw) ? valid(raw) : invalid(['Invalid capability specified.']);
+}
+
+export function validateCapabilities(raw: string[]): ArrayValidation<string> {
+  const validatedArray = validateArray(raw, validateCapability);
+  return mapValid(validatedArray, v => uniq(v));
 }
