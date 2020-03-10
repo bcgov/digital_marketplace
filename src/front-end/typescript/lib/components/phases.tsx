@@ -10,6 +10,12 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
 
+export interface Capability {
+  name: string;
+  pt: boolean;
+  checked: boolean;
+}
+
 interface PhaseState {
   title: string;
   description: string;
@@ -18,6 +24,8 @@ interface PhaseState {
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
+
+  capabilities: Capability[];
 
   collapsed: boolean;
 }
@@ -29,10 +37,59 @@ interface AccordionProps {
 }
 
 export async function InitPhase(title: string, description: string, commonDeliverables: string[]): Promise<PhaseState> {
+  const capabilities = [
+    {
+      name: 'Agile Coaching',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'Delivery Management',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'Frontend Development',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'Technical Architecture',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'User Research',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'Backend Development',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'DevOps Engineering',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'Security Engineering',
+      pt: false,
+      checked: false
+    },
+    {
+      name: 'User Experience Design',
+      pt: false,
+      checked: false
+    }
+  ];
+
   return {
     title,
     description,
     commonDeliverables,
+    capabilities,
     collapsed: false,
     startDate: immutable(await DateField.init({
       errors: [],
@@ -53,7 +110,7 @@ export async function InitPhase(title: string, description: string, commonDelive
     maxBudget: immutable(await NumberField.init({
       errors: [],
       child: {
-        value: 0,
+        value: null,
         id: ''
       }
     }))
@@ -67,9 +124,12 @@ export interface State extends Params {
 }
 
 export type InnerMsg =
-  ADT<'startDate',       { childMsg: DateField.Msg; phaseIndex: number }> |
-  ADT<'completionDate',  { childMsg: DateField.Msg; phaseIndex: number }> |
-  ADT<'maxBudget',       { childMsg: NumberField.Msg; phaseIndex: number }>;
+  ADT<'toggleCollapsed',   number>                                                    |
+  ADT<'toggleCapChecked',  { phaseIndex: number; capIndex: number; }>                 |
+  ADT<'setPtChecked',      { phaseIndex: number; capIndex: number; value: boolean; }> |
+  ADT<'startDate',         { childMsg: DateField.Msg; phaseIndex: number }>           |
+  ADT<'completionDate',    { childMsg: DateField.Msg; phaseIndex: number }>           |
+  ADT<'maxBudget',         { childMsg: NumberField.Msg; phaseIndex: number }>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -99,6 +159,24 @@ export const init: Init<Params, State> = async (initParams) => {
 export const update: Update<State, Msg> = ({ state, msg }) => {
 
   switch (msg.tag) {
+
+    case 'setPtChecked':
+      const phaseIndex2 = msg.value.phaseIndex; // Named phaseIndex2 because the compiler doesn't like phaseIndex below being shadowed
+      const capIndex2 = msg.value.capIndex;
+      state.phases[phaseIndex2].capabilities[capIndex2].pt = msg.value.value;
+      return [state];
+
+    case 'toggleCapChecked':
+      const phaseIndex1 = msg.value.phaseIndex; // Named phaseIndex1 because the compiler doesn't like phaseIndex below being shadowed
+      const capIndex = msg.value.capIndex;
+      state.phases[phaseIndex1].capabilities[capIndex].checked = !state.phases[phaseIndex1].capabilities[capIndex].checked;
+      return [state];
+
+    case 'toggleCollapsed':
+      const phaseIndex = msg.value;
+      state.phases[phaseIndex].collapsed = !state.phases[phaseIndex].collapsed;
+      return [state];
+
     case 'startDate':
       return updateComponentChild({
         state,
@@ -182,16 +260,53 @@ const StartingPhaseView: View<PublicProps> = ({ state, dispatch, disabled }) => 
   );
 };
 
-const TeamCapabilitiesView: View<ChildProps> = ({ state, dispatch, disabled }) => {
+const TeamCapabilitiesView: View<ChildProps> = (props) => {
+  const { state, dispatch } = props;
+  const phaseIndex = props.phaseIndex;
   return (
     <Row>
-      <Col>
+      <Col xs='12'>
         <h4>Team Capabilities</h4>
         <p>Select the capabilities that you will need during this phase and
           indicate whether you expect the need to be for part-time or
           full-time.</p>
-        <div>TODO(Jesse): How should this piece be implemented.  Checkboxes?</div>
       </Col>
+      {
+        state.phases[phaseIndex].capabilities.map((cap, capIndex) =>
+          <Col key={capIndex} xs='6' onClick={ () => { dispatch(adt('toggleCapChecked', {phaseIndex, capIndex})); } }>
+            <div className='d-flex justify-content-between p-3 border'>
+              <div >
+                <input type='checkbox' checked={cap.checked} onChange={() => null}/>
+                <span className='pl-2'>{cap.name}</span>
+              </div>
+              {
+                cap.checked ?
+                <div>
+                  <strong className={`p-1
+                                    border
+                                    rounded-left
+                                    font-size-very-small
+                                    ${cap.pt ? 'bg-purple-light text-white' : '' }`}  // TODO(tags: design): light-purple color for this one?
+                    onClick={ (e) => { dispatch(adt('setPtChecked', {phaseIndex, capIndex, value: true})); e.preventDefault(); e.stopPropagation(); } }
+                  > P/T
+                  </strong>
+
+                  <strong className={`p-1
+                                    border
+                                    rounded-right
+                                    font-size-very-small
+                                    ${cap.pt ? '' : 'bg-purple text-white'}`}
+                    onClick={ (e) => { dispatch(adt('setPtChecked', {phaseIndex, capIndex, value: false})); e.preventDefault(); e.stopPropagation(); } }
+                  > F/T
+                  </strong>
+                </div>
+                :
+                null
+              }
+            </div>
+          </Col>
+        )
+      }
     </Row>
   );
 };
@@ -225,7 +340,8 @@ const PhaseDetailsView: View<PhaseState & ChildProps> = ({ state, dispatch, disa
       <Col sm='8'>
         <NumberField.view
           required
-          extraChildProps={{}}
+          extraChildProps={{ prefix: '$' }}
+          placeholder='0.00'
           label='Phase max budget'
           state={state.phases[phaseIndex].maxBudget}
           disabled={disabled}
@@ -236,13 +352,21 @@ const PhaseDetailsView: View<PhaseState & ChildProps> = ({ state, dispatch, disa
   );
 };
 
-export const AccordionView: View<AccordionProps> = (props) => {
+export const AccordionView: View<Omit<ChildProps & AccordionProps, 'state' | 'disabled'>> = (props) => {
+  const headerColor = 'blue-dark';
   return (
     <div className='pb-4 pt-3'>
 
-      <div>
-        <Icon name='paperclip' />
-        <span className='pl-3 h3'>{props.title}</span>
+      <div className='d-flex align-items-center justify-content-between' onClick={ () => props.dispatch(adt('toggleCollapsed', props.phaseIndex)) }>
+        <div>
+          <Icon color={headerColor} name='paperclip' />
+          <span className={`text-${headerColor} pl-3 h3`}>{props.title}</span>
+        </div>
+        {
+          props.collapsed ?
+          <Icon color={headerColor} className='justify-self-end' name='paperclip' /> :
+          <Icon color={headerColor} className='justify-self-end' name='save' />
+        }
       </div>
 
       <div className={`${ props.collapsed ? 'd-none' : null }`}>
@@ -292,8 +416,10 @@ const PhaseAccordionView: View<PhaseState & ChildProps> = (state) => {
 
   return (
     <AccordionView
+      phaseIndex={phaseIndex}
       title={state.title}
       collapsed={state.collapsed}
+      dispatch={state.dispatch}
     >
       <PhaseView phaseIndex={phaseIndex} {...state} />
     </AccordionView>
