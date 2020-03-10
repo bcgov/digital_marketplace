@@ -52,6 +52,7 @@ $blue-dark-alt-2: #0F4C8B;
 $blue-light:      #E7EDF3;
 $blue-light-alt:  #E9F5FB;
 $purple:          #52489C;
+$purple-light:    lighten($purple, 20);
 $yellow:          #FCBA19;
 $red:             #DC3545;
 $green:           #2E8540;
@@ -68,6 +69,7 @@ $colors:             (
   'blue-light':      $blue-light,
   'blue-light-alt':  $blue-light-alt,
   'purple':          $purple,
+  'purple-light':    $purple-light,
   'yellow':          $yellow,
   'red':             $red,
   'green':           $green
@@ -447,6 +449,10 @@ nav.navbar .nav-link:hover {
 
 .o-100 {
   opacity: 1 !important;
+}
+
+.font-size-very-small {
+  font-size: $font-size-sm*0.8;
 }
 
 .font-size-small {
