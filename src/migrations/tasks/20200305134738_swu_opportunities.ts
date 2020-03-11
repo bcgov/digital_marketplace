@@ -6,6 +6,7 @@ const logger = makeDomainLogger(consoleAdapter, 'migrations');
 
 enum SWUOpportunityStatus {
   Draft = 'DRAFT',
+  UnderReview = 'UNDER_REVIEW',
   Published = 'PUBLISHED',
   EvaluationTeamQuestions = 'EVAL_QUESTIONS',
   EvaluationCodeChallenge = 'EVAL_CC',
@@ -25,16 +26,6 @@ enum SWUOpportunityPhaseType {
   Prototype = 'PROTOTYPE',
   Implementation = 'IMPLEMENTATION'
 }
-
-const SKILLS = [
-  'Delivery Management',
-  'Front-End Development',
-  'Back-End Development',
-  'DevOps',
-  'User Experience Design',
-  'User Interface Design',
-  'User Research'
-];
 
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable('swuOpportunities', table => {
@@ -124,7 +115,7 @@ export async function up(connection: Knex): Promise<void> {
 
   await connection.schema.createTable('swuPhaseCapabilities', table => {
     table.uuid('phase').references('id').inTable('swuOpportunityPhases').notNullable().onDelete('CASCADE');
-    table.enum('capability', SKILLS).notNullable();
+    table.string('capability').notNullable();
     table.boolean('fullTime').defaultTo(false).notNullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdBy').references('id').inTable('users').notNullable();

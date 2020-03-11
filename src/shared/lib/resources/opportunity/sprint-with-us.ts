@@ -8,6 +8,7 @@ export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
 
 export enum SWUOpportunityStatus {
   Draft = 'DRAFT',
+  UnderReview = 'UNDER_REVIEW',
   Published = 'PUBLISHED',
   EvaluationTeamQuestions = 'EVAL_QUESTIONS',
   EvaluationCodeChallenge = 'EVAL_CC',
@@ -119,6 +120,7 @@ export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdA
 
 export type CreateSWUOpportunityStatus
   = SWUOpportunityStatus.Published
+  | SWUOpportunityStatus.UnderReview
   | SWUOpportunityStatus.Draft;
 
 export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate'> {
@@ -175,8 +177,8 @@ export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequest
 
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
+  | ADT<'submitForReview', string>
   | ADT<'publish', string>
-  | ADT<'evaluateQuestions', string>
   | ADT<'evaluateCodeChallenge', string>
   | ADT<'evaluateTeamScenario', string>
   | ADT<'suspend', string>
@@ -187,8 +189,8 @@ export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
+  | ADT<'submitForReview', string[]>
   | ADT<'publish', string[]>
-  | ADT<'evaluateQuestions', string[]>
   | ADT<'evaluateCodeChallenge', string[]>
   | ADT<'evaluateTeamScenario', string[]>
   | ADT<'suspend', string[]>
