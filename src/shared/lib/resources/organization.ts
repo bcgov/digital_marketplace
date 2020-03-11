@@ -1,6 +1,6 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
-import { BodyWithErrors, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export interface Organization {
@@ -42,8 +42,21 @@ export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt'
 
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
 
-export type UpdateRequestBody = CreateRequestBody;
+export type UpdateRequestBody
+  = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'acceptSWUTerms'>;
 
-export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody> & BodyWithErrors;
+export type UpdateProfileRequestBody = CreateRequestBody;
+
+export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+
+type UpdateADTErrors
+  = ADT<'updateProfile', UpdateProfileValidationErrors>
+  | ADT<'acceptSWUTerms', string[]>
+  | ADT<'parseFailure'>;
+
+export interface UpdateValidationErrors extends BodyWithErrors {
+  organization?: UpdateADTErrors;
+}
 
 export type DeleteValidationErrors = BodyWithErrors;
