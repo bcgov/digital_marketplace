@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 import { dateToMidnight, getNumber, getString, getStringArray, isDateInThePast } from 'shared/lib';
-import SKILLS from 'shared/lib/data/skills';
+import CAPABILITIES from 'shared/lib/data/capabilities';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, valid, validateArray, validateArrayCustom, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
@@ -43,11 +43,11 @@ export function validateSWUOpportunityPhaseMaxBudget(raw: number, maxTotalBudget
 }
 
 export function validateCapability(raw: string): Validation<string> {
-  return SKILLS.includes(raw) ? valid(raw) : invalid(['Please select a skill from the list.']);
+  return CAPABILITIES.includes(raw) ? valid(raw) : invalid(['Please select a capability from the list.']);
 }
 
 export function validateSWUOpportunityPhaseRequiredCapabilities(raw: string[]): ArrayValidation<string> {
-  if (!raw.length) { return invalid([['Please select at least one skill.']]); }
+  if (!raw.length) { return invalid([['Please select at least one capability.']]); }
   const validatedArray = validateArray(raw, v => validateCapability(v));
   return mapValid(validatedArray, capabilities => uniq(capabilities));
 }
