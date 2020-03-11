@@ -159,7 +159,9 @@ export interface CreateValidationErrors extends BodyWithErrors {
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
-  | ADT<'score', string>
+  | ADT<'scoreQuestions', number>
+  | ADT<'scoreCodeChallenge', number>
+  | ADT<'scoreTeamScenario', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
   | ADT<'withraw', string>;
@@ -169,7 +171,9 @@ export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'sta
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
-  | ADT<'score', string[]>
+  | ADT<'scoreQuestions', string[]>
+  | ADT<'scoreCodeChallenge', string[]>
+  | ADT<'scoreTeamScenario', string[]>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>
