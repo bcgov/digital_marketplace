@@ -35,9 +35,10 @@ async function rawAffiliationToAffiliation(connection: Connection, params: RawAf
 }
 
 async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliation): Promise<AffiliationSlim> {
-  const { id, organization: orgId, membershipType } = params;
+  const { id, organization: orgId, membershipType, user: userId } = params;
   const organization = getValidValue(await readOneOrganization(connection, orgId), null);
-  if (!organization) {
+  const user = getValidValue(await readOneUser(connection, userId), null);
+  if (!organization || !user) {
     throw new Error('unable to process affiliation'); // Will be caught by calling function
   }
   return {
@@ -46,6 +47,13 @@ async function rawAffiliationToAffiliationSlim(connection: Connection, params: R
     organization: {
       id: organization.id,
       legalName: organization.legalName
+    },
+    user: {
+      id: user.id,
+      status: user.status,
+      name: user.name,
+      avatarImageFile: user.avatarImageFile,
+      capabilities: user.capabilities
     }
   };
 }
@@ -91,6 +99,19 @@ export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connec
       'organizations.active': true
     })
     .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
+  return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw))));
+});
+
+export const readManyAffiliationsForOrganization = tryDb<[Id], AffiliationSlim[]>(async (connection, orgId) => {
+  const results: RawAffiliation[] = await connection<RawAffiliation>('affiliations')
+    .join('users', 'affiliations.user', '=', 'users.id')
+    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+    .where({
+      'affiliations.organization': orgId,
+      'organizations.active': true
+    })
+    .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
+    .select('affiliations.*');
   return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw))));
 });
 

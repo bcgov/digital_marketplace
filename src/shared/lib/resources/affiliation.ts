@@ -28,6 +28,7 @@ export interface AffiliationSlim {
   id: Id;
   organization: Pick<Organization, 'id' | 'legalName'>;
   membershipType: MembershipType;
+  user: Pick<User, 'id' | 'status' | 'name' | 'avatarImageFile' | 'capabilities'>;
 }
 
 export interface CreateRequestBody {
