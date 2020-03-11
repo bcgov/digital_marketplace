@@ -76,6 +76,7 @@ export async function up(connection: Knex): Promise<void> {
     table.uuid('proposal').references('id').inTable('swuProposals').notNullable().onDelete('CASCADE');
     table.enu('phase', Object.values(SWUProposalPhaseType)).notNullable();
     table.integer('proposedCost').notNullable();
+    table.unique(['proposal', 'phase']);
   });
   logger.info('Created swuProposalPhases table.');
 
@@ -107,6 +108,12 @@ export async function up(connection: Knex): Promise<void> {
   logger.info('Created swuTeamQuestionResponses table.');
 }
 
-// tslint:disable-next-line: no-empty
 export async function down(connection: Knex): Promise<void> {
+  await connection.schema.dropTable('swuTeamQuestionResponses');
+  await connection.schema.dropTable('swuProposalReferences');
+  await connection.schema.dropTable('swuProposalTeamMembers');
+  await connection.schema.dropTable('swuProposalPhases');
+  await connection.schema.dropTable('swuProposalAttachments');
+  await connection.schema.dropTable('swuProposalStatuses');
+  await connection.schema.dropTable('swuProposals');
 }
