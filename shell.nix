@@ -34,7 +34,7 @@ let
 in
 
   pkgs.mkShell {
-    buildInputs = with pkgs; [ nodejs-10_x sass postgresql100 docker_compose docker ctags ];
+    buildInputs = with pkgs; [ nodejs-10_x sass postgresql100 docker_compose docker openshift ctags ];
     shellHook = ''
       [ -f ~/.bashrc ] && source ~/.bashrc
       #npm install
