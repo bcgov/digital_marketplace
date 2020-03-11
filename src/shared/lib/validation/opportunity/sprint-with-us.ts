@@ -15,7 +15,7 @@ export function validateSWUOpportunityStatus(raw: string, isOneOf: SWUOpportunit
 }
 
 export function validateCreateSWUOpportunityStatus(raw: string): Validation<CreateSWUOpportunityStatus> {
-  return validateSWUOpportunityStatus(raw, [SWUOpportunityStatus.Draft, SWUOpportunityStatus.Published]) as Validation<CreateSWUOpportunityStatus>;
+  return validateSWUOpportunityStatus(raw, [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published]) as Validation<CreateSWUOpportunityStatus>;
 }
 
 export function validateSWUOpportunityInceptionPhaseStartDate(raw: string, assignmentDate: Date): Validation<Date> {
