@@ -1,9 +1,9 @@
-import CAPABILITIES from 'back-end/../shared/lib/data/capabilities';
 import { generateUuid } from 'back-end/lib';
 import { Connection, tryDb } from 'back-end/lib/db';
 import { createAffiliation, readManyAffiliationsForOrganization } from 'back-end/lib/db/affiliation';
 import { readOneFileById } from 'back-end/lib/db/file';
 import { spread, union } from 'lodash';
+import CAPABILITIES from 'shared/lib/data/capabilities';
 import { valid } from 'shared/lib/http';
 import { MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
