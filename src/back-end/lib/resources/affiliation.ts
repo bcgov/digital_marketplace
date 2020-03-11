@@ -5,7 +5,7 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAffiliationId, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
-import { Affiliation, AffiliationSlim, CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationMember, AffiliationSlim, CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
 import { Session } from 'shared/lib/resources/session';
 import { UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -48,15 +48,15 @@ const resource: Resource = {
   routeNamespace: 'affiliations',
 
   readMany(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<AffiliationSlim[] | string[]>, Session>(async request => {
-      const respond = (code: number, body: AffiliationSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    return nullRequestBodyHandler<JsonResponseBody<AffiliationSlim[] | AffiliationMember[] | string[]>, Session>(async request => {
+      const respond = (code: number, body: AffiliationSlim[] | AffiliationMember[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       // If a query parameter scoping to single org was provided, return affiliations for that org (must be admin or owner for specified org)
       if (request.query.organization) {
         const validatedOrganization = await validateOrganizationId(connection, request.query.organization, false);
         if (isInvalid(validatedOrganization)) {
           return respond(404, validatedOrganization.value);
         }
-        if (!request.session.user || !permissions.readManyAffiliationsForOrganization(connection, request.session, request.params.org)) {
+        if (!request.session.user || !permissions.readManyAffiliationsForOrganization(connection, request.session, request.query.organization)) {
           return respond(401, [permissions.ERROR_MESSAGE]);
         }
         const dbResult = await db.readManyAffiliationsForOrganization(connection, validatedOrganization.value.id);

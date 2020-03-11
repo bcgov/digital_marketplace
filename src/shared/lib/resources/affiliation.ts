@@ -26,9 +26,15 @@ export interface Affiliation {
 // Used when returning a list of the current user's affiliations
 export interface AffiliationSlim {
   id: Id;
-  organization: Pick<Organization, 'id' | 'legalName'>;
   membershipType: MembershipType;
-  user: Pick<User, 'id' | 'status' | 'name' | 'avatarImageFile' | 'capabilities'>;
+  organization: Pick<Organization, 'id' | 'legalName'>;
+}
+
+export interface AffiliationMember {
+  id: Id;
+  membershipType: MembershipType;
+  membershipStatus: MembershipStatus;
+  user: Pick<User, 'id' | 'name' | 'avatarImageFile' | 'capabilities'>;
 }
 
 export interface CreateRequestBody {

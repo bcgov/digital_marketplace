@@ -24,16 +24,19 @@ export interface Organization {
   owner: UserSlim;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
+  acceptedSWUTerms: Date | null;
+  swuQualified: boolean;
 }
 
 export interface OrganizationSlim {
   id: Id;
   legalName: string;
   logoImageFile?: FileRecord;
-  owner?: UserSlim;
+  owner?: UserSlim;       // Admin/owner only
+  swuQualified?: boolean; // Admin/owner only
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner'> {
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualified'> {
   logoImageFile?: Id;
 }
 

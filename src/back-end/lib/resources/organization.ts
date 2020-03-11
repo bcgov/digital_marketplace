@@ -45,7 +45,7 @@ const resource: Resource = {
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[] | string[]>, Session>(async request => {
       const respond = (code: number, body: OrganizationSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-      // Pass session in so we can add owner name for admin/owner only
+      // Pass session in so we can add owner name, swuQualified status for admin/owner only
       const dbResult = await db.readManyOrganizations(connection, request.session);
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
