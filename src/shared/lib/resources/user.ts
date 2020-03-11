@@ -70,13 +70,9 @@ export interface UpdateProfileRequestBody {
   avatarImageFile?: Id;
 }
 
-export interface UpdateCapabilitiesRequestBody {
-  capabilities: string[];
-}
-
 export type UpdateRequestBody
   = ADT<'updateProfile', UpdateProfileRequestBody>
-  | ADT<'updateCapabilities', UpdateCapabilitiesRequestBody>
+  | ADT<'updateCapabilities', string[]>
   | ADT<'acceptTerms'>
   | ADT<'updateNotifications', boolean>
   | ADT<'reactivateUser'>
@@ -84,13 +80,9 @@ export type UpdateRequestBody
 
 export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
 
-export interface UpdateCapabilitiesValidationErrors {
-  capabilities?: string[][];
-}
-
 type UpdateADTErrors
   = ADT<'updateProfile', UpdateProfileValidationErrors>
-  | ADT<'updateCapabilities', UpdateCapabilitiesValidationErrors>
+  | ADT<'updateCapabilities', string[][]>
   | ADT<'acceptTerms', string[]>
   | ADT<'updateNotifications', string[]>
   | ADT<'updateAdminPermissions', string[]>

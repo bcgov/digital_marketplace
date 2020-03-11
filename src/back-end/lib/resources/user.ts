@@ -6,19 +6,19 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateFileRecord, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
-import { getString, getStringArray } from 'shared/lib';
+import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { DeleteValidationErrors, UpdateCapabilitiesRequestBody } from 'shared/lib/resources/user';
-import { adminPermissionsToUserType, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { adminPermissionsToUserType, DeleteValidationErrors, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
+import { isArray } from 'util';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 export type ValidatedUpdateRequestBody
   = ADT<'updateProfile', UpdateProfileRequestBody>
-  | ADT<'updateCapabilities', UpdateCapabilitiesRequestBody>
+  | ADT<'updateCapabilities', string[]>
   | ADT<'acceptTerms'>
   | ADT<'updateNotifications', Date | null>
   | ADT<'reactivateUser'>
@@ -91,9 +91,11 @@ const resource: Resource = {
             });
 
           case 'updateCapabilities':
-            return adt('updateCapabilities', {
-              capabilities: getStringArray(value, 'capabilities')
-            });
+            if (isArray(value)) {
+              return adt('updateCapabilities', value);
+            } else {
+              return null;
+            }
 
           case 'acceptTerms':
             return adt('acceptTerms');
@@ -158,17 +160,12 @@ const resource: Resource = {
             if (!permissions.updateUser(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const { capabilities } = request.body.value;
-            const validatedCapabilities = userValidation.validateCapabilities(capabilities);
+            const validatedCapabilities = userValidation.validateCapabilities(request.body.value);
             if (isValid(validatedCapabilities)) {
-              return valid(adt('updateCapabilities' as const, {
-                capabilities: validatedCapabilities.value
-              }));
+              return valid(adt('updateCapabilities' as const, validatedCapabilities.value));
             } else {
               return invalid({
-                user: adt('updateCapabilities' as const, {
-                  capabilities: getInvalidValue(validatedCapabilities, undefined)
-                })
+                user: adt('updateCapabilities' as const, getInvalidValue(validatedCapabilities, undefined) as string[][])
               });
             }
 
@@ -217,7 +214,7 @@ const resource: Resource = {
               dbResult = await db.updateUser(connection, {...request.body.value, id: request.params.id });
               break;
             case 'updateCapabilities':
-              dbResult = await db.updateUser(connection, {...request.body.value, id: request.params.id });
+              dbResult = await db.updateUser(connection, { capabilities: request.body.value, id: request.params.id });
               break;
             case 'acceptTerms':
               dbResult = await db.updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
