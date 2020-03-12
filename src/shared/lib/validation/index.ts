@@ -1,7 +1,8 @@
 import * as immutable from 'immutable';
-import { isEmpty } from 'lodash';
+import { isEmpty, uniq } from 'lodash';
 import moment from 'moment';
 import { compareDates, formatAmount, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
+import CAPABILITIES from 'shared/lib/data/capabilities';
 import { adt, ADT, Id } from 'shared/lib/types';
 
 export type ErrorTypeFrom<T> = {
@@ -243,4 +244,15 @@ export function validateUUID(raw: string): Validation<Id> {
   } else {
     return valid(raw);
   }
+}
+
+// Validate capabilities for SWU opportunities and proposals
+export function validateCapability(raw: string): Validation<string> {
+  return CAPABILITIES.includes(raw) ? valid(raw) : invalid(['Please select a capability from the list.']);
+}
+
+export function validateCapabilities(raw: string[]): ArrayValidation<string> {
+  if (!raw.length) { return invalid([['Please select at least one capability.']]); }
+  const validatedArray = validateArray(raw, validateCapability);
+  return mapValid(validatedArray, v => uniq(v));
 }
