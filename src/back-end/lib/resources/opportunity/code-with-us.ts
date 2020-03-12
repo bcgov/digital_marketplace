@@ -349,6 +349,13 @@ const resource: Resource = {
                     attachments
             } = request.body.value;
 
+            // CWU Opportunities can only be edited if they are in DRAFT, PUBLISHED, or SUSPENDED
+            if (![CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published, CWUOpportunityStatus.Suspended].includes(cwuOpportunity.status)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+
             // Attachments must be validated for both drafts and published opportunities.
             const validatedAttachments = await validateAttachments(connection, attachments);
             if (isInvalid(validatedAttachments)) {
