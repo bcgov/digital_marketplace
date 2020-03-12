@@ -165,7 +165,7 @@ const resource: Resource = {
               return valid(adt('updateCapabilities' as const, validatedCapabilities.value));
             } else {
               return invalid({
-                user: adt('updateCapabilities' as const, getInvalidValue(validatedCapabilities, undefined) as string[][])
+                user: adt('updateCapabilities' as const, getInvalidValue(validatedCapabilities, []) as string[][])
               });
             }
 
