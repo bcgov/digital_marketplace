@@ -13,7 +13,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareNumbers } from 'shared/lib';
 import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName, isTerminalCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -70,12 +70,12 @@ const init: Init<Tab.Params, State> = async params => {
     showModal: null,
     canViewProposals,
     // Determine whether the "Award" button should be shown at all.
-    canProposalsBeAwarded: proposals.reduce((acc, p) =>
-      // Can be awarded if...
-      // - Opportunity has the appropriate status
-      // - All proposals have been Awarded/NotAwarded/Disqualified/Withdrawn/Evaluated.
-      acc && canCWUOpportunityBeAwarded(params.opportunity) && (isTerminalCWUProposalStatus(p.status) || canCWUProposalBeAwarded(p)),
-      true as boolean
+    // Can be awarded if...
+    // - Opportunity has the appropriate status; and
+    // - At least one proposal can be awarded.
+    canProposalsBeAwarded: canCWUOpportunityBeAwarded(params.opportunity) && proposals.reduce((acc, p) =>
+      acc || canCWUProposalBeAwarded(p),
+      false as boolean
     ),
     proposals,
     table: immutable(await Table.init({
