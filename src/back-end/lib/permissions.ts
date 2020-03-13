@@ -112,6 +112,11 @@ export function readManyAffiliations(session: Session): boolean {
   return isVendor(session);
 }
 
+export async function readManyAffiliationsForOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  // Membership lists for organizations can only be read by admins or organization owner
+  return isAdmin(session) || (!!session.user && await isUserOwnerOfOrg(connection, session.user, orgId));
+}
+
 export async function createAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   // New affiliations can be created only by organization owners, or admins
   return isAdmin(session) || (!!session.user && await isUserOwnerOfOrg(connection, session.user, orgId));
