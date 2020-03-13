@@ -11,7 +11,7 @@ import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { CreateRequestBody, Organization, UpdateRequestBody } from 'shared/lib/resources/organization';
+import { CreateRequestBody, Organization, UpdateProfileRequestBody, UpdateProfileValidationErrors } from 'shared/lib/resources/organization';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom, invalid, valid, validateThenMapValid, Validation } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
@@ -529,7 +529,7 @@ export const view: View<Props> = props => {
 interface PersistUpdateParams {
   state: Immutable<State>;
   orgId: Id;
-  extraBody: Omit<UpdateRequestBody, keyof Values>;
+  extraBody: Omit<UpdateProfileRequestBody, keyof Values>;
 }
 
 type PersistParams
@@ -563,7 +563,7 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
   }
   values.newLogoImage = undefined; // So this property isn't passed to back-end.
   // Make the back-end request.
-  const result = await (() => {
+  const result = await (async () => {
     switch (params.tag) {
       case 'create':
         return api.organizations.create({
@@ -571,11 +571,20 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
           logoImageFile
         });
       case 'update':
-        return api.organizations.update(params.value.orgId, {
+        const updateResult = await api.organizations.update(params.value.orgId, adt('updateProfile', {
           ...params.value.extraBody,
           ...values,
           logoImageFile
-        });
+        }));
+        if (api.isInvalid(updateResult)) {
+          if (updateResult.value.organization?.tag === 'updateProfile') {
+            return invalid(updateResult.value.organization.value);
+          } else {
+            return invalid({} as UpdateProfileValidationErrors);
+          }
+        } else {
+          return updateResult;
+        }
     }
   })();
   // Handle the back-end response.
