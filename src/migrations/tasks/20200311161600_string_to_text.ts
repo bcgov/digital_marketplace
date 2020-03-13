@@ -128,8 +128,8 @@ export async function up(connection: Knex): Promise<void> {
 
   await connection.schema.alterTable('users', table => {
     table.text('name').notNullable().alter();
-    table.text('email').notNullable().alter();
-    table.text('jobTitle').notNullable().alter();
+    table.text('email').alter();
+    table.text('jobTitle').alter();
     table.text('idpUsername').notNullable().alter();
     table.text('name').notNullable().alter();
   });
@@ -265,8 +265,8 @@ export async function down(connection: Knex): Promise<void> {
 
   await connection.schema.alterTable('users', table => {
     table.string('name').notNullable().alter();
-    table.string('email').notNullable().alter();
-    table.string('jobTitle').notNullable().alter();
+    table.string('email').alter();
+    table.string('jobTitle').alter();
     table.string('idpUsername').notNullable().alter();
     table.string('name').notNullable().alter();
   });
