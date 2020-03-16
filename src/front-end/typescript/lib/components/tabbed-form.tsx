@@ -1,7 +1,7 @@
 import { DROPDOWN_CARET_SIZE } from 'front-end/config';
 import { Component, ComponentViewProps, Immutable, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement, rightPlacement } from 'front-end/lib/views/link';
+import Link, { emptyIconLinkSymbol, iconLinkSymbol, leftPlacement, rightPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Dropdown, DropdownMenu, DropdownToggle, Nav } from 'reactstrap';
 import { ADT, adt } from 'shared/lib/types';
@@ -89,7 +89,7 @@ export interface Props<TabId> extends ComponentViewProps<State<TabId>, Msg<TabId
 }
 
 export function view<TabId>(): View<Props<TabId>> {
-  const Header: View<Props<TabId>> = ({ valid, disabled, state, dispatch, getTabLabel, isTabValid }) => {
+  const Header: View<Props<TabId>> = ({ valid, state, dispatch, getTabLabel, isTabValid }) => {
     const activeTab = getActiveTab(state);
     if (!activeTab) { return null; }
     return (
@@ -100,7 +100,6 @@ export function view<TabId>(): View<Props<TabId>> {
               <Link
                 symbol_={leftPlacement(iconLinkSymbol(valid ? 'check-circle' : 'exclamation-circle'))}
                 symbolClassName={valid ? 'text-success' : 'text-warning'}
-                disabled={disabled}
                 color='body'>
                 {getTabLabel(activeTab)}
               </Link>
@@ -110,8 +109,8 @@ export function view<TabId>(): View<Props<TabId>> {
               {state.tabs.map((tab, i) => (
                 <div key={`form-tab-dropdown-item-${i}`} className='dropdown-item d-flex align-items-center flex-nowrap pl-3'>
                   <Link
-                    symbol_={leftPlacement(iconLinkSymbol(isTabValid(tab) ? 'check-circle' : 'exclamation-circle'))}
-                    symbolClassName={isTabValid(tab) ? 'text-success' : 'text-warning'}
+                    symbol_={leftPlacement(isTabValid(tab) ? emptyIconLinkSymbol() : iconLinkSymbol('exclamation-circle'))}
+                    symbolClassName='text-warning'
                     onClick={() => dispatch(adt('setActiveTab', tab))}
                     color='body'>
                     {getTabLabel(tab)}
