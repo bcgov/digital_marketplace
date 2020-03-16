@@ -1,7 +1,7 @@
 import { DROPDOWN_CARET_SIZE } from 'front-end/config';
 import { Component, ComponentViewProps, Immutable, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
-import Link, { emptyIconLinkSymbol, iconLinkSymbol, leftPlacement, rightPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Dropdown, DropdownMenu, DropdownToggle, Nav } from 'reactstrap';
 import { ADT, adt } from 'shared/lib/types';
@@ -65,13 +65,17 @@ export function update<TabId>(): Update<State<TabId>, Msg<TabId>> {
       case 'toggleDropdown':
         return [state.update('isDropdownOpen', v => !v)];
       case 'setActiveTab':
-        return [state.set('activeTab', msg.value)];
+        return [state
+          .set('isDropdownOpen', false)
+          .set('activeTab', msg.value)];
       case 'next':
-        return [state.set('activeTab', getNextTab(state) || state.activeTab)];
+        return [state
+          .set('isDropdownOpen', false)
+          .set('activeTab', getNextTab(state) || state.activeTab)];
       case 'previous':
-        return [state.set('activeTab', getPreviousTab(state) || state.activeTab)];
-      default:
-        return [state];
+        return [state
+          .set('isDropdownOpen', false)
+          .set('activeTab', getPreviousTab(state) || state.activeTab)];
     }
   };
 }
@@ -84,10 +88,6 @@ export interface Props<TabId> extends ComponentViewProps<State<TabId>, Msg<TabId
   isTabValid(tabId: TabId): boolean;
 }
 
-const WarningIcon: View<{}> = () => {
-  return (<Icon name='exclamation-circle' color='warning' className='mr-2' />);
-};
-
 export function view<TabId>(): View<Props<TabId>> {
   const Header: View<Props<TabId>> = ({ valid, disabled, state, dispatch, getTabLabel, isTabValid }) => {
     const activeTab = getActiveTab(state);
@@ -96,24 +96,22 @@ export function view<TabId>(): View<Props<TabId>> {
       <div className='d-flex mb-5'>
         <Nav tabs className='flex-grow-1 flex-nowrap'>
           <Dropdown nav isOpen={state.isDropdownOpen} toggle={() => dispatch(adt('toggleDropdown'))}>
-            <DropdownToggle tag='div' className='d-flex align-items-center flex-nowrap'>
-              {valid ? null : (<WarningIcon />)}
+            <DropdownToggle tag='div' nav className='d-flex align-items-center flex-nowrap active'>
               <Link
-                symbol_={rightPlacement(iconLinkSymbol('caret'))}
-                symbolClassName='mr-n1'
-                className='dropdown-toggle'
-                iconSymbolSize={DROPDOWN_CARET_SIZE}
+                symbol_={leftPlacement(iconLinkSymbol(valid ? 'check-circle' : 'exclamation-circle'))}
+                symbolClassName={valid ? 'text-success' : 'text-warning'}
                 disabled={disabled}
                 color='body'>
                 {getTabLabel(activeTab)}
               </Link>
+              <Icon name='caret' color='body' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
             </DropdownToggle>
             <DropdownMenu>
               {state.tabs.map((tab, i) => (
-                <div key={`form-tab-dropdown-item-${i}`} className='dropdown-item d-flex align-items-center flex-nowrap'>
+                <div key={`form-tab-dropdown-item-${i}`} className='dropdown-item d-flex align-items-center flex-nowrap pl-3'>
                   <Link
-                    symbol_={leftPlacement(isTabValid(tab) ? emptyIconLinkSymbol() : iconLinkSymbol('exclamation-circle'))}
-                    symbolClassName='text-warning'
+                    symbol_={leftPlacement(iconLinkSymbol(isTabValid(tab) ? 'check-circle' : 'exclamation-circle'))}
+                    symbolClassName={isTabValid(tab) ? 'text-success' : 'text-warning'}
                     onClick={() => dispatch(adt('setActiveTab', tab))}
                     color='body'>
                     {getTabLabel(tab)}
@@ -129,13 +127,13 @@ export function view<TabId>(): View<Props<TabId>> {
 
   const Footer: View<Props<TabId>> = ({ state, dispatch }) => {
     return (
-      <div>
-        {showNextButton(state)
-          ? (<Link button outline color='primary' symbol_={rightPlacement(iconLinkSymbol('paperclip'))} onClick={() => dispatch(adt('next'))}>Next</Link>)
-          : null}
+      <div className='mt-5 d-flex flex-nowrap justify-content-between align-items-center'>
         {showPreviousButton(state)
-          ? (<Link button outline color='info' symbol_={leftPlacement(iconLinkSymbol('paperclip'))} onClick={() => dispatch(adt('previous'))}>Previous</Link>)
-          : null}
+          ? (<Link button outline color='info' symbol_={leftPlacement(iconLinkSymbol('arrow-left'))} onClick={() => dispatch(adt('previous'))}>Previous</Link>)
+          : (<div></div>)}
+        {showNextButton(state)
+          ? (<Link button outline color='primary' symbol_={rightPlacement(iconLinkSymbol('arrow-right'))} onClick={() => dispatch(adt('next'))}>Next</Link>)
+          : (<div></div>)}
       </div>
     );
   };

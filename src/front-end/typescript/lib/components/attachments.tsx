@@ -131,15 +131,16 @@ interface Props extends ComponentViewProps<State, Msg> {
   addButtonClassName?: string;
 }
 
-const AddButton: View<Props> = ({ addButtonClassName = '', dispatch, disabled }) => {
+const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
   if (disabled) { return null; }
+  const hasAttachments = !!(state.existingAttachments.length || state.newAttachments.length);
   return (
     <FileLink
       button
       outline
       size='sm'
       color='primary'
-      className={`mb-5 ${addButtonClassName}`}
+      className={`${hasAttachments ? 'mb-5' : ''} ${addButtonClassName}`}
       symbol_={leftPlacement(iconLinkSymbol('paperclip'))}
       disabled={disabled}
       onChange={file => dispatch(adt('addAttachment', file))}

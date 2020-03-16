@@ -316,6 +316,10 @@ nav {
 
 // Custom Bootstrap style overrides.
 
+.dropdown-menu {
+  min-width: 100%;
+}
+
 .btn-warning,
 .badge-warning {
   color: $white !important;
@@ -403,14 +407,6 @@ label {
 
 nav.navbar .nav-link:hover {
   text-decoration: underline;
-}
-
-.nav-tabs {
-
-  .nav-item .active {
-    cursor: default;
-    pointer-events: none;
-  }
 }
 
 .card-body {
