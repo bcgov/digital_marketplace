@@ -1,3 +1,4 @@
+import { DROPDOWN_CARET_SIZE } from 'front-end/config';
 import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, ExtendProps as ExtendLinkProps, iconLinkSymbol, rightPlacement } from 'front-end/lib/views/link';
@@ -6,8 +7,6 @@ import React, { Fragment } from 'react';
 import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
-
-const CARET_SIZE = 0.8; //rem
 
 export interface State {
   isDesktopAccountDropdownOpen: boolean;
@@ -80,7 +79,7 @@ const ContextualDropdown: View<PageContextualDropdown & { isOpen: boolean; dispa
         <Link
           symbol_={rightPlacement(iconLinkSymbol('caret'))}
           symbolClassName='mr-n1'
-          iconSymbolSize={CARET_SIZE}
+          iconSymbolSize={DROPDOWN_CARET_SIZE}
           loading={loading}
           button
           size='sm'
@@ -121,7 +120,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
             height: '2.75rem',
             objectFit: 'cover'
           }} />
-        <Icon name='caret' color='white' className='ml-2' width={CARET_SIZE} height={CARET_SIZE} />
+        <Icon name='caret' color='white' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (

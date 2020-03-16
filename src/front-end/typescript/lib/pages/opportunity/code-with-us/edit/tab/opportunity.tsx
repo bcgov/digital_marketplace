@@ -124,7 +124,7 @@ async function updateStatus(state: Immutable<State>, newStatus: UpdateStatus, on
     case 'valid':
       state = state
         .set('opportunity', result.value)
-        .set('form', await initForm(result.value, state.form.activeTab));
+        .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
       return onValid ? await onValid(state, result.value) : state;
     case 'invalid':
       return onInvalid ? await onInvalid(state, result.value) : state;
@@ -164,7 +164,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (api.isValid(result)) {
             return state
               .set('isEditing', true)
-              .set('form', await initForm(result.value, state.form.activeTab));
+              .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
           } else {
             return addErrorAlert(state, 'This opportunity cannot currently be edited.');
           }
@@ -176,7 +176,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         async state => {
           return state
             .set('isEditing', false)
-            .set('form', await initForm(state.opportunity, state.form.activeTab));
+            .set('form', await initForm(state.opportunity, Form.getActiveTab(state.form)));
         }
       ];
     case 'saveChanges':
