@@ -98,8 +98,8 @@ export function view<TabId>(): View<Props<TabId>> {
           <Dropdown nav isOpen={state.isDropdownOpen} toggle={() => dispatch(adt('toggleDropdown'))}>
             <DropdownToggle tag='div' nav className='d-flex align-items-center flex-nowrap active'>
               <Link
-                symbol_={leftPlacement(iconLinkSymbol(valid ? 'check-circle' : 'exclamation-circle'))}
-                symbolClassName={valid ? 'text-success' : 'text-warning'}
+                symbol_={valid ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
+                symbolClassName='text-warning'
                 color='body'>
                 {getTabLabel(activeTab)}
               </Link>
@@ -109,7 +109,7 @@ export function view<TabId>(): View<Props<TabId>> {
               {state.tabs.map((tab, i) => (
                 <div key={`form-tab-dropdown-item-${i}`} className='dropdown-item d-flex align-items-center flex-nowrap pl-3'>
                   <Link
-                    symbol_={leftPlacement(isTabValid(tab) ? emptyIconLinkSymbol() : iconLinkSymbol('exclamation-circle'))}
+                    symbol_={valid ? undefined : leftPlacement(isTabValid(tab) ? emptyIconLinkSymbol() : iconLinkSymbol('exclamation-circle'))}
                     symbolClassName='text-warning'
                     onClick={() => dispatch(adt('setActiveTab', tab))}
                     color='body'>

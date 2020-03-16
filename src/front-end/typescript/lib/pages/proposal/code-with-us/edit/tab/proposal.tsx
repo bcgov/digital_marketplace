@@ -121,7 +121,7 @@ const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
 
 async function resetProposal(state: Immutable<ValidState>, proposal: CWUProposal): Promise<Immutable<ValidState>> {
   return state
-    .set('form', await initForm(state.opportunity, state.affiliations, proposal, state.form.activeTab))
+    .set('form', await initForm(state.opportunity, state.affiliations, proposal, Form.getActiveTab(state.form)))
     .set('proposal', proposal);
 }
 
@@ -163,7 +163,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(proposalResult) || !api.isValid(affiliationsResult)) { return state; }
           state = state
             .set('isEditing', true)
-            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, state.form.activeTab))
+            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, Form.getActiveTab(state.form)))
             .set('proposal', proposalResult.value);
           return state;
         }
@@ -172,7 +172,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return [
         state.set('isEditing', false),
         async state => {
-          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, state.form.activeTab));
+          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, Form.getActiveTab(state.form)));
         }
       ];
     case 'saveChanges':
