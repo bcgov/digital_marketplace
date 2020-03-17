@@ -1,7 +1,7 @@
-import { uniq } from 'lodash';
-import { dateToMidnight, getNumber, getString, getStringArray, isDateInThePast } from 'shared/lib';
-import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, valid, validateArray, validateArrayCustom, validateCapabilities, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
+import { get, uniq } from 'lodash';
+import { dateToMidnight, getNumber, getString, isDateInThePast } from 'shared/lib';
+import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
 
 export { validateCapabilities } from 'shared/lib/validation';
@@ -46,14 +46,39 @@ export function validateSWUOpportunityPhaseMaxBudget(raw: number, maxTotalBudget
 interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportunityPhaseBody, 'startDate' | 'completionDate'> {
   startDate: Date;
   completionDate: Date;
+  requiredCapabilities: CreateSWUOpportunityPhaseRequiredCapabilityBody[];
+}
+
+export function validateFullTime(raw: any): Validation<boolean> {
+  return isBoolean(raw) ? valid(raw) : invalid(['You must provide a boolean value.']);
+}
+
+export function validatePhaseRequiredCapabilities(raw: any): ArrayValidation<CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors> {
+  if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of required capabilities.'] }]); }
+  return validateArrayCustom(raw, validatePhaseRequiredCapability, {});
+}
+
+export function validatePhaseRequiredCapability(raw: any): Validation<CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors> {
+  const validatedCapability = validateCapability(getString(raw, 'capability'));
+  const validatedFullTime = validateFullTime(get(raw, 'fullTime'));
+  if (allValid([validatedCapability, validatedFullTime])) {
+    return valid({
+      capability: validatedCapability.value,
+      fullTime: validatedFullTime.value
+    } as CreateSWUOpportunityPhaseRequiredCapabilityBody);
+  } else {
+    return invalid({
+      capability: getInvalidValue(validatedCapability, undefined),
+      fullTime: getInvalidValue(validatedFullTime, undefined)
+    });
+  }
 }
 
 export function validateSWUOpportunityInceptionPhase(raw: any, opportunityAssignmentDate: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
   const validatedStartDate = validateSWUOpportunityInceptionPhaseStartDate(getString(raw, 'startDate'), opportunityAssignmentDate);
   const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(getString(raw, 'completionDate'), getValidValue(validatedStartDate, new Date()));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
-  const validatedRequiredCapabilities = validateCapabilities(getStringArray(raw, 'requiredCapabilities'));
-
+  const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
   if (allValid([
     validatedStartDate,
     validatedCompletionDate,
@@ -80,7 +105,7 @@ export function validateSWUOpportunityPrototypePhase(raw: any, inceptionPhaseCom
   const validatedStartDate  = validateSWUOpportunityPrototypePhaseStartDate(getString(raw, 'startDate'), inceptionPhaseCompletionDate);
   const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(getString(raw, 'completionDate'), getValidValue(validatedStartDate, new Date()));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
-  const validatedRequiredCapabilities = validateCapabilities(getStringArray(raw, 'requiredCapabilities'));
+  const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
 
   if (allValid([
     validatedStartDate,
@@ -108,7 +133,7 @@ export function validateSWUOpportunityImplementationPhase(raw: any, prototypeCom
   const validatedStartDate  = validateSWUOpportunityImplementationPhaseStartDate(getString(raw, 'startDate'), prototypeCompletionDate);
   const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(getString(raw, 'completionDate'), getValidValue(validatedStartDate, new Date()));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
-  const validatedRequiredCapabilities = validateCapabilities(getStringArray(raw, 'requiredCapabilities'));
+  const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
 
   if (allValid([
     validatedStartDate,

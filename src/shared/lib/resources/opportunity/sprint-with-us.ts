@@ -91,6 +91,15 @@ export interface SWUOpportunity {
   };
 }
 
+export interface SWUOpportunityPhaseRequiredCapability {
+  capability: string;
+  fullTime: boolean;
+  createdAt: Date;
+  createdBy: UserSlim;
+  updatedAt: Date;
+  updatedBy: UserSlim;
+}
+
 export interface SWUOpportunityPhase {
   startDate: Date;
   completionDate: Date;
@@ -99,7 +108,7 @@ export interface SWUOpportunityPhase {
   createdBy: UserSlim;
   updatedAt: Date;
   updatedBy: UserSlim;
-  requiredCapabilities: string[];
+  requiredCapabilities: SWUOpportunityPhaseRequiredCapability[];
 }
 
 export interface SWUTeamQuestion {
@@ -123,9 +132,12 @@ export type CreateSWUOpportunityStatus
   | SWUOpportunityStatus.UnderReview
   | SWUOpportunityStatus.Draft;
 
-export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate'> {
+export type CreateSWUOpportunityPhaseRequiredCapabilityBody = Omit<SWUOpportunityPhaseRequiredCapability, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
+
+export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate' | 'requiredCapabilities'> {
   startDate: string;
   completionDate: string;
+  requiredCapabilities: CreateSWUOpportunityPhaseRequiredCapabilityBody[];
 }
 
 export type CreateSWUTeamQuestionBody = Omit<SWUTeamQuestion, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
@@ -156,7 +168,13 @@ export interface CreateRequestBody {
 }
 
 export interface CreateSWUOpportunityPhaseValidationErrors extends Omit<ErrorTypeFrom<CreateSWUOpportunityPhaseBody>, 'requiredCapabilities'> {
-  requiredCapabilities?: string[][];
+  requiredCapabilities?: CreateSWUOpportunityPhaseRequiredCapabilityErrors[];
+}
+
+export interface CreateSWUOpportunityPhaseRequiredCapabilityErrors {
+  capability?: string[];
+  fullTime?: string[];
+  parseFailure?: string[];
 }
 
 export interface CreateSWUTeamQuestionValidationErrors extends ErrorTypeFrom<CreateSWUTeamQuestionBody> {
@@ -202,7 +220,7 @@ export interface UpdateEditValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
 }
 
-export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
+export interface UpdateValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
   inceptionPhase?: CreateSWUOpportunityPhaseValidationErrors;
