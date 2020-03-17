@@ -186,6 +186,14 @@ export function emptyPageAlerts<Msg>(): PageAlerts<Msg> {
   };
 }
 
+export interface PageToast<Msg> {
+  title: string;
+  body: string | ReactElement;
+  dismissMsg: Msg;
+}
+
+export type PageGetToasts<State, Msg> = (state: Immutable<State>) => Array<PageToast<Msg>>;
+
 export function mapPageAlerts<MsgA, MsgB, Route>(alerts: PageAlerts<GlobalComponentMsg<MsgA, Route>>, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageAlerts<GlobalComponentMsg<MsgB, Route>> {
   const { info, warnings, errors } = alerts;
   return {
@@ -288,6 +296,7 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   sidebar?: PageSidebar<State, Msg, Props>;
   getMetadata: PageGetMetadata<State>;
   getAlerts?: PageGetAlerts<State, Msg>;
+  getToasts?: PageGetToasts<State, Msg>;
   getBreadcrumbs?: PageGetBreadcrumbs<State, Msg>;
   getModal?: PageGetModal<State, Msg>;
   getContextualActions?: PageGetContextualActions<State, Msg>;

@@ -6,22 +6,47 @@ import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';
 
 export interface State {
-  empty: true;
+  toasts: Array<[string, string]>;
 }
 
 type InnerMsg
-  = ADT<'noop'>;
+  = ADT<'noop'>
+  | ADT<'hideToast', number>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  empty: true
+  toasts: [
+    [
+      'First Toast',
+      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
+    ],
+    [
+      'Second Toast',
+      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
+    ],
+    [
+      'Third Toast',
+      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
+    ],
+    [
+      'Fourth Toast',
+      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
+    ]
+  ]
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+  switch (msg.tag) {
+    case 'hideToast':
+      return [
+        state.update('toasts', ts => ts.filter((t, i) => i !== msg.value))
+      ];
+    default:
+      return [state];
+  }
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
@@ -53,6 +78,13 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         { text: 'second test alert' }
       ]
     };
+  },
+  getToasts(state) {
+    return state.toasts.map((t, i) => ({
+      title: t[0],
+      body: t[1],
+      dismissMsg: { tag: 'hideToast', value: i }
+    }));
   },
   getBreadcrumbs() {
     return [

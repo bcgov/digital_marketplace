@@ -44,7 +44,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import { default as React } from 'react';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import { Modal, ModalBody, ModalFooter, ModalHeader, Toast, ToastBody } from 'reactstrap';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
@@ -322,6 +322,27 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   );
 };
 
+export function ViewToasts<RouteParams, PageState, PageMsg>(props: ViewPageProps<RouteParams, PageState, PageMsg>) {
+  const { pageState, dispatch, component, mapPageMsg } = props;
+  if (!pageState || !component.getToasts) { return null; }
+  const toasts = component.getToasts(pageState);
+  if (!toasts.length) { return null; }
+  const pageDispatch = mapComponentDispatch(dispatch, mapPageMsg);
+  return (
+    <div className='toast-wrapper'>
+      {toasts.map(({ title, body, dismissMsg }, i) => (
+        <Toast key={`page-toast-${i}`} className={i < toasts.length - 1 ? 'mb-3' : ''}>
+          <div className='d-flex align-items-center justify-content-between toast-header'>
+            <strong>{title}</strong>
+            <Icon hover className='ml-2' name='times' color='secondary' onClick={() => pageDispatch(dismissMsg)} />
+          </div>
+          <ToastBody>{body}</ToastBody>
+        </Toast>
+      ))}
+    </div>
+  );
+}
+
 const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
     children: 'Sign In',
@@ -524,6 +545,7 @@ const view: ComponentView<State, Msg> = props => {
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}
+        <ViewToasts {...viewPageProps} />
         <ViewModal dispatch={dispatch} modal={state.modal} />
       </div>
     );

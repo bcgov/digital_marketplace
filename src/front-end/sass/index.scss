@@ -531,6 +531,28 @@ nav.navbar .nav-link:hover {
 
 // Custom components
 
+.toast-wrapper {
+  position: fixed;
+  bottom: map-get($spacers, 4);
+  right: map-get($spacers, 4);
+  width: 400px;
+  z-index: 999; // Below nav, below modals
+
+  @include media-breakpoint-down(xs) {
+    left: map-get($spacers, 3);
+    width: auto;
+  }
+
+  @include media-breakpoint-down(sm) {
+    right: map-get($spacers, 3);
+    bottom: map-get($spacers, 3);
+  }
+
+  .toast {
+    max-width: unset;
+  }
+}
+
 .sidebar {
 
   @include media-breakpoint-down(sm) {
