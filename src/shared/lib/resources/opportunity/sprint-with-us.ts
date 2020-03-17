@@ -132,7 +132,7 @@ export type CreateSWUOpportunityStatus
   | SWUOpportunityStatus.UnderReview
   | SWUOpportunityStatus.Draft;
 
-export type CreateSWUOpportunityPhaseRequiredCapabilityBody = Omit<SWUOpportunityPhaseRequiredCapability, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
+export type CreateSWUOpportunityPhaseRequiredCapabilityBody = Pick<SWUOpportunityPhaseRequiredCapability, 'capability' | 'fullTime'>;
 
 export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate' | 'requiredCapabilities'> {
   startDate: string;

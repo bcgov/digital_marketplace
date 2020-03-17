@@ -55,6 +55,7 @@ export function validateFullTime(raw: any): Validation<boolean> {
 
 export function validatePhaseRequiredCapabilities(raw: any): ArrayValidation<CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors> {
   if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of required capabilities.'] }]); }
+  if (!raw.length) { return invalid([{ capability: ['Please select at least one required capability.'] }]); }
   return validateArrayCustom(raw, validatePhaseRequiredCapability, {});
 }
 
