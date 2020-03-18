@@ -3,7 +3,7 @@ import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
 import { newSWUOpportunityPublished } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, wrapRespond } from 'back-end/lib/server';
+import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAttachments } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
@@ -13,7 +13,7 @@ import { UpdateEditRequestBody } from 'shared/lib/resources/opportunity/code-wit
 import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, SWUOpportunity, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, isInvalid, optional, valid } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, isInvalid, optional, valid, validateUUID } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
 
 interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportunityPhaseBody, 'startDate' | 'completionDate'> {
@@ -74,6 +74,25 @@ async function notifySWUPublished(connection: db.Connection, opportunity: SWUOpp
 
 const resource: Resource = {
   routeNamespace: 'opportunities/sprint-with-us',
+
+  readOne(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<SWUOpportunity | string[]>, Session>(async request => {
+      const respond = (code: number, body: SWUOpportunity | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      // Validate the provided id
+      const validatedId = validateUUID(request.params.id);
+      if (isInvalid(validatedId)) {
+        return respond(400, validatedId.value);
+      }
+      const dbResult = await db.readOneSWUOpportunity(connection, validatedId.value, request.session);
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      if (!dbResult.value) {
+        return respond(404, ['Opportunity not found.']);
+      }
+      return respond(200, dbResult.value);
+    });
+  },
 
   create(connection) {
     return {
