@@ -6,6 +6,12 @@ import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
 
+export enum SWUOpportunityPhaseType {
+  Inception = 'INCEPTION',
+  Prototype = 'PROTOTYPE',
+  Implementation = 'IMPLEMENTATION'
+}
+
 export enum SWUOpportunityStatus {
   Draft = 'DRAFT',
   UnderReview = 'UNDER_REVIEW',
@@ -34,6 +40,7 @@ export interface SWUOpportunityHistoryRecord {
 export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | null {
   switch (raw) {
     case SWUOpportunityStatus.Draft: return SWUOpportunityStatus.Draft;
+    case SWUOpportunityStatus.UnderReview: return SWUOpportunityStatus.UnderReview;
     case SWUOpportunityStatus.Published: return SWUOpportunityStatus.Published;
     case SWUOpportunityStatus.EvaluationTeamQuestions: return SWUOpportunityStatus.EvaluationTeamQuestions;
     case SWUOpportunityStatus.EvaluationCodeChallenge: return SWUOpportunityStatus.EvaluationCodeChallenge;
@@ -45,13 +52,17 @@ export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | n
   }
 }
 
+export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Published, SWUOpportunityStatus.EvaluationTeamQuestions, SWUOpportunityStatus.EvaluationCodeChallenge, SWUOpportunityStatus.EvaluationTeamScenario, SWUOpportunityStatus.Awarded];
+
+export const privateOpportunitiesStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
+
 export interface SWUOpportunity {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
 
-  createdBy: UserSlim;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
+  updatedBy?: UserSlim;
 
   // TODO:
   successfulProponent?: true;
@@ -67,7 +78,7 @@ export interface SWUOpportunity {
   optionalSkills: string[];
   description: string;
   proposalDeadline: Date;
-  assignmentDeadline: Date;
+  assignmentDate: Date;
   questionsWeight: number;
   codeChallengeWeight: number;
   scenarioWeight: number;
@@ -80,7 +91,7 @@ export interface SWUOpportunity {
   implementationPhase?: SWUOpportunityPhase;
   teamQuestions: SWUTeamQuestion[];
   history?: SWUOpportunityHistoryRecord[];
-  publishedAt: Date;
+  publishedAt?: Date;
   subscribed?: boolean;
 
   // TODO:
@@ -95,19 +106,16 @@ export interface SWUOpportunityPhaseRequiredCapability {
   capability: string;
   fullTime: boolean;
   createdAt: Date;
-  createdBy: UserSlim;
-  updatedAt: Date;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
 }
 
 export interface SWUOpportunityPhase {
+  phase: SWUOpportunityPhaseType;
   startDate: Date;
   completionDate: Date;
   maxBudget: number;
   createdAt: Date;
-  createdBy: UserSlim;
-  updatedAt: Date;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
   requiredCapabilities: SWUOpportunityPhaseRequiredCapability[];
 }
 
@@ -118,12 +126,18 @@ export interface SWUTeamQuestion {
   wordLimit: number;
   order: number;
   createdAt: Date;
-  createdBy: UserSlim;
-  updatedAt: Date;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
 }
 
 export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+
+export interface SWUOpportunityHistoryRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: UserSlim | null;
+  type: ADT<'status', SWUOpportunityStatus> | ADT<'event', SWUOpportunityEvent>;
+  note: string;
+}
 
 // Create.
 
@@ -134,13 +148,13 @@ export type CreateSWUOpportunityStatus
 
 export type CreateSWUOpportunityPhaseRequiredCapabilityBody = Pick<SWUOpportunityPhaseRequiredCapability, 'capability' | 'fullTime'>;
 
-export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate' | 'requiredCapabilities'> {
+export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'startDate' | 'completionDate' | 'requiredCapabilities' | 'phase'> {
   startDate: string;
   completionDate: string;
   requiredCapabilities: CreateSWUOpportunityPhaseRequiredCapabilityBody[];
 }
 
-export type CreateSWUTeamQuestionBody = Omit<SWUTeamQuestion, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
+export type CreateSWUTeamQuestionBody = Omit<SWUTeamQuestion, 'createdAt' | 'createdBy'>;
 
 export interface CreateRequestBody {
   title: string;
@@ -189,6 +203,7 @@ export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequest
   implementationPhase?: CreateSWUOpportunityPhaseValidationErrors;
   teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
+  scoreWeights?: string[];
 }
 
 // Update.

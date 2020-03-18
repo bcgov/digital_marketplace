@@ -1,7 +1,7 @@
 import { get, uniq } from 'lodash';
 import { dateToMidnight, getNumber, getString, isDateInThePast } from 'shared/lib';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
+import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, optional, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
 
 export { validateCapabilities } from 'shared/lib/validation';
@@ -77,7 +77,7 @@ export function validatePhaseRequiredCapability(raw: any): Validation<CreateSWUO
 
 export function validateSWUOpportunityInceptionPhase(raw: any, opportunityAssignmentDate: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
   const validatedStartDate = validateSWUOpportunityInceptionPhaseStartDate(getString(raw, 'startDate'), opportunityAssignmentDate);
-  const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(getString(raw, 'completionDate'), getValidValue(validatedStartDate, new Date()));
+  const validatedCompletionDate = optional(getString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(getString(v, 'completionDate'), getValidValue(validatedStartDate, new Date())));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
   const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
   if (allValid([
@@ -104,7 +104,7 @@ export function validateSWUOpportunityInceptionPhase(raw: any, opportunityAssign
 
 export function validateSWUOpportunityPrototypePhase(raw: any, inceptionPhaseCompletionDate?: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
   const validatedStartDate  = validateSWUOpportunityPrototypePhaseStartDate(getString(raw, 'startDate'), inceptionPhaseCompletionDate);
-  const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(getString(raw, 'completionDate'), getValidValue(validatedStartDate, new Date()));
+  const validatedCompletionDate = optional(getString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(v, getValidValue(validatedStartDate, new Date())));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
   const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
 
@@ -132,7 +132,7 @@ export function validateSWUOpportunityPrototypePhase(raw: any, inceptionPhaseCom
 
 export function validateSWUOpportunityImplementationPhase(raw: any, prototypeCompletionDate?: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
   const validatedStartDate  = validateSWUOpportunityImplementationPhaseStartDate(getString(raw, 'startDate'), prototypeCompletionDate);
-  const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(getString(raw, 'completionDate'), getValidValue(validatedStartDate, new Date()));
+  const validatedCompletionDate = optional(getString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(v, getValidValue(validatedStartDate, new Date())));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
   const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
 

@@ -1,3 +1,4 @@
+import { CreateSWUOpportunityStatus, SWUOpportunityStatus } from 'back-end/../shared/lib/resources/opportunity/sprint-with-us';
 import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
@@ -208,6 +209,11 @@ export async function editCWUProposal(connection: Connection, session: Session, 
 
 export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
   return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
+// SWU Opportunities.
+export function createSWUOpportunity(session: Session, createStatus: CreateSWUOpportunityStatus): boolean {
+  return isAdmin(session) || (isGovernment(session) && createStatus !== SWUOpportunityStatus.Published);
 }
 
 // Metrics.
