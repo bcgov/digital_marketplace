@@ -1,7 +1,7 @@
 import { invalid } from 'back-end/../shared/lib/http';
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
-import { newCWUOpportunityPublished } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
+import { newSWUOpportunityPublished } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -69,7 +69,7 @@ type Resource = crud.Resource<
 
 async function notifySWUPublished(connection: db.Connection, opportunity: SWUOpportunity): Promise<void> {
   const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
-  await Promise.all(subscribedUsers.map(async user => await newCWUOpportunityPublished(user, opportunity)));
+  await Promise.all(subscribedUsers.map(async user => await newSWUOpportunityPublished(user, opportunity)));
 }
 
 const resource: Resource = {

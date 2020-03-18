@@ -4,7 +4,7 @@ import { formatAmount, formatDate } from 'shared/lib';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
 
-export async function newCWUOpportunityPublished(recipient: User, opportunity: SWUOpportunity): Promise<void> {
+export async function newSWUOpportunityPublished(recipient: User, opportunity: SWUOpportunity): Promise<void> {
   const title = 'Digital Marketplace - A new Sprint With Us Opportunity has been published';
   await send({
     to: recipient.email,
