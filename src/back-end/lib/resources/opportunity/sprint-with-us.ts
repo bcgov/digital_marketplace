@@ -10,7 +10,7 @@ import { get, omit } from 'lodash';
 import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { UpdateEditRequestBody } from 'shared/lib/resources/opportunity/code-with-us';
-import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, SWUOpportunity, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, isInvalid, optional, valid, validateUUID } from 'shared/lib/validation';
@@ -74,6 +74,17 @@ async function notifySWUPublished(connection: db.Connection, opportunity: SWUOpp
 
 const resource: Resource = {
   routeNamespace: 'opportunities/sprint-with-us',
+
+  readMany(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<SWUOpportunitySlim[] | string[]>, Session>(async request => {
+      const respond = (code: number, body: SWUOpportunitySlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      const dbResult = await db.readManySWUOpportunities(connection, request.session);
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    });
+  },
 
   readOne(connection) {
     return nullRequestBodyHandler<JsonResponseBody<SWUOpportunity | string[]>, Session>(async request => {

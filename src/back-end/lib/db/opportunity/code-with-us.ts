@@ -316,6 +316,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
       'opp.createdAt',
       'version.createdAt as updatedAt',
       'version.createdBy as updatedBy',
+      'version.proposalDeadline',
       'stat.status'
     );
 
@@ -332,11 +333,9 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
           .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
           .andWhere({ 'opp.createdBy': session.user?.id });
       });
-  } else {
-    // Admin users can see both private and public opportunities
-    query = query
-      .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
   }
+  // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
+  // Process results to eliminate fields not viewable by the current role
   const results = (await query).map(result => processForRole(result, session));
   return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
 });

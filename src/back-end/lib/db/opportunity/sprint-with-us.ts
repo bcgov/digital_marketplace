@@ -6,7 +6,7 @@ import { readOneUserSlim } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunitiesStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunitiesStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -55,6 +55,11 @@ interface RawSWUOpportunity extends Omit<SWUOpportunity, 'createdBy' | 'updatedB
   prototypePhase?: Id;
   implementationPhase: Id;
   versionId: Id;
+}
+
+interface RawSWUOpportunitySlim extends Omit<SWUOpportunitySlim, 'createdBy' | 'updatedBy'> {
+  createdBy?: Id;
+  updatedBy?: Id;
 }
 
 interface RawSWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
@@ -128,6 +133,17 @@ async function rawSWUOpportunityToSWUOpportunity(connection: Connection, raw: Ra
     inceptionPhase,
     prototypePhase,
     implementationPhase
+  };
+}
+
+async function rawSWUOpportunitySlimToSWUOpportunitySlim(connection: Connection, raw: RawSWUOpportunitySlim): Promise<SWUOpportunitySlim> {
+  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
+  const createdBy = createdById && getValidValue(await readOneUserSlim(connection, createdById), undefined) || undefined;
+  const updatedBy = updatedById && getValidValue(await readOneUserSlim(connection, updatedById), undefined) || undefined;
+  return {
+    ...restOfRaw,
+    createdBy,
+    updatedBy
   };
 }
 
@@ -237,6 +253,58 @@ export const readManyTeamQuestions = tryDb<[Id], SWUTeamQuestion[]>(async (conne
   }
 
   return valid(await Promise.all(results.map(async raw => await rawTeamQuestionToTeamQuestion(connection, raw))));
+});
+
+export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(async (connection, session) => {
+  // Retrieve the opportunity and most recent opportunity status
+
+  let query = connection<RawSWUOpportunitySlim>('swuOpportunities as opp')
+    // Join on latest SWU status
+    .join<RawSWUOpportunitySlim>('swuOpportunityStatuses as stat', function() {
+      this
+        .on('opp.id', '=', 'stat.opportunity')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuOpportunityStatuses" as stat2 where \
+            stat2.opportunity = opp.id and stat2.status is not null)'));
+    })
+    // Join on latest SWU version
+    .join<RawSWUOpportunitySlim>('swuOpportunityVersions as version', function() {
+      this
+        .on('opp.id', '=', 'version.opportunity')
+        .andOn('version.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuOpportunityVersions" as version2 where \
+            version2.opportunity = opp.id)'));
+    })
+    // Select fields for 'slim' opportunity
+    .select(
+      'opp.id',
+      'version.title',
+      'opp.createdBy',
+      'opp.createdAt',
+      'version.createdAt as updatedAt',
+      'version.createdBy as updatedBy',
+      'version.proposalDeadline',
+      'stat.status'
+    );
+
+  if (!session.user || session.user.type === UserType.Vendor) {
+    // Anonymous users and vendors can only see public opportunities
+    query = query
+      .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[]);
+  } else if (session.user.type === UserType.Government) {
+    // Gov basic users should only see private opportunities that they own, and public opportunities
+    query = query
+      .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[])
+      .orWhere(function() {
+        this
+          .whereIn('stat.status', privateOpportunitiesStatuses as SWUOpportunityStatus[])
+          .andWhere({ 'opp.createdBy': session.user?.id });
+      });
+  }
+  // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
+  // Process results to eliminate fields not viewable by the current role
+  const results = (await query).map(result => processForRole(result, session));
+  return valid(await Promise.all(results.map(async raw => await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw))));
 });
 
 export const readOneSWUOpportunityPhase = tryDb<[Id], SWUOpportunityPhase>(async (connection, id) => {
