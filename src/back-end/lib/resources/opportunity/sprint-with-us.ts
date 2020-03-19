@@ -666,6 +666,10 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Published)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
+            // Only admins can publish, so additional permissions check needed
+            if (!permissions.publishSWUOpportunity(request.session)) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
             // Opportunity will have been fully validated during review process, so no need to repeat
             const validatedPublishNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedPublishNote)) {

@@ -220,6 +220,10 @@ export async function editSWUOpportunity(connection: Connection, session: Sessio
   return isAdmin(session) || (session.user && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
 }
 
+export function publishSWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {
