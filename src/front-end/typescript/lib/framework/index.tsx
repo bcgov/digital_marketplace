@@ -104,10 +104,16 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
 
 // Global Components.
 
-export interface Toast {
+export interface ToastContent {
   title: string;
   body: string | ReactElement;
 }
+
+export type Toast
+  = ADT<'info', ToastContent>
+  | ADT<'error', ToastContent>
+  | ADT<'warning', ToastContent>
+  | ADT<'success', ToastContent>;
 
 type ToastMsg = ADT<'@toast', Toast>;
 

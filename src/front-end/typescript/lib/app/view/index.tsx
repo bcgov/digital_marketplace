@@ -3,7 +3,8 @@ import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'fr
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
-import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, View } from 'front-end/lib/framework';
+import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, Toast as FrameworkToast, View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 // Note(Jesse): @add_new_page_location
 
 import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
@@ -40,7 +41,7 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-import Icon from 'front-end/lib/views/icon';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import { default as React } from 'react';
@@ -322,18 +323,39 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   );
 };
 
+const ViewToastIcon: View<{ toast: FrameworkToast; }> = ({ toast }) => {
+  const name: AvailableIcons = (() => {
+    switch (toast.tag) {
+      case 'info': return 'info-circle';
+      case 'error': return 'times-circle';
+      case 'warning': return 'exclamation-circle';
+      case 'success': return 'check-circle';
+    }
+  })();
+  const color: ThemeColor = (() => {
+    switch (toast.tag) {
+      case 'info': return 'blue-alt';
+      case 'error': return 'danger';
+      case 'warning': return 'warning';
+      case 'success': return 'success';
+    }
+  })();
+  return (<Icon name={name} color={color} />);
+};
+
 const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const toasts = state.toasts;
   if (!toasts.length) { return null; }
   return (
     <div className='toast-wrapper'>
-      {toasts.map(({ title, body }, i) => (
+      {toasts.map((toast, i) => (
         <Toast fade key={`page-toast-${i}`} className={i < toasts.length - 1 ? 'mb-3' : ''}>
-          <div className='d-flex align-items-center justify-content-between toast-header'>
-            <strong>{title}</strong>
-            <Icon hover className='ml-2' name='times' color='secondary' onClick={() => dispatch(adt('dismissToast', i))} />
+          <div className='d-flex align-items-center justify-content-start toast-header'>
+            <ViewToastIcon toast={toast} />
+            <strong className='mx-2'>{toast.value.title}</strong>
+            <Icon hover className='ml-auto' name='times' color='secondary' onClick={() => dispatch(adt('dismissToast', i))} />
           </div>
-          <ToastBody>{body}</ToastBody>
+          <ToastBody>{toast.value.body}</ToastBody>
         </Toast>
       ))}
     </div>

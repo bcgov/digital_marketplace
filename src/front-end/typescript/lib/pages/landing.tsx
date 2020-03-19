@@ -30,10 +30,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         async (state, dispatch) => {
-          dispatch(toast({
+          dispatch(toast(adt('info', {
             title: state.toast[0],
             body: state.toast[1]
-          }));
+          })));
           return null;
         }
       ];

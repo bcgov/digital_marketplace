@@ -536,7 +536,7 @@ nav.navbar .nav-link:hover {
   bottom: map-get($spacers, 4);
   right: map-get($spacers, 4);
   width: 400px;
-  z-index: 999; // Below nav, below modals
+  z-index: 1001; // Above nav, below modals
 
   @include media-breakpoint-down(xs) {
     left: map-get($spacers, 3);
