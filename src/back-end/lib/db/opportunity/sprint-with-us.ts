@@ -724,3 +724,23 @@ export const addSWUOpportunityAddendum = tryDb<[Id, string, AuthenticatedSession
   }
   return valid(dbResult.value);
 });
+
+export const deleteSWUOpportunity = tryDb<[Id, Session], SWUOpportunity>(async (connection, id, session) => {
+
+  // Read the opportunity first, so we can respond with it after deleting
+  const opportunity = getValidValue(await readOneSWUOpportunity(connection, id, session), undefined);
+  if (!opportunity) {
+    throw new Error('unable to delete opportunity');
+  }
+  // Delete root record - cascade relationships in database will cleanup versions/attachments/addenda automatically
+  const [result] = await connection<RawSWUOpportunity>('swuOpportunities')
+    .where({ id })
+    .delete();
+
+  if (!result) {
+    throw new Error('unable to delete opportunity');
+  }
+  result.addenda = [];
+  result.attachments = [];
+  return valid(opportunity);
+});

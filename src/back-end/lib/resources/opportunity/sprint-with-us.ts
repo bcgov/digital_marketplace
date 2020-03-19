@@ -800,6 +800,38 @@ const resource: Resource = {
         }
       })
     };
+  },
+
+  delete(connection) {
+    return {
+      async validateRequestBody(request) {
+        if (!(await permissions.deleteSWUOpportunity(connection, request.session, request.params.id))) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+        const validatedSWUOpportunity = await validateSWUOpportunityId(connection, request.params.id, request.session);
+        if (isInvalid(validatedSWUOpportunity)) {
+          return invalid({ notFound: ['Opportunity not found.'] });
+        }
+        if (validatedSWUOpportunity.value.status !== SWUOpportunityStatus.Draft) {
+          return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+        }
+        return valid(validatedSWUOpportunity.value.id);
+      },
+      respond: wrapRespond({
+        valid: async request => {
+          const dbResult = await db.deleteSWUOpportunity(connection, request.body, request.session);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        },
+        invalid: async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }
+      })
+    };
   }
 };
 

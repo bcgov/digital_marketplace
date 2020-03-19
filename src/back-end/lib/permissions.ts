@@ -224,6 +224,10 @@ export function publishSWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
 
+export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+}
+
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {
