@@ -1,6 +1,7 @@
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable } from 'front-end/lib/framework';
+import * as CapabilitiesTab from 'front-end/lib/pages/user/profile/tab/capabilities';
 import * as LegalTab from 'front-end/lib/pages/user/profile/tab/legal';
 import * as NotificationsTab from 'front-end/lib/pages/user/profile/tab/notifications';
 import * as OrganizationsTab from 'front-end/lib/pages/user/profile/tab/organizations';
@@ -26,6 +27,7 @@ export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 
 export interface Tabs {
   profile: TabbedPage.Tab<Params, ProfileTab.State, ProfileTab.InnerMsg>;
+  capabilities: TabbedPage.Tab<Params, CapabilitiesTab.State, CapabilitiesTab.InnerMsg>;
   notifications: TabbedPage.Tab<Params, NotificationsTab.State, NotificationsTab.InnerMsg>;
   legal: TabbedPage.Tab<Params, LegalTab.State, LegalTab.InnerMsg>;
   organizations: TabbedPage.Tab<Params, OrganizationsTab.State, OrganizationsTab.InnerMsg>;
@@ -40,6 +42,7 @@ export type TabMsg<K extends TabId> = TabbedPage.TabMsg<Tabs, K>;
 export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
   switch (raw) {
     case 'profile':
+    case 'capabilities':
     case 'notifications':
     case 'legal':
     case 'organizations':
@@ -69,6 +72,13 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         icon: 'building',
         title: 'Organizations'
       } as TabbedPage.TabDefinition<Tabs, K>;
+
+    case 'capabilities':
+      return {
+        component: CapabilitiesTab.component,
+        icon: 'paperclip',
+        title: 'Capabilities' } as TabbedPage.TabDefinition<Tabs, K>;
+
     case 'profile':
     default:
       return {
@@ -111,6 +121,7 @@ export async function makeSidebarState(profileUser: User, viewerUser: User, acti
       case UserType.Vendor:
         return [
           makeSidebarLink('profile', profileUser.id, activeTab),
+          makeSidebarLink('capabilities', profileUser.id, activeTab),
           makeSidebarLink('organizations', profileUser.id, activeTab),
           makeSidebarLink('notifications', profileUser.id, activeTab),
           makeSidebarLink('legal', profileUser.id, activeTab)
