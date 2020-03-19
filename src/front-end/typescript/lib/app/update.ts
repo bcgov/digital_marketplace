@@ -1,3 +1,4 @@
+import { TOAST_AUTO_DISMISS_DURATION } from 'front-end/config';
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
@@ -476,6 +477,25 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
 
+    case '@toast':
+      return [state, async (state, dispatch) => {
+        state = state.update('toasts', ts => ts.concat([{
+          ...msg.value,
+          timestamp: Date.now()
+        }]));
+        setTimeout(() => dispatch(adt('dismissLapsedToasts')), TOAST_AUTO_DISMISS_DURATION + 1);
+        return state;
+      }];
+
+    case 'dismissToast':
+      return [state.update('toasts', ts => ts.filter((t, i) => i !== msg.value))];
+
+    case 'dismissLapsedToasts': {
+      const now = Date.now();
+      // Auto-dismiss toasts
+      return [state.update('toasts', ts => ts.filter(({ timestamp }) => timestamp + TOAST_AUTO_DISMISS_DURATION > now))];
+    }
+
     case 'closeModal':
       return [
         state,
@@ -541,7 +561,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageProposalSWUView.component.getModal,
         childMsg: msg.value
       });
-
 
     case 'pageOpportunitySWUEdit':
       return updateAppChildPage({

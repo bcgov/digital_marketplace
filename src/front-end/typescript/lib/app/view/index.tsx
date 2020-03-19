@@ -322,26 +322,23 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
   );
 };
 
-export function ViewToasts<RouteParams, PageState, PageMsg>(props: ViewPageProps<RouteParams, PageState, PageMsg>) {
-  const { pageState, dispatch, component, mapPageMsg } = props;
-  if (!pageState || !component.getToasts) { return null; }
-  const toasts = component.getToasts(pageState);
+const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const toasts = state.toasts;
   if (!toasts.length) { return null; }
-  const pageDispatch = mapComponentDispatch(dispatch, mapPageMsg);
   return (
     <div className='toast-wrapper'>
-      {toasts.map(({ title, body, dismissMsg }, i) => (
-        <Toast key={`page-toast-${i}`} className={i < toasts.length - 1 ? 'mb-3' : ''}>
+      {toasts.map(({ title, body }, i) => (
+        <Toast fade key={`page-toast-${i}`} className={i < toasts.length - 1 ? 'mb-3' : ''}>
           <div className='d-flex align-items-center justify-content-between toast-header'>
             <strong>{title}</strong>
-            <Icon hover className='ml-2' name='times' color='secondary' onClick={() => pageDispatch(dismissMsg)} />
+            <Icon hover className='ml-2' name='times' color='secondary' onClick={() => dispatch(adt('dismissToast', i))} />
           </div>
           <ToastBody>{body}</ToastBody>
         </Toast>
       ))}
     </div>
   );
-}
+};
 
 const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
@@ -545,7 +542,7 @@ const view: ComponentView<State, Msg> = props => {
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}
-        <ViewToasts {...viewPageProps} />
+        <ViewToasts {...props} />
         <ViewModal dispatch={dispatch} modal={state.modal} />
       </div>
     );

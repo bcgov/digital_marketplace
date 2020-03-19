@@ -1,16 +1,16 @@
 import * as Nav from 'front-end/lib/app/view/nav';
-import { AppMsg, Immutable, PageModal } from 'front-end/lib/framework';
+import { AppMsg, Immutable, PageModal, Toast } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotice from 'front-end/lib/pages/notice';
 // Note(Jesse): @add_new_page_location
 
-import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
 import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
+import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
 import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
 
-import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
 import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
+import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
 import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
 
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -90,6 +90,7 @@ export interface SharedState {
 export interface State {
   ready: boolean;
   transitionLoading: number;
+  toasts: Array<Toast & { timestamp: number; }>;
   modal: {
     open: boolean;
     content: PageModal<Msg>;
@@ -139,6 +140,8 @@ export interface State {
 // Note(Jesse): @add_new_page_location
 type InnerMsg
   = ADT<'noop'>
+  | ADT<'dismissToast', number>
+  | ADT<'dismissLapsedToasts'>
   | ADT<'closeModal'>
   | ADT<'nav',                      Nav.Msg>
   | ADT<'pageLanding',              PageLanding.Msg>
