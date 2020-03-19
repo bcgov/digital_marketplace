@@ -261,7 +261,7 @@ export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportuni
     case SWUOpportunityStatus.Draft:
       return [SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published].includes(to);
     case SWUOpportunityStatus.UnderReview:
-      return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Draft, SWUOpportunityStatus.Suspended].includes(to);
+      return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Suspended].includes(to);
     case SWUOpportunityStatus.Published:
       return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationTeamQuestions].includes(to);
     case SWUOpportunityStatus.EvaluationTeamQuestions:
