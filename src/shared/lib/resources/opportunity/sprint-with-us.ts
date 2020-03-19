@@ -54,7 +54,9 @@ export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | n
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Published, SWUOpportunityStatus.EvaluationTeamQuestions, SWUOpportunityStatus.EvaluationCodeChallenge, SWUOpportunityStatus.EvaluationTeamScenario, SWUOpportunityStatus.Awarded];
 
-export const privateOpportunitiesStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
+export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
+
+export const editableOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published, SWUOpportunityStatus.Suspended];
 
 export interface SWUOpportunity {
   id: Id;
@@ -204,6 +206,7 @@ export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequest
   teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
   scoreWeights?: string[];
+  phases?: string[];
 }
 
 // Update.
@@ -231,11 +234,11 @@ type UpdateADTErrors
   | ADT<'addAddendum', string[]>
   | ADT<'parseFailure'>;
 
-export interface UpdateEditValidationErrors extends BodyWithErrors {
+export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
 }
 
-export interface UpdateValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
+export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
   inceptionPhase?: CreateSWUOpportunityPhaseValidationErrors;
@@ -243,10 +246,33 @@ export interface UpdateValidationErrors extends Omit<ErrorTypeFrom<UpdateEditReq
   implementationPhase?: CreateSWUOpportunityPhaseValidationErrors;
   teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
+  scoreWeights?: string[];
+  phases?: string[];
 }
 
 // Delete.
 
 export interface DeleteValidationErrors extends BodyWithErrors {
   status?: string[];
+}
+
+export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportunityStatus): boolean {
+  switch (from) {
+    case SWUOpportunityStatus.Draft:
+      return [SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published].includes(to);
+    case SWUOpportunityStatus.UnderReview:
+      return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Draft, SWUOpportunityStatus.Suspended].includes(to);
+    case SWUOpportunityStatus.Published:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationTeamQuestions].includes(to);
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationCodeChallenge].includes(to);
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationTeamScenario].includes(to);
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.Awarded].includes(to);
+    case SWUOpportunityStatus.Suspended:
+      return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Canceled].includes(to);
+    default:
+      return false;
+  }
 }

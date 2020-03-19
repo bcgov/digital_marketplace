@@ -5,6 +5,7 @@ import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, map
 import { isArray, isBoolean } from 'util';
 
 export { validateCapabilities } from 'shared/lib/validation';
+export { validateAddendumText } from 'shared/lib/validation/addendum';
 
 export function validateSWUOpportunityStatus(raw: string, isOneOf: SWUOpportunityStatus[]): Validation<SWUOpportunityStatus> {
   const parsed = parseSWUOpportunityStatus(raw);

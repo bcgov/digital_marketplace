@@ -3,6 +3,7 @@ import { get } from 'lodash';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
 import { Session } from 'shared/lib/resources/session';
@@ -157,5 +158,26 @@ export async function validateProponent(connection: db.Connection, raw: any): Pr
       return invalid(adt('organization', validatedOrganization.value));
     default:
       return invalid(adt('parseFailure' as const, ['Invalid proponent provided.']));
+  }
+}
+
+export async function validateSWUOpportunityId(connection: db.Connection, opportunityId: Id, session: Session): Promise<Validation<SWUOpportunity>> {
+  try {
+    const validatedId = validateUUID(opportunityId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneSWUOpportunity(connection, opportunityId, session);
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const opportunity = dbResult.value;
+    if (!opportunity) {
+      return invalid(['The specified Sprint With Us opportunity was not found.']);
+    }
+    return valid(opportunity);
+
+  } catch (exception) {
+    return invalid(['Please select a valid Sprint With Us opportunity.']);
   }
 }

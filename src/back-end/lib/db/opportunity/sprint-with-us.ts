@@ -6,9 +6,9 @@ import { readOneUserSlim } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunitiesStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { UserType } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { getValidValue, isInvalid } from 'shared/lib/validation';
 
@@ -18,6 +18,10 @@ interface CreateSWUOpportunityParams extends Omit<SWUOpportunity, 'createdBy' | 
   prototypePhase?: CreateSWUOpportunityPhaseParams;
   implementationPhase: CreateSWUOpportunityPhaseParams;
   teamQuestions: CreateSWUTeamQuestionBody[];
+}
+
+interface UpdateSWUOpportunityParams extends Omit<CreateSWUOpportunityParams, 'status'> {
+  id: Id;
 }
 
 interface CreateSWUOpportunityPhaseParams extends Omit<CreateSWUOpportunityPhaseBody, 'startDate' | 'completionDate'> {
@@ -221,6 +225,17 @@ async function rawHistoryRecordToHistoryRecord(connection: Connection, session: 
   };
 }
 
+export async function isSWUOpportunityAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
+  try {
+    const result = await connection<RawSWUOpportunity>('swuOpportunities')
+      .select('*')
+      .where({ id, createdBy: user.id });
+    return !!result && result.length > 0;
+  } catch (exception) {
+    return false;
+  }
+}
+
 export const readManyAddendum = tryDb<[Id], Addendum[]>(async (connection, opportunityId) => {
   const results = await connection<RawSWUOpportunityAddendum>('swuOpportunityAddenda')
     .where({ opportunity: opportunityId });
@@ -297,7 +312,7 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(a
       .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[])
       .orWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunitiesStatuses as SWUOpportunityStatus[])
+          .whereIn('stat.status', privateOpportunityStatuses as SWUOpportunityStatus[])
           .andWhere({ 'opp.createdBy': session.user?.id });
       });
   }
@@ -401,14 +416,14 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
           .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[])
           .orWhere(function() {
             this
-              .whereIn('stat.status', privateOpportunitiesStatuses as SWUOpportunityStatus[])
+              .whereIn('stat.status', privateOpportunityStatuses as SWUOpportunityStatus[])
               .andWhere({ 'opp.createdBy': session.user?.id });
           });
       });
   } else {
     // Admin users can see both private and public opportunities
     query = query
-      .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunitiesStatuses]);
+      .whereIn('stat.status', [...publicOpportunityStatuses, ...privateOpportunityStatuses]);
   }
 
   let result = await query.first<RawSWUOpportunity>();
@@ -585,4 +600,127 @@ export const createSWUOpportunityPhase = tryDb<[Id, CreateSWUOpportunityPhasePar
   });
 
   return await readOneSWUOpportunityPhase(connection, phaseId);
+});
+
+export const updateSWUOpportunityVersion = tryDb<[UpdateSWUOpportunityParams, AuthenticatedSession], SWUOpportunity>(async (connection, opportunity, session) => {
+  const now = new Date();
+  const { attachments, inceptionPhase, prototypePhase, implementationPhase, teamQuestions, ...restOfOpportunity } = opportunity;
+  const opportunityVersion = await connection.transaction(async trx => {
+    const [versionRecord] = await connection<SWUOpportunityVersionRecord>('swuOpportunityVersions')
+      .transacting(trx)
+      .insert({
+        ...restOfOpportunity,
+        opportunity: restOfOpportunity.id,
+        id: generateUuid(),
+        createdAt: now,
+        createdBy: session.user.id
+      }, '*');
+
+    if (!versionRecord) {
+      throw new Error('unable to update opportunity');
+    }
+
+    // Create attachments
+    await createSWUOpportunityAttachments(connection, trx, versionRecord.id, attachments || []);
+
+    // Create phases
+    if (inceptionPhase) {
+      await createSWUOpportunityPhase(trx, versionRecord.id, inceptionPhase, SWUOpportunityPhaseType.Inception, session);
+    }
+    if (prototypePhase) {
+      await createSWUOpportunityPhase(trx, versionRecord.id, prototypePhase, SWUOpportunityPhaseType.Prototype, session);
+    }
+    await createSWUOpportunityPhase(trx, versionRecord.id, implementationPhase, SWUOpportunityPhaseType.Implementation, session);
+
+    // Create team questions
+    for (const teamQuestion of teamQuestions) {
+      await connection<RawTeamQuestion & { opportunityVersion: Id }>('swuTeamQuestions')
+        .transacting(trx)
+        .insert({
+          ...teamQuestion,
+          createdAt: now,
+          createdBy: session.user.id,
+          opportunityVersion: versionRecord.id
+        });
+    }
+
+    // Add an 'edit' change record
+    await connection<RawSWUOpportunityHistoryRecord & { opportunity: Id }>('swuOpportunityStatuses')
+      .insert({
+        id: generateUuid(),
+        opportunity: restOfOpportunity.id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: SWUOpportunityEvent.Edited,
+        note: ''
+      });
+
+    return versionRecord;
+  });
+  const dbResult = await readOneSWUOpportunity(connection, opportunityVersion.opportunity, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+  return valid(dbResult.value);
+});
+
+export const updateSWUOpportunityStatus = tryDb<[Id, SWUOpportunityStatus, string, AuthenticatedSession], SWUOpportunity>(async (connection, id, status, note, session) => {
+  const now = new Date();
+  const [result] = await connection<RawSWUOpportunityHistoryRecord & { opportunity: Id }>('swuOpportunityStatuses')
+    .insert({
+      id: generateUuid(),
+      opportunity: id,
+      createdAt: now,
+      createdBy: session.user.id,
+      status,
+      note
+    }, '*');
+
+  if (!result) {
+    throw new Error('unable to update opportunity');
+  }
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+
+  return valid(dbResult.value);
+});
+
+export const addSWUOpportunityAddendum = tryDb<[Id, string, AuthenticatedSession], SWUOpportunity>(async (connection, id, addendumText, session) => {
+  const now = new Date();
+  await connection.transaction(async trx => {
+    const [addendum] = await connection<RawSWUOpportunityAddendum & { opportunity: Id }>('swuOpportunityAddenda')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        description: addendumText,
+        createdBy: session.user.id,
+        createdAt: now
+      }, '*');
+
+    if (!addendum) {
+      throw new Error('unable to add addendum');
+    }
+
+    // Add a history record for the addendum addition
+    await connection<RawSWUOpportunityHistoryRecord & { opportunity: Id }>('swuOpportunityStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: SWUOpportunityEvent.AddendumAdded,
+        note: ''
+      });
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add addendum');
+  }
+  return valid(dbResult.value);
 });

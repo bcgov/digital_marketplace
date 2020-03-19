@@ -26,7 +26,7 @@ export async function newCWUOpportunityPublished(recipient: User, opportunity: C
 
 export async function updatedCWUOpportunity(recipient: User, opportunity: CWUOpportunity, edits: CWUEditsToNotifyOn): Promise<void> {
   const title = 'Digital Marketplace - An opportunity you are watching has been updated';
-  const description = `Hi ${recipient.name}, an Code With Us opportunity you are watching has been updated:`;
+  const description = `Hi ${recipient.name}, a Code With Us opportunity you are watching has been updated:`;
   await send({
     to: recipient.email,
     subject: title,
