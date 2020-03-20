@@ -306,7 +306,7 @@ export const component: Tab.Component<State, Msg> = {
   getAlerts(state) {
     return {
       warnings: state.opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(state.form)
-        ? [{ text: 'Please edit, complete and save the form below in order to publish this opportunity.' }]
+        ? [{ text: 'This opportunity is a draft. Please select "Edit" from the Actions dropdown to complete and publish this opportunity.' }]
         : [],
       info: [],
       errors: state.errorAlerts.map((text, i) => ({
