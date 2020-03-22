@@ -101,7 +101,7 @@ export interface SWUProposalHistoryRecord {
   note: string;
 }
 
-export type SWUProposalSlim = Omit<SWUProposal, 'history' | 'opportunity' | 'attachments'>;
+export type SWUProposalSlim = Omit<SWUProposal, 'history' | 'opportunity' | 'attachments' | 'references' | 'teamQuestionResponses' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
 
 // Create.
 

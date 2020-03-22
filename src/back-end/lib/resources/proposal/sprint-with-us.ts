@@ -8,7 +8,7 @@ import { get, omit } from 'lodash';
 import { getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, SWUProposal, SWUProposalStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid } from 'shared/lib/validation';
@@ -53,6 +53,25 @@ type Resource = crud.Resource<
 
 const resource: Resource = {
   routeNamespace: 'proposals/sprint-with-us',
+
+  readMany(connection) {
+    return nullRequestBodyHandler<JsonResponseBody<SWUProposalSlim[] | string[]>, Session>(async request => {
+      const respond = (code: number, body: SWUProposalSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      const validatedSWUOpportunity = await validateSWUOpportunityId(connection, request.query.opportunity, request.session);
+      if (isInvalid(validatedSWUOpportunity)) {
+        return respond(404, ['Sprint With Us opportunity not found.']);
+      }
+
+      if (!permissions.isSignedIn(request.session) || !await permissions.readManySWUProposals(connection, request.session, validatedSWUOpportunity.value)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const dbResult = await db.readManySWUProposals(connection, request.session, request.query.opportunity);
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    });
+  },
 
   readOne(connection) {
     return nullRequestBodyHandler<JsonResponseBody<SWUProposal | string[]>, Session>(async request => {

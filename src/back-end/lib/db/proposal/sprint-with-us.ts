@@ -6,9 +6,9 @@ import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalStatus, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalStatus, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { User } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { getValidValue, isInvalid, valid } from 'shared/lib/validation';
 
@@ -37,7 +37,11 @@ interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | '
   attachments: Id[];
 }
 
-type RawSWUProposalSlim = Omit<RawSWUProposal, 'opportunity' | 'attachments' | 'history'>;
+interface RawSWUProposalSlim extends Omit<SWUProposalSlim, 'createdBy' | 'updatedBy' | 'organization'> {
+  createdBy?: Id;
+  updatedBy?: Id;
+  organization: Id;
+}
 
 interface RawHistoryRecord extends Omit<SWUProposalHistoryRecord, 'id' | 'createdBy' | 'type'> {
   createdBy: Id | null;
@@ -142,6 +146,29 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   };
 }
 
+async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: RawSWUProposalSlim): Promise<SWUProposalSlim> {
+  const { createdBy: createdById,
+          updatedBy: updatedById,
+          organization: organizationId,
+          ...restOfRaw
+        } = raw;
+
+  const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
+  const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
+  const organization = getValidValue(await readOneOrganizationSlim(connection, organizationId, false), undefined);
+
+  if (!organization) {
+    throw new Error('unable to process proposal');
+  }
+
+  return {
+    ...restOfRaw,
+    createdBy: createdBy || undefined,
+    updatedBy: updatedBy || undefined,
+    organization
+  };
+}
+
 async function getSWUProposalSubmittedAt(connection: Connection, proposal: RawSWUProposal | RawSWUProposalSlim): Promise<Date | undefined> {
   return (await connection<{ submittedAt: Date }>('swuProposalStatuses')
     .where({ proposal: proposal.id, status: SWUProposalStatus.Submitted })
@@ -185,6 +212,69 @@ export const readOneSWUProposalPhase = tryDb<[Id], SWUProposalPhase>(async (conn
   }
 
   return valid(await rawSWUProposalPhaseToSWUProposalPhase(connection, result));
+});
+
+export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposalSlim[]>(async (connection, session, id) => {
+  const query = connection<RawSWUProposalSlim>('swuProposals')
+    .where({ opportunity: id })
+    .select<RawSWUProposalSlim[]>(
+      'id',
+      'createdBy',
+      'createdAt',
+      'updatedBy',
+      'updatedAt',
+      'organization'
+    );
+
+  // If user is vendor, scope results to those proposals they have authored
+  // If user is admin/gov, we don't scope, and include scores
+  if (session.user.type === UserType.Vendor) {
+    query.andWhere({ createdBy: session.user.id });
+  } else {
+    query.select('questionsScore', 'challengeScore', 'scenarioScore', 'priceScore');
+  }
+
+  let results = await query;
+
+  if (!results) {
+    throw new Error('unable to read proposals');
+  }
+
+  // Read latest status for each proposal, and get submittedDate if it exists
+  for (const proposal of results) {
+    const statusResult = await connection<{ status: SWUProposalStatus }>('swuProposalStatuses')
+      .where({ proposal: proposal.id })
+      .whereNotNull('status')
+      .orderBy('createdAt', 'desc')
+      .first();
+
+    if (!statusResult) {
+      throw new Error('unable to read proposal status');
+    }
+    proposal.status = statusResult.status;
+
+    proposal.submittedAt = await getSWUProposalSubmittedAt(connection, proposal);
+  }
+
+  // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
+  if (session.user && session.user.type !== UserType.Vendor) {
+    results = results.filter(result => isSWUProposalStatusVisibleToGovernment(result.status));
+  }
+
+  // Read ranks for rankable proposals and apply to existing result set
+  const rankableProposals = results.filter(result => rankableSWUProposalStatuses.includes(result.status));
+  const ranks = await connection
+    .from('cwuProposals')
+    .whereIn('id', rankableProposals.map(r => r.id))
+    .andWhere({ opportunity: id })
+    .select(connection.raw('id, RANK () OVER (ORDER BY score DESC) rank'));
+
+  for (const result of results) {
+    const match = ranks.find(r => r.id === result.id);
+    result.rank = match ? match.rank : undefined;
+  }
+
+  return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result))));
 });
 
 export const readOneSWUProposalByOpportunityAndAuthor = tryDb<[Id, Session], Id | null>(async (connection, opportunityId, session) => {
