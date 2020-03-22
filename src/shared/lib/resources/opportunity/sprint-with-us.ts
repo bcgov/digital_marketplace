@@ -90,7 +90,7 @@ export interface SWUOpportunity {
   addenda: Addendum[];
   inceptionPhase?: SWUOpportunityPhase;
   prototypePhase?: SWUOpportunityPhase;
-  implementationPhase?: SWUOpportunityPhase;
+  implementationPhase: SWUOpportunityPhase;
   teamQuestions: SWUTeamQuestion[];
   history?: SWUOpportunityHistoryRecord[];
   publishedAt?: Date;
@@ -274,5 +274,16 @@ export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportuni
       return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Canceled].includes(to);
     default:
       return false;
+  }
+}
+
+export function doesSWUOpportunityStatusAllowGovToViewProposals(s: SWUOpportunityStatus): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.Draft:
+    case SWUOpportunityStatus.UnderReview:
+    case SWUOpportunityStatus.Published:
+      return false;
+    default:
+      return true;
   }
 }

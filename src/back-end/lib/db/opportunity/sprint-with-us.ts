@@ -70,21 +70,18 @@ interface RawSWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
   createdBy?: Id;
 }
 
-interface RawSWUOpportunityPhase extends Omit<SWUOpportunityPhase, 'createdBy' | 'updatedBy' | 'requiredCapabilities'> {
+interface RawSWUOpportunityPhase extends Omit<SWUOpportunityPhase, 'createdBy' | 'requiredCapabilities'> {
   id: Id;
   createdBy?: Id;
-  updatedBy?: Id;
   requiredCapabilities: Id[];
 }
 
-interface RawPhaseRequiredCapability extends Omit<SWUOpportunityPhaseRequiredCapability, 'createdBy' | 'updatedBy'> {
+interface RawPhaseRequiredCapability extends Omit<SWUOpportunityPhaseRequiredCapability, 'createdBy'> {
   createdBy?: Id;
-  updatedBy?: Id;
 }
 
-interface RawTeamQuestion extends Omit<SWUTeamQuestion, 'createdBy' | 'updatedBy'> {
+interface RawTeamQuestion extends Omit<SWUTeamQuestion, 'createdBy'> {
   createdBy?: Id;
-  updatedBy?: Id;
 }
 
 interface RawSWUOpportunityHistoryRecord extends Omit<SWUOpportunityHistoryRecord, 'createdBy' | 'type'> {
@@ -98,11 +95,9 @@ async function rawSWUOpportunityToSWUOpportunity(connection: Connection, raw: Ra
     createdBy: createdById,
     updatedBy: updatedById,
     attachments: attachmentIds,
-    addenda: addendaIds,
     inceptionPhase: inceptionPhaseId,
     prototypePhase: prototypePhaseId,
     implementationPhase: implementationPhaseId,
-    teamQuestions: teamQuestionIds,
     ...restOfRaw
   } = raw;
 
@@ -358,6 +353,26 @@ function processForRole<T extends RawSWUOpportunity>(result: T, session: Session
   }
   return result;
 }
+
+export const readOneSWUOpportunitySlim = tryDb<[Id, Session], SWUOpportunitySlim>(async (connection, opportunityId, session) => {
+  // Since slim opportunity requires the same joins, etc. as full to build, we query the full one, and reduce down to slim
+  const dbResult = await readOneSWUOpportunity(connection, opportunityId, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read opportunity');
+  }
+
+  const { id, title, createdAt, createdBy, updatedAt, updatedBy, status, proposalDeadline } = dbResult.value;
+  return valid({
+    id,
+    title,
+    createdAt,
+    createdBy,
+    updatedAt,
+    updatedBy,
+    status,
+    proposalDeadline
+  });
+});
 
 export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>(async (connection, id, session) => {
   let query = connection<RawSWUOpportunity>('swuOpportunities as opp')
