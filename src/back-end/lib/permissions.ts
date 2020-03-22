@@ -1,8 +1,11 @@
-import { CreateSWUOpportunityStatus, SWUOpportunityStatus } from 'back-end/../shared/lib/resources/opportunity/sprint-with-us';
 import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isSWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { isSWUProposalAuthor } from 'back-end/lib/db/proposal/sprint-with-us';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateSWUOpportunityStatus, doesSWUOpportunityStatusAllowGovToViewProposals, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { Organization } from 'shared/lib/resources/organization';
 import { CWUProposal, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment } from 'shared/lib/resources/proposal/code-with-us';
+import { isSWUProposalStatusVisibleToGovernment, SWUProposal, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 
@@ -226,6 +229,38 @@ export function publishSWUOpportunity(session: Session): boolean {
 
 export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
   return isAdmin(session) || (session.user && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+}
+
+// SWU Proposals.
+
+export async function readOneSWUProposal(connection: Connection, session: Session, proposal: SWUProposal): Promise<boolean> {
+  if (isAdmin(session) || (session.user && await isSWUOpportunityAuthor(connection, session.user, proposal.opportunity.id))) {
+    // Only provide permission to admins/gov owners if opportunity is not in draft/published
+    // And proposal is not in draft/submitted
+    return doesSWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
+          isSWUProposalStatusVisibleToGovernment(proposal.status);
+  } else if (isVendor(session)) {
+    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    return (session.user && await isSWUProposalAuthor(connection, session.user, proposal.id)) || false;
+  }
+  return false;
+}
+
+export async function readSWUProposalHistory(connection: Connection, session: Session, opportunityId: string, proposalId: string): Promise<boolean> {
+  return isAdmin(session) ||
+    (session.user && await isSWUOpportunityAuthor(connection, session.user, opportunityId) ||
+    (session.user && await isSWUProposalAuthor(connection, session.user, proposalId))) || false;
+}
+
+export async function readSWUProposalScore(connection: Connection, session: Session, opportunityId: string, proposalId: string, proposalStatus: SWUProposalStatus): Promise<boolean> {
+  return isAdmin(session) ||
+         (session.user && await isSWUOpportunityAuthor(connection, session.user, opportunityId) ||
+         (session.user && await isSWUProposalAuthor(connection, session.user, proposalId) &&
+          (proposalStatus === SWUProposalStatus.Awarded || proposalStatus === SWUProposalStatus.NotAwarded) || false));
+}
+
+export async function createSWUProposal(connection: Connection, session: Session, organization: Organization): Promise<boolean> {
+  return isVendor(session) && organization.swuQualified && !!session.user && await isUserOwnerOfOrg(connection, session.user, organization.id);
 }
 
 // Metrics.

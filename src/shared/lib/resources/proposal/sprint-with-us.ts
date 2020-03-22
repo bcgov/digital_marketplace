@@ -7,6 +7,12 @@ import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_SWU_PROPOSAL_TITLE = 'Unknown';
 
+export enum SWUProposalPhaseType {
+  Inception = 'INCEPTION',
+  Prototype = 'PROTOTYPE',
+  Implementation = 'IMPLEMENTATION'
+}
+
 export enum SWUProposalStatus {
   Draft        = 'DRAFT',
   Submitted    = 'SUBMITTED',
@@ -41,12 +47,12 @@ export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
 
 export interface SWUProposal {
   id: Id;
-  createdBy: UserSlim;
+  createdBy?: UserSlim;
   createdAt: Date;
-  updatedBy: UserSlim;
+  updatedBy?: UserSlim;
   updatedAt: Date;
   status: SWUProposalStatus;
-  history?: SWUProposalHistoryRecord;
+  history?: SWUProposalHistoryRecord[];
   submittedAt?: Date;
   opportunity: SWUOpportunitySlim;
   organization: OrganizationSlim;
@@ -60,9 +66,11 @@ export interface SWUProposal {
   challengeScore?: number;
   scenarioScore?: number;
   priceScore?: number;
+  rank?: number;
 }
 
 export interface SWUProposalPhase {
+  phase: SWUProposalPhaseType;
   members: SWUProposalTeamMember[];
   proposedCost: number;
 }
@@ -87,7 +95,6 @@ export interface SWUProposalTeamQuestionResponse {
 }
 
 export interface SWUProposalHistoryRecord {
-  id: Id;
   createdAt: Date;
   createdBy: UserSlim | null;
   type: ADT<'status', SWUProposalStatus> | ADT<'event', SWUProposalEvent>;
@@ -119,6 +126,7 @@ export type CreateSWUProposalTeamQuestionResponseBody = SWUProposalTeamQuestionR
 
 export interface CreateRequestBody {
   opportunity: Id;
+  organization: Id;
   inceptionPhase?: CreateSWUProposalPhaseBody;
   prototypePhase?: CreateSWUProposalPhaseBody;
   implementationPhase: CreateSWUProposalPhaseBody;
@@ -131,9 +139,13 @@ export interface CreateRequestBody {
 export interface CreateSWUProposalPhaseValidationErrors {
   members?: CreateSWUProposalTeamMemberValidationErrors[];
   proposedCost?: string[];
+  phase?: string[];
 }
 
-export type CreateSWUProposalTeamMemberValidationErrors = ErrorTypeFrom<CreateSWUProposalTeamMemberBody>;
+export interface CreateSWUProposalTeamMemberValidationErrors extends ErrorTypeFrom<CreateSWUProposalTeamMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
 
 export interface CreateSWUProposalReferenceValidationErrors extends ErrorTypeFrom<CreateSWUProposalReferenceBody> {
   parseFailure?: string[];
@@ -150,8 +162,11 @@ export interface CreateValidationErrors extends BodyWithErrors {
   implementationPhase?: CreateSWUProposalPhaseValidationErrors;
   references?: CreateSWUProposalReferenceValidationErrors[];
   teamQuestionResponses?: CreateSWUProposalTeamQuestionResponseValidationErrors[];
+  organization?: string[];
   opportunity?: string[];
   status?: string[];
+  totalProposedCost?: string[];
+  team?: string[];
 }
 
 // Update.
@@ -164,7 +179,7 @@ export type UpdateRequestBody
   | ADT<'scoreTeamScenario', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
-  | ADT<'withraw', string>;
+  | ADT<'withdraw', string>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
 
@@ -196,3 +211,15 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 export interface DeleteValidationErrors extends BodyWithErrors {
   status?: string[];
 }
+
+export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus): boolean {
+  switch (s) {
+    case SWUProposalStatus.Draft:
+    case SWUProposalStatus.Submitted:
+      return false;
+    default:
+      return true;
+  }
+}
+
+export const rankableSWUProposalStatuses: readonly SWUProposalStatus[] = [SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded];

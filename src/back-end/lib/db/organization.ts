@@ -84,6 +84,22 @@ async function calculateSWUQualifiedStatus(connection: Connection, organization:
   return false;
 }
 
+export const readOneOrganizationSlim = tryDb<[Id, boolean?], OrganizationSlim | null>(async (connection, opportunityId, allowInactive = false) => {
+  const dbResult = await readOneOrganization(connection, opportunityId, allowInactive);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read organization');
+  }
+
+  const { id, legalName, logoImageFile, owner, swuQualified } = dbResult.value;
+  return valid({
+    id,
+    legalName,
+    logoImageFile,
+    owner,
+    swuQualified
+  });
+});
+
 export const readOneOrganization = tryDb<[Id, boolean?], Organization | null>(async (connection, id, allowInactive = false) => {
   const where = {
     'organizations.id': id,

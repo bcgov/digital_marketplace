@@ -14,6 +14,7 @@ import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/co
 import sprintWithUsOpportunityResource from 'back-end/lib/resources/opportunity/sprint-with-us';
 import organizationResource from 'back-end/lib/resources/organization';
 import codeWithUsProposalResource from 'back-end/lib/resources/proposal/code-with-us';
+import sprintWithUsProposalResource from 'back-end/lib/resources/proposal/sprint-with-us';
 import sessionResource from 'back-end/lib/resources/session';
 import codeWithUsSubscriberResource from 'back-end/lib/resources/subscribers/code-with-us';
 import userResource from 'back-end/lib/resources/user';
@@ -67,6 +68,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     codeWithUsOpportunityResource,
     sprintWithUsOpportunityResource,
     codeWithUsProposalResource,
+    sprintWithUsProposalResource,
     codeWithUsSubscriberResource,
     fileResource,
     counterResource,
