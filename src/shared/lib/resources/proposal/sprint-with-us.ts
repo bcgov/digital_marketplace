@@ -1,7 +1,8 @@
+import { isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUOpportunitySlim } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { UserSlim } from 'shared/lib/resources/user';
+import { UserSlim, UserType } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
@@ -199,7 +200,8 @@ export interface UpdateEditValidationErrors {
   inceptionPhase?: CreateSWUProposalPhaseValidationErrors;
   prototypePhase?: CreateSWUProposalPhaseValidationErrors;
   implementationPhase?: CreateSWUProposalPhaseValidationErrors;
-  references: CreateSWUProposalReferenceValidationErrors[];
+  references?: CreateSWUProposalReferenceValidationErrors[];
+  organization?: string[];
 }
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -223,3 +225,42 @@ export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus): bo
 }
 
 export const rankableSWUProposalStatuses: readonly SWUProposalStatus[] = [SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded];
+
+export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
+  const hasProposalDeadlinePassed = isDateInThePast(proposalDeadline);
+  switch (from) {
+    case SWUProposalStatus.Draft:
+      return to === SWUProposalStatus.Submitted && userType === UserType.Vendor && !hasProposalDeadlinePassed;
+
+    case SWUProposalStatus.Submitted:
+      return (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
+             (to === SWUProposalStatus.UnderReview && userType !== UserType.Vendor && hasProposalDeadlinePassed);
+
+    case SWUProposalStatus.UnderReview:
+      return (([SWUProposalStatus.Evaluated, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
+             hasProposalDeadlinePassed;
+
+    case SWUProposalStatus.Evaluated:
+      return (([SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
+             hasProposalDeadlinePassed;
+
+    case SWUProposalStatus.Awarded:
+      return ((to === SWUProposalStatus.Disqualified && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
+             hasProposalDeadlinePassed;
+
+    case SWUProposalStatus.NotAwarded:
+      return [SWUProposalStatus.Awarded, SWUProposalStatus.Disqualified].includes(to) &&
+             userType !== UserType.Vendor &&
+             hasProposalDeadlinePassed;
+
+    case SWUProposalStatus.Withdrawn:
+      return userType === UserType.Vendor &&
+             !hasProposalDeadlinePassed &&
+             to === SWUProposalStatus.Submitted;
+    default:
+      return false;
+  }
+}

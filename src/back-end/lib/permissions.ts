@@ -274,6 +274,10 @@ export async function createSWUProposal(connection: Connection, session: Session
   return isVendor(session) && organization.swuQualified && !!session.user && await isUserOwnerOfOrg(connection, session.user, organization.id);
 }
 
+export async function editSWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
+  return session.user && await isSWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {

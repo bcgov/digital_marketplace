@@ -142,3 +142,19 @@ export function validateSWUProposalTeamCapabilities(opportunity: SWUOpportunity,
     return invalid(['The selected team members for each phase do not satisfy this opportunity\'s capability requirements.']);
   }
 }
+
+export function validateNote(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Note', 0, 5000);
+}
+
+export function validateTeamQuestionsScore(raw: number, opportunityScoreWeight: number): Validation<number> {
+  return validateNumber(raw, 0, opportunityScoreWeight, 'Team Questions Score');
+}
+
+export function validateCodeChallengeScore(raw: number, opportunityScoreWeight: number): Validation<number> {
+  return validateNumber(raw, 0, opportunityScoreWeight, 'Code Challenge Score');
+}
+
+export function validateTeamScenarioScore(raw: number, opportunityScoreWeight: number): Validation<number> {
+  return validateNumber(raw, 0, opportunityScoreWeight, 'Team Scenario Score');
+}
