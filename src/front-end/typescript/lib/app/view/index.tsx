@@ -17,6 +17,7 @@ import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-
 
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -283,6 +284,14 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageNotice.component,
         state => state.pages.notice,
         value => ({ tag: 'pageNotice', value })
+      );
+
+    case 'notFound':
+      return makeViewPageProps(
+        props,
+        PageNotFound.component,
+        state => state.pages.notFound,
+        value => ({ tag: 'pageNotFound', value })
       );
   }
 }

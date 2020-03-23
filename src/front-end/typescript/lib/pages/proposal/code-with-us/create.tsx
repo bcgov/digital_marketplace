@@ -1,4 +1,4 @@
-import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -45,7 +45,7 @@ export interface RouteParams {
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor],
-  async success({ dispatch, routeParams }) {
+  async success({ routePath, dispatch, routeParams }) {
     const { opportunityId } = routeParams;
     // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
     const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
@@ -62,7 +62,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     const affiliationsResult = await api.affiliations.readMany();
     // Redirect to 404 page if there is a server error.
     if (!api.isValid(opportunityResult) || !api.isValid(affiliationsResult)) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
     const opportunity = opportunityResult.value;
@@ -85,8 +85,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       }))
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({ routePath, dispatch }) {
+    dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     return invalid(null);
   }
 });
@@ -160,10 +160,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
 
-  sidebar: {
+  sidebar: sidebarValid({
     size: 'large',
     color: 'blue-light',
-    view: makeInstructionalSidebar<State, Msg>({
+    view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Create a Code With Us Proposal',
       getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
@@ -172,7 +172,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         </span>
       )
     })
-  },
+  }),
 
   getModal: getModalValid<ValidState, Msg>(state => {
     switch (state.showModal) {

@@ -27,11 +27,11 @@ export interface RouteParams {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
-  async success({ routeParams, shared, dispatch }) {
+  async success({ routePath, routeParams, shared, dispatch }) {
     const { proposalId, opportunityId } = routeParams;
     const result = await api.proposals.cwu.readOne(opportunityId, proposalId);
     if (!api.isValid(result)) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound'as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
     return valid(immutable({
@@ -40,8 +40,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
       exportedAt: new Date()
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound'as const))));
+  async fail({ routePath, dispatch }) {
+    dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     return invalid(null);
   }
 });

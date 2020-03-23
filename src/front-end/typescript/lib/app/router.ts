@@ -328,20 +328,15 @@ const router: Router.Router<Route> = {
 
     {
       path: '/notice/:noticeId',
-      makeRoute({ params, query }) {
-        return {
-          tag: 'notice',
-          value: PageNotice.parseNoticeId(params.noticeId, query)
-        };
+      makeRoute({ path, params, query }) {
+        const noticeId = PageNotice.parseNoticeId(params.noticeId, query);
+        return noticeId ? adt('notice', noticeId) : adt('notFound', { path });
       }
     },
     {
       path: '(.*)',
-      makeRoute() {
-        return {
-          tag: 'notice',
-          value: adt('notFound')
-        };
+      makeRoute({ path }) {
+        return adt('notFound', { path });
       }
     }
   ],
@@ -413,12 +408,13 @@ const router: Router.Router<Route> = {
       case 'notice':
         return (() => {
           switch (route.value.tag) {
-            case 'notFound':
             case 'deactivatedOwnAccount':
             case 'authFailure':
               return `/notice/${route.value.tag}`;
           }
         })();
+      case 'notFound':
+        return route.value.path || '/not-found';
     }
   }
 
