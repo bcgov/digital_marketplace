@@ -73,7 +73,7 @@ export type State = Validation<Immutable<ValidState>, null>;
 
 export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams, dispatch }) => {
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routePath, routeParams, dispatch }) => {
   if (routeParams) {
     const result = await api.getMarkdownFile(routeParams);
     if (api.isValid(result)) {
@@ -83,7 +83,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParam
       }));
     }
   }
-  dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
   return invalid(null);
 };
 

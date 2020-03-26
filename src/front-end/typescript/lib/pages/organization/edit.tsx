@@ -54,7 +54,7 @@ export interface RouteParams {
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor, UserType.Admin],
 
-  async success({ dispatch, routeParams, shared }) {
+  async success({ routePath, dispatch, routeParams, shared }) {
     const result = await api.organizations.readOne(routeParams.orgId);
     if (api.isValid(result)) {
       return valid(immutable({
@@ -72,17 +72,17 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         orgForm: immutable(await OrgForm.init({organization: result.value }))
       }));
     } else {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
   },
-  async fail({dispatch, shared, routeParams}) {
+  async fail({ routePath, dispatch, shared, routeParams }) {
     if (!shared.session || !shared.session.user) {
       dispatch(replaceRoute(adt('signIn' as const, {
         redirectOnSuccess: router.routeToUrl(adt('orgEdit', {orgId: routeParams.orgId}))
       })));
     } else {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     }
 
     return invalid(null);

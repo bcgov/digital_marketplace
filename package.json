@@ -54,6 +54,7 @@
     "@types/uuid": "^3.4.5",
     "bcrypt": "^3.0.6",
     "body-parser": "^1.18.3",
+    "bowser": "^2.9.0",
     "chalk": "^2.4.2",
     "cookie-parser": "^1.4.4",
     "dotenv": "^6.2.0",
