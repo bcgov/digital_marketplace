@@ -1,6 +1,5 @@
 import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
-import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
@@ -43,13 +42,13 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     }));
   },
 
-  async fail({ routeParams, shared, dispatch }) {
+  async fail({ routePath, routeParams, shared, dispatch }) {
     if (!shared.session || !shared.session.user) {
       dispatch(replaceRoute(adt('signIn' as const, {
-        redirectOnSuccess: router.routeToUrl(adt('orgCreate', null))
+        redirectOnSuccess: routePath
       })));
     } else {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     }
     return invalid(null);
   }

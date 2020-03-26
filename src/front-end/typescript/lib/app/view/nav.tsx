@@ -340,7 +340,7 @@ const TopNavbar: View<Props> = props => {
                 <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
                   <img src={props.logoImageUrl} style={{ height: '44px' }} />
                 </Link>
-                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-n2 mr-3 d-none d-md-block' />
+                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='mx-3 d-none d-md-block' />
                 {isLoading
                   ? (<Spinner size='sm' color='blue-dark-alt' className='transition-indicator' />)
                   : null}

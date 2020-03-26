@@ -34,19 +34,19 @@ export interface RouteParams {
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Admin, UserType.Government],
-  async success({ routeParams, shared, dispatch }) {
+  async success({ routePath, routeParams, shared, dispatch }) {
     const { opportunityId } = routeParams;
     const oppResult = await api.opportunities.cwu.readOne(opportunityId);
     const propSlimResult = await api.proposals.cwu.readMany(opportunityId);
     if (!api.isValid(oppResult) || !api.isValid(propSlimResult)) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound'as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
     const propResults = await Promise.all(propSlimResult.value.map(({ id }) => api.proposals.cwu.readOne(opportunityId, id)));
     const proposals: CWUProposal[] = [];
     for (const proposal of propResults) {
       if (!api.isValid(proposal)) {
-        dispatch(replaceRoute(adt('notice' as const, adt('notFound'as const))));
+        dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
         return invalid(null);
       }
       proposals.push(proposal.value);
@@ -58,8 +58,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       exportedAt: new Date()
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound'as const))));
+  async fail({ routePath, dispatch }) {
+    dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     return invalid(null);
   }
 });

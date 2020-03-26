@@ -31,12 +31,12 @@ export interface RouteParams {
 function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, State_<K>, Msg_<K>> {
   return isSignedIn({
 
-    async success({ routeParams, shared, dispatch }) {
+    async success({ routePath, routeParams, shared, dispatch }) {
       const viewerUser = shared.sessionUser;
       const profileUserResult = await api.users.readOne(routeParams.userId);
       // If the request failed, then show the "Not Found" page.
       if (!api.isValid(profileUserResult)) {
-        dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+        dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
         return invalid(null);
       }
       const profileUser = profileUserResult.value;
@@ -44,7 +44,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       const viewerIsAdmin = isAdmin(viewerUser);
       // If the viewer isn't the owner or an admin, then show the "Not Found" page.
       if (!isOwner && !viewerIsAdmin) {
-        dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+        dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
         return invalid(null);
       }
       // Set up the visible tab state.

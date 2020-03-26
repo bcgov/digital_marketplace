@@ -1,48 +1,41 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, toast, Update } from 'front-end/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  toasts: Array<[string, string]>;
+  toast: [string, string];
 }
 
 type InnerMsg
   = ADT<'noop'>
-  | ADT<'hideToast', number>;
+  | ADT<'showToast'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  toasts: [
-    [
-      'First Toast',
-      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
-    ],
-    [
-      'Second Toast',
-      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
-    ],
-    [
-      'Third Toast',
-      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
-    ],
-    [
-      'Fourth Toast',
-      'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
-    ]
+  toast: [
+    'Example Toast',
+    'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
   ]
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'hideToast':
+    case 'showToast':
       return [
-        state.update('toasts', ts => ts.filter((t, i) => i !== msg.value))
+        state,
+        async (state, dispatch) => {
+          dispatch(toast(adt('info', {
+            title: state.toast[0],
+            body: state.toast[1]
+          })));
+          return null;
+        }
       ];
     default:
       return [state];
@@ -54,6 +47,9 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <Row>
       <Col xs='12'>
         Landing page coming soon.
+      </Col>
+      <Col xs='12' className='mt-5'>
+        <button onClick={() => dispatch(adt('showToast'))}>Show Toast</button>
       </Col>
     </Row>
   );
@@ -78,13 +74,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         { text: 'second test alert' }
       ]
     };
-  },
-  getToasts(state) {
-    return state.toasts.map((t, i) => ({
-      title: t[0],
-      body: t[1],
-      dismissMsg: { tag: 'hideToast', value: i }
-    }));
   },
   getBreadcrumbs() {
     return [

@@ -17,3 +17,5 @@ export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'TODO';
 export const EMPTY_STRING = '—'; // emdash
 
 export const DROPDOWN_CARET_SIZE = 0.8; //rem
+
+export const TOAST_AUTO_DISMISS_DURATION = 15000; //ms
