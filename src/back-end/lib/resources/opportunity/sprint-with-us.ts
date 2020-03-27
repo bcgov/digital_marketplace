@@ -210,17 +210,17 @@ const resource: Resource = {
             inceptionPhase: inceptionPhase ? {
               ...inceptionPhase,
               startDate: getValidValue(validatedInceptionPhaseStartDate, defaultDate),
-              completionDate: getValidValue(validatedInceptionPhaseCompletionDate, defaultDate)
+              completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, now), 14))
             } : undefined,
             prototypePhase: prototypePhase ? {
               ...prototypePhase,
               startDate: getValidValue(validatedPrototypePhaseStartDate, defaultDate),
-              completionDate: getValidValue(validatedPrototypePhaseCompletionDate, defaultDate)
+              completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, now), 14))
             } : undefined,
             implementationPhase: {
               ...implementationPhase,
               startDate: getValidValue(validatedImplementationPhaseStartDate, defaultDate),
-              completionDate: getValidValue(validatedImplementationPhaseCompletionDate, defaultDate)
+              completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, now), 14))
             }
           });
         }
@@ -488,7 +488,6 @@ const resource: Resource = {
                 session: request.session,
                 body: adt('edit' as const , {
                   ...request.body.value,
-                  status: swuOpportunity.status,
                   attachments: validatedAttachments.value,
                   // Coerce validated dates to default values
                   proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
@@ -496,17 +495,17 @@ const resource: Resource = {
                   inceptionPhase: inceptionPhase ? {
                     ...inceptionPhase,
                     startDate: getValidValue(validatedInceptionPhaseStartDate, defaultDate),
-                    completionDate: getValidValue(validatedInceptionPhaseCompletionDate, defaultDate)
+                    completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, now), 14))
                   } : undefined,
                   prototypePhase: prototypePhase ? {
                     ...prototypePhase,
                     startDate: getValidValue(validatedPrototypePhaseStartDate, defaultDate),
-                    completionDate: getValidValue(validatedPrototypePhaseCompletionDate, defaultDate)
+                    completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, now), 14))
                   } : undefined,
                   implementationPhase: {
                     ...implementationPhase,
                     startDate: getValidValue(validatedImplementationPhaseStartDate, defaultDate),
-                    completionDate: getValidValue(validatedImplementationPhaseCompletionDate, defaultDate)
+                    completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, now), 14))
                   }
                 })
               } as ValidatedUpdateRequestBody);
