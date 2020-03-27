@@ -1,5 +1,5 @@
 import { get, isArray, isBoolean, repeat } from 'lodash';
-import moment from 'moment-timezone';
+import moment, { isDate } from 'moment-timezone';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export function getString(obj: any, keyPath: string | string[], fallback = ''): string {
@@ -26,6 +26,14 @@ export function getBoolean(obj: any, keyPath: string | string[], fallback = fals
   } else {
     return fallback;
   }
+}
+
+export function getISODateString(obj: any, keyPath: string | string[]): string {
+  const value = get(obj, keyPath);
+  if (isDate(value)) {
+    return value.toISOString();
+  }
+  return value;
 }
 
 export async function identityAsync<T>(a: T): Promise<T> {
