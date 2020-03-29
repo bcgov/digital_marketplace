@@ -33,7 +33,10 @@ interface ValidatedUpdateRequestBody {
 
 type ValidatedUpdateEditRequestBody = Omit<ValidatedCreateRequestBody, 'opportunity' | 'status' | 'session'>;
 
-type ValidatedDeleteRequestBody = Id;
+interface ValidatedDeleteRequestBody {
+  proposal: Id;
+  session: AuthenticatedSession;
+}
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -566,6 +569,41 @@ const resource: Resource = {
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
         })
+      })
+    };
+  },
+
+  delete(connection) {
+    return {
+      async validateRequestBody(request) {
+        if (!permissions.isSignedIn(request.session) || !(await permissions.deleteSWUProposal(connection, request.session, request.params.id))) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+        const validatedSWUProposal = await validateSWUProposalId(connection, request.params.id, request.session);
+        if (isInvalid(validatedSWUProposal)) {
+          return invalid({ notFound: ['The specified proposal was not found.'] });
+        }
+        if (validatedSWUProposal.value.status !== SWUProposalStatus.Draft) {
+          return invalid({ status: ['Only draft proposals can be deleted.'] });
+        }
+        return valid({
+          proposal: validatedSWUProposal.value.id,
+          session: request.session
+        });
+      },
+      respond: wrapRespond({
+        valid: async request => {
+          const dbResult = await db.deleteSWUProposal(connection, request.body.proposal, request.body.session);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        },
+        invalid: async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }
       })
     };
   }

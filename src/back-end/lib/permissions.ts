@@ -278,6 +278,10 @@ export async function editSWUProposal(connection: Connection, session: Session, 
   return session.user && await isSWUProposalAuthor(connection, session.user, proposalId) || false;
 }
 
+export async function deleteSWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
+  return session.user && await isSWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {

@@ -1012,3 +1012,21 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
     return dbResult.value;
   }));
 });
+
+export const deleteSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal>(async (connection, id, session) => {
+  // Read the proposal first, so we can respond with it after deleting
+  const proposal = getValidValue(await readOneSWUProposal(connection, id, session), undefined);
+  if (!proposal) {
+    throw new Error('unable to delete proposal');
+  }
+
+  // Delete root record
+  const [result] = await connection<RawSWUProposal>('swuProposals')
+    .where({ id })
+    .delete('*');
+
+  if (!result) {
+    throw new Error('unable to delete proposal');
+  }
+  return valid(proposal);
+});
