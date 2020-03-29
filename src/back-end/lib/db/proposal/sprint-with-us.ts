@@ -341,6 +341,7 @@ export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal 
     .join<RawSWUProposal>('swuProposalStatuses as statuses', function() {
       this
         .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
         .andOn('statuses.createdAt', '=',
           connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
             statuses2.proposal = proposals.id and statuses2.status is not null)'));
@@ -393,7 +394,7 @@ export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal 
           .join('swuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
           .whereIn('statuses.status', rankableSWUProposalStatuses as SWUProposalStatus[])
           .andWhere({ opportunity: result.opportunity })
-          .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY questionsScore + challengeScore + scenarioScore + priceScore) rank'));
+          .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY "questionsScore" + "challengeScore" + "scenarioScore" + "priceScore") rank'));
         result.rank = ranks.find(r => r.id === result.id)?.rank;
       }
     }
@@ -712,7 +713,7 @@ export const updateSWUProposalTeamQuestionScore = tryDb<[Id, number, Authenticat
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.QuestionsScoreEntered,
-        note: `A team questions score of "${score}%" was entered.`
+        note: `A team questions score of "${score}" was entered.`
       }, '*');
 
     if (!result) {
@@ -755,11 +756,44 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.ChallengeScoreEntered,
-        note: `A code challenge score of "${score}%" was entered.`
+        note: `A code challenge score of "${score}" was entered.`
       }, '*');
 
     if (!result) {
       throw new Error('unable to update code challenge score');
+    }
+
+    // Disqualify this proposal if the score entered is less than 80% (need to query latest opportunity weight for CC first)
+    const codeChallengeWeight = (await connection<{ challengeWeight: number }>('swuProposals as proposals')
+      .transacting(trx)
+      .where({ 'proposals.id': proposalId })
+      .join('swuOpportunities as opportunities', 'proposals.opportunity', '=', 'opportunities.id')
+      .join('swuOpportunityVersions as versions', function() {
+        this
+          .on('versions.opportunity', '=', 'opportunities.id')
+          .andOn('versions.createdAt', '=',
+            connection.raw('(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
+              versions2.opportunity = opportunities.id)'));
+      })
+      .select<{ codeChallengeWeight: number }>('versions.codeChallengeWeight')
+      .first())?.codeChallengeWeight;
+
+    if (!codeChallengeWeight) {
+      throw new Error('unable to update proposal');
+    }
+
+    if ((score / codeChallengeWeight) < .80 ) {
+      // Disqualify
+      await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+        .transacting(trx)
+        .insert({
+          id: generateUuid(),
+          proposal: proposalId,
+          createdAt: new Date(), // Use a new date so this record appears after the score entry in the history,
+          createdBy: session.user.id,
+          status: SWUProposalStatus.Disqualified,
+          note: `Failed the code challenge.`
+        });
     }
 
     const dbResult = await readOneSWUProposal(trx, result.proposal, session);
@@ -802,7 +836,7 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.ScenarioScoreEntered,
-        note: `A team scenario score of "${scenarioScore}%" was entered.`
+        note: `A team scenario score of "${scenarioScore}" was entered.`
       }, '*');
 
     if (!scenarioScoreResult) {
@@ -815,14 +849,30 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
       .insert({
         id: generateUuid(),
         proposal: proposalId,
-        createdAt: now,
+        createdAt: new Date(), // New date so it appears after the previous updates
         createdBy: session.user.id,
         event: SWUProposalEvent.PriceScoreEntered,
-        note: `A price score of "${scenarioScore}%" was entered.`
+        note: `A price score of "${priceScore}" was calculated.`
       }, '*');
 
     if (!priceScoreResult) {
       throw new Error('unable to update team scenario score');
+    }
+
+    // Create a status record now that this proposal is fully evaluated
+    const [evalStatusResult] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: new Date(), // New date so it appears after the previous updates
+        createdBy: session.user.id,
+        status: SWUProposalStatus.Evaluated,
+        note: ''
+      }, '*');
+
+    if (!evalStatusResult) {
+      throw new Error('unable to update proposal');
     }
 
     const dbResult = await readOneSWUProposal(trx, proposalId, session);
@@ -836,20 +886,21 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
 
 interface ProposalBidRecord {
   id: Id;
-  bid: number;
+  bid: string; // Knex/Postgres returns results of aggregrate queries as strings instead of numbers for some reason, so we parse the result ourselves later.
 }
 
 async function calculatePriceScore(connection: Transaction, proposalId: Id): Promise<number> {
 
   // Get the price score weight from the opportunity corresponding to this proposal
   const priceScoreWeight = (await connection<{ priceWeight: number }>('swuProposals as proposals')
-    .join('swuOpportunity as opportunities', 'proposals.opportunity', '=', 'opportunities.id')
+    .where({ 'proposals.id': proposalId })
+    .join('swuOpportunities as opportunities', 'proposals.opportunity', '=', 'opportunities.id')
     .join('swuOpportunityVersions as versions', function() {
       this
         .on('versions.opportunity', '=', 'opportunities.id')
         .andOn('versions.createdAt', '=',
           connection.raw('(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
-            versions2.opportunity = opportunities.id and versions2.status is not null)'));
+            versions2.opportunity = opportunities.id)'));
     })
     .select<{ priceWeight: number }>('versions.priceWeight')
     .first())?.priceWeight;
@@ -861,26 +912,28 @@ async function calculatePriceScore(connection: Transaction, proposalId: Id): Pro
   // Select summed bids for each proposal in the same opportunity, order lowest to highest
   // Restrict to proposals that are in UnderReview/Evaluated
   const bids = await connection<ProposalBidRecord>('swuProposals as proposals')
-    .whereIn('opportunity', function() {
-      this
-        .where({ id: proposalId })
-        .select('opportunity');
-    })
     // Get latest status, so we can check to make sure proposal is under review/evaluated
-    .join('swuProposalStatuses as stasuses', function() {
+    .join('swuProposalStatuses as statuses', function() {
       this
         .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
         .andOn('statuses.createdAt', '=',
           connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
             statuses2.proposal = proposals.id and statuses2.status is not null)'));
     })
+    .join('swuProposalPhases as phases', 'proposals.id', '=', 'phases.proposal')
+    .whereIn('proposals.opportunity', function() {
+      this
+        .where({ id: proposalId })
+        .select('opportunity')
+        .from('swuProposals');
+    })
     .whereIn('statuses.status', [SWUProposalStatus.UnderReview, SWUProposalStatus.Evaluated])
     // Join to phases, sum the proposed costs, group by proposal, sort lowest to highest
-    .join('swuProposalPhases as phases', 'proposals.id', '=', 'phases.proposals')
     .sum('phases.proposedCost as bid')
     .groupBy('proposals.id')
-    .select<ProposalBidRecord[]>('proposals.id', 'bid')
-    .orderBy('proposalBid', 'asc');
+    .select<ProposalBidRecord[]>('proposals.id')
+    .orderBy('bid', 'asc');
 
   if (!bids || !bids.length) {
     throw new Error('unable to calculate price scores');
@@ -892,7 +945,7 @@ async function calculatePriceScore(connection: Transaction, proposalId: Id): Pro
     throw new Error('unable to calculate price score');
   }
 
-  return (lowestBid / proposal.bid) * priceScoreWeight;
+  return (parseFloat(lowestBid) / parseFloat(proposal.bid)) * priceScoreWeight;
 }
 
 export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUProposal>(async (connection, proposalId, note, session) => {
