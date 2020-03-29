@@ -10,7 +10,7 @@ export async function up(connection: Knex): Promise<void> {
   });
   logger.info('Completed modifying swuOpportunityStatuses table.');
 
-  await connection.schema.alterTable('cwuProposalStatuses', table => {
+  await connection.schema.alterTable('swuProposalStatuses', table => {
     table.uuid('createdBy').nullable().alter();
   });
   logger.info('Completed modifying swuProposalStatuses table.');
