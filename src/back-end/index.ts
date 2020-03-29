@@ -3,6 +3,7 @@ import * as crud from 'back-end/lib/crud';
 import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
 import loggerHook from 'back-end/lib/hooks/logger';
+import sprintWithUsHook from 'back-end/lib/hooks/sprint-with-us';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import basicAuth from 'back-end/lib/map-routes/basic-auth';
@@ -89,7 +90,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     flippedConcat(notFoundJsonRoute),
     // Namespace all CRUD routes with '/api'.
     map((route: BasicRoute) => namespaceRoute('/api', route)),
-    addHooks([codeWithUsHook(connection)])
+    addHooks([codeWithUsHook(connection), sprintWithUsHook(connection)])
   ])(resources);
 
   // Collect all routes.
