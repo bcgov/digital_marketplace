@@ -7,6 +7,7 @@ import { valid } from 'shared/lib/http';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -758,4 +759,75 @@ export const deleteSWUOpportunity = tryDb<[Id, Session], SWUOpportunity>(async (
   result.addenda = [];
   result.attachments = [];
   return valid(opportunity);
+});
+
+export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
+  const now = new Date();
+  return valid(await connection.transaction(async trx => {
+    const lapsedOpportunitiesIds = (await connection<{ id: Id }>('swuOpportunities as opportunities')
+      .transacting(trx)
+      .join('swuOpportunityStatuses as statuses', function() {
+        this
+          .on('opportunities.id', '=', 'statuses.opportunity')
+          .andOn('statuses.createdAt', '=',
+            connection.raw('(select max("createdAt") from "swuOpportunityStatuses" as statuses2 where \
+              statuses2.opportunity = opportunities.id and statuses2.status is not null)'));
+      })
+      .join('swuOpportunityVersions as versions', function() {
+        this
+          .on('opportunities.id', '=', 'versions.opportunity')
+          .andOn('versions.createdAt', '=',
+            connection.raw('(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
+              versions2.opportunity = opportunities.id)'));
+      })
+      .where({
+        'statuses.status': SWUOpportunityStatus.Published
+      })
+      .andWhere('versions.proposalDeadline', '<=', now)
+      .select<Array<{ id: Id }>>('opportunities.id'))?.map(result => result.id) || [];
+
+    for (const lapsedOpportunityId of lapsedOpportunitiesIds) {
+      // Set the opportunity to EVAL_TEAM_QUESTIONS status
+      await connection('swuOpportunityStatuses')
+        .transacting(trx)
+        .insert({
+          id: generateUuid(),
+          createdAt: now,
+          opportunity: lapsedOpportunityId,
+          status: SWUOpportunityStatus.EvaluationTeamQuestions,
+          note: 'This opportunity has closed.'
+        });
+
+      // Get a list of SUBMITTED proposals for this opportunity
+      const proposalIds = (await connection<{ id: Id }>('swuProposals as proposals')
+        .transacting(trx)
+        .join('swuProposalStatuses as statuses', function() {
+          this
+            .on('proposals.id', '=', 'statuses.proposal')
+            .andOnNotNull('statuses.status')
+            .andOn('statuses.createdAt', '=',
+              connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+                statuses2.proposal = proposals.id and statuses2.status is not null)'));
+        })
+        .where({
+          'proposals.opportunity': lapsedOpportunityId,
+          'statuses.status': SWUProposalStatus.Submitted
+        })
+        .select<Array<{ id: Id }>>('proposals.id'))?.map(result => result.id) || [];
+
+      for (const proposalId of proposalIds) {
+        // Set the proposal to UNDER_REVIEW status
+        await connection('swuProposalStatuses')
+          .transacting(trx)
+          .insert({
+            id: generateUuid(),
+            createdAt: now,
+            proposal: proposalId,
+            status: SWUProposalStatus.UnderReview,
+            note: ''
+          });
+      }
+    }
+    return lapsedOpportunitiesIds.length;
+  }));
 });

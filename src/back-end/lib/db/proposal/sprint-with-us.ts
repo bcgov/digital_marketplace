@@ -184,11 +184,15 @@ async function getSWUProposalSubmittedAt(connection: Connection, proposal: RawSW
 }
 
 async function createSWUProposalAttachments(trx: Transaction, proposalId: Id, attachments: FileRecord[]) {
-  for (const attachment of attachments) {
+  const existingAttachments = await trx<{ file: Id }>('swuProposalAttachments')
+    .where({ proposal: proposalId})
+    .select();
+  const newAttachmentIds = existingAttachments?.filter(existing => !attachments.map(record => record.id).includes(existing.file)).map(n => n.file) || attachments.map(a => a.id);
+  for (const attachmentId of newAttachmentIds) {
     const [attachmentResult] = await trx('swuProposalAttachments')
       .insert({
         proposal: proposalId,
-        file: attachment.id
+        file: attachmentId
       }, '*');
     if (!attachmentResult) {
       throw new Error('Unable to create proposal attachment');
