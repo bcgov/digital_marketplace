@@ -51,10 +51,7 @@ export interface CWUOpportunity {
   createdBy?: UserSlim;
   updatedBy?: UserSlim;
 
-  // TODO
-  // @successful-proponent
-  successfulProponent?: true;
-
+  successfulProponent?: boolean;
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -76,8 +73,6 @@ export interface CWUOpportunity {
   history?: CWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
-
-  // TODO
   reporting?: {
     numProposals: number;
     numWatchers: number;

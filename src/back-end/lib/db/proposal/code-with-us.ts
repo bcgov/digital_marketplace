@@ -670,3 +670,19 @@ export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connec
   result.attachments = [];
   return valid(await rawCWUProposalToCWUProposal(connection, session, result));
 });
+
+export const readSubmittedProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
+  return valid((await connection<RawCWUProposal>('cwuProposals as proposals')
+    .join('cwuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+        connection.raw('(select max("createdAt") from "cwuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity
+    })
+    .whereNotIn('statuses.status', [CWUProposalStatus.Draft, CWUProposalStatus.Withdrawn]))?.length || 0);
+});
