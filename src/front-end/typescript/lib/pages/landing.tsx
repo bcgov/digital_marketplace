@@ -63,10 +63,10 @@ const view: ComponentView<State, Msg> = ({state, dispatch}) => {
       <Col xs='12' className='mt-5'>
         <button onClick={() => dispatch(adt('showToast'))}>Show Toast</button>
       </Col>
-      <Col xs='12'>
+      <Col xs='12' md='8'>
         <TeamQuestions.view
           state={state.teamQs}
-        dispatch={mapComponentDispatch(dispatch, msg => adt('updateTeamQs' as const, msg))} />
+          dispatch={mapComponentDispatch(dispatch, msg => adt('updateTeamQs' as const, msg))} />
       </Col>
     </Row>
   );

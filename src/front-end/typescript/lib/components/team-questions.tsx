@@ -141,110 +141,110 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 interface QuestionViewProps {
-  qIndex: number;
-  state: Question;
+  index: number;
+  question: Question;
+  disabled?: boolean;
   dispatch: Dispatch<Msg>;
 }
 
 const QuestionView: View<QuestionViewProps> = props => {
-  const { state, dispatch, qIndex } = props;
+  const { question, dispatch, index, disabled } = props;
   return (
-    <div className='py-4 border-bottom'>
-      <Row className='pb-3'>
-        <Col>
-          <span className='h3 pr-3'>Question {qIndex + 1}</span>
-          <Link
-            button
-            outline
-            size='sm'
-            color='blue-dark'
-            symbol_={leftPlacement(iconLinkSymbol('trash'))}
-            onClick={() => dispatch(adt('deleteQuestion', qIndex))}
-          >
-            Delete
-          </Link>
-        </Col>
-      </Row>
+    <div className='pb-5 mb-5 border-bottom'>
+      <div className='d-flex align-items-center mb-4'>
+        <h3 className='mb-0'>Question {index + 1}</h3>
+        {disabled
+          ? null
+          : (<Link
+              button
+              outline
+              size='sm'
+              color='blue-dark'
+              className='ml-4'
+              symbol_={leftPlacement(iconLinkSymbol('trash'))}
+              onClick={() => dispatch(adt('deleteQuestion', index))}>
+                Delete
+              </Link>)}
+      </div>
       <LongText.view
         extraChildProps={{}}
         label='Question'
+        placeholder='Enter your question here.'
         required
-        state={state.question}
-        dispatch={mapComponentDispatch(dispatch, value => adt('questionText' as const, { childMsg: value, qIndex } )) }
-      />
-
+        style={{ height: '200px' }}
+        disabled={disabled}
+        state={question.question}
+        dispatch={mapComponentDispatch(dispatch, value => adt('questionText' as const, { childMsg: value, qIndex: index } ))} />
       <LongText.view
         extraChildProps={{}}
         label='Response Guidelines'
+        placeholder='Provide some guidance on how a Vendor can effectively respond to your question.'
         required
-        state={state.responseGuideline}
-        dispatch={mapComponentDispatch(dispatch, value => adt('responseGuidelineText' as const, { childMsg: value, qIndex } )) }
+        style={{ height: '160px' }}
+        disabled={disabled}
+        state={question.responseGuideline}
+        dispatch={mapComponentDispatch(dispatch, value => adt('responseGuidelineText' as const, { childMsg: value, qIndex: index } )) }
       />
-
-    <Row>
-      <Col md='3'>
-        <NumberField.view
-          extraChildProps={{
-            suffix: 'words'
-          }}
-          label='Word Limit'
-          required
-          state={state.wordLimit}
-          dispatch={mapComponentDispatch(dispatch, value => adt('wordLimit' as const, { childMsg: value, qIndex } )) }
-        />
-      </Col>
-    </Row>
-
-    <Row>
-      <Col md='3'>
-        <NumberField.view
-          extraChildProps={{
-            suffix: 'pt(s)'
-          }}
-          label='Score'
-          required
-          state={state.score}
-          dispatch={mapComponentDispatch(dispatch, value => adt('score' as const, { childMsg: value, qIndex } )) }
-        />
-      </Col>
-    </Row>
-
+      <Row>
+        <Col xs='12' md='6' lg='5'>
+          <NumberField.view
+            extraChildProps={{
+              suffix: 'words'
+            }}
+            label='Word Limit'
+            required
+            disabled={disabled}
+            state={question.wordLimit}
+            dispatch={mapComponentDispatch(dispatch, value => adt('wordLimit' as const, { childMsg: value, qIndex: index } )) }
+          />
+          <NumberField.view
+            extraChildProps={{
+              suffix: 'points'
+            }}
+            label='Score'
+            required
+            disabled={disabled}
+            state={question.score}
+            dispatch={mapComponentDispatch(dispatch, value => adt('score' as const, { childMsg: value, qIndex: index } )) }
+          />
+        </Col>
+      </Row>
     </div>
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {}
+interface Props extends ComponentViewProps<State, Msg> {
+  disabled?: boolean;
+}
 
-const AddButton: View<Props> = ({ dispatch }) => {
+const AddButton: View<Props> = ({ disabled, dispatch }) => {
   return (
-
     <Link
       button
       outline
+      disabled={disabled}
       size='sm'
       color='primary'
-      className={`mt-5 mb-2`}
       symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-      onClick={ () => { dispatch(adt('addQuestion')); } }
-    >
+      onClick={ () => { dispatch(adt('addQuestion')); } }>
       Add Question
     </Link>
   );
 };
 
 export const view: View<Props> = props => {
-  const state = props.state;
+  const { state, disabled } = props;
   return (
     <div>
-      { state.questions.map((file, i) => (
-          <QuestionView
-            key={i}
-            qIndex={i}
-            state={state.questions[i]}
-            dispatch={props.dispatch}
-          />
-        ))
-      }
+      {state.questions.map((file, i) => (
+        <QuestionView
+          key={`team-questions-question-${i}`}
+          index={i}
+          disabled={disabled}
+          question={state.questions[i]}
+          dispatch={props.dispatch}
+        />
+      ))}
       <AddButton {...props} />
     </div>
   );
