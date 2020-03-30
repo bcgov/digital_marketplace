@@ -103,6 +103,7 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Awarded:
     case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.Canceled:
       return true;
     default:
       return false;
@@ -192,6 +193,17 @@ export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
   switch (o.status) {
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canCWUOpportunityDetailsBeEdited(o: CWUOpportunity): boolean {
+  switch (o.status) {
+    case CWUOpportunityStatus.Draft:
+    case CWUOpportunityStatus.Published:
+    case CWUOpportunityStatus.Suspended:
       return true;
     default:
       return false;

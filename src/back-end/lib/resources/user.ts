@@ -8,16 +8,17 @@ import { validateFileRecord, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
 import { Session } from 'shared/lib/resources/session';
-import { DeleteValidationErrors } from 'shared/lib/resources/user';
-import { adminPermissionsToUserType, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
+import { adminPermissionsToUserType, DeleteValidationErrors, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
+import { isArray } from 'util';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 export type ValidatedUpdateRequestBody
   = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'updateCapabilities', string[]>
   | ADT<'acceptTerms'>
   | ADT<'updateNotifications', Date | null>
   | ADT<'reactivateUser'>
@@ -89,6 +90,13 @@ const resource: Resource = {
               avatarImageFile: getString(value, 'avatarImageFile') || undefined
             });
 
+          case 'updateCapabilities':
+            if (isArray(value)) {
+              return adt('updateCapabilities', value);
+            } else {
+              return null;
+            }
+
           case 'acceptTerms':
             return adt('acceptTerms');
 
@@ -148,6 +156,19 @@ const resource: Resource = {
               });
             }
 
+          case 'updateCapabilities':
+            if (!permissions.updateUser(request.session, request.params.id)) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            const validatedCapabilities = userValidation.validateCapabilities(request.body.value);
+            if (isValid(validatedCapabilities)) {
+              return valid(adt('updateCapabilities' as const, validatedCapabilities.value));
+            } else {
+              return invalid({
+                user: adt('updateCapabilities' as const, getInvalidValue(validatedCapabilities, []) as string[][])
+              });
+            }
+
           case 'acceptTerms':
             if (!permissions.acceptTerms(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -191,6 +212,9 @@ const resource: Resource = {
           switch (request.body.tag) {
             case 'updateProfile':
               dbResult = await db.updateUser(connection, {...request.body.value, id: request.params.id });
+              break;
+            case 'updateCapabilities':
+              dbResult = await db.updateUser(connection, { capabilities: request.body.value, id: request.params.id });
               break;
             case 'acceptTerms':
               dbResult = await db.updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });

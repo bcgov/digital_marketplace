@@ -1,6 +1,6 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
-import { BodyWithErrors, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
 export interface Organization {
@@ -24,23 +24,39 @@ export interface Organization {
   owner: UserSlim;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
+  acceptedSWUTerms: Date | null;
+  swuQualified: boolean;
 }
 
 export interface OrganizationSlim {
   id: Id;
   legalName: string;
   logoImageFile?: FileRecord;
-  owner?: UserSlim;
+  owner?: UserSlim;       // Admin/owner only
+  swuQualified?: boolean; // Admin/owner only
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner'> {
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualified'> {
   logoImageFile?: Id;
 }
 
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
 
-export type UpdateRequestBody = CreateRequestBody;
+export type UpdateRequestBody
+  = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'acceptSWUTerms'>;
 
-export type UpdateValidationErrors = ErrorTypeFrom<UpdateRequestBody> & BodyWithErrors;
+export type UpdateProfileRequestBody = CreateRequestBody;
+
+export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+
+type UpdateADTErrors
+  = ADT<'updateProfile', UpdateProfileValidationErrors>
+  | ADT<'acceptSWUTerms', string[]>
+  | ADT<'parseFailure'>;
+
+export interface UpdateValidationErrors extends BodyWithErrors {
+  organization?: UpdateADTErrors;
+}
 
 export type DeleteValidationErrors = BodyWithErrors;

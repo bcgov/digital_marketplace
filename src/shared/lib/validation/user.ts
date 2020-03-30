@@ -1,7 +1,8 @@
+
 import { parseUserStatus, parseUserType, UserStatus, UserType } from 'shared/lib/resources/user';
 import { invalid, valid, validateGenericString, Validation } from 'shared/lib/validation';
 
-export { validateEmail } from 'shared/lib/validation';
+export { validateCapabilities, validateEmail } from 'shared/lib/validation';
 
 export function validateName(name: string): Validation<string> {
   return validateGenericString(name, 'Name');

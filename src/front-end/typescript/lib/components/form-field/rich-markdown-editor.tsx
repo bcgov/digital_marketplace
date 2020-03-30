@@ -8,14 +8,31 @@ import Link, { externalDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Spinner } from 'reactstrap';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 import { Validation } from 'shared/lib/validation';
 
 export type Value = string;
 
 export type UploadImage = (file: File) => Promise<Validation<{ name: string; url: string }>>;
 
+type Snapshot = [string, number, number]; // [value, selectionStart, selectionEnd]
+
+type StackEntry = ADT<'single', Snapshot> | ADT<'batch', Snapshot>;
+
+type Stack = StackEntry[];
+
+function emptyStack(): Stack {
+  return [];
+}
+
+function isStackEmpty(stack: Stack): boolean {
+  return !stack.length;
+}
+
 interface ChildState extends FormField.ChildStateBase<Value> {
+  currentStackEntry: StackEntry | null; // When in the middle of undoing/redoing to ensure continuity in UX.
+  undo: Stack;
+  redo: Stack;
   loading: number;
   selectionStart: number;
   selectionEnd: number;
@@ -27,8 +44,10 @@ export interface ChildParams extends FormField.ChildParamsBase<Value> {
 }
 
 type InnerChildMsg
-  = ADT<'onChangeTextArea', [string, number, number]> // [value, selectionStart, selectionEnd]
+  = ADT<'onChangeTextArea', Snapshot>
   | ADT<'onChangeSelection', [number, number]> // [selectionStart, selectionEnd]
+  | ADT<'controlUndo'>
+  | ADT<'controlRedo'>
   | ADT<'controlH1'>
   | ADT<'controlH2'>
   | ADT<'controlH3'>
@@ -51,6 +70,9 @@ export type Msg = FormField.Msg<InnerChildMsg>;
 
 const childInit: ChildComponent['init'] = async params => ({
   ...params,
+  currentStackEntry: null,
+  undo: emptyStack(),
+  redo: emptyStack(),
   loading: 0,
   selectionStart: 0,
   selectionEnd: 0
@@ -76,33 +98,115 @@ function insert(state: Immutable<ChildState>, params: InsertParams): UpdateRetur
   if (suffix !== '' && separateLine) {
     suffix = suffix.replace(/^\n?\n?/, '\n\n');
   }
-  state = state
-    .set('value', `${prefix}${body}${suffix}`)
-    .set('selectionStart', prefix.length)
-    .set('selectionEnd', prefix.length + body.length);
+  state = pushStack(state, 'undo', getStackEntry(state));
+  state = resetRedoStack(state);
+  state = setSnapshot(state, [
+    `${prefix}${body}${suffix}`,
+    prefix.length,
+    prefix.length + body.length
+  ]);
   return [
     state,
     async (state, dispatch) => {
-      dispatch({ tag: '@validate', value: undefined });
-      dispatch({ tag: 'focus', value: undefined });
+      dispatch(adt('@validate'));
+      dispatch(adt('focus'));
       return null;
     }
+  ];
+}
+
+function getSnapshot(state: Immutable<ChildState>): Snapshot {
+  return [
+    state.value,
+    state.selectionStart,
+    state.selectionEnd
+  ];
+}
+
+function setSnapshot(state: Immutable<ChildState>, snapshot: Snapshot): Immutable<ChildState> {
+  return state
+    .set('value', snapshot[0])
+    .set('selectionStart', snapshot[1])
+    .set('selectionEnd', snapshot[2]);
+}
+
+function getStackEntry(state: Immutable<ChildState>): StackEntry {
+  return state.currentStackEntry || adt('single', getSnapshot(state));
+}
+
+function setStackEntry(state: Immutable<ChildState>, entry: StackEntry): Immutable<ChildState> {
+  return setSnapshot(state, entry.value)
+    .set('currentStackEntry', entry);
+}
+
+function resetRedoStack(state: Immutable<ChildState>): Immutable<ChildState> {
+  return state
+    .set('redo', emptyStack())
+    .set('currentStackEntry', null);
+}
+
+const MAX_STACK_ENTRIES = 50;
+const STACK_BATCH_SIZE = 5;
+
+function pushStack(state: Immutable<ChildState>, k: 'undo' | 'redo', entry: StackEntry): Immutable<ChildState> {
+  return state.update(k, stack => {
+    const addAsNewest = () => [entry, ...stack.slice(0, MAX_STACK_ENTRIES - 1)];
+    // If stack is smaller than batch size, or are adding a batch, simply add the entry.
+    if (stack.length < STACK_BATCH_SIZE || entry.tag === 'batch') {
+      return addAsNewest();
+    }
+    // If newest entries are batches, simply add the entry.
+    for (let i = 0; i < STACK_BATCH_SIZE; i++) {
+      if (stack[i].tag === 'batch') {
+        return addAsNewest();
+      }
+    }
+    // Otherwise, the newest (single) entries need to be batched.
+    return [
+      entry,
+      adt('batch', stack[STACK_BATCH_SIZE - 1].value), // convert single entry to batch
+      ...stack.slice(STACK_BATCH_SIZE, MAX_STACK_ENTRIES - 2)
+    ];
+  });
+}
+
+function popStack(state: Immutable<ChildState>, k: 'undo' | 'redo'): [StackEntry | undefined, Immutable<ChildState>] {
+  const stack = state.get(k);
+  if (!stack.length) { return [undefined, state]; }
+  const [entry, ...rest] = stack;
+  return [
+    entry,
+    state.set(k, rest)
   ];
 }
 
 const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
   switch (msg.tag) {
     case 'onChangeTextArea':
-      return [state
-        .set('value', msg.value[0])
-        .set('selectionStart', msg.value[1])
-        .set('selectionEnd', msg.value[2])
-      ];
+      state = pushStack(state, 'undo', getStackEntry(state));
+      state = resetRedoStack(state);
+      return [setSnapshot(state, msg.value)];
     case 'onChangeSelection':
       return [state
         .set('selectionStart', msg.value[0])
         .set('selectionEnd', msg.value[1])
       ];
+    case 'controlUndo': {
+      let entry;
+      [entry, state] = popStack(state, 'undo');
+      if (!entry) { return [state]; }
+      state = pushStack(state, 'redo', getStackEntry(state));
+      state = setStackEntry(state, entry);
+      return [state];
+    }
+    case 'controlRedo': {
+      let entry;
+      [entry, state] = popStack(state, 'redo');
+      if (!entry) { return [state]; }
+      state = pushStack(state, 'undo', getStackEntry(state));
+      state = setStackEntry(state, entry);
+      return [state];
+    }
     case 'controlH1':
       return insert(state, {
         text: selectedText => `# ${selectedText}`,
@@ -195,25 +299,40 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
   const isDisabled = disabled || isLoading;
   const onSelectFile = (file: File) => {
     if (isDisabled) { return; }
-    dispatch({ tag: 'controlImage', value: file });
+    dispatch(adt('controlImage', file));
   };
   return (
     <div className='bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 form-control border-0'>
       <ControlIcon
+        name='undo'
+        width={0.9}
+        height={0.9}
+        disabled={isDisabled || isStackEmpty(state.undo)}
+        className='mr-2'
+        onClick={() => dispatch(adt('controlUndo'))} />
+      <ControlIcon
+        name='redo'
+        width={0.9}
+        height={0.9}
+        disabled={isDisabled || isStackEmpty(state.redo)}
+        className='mr-3'
+        onClick={() => dispatch(adt('controlRedo'))} />
+      <ControlSeparator />
+      <ControlIcon
         name='h1'
         disabled={isDisabled}
         className='mr-2'
-        onClick={() => dispatch({ tag: 'controlH1', value: undefined })} />
+        onClick={() => dispatch(adt('controlH1'))} />
       <ControlIcon
         name='h2'
         disabled={isDisabled}
         className='mr-2'
-        onClick={() => dispatch({ tag: 'controlH2', value: undefined })} />
+        onClick={() => dispatch(adt('controlH2'))} />
       <ControlIcon
         name='h3'
         disabled={isDisabled}
         className='mr-3'
-        onClick={() => dispatch({ tag: 'controlH3', value: undefined })} />
+        onClick={() => dispatch(adt('controlH3'))} />
       <ControlSeparator />
       <ControlIcon
         name='bold'
@@ -221,14 +340,14 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         width={0.9}
         height={0.9}
         className='mr-2'
-        onClick={() => dispatch({ tag: 'controlBold', value: undefined })} />
+        onClick={() => dispatch(adt('controlBold'))} />
       <ControlIcon
         name='italics'
         width={0.9}
         height={0.9}
         disabled={isDisabled}
         className='mr-3'
-        onClick={() => dispatch({ tag: 'controlItalics', value: undefined })} />
+        onClick={() => dispatch(adt('controlItalics'))} />
       <ControlSeparator />
       <ControlIcon
         name='unordered-list'
@@ -236,14 +355,14 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         height={1}
         disabled={isDisabled}
         className='mr-2'
-        onClick={() => dispatch({ tag: 'controlUnorderedList', value: undefined })} />
+        onClick={() => dispatch(adt('controlUnorderedList'))} />
       <ControlIcon
         name='ordered-list'
         width={1}
         height={1}
         disabled={isDisabled}
         className='mr-3'
-        onClick={() => dispatch({ tag: 'controlOrderedList', value: undefined })} />
+        onClick={() => dispatch(adt('controlOrderedList'))} />
       <ControlSeparator />
       <FileLink
         className='p-0'
@@ -278,7 +397,7 @@ const ChildView: ChildComponent['view'] = props => {
     const start = target.selectionStart;
     const end = target.selectionEnd;
     if (start !== state.selectionStart || end !== state.selectionEnd) {
-      dispatch({ tag: 'onChangeSelection', value: [start, end] });
+      dispatch(adt('onChangeSelection', [start, end]));
     }
   };
   return (
@@ -304,13 +423,27 @@ const ChildView: ChildComponent['view'] = props => {
         }}
         onChange={e => {
           const value = e.currentTarget.value;
-          dispatch({ tag: 'onChangeTextArea', value: [
+          dispatch(adt('onChangeTextArea', [
             value,
             e.currentTarget.selectionStart,
             e.currentTarget.selectionEnd
-          ]});
+          ]));
           // Let the parent form field component know that the value has been updated.
           props.onChange(value);
+        }}
+        onKeyDown={e => {
+          const isModifier = e.ctrlKey || e.metaKey;
+          const isUndo = isModifier && !e.shiftKey && e.keyCode === 90; //Ctrl-Z or Cmd-Z
+          const isRedo = isModifier && ((e.shiftKey && e.keyCode === 90) || e.keyCode === 89); //Ctrl-Shift-Z, Cmd-Shift-Z, Ctrl-Y or Cmd-Y
+          const run = (msg: InnerChildMsg) => {
+            e.preventDefault();
+            dispatch(msg);
+          };
+          if (isUndo) {
+            run(adt('controlUndo'));
+          } else if (isRedo) {
+            run(adt('controlRedo'));
+          }
         }}
         onSelect={e => onChangeSelection(e.currentTarget)}>
       </textarea>

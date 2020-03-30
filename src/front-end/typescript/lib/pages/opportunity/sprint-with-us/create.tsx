@@ -43,8 +43,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       // form: immutable(await Form.init({}))
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({ routePath, dispatch }) {
+    dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     return invalid(null);
   }
 });

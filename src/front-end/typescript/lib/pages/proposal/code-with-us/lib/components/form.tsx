@@ -4,13 +4,14 @@ import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
+import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Icon from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
-import { Alert, Col, Nav, NavItem, Row } from 'reactstrap';
+import { Alert, Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
@@ -26,9 +27,11 @@ const ProponentTypeRadioGroup = RadioGroup.makeComponent<ProponentType>();
 
 export type TabId = 'Proponent' | 'Proposal' | 'Attachments';
 
+const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
+
 export interface State {
   opportunity: CWUOpportunity;
-  activeTab: TabId;
+  tabbedForm: Immutable<TabbedForm.State<TabId>>;
   // Proponent Tab
   proponentType: Immutable<RadioGroup.State<ProponentType>>;
   // Individual
@@ -52,33 +55,37 @@ export interface State {
 }
 
 export type Msg
-  = ADT<'updateActiveTab',   TabId>
+  = ADT<'tabbedForm',         TabbedForm.Msg<TabId>>
   // Proponent Tab
-  | ADT<'proponentType', RadioGroup.Msg<ProponentType>>
+  | ADT<'proponentType',      RadioGroup.Msg<ProponentType>>
   // Individual Proponent
-  | ADT<'legalName', ShortText.Msg>
-  | ADT<'email', ShortText.Msg>
-  | ADT<'phone', ShortText.Msg>
-  | ADT<'street1', ShortText.Msg>
-  | ADT<'street2', ShortText.Msg>
-  | ADT<'city', ShortText.Msg>
-  | ADT<'region', ShortText.Msg>
-  | ADT<'mailCode', ShortText.Msg>
-  | ADT<'country', ShortText.Msg>
+  | ADT<'legalName',          ShortText.Msg>
+  | ADT<'email',              ShortText.Msg>
+  | ADT<'phone',              ShortText.Msg>
+  | ADT<'street1',            ShortText.Msg>
+  | ADT<'street2',            ShortText.Msg>
+  | ADT<'city',               ShortText.Msg>
+  | ADT<'region',             ShortText.Msg>
+  | ADT<'mailCode',           ShortText.Msg>
+  | ADT<'country',            ShortText.Msg>
   // Organization Proponent
-  | ADT<'organization', Select.Msg>
+  | ADT<'organization',       Select.Msg>
   // Proposal Tab
   | ADT<'toggleEvaluationCriteria'>
-  | ADT<'proposalText',           RichMarkdownEditor.Msg>
+  | ADT<'proposalText',       RichMarkdownEditor.Msg>
   | ADT<'additionalComments', RichMarkdownEditor.Msg>
   // Attachments tab
-  | ADT<'attachments', Attachments.Msg>;
+  | ADT<'attachments',        Attachments.Msg>;
 
 export interface Params {
   opportunity: CWUOpportunity;
   proposal?: CWUProposal;
   activeTab?: TabId;
   affiliations: AffiliationSlim[];
+}
+
+export function getActiveTab(state: Immutable<State>): TabId {
+  return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Proponent';
@@ -99,7 +106,15 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
     };
   })();
   return {
-    activeTab,
+    tabbedForm: immutable(await TabbedFormComponent.init({
+      tabs: [
+        'Proponent',
+        'Proposal',
+        'Attachments'
+      ],
+      activeTab
+    })),
+
     opportunity,
     orgId: '',
     showEvaluationCriteria: true,
@@ -267,8 +282,14 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'updateActiveTab':
-      return [state.set('activeTab', msg.value)];
+    case 'tabbedForm':
+      return updateComponentChild({
+        state,
+        childStatePath: ['tabbedForm'],
+        childUpdate: TabbedFormComponent.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('tabbedForm', value)
+      });
 
     case 'proponentType':
       return updateComponentChild({
@@ -799,61 +820,30 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-// @duplicated-tab-helper-functions
-function isActiveTab(state: State, tab: TabId): boolean {
-  return state.activeTab === tab;
-}
-
-// @duplicated-tab-helper-functions
-const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab, disabled }) => {
-  const isActive = isActiveTab(state, tab);
-  const isValid = () => {
-    switch (tab) {
-      case 'Proponent':   return isProponentTabValid(state);
-      case 'Proposal':    return isProposalTabValid(state);
-      case 'Attachments': return isAttachmentsTabValid(state);
-    }
-  };
-  return (
-    <NavItem>
-      <Link
-        nav
-        symbol_={isValid() ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
-        symbolClassName='text-warning'
-        className={`text-nowrap ${isActive ? 'active text-body' : 'text-primary'}`}
-        onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>
-        {tab}
-      </Link>
-    </NavItem>
-  );
-};
-
 export const view: View<Props> = props => {
-  const { state } = props;
+  const { state, dispatch } = props;
+  const activeTab = (() => {
+    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+      case 'Proponent':    return (<ProponentView {...props} />);
+      case 'Proposal': return (<ProposalView {...props} />);
+      case 'Attachments': return (<AttachmentsView {...props} />);
+    }
+  })();
   return (
-    <div>
-      <div className='sticky bg-white'>
-        <div className='d-flex mb-5' style={{ overflowX: 'auto' }}>
-          <Nav tabs className='flex-grow-1 flex-nowrap bg-white'>
-            <TabLink {...props} tab='Proponent' />
-            <TabLink {...props} tab='Proposal' />
-            <TabLink {...props} tab='Attachments' />
-          </Nav>
-        </div>
-      </div>
-      {(() => {
-        switch (state.activeTab) {
-          case 'Proponent': {
-            return (<ProponentView {...props} />);
-          }
-          case 'Proposal': {
-            return (<ProposalView {...props} />);
-          }
-          case 'Attachments': {
-            return (<AttachmentsView {...props} />);
-          }
+    <TabbedFormComponent.view
+      valid={isValid(state)}
+      disabled={props.disabled}
+      getTabLabel={a => a}
+      isTabValid={tab => {
+        switch (tab) {
+          case 'Proponent':    return isProponentTabValid(state);
+          case 'Proposal': return isProposalTabValid(state);
+          case 'Attachments': return isAttachmentsTabValid(state);
         }
-      })()}
-    </div>
+      }}
+      state={state.tabbedForm}
+      dispatch={mapComponentDispatch(dispatch, msg => adt('tabbedForm' as const, msg))}>
+      {activeTab}
+    </TabbedFormComponent.view>
   );
 };

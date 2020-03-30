@@ -43,6 +43,7 @@ export interface User {
   idpUsername: string;
   deactivatedOn: Date | null;
   deactivatedBy: Id | null;
+  capabilities: string[];
 }
 
 export interface UserSlim {
@@ -71,6 +72,7 @@ export interface UpdateProfileRequestBody {
 
 export type UpdateRequestBody
   = ADT<'updateProfile', UpdateProfileRequestBody>
+  | ADT<'updateCapabilities', string[]>
   | ADT<'acceptTerms'>
   | ADT<'updateNotifications', boolean>
   | ADT<'reactivateUser'>
@@ -80,6 +82,7 @@ export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBo
 
 type UpdateADTErrors
   = ADT<'updateProfile', UpdateProfileValidationErrors>
+  | ADT<'updateCapabilities', string[][]>
   | ADT<'acceptTerms', string[]>
   | ADT<'updateNotifications', string[]>
   | ADT<'updateAdminPermissions', string[]>

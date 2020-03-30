@@ -3,7 +3,8 @@ import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'fr
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
-import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, View } from 'front-end/lib/framework';
+import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, Toast as FrameworkToast, View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 // Note(Jesse): @add_new_page_location
 
 import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
@@ -16,6 +17,7 @@ import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-
 
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -40,11 +42,11 @@ import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
 import * as PageSignUpStepTwo from 'front-end/lib/pages/sign-up/step-two';
 import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
-import Icon from 'front-end/lib/views/icon';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import { default as React } from 'react';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import { Modal, ModalBody, ModalFooter, ModalHeader, Toast, ToastBody } from 'reactstrap';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
@@ -283,6 +285,14 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.notice,
         value => ({ tag: 'pageNotice', value })
       );
+
+    case 'notFound':
+      return makeViewPageProps(
+        props,
+        PageNotFound.component,
+        state => state.pages.notFound,
+        value => ({ tag: 'pageNotFound', value })
+      );
   }
 }
 
@@ -299,7 +309,7 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
       <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{content.title}</ModalHeader>
       <ModalBody>{content.body(dispatch)}</ModalBody>
       <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
-        <div className='p-3 d-flex flex-md-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
+        <div className='p-3 d-flex flex-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
           {content.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
             const props = {
               key: `modal-action-${i}`,
@@ -308,7 +318,7 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
               loading,
               disabled,
               onClick: () => dispatch(msg),
-              className: i === 0 ? 'mx-0' : 'ml-3 mr-0 ml-md-0 mr-md-3'
+              className: i === 0 ? 'mx-0' : 'mr-3'
             };
             if (button) {
               return (<Link button {...props}>{text}</Link>);
@@ -319,6 +329,45 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
         </div>
       </ModalFooter>
     </Modal>
+  );
+};
+
+const ViewToastIcon: View<{ toast: FrameworkToast; }> = ({ toast }) => {
+  const name: AvailableIcons = (() => {
+    switch (toast.tag) {
+      case 'info': return 'info-circle';
+      case 'error': return 'times-circle';
+      case 'warning': return 'exclamation-circle';
+      case 'success': return 'check-circle';
+    }
+  })();
+  const color: ThemeColor = (() => {
+    switch (toast.tag) {
+      case 'info': return 'blue-alt';
+      case 'error': return 'danger';
+      case 'warning': return 'warning';
+      case 'success': return 'success';
+    }
+  })();
+  return (<Icon name={name} color={color} />);
+};
+
+const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const toasts = state.toasts;
+  if (!toasts.length) { return null; }
+  return (
+    <div className='toast-wrapper'>
+      {toasts.map((toast, i) => (
+        <Toast fade key={`page-toast-${i}`} className={i < toasts.length - 1 ? 'mb-3' : ''}>
+          <div className='d-flex align-items-center justify-content-start toast-header'>
+            <ViewToastIcon toast={toast} />
+            <strong className='mx-2'>{toast.value.title}</strong>
+            <Icon hover className='ml-auto' name='times' color='secondary' onClick={() => dispatch(adt('dismissToast', i))} />
+          </div>
+          <ToastBody>{toast.value.body}</ToastBody>
+        </Toast>
+      ))}
+    </div>
   );
 };
 
@@ -524,6 +573,7 @@ const view: ComponentView<State, Msg> = props => {
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}
+        <ViewToasts {...props} />
         <ViewModal dispatch={dispatch} modal={state.modal} />
       </div>
     );

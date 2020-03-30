@@ -2,7 +2,7 @@ import { isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
-import { UserSlim, UserType  } from 'shared/lib/resources/user';
+import { UserSlim, UserType } from 'shared/lib/resources/user';
 import { ADT, adt, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
@@ -40,7 +40,7 @@ export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
 export interface CWUProposalHistoryRecord {
   id: Id;
   createdAt: Date;
-  createdBy: UserSlim;
+  createdBy: UserSlim | null;
   type: ADT<'status', CWUProposalStatus> | ADT<'event', CWUProposalEvent>;
   note: string;
 }
@@ -77,7 +77,7 @@ export function getCWUProponentTypeTitleCase(p: CWUProposal | CWUProposalSlim): 
   }
 }
 
-export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'statusHistory' | 'opportunity' | 'attachments'>;
+export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'history' | 'opportunity' | 'attachments'>;
 
 export interface CWUIndividualProponent {
   id: Id;
@@ -200,6 +200,11 @@ export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStat
       return [CWUProposalStatus.Awarded, CWUProposalStatus.Disqualified].includes(to) &&
              userType !== UserType.Vendor &&
              hasProposalDeadlinePassed;
+
+    case CWUProposalStatus.Withdrawn:
+      return userType === UserType.Vendor &&
+             !hasProposalDeadlinePassed &&
+             to === CWUProposalStatus.Submitted;
     default:
       return false;
   }

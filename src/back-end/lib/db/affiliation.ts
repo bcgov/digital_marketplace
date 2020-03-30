@@ -3,7 +3,7 @@ import { Connection, tryDb } from 'back-end/lib/db';
 import { readOneOrganization } from 'back-end/lib/db/organization';
 import { readOneUser } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
-import { Affiliation, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
+import { Affiliation, AffiliationMember, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { getValidValue } from 'shared/lib/validation';
@@ -50,6 +50,25 @@ async function rawAffiliationToAffiliationSlim(connection: Connection, params: R
   };
 }
 
+async function rawAffiliationToAffiliationMember(connection: Connection, params: RawAffiliation): Promise<AffiliationMember> {
+  const { id, user: userId, membershipType, membershipStatus } = params;
+  const user = getValidValue(await readOneUser(connection, userId), null);
+  if (!user) {
+    throw new Error('unable to process affiliation');
+  }
+  return {
+    id,
+    membershipType,
+    membershipStatus,
+    user: {
+      id: user.id,
+      name: user.name,
+      avatarImageFile: user.avatarImageFile,
+      capabilities: user.capabilities
+    }
+  };
+}
+
 export const readOneAffiliation = tryDb<[Id, Id], Affiliation | null>(async (connection, user, organization) => {
   const result = await connection<RawAffiliation>('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
@@ -92,6 +111,19 @@ export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connec
     })
     .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
   return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw))));
+});
+
+export const readManyAffiliationsForOrganization = tryDb<[Id], AffiliationMember[]>(async (connection, orgId) => {
+  const results: RawAffiliation[] = await connection<RawAffiliation>('affiliations')
+    .join('users', 'affiliations.user', '=', 'users.id')
+    .join('organizations', 'affiliations.organization', '=', 'organizations.id')
+    .where({
+      'affiliations.organization': orgId,
+      'organizations.active': true
+    })
+    .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
+    .select('affiliations.*');
+  return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationMember(connection, raw))));
 });
 
 export const createAffiliation = tryDb<[CreateAffiliationParams], Affiliation>(async (connection, affiliation) => {

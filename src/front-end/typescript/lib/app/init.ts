@@ -6,6 +6,7 @@ const init: Init<null, State> = async () => {
   return {
     ready: false,
     transitionLoading: 0,
+    toasts: [],
     modal: {
       open: false,
       content: {

@@ -49,7 +49,7 @@ interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
 }
 
 interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityHistoryRecord, 'createdBy' | 'type'> {
-  createdBy: Id;
+  createdBy: Id | null;
   status?: CWUOpportunityStatus;
   event?: CWUOpportunityEvent;
 }
@@ -107,9 +107,9 @@ async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection: Con
 
 async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection: Connection, session: Session, raw: RawCWUOpportunityHistoryRecord): Promise<CWUOpportunityHistoryRecord> {
   const { createdBy: createdById, status, event, ...restOfRaw } = raw;
-  const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
+  const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), null) : null;
 
-  if (!createdBy || (!status && !event)) {
+  if (!status && !event) {
     throw new Error('unable to process opportunity status record');
   }
 

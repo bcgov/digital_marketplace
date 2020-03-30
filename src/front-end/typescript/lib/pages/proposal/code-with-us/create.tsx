@@ -1,9 +1,10 @@
-import { getAlertsValid, getContextualActionsValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -13,9 +14,14 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
+type ModalId
+  = 'submit'
+  | 'cancel';
+
 export type State = Validation<Immutable<ValidState>, null>;
 
 export interface ValidState {
+  showModal: ModalId | null;
   opportunity: CWUOpportunity;
   form: Immutable<Form.State>;
   showErrorAlert: 'submit' | 'save' | null;
@@ -24,7 +30,9 @@ export interface ValidState {
 }
 
 type InnerMsg
-  = ADT<'dismissErrorAlert'>
+  = ADT<'hideModal'>
+  | ADT<'showModal', ModalId>
+  | ADT<'dismissErrorAlert'>
   | ADT<'form', Form.Msg>
   | ADT<'submit'>
   | ADT<'saveDraft'>;
@@ -37,25 +45,24 @@ export interface RouteParams {
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor],
-  async success({ dispatch, routeParams }) {
+  async success({ routePath, dispatch, routeParams }) {
     const { opportunityId } = routeParams;
     // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
-    // TODO uncomment this once the backend supports cwu propsals readMany for vendors
-    //const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
-    //if (api.isValid(proposalsResult) && proposalsResult.value.length) {
-      //const existingProposal = proposalsResult.value[0];
-      //dispatch(replaceRoute(adt('proposalCWUEdit' as const, {
-        //opportunityId,
-        //proposalId: existingProposal.id
-      //})));
-      //return invalid(null);
-    //}
+    const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
+    if (api.isValid(proposalsResult) && proposalsResult.value.length) {
+      const existingProposal = proposalsResult.value[0];
+      dispatch(replaceRoute(adt('proposalCWUEdit' as const, {
+        opportunityId,
+        proposalId: existingProposal.id
+      })));
+      return invalid(null);
+    }
     // Fetch opportunity and affiliated organizations.
     const opportunityResult = await api.opportunities.cwu.readOne(opportunityId);
     const affiliationsResult = await api.affiliations.readMany();
     // Redirect to 404 page if there is a server error.
     if (!api.isValid(opportunityResult) || !api.isValid(affiliationsResult)) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
     const opportunity = opportunityResult.value;
@@ -67,6 +74,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     const affiliations = affiliationsResult.value;
     // Everything looks good, so state is valid.
     return valid(immutable({
+      showModal: null,
       submitLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
@@ -77,8 +85,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       }))
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({ routePath, dispatch }) {
+    dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     return invalid(null);
   }
 });
@@ -90,11 +98,18 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [state.set('showModal', null)];
+
     case 'dismissErrorAlert':
       return [state.set('showErrorAlert', null)];
 
     case 'saveDraft':
     case 'submit':
+      state = state.set('showModal', null);
       const isSubmit = msg.tag === 'submit';
       return [
         isSubmit ? startSubmitLoading(state) : startSaveDraftLoading(state),
@@ -108,6 +123,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             proposalId: result.value[1].id,
             opportunityId: result.value[1].opportunity.id
           })));
+          dispatch(toast(adt('success', isSubmit ? toasts.submitted.success : toasts.draftCreated.success)));
           return state.set('form', result.value[0]);
         }
       ];
@@ -127,11 +143,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 });
 
 const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
+  const isSubmitLoading   = state.submitLoading > 0;
+  const isSaveDraftLoading = state.saveDraftLoading > 0;
+  const isLoading          = isSubmitLoading || isSaveDraftLoading;
   return (
     <Form.view
       state={state.form}
       dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
-      disabled={false}
+      disabled={isLoading}
     />
   );
 });
@@ -140,10 +159,11 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  sidebar: {
+
+  sidebar: sidebarValid({
     size: 'large',
     color: 'blue-light',
-    view: makeInstructionalSidebar<State, Msg>({
+    view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Create a Code With Us Proposal',
       getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
@@ -152,7 +172,56 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         </span>
       )
     })
-  },
+  }),
+
+  getModal: getModalValid<ValidState, Msg>(state => {
+    switch (state.showModal) {
+      case 'submit':
+        return {
+          title: 'Review Terms and Conditions',
+          body: () => 'Please ensure you have reviewed the Digital Marketplace Terms and Conditions prior to submitting your proposal for this Code With Us opportunity.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Submit Proposal',
+              icon: 'paper-plane',
+              color: 'primary',
+              msg: adt('submit'),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'cancel':
+        return {
+          title: 'Cancel New Code With Us Proposal?',
+          body: () => 'Are you sure you want to cancel? Any information you may have entered will be lost if you do so.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Yes, I want to cancel',
+              color: 'danger',
+              msg: newRoute(adt('opportunityCWUView' as const, {
+                opportunityId: state.opportunity.id
+              })),
+              button: true
+            },
+            {
+              text: 'Go Back',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case null:
+        return null;
+    }
+  }),
+
   getMetadata() {
     return makePageMetadata('Create Proposal');
   },
@@ -170,7 +239,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         loading: isSubmitLoading,
         disabled: isLoading || !isValid(),
         color: 'primary',
-        onClick: () => dispatch(adt('submit'))
+        onClick: () => dispatch(adt('showModal', 'submit' as const))
       },
       {
         children: 'Save Draft',
@@ -185,9 +254,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         children: 'Cancel',
         color: 'white',
         disabled: isLoading,
-        dest: routeDest(adt('opportunityCWUView', {
-          opportunityId: state.opportunity.id
-        }))
+        onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }
     ]);
   }),

@@ -112,6 +112,11 @@ export function readManyAffiliations(session: Session): boolean {
   return isVendor(session);
 }
 
+export async function readManyAffiliationsForOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
+  // Membership lists for organizations can only be read by admins or organization owner
+  return isAdmin(session) || (!!session.user && await isUserOwnerOfOrg(connection, session.user, orgId));
+}
+
 export async function createAffiliation(connection: Connection, session: Session, orgId: string): Promise<boolean> {
   // New affiliations can be created only by organization owners, or admins
   return isAdmin(session) || (!!session.user && await isUserOwnerOfOrg(connection, session.user, orgId));
@@ -203,4 +208,14 @@ export async function editCWUProposal(connection: Connection, session: Session, 
 
 export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
   return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
+// Metrics.
+
+export function readAllCounters(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function readManyCounters(session: Session): boolean {
+  return isAdmin(session) || isGovernment(session);
 }

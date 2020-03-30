@@ -1,24 +1,27 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
+import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/edit-tab-header';
-import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatDate } from 'shared/lib';
+import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationSlim } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
-type ModalId = 'score' | 'disqualify';
+type ModalId = 'submit' | 'submitChanges' | 'saveChangesAndSubmit' | 'withdrawBeforeDeadline' | 'withdrawAfterDeadline' | 'delete';
 
 interface ValidState extends Tab.Params {
   opportunity: CWUOpportunity;
@@ -32,6 +35,7 @@ interface ValidState extends Tab.Params {
   deleteLoading: number;
   showModal: ModalId | null;
   form: Immutable<Form.State>;
+  submitTermsCheckbox: Immutable<Checkbox.State>;
 }
 
 function isLoading(state: Immutable<ValidState>): boolean {
@@ -49,14 +53,14 @@ export type InnerMsg
   = ADT<'hideModal'>
   | ADT<'showModal', ModalId>
   | ADT<'form', Form.Msg>
+  | ADT<'submitTermsCheckbox', Checkbox.Msg>
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
   | ADT<'saveChangesAndSubmit'>
   | ADT<'submit'>
   | ADT<'withdraw'>
-  | ADT<'delete'>
-  | ADT<'noop'>;
+  | ADT<'delete'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -92,7 +96,14 @@ const init: Init<Tab.Params, State> = async params => {
     withdrawLoading: 0,
     deleteLoading: 0,
     showModal: null,
-    form: await initForm(opportunity, affiliations, proposal)
+    form: await initForm(opportunity, affiliations, proposal),
+    submitTermsCheckbox: immutable(await Checkbox.init({
+      errors: [],
+      child: {
+        value: false,
+        id: 'edit-cwu-proposal-submit-terms'
+      }
+    }))
   }));
 };
 
@@ -111,8 +122,14 @@ const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
 
 async function resetProposal(state: Immutable<ValidState>, proposal: CWUProposal): Promise<Immutable<ValidState>> {
   return state
-    .set('form', await initForm(state.opportunity, state.affiliations, proposal, state.form.activeTab))
+    .set('form', await initForm(state.opportunity, state.affiliations, proposal, Form.getActiveTab(state.form)))
     .set('proposal', proposal);
+}
+
+function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
+  return state
+    .set('showModal', null)
+    .update('submitTermsCheckbox', s => FormField.setValue(s, false));
 }
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
@@ -120,7 +137,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
     case 'showModal':
       return [state.set('showModal', msg.value)];
     case 'hideModal':
-      return [state.set('showModal', null)];
+      return [hideModal(state)];
     case 'form':
       return updateComponentChild({
         state,
@@ -128,6 +145,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         childUpdate: Form.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('form', value)
+      });
+    case 'submitTermsCheckbox':
+      return updateComponentChild({
+        state,
+        childStatePath: ['submitTermsCheckbox'],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('submitTermsCheckbox', value)
       });
     case 'startEditing':
       return [
@@ -139,7 +164,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(proposalResult) || !api.isValid(affiliationsResult)) { return state; }
           state = state
             .set('isEditing', true)
-            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, state.form.activeTab))
+            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, Form.getActiveTab(state.form)))
             .set('proposal', proposalResult.value);
           return state;
         }
@@ -148,26 +173,31 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return [
         state.set('isEditing', false),
         async state => {
-          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, state.form.activeTab));
+          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, Form.getActiveTab(state.form)));
         }
       ];
     case 'saveChanges':
+      state = hideModal(state);
       return [
         startSaveChangesLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSaveChangesLoading(state);
           const result = await Form.persist(state.form, adt('update', state.proposal.id));
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }
+          result.value[1].status === CWUProposalStatus.Draft
+            ? dispatch(toast(adt('success', toasts.changesSaved.success)))
+            : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           return (await resetProposal(state, result.value[1]))
             .set('isEditing', false);
         }
       ];
     case 'saveChangesAndSubmit':
+      state = hideModal(state);
       return [
         startSaveChangesAndSubmitLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSaveChangesAndSubmitLoading(state);
           const saveResult = await Form.persist(state.form, adt('update', state.proposal.id));
           if (isInvalid(saveResult)) {
@@ -177,35 +207,41 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(submitResult)) {
             return state;
           }
+          dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           state = state.set('isEditing', false);
           return await resetProposal(state, submitResult.value);
         }
       ];
     case 'submit':
+      state = hideModal(state);
       return [
         startSubmitLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSubmitLoading(state);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(result)) {
             return state;
           }
+          dispatch(toast(adt('success', toasts.submitted.success)));
           return await resetProposal(state, result.value);
         }
       ];
     case 'withdraw':
+      state = hideModal(state);
       return [
         startWithdrawLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopWithdrawLoading(state);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('withdraw', ''));
           if (!api.isValid(result)) {
             return state;
           }
+          dispatch(toast(adt('success', toasts.withdrawn.success)));
           return await resetProposal(state, result.value);
         }
       ];
     case 'delete':
+      state = hideModal(state);
       return [
         startDeleteLoading(state),
         async (state, dispatch) => {
@@ -213,7 +249,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(result)) {
             return stopDeleteLoading(state);
           }
-          //TODO redirect to proposals list when ready
+          dispatch(toast(adt('success', toasts.deleted.success)));
           dispatch(replaceRoute(adt('opportunities' as const, null)));
           return state;
         }
@@ -247,7 +283,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
           icon: 'trophy',
           iconColor: 'yellow',
           name: 'Ranking',
-          value: proposal.rank ? String(proposal.rank) : EMPTY_STRING
+          value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
         }
       : null
   ];
@@ -278,14 +314,133 @@ const view: ComponentView<State, Msg> = viewValid(props => {
   );
 });
 
+const SubmitTerms: View<ComponentViewProps<ValidState, Msg> & { action: string; }> = ({ action, state, dispatch }) => {
+  return (
+    <div>
+      <p>Please ensure you have reviewed the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link> prior to {action} your proposal for this Code With Us opportunity.</p>
+      <Checkbox.view
+        extraChildProps={{
+          inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link>.</span>)
+        }}
+        className='font-weight-bold'
+        state={state.submitTermsCheckbox}
+        dispatch={mapComponentDispatch(dispatch, value => adt('submitTermsCheckbox' as const, value))} />
+    </div>
+  );
+};
+
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
 
   getModal: getModalValid<ValidState, Msg>(state => {
+    const hasAcceptedTerms = FormField.getValue(state.submitTermsCheckbox);
     switch (state.showModal) {
-      default: return null;
+      case 'submit':
+        return {
+          title: 'Review Terms and Conditions',
+          body: dispatch => (<SubmitTerms action='submitting' state={state} dispatch={dispatch} />),
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Submit Proposal',
+              icon: 'paper-plane',
+              color: 'primary',
+              msg: adt('submit'),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'submitChanges':
+      case 'saveChangesAndSubmit':
+        return {
+          title: 'Review Terms and Conditions',
+          body: dispatch => (<SubmitTerms action='submitting changes to' state={state} dispatch={dispatch} />),
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Submit Changes',
+              icon: 'paper-plane',
+              color: 'primary',
+              msg: state.showModal === 'submitChanges' ? adt('saveChanges') : adt('saveChangesAndSubmit'),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'withdrawBeforeDeadline':
+        return {
+          title: 'Withdraw Code With Us Proposal?',
+          body: () => 'Are you sure you want to withdraw your Code With Us proposal? You will still be able to resubmit your proposal prior to the opportunity\'s proposal deadline.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Withdraw Proposal',
+              icon: 'ban',
+              color: 'danger',
+              msg: adt('withdraw'),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'withdrawAfterDeadline':
+        return {
+          title: 'Withdraw Code With Us Proposal?',
+          body: () => 'Are you sure you want to withdraw your Code With Us proposal? Your proposal will no longer be considered for this opportunity.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Withdraw Proposal',
+              icon: 'ban',
+              color: 'danger',
+              msg: adt('withdraw'),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'delete':
+        return {
+          title: 'Delete Code With Us Proposal?',
+          body: () => 'Are you sure you want to delete your Code With Us proposal? You will not be able to recover the proposal once it has been deleted.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Delete Proposal',
+              icon: 'trash',
+              color: 'danger',
+              msg: adt('delete'),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case null: return null;
     }
   }),
 
@@ -312,7 +467,7 @@ export const component: Tab.Component<State, Msg> = {
               loading: isSaveChangesAndSubmitLoading,
               disabled: disabled || !isValid(),
               color: 'primary',
-              onClick: () => dispatch(adt('saveChangesAndSubmit'))
+              onClick: () => dispatch(adt('showModal', 'saveChangesAndSubmit' as const))
             }
           : null,
         // Save Changes
@@ -326,7 +481,7 @@ export const component: Tab.Component<State, Msg> = {
               return !isValid();
             }
           })(),
-          onClick: () => dispatch(adt('saveChanges')),
+          onClick: () => dispatch(isDraft ? adt('saveChanges') : adt('showModal', 'submitChanges' as const)),
           button: true,
           loading: isSaveChangesLoading,
           symbol_: leftPlacement(iconLinkSymbol(isDraft ? 'save' : 'paper-plane')),
@@ -353,7 +508,7 @@ export const component: Tab.Component<State, Msg> = {
                   children: 'Submit',
                   symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
                   disabled: !isValid(),
-                  onClick: () => dispatch(adt('submit'))
+                  onClick: () => dispatch(adt('showModal', 'submit' as const))
                 },
                 {
                   children: 'Edit',
@@ -367,7 +522,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Delete',
                   symbol_: leftPlacement(iconLinkSymbol('user-slash')),
-                  onClick: () => dispatch(adt('delete'))
+                  onClick: () => dispatch(adt('showModal', 'delete' as const))
                 }
               ]
             }
@@ -392,7 +547,7 @@ export const component: Tab.Component<State, Msg> = {
             color: 'white',
             disabled,
             loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('withdraw'))
+            onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
           }
         ]);
       case CWUProposalStatus.UnderReview:
@@ -407,9 +562,26 @@ export const component: Tab.Component<State, Msg> = {
             color: 'white',
             disabled,
             loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('withdraw'))
+            onClick: () => dispatch(adt('showModal', 'withdrawAfterDeadline' as const))
           }
         ]);
+      case CWUProposalStatus.Withdrawn:
+        if (state.opportunity.status === CWUOpportunityStatus.Published) {
+          // Still accepting proposals.
+          return adt('links', [
+            {
+              children: 'Resubmit',
+              symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
+              loading: isSubmitLoading,
+              disabled,
+              button: true,
+              color: 'primary',
+              onClick: () => dispatch(adt('showModal', 'submit' as const))
+            }
+          ]);
+        } else {
+          return null;
+        }
       default:
         return null;
     }

@@ -32,14 +32,14 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
   return isUserType({
     userType: [UserType.Government, UserType.Admin],
 
-    async success({ routeParams, shared, dispatch }) {
+    async success({ routePath, routeParams, shared, dispatch }) {
       // Get the proposal.
       const proposalResult = await api.proposals.cwu.readOne(routeParams.opportunityId, routeParams.proposalId);
       // If the request failed, then show the "Not Found" page.
       // The back-end will return a 404 if the viewer is a Government
       // user and is not the associated opportunity owner.
       if (!api.isValid(proposalResult)) {
-        dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+        dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
         return invalid(null);
       }
       const proposal = proposalResult.value;
@@ -57,8 +57,8 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       })) as State_<K>;
     },
 
-    async fail({ dispatch }) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    async fail({ routePath, dispatch }) {
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
   });

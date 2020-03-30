@@ -121,7 +121,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
   if (!pageState) {
-    dispatch(newRoute(adt('notice' as const, adt('notFound' as const))));
+    dispatch(newRoute(adt('notFound' as const, {})));
     return null;
   }
   // pageState is defined, render page.
