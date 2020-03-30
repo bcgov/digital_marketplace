@@ -32,12 +32,12 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
   return isUserType({
     userType: [UserType.Vendor],
 
-    async success({ routeParams, shared, dispatch }) {
+    async success({ routePath, routeParams, shared, dispatch }) {
       // Get the proposal.
       const proposalResult = await api.proposals.cwu.readOne(routeParams.opportunityId, routeParams.proposalId);
       // If the request failed, then show the "Not Found" page.
       if (!api.isValid(proposalResult)) {
-        dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+        dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
         return invalid(null);
       }
       const viewerUser = shared.sessionUser;
@@ -56,8 +56,8 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       })) as State_<K>;
     },
 
-    async fail({ dispatch }) {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+    async fail({ routePath, dispatch }) {
+      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
   });

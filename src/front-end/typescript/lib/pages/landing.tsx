@@ -1,23 +1,35 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Phases from 'front-end/lib/components/phases';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as TeamQuestions from 'front-end/lib/components/team-questions';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import React from 'react';
-// import { Col, Row } from 'reactstrap';
+import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
+  toast: [string, string];
+  teamQs: Immutable<TeamQuestions.State>;
   phases: Immutable<Phases.State>;
 }
 
-type InnerMsg = ADT<'updatePhases', Phases.Msg>;
+type InnerMsg
+  = ADT<'noop'>
+  | ADT<'showToast'>
+  | ADT<'updateTeamQs', TeamQuestions.Msg>
+  | ADT<'updatePhases', Phases.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  phases: immutable(await Phases.init({}))
+  phases: immutable(await Phases.init({})),
+  teamQs: immutable(await TeamQuestions.init({})),
+  toast: [
+    'Example Toast',
+    'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
+  ]
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -30,6 +42,25 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'updatePhases', value })
       });
+    case 'updateTeamQs':
+      return updateComponentChild({
+        state,
+        childStatePath: ['teamQs'],
+        childUpdate: TeamQuestions.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'updateTeamQs', value })
+      });
+    case 'showToast':
+      return [
+        state,
+        async (state, dispatch) => {
+          dispatch(toast(adt('info', {
+            title: state.toast[0],
+            body: state.toast[1]
+          })));
+          return null;
+        }
+      ];
     default:
       return [state];
   }
@@ -37,11 +68,26 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
-    <Phases.view
-      state={state.phases}
-      dispatch={mapComponentDispatch(dispatch, msg => adt('updatePhases' as const, msg))}
-      disabled={false}
-    />
+    <Row>
+      <Col xs='12'>
+        Landing page coming soon.
+      </Col>
+      <Col xs='12' className='mt-5'>
+        <button onClick={() => dispatch(adt('showToast'))}>Show Toast</button>
+      </Col>
+      <Col xs='12' md='8'>
+        <TeamQuestions.view
+          state={state.teamQs}
+          dispatch={mapComponentDispatch(dispatch, msg => adt('updateTeamQs' as const, msg))} />
+      </Col>
+      <Col xs='12' md='8'>
+        <Phases.view
+          state={state.phases}
+          dispatch={mapComponentDispatch(dispatch, msg => adt('updatePhases' as const, msg))}
+          disabled={false}
+        />
+      </Col>
+    </Row>
   );
 };
 

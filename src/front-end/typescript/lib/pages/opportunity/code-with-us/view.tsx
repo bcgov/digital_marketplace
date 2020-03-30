@@ -1,8 +1,10 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { ADT, Id } from 'shared/lib/types';
 
 export interface State {
@@ -15,7 +17,8 @@ export interface RouteParams {
   opportunityId: Id;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams }) => {
+  await api.counters.update(getCWUOpportunityViewsCounterName(routeParams.opportunityId), null);
   return { empty: true };
 };
 

@@ -15,11 +15,14 @@ import { formatAmount } from 'shared/lib';
 import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
+type ModalId = 'publish' | 'publishChanges' | 'saveChangesAndPublish' | 'delete' | 'cancel' | 'suspend';
+
 export interface State extends Tab.Params {
+  showModal: ModalId | null;
   startEditingLoading: number;
   saveChangesLoading: number;
-  saveChangesAndPublishLoading: number;
-  publishLoading: number;
+  saveChangesAndUpdateStatusLoading: number;
+  updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
   infoAlerts: string[];
@@ -31,6 +34,8 @@ type UpdateStatus = 'publish' | 'cancel' | 'suspend';
 
 export type InnerMsg
   = ADT<'form', Form.Msg>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
   | ADT<'dismissInfoAlert', number>
   | ADT<'dismissErrorAlert', number>
   | ADT<'startEditing'>
@@ -75,10 +80,11 @@ async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Pr
 
 const init: Init<Tab.Params, State> = async params => ({
   ...params,
+  showModal: null,
   startEditingLoading: 0,
   saveChangesLoading: 0,
-  saveChangesAndPublishLoading: 0,
-  publishLoading: 0,
+  saveChangesAndUpdateStatusLoading: 0,
+  updateStatusLoading: 0,
   deleteLoading: 0,
   isEditing: false,
   infoAlerts: [],
@@ -90,15 +96,15 @@ const startStartEditingLoading = makeStartLoading<State>('startEditingLoading');
 const stopStartEditingLoading = makeStopLoading<State>('startEditingLoading');
 const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
 const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
-const startSaveChangesAndPublishLoading = makeStartLoading<State>('saveChangesAndPublishLoading');
-const stopSaveChangesAndPublishLoading = makeStopLoading<State>('saveChangesAndPublishLoading');
-const startPublishLoading = makeStartLoading<State>('publishLoading');
-const stopPublishLoading = makeStopLoading<State>('publishLoading');
+const startSaveChangesAndUpdateStatusLoading = makeStartLoading<State>('saveChangesAndUpdateStatusLoading');
+const stopSaveChangesAndUpdateStatusLoading = makeStopLoading<State>('saveChangesAndUpdateStatusLoading');
+const startUpdateStatusLoading = makeStartLoading<State>('updateStatusLoading');
+const stopUpdateStatusLoading = makeStopLoading<State>('updateStatusLoading');
 const startDeleteLoading = makeStartLoading<State>('deleteLoading');
 const stopDeleteLoading = makeStopLoading<State>('deleteLoading');
 
 async function saveChanges(state: Immutable<State>, onValid?: AsyncWithState<State, [CWUOpportunity]>, onInvalid?: AsyncWithState<State>): Promise<Immutable<State>> {
-  const result = await Form.persist(state.form, adt('update'));
+  const result = await Form.persist(state.form, adt('update' as const));
   switch (result.tag) {
     case 'valid':
       state = state
@@ -118,7 +124,7 @@ async function updateStatus(state: Immutable<State>, newStatus: UpdateStatus, on
     case 'valid':
       state = state
         .set('opportunity', result.value)
-        .set('form', await initForm(result.value, state.form.activeTab));
+        .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
       return onValid ? await onValid(state, result.value) : state;
     case 'invalid':
       return onInvalid ? await onInvalid(state, result.value) : state;
@@ -137,6 +143,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('form', value)
       });
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal':
+      return [state.set('showModal', null)];
     case 'dismissInfoAlert':
       return [
         state.update('infoAlerts', alerts => alerts.filter((a, i) => i !== msg.value))
@@ -154,7 +164,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (api.isValid(result)) {
             return state
               .set('isEditing', true)
-              .set('form', await initForm(result.value, state.form.activeTab));
+              .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
           } else {
             return addErrorAlert(state, 'This opportunity cannot currently be edited.');
           }
@@ -166,10 +176,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         async state => {
           return state
             .set('isEditing', false)
-            .set('form', await initForm(state.opportunity, state.form.activeTab));
+            .set('form', await initForm(state.opportunity, Form.getActiveTab(state.form)));
         }
       ];
     case 'saveChanges':
+      state = state.set('showModal', null);
       return [
         startSaveChangesLoading(state),
         async state => {
@@ -182,10 +193,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'saveChangesAndPublish':
+      state = state.set('showModal', null);
       return [
-        startSaveChangesAndPublishLoading(state),
+        startSaveChangesAndUpdateStatusLoading(state),
         async state => {
-          state = stopSaveChangesAndPublishLoading(state);
+          state = stopSaveChangesAndUpdateStatusLoading(state);
           return await saveChanges(
             state,
             state1 => updateStatus(state1, 'publish',
@@ -198,10 +210,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'updateStatus':
+      state = state.set('showModal', null);
       return [
-        startPublishLoading(state),
+        startUpdateStatusLoading(state),
         async state => {
-          state = stopPublishLoading(state);
+          state = stopUpdateStatusLoading(state);
           return await updateStatus(
             state,
             msg.value,
@@ -211,6 +224,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'delete':
+      state = state.set('showModal', null);
       return [
         startDeleteLoading(state),
         async (state, dispatch) => {
@@ -233,7 +247,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const Reporting: ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
   const reporting = opportunity.reporting;
-  //TODO return null if reporting is undefined
   if (opportunity.status === CWUOpportunityStatus.Draft) { return null; }
   const reportCards: ReportCard[] = [
     {
@@ -267,9 +280,9 @@ const view: ComponentView<State, Msg> = props => {
   const viewerUser = state.viewerUser;
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
-  const isPublishLoading = state.publishLoading > 0;
+  const isUpdateStatusLoading = state.updateStatusLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
-  const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
+  const isLoading = isStartEditingLoading || isSaveChangesLoading || isUpdateStatusLoading || isDeleteLoading;
   return (
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
@@ -290,6 +303,7 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
   getAlerts(state) {
     return {
       warnings: state.opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(state.form)
@@ -305,38 +319,161 @@ export const component: Tab.Component<State, Msg> = {
       }))
     };
   },
+
+  getModal: state => {
+    switch (state.showModal) {
+      case 'publish':
+        return {
+          title: 'Publish Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Publish Opportunity',
+              icon: 'bullhorn',
+              color: 'primary',
+              button: true,
+              msg: adt('updateStatus', 'publish' as const)
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribers will be notified.'
+        };
+      case 'publishChanges':
+        return {
+          title: 'Publish Changes to Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Publish Changes',
+              icon: 'bullhorn',
+              color: 'primary',
+              button: true,
+              msg: adt('saveChanges') // This is the reason this is a different modal from 'saveChangesAndPublish'
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified.'
+        };
+      case 'saveChangesAndPublish':
+        return {
+          title: 'Publish Changes to Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Publish Changes',
+              icon: 'bullhorn',
+              color: 'primary',
+              button: true,
+              msg: adt('saveChangesAndPublish')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified.'
+        };
+      case 'suspend':
+        return {
+          title: 'Suspend Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Suspend Opportunity',
+              icon: 'pause-circle',
+              color: 'warning',
+              button: true,
+              msg: adt('updateStatus', 'suspend' as const)
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to suspend this opportunity? Once suspended, all subscribers and vendors with pending or submitted proposals will be notified.'
+        };
+      case 'delete':
+        return {
+          title: 'Delete Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Delete Opportunity',
+              icon: 'trash',
+              color: 'danger',
+              button: true,
+              msg: adt('delete')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to delete this opportunity? You will not be able to recover it once it has been deleted.'
+        };
+      case 'cancel':
+        return {
+          title: 'Cancel Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Cancel Opportunity',
+              icon: 'minus-circle',
+              color: 'danger',
+              button: true,
+              msg: adt('updateStatus', 'cancel' as const)
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to cancel this opportunity? Once cancelled, all subscribers and vendors with pending or submitted proposals will be notified.'
+        };
+      case null:
+        return null;
+    }
+  },
+
   getContextualActions({ state, dispatch }) {
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
-    const isSaveChangesAndPublishLoading = state.saveChangesAndPublishLoading > 0;
-    const isPublishLoading = state.publishLoading > 0;
+    const isSaveChangesAndUpdateStatusLoading = state.saveChangesAndUpdateStatusLoading > 0;
+    const isUpdateStatusLoading = state.updateStatusLoading > 0;
     const isDeleteLoading = state.deleteLoading > 0;
-    const isLoading = isStartEditingLoading || isSaveChangesLoading || isPublishLoading || isDeleteLoading;
-    const oppStatus = state.opportunity.status;
+    const isLoading = isStartEditingLoading || isSaveChangesLoading || isUpdateStatusLoading || isDeleteLoading;
+    const opp = state.opportunity;
+    const oppStatus = opp.status;
     const isValid = () => Form.isValid(state.form);
     if (state.isEditing) {
       return adt('links', compact([
         // Publish button
-        oppStatus === CWUOpportunityStatus.Draft || oppStatus === CWUOpportunityStatus.Suspended
+        !isCWUOpportunityPublic(opp)
           ? {
               children: 'Publish Changes',
               symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
               button: true,
-              loading: isSaveChangesAndPublishLoading,
-              disabled: isSaveChangesAndPublishLoading || !isValid(),
+              loading: isSaveChangesAndUpdateStatusLoading,
+              disabled: isSaveChangesAndUpdateStatusLoading || !isValid(),
               color: 'primary',
-              onClick: () => dispatch(adt('saveChangesAndPublish'))
+              onClick: () => dispatch(adt('showModal', 'saveChangesAndPublish' as const))
             }
           : null,
         // Save changes button
         {
-          children: (() => {
-            switch (oppStatus) {
-              case CWUOpportunityStatus.Draft: return 'Save Draft';
-              case CWUOpportunityStatus.Published: return 'Publish Changes';
-              default: return 'Save Changes';
-            }
-          })(),
+          children: isCWUOpportunityPublic(opp) ? 'Publish Changes' : 'Save Changes',
           disabled: isSaveChangesLoading || (() => {
             if (oppStatus === CWUOpportunityStatus.Draft) {
               // No validation required, always possible to save a draft.
@@ -345,24 +482,11 @@ export const component: Tab.Component<State, Msg> = {
               return !isValid();
             }
           })(),
-          onClick: () => dispatch(adt('saveChanges')),
+          onClick: () => dispatch(isCWUOpportunityPublic(opp) ? adt('showModal', 'publishChanges' as const) : adt('saveChanges')),
           button: true,
           loading: isSaveChangesLoading,
-          symbol_: leftPlacement(iconLinkSymbol((() => {
-            switch (oppStatus) {
-              case CWUOpportunityStatus.Published: return 'bullhorn';
-              default: return 'save';
-            }
-          })())),
-          color: (() => {
-            switch (oppStatus) {
-              case CWUOpportunityStatus.Draft:
-              case CWUOpportunityStatus.Suspended:
-                return 'success';
-              default:
-                return 'primary';
-            }
-          })()
+          symbol_: leftPlacement(iconLinkSymbol(isCWUOpportunityPublic(opp) ? 'bullhorn' : 'save')),
+          color: isCWUOpportunityPublic(opp) ? 'primary' : 'success'
         },
         // Cancel link
         {
@@ -385,7 +509,7 @@ export const component: Tab.Component<State, Msg> = {
                   children: 'Publish',
                   disabled: !isValid(),
                   symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
-                  onClick: () => dispatch(adt('updateStatus', 'publish' as const))
+                  onClick: () => dispatch(adt('showModal', 'publish' as const))
                 },
                 {
                   children: 'Edit',
@@ -399,7 +523,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Delete',
                   symbol_: leftPlacement(iconLinkSymbol('trash')),
-                  onClick: () => dispatch(adt('delete'))
+                  onClick: () => dispatch(adt('showModal', 'delete' as const))
                 }
               ]
             }
@@ -424,12 +548,12 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Suspend',
                   symbol_: leftPlacement(iconLinkSymbol('pause-circle')),
-                  onClick: () => dispatch(adt('updateStatus', 'suspend' as const))
+                  onClick: () => dispatch(adt('showModal', 'suspend' as const))
                 },
                 {
                   children: 'Cancel',
                   symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
-                  onClick: () => dispatch(adt('updateStatus', 'cancel' as const))
+                  onClick: () => dispatch(adt('showModal', 'cancel' as const))
                 }
               ]
             }
@@ -445,7 +569,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Publish',
                   symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
-                  onClick: () => dispatch(adt('updateStatus', 'publish' as const))
+                  onClick: () => dispatch(adt('showModal', 'publish' as const))
                 },
                 {
                   children: 'Edit',
@@ -459,14 +583,43 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Cancel',
                   symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
-                  onClick: () => dispatch(adt('updateStatus', 'cancel' as const))
+                  onClick: () => dispatch(adt('showModal', 'cancel' as const))
                 }
               ]
             }
           ]
         });
-      default:
-        return null;
+      case CWUOpportunityStatus.Evaluation:
+        return adt('links', [
+          {
+            children: 'Edit',
+            loading: isStartEditingLoading,
+            symbol_: leftPlacement(iconLinkSymbol('edit')),
+            onClick: () => dispatch(adt('startEditing')),
+            button: true,
+            color: 'primary'
+          },
+          {
+            children: 'Cancel',
+            symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
+            onClick: () => dispatch(adt('showModal', 'cancel' as const)),
+            button: true,
+            outline: true,
+            color: 'white'
+          }
+        ]);
+      case CWUOpportunityStatus.Awarded:
+      case CWUOpportunityStatus.Canceled:
+        return adt('links', [
+          {
+            children: 'Edit',
+            loading: isStartEditingLoading,
+            symbol_: leftPlacement(iconLinkSymbol('edit')),
+            onClick: () => dispatch(adt('startEditing')),
+            button: true,
+            color: 'primary'
+          }
+        ]);
     }
   }
 };

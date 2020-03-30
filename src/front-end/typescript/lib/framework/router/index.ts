@@ -54,6 +54,7 @@ export type RouteParams = Record<string, string | undefined>;
 export type RouteQuery = Record<string, string | string[] | undefined>;
 
 export interface RouteDefinitionParams {
+  path: string;
   params: RouteParams;
   query: RouteQuery;
 }
@@ -135,9 +136,11 @@ export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispa
   }));
   function urlToRoute(url: Url): Route | null {
     for (const definition of routes) {
-      const result = definition.match(url.pathname);
+      const path = url.pathname;
+      const result = definition.match(path);
       if (result) {
         return definition.makeRoute({
+          path,
           params: result.params,
           query: qs.parse(url.search.replace(/^\?+/, ''))
         });

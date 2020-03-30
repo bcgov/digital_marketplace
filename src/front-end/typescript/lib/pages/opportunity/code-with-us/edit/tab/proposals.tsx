@@ -1,9 +1,10 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, Dispatch, GlobalComponentMsg, Immutable,  immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentView, Dispatch, GlobalComponentMsg, immutable, Immutable,  Init, mapComponentDispatch, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as toasts from 'front-end/lib/pages/opportunity/code-with-us/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
@@ -13,11 +14,14 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareNumbers } from 'shared/lib';
 import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName, isTerminalCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 
+type ModalId = ADT<'award', Id>;
+
 export interface State extends Tab.Params {
+  showModal: ModalId | null;
   awardLoading: Id | null;
   canProposalsBeAwarded: boolean;
   canViewProposals: boolean;
@@ -27,6 +31,8 @@ export interface State extends Tab.Params {
 
 export type InnerMsg
   = ADT<'table', Table.Msg>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
   | ADT<'award', Id>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -62,14 +68,15 @@ const init: Init<Tab.Params, State> = async params => {
   }
   return {
     awardLoading: null,
+    showModal: null,
     canViewProposals,
     // Determine whether the "Award" button should be shown at all.
-    canProposalsBeAwarded: proposals.reduce((acc, p) =>
-      // Can be awarded if...
-      // - Opportunity has the appropriate status
-      // - All proposals have been Awarded/NotAwarded/Disqualified/Withdrawn/Evaluated.
-      acc && canCWUOpportunityBeAwarded(params.opportunity) && (isTerminalCWUProposalStatus(p.status) || canCWUProposalBeAwarded(p)),
-      true as boolean
+    // Can be awarded if...
+    // - Opportunity has the appropriate status; and
+    // - At least one proposal can be awarded.
+    canProposalsBeAwarded: canCWUOpportunityBeAwarded(params.opportunity) && proposals.reduce((acc, p) =>
+      acc || canCWUProposalBeAwarded(p),
+      false as boolean
     ),
     proposals,
     table: immutable(await Table.init({
@@ -83,6 +90,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
 
     case 'award':
+      state = state.set('showModal', null);
       return [
         state.set('awardLoading', msg.value),
         async (state, dispatch) => {
@@ -90,6 +98,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const updateResult = await api.proposals.cwu.update(msg.value, adt('award', ''));
           switch (updateResult.tag) {
             case 'valid':
+              dispatch(toast(adt('success', toasts.statusChanged.success(CWUOpportunityStatus.Awarded))));
               return immutable(await init({
                 opportunity: api.getValidValue(await api.opportunities.cwu.readOne(state.opportunity.id), state.opportunity),
                 viewerUser: state.viewerUser
@@ -100,6 +109,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               return state;
           }
       }];
+
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [state.set('showModal', null)];
 
     case 'table':
       return updateComponentChild({
@@ -158,7 +173,7 @@ const ContextMenuCell: View<{ loading: boolean; proposal: CWUProposalSlim; dispa
       color='primary'
       size='sm'
       loading={loading}
-      onClick={() => dispatch(adt('award', proposal.id)) }>
+      onClick={() => dispatch(adt('showModal', adt('award' as const, proposal.id))) }>
       Award
     </Link>
   );
@@ -293,5 +308,31 @@ const view: ComponentView<State, Msg> = (props) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+
+  getModal: state => {
+    if (!state.showModal) { return null; }
+    switch (state.showModal.tag) {
+      case 'award':
+        return {
+          title: 'Award Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Award Opportunity',
+              icon: 'award',
+              color: 'primary',
+              button: true,
+              msg: adt('award', state.showModal.value)
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all susbscribers and vendors with submitted proposals will be notified accordingly.'
+        };
+    }
+  }
 };

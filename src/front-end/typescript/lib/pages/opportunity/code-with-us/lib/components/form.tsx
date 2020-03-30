@@ -8,12 +8,12 @@ import * as RadioGroup from 'front-end/lib/components/form-field/radio-group';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as SelectMulti from 'front-end/lib/components/form-field/select-multi';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
+import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { flatten } from 'lodash';
 import React from 'react';
-import { Col, Nav, NavItem, Row } from 'reactstrap';
+import { Col, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
 import { Addendum, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
@@ -26,9 +26,11 @@ const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
 export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Addenda';
 
+const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
+
 export interface State {
-  activeTab: TabId;
   opportunity?: CWUOpportunity;
+  tabbedForm: Immutable<TabbedForm.State<TabId>>;
   // Overview Tab
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
@@ -55,34 +57,38 @@ export interface State {
 }
 
 export type Msg
-  = ADT<'updateActiveTab',   TabId>
+  = ADT<'tabbedForm',         TabbedForm.Msg<TabId>>
   // Details Tab
-  | ADT<'title',             ShortText.Msg>
-  | ADT<'teaser',            LongText.Msg>
-  | ADT<'location',          ShortText.Msg>
-  | ADT<'reward',            NumberField.Msg>
-  | ADT<'skills',            SelectMulti.Msg>
-  | ADT<'remoteOk',          RadioGroup.Msg<RemoteOk>>
-  | ADT<'remoteDesc',        LongText.Msg>
+  | ADT<'title',              ShortText.Msg>
+  | ADT<'teaser',             LongText.Msg>
+  | ADT<'location',           ShortText.Msg>
+  | ADT<'reward',             NumberField.Msg>
+  | ADT<'skills',             SelectMulti.Msg>
+  | ADT<'remoteOk',           RadioGroup.Msg<RemoteOk>>
+  | ADT<'remoteDesc',         LongText.Msg>
   // Description Tab
-  | ADT<'description',       RichMarkdownEditor.Msg>
+  | ADT<'description',        RichMarkdownEditor.Msg>
   // Details Tab
-  | ADT<'proposalDeadline',    DateField.Msg>
-  | ADT<'startDate',           DateField.Msg>
-  | ADT<'assignmentDate',      DateField.Msg>
-  | ADT<'completionDate',      DateField.Msg>
-  | ADT<'submissionInfo',      ShortText.Msg>
-  | ADT<'acceptanceCriteria',  RichMarkdownEditor.Msg>
-  | ADT<'evaluationCriteria',  RichMarkdownEditor.Msg>
+  | ADT<'proposalDeadline',   DateField.Msg>
+  | ADT<'startDate',          DateField.Msg>
+  | ADT<'assignmentDate',     DateField.Msg>
+  | ADT<'completionDate',     DateField.Msg>
+  | ADT<'submissionInfo',     ShortText.Msg>
+  | ADT<'acceptanceCriteria', RichMarkdownEditor.Msg>
+  | ADT<'evaluationCriteria', RichMarkdownEditor.Msg>
   // Attachments tab
-  | ADT<'attachments', Attachments.Msg>
+  | ADT<'attachments',        Attachments.Msg>
   // Addenda tab
-  | ADT<'addenda', Addenda.Msg>;
+  | ADT<'addenda',            Addenda.Msg>;
 
 export interface Params {
   opportunity?: CWUOpportunity;
   activeTab?: TabId;
   showAddendaTab?: boolean;
+}
+
+export function getActiveTab(state: Immutable<State>): TabId {
+  return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Overview';
@@ -126,9 +132,20 @@ async function initCompletionDate(value: DateField.Value, startDate?: Date): Pro
 }
 
 export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
+  activeTab = !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab;
   return {
-    activeTab: !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab,
     opportunity,
+
+    tabbedForm: immutable(await TabbedFormComponent.init({
+      tabs: [
+        'Overview',
+        'Description',
+        'Details',
+        'Attachments',
+        ...(showAddendaTab ? ['Addenda' as const] : [])
+      ],
+      activeTab
+    })),
 
     title: immutable(await ShortText.init({
       errors: [],
@@ -487,8 +504,14 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'updateActiveTab':
-      return [state.set('activeTab', msg.value)];
+    case 'tabbedForm':
+      return updateComponentChild({
+        state,
+        childStatePath: ['tabbedForm'],
+        childUpdate: TabbedFormComponent.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('tabbedForm', value)
+      });
 
     case 'title':
       return updateComponentChild({
@@ -678,12 +701,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function areDetailsDisabled(opportunity?: CWUOpportunity, disabledProp?: boolean): boolean {
+function areNonAddendaDisabled(opportunity?: CWUOpportunity, disabledProp?: boolean): boolean {
   return disabledProp || (!!opportunity && !canCWUOpportunityDetailsBeEdited(opportunity));
 }
 
 const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
+  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -770,7 +793,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
 };
 
 const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
+  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -791,7 +814,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
 };
 
 const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
+  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -872,7 +895,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
 
 // @duplicated-attachments-view
 const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areDetailsDisabled(state.opportunity, disabledProp);
+  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
   return (
     <Row>
       <Col xs='12'>
@@ -907,45 +930,14 @@ const AddendaView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-// @duplicated-tab-helper-functions
-function isActiveTab(state: State, tab: TabId): boolean {
-  return state.activeTab === tab;
-}
-
-// @duplicated-tab-helper-functions
-const TabLink: View<Props & { tab: TabId; }> = ({ state, dispatch, tab, disabled }) => {
-  const isActive = isActiveTab(state, tab);
-  const isValid = () => {
-    switch (tab) {
-      case 'Overview':    return isOverviewTabValid(state);
-      case 'Description': return isDescriptionTabValid(state);
-      case 'Details':     return isDetailsTabValid(state);
-      case 'Attachments': return isAttachmentsTabValid(state);
-      case 'Addenda':     return isAddendaTabValid(state);
-    }
-  };
-  return (
-    <NavItem>
-      <Link
-        nav
-        symbol_={isValid() ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
-        symbolClassName='text-warning'
-        className={`text-nowrap ${isActive ? 'active text-body' : 'text-primary'}`}
-        onClick={() => {dispatch(adt('updateActiveTab', tab)); }}>
-        {tab}
-      </Link>
-    </NavItem>
-  );
-};
-
 interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
 export const view: View<Props> = props => {
-  const { state } = props;
+  const { state, dispatch } = props;
   const activeTab = (() => {
-    switch (state.activeTab) {
+    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case 'Overview':    return (<OverviewView {...props} />);
       case 'Description': return (<DescriptionView {...props} />);
       case 'Details':     return (<DetailsView {...props} />);
@@ -953,23 +945,23 @@ export const view: View<Props> = props => {
       case 'Addenda':     return (<AddendaView {...props} />);
     }
   })();
-
   return (
-    <div>
-      <div className='sticky bg-white'>
-        <div className='d-flex mb-5' style={{ overflowX: 'auto' }}>
-          <Nav tabs className='flex-grow-1 flex-nowrap bg-white'>
-            <TabLink {...props} tab='Overview' />
-            <TabLink {...props} tab='Description' />
-            <TabLink {...props} tab='Details' />
-            <TabLink {...props} tab='Attachments' />
-            {state.addenda
-              ? (<TabLink {...props} tab='Addenda' />)
-              : null}
-          </Nav>
-        </div>
-      </div>
+    <TabbedFormComponent.view
+      valid={isValid(state)}
+      disabled={props.disabled}
+      getTabLabel={a => a}
+      isTabValid={tab => {
+        switch (tab) {
+          case 'Overview':    return isOverviewTabValid(state);
+          case 'Description': return isDescriptionTabValid(state);
+          case 'Details':     return isDetailsTabValid(state);
+          case 'Attachments': return isAttachmentsTabValid(state);
+          case 'Addenda':     return isAddendaTabValid(state);
+        }
+      }}
+      state={state.tabbedForm}
+      dispatch={mapComponentDispatch(dispatch, msg => adt('tabbedForm' as const, msg))}>
       {activeTab}
-    </div>
+    </TabbedFormComponent.view>
   );
 };

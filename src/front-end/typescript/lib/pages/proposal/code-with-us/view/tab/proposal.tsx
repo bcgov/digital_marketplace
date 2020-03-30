@@ -4,10 +4,11 @@ import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as NumberField from 'front-end/lib/components/form-field/number';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
 import ViewTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
@@ -20,7 +21,10 @@ import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import { validateDisqualificationReason, validateScore } from 'shared/lib/validation/proposal/code-with-us';
 
-type ModalId = 'score' | 'disqualify';
+type ModalId
+  = 'score'
+  | 'disqualify'
+  | 'award';
 
 interface ValidState extends Tab.Params {
   scoreLoading: number;
@@ -141,13 +145,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
     case 'submitScore':
       return [
         startScoreLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopScoreLoading(state);
           const score = FormField.getValue(state.score);
           if (score === null) { return state; }
           const result = await api.proposals.cwu.update(state.proposal.id, adt('score', score));
           switch (result.tag) {
             case 'valid':
+              dispatch(toast(adt('success', toasts.scored.success)));
               return state
                 .set('form', await initForm(state.opportunity, result.value))
                 .set('showModal', null)
@@ -165,12 +170,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
     case 'disqualify':
       return [
         startDisqualifyLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopDisqualifyLoading(state);
           const reason = FormField.getValue(state.disqualificationReason);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('disqualify', reason));
           switch (result.tag) {
             case 'valid':
+              dispatch(toast(adt('success', toasts.disqualified.success)));
               return state
                 .set('form', await initForm(state.opportunity, result.value))
                 .set('showModal', null)
@@ -188,13 +194,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
     case 'award':
       return [
         startAwardLoading(state).set('showModal', null),
-        async state => {
+        async (state, dispatch) => {
           state = stopAwardLoading(state);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('award', ''));
           if (!api.isValid(result)) {
             //TODO propagate errors
             return state;
           }
+          dispatch(toast(adt('success', toasts.awarded.success)));
           return state
             .set('form', await initForm(state.opportunity, result.value))
             .set('proposal', result.value);
@@ -258,6 +265,26 @@ export const component: Tab.Component<State, Msg> = {
     const isScoreLoading = state.scoreLoading > 0;
     const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
+      case 'award':
+        return {
+          title: 'Award Code With Us Opportunity?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Award Opportunity',
+              icon: 'award',
+              color: 'primary',
+              button: true,
+              msg: adt('award')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ],
+          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all of this opportunity\'s susbscribers and vendors with submitted proposals will be notified accordingly.'
+        };
       case 'score':
         return {
           title: 'Enter Score',
@@ -366,7 +393,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: 'Award',
                   symbol_: leftPlacement(iconLinkSymbol('award')),
-                  onClick: () => dispatch(adt('award'))
+                  onClick: () => dispatch(adt('showModal', 'award' as const))
                 },
                 {
                   children: 'Edit Score',
@@ -393,7 +420,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('award')),
             button: true,
             color: 'primary',
-            onClick: () => dispatch(adt('award'))
+            onClick: () => dispatch(adt('showModal', 'award' as const))
           }
         ]);
       default:

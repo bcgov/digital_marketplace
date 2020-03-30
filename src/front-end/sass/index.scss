@@ -318,6 +318,15 @@ nav {
 
 // Custom Bootstrap style overrides.
 
+.dropdown-menu {
+  min-width: 100%;
+}
+
+.btn-warning,
+.badge-warning {
+  color: $white !important;
+}
+
 .ta-left {
   text-align: left;
 }
@@ -327,9 +336,10 @@ button {
 
   &.disabled:not(.btn-link):not(.dropdown-item),
   &:disabled:not(.btn-link):not(.dropdown-item) {
-    background-color: $secondary;
-    border-color: $secondary;
-    box-shadow: none;
+    background-color: $secondary !important;
+    border-color: $secondary !important;
+    color: $white !important;
+    box-shadow: none !important;
   }
 }
 
@@ -401,15 +411,6 @@ nav.navbar .nav-link:hover {
   text-decoration: underline;
 }
 
-.nav-tabs {
-  overflow: hidden;
-
-  .nav-item .active {
-    cursor: default;
-    pointer-events: none;
-  }
-}
-
 .card-body {
   @extend .p-4;
 }
@@ -418,10 +419,6 @@ nav.navbar .nav-link:hover {
   display: inline-flex;
   padding: 0.35em 0.7em;
   letter-spacing: 0.5px;
-
-  &-warning {
-    color: $white !important;
-  }
 }
 
 .custom-radio,
@@ -539,6 +536,28 @@ nav.navbar .nav-link:hover {
 }
 
 // Custom components
+
+.toast-wrapper {
+  position: fixed;
+  bottom: map-get($spacers, 4);
+  right: map-get($spacers, 4);
+  width: 400px;
+  z-index: 1001; // Above nav, below modals
+
+  @include media-breakpoint-down(xs) {
+    left: map-get($spacers, 3);
+    width: auto;
+  }
+
+  @include media-breakpoint-down(sm) {
+    right: map-get($spacers, 3);
+    bottom: map-get($spacers, 3);
+  }
+
+  .toast {
+    max-width: unset;
+  }
+}
 
 .sidebar {
 

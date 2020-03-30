@@ -3,6 +3,7 @@ import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMan
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
+import * as CounterResource from 'shared/lib/resources/counter';
 import * as FileResource from 'shared/lib/resources/file';
 import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
@@ -32,6 +33,49 @@ export const getMarkdownFile = (id: string) => makeRequest<GetMarkdownFileAction
   url: `/markdown/${id}.md`,
   body: undefined
 });
+
+// Counters
+
+interface CounterResourceTypes extends Pick<UndefinedResourceTypes, 'create' | 'readOne' | 'delete'> {
+  readMany: ReadManyActionTypes<{
+    rawResponse: CounterResource.Counter;
+    validResponse: CounterResource.Counter;
+    invalidResponse: CounterResource.UpdateValidationErrors;
+  }>;
+  update: {
+    request: CounterResource.UpdateRequestBody;
+    rawResponse: CounterResource.Counter;
+    validResponse: CounterResource.Counter;
+    invalidResponse: CounterResource.UpdateValidationErrors;
+  };
+}
+
+interface CountersCrudApi extends Omit<CrudApi<CounterResourceTypes>, 'readMany'> {
+  readMany(counters: string[]): ReturnType<CrudApi<CounterResourceTypes>['readMany']>;
+}
+
+const COUNTERS_ROUTE_NAMESPACE = apiNamespace('counters');
+
+export const counters: CountersCrudApi = {
+
+  ...makeCrudApi<Omit<CounterResourceTypes, 'readMany'> & Pick<UndefinedResourceTypes, 'readMany'>>({
+    routeNamespace: COUNTERS_ROUTE_NAMESPACE,
+    update: {},
+    create: undefined,
+    readOne: undefined,
+    readMany: undefined,
+    delete: undefined
+  }),
+
+  async readMany(counters: string[]) {
+    return await makeRequest<ReadManyActionTypes<CounterResourceTypes['readMany']> & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${COUNTERS_ROUTE_NAMESPACE}?counters=${window.encodeURIComponent(counters.join(','))}`,
+      body: null
+    });
+  }
+
+};
 
 // Sessions
 

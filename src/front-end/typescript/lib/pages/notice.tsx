@@ -7,37 +7,22 @@ import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
 
 export type NoticeId
-  = ADT<'notFound'>
-  | ADT<'deactivatedOwnAccount'>
+  = ADT<'deactivatedOwnAccount'>
   | ADT<'authFailure'>;
 
-export function parseNoticeId(tag: any, value: any): NoticeId {
+export function parseNoticeId(tag: any, value: any): NoticeId | null {
   switch (tag) {
     case 'deactivatedOwnAccount':
       return adt('deactivatedOwnAccount');
     case 'authFailure':
       return adt('authFailure');
-    case 'notFound':
     default:
-      return adt('notFound');
+      return null;
   }
 }
 
 function noticeIdToState(noticeId: NoticeId): State {
   switch (noticeId.tag) {
-
-    case 'notFound':
-      return {
-        title: 'Page Not Found',
-        body: 'The page you are looking for does not exist.',
-        button: {
-          text: 'Back to Home',
-          route: {
-            tag: 'landing',
-            value: null
-          }
-        }
-      };
 
     case 'deactivatedOwnAccount':
       return {

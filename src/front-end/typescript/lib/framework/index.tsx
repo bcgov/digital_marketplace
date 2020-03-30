@@ -7,7 +7,7 @@ import * as Immutable from 'immutable';
 import { remove } from 'lodash';
 import { default as React, ReactElement } from 'react';
 import ReactDom from 'react-dom';
-import { ADT } from 'shared/lib/types';
+import { ADT, adtCurried } from 'shared/lib/types';
 
 export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framework/router';
 
@@ -104,13 +104,28 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
 
 // Global Components.
 
-export type GlobalMsg<Route>  = Router.RouterMsg<Route>;
+export interface ToastContent {
+  title: string;
+  body: string | ReactElement;
+}
+
+export type Toast
+  = ADT<'info', ToastContent>
+  | ADT<'error', ToastContent>
+  | ADT<'warning', ToastContent>
+  | ADT<'success', ToastContent>;
+
+type ToastMsg = ADT<'@toast', Toast>;
+
+export const toast = adtCurried<ToastMsg>('@toast');
+
+export type GlobalMsg<Route>  = Router.RouterMsg<Route> | ToastMsg;
 
 export type GlobalComponentMsg<Msg, Route> = Msg | GlobalMsg<Route>;
 
 export function isGlobalMsg<Msg, Route>(msg: GlobalComponentMsg<Msg, Route>): msg is GlobalMsg<Route> {
   const globalMsg = msg as GlobalMsg<Route>;
-  return globalMsg.tag === '@newRoute' || globalMsg.tag === '@replaceRoute' || globalMsg.tag === '@newUrl' || globalMsg.tag === '@replaceUrl';
+  return globalMsg.tag === '@toast' || globalMsg.tag === '@newRoute' || globalMsg.tag === '@replaceRoute' || globalMsg.tag === '@newUrl' || globalMsg.tag === '@replaceUrl';
 }
 
 export function mapGlobalComponentMsg<MsgA, MsgB, Route>(msg: GlobalComponentMsg<MsgA, Route>, map: (msg: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): GlobalComponentMsg<MsgB, Route> {
@@ -152,6 +167,7 @@ export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: Update
 // Page components.
 
 export interface PageInitParams<RouteParams, SharedState, Msg> {
+  routePath: string;
   routeParams: Readonly<RouteParams>;
   shared: Readonly<SharedState>;
   dispatch: Dispatch<Msg>;
@@ -217,7 +233,7 @@ export function mapPageBreadcrumbsMsg<MsgA, MsgB, Route>(breadcrumbs: PageBreadc
 
 export interface ModalAction<Msg> {
   text: string;
-  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success';
+  color: 'primary' | 'info' | 'secondary' | 'danger' | 'success' | 'warning';
   msg: Msg;
   button?: boolean;
   disabled?: boolean;
@@ -315,6 +331,7 @@ export function mapAppDispatch<ParentMsg, ChildMsg, Route>(dispatch: Dispatch<Ap
 export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams, ChildState, ChildMsg, SharedState> {
   state: Immutable<ParentState>;
   dispatch: Dispatch<ParentMsg>;
+  routePath: string;
   childStatePath: string[];
   childRouteParams: ChildRouteParams;
   childInit: PageInit<ChildRouteParams, SharedState, ChildState, ChildMsg>;
@@ -333,6 +350,7 @@ export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams
 export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams, ChildState, ChildMsg, SharedState, Route>(params: InitAppChildPageParams<ParentState, AppMsg<ParentMsg, Route>, ChildRouteParams, ChildState, GlobalComponentMsg<ChildMsg, Route>, SharedState>): Promise<Immutable<ParentState>> {
   const childDispatch = mapAppDispatch(params.dispatch, params.mapChildMsg);
   const childState = immutable(await params.childInit({
+    routePath: params.routePath,
     routeParams: params.childRouteParams,
     shared: params.getSharedState(params.state),
     dispatch: childDispatch
