@@ -1,10 +1,12 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
+import { readSubmittedSWUProposalCount } from 'back-end/lib/db/proposal/sprint-with-us';
 import { RawSWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/sprint-with-us';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
 import { Addendum } from 'shared/lib/resources/addendum';
+import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -460,6 +462,11 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
       .orderBy('createdAt', 'desc')
       .first())?.createdAt;
 
+    // Set awarded proponent flag if applicable
+    if (result.status === SWUOpportunityStatus.Awarded) {
+      result.successfulProponent = true;
+    }
+
     // If authenticated, add on subscription status flag
     if (session.user) {
       result.subscribed = !!(await connection<RawSWUOpportunitySubscriber>('swuOpportunitySubscribers')
@@ -467,13 +474,33 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
         .first());
     }
 
-    // If admin/owner, add on history
+    // If admin/owner, add on history and reporting metrics if public
     if (session.user?.type === UserType.Admin || result.createdBy === session.user?.id) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>('swuOpportunityStatuses')
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');
 
       result.history = await Promise.all(rawHistory.map(async raw => await rawHistoryRecordToHistoryRecord(connection, session, raw)));
+
+      if (publicOpportunityStatuses.includes(result.status)) {
+        // Retrieve opportunity views
+        const numViews = (await connection<{ count: number }>('viewCounters')
+        .where({ name: getSWUOpportunityViewsCounterName(result.id) })
+        .first())?.count || 0;
+
+        // Retrieve watchers/subscribers
+        const numWatchers = (await connection('swuOpportunitySubscribers')
+          .where({ opportunity: result.id }))?.length || 0;
+
+        // Retrieve number of submitted proposals (exclude draft/withdrawn)
+        const numProposals = getValidValue(await readSubmittedSWUProposalCount(connection, result.id), 0);
+
+        result.reporting = {
+          numViews,
+          numWatchers,
+          numProposals
+        };
+      }
     }
 
     // Retrieve phases for the opportunity version

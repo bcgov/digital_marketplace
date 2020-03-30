@@ -14,3 +14,7 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 export function getCWUOpportunityViewsCounterName(id: Id): string {
   return `opportunity.code-with-us.${id}.views`;
 }
+
+export function getSWUOpportunityViewsCounterName(id: Id): string {
+  return `opportunity.sprint-with-us.${id}.views`;
+}

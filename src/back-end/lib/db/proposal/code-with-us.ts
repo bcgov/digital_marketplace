@@ -671,7 +671,7 @@ export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connec
   return valid(await rawCWUProposalToCWUProposal(connection, session, result));
 });
 
-export const readSubmittedProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
+export const readSubmittedCWUProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
   return valid((await connection<RawCWUProposal>('cwuProposals as proposals')
     .join('cwuProposalStatuses as statuses', function() {
       this

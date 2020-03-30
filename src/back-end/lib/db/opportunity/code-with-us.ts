@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { readSubmittedProposalCount } from 'back-end/lib/db/proposal/code-with-us';
+import { readSubmittedCWUProposalCount } from 'back-end/lib/db/proposal/code-with-us';
 import { RawCWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/code-with-us';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
@@ -266,7 +266,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
           .where({ opportunity: result.id }))?.length || 0;
 
         // Retrieve number of submitted proposals (exclude draft/withdrawn)
-        const numProposals = getValidValue(await readSubmittedProposalCount(connection, result.id), 0);
+        const numProposals = getValidValue(await readSubmittedCWUProposalCount(connection, result.id), 0);
 
         result.reporting = {
           numViews,

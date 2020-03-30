@@ -1030,3 +1030,19 @@ export const deleteSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal>(
   }
   return valid(proposal);
 });
+
+export const readSubmittedSWUProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
+  return valid((await connection<RawSWUProposal>('swuProposals as proposals')
+    .join('swuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+        connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity
+    })
+    .whereNotIn('statuses.status', [SWUProposalStatus.Draft, SWUProposalStatus.Withdrawn]))?.length || 0);
+});

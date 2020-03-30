@@ -66,9 +66,7 @@ export interface SWUOpportunity {
   createdBy?: UserSlim;
   updatedBy?: UserSlim;
 
-  // TODO:
   successfulProponent?: true;
-
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -95,8 +93,6 @@ export interface SWUOpportunity {
   history?: SWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
-
-  // TODO:
   reporting?: {
     numProposals: number;
     numWatchers: number;
