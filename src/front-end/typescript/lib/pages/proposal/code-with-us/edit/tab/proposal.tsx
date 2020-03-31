@@ -3,10 +3,11 @@ import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoa
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/edit-tab-header';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
@@ -179,12 +180,15 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       state = hideModal(state);
       return [
         startSaveChangesLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSaveChangesLoading(state);
           const result = await Form.persist(state.form, adt('update', state.proposal.id));
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }
+          result.value[1].status === CWUProposalStatus.Draft
+            ? dispatch(toast(adt('success', toasts.changesSaved.success)))
+            : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           return (await resetProposal(state, result.value[1]))
             .set('isEditing', false);
         }
@@ -193,7 +197,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       state = hideModal(state);
       return [
         startSaveChangesAndSubmitLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSaveChangesAndSubmitLoading(state);
           const saveResult = await Form.persist(state.form, adt('update', state.proposal.id));
           if (isInvalid(saveResult)) {
@@ -203,6 +207,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(submitResult)) {
             return state;
           }
+          dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           state = state.set('isEditing', false);
           return await resetProposal(state, submitResult.value);
         }
@@ -211,12 +216,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       state = hideModal(state);
       return [
         startSubmitLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSubmitLoading(state);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(result)) {
             return state;
           }
+          dispatch(toast(adt('success', toasts.submitted.success)));
           return await resetProposal(state, result.value);
         }
       ];
@@ -224,12 +230,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       state = hideModal(state);
       return [
         startWithdrawLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopWithdrawLoading(state);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('withdraw', ''));
           if (!api.isValid(result)) {
             return state;
           }
+          dispatch(toast(adt('success', toasts.withdrawn.success)));
           return await resetProposal(state, result.value);
         }
       ];
@@ -242,7 +249,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(result)) {
             return stopDeleteLoading(state);
           }
-          //TODO redirect to proposals list when ready
+          dispatch(toast(adt('success', toasts.deleted.success)));
           dispatch(replaceRoute(adt('opportunities' as const, null)));
           return state;
         }

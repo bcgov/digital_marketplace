@@ -1,9 +1,10 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, Dispatch, GlobalComponentMsg, Immutable,  immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentView, Dispatch, GlobalComponentMsg, immutable, Immutable,  Init, mapComponentDispatch, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as toasts from 'front-end/lib/pages/opportunity/code-with-us/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
@@ -97,6 +98,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const updateResult = await api.proposals.cwu.update(msg.value, adt('award', ''));
           switch (updateResult.tag) {
             case 'valid':
+              dispatch(toast(adt('success', toasts.statusChanged.success(CWUOpportunityStatus.Awarded))));
               return immutable(await init({
                 opportunity: api.getValidValue(await api.opportunities.cwu.readOne(state.opportunity.id), state.opportunity),
                 viewerUser: state.viewerUser

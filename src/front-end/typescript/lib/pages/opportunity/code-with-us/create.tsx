@@ -1,8 +1,9 @@
 import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Form from 'front-end/lib/pages/opportunity/code-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/opportunity/code-with-us/lib/toasts';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -46,8 +47,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       form: immutable(await Form.init({}))
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+  async fail({ routePath, dispatch }) {
+    dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
     return invalid(null);
   }
 });
@@ -79,6 +80,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
                 opportunityId: result.value[1].id,
                 tab: isPublish ? 'summary' as const : 'opportunity' as const
               })));
+              dispatch(toast(adt('success', isPublish ? toasts.statusChanged.success(CWUOpportunityStatus.Published) : toasts.draftCreated.success)));
               return state.set('form', result.value[0]);
             case 'invalid':
               state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);

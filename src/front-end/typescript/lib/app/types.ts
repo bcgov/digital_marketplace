@@ -2,6 +2,7 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import { AppMsg, Immutable, PageModal, Toast } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 // Note(Jesse): @add_new_page_location
 
@@ -38,35 +39,36 @@ import { ADT } from 'shared/lib/types';
 
 // Note(Jesse): @add_new_page_location
 export type Route
-  = ADT<'landing',               PageLanding.RouteParams>
-  | ADT<'opportunities',         PageOpportunities.RouteParams>
-  | ADT<'content',               PageContent.RouteParams>
-  | ADT<'signOut',               PageSignOut.RouteParams>
-  | ADT<'signIn',                PageSignIn.RouteParams>
-  | ADT<'signUpStepOne',         PageSignUpStepOne.RouteParams>
-  | ADT<'signUpStepTwo',         PageSignUpStepTwo.RouteParams>
-  | ADT<'notice',                PageNotice.RouteParams>
-  | ADT<'userList',              PageUserList.RouteParams>
-  | ADT<'userProfile',           PageUserProfile.RouteParams>
-  | ADT<'orgCreate',             PageOrgCreate.RouteParams>
-  | ADT<'orgList',               PageOrgList.RouteParams>
-  | ADT<'orgEdit',               PageOrgEdit.RouteParams>
+  = ADT<'landing',              PageLanding.RouteParams>
+  | ADT<'opportunities',        PageOpportunities.RouteParams>
+  | ADT<'content',              PageContent.RouteParams>
+  | ADT<'signOut',              PageSignOut.RouteParams>
+  | ADT<'signIn',               PageSignIn.RouteParams>
+  | ADT<'signUpStepOne',        PageSignUpStepOne.RouteParams>
+  | ADT<'signUpStepTwo',        PageSignUpStepTwo.RouteParams>
+  | ADT<'notice',               PageNotice.RouteParams>
+  | ADT<'notFound',             PageNotFound.RouteParams>
+  | ADT<'userList',             PageUserList.RouteParams>
+  | ADT<'userProfile',          PageUserProfile.RouteParams>
+  | ADT<'orgCreate',            PageOrgCreate.RouteParams>
+  | ADT<'orgList',              PageOrgList.RouteParams>
+  | ADT<'orgEdit',              PageOrgEdit.RouteParams>
 
-  | ADT<'proposalSWUCreate',     PageProposalSWUCreate.RouteParams>
-  | ADT<'proposalSWUEdit',       PageProposalSWUEdit.RouteParams>
-  | ADT<'proposalSWUView',       PageProposalSWUView.RouteParams>
+  | ADT<'proposalSWUCreate',    PageProposalSWUCreate.RouteParams>
+  | ADT<'proposalSWUEdit',      PageProposalSWUEdit.RouteParams>
+  | ADT<'proposalSWUView',      PageProposalSWUView.RouteParams>
 
-  | ADT<'opportunitySWUCreate',  PageOpportunitySWUCreate.RouteParams>
-  | ADT<'opportunitySWUEdit',    PageOpportunitySWUEdit.RouteParams>
-  | ADT<'opportunitySWUView',    PageOpportunitySWUView.RouteParams>
+  | ADT<'opportunitySWUCreate', PageOpportunitySWUCreate.RouteParams>
+  | ADT<'opportunitySWUEdit',   PageOpportunitySWUEdit.RouteParams>
+  | ADT<'opportunitySWUView',   PageOpportunitySWUView.RouteParams>
 
-  | ADT<'opportunityCWUCreate',  PageOpportunityCWUCreate.RouteParams>
-  | ADT<'opportunityCWUEdit',    PageOpportunityCWUEdit.RouteParams>
-  | ADT<'opportunityCWUView',    PageOpportunityCWUView.RouteParams>
+  | ADT<'opportunityCWUCreate', PageOpportunityCWUCreate.RouteParams>
+  | ADT<'opportunityCWUEdit',   PageOpportunityCWUEdit.RouteParams>
+  | ADT<'opportunityCWUView',   PageOpportunityCWUView.RouteParams>
 
-  | ADT<'proposalCWUCreate',     PageProposalCWUCreate.RouteParams>
-  | ADT<'proposalCWUEdit',       PageProposalCWUEdit.RouteParams>
-  | ADT<'proposalCWUView',       PageProposalCWUView.RouteParams>
+  | ADT<'proposalCWUCreate',    PageProposalCWUCreate.RouteParams>
+  | ADT<'proposalCWUEdit',      PageProposalCWUEdit.RouteParams>
+  | ADT<'proposalCWUView',      PageProposalCWUView.RouteParams>
 
   | ADT<'proposalCWUExportOne', PageProposalCWUExportOne.RouteParams>
   | ADT<'proposalCWUExportAll', PageProposalCWUExportAll.RouteParams>
@@ -109,6 +111,7 @@ export interface State {
     signUpStepTwo?: Immutable<PageSignUpStepTwo.State>;
     signIn?: Immutable<PageSignIn.State>;
     notice?: Immutable<PageNotice.State>;
+    notFound?: Immutable<PageNotFound.State>;
     userList?: Immutable<PageUserList.State>;
     userProfile?: Immutable<PageUserProfile.State>;
     orgCreate?: Immutable<PageOrgCreate.State>;
@@ -152,6 +155,7 @@ type InnerMsg
   | ADT<'pageSignUpStepOne',        PageSignUpStepOne.Msg>
   | ADT<'pageSignUpStepTwo',        PageSignUpStepTwo.Msg>
   | ADT<'pageNotice',               PageNotice.Msg>
+  | ADT<'pageNotFound',             PageNotFound.Msg>
   | ADT<'pageUserList',             PageUserList.Msg>
   | ADT<'pageUserProfile',          PageUserProfile.Msg>
   | ADT<'pageOrgCreate',            PageOrgCreate.Msg>

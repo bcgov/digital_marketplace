@@ -104,10 +104,16 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
 
 // Global Components.
 
-export interface Toast {
+export interface ToastContent {
   title: string;
   body: string | ReactElement;
 }
+
+export type Toast
+  = ADT<'info', ToastContent>
+  | ADT<'error', ToastContent>
+  | ADT<'warning', ToastContent>
+  | ADT<'success', ToastContent>;
 
 type ToastMsg = ADT<'@toast', Toast>;
 
@@ -161,6 +167,7 @@ export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: Update
 // Page components.
 
 export interface PageInitParams<RouteParams, SharedState, Msg> {
+  routePath: string;
   routeParams: Readonly<RouteParams>;
   shared: Readonly<SharedState>;
   dispatch: Dispatch<Msg>;
@@ -324,6 +331,7 @@ export function mapAppDispatch<ParentMsg, ChildMsg, Route>(dispatch: Dispatch<Ap
 export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams, ChildState, ChildMsg, SharedState> {
   state: Immutable<ParentState>;
   dispatch: Dispatch<ParentMsg>;
+  routePath: string;
   childStatePath: string[];
   childRouteParams: ChildRouteParams;
   childInit: PageInit<ChildRouteParams, SharedState, ChildState, ChildMsg>;
@@ -342,6 +350,7 @@ export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams
 export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams, ChildState, ChildMsg, SharedState, Route>(params: InitAppChildPageParams<ParentState, AppMsg<ParentMsg, Route>, ChildRouteParams, ChildState, GlobalComponentMsg<ChildMsg, Route>, SharedState>): Promise<Immutable<ParentState>> {
   const childDispatch = mapAppDispatch(params.dispatch, params.mapChildMsg);
   const childState = immutable(await params.childInit({
+    routePath: params.routePath,
     routeParams: params.childRouteParams,
     shared: params.getSharedState(params.state),
     dispatch: childDispatch

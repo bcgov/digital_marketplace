@@ -1,5 +1,6 @@
 import { TOAST_AUTO_DISMISS_DURATION } from 'front-end/config';
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import router from 'front-end/lib/app/router';
 import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
@@ -16,6 +17,7 @@ import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-
 
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -56,6 +58,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   const defaultPageInitParams = {
     state,
     dispatch,
+    routePath: router.routeToUrl(route),
     getSharedState(state: Immutable<State>) {
       return state.shared;
     },
@@ -423,6 +426,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageNotice.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageNotice' as const, value };
+        }
+      });
+
+    case 'notFound':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'notFound'],
+        childRouteParams: route.value,
+        childInit: PageNotFound.component.init,
+        childGetMetadata: PageNotFound.component.getMetadata,
+        childGetModal: PageNotFound.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageNotFound' as const, value };
         }
       });
   }
@@ -816,6 +832,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageNotice.component.update,
         childGetMetadata: PageNotice.component.getMetadata,
         childGetModal: PageNotice.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageNotFound':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageNotFound', value }),
+        childStatePath: ['pages', 'notFound'],
+        childUpdate: PageNotFound.component.update,
+        childGetMetadata: PageNotFound.component.getMetadata,
+        childGetModal: PageNotFound.component.getModal,
         childMsg: msg.value
       });
 
