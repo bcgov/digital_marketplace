@@ -347,8 +347,13 @@ a,
 .a {
   cursor: pointer;
 
-  &.disabled {
+  &.disabled,
+  &:disabled {
     opacity: $btn-disabled-opacity;
+
+    &:hover {
+      text-decoration: none;
+    }
   }
 
   &.nav-link:focus {
@@ -356,7 +361,8 @@ a,
   }
 }
 
-.disabled {
+.disabled,
+*:disabled {
   cursor: not-allowed !important;
 }
 
@@ -451,7 +457,7 @@ nav.navbar .nav-link:hover {
   opacity: 1 !important;
 }
 
-.font-size-very-small {
+.font-size-extra-small {
   font-size: $font-size-sm*0.8;
 }
 
