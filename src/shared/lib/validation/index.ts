@@ -251,8 +251,8 @@ export function validateCapability(raw: string): Validation<string> {
   return CAPABILITIES.includes(raw) ? valid(raw) : invalid(['Please select a capability from the list.']);
 }
 
-export function validateCapabilities(raw: string[]): ArrayValidation<string> {
-  if (!raw.length) { return invalid([['Please select at least one capability.']]); }
+export function validateCapabilities(raw: string[], minCapabilities = 1): ArrayValidation<string> {
+  if (raw.length < minCapabilities) { return invalid([[`Please select at least ${minCapabilities} capabilit${minCapabilities === 1 ? 'y' : 'ies'}.`]]); }
   const validatedArray = validateArray(raw, validateCapability);
   return mapValid(validatedArray, v => uniq(v));
 }
