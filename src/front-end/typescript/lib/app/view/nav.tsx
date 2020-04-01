@@ -3,7 +3,7 @@ import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextu
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, ExtendProps as ExtendLinkProps, iconLinkSymbol, rightPlacement } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
-import React, { Fragment } from 'react';
+import React, { Fragment, MouseEvent } from 'react';
 import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 export type Params = null;
@@ -54,12 +54,12 @@ export type NavLink = ExtendLinkProps<{ active?: boolean; }>;
 type NavLinkProps = NavLink & { dispatch: Dispatch<Msg>; };
 
 const NavLink: View<NavLinkProps> = props => {
-  const onClick = () => {
+  const onClick = (e: MouseEvent) => {
     props.dispatch(adt('toggleMobileMenu', false));
     props.dispatch(adt('toggleDesktopAccountDropdown', false));
     props.dispatch(adt('toggleDesktopContextualDropdown', false));
     props.dispatch(adt('toggleMobileContextualDropdown', false));
-    if (props.onClick) { return props.onClick(); }
+    if (props.onClick) { return props.onClick(e); }
   };
   const linkProps = { ...props };
   linkProps.color = linkProps.color || 'white';
