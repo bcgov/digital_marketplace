@@ -84,7 +84,7 @@ interface BaseProps {
   disabled?: boolean;
   newTab?: boolean;
   focusable?: boolean;
-  onClick?(): void;
+  onClick?(e: MouseEvent): void;
 }
 
 export interface AnchorProps extends BaseProps {
@@ -144,9 +144,9 @@ function AnchorLink(props: AnchorProps) {
   finalClassName += color && color !== 'inherit' && !disabled ? ` text-hover-${color}` : '';
   finalClassName += ` ${className}`;
   const finalOnClick = !disabled && onClick
-    ? ((e: MouseEvent<HTMLElement>): false | void => {
+    ? ((e: MouseEvent): false | void => {
         if (!newTab && !e.ctrlKey && !e.metaKey) { e.preventDefault(); }
-        onClick();
+        onClick(e);
       })
     : undefined;
   const finalProps = {

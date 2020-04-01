@@ -210,10 +210,10 @@ const PartTimeSwitch: View<PartTimeSwitchProps> = ({ partTime, disabled, index, 
       onClick={() => dispatch(adt('toggleCapabilityIsPartTime', index))}
       style={{ cursor: 'pointer' }}
       className='d-flex align-items-stretch font-size-extra-small font-weight-bold ml-auto'>
-      <div className={`${baseSwitchClassName} ${selectedClassName(partTime)} rounded-left border-right-none`} style={{ width, padding }}>
+      <div className={`${baseSwitchClassName} ${selectedClassName(partTime)} rounded-left border-right-0`} style={{ width, padding }}>
         P/T
       </div>
-      <div className={`${baseSwitchClassName} ${selectedClassName(!partTime)} rounded-right border-left-none`} style={{ width, padding }}>
+      <div className={`${baseSwitchClassName} ${selectedClassName(!partTime)} rounded-right border-left-0`} style={{ width, padding }}>
         F/T
       </div>
     </div>

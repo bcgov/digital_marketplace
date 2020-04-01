@@ -76,7 +76,7 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
     case 'capabilities':
       return {
         component: CapabilitiesTab.component,
-        icon: 'paperclip',
+        icon: 'toolbox',
         title: 'Capabilities' } as TabbedPage.TabDefinition<Tabs, K>;
 
     case 'profile':

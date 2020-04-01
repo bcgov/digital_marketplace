@@ -1,96 +1,42 @@
 import { Route } from 'front-end/lib/app/types';
 import { ComponentView, Dispatch, GlobalComponentMsg, Init, Update, View } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Icon from 'front-end/lib/views/icon';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
+import { Col, Row, Spinner } from 'reactstrap';
+import { CAPABILITIES_WITH_DESCRIPTIONS } from 'shared/lib/data/capabilities';
+import { usersAreEquivalent } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
-const capabilities = [
-  {
-    name: 'Agile Coaching',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'Delivery Management',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'Frontend Development',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'Technical Architecture',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'User Research',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'Backend Development',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'DevOps Engineering',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'Security Engineering',
-    pt: false,
-    checked: false,
-    collapsed: true
-  },
-  {
-    name: 'User Experience Design',
-    pt: false,
-    checked: false,
-    collapsed: true
-  }
-];
-
 export interface Capability {
-  index: number;
   name: string;
-  pt: boolean;
+  description: string[];
   checked: boolean;
-  collapsed: boolean;
-  bodyBullets: string[];
-}
-
-interface CapabilityAndDispatch {
-  capability: Capability;
-  dispatch: Dispatch<Msg>;
+  open: boolean;
 }
 
 export interface State extends Tab.Params {
   capabilities: Capability[];
+  loading: number | null; //index of capability loading
 }
 
-export type InnerMsg =
-  ADT<'toggleCollapsed', number> |
-  ADT<'toggleChecked', number>;
+export type InnerMsg
+  = ADT<'toggleOpen', number>
+  | ADT<'toggleChecked', number>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: Init<Tab.Params, State> = async (params) => {
   return ({
     ...params,
-    capabilities: capabilities.map( (c, index) => ({...c, index, bodyBullets: ['body bullets for', 'this thing!']})  )
+    loading: null,
+    capabilities: CAPABILITIES_WITH_DESCRIPTIONS.map(capability => ({
+      ...capability,
+      checked: params.profileUser.capabilities.indexOf(capability.name) !== -1,
+      open: false
+    }))
   });
 };
 
@@ -98,89 +44,96 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
 
     case 'toggleChecked':
-      state.capabilities[msg.value].checked = !state.capabilities[msg.value].checked;
-      return [state];
+      return [
+        state.set('loading', msg.value),
+        async state => {
+          state = state.set('loading', null);
+          const capabilities = state.capabilities.filter((c, i) => i === msg.value ? !c.checked : c.checked);
+          const result = await api.users.update(state.profileUser.id, adt('updateCapabilities', capabilities.map(({ name }) => name)));
+          if (api.isValid(result)) {
+            return state.update('capabilities', cs => cs.map(c => ({
+              ...c,
+              checked: result.value.capabilities.indexOf(c.name) !== -1
+            })));
+          }
+          return state;
+        }
+      ];
 
-    case 'toggleCollapsed':
-      state.capabilities[msg.value].collapsed = !state.capabilities[msg.value].collapsed;
-      return [state];
+    case 'toggleOpen':
+      return [state.update('capabilities', cs => cs.map((c, i) => {
+        return i === msg.value ? { ...c, open: !c.open } : c;
+      }))];
 
     default:
       return [state];
   }
 };
 
-export const ToggleView: View<CapabilityAndDispatch> = ({capability, dispatch}) => {
-  const iconColor = 'blue-dark';
-  const checkedIcon = capability.checked ? 'question-circle' : 'plus-circle' ;
+interface CapabilityProps extends Capability {
+  dispatch: Dispatch<Msg>;
+  index: number;
+  loading: boolean;
+  disabled: boolean;
+}
+
+const Capability: View<CapabilityProps> = ({ dispatch, index, loading, disabled, name, description, checked, open }) => {
   return (
-    <div className=''>
-
+    <div className='border border-top-0'>
       <div
-        className={`${capability.collapsed ? '' : 'bg-light' } p-3 border d-flex align-items-center justify-content-between`}
-        onClick={ (e) => {
-          e.stopPropagation();
-          dispatch(adt('toggleCollapsed', capability.index));
-        }}
-      >
-        <div>
-          <Icon name={checkedIcon}
-            onClick={ (e) => {
-              e.stopPropagation();
-              dispatch(adt('toggleChecked', capability.index));
-            }}
-          />
-          <span className={`pl-2`}>{capability.name}</span>
-        </div>
-        {
-          capability.collapsed ?
-          <Icon color={iconColor} className='justify-self-end' name='chevron-down' /> :
-          <Icon color={iconColor} className='justify-self-end' name='chevron-up' />
-        }
+        className={`${open ? 'bg-light border-bottom' : ''} p-3 d-flex align-items-center`}
+        style={{ cursor: 'pointer' }}
+        onClick={() => dispatch(adt('toggleOpen', index))}>
+        <Link
+          onClick={e => {
+            e.stopPropagation();
+            dispatch(adt('toggleChecked', index));
+          }}
+          symbol_={leftPlacement(iconLinkSymbol(checked ? 'check-circle' : 'circle'))}
+          symbolClassName={checked ? 'text-success' : 'text-body'}
+          color='body'
+          disabled={loading || disabled}>
+          <span>{name}</span>
+          {loading
+            ? (<Spinner color='secondary' size='sm' className='ml-3'/>)
+            : null}
+        </Link>
+        <Icon
+          color='blue-dark'
+          className='ml-auto'
+          name={open ? 'chevron-up' : 'chevron-down'} />
       </div>
-
-      <div className={`${ capability.collapsed ? 'd-none' : 'border' }`}>
-        <ul className='py-4 m-0'>
-        {
-          capability.bodyBullets.map(
-            (bullet) => { return(
-              <li>{bullet}</li>
-            ); }
-          )
-        }
-        </ul>
-      </div>
-
+      {open
+        ? (<ul className={open ? 'py-5 pr-4 pl-5 m-0' : 'd-none'}>
+            {description.map((item, i) => (<li key={`capability-${index}-description-${i}`}>{item}</li>))}
+          </ul>)
+        : null}
     </div>
   );
 };
 
 const view: ComponentView<State, Msg> = props => {
-  const dispatch = props.dispatch;
+  const { state, dispatch } = props;
   return (
     <Row>
-
       <Col xs='12'>
         <h2>Capabilities & Skills</h2>
-        <p>Sprint With Us opportunities call for teams with the capabilities and skills shown below. Let us know what you can do!</p>
+        <p className='mb-5'>Sprint With Us opportunities required teams with the capabilities and skills shown below. Let us know what you can do!</p>
       </Col>
-
-      <Col className='pt-3' xs='12'>
-        <h4>Capabilities</h4>
-
-      {
-        props.state.capabilities.map( (capability) => {
-          return (
-            <ToggleView
-              key={capability.index}
-              dispatch={dispatch}
-              capability={capability}
-            />
-          );
-        })
-      }
+      <Col xs='12'>
+        <h4 className='mb-4'>Capabilities</h4>
+        <div className='border-top'>
+          {state.capabilities.map((capability, i) => (
+            <Capability
+              key={`user-profile-capability-${i}`}
+              {...capability}
+              index={i}
+              loading={state.loading === i}
+              disabled={!!state.loading || !usersAreEquivalent(state.viewerUser, state.profileUser)}
+              dispatch={dispatch} />
+          ))}
+        </div>
       </Col>
-
     </Row>
   );
 };
