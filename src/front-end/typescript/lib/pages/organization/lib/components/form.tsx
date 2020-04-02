@@ -340,7 +340,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('region', value)
       });
-
       default: return [state];
   }
 };
@@ -600,3 +599,4 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
       ]);
   }
 }
+

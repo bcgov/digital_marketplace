@@ -78,7 +78,7 @@ export function validatePhaseRequiredCapability(raw: any): Validation<CreateSWUO
 
 export function validateSWUOpportunityInceptionPhase(raw: any, opportunityAssignmentDate: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
   const validatedStartDate = validateSWUOpportunityInceptionPhaseStartDate(getISODateString(raw, 'startDate'), opportunityAssignmentDate);
-  const validatedCompletionDate = optional(getISODateString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(getString(v, 'completionDate'), getValidValue(validatedStartDate, new Date())));
+  const validatedCompletionDate = optional(getISODateString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(getISODateString(v, 'completionDate'), getValidValue(validatedStartDate, new Date())));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
   const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
   if (allValid([

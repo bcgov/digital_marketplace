@@ -1,8 +1,11 @@
-
 import { parseUserStatus, parseUserType, UserStatus, UserType } from 'shared/lib/resources/user';
-import { invalid, valid, validateGenericString, Validation } from 'shared/lib/validation';
+import { ArrayValidation, invalid, valid, validateCapabilities as validateCapabilitiesShared, validateGenericString, Validation } from 'shared/lib/validation';
 
-export { validateCapabilities, validateEmail } from 'shared/lib/validation';
+export { validateEmail } from 'shared/lib/validation';
+
+export function validateCapabilities(raw: string[]): ArrayValidation<string> {
+  return validateCapabilitiesShared(raw, 0);
+}
 
 export function validateName(name: string): Validation<string> {
   return validateGenericString(name, 'Name');
