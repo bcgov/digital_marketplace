@@ -6,6 +6,20 @@ import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
 
+export enum SWUOpportunityPhaseType {
+  Inception = 'INCEPTION',
+  Prototype = 'PROTOTYPE',
+  Implementation = 'IMPLEMENTATION'
+}
+
+export function swuOpportunityPhaseTypeToTitleCase(phase: SWUOpportunityPhaseType): string {
+  switch (phase) {
+    case SWUOpportunityPhaseType.Inception: return 'Inception';
+    case SWUOpportunityPhaseType.Prototype: return 'Proof of Concept';
+    case SWUOpportunityPhaseType.Implementation: return 'Implementation';
+  }
+}
+
 export enum SWUOpportunityStatus {
   Draft = 'DRAFT',
   UnderReview = 'UNDER_REVIEW',
@@ -34,6 +48,7 @@ export interface SWUOpportunityHistoryRecord {
 export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | null {
   switch (raw) {
     case SWUOpportunityStatus.Draft: return SWUOpportunityStatus.Draft;
+    case SWUOpportunityStatus.UnderReview: return SWUOpportunityStatus.UnderReview;
     case SWUOpportunityStatus.Published: return SWUOpportunityStatus.Published;
     case SWUOpportunityStatus.EvaluationTeamQuestions: return SWUOpportunityStatus.EvaluationTeamQuestions;
     case SWUOpportunityStatus.EvaluationCodeChallenge: return SWUOpportunityStatus.EvaluationCodeChallenge;
@@ -45,13 +60,19 @@ export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | n
   }
 }
 
+export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Published, SWUOpportunityStatus.EvaluationTeamQuestions, SWUOpportunityStatus.EvaluationCodeChallenge, SWUOpportunityStatus.EvaluationTeamScenario, SWUOpportunityStatus.Awarded];
+
+export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
+
+export const editableOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published, SWUOpportunityStatus.Suspended];
+
 export interface SWUOpportunity {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
 
-  createdBy: UserSlim;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
+  updatedBy?: UserSlim;
 
   // TODO:
   successfulProponent?: true;
@@ -67,7 +88,7 @@ export interface SWUOpportunity {
   optionalSkills: string[];
   description: string;
   proposalDeadline: Date;
-  assignmentDeadline: Date;
+  assignmentDate: Date;
   questionsWeight: number;
   codeChallengeWeight: number;
   scenarioWeight: number;
@@ -77,10 +98,10 @@ export interface SWUOpportunity {
   addenda: Addendum[];
   inceptionPhase?: SWUOpportunityPhase;
   prototypePhase?: SWUOpportunityPhase;
-  implementationPhase?: SWUOpportunityPhase;
+  implementationPhase: SWUOpportunityPhase;
   teamQuestions: SWUTeamQuestion[];
   history?: SWUOpportunityHistoryRecord[];
-  publishedAt: Date;
+  publishedAt?: Date;
   subscribed?: boolean;
 
   // TODO:
@@ -95,19 +116,16 @@ export interface SWUOpportunityPhaseRequiredCapability {
   capability: string;
   fullTime: boolean;
   createdAt: Date;
-  createdBy: UserSlim;
-  updatedAt: Date;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
 }
 
 export interface SWUOpportunityPhase {
+  phase: SWUOpportunityPhaseType;
   startDate: Date;
   completionDate: Date;
   maxBudget: number;
   createdAt: Date;
-  createdBy: UserSlim;
-  updatedAt: Date;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
   requiredCapabilities: SWUOpportunityPhaseRequiredCapability[];
 }
 
@@ -118,12 +136,18 @@ export interface SWUTeamQuestion {
   wordLimit: number;
   order: number;
   createdAt: Date;
-  createdBy: UserSlim;
-  updatedAt: Date;
-  updatedBy: UserSlim;
+  createdBy?: UserSlim;
 }
 
 export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+
+export interface SWUOpportunityHistoryRecord {
+  id: Id;
+  createdAt: Date;
+  createdBy: UserSlim | null;
+  type: ADT<'status', SWUOpportunityStatus> | ADT<'event', SWUOpportunityEvent>;
+  note: string;
+}
 
 // Create.
 
@@ -134,13 +158,13 @@ export type CreateSWUOpportunityStatus
 
 export type CreateSWUOpportunityPhaseRequiredCapabilityBody = Pick<SWUOpportunityPhaseRequiredCapability, 'capability' | 'fullTime'>;
 
-export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'startDate' | 'completionDate' | 'requiredCapabilities'> {
+export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'startDate' | 'completionDate' | 'requiredCapabilities' | 'phase'> {
   startDate: string;
   completionDate: string;
   requiredCapabilities: CreateSWUOpportunityPhaseRequiredCapabilityBody[];
 }
 
-export type CreateSWUTeamQuestionBody = Omit<SWUTeamQuestion, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
+export type CreateSWUTeamQuestionBody = Omit<SWUTeamQuestion, 'createdAt' | 'createdBy'>;
 
 export interface CreateRequestBody {
   title: string;
@@ -189,6 +213,8 @@ export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequest
   implementationPhase?: CreateSWUOpportunityPhaseValidationErrors;
   teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
+  scoreWeights?: string[];
+  phases?: string[];
 }
 
 // Update.
@@ -216,11 +242,11 @@ type UpdateADTErrors
   | ADT<'addAddendum', string[]>
   | ADT<'parseFailure'>;
 
-export interface UpdateEditValidationErrors extends BodyWithErrors {
+export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
 }
 
-export interface UpdateValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
+export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'mandatorySkills' | 'optionalSkills' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
   inceptionPhase?: CreateSWUOpportunityPhaseValidationErrors;
@@ -228,10 +254,44 @@ export interface UpdateValidationErrors extends Omit<ErrorTypeFrom<UpdateEditReq
   implementationPhase?: CreateSWUOpportunityPhaseValidationErrors;
   teamQuestions?: CreateSWUTeamQuestionValidationErrors[];
   attachments?: string[][];
+  scoreWeights?: string[];
+  phases?: string[];
 }
 
 // Delete.
 
 export interface DeleteValidationErrors extends BodyWithErrors {
   status?: string[];
+}
+
+export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportunityStatus): boolean {
+  switch (from) {
+    case SWUOpportunityStatus.Draft:
+      return [SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published].includes(to);
+    case SWUOpportunityStatus.UnderReview:
+      return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Suspended].includes(to);
+    case SWUOpportunityStatus.Published:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationTeamQuestions].includes(to);
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationCodeChallenge].includes(to);
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.EvaluationTeamScenario].includes(to);
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+      return [SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended, SWUOpportunityStatus.Awarded].includes(to);
+    case SWUOpportunityStatus.Suspended:
+      return [SWUOpportunityStatus.Published, SWUOpportunityStatus.Canceled].includes(to);
+    default:
+      return false;
+  }
+}
+
+export function doesSWUOpportunityStatusAllowGovToViewProposals(s: SWUOpportunityStatus): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.Draft:
+    case SWUOpportunityStatus.UnderReview:
+    case SWUOpportunityStatus.Published:
+      return false;
+    default:
+      return true;
+  }
 }

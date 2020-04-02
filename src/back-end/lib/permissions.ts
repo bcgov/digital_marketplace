@@ -1,4 +1,5 @@
-import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { CreateSWUOpportunityStatus, SWUOpportunityStatus } from 'back-end/../shared/lib/resources/opportunity/sprint-with-us';
+import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isSWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment } from 'shared/lib/resources/proposal/code-with-us';
@@ -208,6 +209,23 @@ export async function editCWUProposal(connection: Connection, session: Session, 
 
 export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
   return session.user && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+}
+
+// SWU Opportunities.
+export function createSWUOpportunity(session: Session, createStatus: CreateSWUOpportunityStatus): boolean {
+  return isAdmin(session) || (isGovernment(session) && createStatus !== SWUOpportunityStatus.Published);
+}
+
+export async function editSWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+}
+
+export function publishSWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
+  return isAdmin(session) || (session.user && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
 }
 
 // Metrics.

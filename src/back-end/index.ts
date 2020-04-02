@@ -11,6 +11,7 @@ import avatarResource from 'back-end/lib/resources/avatar';
 import counterResource from 'back-end/lib/resources/counter';
 import fileResource from 'back-end/lib/resources/file';
 import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';
+import sprintWithUsOpportunityResource from 'back-end/lib/resources/opportunity/sprint-with-us';
 import organizationResource from 'back-end/lib/resources/organization';
 import codeWithUsProposalResource from 'back-end/lib/resources/proposal/code-with-us';
 import sessionResource from 'back-end/lib/resources/session';
@@ -64,6 +65,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     affiliationResource,
     avatarResource,
     codeWithUsOpportunityResource,
+    sprintWithUsOpportunityResource,
     codeWithUsProposalResource,
     codeWithUsSubscriberResource,
     fileResource,

@@ -1,47 +1,47 @@
 import * as templates from 'back-end/lib/mailer/templates';
 import { send } from 'back-end/lib/mailer/transport';
 import { formatAmount, formatDate } from 'shared/lib';
-import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
 import { ADT } from 'shared/lib/types';
 
-export type CWUEditsToNotifyOn
-  = ADT<'status', CWUOpportunityStatus>
+export type SWUEditsToNotifyOn
+  = ADT<'status', SWUOpportunityStatus>
   | ADT<'deadline', Date>
   | ADT<'addendum', string>;
 
-export async function newCWUOpportunityPublished(recipient: User, opportunity: CWUOpportunity): Promise<void> {
-  const title = 'Digital Marketplace - A new Code With Us Opportunity has been published';
+export async function newSWUOpportunityPublished(recipient: User, opportunity: SWUOpportunity): Promise<void> {
+  const title = 'Digital Marketplace - A new Sprint With Us Opportunity has been published';
   await send({
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
-      description: `Hi ${recipient.name}, a New Code With Us opportunity is available:`,
-      descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      callToAction: viewCWUOpportunityCallToAction(opportunity)
+      description: `Hi ${recipient.name}, a New Sprint With Us opportunity is available:`,
+      descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+      callToAction: viewSWUOpportunityCallToAction(opportunity)
     })
   });
 }
 
-export async function updatedCWUOpportunity(recipient: User, opportunity: CWUOpportunity, edits: CWUEditsToNotifyOn): Promise<void> {
+export async function updatedSWUOpportunity(recipient: User, opportunity: SWUOpportunity, edits: SWUEditsToNotifyOn): Promise<void> {
   const title = 'Digital Marketplace - An opportunity you are watching has been updated';
-  const description = `Hi ${recipient.name}, a Code With Us opportunity you are watching has been updated:`;
+  const description = `Hi ${recipient.name}, a Sprint With Us opportunity you are watching has been updated:`;
   await send({
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
-      descriptionLists: [makeCWUOpportunityEditsInformation(opportunity, edits)]
+      descriptionLists: [makeSWUOpportunityEditsInformation(opportunity, edits)]
     })
   });
 }
 
-function makeCWUOpportunityInformation(opportunity: CWUOpportunity): templates.DescriptionListProps {
+function makeSWUOpportunityInformation(opportunity: SWUOpportunity): templates.DescriptionListProps {
   const items = [
     { name: 'Title', value: opportunity.title },
-    { name: 'Value', value: `$${formatAmount(opportunity.reward)}` },
+    { name: 'Value', value: `$${formatAmount(opportunity.totalMaxBudget)}` },
     { name: 'Deadline to apply', value: formatDate(opportunity.proposalDeadline) }
   ];
   return {
@@ -50,7 +50,7 @@ function makeCWUOpportunityInformation(opportunity: CWUOpportunity): templates.D
   };
 }
 
-function makeCWUOpportunityEditsInformation(opportunity: CWUOpportunity, edits: CWUEditsToNotifyOn): templates.DescriptionListProps {
+function makeSWUOpportunityEditsInformation(opportunity: SWUOpportunity, edits: SWUEditsToNotifyOn): templates.DescriptionListProps {
   const items = [
     { name: 'Title', value: opportunity.title }
   ];
@@ -81,9 +81,9 @@ function makeCWUOpportunityEditsInformation(opportunity: CWUOpportunity, edits: 
   };
 }
 
-function viewCWUOpportunityCallToAction(opportunity: CWUOpportunity): templates.LinkProps {
+function viewSWUOpportunityCallToAction(opportunity: SWUOpportunity): templates.LinkProps {
   return {
-    text: 'View Code With Us Details',
-    url: templates.makeUrl(`opportunities/code-with-us/${opportunity.id}`)
+    text: 'View Sprint With Us Details',
+    url: templates.makeUrl(`opportunities/sprint-with-us/${opportunity.id}`)
   };
 }
