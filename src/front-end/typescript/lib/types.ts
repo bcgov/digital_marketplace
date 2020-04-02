@@ -9,6 +9,7 @@ export type Color
   | 'blue-light'
   | 'white'
   | 'purple'
+  | 'purple-light'
   | 'yellow'
   | 'orange'
   | 'red'

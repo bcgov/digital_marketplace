@@ -12,6 +12,14 @@ export enum SWUOpportunityPhaseType {
   Implementation = 'IMPLEMENTATION'
 }
 
+export function swuOpportunityPhaseTypeToTitleCase(phase: SWUOpportunityPhaseType): string {
+  switch (phase) {
+    case SWUOpportunityPhaseType.Inception: return 'Inception';
+    case SWUOpportunityPhaseType.Prototype: return 'Proof of Concept';
+    case SWUOpportunityPhaseType.Implementation: return 'Implementation';
+  }
+}
+
 export enum SWUOpportunityStatus {
   Draft = 'DRAFT',
   UnderReview = 'UNDER_REVIEW',
