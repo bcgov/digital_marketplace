@@ -67,9 +67,9 @@ export interface SWUProposal {
   organization: OrganizationSlim;
   inceptionPhase?: SWUProposalPhase;
   prototypePhase?: SWUProposalPhase;
-  implementationPhase: SWUProposalPhase;
-  references: SWUProposalReference[];
-  attachments: FileRecord[];
+  implementationPhase?: SWUProposalPhase;
+  references?: SWUProposalReference[];
+  attachments?: FileRecord[];
   teamQuestionResponses: SWUProposalTeamQuestionResponse[];
   questionsScore?: number;
   challengeScore?: number;

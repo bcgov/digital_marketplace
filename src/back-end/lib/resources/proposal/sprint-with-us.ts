@@ -439,7 +439,7 @@ const resource: Resource = {
               proposalValidation.validateSWUProposalProposedCost(
                 validatedSWUProposal.value.inceptionPhase?.proposedCost || 0,
                 validatedSWUProposal.value.prototypePhase?.proposedCost || 0,
-                validatedSWUProposal.value.implementationPhase.proposedCost,
+                validatedSWUProposal.value.implementationPhase?.proposedCost || 0,
                 swuOpportunity.totalMaxBudget
               ),
               await validateSWUProposalCapabilities(
