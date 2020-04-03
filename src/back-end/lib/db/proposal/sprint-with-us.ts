@@ -763,39 +763,6 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
       throw new Error('unable to update code challenge score');
     }
 
-    // Disqualify this proposal if the score entered is less than 80% (need to query latest opportunity weight for CC first)
-    const codeChallengeWeight = (await connection<{ challengeWeight: number }>('swuProposals as proposals')
-      .transacting(trx)
-      .where({ 'proposals.id': proposalId })
-      .join('swuOpportunities as opportunities', 'proposals.opportunity', '=', 'opportunities.id')
-      .join('swuOpportunityVersions as versions', function() {
-        this
-          .on('versions.opportunity', '=', 'opportunities.id')
-          .andOn('versions.createdAt', '=',
-            connection.raw('(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
-              versions2.opportunity = opportunities.id)'));
-      })
-      .select<{ codeChallengeWeight: number }>('versions.codeChallengeWeight')
-      .first())?.codeChallengeWeight;
-
-    if (!codeChallengeWeight) {
-      throw new Error('unable to update proposal');
-    }
-
-    if ((score / codeChallengeWeight) < .80 ) {
-      // Disqualify
-      await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
-        .transacting(trx)
-        .insert({
-          id: generateUuid(),
-          proposal: proposalId,
-          createdAt: new Date(), // Use a new date so this record appears after the score entry in the history,
-          createdBy: session.user.id,
-          status: SWUProposalStatus.Disqualified,
-          note: `Failed the code challenge.`
-        });
-    }
-
     const dbResult = await readOneSWUProposal(trx, result.proposal, session);
     if (isInvalid(dbResult) || !dbResult.value) {
       throw new Error('unable to update proposal');
