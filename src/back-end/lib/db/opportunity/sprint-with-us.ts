@@ -823,7 +823,7 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
             id: generateUuid(),
             createdAt: now,
             proposal: proposalId,
-            status: SWUProposalStatus.UnderReview,
+            status: SWUProposalStatus.UnderReviewTeamQuestions,
             note: ''
           });
       }

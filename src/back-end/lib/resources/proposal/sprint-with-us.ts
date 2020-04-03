@@ -24,7 +24,9 @@ interface ValidatedUpdateRequestBody {
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submit', string>
       | ADT<'scoreQuestions', number>
+      | ADT<'screenInToCodeChallenge', string>
       | ADT<'scoreCodeChallenge', number>
+      | ADT<'screenInToTeamScenario', string>
       | ADT<'scoreTeamScenario', number>
       | ADT<'award', string>
       | ADT<'disqualify', string>
@@ -272,8 +274,12 @@ const resource: Resource = {
             return adt('submit', getString(body, 'value', ''));
           case 'scoreQuestions':
             return adt('scoreQuestions', getNumber<number>(body, 'value', -1, false));
+          case 'screenInToCodeChallenge':
+            return adt('screenInToCodeChallenge', getString(body, 'value'));
           case 'scoreCodeChallenge':
             return adt('scoreCodeChallenge', getNumber<number>(body, 'value', -1, false));
+          case 'screenInToTeamScenario':
+            return adt('screenInToTeamScenario', getString(body, 'value'));
           case 'scoreTeamScenario':
             return adt('scoreTeamScenario', getNumber<number>(body, 'value', -1, false));
           case 'award':
@@ -432,7 +438,7 @@ const resource: Resource = {
               body: adt('submit' as const, validatedSubmissionNote.value)
             } as ValidatedUpdateRequestBody);
           case 'scoreQuestions':
-            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReview) {
+            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReviewTeamQuestions) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -447,8 +453,24 @@ const resource: Resource = {
               session: request.session,
               body: adt('scoreQuestions' as const, validatedQuestionsScore.value)
             } as ValidatedUpdateRequestBody);
+          case 'screenInToCodeChallenge':
+            if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewCodeChallenge, request.session.user.type, swuOpportunity.proposalDeadline)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            const validatedScreenInCCNote = proposalValidation.validateNote(request.body.value);
+            if (isInvalid(validatedScreenInCCNote)) {
+              return invalid({
+                proposal: adt('screenInToCodeChallenge' as const, getInvalidValue(validatedScreenInCCNote, []))
+              });
+            }
+            return valid({
+              session: request.session,
+              body: adt('screenInToCodeChallenge' as const, validatedScreenInCCNote.value)
+            });
           case 'scoreCodeChallenge':
-            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReview) {
+            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReviewCodeChallenge) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -463,8 +485,24 @@ const resource: Resource = {
               session: request.session,
               body: adt('scoreCodeChallenge' as const, validatedCodeChallengeScore.value)
             } as ValidatedUpdateRequestBody);
+          case 'screenInToTeamScenario':
+            if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewTeamScenario, request.session.user.type, swuOpportunity.proposalDeadline)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            const validatedScreenInTSNote = proposalValidation.validateNote(request.body.value);
+            if (isInvalid(validatedScreenInTSNote)) {
+              return invalid({
+                proposal: adt('screenInToTeamScenario' as const, getInvalidValue(validatedScreenInTSNote, []))
+              });
+            }
+            return valid({
+              session: request.session,
+              body: adt('screenInToTeamScenario' as const, validatedScreenInTSNote.value)
+            });
           case 'scoreTeamScenario':
-            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReview) {
+            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReviewTeamScenario) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -545,8 +583,14 @@ const resource: Resource = {
             case 'scoreQuestions':
               dbResult = await db.updateSWUProposalTeamQuestionScore(connection, request.params.id, body.value, session);
               break;
+            case 'screenInToCodeChallenge':
+              dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.UnderReviewCodeChallenge, body.value, session);
+              break;
             case 'scoreCodeChallenge':
               dbResult = await db.updateSWUProposalCodeChallengeScore(connection, request.params.id, body.value, session);
+              break;
+            case 'screenInToTeamScenario':
+              dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.UnderReviewTeamScenario, body.value, session);
               break;
             case 'scoreTeamScenario':
               dbResult = await db.updateSWUProposalScenarioAndPriceScores(connection, request.params.id, body.value, session);

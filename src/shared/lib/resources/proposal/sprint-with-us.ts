@@ -15,14 +15,18 @@ export enum SWUProposalPhaseType {
 }
 
 export enum SWUProposalStatus {
-  Draft        = 'DRAFT',
-  Submitted    = 'SUBMITTED',
-  UnderReview  = 'UNDER_REVIEW',
-  Evaluated    = 'EVALUATED',
-  Awarded      = 'AWARDED',
-  NotAwarded   = 'NOT_AWARDED',
-  Disqualified = 'DISQUALIFIED',
-  Withdrawn    = 'WITHDRAWN'
+  Draft                     = 'DRAFT',
+  Submitted                 = 'SUBMITTED',
+  UnderReviewTeamQuestions  = 'UNDER_REVIEW_QUESTIONS',
+  EvaluatedTeamQuestions    = 'EVALUATED_QUESTIONS',
+  UnderReviewCodeChallenge  = 'UNDER_REVIEW_CODE_CHALLENGE',
+  EvaluatedCodeChallenge    = 'EVALUATED_CODE_CHALLENGE',
+  UnderReviewTeamScenario   = 'UNDER_REVIEW_TEAM_SCENARIO',
+  EvaluatedTeamScenario     = 'EVALUATED_TEAM_SCENARIO',
+  Awarded                   = 'AWARDED',
+  NotAwarded                = 'NOT_AWARDED',
+  Disqualified              = 'DISQUALIFIED',
+  Withdrawn                 = 'WITHDRAWN'
 }
 
 export enum SWUProposalEvent {
@@ -36,8 +40,12 @@ export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
   switch (raw) {
     case SWUProposalStatus.Draft: return SWUProposalStatus.Draft;
     case SWUProposalStatus.Submitted: return SWUProposalStatus.Submitted;
-    case SWUProposalStatus.UnderReview: return SWUProposalStatus.UnderReview;
-    case SWUProposalStatus.Evaluated: return SWUProposalStatus.Evaluated;
+    case SWUProposalStatus.UnderReviewTeamQuestions: return SWUProposalStatus.UnderReviewTeamQuestions;
+    case SWUProposalStatus.EvaluatedTeamQuestions: return SWUProposalStatus.EvaluatedTeamQuestions;
+    case SWUProposalStatus.UnderReviewCodeChallenge: return SWUProposalStatus.UnderReviewCodeChallenge;
+    case SWUProposalStatus.EvaluatedCodeChallenge: return SWUProposalStatus.EvaluatedCodeChallenge;
+    case SWUProposalStatus.UnderReviewTeamScenario: return SWUProposalStatus.UnderReviewTeamScenario;
+    case SWUProposalStatus.EvaluatedTeamScenario: return SWUProposalStatus.EvaluatedTeamScenario;
     case SWUProposalStatus.Awarded: return SWUProposalStatus.Awarded;
     case SWUProposalStatus.NotAwarded: return SWUProposalStatus.NotAwarded;
     case SWUProposalStatus.Disqualified: return SWUProposalStatus.Disqualified;
@@ -176,7 +184,9 @@ export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
   | ADT<'scoreQuestions', number>
+  | ADT<'screenInToCodeChallenge', string>
   | ADT<'scoreCodeChallenge', number>
+  | ADT<'screenInToTeamScenario', string>
   | ADT<'scoreTeamScenario', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
@@ -188,7 +198,9 @@ type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
   | ADT<'scoreQuestions', string[]>
+  | ADT<'screenInToCodeChallenge', string[]>
   | ADT<'scoreCodeChallenge', string[]>
+  | ADT<'screenInToTeamScenario', string[]>
   | ADT<'scoreTeamScenario', string[]>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
@@ -224,7 +236,7 @@ export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus): bo
   }
 }
 
-export const rankableSWUProposalStatuses: readonly SWUProposalStatus[] = [SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded];
+export const rankableSWUProposalStatuses: readonly SWUProposalStatus[] = [SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded];
 
 export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
   const hasProposalDeadlinePassed = isDateInThePast(proposalDeadline);
@@ -234,15 +246,31 @@ export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStat
 
     case SWUProposalStatus.Submitted:
       return (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
-             (to === SWUProposalStatus.UnderReview && userType !== UserType.Vendor && hasProposalDeadlinePassed);
+             (to === SWUProposalStatus.UnderReviewTeamQuestions && userType !== UserType.Vendor && hasProposalDeadlinePassed);
 
-    case SWUProposalStatus.UnderReview:
-      return (([SWUProposalStatus.Evaluated, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+    case SWUProposalStatus.UnderReviewTeamQuestions:
+      return (([SWUProposalStatus.EvaluatedTeamQuestions, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
              (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
              hasProposalDeadlinePassed;
 
-    case SWUProposalStatus.Evaluated:
-      return (([SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+    case SWUProposalStatus.EvaluatedTeamQuestions:
+      return (([SWUProposalStatus.UnderReviewCodeChallenge, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+
+    case SWUProposalStatus.UnderReviewCodeChallenge:
+      return (([SWUProposalStatus.EvaluatedCodeChallenge, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+
+    case SWUProposalStatus.EvaluatedCodeChallenge:
+      return (([SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+
+    case SWUProposalStatus.UnderReviewTeamScenario:
+      return (([SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+
+    case SWUProposalStatus.EvaluatedTeamScenario:
+      return (([SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
              (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
              hasProposalDeadlinePassed;
 

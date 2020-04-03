@@ -274,10 +274,10 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
   // Read ranks for rankable proposals and apply to existing result set
   const rankableProposals = results.filter(result => rankableSWUProposalStatuses.includes(result.status));
   const ranks = await connection
-    .from('cwuProposals')
+    .from('swuProposals')
     .whereIn('id', rankableProposals.map(r => r.id))
     .andWhere({ opportunity: id })
-    .select(connection.raw('id, RANK () OVER (ORDER BY score DESC) rank'));
+    .select(connection.raw('id, RANK () OVER (ORDER BY ("questionsScore" + "challengeScore" + "scenarioScore" + "priceScore") DESC) rank'));
 
   for (const result of results) {
     const match = ranks.find(r => r.id === result.id);
@@ -720,6 +720,22 @@ export const updateSWUProposalTeamQuestionScore = tryDb<[Id, number, Authenticat
       throw new Error('unable to update team questions score');
     }
 
+    // Change the status to EvaluatedTeamQuestions
+    const [statusRecord] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: new Date(),
+        createdBy: session.user.id,
+        status: SWUProposalStatus.EvaluatedTeamQuestions,
+        note: ''
+      }, '*');
+
+    if (!statusRecord) {
+      throw new Error('unable to update team questions score');
+    }
+
     const dbResult = await readOneSWUProposal(trx, result.proposal, session);
     if (isInvalid(dbResult) || !dbResult.value) {
       throw new Error('unable to update proposal');
@@ -760,6 +776,22 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
       }, '*');
 
     if (!result) {
+      throw new Error('unable to update code challenge score');
+    }
+
+    // Change the status to EvaluatedCodeChallenge
+    const [statusRecord] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: new Date(),
+        createdBy: session.user.id,
+        status: SWUProposalStatus.EvaluatedCodeChallenge,
+        note: ''
+      }, '*');
+
+    if (!statusRecord) {
       throw new Error('unable to update code challenge score');
     }
 
@@ -834,7 +866,7 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
         proposal: proposalId,
         createdAt: new Date(), // New date so it appears after the previous updates
         createdBy: session.user.id,
-        status: SWUProposalStatus.Evaluated,
+        status: SWUProposalStatus.EvaluatedTeamScenario,
         note: ''
       }, '*');
 
@@ -895,7 +927,7 @@ async function calculatePriceScore(connection: Transaction, proposalId: Id): Pro
         .select('opportunity')
         .from('swuProposals');
     })
-    .whereIn('statuses.status', [SWUProposalStatus.UnderReview, SWUProposalStatus.Evaluated])
+    .whereIn('statuses.status', [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario])
     // Join to phases, sum the proposed costs, group by proposal, sort lowest to highest
     .sum('phases.proposedCost as bid')
     .groupBy('proposals.id')
@@ -954,7 +986,7 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
         .orderBy('createdAt', 'desc')
         .first())?.status;
 
-      if (currentStatus && [SWUProposalStatus.UnderReview, SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded].includes(currentStatus)) {
+      if (currentStatus && [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded].includes(currentStatus)) {
         await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
           .transacting(trx)
           .insert({
