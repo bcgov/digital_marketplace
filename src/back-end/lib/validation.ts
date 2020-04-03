@@ -232,7 +232,7 @@ export async function validateSWUProposalTeamMembers(connection: db.Connection, 
   return validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v), {});
 }
 
-export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase?: SWUOpportunityPhase): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
+export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase: SWUOpportunityPhase | null): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
 
   if (!raw && opportunityPhase) {
     return invalid({
@@ -266,13 +266,9 @@ export async function validateSWUProposalPhase(connection: db.Connection, raw: a
   }
 }
 
-export async function validateSWUProposalCapabilities(connection: db.Connection, opportunity: SWUOpportunity, inceptionPhase?: CreateSWUProposalPhaseBody, prototypePhase?: CreateSWUProposalPhaseBody, implementationPhase?: CreateSWUProposalPhaseBody): Promise<Validation<string[]>> {
+export async function validateSWUProposalCapabilities(connection: db.Connection, opportunity: SWUOpportunity, inceptionMemberIds: Id[], prototypeMemberIds: Id[], implementationMemberIds: Id[]): Promise<Validation<string[]>> {
   // Extract a flattened set of team members across phases
-  const teamMemberIds = union(
-    (inceptionPhase?.members.map(m => m.member) || []),
-    (prototypePhase?.members.map(m => m.member) || []),
-    (implementationPhase?.members.map(m => m.member) || [])
-  );
+  const teamMemberIds = union(inceptionMemberIds, prototypeMemberIds, implementationMemberIds);
 
   const dbResults = (await Promise.all(teamMemberIds.map(async id => await db.readOneUser(connection, id), undefined)));
   const teamMembers = dbResults.map(v => getValidValue(v, null)).filter(v => !!v) as User[];

@@ -6,7 +6,7 @@ import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
 import { FileRecord } from 'shared/lib/resources/file';
-import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { doesSWUOpportunityStatusAllowGovToViewFullProposal, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -41,12 +41,14 @@ interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | '
   prototypePhase?: Id;
   implementationPhase: Id;
   attachments: Id[];
+  anonymousProponentName: string;
 }
 
 interface RawSWUProposalSlim extends Omit<SWUProposalSlim, 'createdBy' | 'updatedBy' | 'organization'> {
   createdBy?: Id;
   updatedBy?: Id;
   organization: Id;
+  opportunity: Id;
 }
 
 interface RawHistoryRecord extends Omit<SWUProposalHistoryRecord, 'id' | 'createdBy' | 'type'> {
@@ -106,10 +108,31 @@ async function rawProposalTeamMemberToProposalTeamMember(connection: Connection,
 }
 
 async function rawSWUProposalToSWUProposal(connection: Connection, session: Session, raw: RawSWUProposal): Promise<SWUProposal> {
+  // If the user if gov/admin and the opportunity status is anything before EvaluationCodeChallenge, keep the proposal anonymous
+  const { opportunity: opportunityId } = raw;
+  const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
+  const teamQuestionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, raw.id), undefined);
+  if (!opportunity || !teamQuestionResponses) {
+    throw new Error('unable to process proposal');
+  }
+  if (session.user?.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
+    // Return anonymous proposal only
+    return {
+      id: raw.id,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      status: raw.status,
+      submittedAt: raw.submittedAt,
+      opportunity,
+      teamQuestionResponses,
+      questionsScore: raw.questionsScore || undefined,
+      anonymousProponentName: raw.anonymousProponentName
+    };
+  }
+
   const {
     createdBy: createdById,
     updatedBy: updatedById,
-    opportunity: opportunityId,
     organization: organizationId,
     attachments: attachmentIds,
     inceptionPhase: inceptionPhaseId,
@@ -119,14 +142,12 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
    } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
-  const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
   const organization = getValidValue(await readOneOrganizationSlim(connection, organizationId, true), null);
   const inceptionPhase = inceptionPhaseId ? getValidValue(await readOneSWUProposalPhase(connection, inceptionPhaseId), undefined) : undefined;
   const prototypePhase = prototypePhaseId ? getValidValue(await readOneSWUProposalPhase(connection, prototypePhaseId), undefined) : undefined;
   const implementationPhase = getValidValue(await readOneSWUProposalPhase(connection, implementationPhaseId), undefined);
   const references = getValidValue(await readManyProposalReferences(connection, raw.id), undefined);
-  const teamQuestionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, raw.id), undefined);
-  if (!opportunity || !organization || !implementationPhase || !references || !teamQuestionResponses) {
+  if (!organization || !implementationPhase || !references) {
     throw new Error('unable to process proposal');
   }
   const attachments = await Promise.all(attachmentIds.map(async id => {
@@ -152,7 +173,25 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   };
 }
 
-async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: RawSWUProposalSlim): Promise<SWUProposalSlim> {
+async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: RawSWUProposalSlim, session: Session): Promise<SWUProposalSlim> {
+  // If the user if gov/admin and the opportunity status is anything before EvaluationCodeChallenge, keep the proposal anonymous
+  const { opportunity: opportunityId } = raw;
+  const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
+  if (!opportunity) {
+    throw new Error('unable to process proposal');
+  }
+  if (session.user?.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
+    // Return anonymous proposal only
+    return {
+      id: raw.id,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      status: raw.status,
+      submittedAt: raw.submittedAt,
+      questionsScore: raw.questionsScore || undefined,
+      anonymousProponentName: raw.anonymousProponentName
+    };
+  }
   const { createdBy: createdById,
           updatedBy: updatedById,
           organization: organizationId,
@@ -233,7 +272,9 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
       'createdAt',
       'updatedBy',
       'updatedAt',
-      'organization'
+      'organization',
+      'anonymousProponentName',
+      'opportunity'
     );
 
   // If user is vendor, scope results to those proposals they have authored
@@ -274,17 +315,17 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
   // Read ranks for rankable proposals and apply to existing result set
   const rankableProposals = results.filter(result => rankableSWUProposalStatuses.includes(result.status));
   const ranks = await connection
-    .from('cwuProposals')
+    .from('swuProposals')
     .whereIn('id', rankableProposals.map(r => r.id))
     .andWhere({ opportunity: id })
-    .select(connection.raw('id, RANK () OVER (ORDER BY score DESC) rank'));
+    .select(connection.raw('id, RANK () OVER (ORDER BY ("questionsScore" + "challengeScore" + "scenarioScore" + "priceScore") DESC) rank'));
 
   for (const result of results) {
     const match = ranks.find(r => r.id === result.id);
     result.rank = match ? match.rank : undefined;
   }
 
-  return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result))));
+  return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result, session))));
 });
 
 export const readOneSWUProposalByOpportunityAndAuthor = tryDb<[Id, Session], Id | null>(async (connection, opportunityId, session) => {
@@ -459,6 +500,8 @@ export const createSWUProposal = tryDb<[CreateSWUProposalParams, AuthenticatedSe
   const now = new Date();
   const proposalId = await connection.transaction(async trx => {
     const { attachments, references, teamQuestionResponses, status, inceptionPhase, prototypePhase, implementationPhase, ...restOfProposal } = proposal;
+
+    const anonymousProponentName: string = status === SWUProposalStatus.Submitted ? await generateAnonymousProponentName(connection, proposal.opportunity) : '';
     // Create root record for proposal
     const [proposalRootRecord] = await connection<RawSWUProposal>('swuProposals')
       .transacting(trx)
@@ -468,7 +511,8 @@ export const createSWUProposal = tryDb<[CreateSWUProposalParams, AuthenticatedSe
         createdAt: now,
         createdBy: session.user.id,
         updatedAt: now,
-        updatedBy: session.user.id
+        updatedBy: session.user.id,
+        anonymousProponentName
       }, '*');
 
     if (!proposalRootRecord) {
@@ -650,10 +694,28 @@ async function updateSWUProposalTeamQuestionResponses(connection: Transaction, p
   }
 }
 
+async function generateAnonymousProponentName(connection: Connection, opportunityId: Id): Promise<string> {
+  // Names are based on the count of submitted proposals for this opportunity so far
+  const submittedProposals = await connection<RawSWUProposal>('swuProposals as proposals')
+  .join('swuProposalStatuses as statuses', function() {
+    this
+      .on('proposals.id', '=', 'statuses.proposal')
+      .andOnNotNull('statuses.status')
+      .andOn('statuses.createdAt', '=',
+        connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+          statuses2.proposal = proposals.id and statuses2.status is not null)'));
+  })
+  .where({ 'proposals.opportunity': opportunityId })
+  .andWhereNot({ 'statuses.status': SWUProposalStatus.Draft });
+
+  return `Proponent ${submittedProposals.length + 1}`;
+}
+
 export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, AuthenticatedSession], SWUProposal>(async (connection, proposalId, status, note, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
-    const [result] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+
+    const [statusRecord] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
       .transacting(trx)
       .insert({
         id: generateUuid(),
@@ -664,20 +726,31 @@ export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, Aut
         note
       }, '*');
 
-    // Update updatedAt/By stamp on proposal root record
-    await connection('swuProposals')
+    // Update proposal root record
+    let [rootRecord] = await connection<RawSWUProposal>('swuProposals')
       .transacting(trx)
       .where({ id: proposalId })
       .update({
         updatedAt: now,
         updatedBy: session.user.id
-      });
+      }, '*');
 
-    if (!result) {
+    if (!statusRecord || !rootRecord) {
       throw new Error('unable to update proposal');
     }
 
-    const dbResult = await readOneSWUProposal(trx, result.proposal, session);
+    // If the new status is Submit, then generate an anonymized vendor name
+    if (status === SWUProposalStatus.Submitted) {
+      const anonymousProponentName = await generateAnonymousProponentName(connection, rootRecord.opportunity);
+      [rootRecord] = await connection<RawSWUProposal>('swuProposals')
+        .transacting(trx)
+        .where({ id: proposalId })
+        .update({
+          anonymousProponentName
+        }, '*');
+    }
+
+    const dbResult = await readOneSWUProposal(trx, statusRecord.proposal, session);
     if (isInvalid(dbResult) || !dbResult.value) {
       throw new Error('unable to update proposal');
     }
@@ -717,6 +790,22 @@ export const updateSWUProposalTeamQuestionScore = tryDb<[Id, number, Authenticat
       }, '*');
 
     if (!result) {
+      throw new Error('unable to update team questions score');
+    }
+
+    // Change the status to EvaluatedTeamQuestions
+    const [statusRecord] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: new Date(),
+        createdBy: session.user.id,
+        status: SWUProposalStatus.EvaluatedTeamQuestions,
+        note: ''
+      }, '*');
+
+    if (!statusRecord) {
       throw new Error('unable to update team questions score');
     }
 
@@ -763,37 +852,20 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
       throw new Error('unable to update code challenge score');
     }
 
-    // Disqualify this proposal if the score entered is less than 80% (need to query latest opportunity weight for CC first)
-    const codeChallengeWeight = (await connection<{ challengeWeight: number }>('swuProposals as proposals')
+    // Change the status to EvaluatedCodeChallenge
+    const [statusRecord] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
       .transacting(trx)
-      .where({ 'proposals.id': proposalId })
-      .join('swuOpportunities as opportunities', 'proposals.opportunity', '=', 'opportunities.id')
-      .join('swuOpportunityVersions as versions', function() {
-        this
-          .on('versions.opportunity', '=', 'opportunities.id')
-          .andOn('versions.createdAt', '=',
-            connection.raw('(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
-              versions2.opportunity = opportunities.id)'));
-      })
-      .select<{ codeChallengeWeight: number }>('versions.codeChallengeWeight')
-      .first())?.codeChallengeWeight;
+      .insert({
+        id: generateUuid(),
+        proposal: proposalId,
+        createdAt: new Date(),
+        createdBy: session.user.id,
+        status: SWUProposalStatus.EvaluatedCodeChallenge,
+        note: ''
+      }, '*');
 
-    if (!codeChallengeWeight) {
-      throw new Error('unable to update proposal');
-    }
-
-    if ((score / codeChallengeWeight) < .80 ) {
-      // Disqualify
-      await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
-        .transacting(trx)
-        .insert({
-          id: generateUuid(),
-          proposal: proposalId,
-          createdAt: new Date(), // Use a new date so this record appears after the score entry in the history,
-          createdBy: session.user.id,
-          status: SWUProposalStatus.Disqualified,
-          note: `Failed the code challenge.`
-        });
+    if (!statusRecord) {
+      throw new Error('unable to update code challenge score');
     }
 
     const dbResult = await readOneSWUProposal(trx, result.proposal, session);
@@ -867,7 +939,7 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
         proposal: proposalId,
         createdAt: new Date(), // New date so it appears after the previous updates
         createdBy: session.user.id,
-        status: SWUProposalStatus.Evaluated,
+        status: SWUProposalStatus.EvaluatedTeamScenario,
         note: ''
       }, '*');
 
@@ -928,7 +1000,7 @@ async function calculatePriceScore(connection: Transaction, proposalId: Id): Pro
         .select('opportunity')
         .from('swuProposals');
     })
-    .whereIn('statuses.status', [SWUProposalStatus.UnderReview, SWUProposalStatus.Evaluated])
+    .whereIn('statuses.status', [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario])
     // Join to phases, sum the proposed costs, group by proposal, sort lowest to highest
     .sum('phases.proposedCost as bid')
     .groupBy('proposals.id')
@@ -987,7 +1059,7 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
         .orderBy('createdAt', 'desc')
         .first())?.status;
 
-      if (currentStatus && [SWUProposalStatus.UnderReview, SWUProposalStatus.Evaluated, SWUProposalStatus.Awarded].includes(currentStatus)) {
+      if (currentStatus && [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded].includes(currentStatus)) {
         await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
           .transacting(trx)
           .insert({

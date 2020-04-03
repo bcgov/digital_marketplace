@@ -19,7 +19,7 @@ interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportuni
   completionDate: Date;
 }
 
-interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'history' | 'publishedAt' | 'subscribed' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions'> {
+interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'history' | 'publishedAt' | 'subscribed' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'codeChallengeEndDate' | 'teamScenarioEndDate'> {
   status: CreateSWUOpportunityStatus;
   session: AuthenticatedSession;
   inceptionPhase?: ValidatedCreateSWUOpportunityPhaseBody;
@@ -33,8 +33,8 @@ interface ValidatedUpdateRequestBody {
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submitForReview', string>
       | ADT<'publish', string>
-      | ADT<'evaluateCodeChallenge', string>
-      | ADT<'evaluateTeamScenario', string>
+      | ADT<'startCodeChallenge', string>
+      | ADT<'startTeamScenario', string>
       | ADT<'suspend', string>
       | ADT<'cancel', string>
       | ADT<'addAddendum', string>;
@@ -389,10 +389,10 @@ const resource: Resource = {
             return adt('submitForReview', getString(body, 'value'));
           case 'publish':
             return adt('publish', getString(body, 'value'));
-          case 'evaluateCodeChallenge':
-            return adt('evaluateCodeChallenge', getString(body, 'value'));
-          case 'evaluateTeamScenario':
-            return adt('evaluateTeamScenario', getString(body, 'value'));
+          case 'startCodeChallenge':
+            return adt('startCodeChallenge', getString(body, 'value'));
+          case 'startTeamScenario':
+            return adt('startTeamScenario', getString(body, 'value'));
           case 'suspend':
             return adt('suspend', getString(body, 'value'));
           case 'cancel':
@@ -678,29 +678,39 @@ const resource: Resource = {
               session: request.session,
               body: adt('publish', validatedPublishNote.value)
             });
-          case 'evaluateCodeChallenge':
+          case 'startCodeChallenge':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationCodeChallenge)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            // Ensure there is at least one screened in proponent
+            const screenedInCCProponentCount = getValidValue(await db.countScreenedInSWUCodeChallenge(connection, validatedSWUOpportunity.value.id), 0);
+            if (!screenedInCCProponentCount) {
+              return invalid({ permissions: ['You must have at least one screened in proponent to start the Code Challenge.'] });
             }
             const validatedEvaluationCodeChallengeNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedEvaluationCodeChallengeNote)) {
-              return invalid({ opportunity: adt('evaluateCodeChallenge' as const, validatedEvaluationCodeChallengeNote.value) });
+              return invalid({ opportunity: adt('startCodeChallenge' as const, validatedEvaluationCodeChallengeNote.value) });
             }
             return valid({
               session: request.session,
-              body: adt('evaluateCodeChallenge', validatedEvaluationCodeChallengeNote.value)
+              body: adt('startCodeChallenge', validatedEvaluationCodeChallengeNote.value)
             });
-          case 'evaluateTeamScenario':
-            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationCodeChallenge)) {
+          case 'startTeamScenario':
+            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationTeamScenario)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            // Ensure there is at least one screened in proponent
+            const screenedInTSProponentCount = getValidValue(await db.countScreenInSWUTeamScenario(connection, validatedSWUOpportunity.value.id), 0);
+            if (!screenedInTSProponentCount) {
+              return invalid({ permissions: ['You must have at least one screened in proponent to start the Team Scenario.'] });
             }
             const validatedEvaluationTeamScenarioNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedEvaluationTeamScenarioNote)) {
-              return invalid({ opportunity: adt('evaluateTeamScenario' as const, validatedEvaluationTeamScenarioNote.value) });
+              return invalid({ opportunity: adt('startTeamScenario' as const, validatedEvaluationTeamScenarioNote.value) });
             }
             return valid({
               session: request.session,
-              body: adt('evaluateTeamScenario', validatedEvaluationTeamScenarioNote.value)
+              body: adt('startTeamScenario', validatedEvaluationTeamScenarioNote.value)
             });
           case 'suspend':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Suspended)) {
@@ -761,10 +771,10 @@ const resource: Resource = {
                 notifySWUPublished(connection, dbResult.value);
               }
               break;
-            case 'evaluateCodeChallenge':
+            case 'startCodeChallenge':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.EvaluationCodeChallenge, body.value, session);
               break;
-            case 'evaluateTeamScenario':
+            case 'startTeamScenario':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.EvaluationTeamScenario, body.value, session);
               break;
             case 'suspend':
