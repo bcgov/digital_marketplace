@@ -223,8 +223,8 @@ export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submitForReview', string>
   | ADT<'publish', string>
-  | ADT<'evaluateCodeChallenge', string>
-  | ADT<'evaluateTeamScenario', string>
+  | ADT<'startCodeChallenge', string>
+  | ADT<'startTeamScenario', string>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>;
@@ -235,8 +235,8 @@ type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submitForReview', string[]>
   | ADT<'publish', string[]>
-  | ADT<'evaluateCodeChallenge', string[]>
-  | ADT<'evaluateTeamScenario', string[]>
+  | ADT<'startCodeChallenge', string[]>
+  | ADT<'startTeamScenario', string[]>
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
