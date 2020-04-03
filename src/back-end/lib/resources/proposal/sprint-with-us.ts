@@ -8,10 +8,10 @@ import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
 interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'attachments'> {
@@ -184,25 +184,25 @@ const resource: Resource = {
           });
         }
 
-        const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, validatedSWUOpportunity.value.inceptionPhase);
-        const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, validatedSWUOpportunity.value.prototypePhase);
+        const validatedInceptionPhase = await optionalAsync(inceptionPhase, async v => await validateSWUProposalPhase(connection, v, validatedSWUOpportunity.value.inceptionPhase || null));
+        const validatedPrototypePhase = await optionalAsync(prototypePhase, async v => await validateSWUProposalPhase(connection, v, validatedSWUOpportunity.value.prototypePhase || null));
         const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, validatedSWUOpportunity.value.implementationPhase);
         const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses);
         const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
         // Validate that the total proposed cost does not exceed the max budget of the opportunity
         const validatedTotalProposedCost = proposalValidation.validateSWUProposalProposedCost(
-          validatedSWUOpportunity.value,
-          getValidValue(validatedImplementationPhase, undefined),
-          getValidValue(validatedPrototypePhase, undefined),
-          getValidValue(validatedInceptionPhase, undefined)
+          getValidValue(validatedInceptionPhase, null)?.proposedCost || 0,
+          getValidValue(validatedPrototypePhase, null)?.proposedCost || 0,
+          getValidValue(validatedImplementationPhase, null)?.proposedCost || 0,
+          validatedSWUOpportunity.value.totalMaxBudget
         );
         // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
         const validatedProposalTeam = await validateSWUProposalCapabilities(
           connection,
           validatedSWUOpportunity.value,
-          getValidValue(validatedInceptionPhase, undefined),
-          getValidValue(validatedPrototypePhase, undefined),
-          getValidValue(validatedImplementationPhase, undefined)
+          getValidValue(validatedInceptionPhase, null)?.members.map(m => m.member) || [],
+          getValidValue(validatedPrototypePhase, null)?.members.map(m => m.member) || [],
+          getValidValue(validatedImplementationPhase, null)?.members.map(m => m.member) || []
         );
 
         if (allValid([
@@ -357,6 +357,10 @@ const resource: Resource = {
               });
             }
 
+            const validatedInceptionPhase = await optionalAsync(inceptionPhase, async v => await validateSWUProposalPhase(connection, v, swuOpportunity.inceptionPhase || null));
+            const validatedPrototypePhase = await optionalAsync(prototypePhase, async v => await validateSWUProposalPhase(connection, v, swuOpportunity.prototypePhase || null));
+            const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase);
+
             // Do not validate other fields if the proposal is a draft.
             if (validatedSWUProposal.value.status === SWUProposalStatus.Draft) {
               return valid({
@@ -364,30 +368,30 @@ const resource: Resource = {
                 body: adt('edit' as const, {
                   ...request.body.value,
                   organization: validatedOrganization.value.id,
-                  attachments: validatedAttachments.value
+                  attachments: validatedAttachments.value,
+                  inceptionPhase: validatedInceptionPhase.value as CreateSWUProposalPhaseBody | undefined,
+                  prototypePhase: validatedPrototypePhase.value as CreateSWUProposalPhaseBody | undefined,
+                  implementationPhase: validatedImplementationPhase.value as CreateSWUProposalPhaseBody
                 })
               });
             }
 
-            const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, swuOpportunity.inceptionPhase);
-            const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, swuOpportunity.prototypePhase);
-            const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase);
             const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses);
             const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
             // Validate that the total proposed cost does not exceed the max budget of the opportunity
             const validatedTotalProposedCost = proposalValidation.validateSWUProposalProposedCost(
-              swuOpportunity,
-              getValidValue(validatedImplementationPhase, undefined),
-              getValidValue(validatedPrototypePhase, undefined),
-              getValidValue(validatedInceptionPhase, undefined)
+              getValidValue(validatedInceptionPhase, null)?.proposedCost || 0,
+              getValidValue(validatedPrototypePhase, null)?.proposedCost || 0,
+              getValidValue(validatedImplementationPhase, null)?.proposedCost || 0,
+              swuOpportunity.totalMaxBudget
             );
             // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
             const validatedProposalTeam = await validateSWUProposalCapabilities(
               connection,
               swuOpportunity,
-              getValidValue(validatedInceptionPhase, undefined),
-              getValidValue(validatedPrototypePhase, undefined),
-              getValidValue(validatedImplementationPhase, undefined)
+              getValidValue(validatedInceptionPhase, null)?.members.map(m => m.member) || [],
+              getValidValue(validatedPrototypePhase, null)?.members.map(m => m.member) || [],
+              getValidValue(validatedImplementationPhase, null)?.members.map(m => m.member) || []
             );
 
             if (allValid([
@@ -419,7 +423,7 @@ const resource: Resource = {
                   implementationPhase: getInvalidValue(validatedImplementationPhase, undefined),
                   references: getInvalidValue(validatedReferences, undefined),
                   teamQuestionResponses: getInvalidValue(validatedTeamQuestionResponses, undefined)
-                })
+                } as UpdateEditValidationErrors)
               });
             }
           case 'submit':
@@ -428,7 +432,29 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            // TODO - need to validate draft proposal here to make sure it has everything
+            // Validate draft proposal here to make sure it has everything
+            if (!allValid([
+              proposalValidation.validateSWUProposalTeamQuestionResponses(validatedSWUProposal.value.teamQuestionResponses),
+              proposalValidation.validateSWUProposalReferences(validatedSWUProposal.value.references),
+              proposalValidation.validateSWUProposalProposedCost(
+                validatedSWUProposal.value.inceptionPhase?.proposedCost || 0,
+                validatedSWUProposal.value.prototypePhase?.proposedCost || 0,
+                validatedSWUProposal.value.implementationPhase.proposedCost,
+                swuOpportunity.totalMaxBudget
+              ),
+              await validateSWUProposalCapabilities(
+                connection,
+                swuOpportunity,
+                validatedSWUProposal.value.inceptionPhase?.members.map(m => m.member.id) || [],
+                validatedSWUProposal.value.prototypePhase?.members.map(m => m.member.id) || [],
+                validatedSWUProposal.value.implementationPhase?.members.map(m => m.member.id) || []
+              )
+            ])) {
+              return invalid({
+                proposal: adt('submit' as const, ['This proposal could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to submit it again.'])
+              });
+            }
+
             const validatedSubmissionNote = proposalValidation.validateNote(request.body.value);
             if (isInvalid(validatedSubmissionNote)) {
               return invalid({ proposal: adt('submit' as const, validatedSubmissionNote.value) });

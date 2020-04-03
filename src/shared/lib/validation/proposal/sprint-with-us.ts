@@ -1,7 +1,7 @@
 import { spread, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
 import { allValid, ArrayValidation, getInvalidValue, invalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
@@ -116,12 +116,9 @@ export function validateSWUProposalTeamQuestionResponses(raw: any): ArrayValidat
   return validateArrayCustom(raw, validateSWUProposalTeamQuestionResponse, {});
 }
 
-export function validateSWUProposalProposedCost(opportunity: SWUOpportunity, implementationPhase?: CreateSWUProposalPhaseBody, prototypePhase?: CreateSWUProposalPhaseBody, inceptionPhase?: CreateSWUProposalPhaseBody): Validation<number> {
-  // Ensure total proposed cost across phases does not exceed max total budget for opportunity
-  const totalProposedCost = (inceptionPhase?.proposedCost || 0) +
-                            (prototypePhase?.proposedCost || 0) +
-                            (implementationPhase?.proposedCost || 0);
-  if (totalProposedCost > opportunity.totalMaxBudget) {
+export function validateSWUProposalProposedCost(inceptionCost: number, prototypeCost: number, implementationCost: number, opportunityBudget: number): Validation<number> {
+  const totalProposedCost = inceptionCost + prototypeCost + implementationCost;
+  if (totalProposedCost > opportunityBudget) {
     return invalid(['The proposed cost exceeds the maximum budget for this opportunity.']);
   }
   return valid(totalProposedCost);
