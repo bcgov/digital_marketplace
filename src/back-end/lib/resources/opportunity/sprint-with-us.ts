@@ -682,6 +682,11 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationCodeChallenge)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
+            // Ensure there is at least one screened in proponent
+            const screenedInCCProponentCount = getValidValue(await db.countScreenedInSWUCodeChallenge(connection, validatedSWUOpportunity.value.id), 0);
+            if (!screenedInCCProponentCount) {
+              return invalid({ permissions: ['You must have at least one screened in proponent to start the Code Challenge.'] });
+            }
             const validatedEvaluationCodeChallengeNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedEvaluationCodeChallengeNote)) {
               return invalid({ opportunity: adt('startCodeChallenge' as const, validatedEvaluationCodeChallengeNote.value) });
@@ -691,8 +696,13 @@ const resource: Resource = {
               body: adt('startCodeChallenge', validatedEvaluationCodeChallengeNote.value)
             });
           case 'startTeamScenario':
-            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationCodeChallenge)) {
+            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationTeamScenario)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            // Ensure there is at least one screened in proponent
+            const screenedInTSProponentCount = getValidValue(await db.countScreenInSWUTeamScenario(connection, validatedSWUOpportunity.value.id), 0);
+            if (!screenedInTSProponentCount) {
+              return invalid({ permissions: ['You must have at least one screened in proponent to start the Team Scenario.'] });
             }
             const validatedEvaluationTeamScenarioNote = opportunityValidation.validateNote(request.body.value);
             if (isInvalid(validatedEvaluationTeamScenarioNote)) {

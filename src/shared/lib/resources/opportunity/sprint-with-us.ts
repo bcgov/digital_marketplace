@@ -295,3 +295,14 @@ export function doesSWUOpportunityStatusAllowGovToViewProposals(s: SWUOpportunit
       return true;
   }
 }
+
+export function doesSWUOpportunityStatusAllowGovToViewFullProposal(s: SWUOpportunityStatus): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}

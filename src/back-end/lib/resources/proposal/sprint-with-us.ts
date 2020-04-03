@@ -7,6 +7,7 @@ import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, 
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
+import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
@@ -330,7 +331,7 @@ const resource: Resource = {
 
             // Organization can only changed for DRAFT or WITHDRAWN proposals
             if (![SWUProposalStatus.Draft, SWUProposalStatus.Withdrawn].includes(validatedSWUProposal.value.status) &&
-                organization !== validatedSWUProposal.value.organization.id) {
+                organization !== validatedSWUProposal.value.organization?.id) {
               return invalid({
                 proposal: adt('edit' as const, {
                   organization: ['Organization cannot be changed once the proposal has been submitted']
@@ -469,6 +470,12 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
+            // The opportunity must be in team questions stage
+            if (swuOpportunity.status !== SWUOpportunityStatus.EvaluationTeamQuestions) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
+              });
+            }
             const validatedQuestionsScore = proposalValidation.validateTeamQuestionsScore(request.body.value, swuOpportunity.questionsWeight);
             if (isInvalid(validatedQuestionsScore)) {
               return invalid({
@@ -483,6 +490,12 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewCodeChallenge, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            // The opportunity must be in team question stage still
+            if (swuOpportunity.status !== SWUOpportunityStatus.EvaluationTeamQuestions) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
             const validatedScreenInCCNote = proposalValidation.validateNote(request.body.value);
@@ -501,6 +514,12 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
+            // The opportunity must be in code challenge stage
+            if (swuOpportunity.status !== SWUOpportunityStatus.EvaluationCodeChallenge) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
+              });
+            }
             const validatedCodeChallengeScore = proposalValidation.validateCodeChallengeScore(request.body.value, swuOpportunity.codeChallengeWeight);
             if (isInvalid(validatedCodeChallengeScore)) {
               return invalid({
@@ -515,6 +534,12 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewTeamScenario, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            // The opportunity must be in code challenge stage still
+            if (swuOpportunity.status !== SWUOpportunityStatus.EvaluationCodeChallenge) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
             const validatedScreenInTSNote = proposalValidation.validateNote(request.body.value);
@@ -533,6 +558,12 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
+            // The opportunity must be in team scenario stage
+            if (swuOpportunity.status !== SWUOpportunityStatus.EvaluationTeamScenario) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
+              });
+            }
             const validatedTeamScenarioScore = proposalValidation.validateTeamScenarioScore(request.body.value, swuOpportunity.scenarioWeight);
             if (isInvalid(validatedTeamScenarioScore)) {
               return invalid({
@@ -547,6 +578,12 @@ const resource: Resource = {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.Awarded, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+             // The opportunity must be in team scenario stage
+            if (swuOpportunity.status !== SWUOpportunityStatus.EvaluationTeamScenario) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
             const validatedAwardNote = proposalValidation.validateNote(request.body.value);

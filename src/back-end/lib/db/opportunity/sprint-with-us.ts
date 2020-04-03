@@ -831,3 +831,35 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
     return lapsedOpportunitiesIds.length;
   }));
 });
+
+export const countScreenedInSWUCodeChallenge = tryDb<[Id], number>(async (connection, opportunity) => {
+  return valid((await connection('swuProposals as proposals')
+    .join('swuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity,
+      'statuses.status': SWUProposalStatus.UnderReviewCodeChallenge
+    }))?.length || 0);
+});
+
+export const countScreenInSWUTeamScenario = tryDb<[Id], number>(async (connection, opportunity) => {
+  return valid((await connection('swuProposals as proposals')
+    .join('swuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity,
+      'statuses.status': SWUProposalStatus.UnderReviewTeamScenario
+    }))?.length || 0);
+});

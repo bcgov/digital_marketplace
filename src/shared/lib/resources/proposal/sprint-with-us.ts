@@ -64,7 +64,7 @@ export interface SWUProposal {
   history?: SWUProposalHistoryRecord[];
   submittedAt?: Date;
   opportunity: SWUOpportunitySlim;
-  organization: OrganizationSlim;
+  organization?: OrganizationSlim;
   inceptionPhase?: SWUProposalPhase;
   prototypePhase?: SWUProposalPhase;
   implementationPhase?: SWUProposalPhase;
@@ -76,6 +76,7 @@ export interface SWUProposal {
   scenarioScore?: number;
   priceScore?: number;
   rank?: number;
+  anonymousProponentName: string;
 }
 
 export interface SWUProposalPhase {

@@ -6,7 +6,7 @@ import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
 import { FileRecord } from 'shared/lib/resources/file';
-import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { doesSWUOpportunityStatusAllowGovToViewFullProposal, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -48,6 +48,7 @@ interface RawSWUProposalSlim extends Omit<SWUProposalSlim, 'createdBy' | 'update
   createdBy?: Id;
   updatedBy?: Id;
   organization: Id;
+  opportunity: Id;
 }
 
 interface RawHistoryRecord extends Omit<SWUProposalHistoryRecord, 'id' | 'createdBy' | 'type'> {
@@ -107,10 +108,31 @@ async function rawProposalTeamMemberToProposalTeamMember(connection: Connection,
 }
 
 async function rawSWUProposalToSWUProposal(connection: Connection, session: Session, raw: RawSWUProposal): Promise<SWUProposal> {
+  // If the user if gov/admin and the opportunity status is anything before EvaluationCodeChallenge, keep the proposal anonymous
+  const { opportunity: opportunityId } = raw;
+  const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
+  const teamQuestionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, raw.id), undefined);
+  if (!opportunity || !teamQuestionResponses) {
+    throw new Error('unable to process proposal');
+  }
+  if (session.user?.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
+    // Return anonymous proposal only
+    return {
+      id: raw.id,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      status: raw.status,
+      submittedAt: raw.submittedAt,
+      opportunity,
+      teamQuestionResponses,
+      questionsScore: raw.questionsScore || undefined,
+      anonymousProponentName: raw.anonymousProponentName
+    };
+  }
+
   const {
     createdBy: createdById,
     updatedBy: updatedById,
-    opportunity: opportunityId,
     organization: organizationId,
     attachments: attachmentIds,
     inceptionPhase: inceptionPhaseId,
@@ -120,14 +142,12 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
    } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
-  const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
   const organization = getValidValue(await readOneOrganizationSlim(connection, organizationId, true), null);
   const inceptionPhase = inceptionPhaseId ? getValidValue(await readOneSWUProposalPhase(connection, inceptionPhaseId), undefined) : undefined;
   const prototypePhase = prototypePhaseId ? getValidValue(await readOneSWUProposalPhase(connection, prototypePhaseId), undefined) : undefined;
   const implementationPhase = getValidValue(await readOneSWUProposalPhase(connection, implementationPhaseId), undefined);
   const references = getValidValue(await readManyProposalReferences(connection, raw.id), undefined);
-  const teamQuestionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, raw.id), undefined);
-  if (!opportunity || !organization || !implementationPhase || !references || !teamQuestionResponses) {
+  if (!organization || !implementationPhase || !references) {
     throw new Error('unable to process proposal');
   }
   const attachments = await Promise.all(attachmentIds.map(async id => {
@@ -153,7 +173,25 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   };
 }
 
-async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: RawSWUProposalSlim): Promise<SWUProposalSlim> {
+async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: RawSWUProposalSlim, session: Session): Promise<SWUProposalSlim> {
+  // If the user if gov/admin and the opportunity status is anything before EvaluationCodeChallenge, keep the proposal anonymous
+  const { opportunity: opportunityId } = raw;
+  const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
+  if (!opportunity) {
+    throw new Error('unable to process proposal');
+  }
+  if (session.user?.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
+    // Return anonymous proposal only
+    return {
+      id: raw.id,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      status: raw.status,
+      submittedAt: raw.submittedAt,
+      questionsScore: raw.questionsScore || undefined,
+      anonymousProponentName: raw.anonymousProponentName
+    };
+  }
   const { createdBy: createdById,
           updatedBy: updatedById,
           organization: organizationId,
@@ -234,7 +272,9 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
       'createdAt',
       'updatedBy',
       'updatedAt',
-      'organization'
+      'organization',
+      'anonymousProponentName',
+      'opportunity'
     );
 
   // If user is vendor, scope results to those proposals they have authored
@@ -285,7 +325,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
     result.rank = match ? match.rank : undefined;
   }
 
-  return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result))));
+  return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result, session))));
 });
 
 export const readOneSWUProposalByOpportunityAndAuthor = tryDb<[Id, Session], Id | null>(async (connection, opportunityId, session) => {
