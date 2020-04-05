@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { readSubmittedSWUProposalCount } from 'back-end/lib/db/proposal/sprint-with-us';
+import { readOneSWUAwardedProposal, readSubmittedSWUProposalCount } from 'back-end/lib/db/proposal/sprint-with-us';
 import { RawSWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/sprint-with-us';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
@@ -9,7 +9,7 @@ import { Addendum } from 'shared/lib/resources/addendum';
 import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityHistoryRecord, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -357,24 +357,38 @@ function processForRole<T extends RawSWUOpportunity>(result: T, session: Session
   return result;
 }
 
-export const readOneSWUOpportunitySlim = tryDb<[Id, Session], SWUOpportunitySlim>(async (connection, opportunityId, session) => {
-  // Since slim opportunity requires the same joins, etc. as full to build, we query the full one, and reduce down to slim
-  const dbResult = await readOneSWUOpportunity(connection, opportunityId, session);
-  if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error('unable to read opportunity');
-  }
+export const readOneSWUOpportunitySlim = tryDb<[Id, Session], SWUOpportunitySlim | null>(async (connection, id, session) => {
+  const result = await connection<RawSWUOpportunitySlim>('swuOpportunities as opp')
+    .where({ 'opp.id': id })
+    // Join on latest SWU status
+    .join<RawSWUOpportunitySlim>('swuOpportunityStatuses as stat', function() {
+      this
+        .on('opp.id', '=', 'stat.opportunity')
+        .andOn('stat.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuOpportunityStatuses" as stat2 where \
+            stat2.opportunity = opp.id and stat2.status is not null)'));
+    })
+    // Join on latest SWU version
+    .join<RawSWUOpportunitySlim>('swuOpportunityVersions as version', function() {
+      this
+        .on('opp.id', '=', 'version.opportunity')
+        .andOn('version.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuOpportunityVersions" as version2 where \
+            version2.opportunity = opp.id)'));
+    })
+    .select(
+      'opp.id',
+      'opp.createdAt',
+      'opp.createdBy',
+      'version.createdAt as updatedAt',
+      'version.createdBy as updatedBy',
+      'version.title',
+      'version.proposalDeadline',
+      'stat.status'
+    )
+    .first();
 
-  const { id, title, createdAt, createdBy, updatedAt, updatedBy, status, proposalDeadline } = dbResult.value;
-  return valid({
-    id,
-    title,
-    createdAt,
-    createdBy,
-    updatedAt,
-    updatedBy,
-    status,
-    proposalDeadline
-  });
+  return result ? valid(await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, result)) : valid(null);
 });
 
 export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>(async (connection, id, session) => {
@@ -463,8 +477,12 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
       .first())?.createdAt;
 
     // Set awarded proponent flag if applicable
+    let awardedProposal: SWUProposalSlim | null;
     if (result.status === SWUOpportunityStatus.Awarded) {
-      result.successfulProponent = true;
+      awardedProposal = getValidValue(await readOneSWUAwardedProposal(connection, result.id, session), null);
+      result.successfulProponentName = awardedProposal?.organization?.legalName;
+    } else {
+      awardedProposal = null;
     }
 
     // If authenticated, add on subscription status flag
@@ -474,13 +492,15 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
         .first());
     }
 
-    // If admin/owner, add on history and reporting metrics if public
+    // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
     if (session.user?.type === UserType.Admin || result.createdBy === session.user?.id) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>('swuOpportunityStatuses')
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');
 
       result.history = await Promise.all(rawHistory.map(async raw => await rawHistoryRecordToHistoryRecord(connection, session, raw)));
+
+      result.successfulProposal = awardedProposal || undefined;
 
       if (publicOpportunityStatuses.includes(result.status)) {
         // Retrieve opportunity views

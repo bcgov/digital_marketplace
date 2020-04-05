@@ -1118,3 +1118,22 @@ export const readSubmittedSWUProposalCount = tryDb<[Id], number>(async (connecti
     })
     .whereNotIn('statuses.status', [SWUProposalStatus.Draft, SWUProposalStatus.Withdrawn]))?.length || 0);
 });
+
+export const readOneSWUAwardedProposal = tryDb<[Id, Session], SWUProposalSlim | null>(async (connection, opportunity, session) => {
+  const result = await connection<RawSWUProposalSlim>('swuProposals as proposals')
+    .join('swuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+        connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity,
+      'statuses.status': SWUProposalStatus.Awarded
+    })
+    .first();
+
+  return result ? valid(await rawSWUProposalSlimToSWUProposalSlim(connection, result, session)) : valid(null);
+});
