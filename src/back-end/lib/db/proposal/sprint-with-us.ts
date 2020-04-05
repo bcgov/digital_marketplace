@@ -501,7 +501,6 @@ export const createSWUProposal = tryDb<[CreateSWUProposalParams, AuthenticatedSe
   const proposalId = await connection.transaction(async trx => {
     const { attachments, references, teamQuestionResponses, status, inceptionPhase, prototypePhase, implementationPhase, ...restOfProposal } = proposal;
 
-    const anonymousProponentName: string = status === SWUProposalStatus.Submitted ? await generateAnonymousProponentName(connection, proposal.opportunity) : '';
     // Create root record for proposal
     const [proposalRootRecord] = await connection<RawSWUProposal>('swuProposals')
       .transacting(trx)
@@ -511,8 +510,7 @@ export const createSWUProposal = tryDb<[CreateSWUProposalParams, AuthenticatedSe
         createdAt: now,
         createdBy: session.user.id,
         updatedAt: now,
-        updatedBy: session.user.id,
-        anonymousProponentName
+        updatedBy: session.user.id
       }, '*');
 
     if (!proposalRootRecord) {
@@ -694,23 +692,6 @@ async function updateSWUProposalTeamQuestionResponses(connection: Transaction, p
   }
 }
 
-async function generateAnonymousProponentName(connection: Connection, opportunityId: Id): Promise<string> {
-  // Names are based on the count of submitted proposals for this opportunity so far
-  const submittedProposals = await connection<RawSWUProposal>('swuProposals as proposals')
-  .join('swuProposalStatuses as statuses', function() {
-    this
-      .on('proposals.id', '=', 'statuses.proposal')
-      .andOnNotNull('statuses.status')
-      .andOn('statuses.createdAt', '=',
-        connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
-          statuses2.proposal = proposals.id and statuses2.status is not null)'));
-  })
-  .where({ 'proposals.opportunity': opportunityId })
-  .andWhereNot({ 'statuses.status': SWUProposalStatus.Draft });
-
-  return `Proponent ${submittedProposals.length + 1}`;
-}
-
 export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, AuthenticatedSession], SWUProposal>(async (connection, proposalId, status, note, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
@@ -727,7 +708,7 @@ export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, Aut
       }, '*');
 
     // Update proposal root record
-    let [rootRecord] = await connection<RawSWUProposal>('swuProposals')
+    await connection<RawSWUProposal>('swuProposals')
       .transacting(trx)
       .where({ id: proposalId })
       .update({
@@ -735,19 +716,8 @@ export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, Aut
         updatedBy: session.user.id
       }, '*');
 
-    if (!statusRecord || !rootRecord) {
+    if (!statusRecord) {
       throw new Error('unable to update proposal');
-    }
-
-    // If the new status is Submit, then generate an anonymized vendor name
-    if (status === SWUProposalStatus.Submitted) {
-      const anonymousProponentName = await generateAnonymousProponentName(connection, rootRecord.opportunity);
-      [rootRecord] = await connection<RawSWUProposal>('swuProposals')
-        .transacting(trx)
-        .where({ id: proposalId })
-        .update({
-          anonymousProponentName
-        }, '*');
     }
 
     const dbResult = await readOneSWUProposal(trx, statusRecord.proposal, session);

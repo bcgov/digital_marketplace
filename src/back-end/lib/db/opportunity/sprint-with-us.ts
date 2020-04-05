@@ -815,7 +815,7 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
         })
         .select<Array<{ id: Id }>>('proposals.id'))?.map(result => result.id) || [];
 
-      for (const proposalId of proposalIds) {
+      for (const [index, proposalId] of proposalIds.entries()) {
         // Set the proposal to UNDER_REVIEW status
         await connection('swuProposalStatuses')
           .transacting(trx)
@@ -825,6 +825,14 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
             proposal: proposalId,
             status: SWUProposalStatus.UnderReviewTeamQuestions,
             note: ''
+          });
+
+        // And generate anonymized name
+        await connection('swuProposals')
+          .transacting(trx)
+          .where({ id: proposalId })
+          .update({
+            anonymousProponentName: `Proponent ${index + 1}`
           });
       }
     }
