@@ -1133,6 +1133,16 @@ export const readOneSWUAwardedProposal = tryDb<[Id, Session], SWUProposalSlim | 
       'proposals.opportunity': opportunity,
       'statuses.status': SWUProposalStatus.Awarded
     })
+    .select<RawSWUProposalSlim[]>(
+      'proposals.id',
+      'proposals.createdBy',
+      'proposals.createdAt',
+      'updatedBy',
+      'updatedAt',
+      'organization',
+      'anonymousProponentName',
+      'opportunity'
+    )
     .first();
 
   return result ? valid(await rawSWUProposalSlimToSWUProposalSlim(connection, result, session)) : valid(null);
