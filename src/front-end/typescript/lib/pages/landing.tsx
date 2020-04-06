@@ -1,8 +1,6 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, toast, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as Phases from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/phases';
-import * as TeamQuestions from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/team-questions';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, toast, Update } from 'front-end/lib/framework';
 import Accordion from 'front-end/lib/views/accordion';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -10,16 +8,12 @@ import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
   toast: [string, string];
-  teamQs: Immutable<TeamQuestions.State>;
-  phases: Immutable<Phases.State>;
   showAccordion: boolean;
 }
 
 type InnerMsg
   = ADT<'noop'>
   | ADT<'showToast'>
-  | ADT<'updateTeamQs', TeamQuestions.Msg>
-  | ADT<'updatePhases', Phases.Msg>
   | ADT<'toggleAccordion'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -27,10 +21,6 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  phases: immutable(await Phases.init({
-    startWith: 'inception'
-  })),
-  teamQs: immutable(await TeamQuestions.init({})),
   toast: [
     'Example Toast',
     'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
@@ -40,22 +30,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'updatePhases':
-      return updateComponentChild({
-        state,
-        childStatePath: ['phases'],
-        childUpdate: Phases.update,
-        childMsg: msg.value,
-        mapChildMsg: value => ({ tag: 'updatePhases', value })
-      });
-    case 'updateTeamQs':
-      return updateComponentChild({
-        state,
-        childStatePath: ['teamQs'],
-        childUpdate: TeamQuestions.update,
-        childMsg: msg.value,
-        mapChildMsg: value => ({ tag: 'updateTeamQs', value })
-      });
     case 'showToast':
       return [
         state,
@@ -98,18 +72,6 @@ const view: ComponentView<State, Msg> = ({state, dispatch}) => {
           open={state.showAccordion}>
           Children!
         </Accordion>
-      </Col>
-      <Col xs='12' md='8' className='pt-7'>
-        <TeamQuestions.view
-          state={state.teamQs}
-          dispatch={mapComponentDispatch(dispatch, msg => adt('updateTeamQs' as const, msg))} />
-      </Col>
-      <Col xs='12' md='8' className='pt-7'>
-        <Phases.view
-          state={state.phases}
-          dispatch={mapComponentDispatch(dispatch, msg => adt('updatePhases' as const, msg))}
-          disabled={false}
-        />
       </Col>
     </Row>
   );

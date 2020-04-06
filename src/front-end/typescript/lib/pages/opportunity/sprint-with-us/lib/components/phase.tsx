@@ -2,25 +2,31 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
+import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseValidationErrors, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
+import { invalid, Validation } from 'shared/lib/validation';
+import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
 
-export interface Capability {
-  name: string;
-  partTime: boolean;
+export interface Capability extends CreateSWUOpportunityPhaseRequiredCapabilityBody {
   checked: boolean;
 }
 
 export interface Params {
+  phase?: SWUOpportunityPhase;
+  totalMaxBudget?: number;
   isAccordianOpen: boolean;
+  validateStartDate(raw: string): Validation<Date>;
+  validateCompletionDate(raw: string, startDate?: Date): Validation<Date>;
 }
 
-export interface State extends Params {
+export interface State extends Pick<Params, 'isAccordianOpen' | 'validateCompletionDate'> {
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
@@ -30,36 +36,70 @@ export interface State extends Params {
 export type Msg
   = ADT<'toggleAccordion'>
   | ADT<'toggleCapabilityChecked', number> //index
-  | ADT<'toggleCapabilityIsPartTime', number> //index
+  | ADT<'toggleCapabilityIsFullTime', number> //index
   | ADT<'startDate', DateField.Msg>
   | ADT<'completionDate', DateField.Msg>
   | ADT<'maxBudget', NumberField.Msg>;
 
-export const init: Init<Params, State> = async params => {
-  const idPrefix = String(Math.random());
+export function setValidateStartDate(state: Immutable<State>, validate: Params['validateStartDate']): Immutable<State> {
+  return state.update('startDate', s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
+}
+
+function resetCompletionDate(state: Immutable<State>): Immutable<State> {
+  return state.update('completionDate', s => FormField.setValidate(
+    s,
+    DateField.validateDate(raw => state.validateCompletionDate(raw, DateField.getDate(state.startDate))),
+    !!FormField.getValue(s)
+  ));
+}
+
+export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Immutable<State> {
+  return state.update('maxBudget', s => FormField.setValidate(
+    s,
+    v => {
+      if (v === null) { return invalid(['Please enter a valid Maximum Phase Budget.']); }
+      return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(v, totalMaxBudget);
+    },
+    FormField.getValue(s) !== null
+  ));
+}
+
+export function setIsAccordianOpen(state: Immutable<State>, isAccordianOpen: boolean): Immutable<State> {
+  return state.set('isAccordianOpen', isAccordianOpen);
+}
+
+export const init: Init<Params, State> = async ({ isAccordianOpen, totalMaxBudget, phase, validateStartDate, validateCompletionDate }) => {
+  const idNamespace = String(Math.random());
   return {
-    ...params,
-    capabilities: CAPABILITIES.map(name => ({ name, partTime: false, checked: false })),
+    isAccordianOpen,
+    validateCompletionDate,
+    capabilities: CAPABILITIES.map(capability => ({ capability, fullTime: true, checked: false })),
     collapsed: false,
     startDate: immutable(await DateField.init({
       errors: [],
+      validate: DateField.validateDate(validateStartDate),
       child: {
-        value: null,
-        id: `${idPrefix}-start-date`
+        value: phase?.startDate ? DateField.dateToValue(phase.startDate) : null,
+        id: `swu-opportunity-phase-${idNamespace}-start-date`
       }
     })),
     completionDate: immutable(await DateField.init({
       errors: [],
+      validate: DateField.validateDate(raw => validateCompletionDate(raw, phase?.startDate)),
       child: {
-        value: null,
-        id: `${idPrefix}-completion-date`
+        value: phase?.completionDate ? DateField.dateToValue(phase.completionDate) : null,
+        id: `swu-opportunity-phase-${idNamespace}-completion-date`
       }
     })),
     maxBudget: immutable(await NumberField.init({
       errors: [],
+      validate: v => {
+        if (v === null) { return invalid(['Please enter a valid Maximum Phase Budget.']); }
+        return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(v, totalMaxBudget);
+      },
       child: {
-        value: null,
-        id: `${idPrefix}-max-budget`,
+        value: phase ? phase.maxBudget : null,
+        id: `swu-opportunity-phase-${idNamespace}-max-budget`,
         min: 1
       }
     }))
@@ -76,9 +116,9 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         return i === msg.value ? { ...c, checked: !c.checked } : c;
       }))];
 
-    case 'toggleCapabilityIsPartTime':
+    case 'toggleCapabilityIsFullTime':
       return [state.update('capabilities', cs => cs.map((c, i) => {
-        return i === msg.value ? { ...c, partTime: !c.partTime } : c;
+        return i === msg.value ? { ...c, fullTime: !c.fullTime } : c;
       }))];
 
     case 'startDate':
@@ -87,7 +127,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['startDate'],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('startDate', value)
+        mapChildMsg: value => adt('startDate', value),
+        updateAfter: state => [resetCompletionDate(state)]
       });
 
     case 'completionDate':
@@ -110,28 +151,47 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-export interface Values {
-  startDate: DateField.Value;
-  completionDate: DateField.Value;
-  maxBudget: NumberField.Value;
-  capabilities: Capability[];
-}
+export type Values = CreateSWUOpportunityPhaseBody;
 
-export function getValues(state: Immutable<State>): Values {
+export function getValues(state: Immutable<State>): Values | null {
+  const maxBudget = FormField.getValue(state.maxBudget);
+  if (maxBudget === null) { return null; }
   return {
-    startDate: FormField.getValue(state.startDate),
-    completionDate: FormField.getValue(state.completionDate),
-    maxBudget: FormField.getValue(state.maxBudget),
-    capabilities: state.capabilities
+    startDate: DateField.getValueAsString(state.startDate),
+    completionDate: DateField.getValueAsString(state.completionDate),
+    maxBudget,
+    requiredCapabilities: state.capabilities.map(({ capability, fullTime }) => ({ capability, fullTime }))
   };
 }
 
-//TODO setErrors
+export type Errors = CreateSWUOpportunityPhaseValidationErrors;
+
+export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
+  return state
+    .update('startDate', s => FormField.setErrors(s, errors?.startDate || []))
+    .update('completionDate', s => FormField.setErrors(s, errors?.completionDate || []))
+    .update('maxBudget', s => FormField.setErrors(s, errors?.maxBudget || []));
+}
+
+function capabilitiesAreValid(capabilities: Capability[]): boolean {
+  for (const c of capabilities) {
+    if (c.checked) { return true; }
+  }
+  return false;
+}
+
+export function isValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.startDate)
+      && FormField.isValid(state.completionDate)
+      && FormField.isValid(state.maxBudget)
+      && capabilitiesAreValid(state.capabilities);
+}
 
 export interface Props extends ComponentViewProps<State, Msg> {
   title: string;
   description: string;
   icon: AvailableIcons;
+  iconColor?: ThemeColor;
   deliverables: string[];
   disabled?: boolean;
   className?: string;
@@ -160,7 +220,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs='12'>
         <h4 className='mb-4'>Details</h4>
       </Col>
-      <Col xs='12' md='5'>
+      <Col xs='12' md='6'>
         <DateField.view
           required
           extraChildProps={{}}
@@ -169,7 +229,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
       </Col>
-      <Col xs='12' md='5'>
+      <Col xs='12' md='6'>
         <DateField.view
           extraChildProps={{}}
           label='Phase Completion Date'
@@ -177,7 +237,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
       </Col>
-      <Col xs='12' md='6' lg='5'>
+      <Col xs='12' md='7' lg='6'>
         <NumberField.view
           required
           extraChildProps={{ prefix: '$' }}
@@ -191,14 +251,14 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-interface PartTimeSwitchProps {
-  partTime: boolean;
+interface FullTimeSwitchProps {
+  fullTime: boolean;
   disabled?: boolean;
   index: number;
   dispatch: Dispatch<Msg>;
 }
 
-const PartTimeSwitch: View<PartTimeSwitchProps> = ({ partTime, disabled, index, dispatch }) => {
+const FullTimeSwitch: View<FullTimeSwitchProps> = ({ fullTime, disabled, index, dispatch }) => {
   const selectedClassName = (selected: boolean) => {
     return selected ? 'bg-purple text-white' : 'text-secondary border';
   };
@@ -207,13 +267,13 @@ const PartTimeSwitch: View<PartTimeSwitchProps> = ({ partTime, disabled, index, 
   const padding = '0.15rem 0.25rem';
   return (
     <div
-      onClick={() => dispatch(adt('toggleCapabilityIsPartTime', index))}
+      onClick={() => dispatch(adt('toggleCapabilityIsFullTime', index))}
       style={{ cursor: 'pointer' }}
       className='d-flex align-items-stretch font-size-extra-small font-weight-bold ml-auto'>
-      <div className={`${baseSwitchClassName} ${selectedClassName(partTime)} rounded-left border-right-0`} style={{ width, padding }}>
+      <div className={`${baseSwitchClassName} ${selectedClassName(!fullTime)} rounded-left border-right-0`} style={{ width, padding }}>
         P/T
       </div>
-      <div className={`${baseSwitchClassName} ${selectedClassName(!partTime)} rounded-right border-left-0`} style={{ width, padding }}>
+      <div className={`${baseSwitchClassName} ${selectedClassName(fullTime)} rounded-right border-left-0`} style={{ width, padding }}>
         F/T
       </div>
     </div>
@@ -226,20 +286,20 @@ interface CapabilityProps extends Capability {
   dispatch: Dispatch<Msg>;
 }
 
-const Capability: View<CapabilityProps> = ({ name, partTime, checked, dispatch, index, disabled }) => {
+const Capability: View<CapabilityProps> = ({ capability, fullTime, checked, dispatch, index, disabled }) => {
   return (
-    <div className='border-right border-bottom d-flex flex-nowrap align-items-center px-3 py-2'>
+    <div className='border-right border-bottom d-flex flex-nowrap align-items-center p-2'>
       <Link
         onClick={() => dispatch(adt('toggleCapabilityChecked', index))}
         symbol_={leftPlacement(iconLinkSymbol(checked ? 'check-circle' : 'circle'))}
         symbolClassName={checked ? 'text-success' : 'text-body'}
-        className='py-1 font-size-small'
+        className='py-1 font-size-small text-nowrap'
         iconSymbolSize={0.9}
         color='body'
         disabled={disabled}>
-        {name}
+        {capability}
       </Link>
-      {checked ? (<PartTimeSwitch partTime={partTime} disabled={disabled} index={index} dispatch={dispatch} />) : null}
+      {checked ? (<FullTimeSwitch fullTime={fullTime} disabled={disabled} index={index} dispatch={dispatch} />) : null}
     </div>
   );
 };
@@ -271,7 +331,7 @@ const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 export const view: View<Props> = props => {
-  const { state, title, icon, dispatch, className } = props;
+  const { state, title, icon, iconColor, dispatch, className } = props;
   return (
     <Accordion
       className={className}
@@ -283,6 +343,7 @@ export const view: View<Props> = props => {
       iconWidth={2}
       iconHeight={2}
       iconClassName='mr-3'
+      iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={state.isAccordianOpen}>

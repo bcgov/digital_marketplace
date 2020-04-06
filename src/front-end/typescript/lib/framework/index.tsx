@@ -41,6 +41,7 @@ export interface UpdateChildParams<ParentState, ParentMsg, ChildState, ChildMsg>
   childStatePath: string[];
   childUpdate: Update<ChildState, ChildMsg>;
   childMsg: ChildMsg;
+  updateAfter?(state: Immutable<ParentState>): UpdateReturnValue<ParentState, ParentMsg>;
   mapChildMsg(msg: ChildMsg): ParentMsg;
 }
 
@@ -76,7 +77,7 @@ export function mapComponentDispatch<ParentMsg, ChildMsg>(dispatch: Dispatch<Par
 }
 
 export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<PS, PM, CS, CM>): UpdateReturnValue<PS, PM> {
-  const { childStatePath, childUpdate, childMsg, mapChildMsg } = params;
+  const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
   // tslint:disable:next-line no-console
@@ -87,13 +88,24 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
     msg: childMsg
   });
   state = state.setIn(childStatePath, newChildState);
-  let asyncStateUpdate;
+  let newAsyncUpdateAfterState: UpdateReturnValue<PS, PM>[1];
+  if (updateAfter) {
+    [state, newAsyncUpdateAfterState] = updateAfter(state);
+  }
+  let asyncStateUpdate: UpdateReturnValue<PS, PM>[1];
   if (newAsyncChildState) {
     asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<PM>) => {
       const mappedDispatch = mapComponentDispatch(dispatch, mapChildMsg);
       const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
       if (!newChildState) { return null; }
-      return state.setIn(childStatePath, newChildState);
+      state = state.setIn(childStatePath, newChildState);
+      if (newAsyncUpdateAfterState) {
+        const result = await newAsyncUpdateAfterState(state, dispatch);
+        if (result !== null) {
+          state = result;
+        }
+      }
+      return state;
     };
   }
   return [
@@ -140,7 +152,7 @@ export function mapGlobalComponentDispatch<ParentMsg, ChildMsg, Route>(dispatch:
 }
 
 export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<PS, GlobalComponentMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>> {
-  const { childStatePath, childUpdate, childMsg, mapChildMsg } = params;
+  const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
   if (!childState) { return [state]; }
@@ -149,13 +161,24 @@ export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: Update
     msg: childMsg
   });
   state = state.setIn(childStatePath, newChildState);
-  let asyncStateUpdate;
+  let newAsyncUpdateAfterState: UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>>[1];
+  if (updateAfter) {
+    [state, newAsyncUpdateAfterState] = updateAfter(state);
+  }
+  let asyncStateUpdate: UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>>[1];
   if (newAsyncChildState) {
     asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<GlobalComponentMsg<PM, Route>>) => {
       const mappedDispatch = mapGlobalComponentDispatch(dispatch, mapChildMsg);
       const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
       if (!newChildState) { return null; }
-      return state.setIn(childStatePath, newChildState);
+      state = state.setIn(childStatePath, newChildState);
+      if (newAsyncUpdateAfterState) {
+        const result = await newAsyncUpdateAfterState(state, dispatch);
+        if (result !== null) {
+          state = result;
+        }
+      }
+      return state;
     };
   }
   return [
@@ -370,7 +393,7 @@ export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams,
  */
 
 export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<PS, AppMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, AppMsg<PM, Route>> {
-  const { childStatePath, childUpdate, childMsg, mapChildMsg } = params;
+  const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
   if (!childState) { return [state]; }
@@ -379,13 +402,24 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
     msg: childMsg
   });
   state = state.setIn(childStatePath, newChildState);
-  let asyncStateUpdate;
+  let newAsyncUpdateAfterState: UpdateReturnValue<PS, AppMsg<PM, Route>>[1];
+  if (updateAfter) {
+    [state, newAsyncUpdateAfterState] = updateAfter(state);
+  }
+  let asyncStateUpdate: UpdateReturnValue<PS, AppMsg<PM, Route>>[1];
   if (newAsyncChildState) {
     asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
       const mappedDispatch = mapAppDispatch(dispatch, mapChildMsg);
       const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
       if (!newChildState) { return null; }
-      return state.setIn(childStatePath, newChildState);
+      state = state.setIn(childStatePath, newChildState);
+      if (newAsyncUpdateAfterState) {
+        const result = await newAsyncUpdateAfterState(state, dispatch);
+        if (result !== null) {
+          state = result;
+        }
+      }
+      return state;
     };
   }
   return [

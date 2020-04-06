@@ -1,6 +1,6 @@
 import { get, uniq } from 'lodash';
 import { dateToMidnight, getISODateString, getNumber, getString, isDateInThePast } from 'shared/lib';
-import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, optional, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
 
@@ -40,8 +40,8 @@ export function validateSWUOpportunityPhaseCompletionDate(raw: string, startDate
   return validateDate(raw, startDate);
 }
 
-export function validateSWUOpportunityPhaseMaxBudget(raw: number, maxTotalBudget?: number): Validation<number> {
-  return validateNumber(raw, 0, maxTotalBudget);
+export function validateSWUOpportunityPhaseMaxBudget(raw: number, totalMaxBudget?: number): Validation<number> {
+  return validateNumber(raw, 0, totalMaxBudget);
 }
 
 interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportunityPhaseBody, 'startDate' | 'completionDate'> {
@@ -174,11 +174,12 @@ export function validateTeamQuestionScore(raw: number): Validation<number> {
 }
 
 export function validateTeamQuestionWordLimit(raw: number): Validation<number> {
-  return validateNumber(raw, 1, undefined, 'Word Limit');
+  return validateNumber(raw, 1, MAX_TEAM_QUESTION_WORD_LIMIT, 'Word Limit');
 }
 
+// Allow up to 100 team questions per opportunity.
 export function validateTeamQuestionOrder(raw: number): Validation<number> {
-  return validateNumber(raw, 1, 10, 'Order');
+  return validateNumber(raw, 1, MAX_TEAM_QUESTIONS, 'Order');
 }
 
 export function validateTeamQuestion(raw: any): Validation<CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors> {
@@ -238,11 +239,11 @@ export function validateLocation(raw: string): Validation<string> {
 }
 
 export function validateTotalMaxBudget(raw: string | number): Validation<number> {
-  return validateNumber(raw, 1, 2000000, 'max budget', 'a');
+  return validateNumber(raw, 1, 2000000, 'Total Maximum Budget', 'a');
 }
 
 export function validateMinimumTeamMembers(raw: string | number): Validation<number> {
-  return validateNumber(raw, 1, 5, 'minimum team count', 'a');
+  return validateNumber(raw, 1, 5, 'minimum team size', 'a');
 }
 
 export function validateMandatorySkills(raw: string[]): ArrayValidation<string> {

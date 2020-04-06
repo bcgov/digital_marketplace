@@ -5,12 +5,29 @@ import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
+export { Addendum } from 'shared/lib/resources/addendum';
+
 export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
+export const DEFAULT_QUESTIONS_WEIGHT = 25;
+export const DEFAULT_CODE_CHALLENGE_WEIGHT = 40;
+export const DEFAULT_SCENARIO_WEIGHT = 25;
+export const DEFAULT_PRICE_WEIGHT = 10;
+export const MAX_TEAM_QUESTIONS = 100;
+export const MAX_TEAM_QUESTION_WORD_LIMIT = 3000;
 
 export enum SWUOpportunityPhaseType {
   Inception = 'INCEPTION',
   Prototype = 'PROTOTYPE',
   Implementation = 'IMPLEMENTATION'
+}
+
+export function parseSWUOpportunityPhaseType(raw: string): SWUOpportunityPhaseType | null {
+  switch (raw) {
+    case SWUOpportunityPhaseType.Inception: return SWUOpportunityPhaseType.Inception;
+    case SWUOpportunityPhaseType.Prototype: return SWUOpportunityPhaseType.Prototype;
+    case SWUOpportunityPhaseType.Implementation: return SWUOpportunityPhaseType.Implementation;
+    default: return null;
+  }
 }
 
 export function swuOpportunityPhaseTypeToTitleCase(phase: SWUOpportunityPhaseType): string {
@@ -156,7 +173,7 @@ export type CreateSWUOpportunityStatus
 
 export type CreateSWUOpportunityPhaseRequiredCapabilityBody = Pick<SWUOpportunityPhaseRequiredCapability, 'capability' | 'fullTime'>;
 
-export interface CreateSWUOpportunityPhaseBody extends Omit<SWUOpportunityPhase, 'createdAt' | 'createdBy' | 'startDate' | 'completionDate' | 'requiredCapabilities' | 'phase'> {
+export interface CreateSWUOpportunityPhaseBody extends Pick<SWUOpportunityPhase, 'maxBudget'> {
   startDate: string;
   completionDate: string;
   requiredCapabilities: CreateSWUOpportunityPhaseRequiredCapabilityBody[];
@@ -170,13 +187,13 @@ export interface CreateRequestBody {
   remoteOk: boolean;
   remoteDesc: string;
   location: string;
+  proposalDeadline: string;
+  assignmentDate: string;
   totalMaxBudget: number;
   minTeamMembers: number;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;
-  proposalDeadline: string;
-  assignmentDate: string;
   questionsWeight: number;
   codeChallengeWeight: number;
   scenarioWeight: number;

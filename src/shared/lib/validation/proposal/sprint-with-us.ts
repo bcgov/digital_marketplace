@@ -1,6 +1,6 @@
 import { spread, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
-import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
 import { allValid, ArrayValidation, getInvalidValue, invalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
@@ -87,12 +87,13 @@ export function validateSWUProposalReferences(raw: any): ArrayValidation<CreateS
   return validateArrayCustom(raw, validateSWUProposalReference, {});
 }
 
-export function validateSWUProposalTeamQuestionResponseResponse(raw: string): Validation<string> {
+// TODO validate word limit
+export function validateSWUProposalTeamQuestionResponseResponse(raw: string, wordLimit = MAX_TEAM_QUESTION_WORD_LIMIT): Validation<string> {
   return validateGenericString(raw, 'Response', 1);
 }
 
 export function validateSWUProposalTeamQuestionResponseOrder(raw: number): Validation<number> {
-  return validateNumber(raw, 1, 10, 'Order');
+  return validateNumber(raw, 1, MAX_TEAM_QUESTIONS, 'Order');
 }
 
 export function validateSWUProposalTeamQuestionResponse(raw: any): Validation<CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors> {

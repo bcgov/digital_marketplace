@@ -1,9 +1,8 @@
-
 import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
-// import * as Form from 'front-end/lib/pages/opportunity/code-with-us/lib/components/form';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as Form from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
@@ -16,7 +15,7 @@ interface ValidState {
   saveDraftLoading: number;
   showErrorAlert: 'publish' | 'save' | null;
   showPublishModal: boolean;
-  // form: Immutable<Form.State>;
+  form: Immutable<Form.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -25,8 +24,8 @@ type InnerMsg
   = ADT<'dismissErrorAlert'>
   | ADT<'hidePublishModal'>
   | ADT<'publish'>
-  | ADT<'saveDraft'>;
-  // | ADT<'form', Form.Msg>;
+  | ADT<'saveDraft'>
+  | ADT<'form', Form.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -39,8 +38,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       publishLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
-      showPublishModal: false
-      // form: immutable(await Form.init({}))
+      showPublishModal: false,
+      form: immutable(await Form.init({}))
     }));
   },
   async fail({ routePath, dispatch }) {
@@ -90,14 +89,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         // }
       ];
 
-    // case 'form':
-    //   return updateComponentChild({
-    //     state,
-    //     childStatePath: ['form'],
-    //     childUpdate: Form.update,
-    //     childMsg: msg.value,
-    //     mapChildMsg: (value) => adt('form', value)
-    //   });
+    case 'form':
+      return updateComponentChild({
+        state,
+        childStatePath: ['form'],
+        childUpdate: Form.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('form', value)
+      });
 
     default:
       return [state];
@@ -105,21 +104,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 });
 
 const view: ComponentView<State,  Msg> = viewValid(({ state, dispatch }) => {
-  // const isPublishLoading = state.publishLoading > 0;
-  // const isSaveDraftLoading = state.saveDraftLoading > 0;
-  // const isDisabled = isSaveDraftLoading || isPublishLoading;
+  const isPublishLoading = state.publishLoading > 0;
+  const isSaveDraftLoading = state.saveDraftLoading > 0;
+  const isDisabled = isSaveDraftLoading || isPublishLoading;
   return (
-    <div className='d-flex flex-column h-100 justify-content-between'>
-      Put sweet stuff here.
-      {
-      /*
-      <Form.view
-        state={state.form}
-        dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
-        disabled={isDisabled} />
-       */
-      }
-    </div>
+    <Form.view
+      state={state.form}
+      dispatch={mapComponentDispatch(dispatch, value => adt('form' as const, value))}
+      disabled={isDisabled} />
   );
 });
 
@@ -131,11 +123,11 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     size: 'large',
     color: 'blue-light',
     view: makeInstructionalSidebar<State,  Msg>({
-      getTitle: () => 'Create a Code With Us Opportunity',
+      getTitle: () => 'Create a Sprint With Us Opportunity',
       getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
         <span>
-          Need help? <Link newTab color='primary' dest={routeDest(adt('content', 'code-with-us-opportunity-guide'))}>Read the guide</Link> for creating and managing a CWU opportunity
+          Need help? <Link newTab color='primary' dest={routeDest(adt('content', 'sprint-with-us-opportunity-guide'))}>Read the guide</Link> for creating and managing a SWU opportunity
         </span>
       )
     })
@@ -184,7 +176,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   getModal: getModalValid<ValidState, Msg>(state => {
     if (state.showPublishModal) {
       return {
-        title: 'Publish Code With Us Opportunity?',
+        title: 'Publish Sprint With Us Opportunity?',
         body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
         onCloseMsg: adt('hidePublishModal'),
         actions: [
@@ -206,6 +198,6 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     return null;
   }),
   getMetadata() {
-    return makePageMetadata('Create Opportunity');
+    return makePageMetadata('Create Sprint With Us Opportunity');
   }
 };
