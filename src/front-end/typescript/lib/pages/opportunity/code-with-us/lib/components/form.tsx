@@ -52,13 +52,13 @@ export interface State {
   evaluationCriteria: Immutable<RichMarkdownEditor.State>;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
-  // Attachments tab
+  // Addenda tab
   addenda: Immutable<Addenda.State> | null;
 }
 
 export type Msg
   = ADT<'tabbedForm',         TabbedForm.Msg<TabId>>
-  // Details Tab
+  // Overview Tab
   | ADT<'title',              ShortText.Msg>
   | ADT<'teaser',             LongText.Msg>
   | ADT<'location',           ShortText.Msg>
@@ -367,26 +367,25 @@ export function isValid(state: Immutable<State>): boolean {
     isAddendaTabValid(state);
 }
 
-export type Values = Omit<CreateRequestBody, 'attachments' | 'status' | 'remoteOk'>;
+export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
 
-export function getValues(state: Immutable<State>, status?: CreateCWUOpportunityStatus): Values {
+export function getValues(state: Immutable<State>): Values {
   return {
-    title:               FormField.getValue(state.title),
-    teaser:              FormField.getValue(state.teaser),
-    remoteDesc:          FormField.getValue(state.remoteDesc),
-    location:            FormField.getValue(state.location),
-    reward:              FormField.getValue(state.reward) || 0,
-    skills:              SelectMulti.getValueAsStrings(state.skills),
-    description:         FormField.getValue(state.description),
-
-    proposalDeadline:    DateField.getValueAsString(state.proposalDeadline),
-    assignmentDate:      DateField.getValueAsString(state.assignmentDate),
-    startDate:           DateField.getValueAsString(state.startDate),
-    completionDate:      DateField.getValueAsString(state.completionDate),
-
-    submissionInfo:      FormField.getValue(state.submissionInfo),
-    acceptanceCriteria:  FormField.getValue(state.acceptanceCriteria),
-    evaluationCriteria:  FormField.getValue(state.evaluationCriteria)
+    title:              FormField.getValue(state.title),
+    teaser:             FormField.getValue(state.teaser),
+    remoteOk:           FormField.getValue(state.remoteOk) === 'yes',
+    remoteDesc:         FormField.getValue(state.remoteDesc),
+    location:           FormField.getValue(state.location),
+    reward:             FormField.getValue(state.reward) || 0,
+    skills:             SelectMulti.getValueAsStrings(state.skills),
+    description:        FormField.getValue(state.description),
+    proposalDeadline:   DateField.getValueAsString(state.proposalDeadline),
+    assignmentDate:     DateField.getValueAsString(state.assignmentDate),
+    startDate:          DateField.getValueAsString(state.startDate),
+    completionDate:     DateField.getValueAsString(state.completionDate),
+    submissionInfo:     FormField.getValue(state.submissionInfo),
+    acceptanceCriteria: FormField.getValue(state.acceptanceCriteria),
+    evaluationCriteria: FormField.getValue(state.evaluationCriteria)
   };
 }
 

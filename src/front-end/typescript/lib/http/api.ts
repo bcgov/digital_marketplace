@@ -6,6 +6,7 @@ import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as CounterResource from 'shared/lib/resources/counter';
 import * as FileResource from 'shared/lib/resources/file';
 import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
+import * as SWUOpportunityResource from 'shared/lib/resources/opportunity/sprint-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
@@ -127,11 +128,11 @@ export const users: CrudApi<UserResourceTypes> = {
 
 // CWUProposal
 
-interface RawCWUProposalStatusRecord extends Omit<CWUProposalResource.CWUProposalHistoryRecord, 'createdAt'> {
+interface RawCWUProposalHistoryRecord extends Omit<CWUProposalResource.CWUProposalHistoryRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawCWUProposalStatusRecordToCWUProposalStatusRecord(raw: RawCWUProposalStatusRecord): CWUProposalResource.CWUProposalHistoryRecord {
+function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(raw: RawCWUProposalHistoryRecord): CWUProposalResource.CWUProposalHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
@@ -142,7 +143,7 @@ interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdA
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
-  history?: RawCWUProposalStatusRecord[];
+  history?: RawCWUProposalHistoryRecord[];
 }
 
 function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.CWUProposal {
@@ -151,7 +152,7 @@ function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.C
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
-    history: raw.history && raw.history.map(s => rawCWUProposalStatusRecordToCWUProposalStatusRecord(s))
+    history: raw.history && raw.history.map(s => rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(s))
   };
 }
 
@@ -257,11 +258,11 @@ function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
 
 // CodeWithUs Opportunities
 
-interface RawCWUOpportunityStatusRecord extends Omit<CWUOpportunityResource.CWUOpportunityHistoryRecord, 'createdAt'> {
+interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityResource.CWUOpportunityHistoryRecord, 'createdAt'> {
   createdAt: string;
 }
 
-function rawCWUHistoryRecordToCWUHistoryRecord(raw: RawCWUOpportunityStatusRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
+function rawCWUHistoryRecordToCWUHistoryRecord(raw: RawCWUOpportunityHistoryRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
@@ -277,7 +278,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 
   updatedAt: string;
   publishedAt?: string;
   addenda: RawAddendum[];
-  history?: RawCWUOpportunityStatusRecord[];
+  history?: RawCWUOpportunityHistoryRecord[];
 }
 
 function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
@@ -340,10 +341,126 @@ export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = makeCrudAp
   }
 });
 
+// SprintWithUs Opportunities
+
+interface RawSWUOpportunityHistoryRecord extends Omit<SWUOpportunityResource.SWUOpportunityHistoryRecord, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawSWUHistoryRecordToSWUHistoryRecord(raw: RawSWUOpportunityHistoryRecord): SWUOpportunityResource.SWUOpportunityHistoryRecord {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface RawSWUOpportunityPhase extends Omit<SWUOpportunityResource.SWUOpportunityPhase, 'startDate' | 'completionDate' | 'createdAt'> {
+  startDate: string;
+  completionDate: string;
+  createdAt: string;
+}
+
+function rawSWUOpportunityPhaseToSWUOpportunityPhase(raw: RawSWUOpportunityPhase): SWUOpportunityResource.SWUOpportunityPhase {
+  return {
+    ...raw,
+    startDate: new Date(raw.startDate),
+    completionDate: new Date(raw.completionDate),
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface RawSWUTeamQuestion extends Omit<SWUOpportunityResource.SWUTeamQuestion, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawSWUTeamQuestionToSWUTeamQuestion(raw: RawSWUTeamQuestion): SWUOpportunityResource.SWUTeamQuestion {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface RawSWUOpportunity extends Omit<SWUOpportunityResource.SWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions'> {
+  proposalDeadline: string;
+  assignmentDate: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  addenda: RawAddendum[];
+  history?: RawSWUOpportunityHistoryRecord[];
+  inceptionPhase?: RawSWUOpportunityPhase;
+  prototypePhase?: RawSWUOpportunityPhase;
+  implementationPhase: RawSWUOpportunityPhase;
+  teamQuestions: RawSWUTeamQuestion[];
+}
+
+function rawSWUOpportunityToSWUOpportunity(raw: RawSWUOpportunity): SWUOpportunityResource.SWUOpportunity {
+  return {
+    ...raw,
+    proposalDeadline: new Date(raw.proposalDeadline),
+    assignmentDate: new Date(raw.assignmentDate),
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt),
+    publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
+    addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
+    history: raw.history && raw.history.map(s => rawSWUHistoryRecordToSWUHistoryRecord(s)),
+    inceptionPhase: raw.inceptionPhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.inceptionPhase),
+    prototypePhase: raw.prototypePhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.prototypePhase),
+    implementationPhase: rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.implementationPhase),
+  teamQuestions: raw.teamQuestions.map(tq => rawSWUTeamQuestionToSWUTeamQuestion(tq))
+  };
+}
+
+interface SWUOpportunityResourceTypes {
+  create: {
+    request: SWUOpportunityResource.CreateRequestBody;
+    rawResponse: RawSWUOpportunity;
+    validResponse: SWUOpportunityResource.SWUOpportunity;
+    invalidResponse: SWUOpportunityResource.CreateValidationErrors;
+  };
+  readMany: {
+    rawResponse: SWUOpportunityResource.SWUOpportunitySlim;
+    validResponse: SWUOpportunityResource.SWUOpportunitySlim;
+    invalidResponse: string[];
+  };
+  readOne: {
+    rawResponse: RawSWUOpportunity;
+    validResponse: SWUOpportunityResource.SWUOpportunity;
+    invalidResponse: SWUOpportunityResource.UpdateValidationErrors;
+  };
+  update: {
+    request: SWUOpportunityResource.UpdateRequestBody;
+    rawResponse: RawSWUOpportunity;
+    validResponse: SWUOpportunityResource.SWUOpportunity;
+    invalidResponse: SWUOpportunityResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawSWUOpportunity;
+    validResponse: SWUOpportunityResource.SWUOpportunity;
+    invalidResponse: SWUOpportunityResource.DeleteValidationErrors;
+  };
+}
+
+const swuOpportunityActionParams = {
+  transformValid: rawSWUOpportunityToSWUOpportunity
+};
+
+export const swuOpportunities: CrudApi<SWUOpportunityResourceTypes> = makeCrudApi({
+  routeNamespace: apiNamespace('opportunities/code-with-us'),
+  create: swuOpportunityActionParams,
+  readOne: swuOpportunityActionParams,
+  update: swuOpportunityActionParams,
+  delete: swuOpportunityActionParams,
+  readMany: {
+    transformValid: a => a
+  }
+});
+
 // Opportunities
 
 export const opportunities = {
-  cwu: cwuOpportunities
+  cwu: cwuOpportunities,
+  swu: swuOpportunities
 };
 
 // Organizations

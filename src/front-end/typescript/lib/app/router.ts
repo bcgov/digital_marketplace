@@ -38,7 +38,15 @@ const router: Router.Router<Route> = {
   // Note(Jesse): @add_new_page_location
 
   routes: [
-
+    {
+      path: '/opportunities/sprint-with-us/create',
+      makeRoute() {
+        return {
+          tag: 'opportunitySWUCreate',
+          value: null
+        };
+      }
+    },
     {
       path: '/opportunities/sprint-with-us/:opportunityId',
       makeRoute({params}) {
@@ -58,15 +66,6 @@ const router: Router.Router<Route> = {
           value: {
             opportunityId: params.opportunityId || ''
           }
-        };
-      }
-    },
-    {
-      path: '/opportunities/sprint-with-us/create',
-      makeRoute() {
-        return {
-          tag: 'opportunitySWUCreate',
-          value: null
         };
       }
     },

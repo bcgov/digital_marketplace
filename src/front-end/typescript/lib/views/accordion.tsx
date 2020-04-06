@@ -14,6 +14,7 @@ export interface Props {
   iconWidth?: number;
   iconHeight?: number;
   iconClassName?: string;
+  iconColor?: ThemeColor;
   chevronWidth?: number;
   chevronHeight?: number;
   className?: string;
@@ -33,6 +34,7 @@ export const view: View<Props> = props => {
     iconWidth,
     iconHeight,
     iconClassName,
+    iconColor,
     chevronWidth,
     chevronHeight,
     className = '',
@@ -44,7 +46,7 @@ export const view: View<Props> = props => {
     <div className={`py-2 ${className}`}>
       <Link color={color} disabled={disabled} className='align-items-center flex-nowrap w-100' onClick={toggle}>
         <div className='d-flex align-items-center flex-nowrap'>
-          <Icon name={icon} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />
+          <Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />
           <div className={titleClassName}>{title}</div>
         </div>
         <Icon className={`ml-auto`} name={open ? 'chevron-up' : 'chevron-down'} width={chevronWidth} height={chevronHeight} />

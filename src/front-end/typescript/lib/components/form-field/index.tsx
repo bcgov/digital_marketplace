@@ -30,17 +30,19 @@ export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, Inn
 
 export type ChildComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<ChildParams, ChildState, ChildMsg<InnerChildMsg>, ChildProps<Value, ChildState, InnerChildMsg> & ExtraChildProps>;
 
+export type Validate<Value> = (value: Value) => Validation<Value>;
+
 export interface State<Value, ChildState extends ChildStateBase<Value>> {
   errors: string[];
   showHelp: boolean;
   child: Immutable<ChildState>;
-  validate?(value: Value): Validation<Value>;
+  validate: Validate<Value> | null;
 }
 
 export interface Params<Value, ChildParams extends ChildParamsBase<Value>> {
   errors: string[];
   child: ChildParams;
-  validate?(value: Value): Validation<Value>;
+  validate?: Validate<Value>;
 }
 
 export type Msg<InnerChildMsg>
@@ -73,14 +75,8 @@ function makeInit<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
     errors: params.errors,
     showHelp: false,
     child: immutable(await childInit(params.child)),
-    validate: params.validate
+    validate: params.validate || null
   });
-}
-
-function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Immutable<State<Value, ChildState>> {
-  return state.validate
-    ? validateAndSetValue(state, getValue(state), state.validate)
-    : state;
 }
 
 function makeUpdate<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(childUpdate: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['update']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['update'] {
@@ -258,6 +254,21 @@ export function setValue<Value, ChildState extends ChildStateBase<Value>>(state:
 export function updateValue<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>, fn: (_: Value) => Value): Immutable<State<Value, ChildState>> {
   const value = getValue(state);
   return setValue(state, fn(value));
+}
+
+export function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Immutable<State<Value, ChildState>> {
+  return state.validate
+    ? validateAndSetValue(state, getValue(state), state.validate)
+    : state;
+}
+
+export function setValidate<Value, ChildState extends ChildStateBase<Value>>(
+  state: Immutable<State<Value, ChildState>>,
+  validateFn: Exclude<State<Value, ChildState>['validate'], null>,
+  runValidation = false
+): Immutable<State<Value, ChildState>> {
+  state = state.set('validate', validateFn);
+  return runValidation ? validate(state) : state;
 }
 
 export function setErrors<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>, errors: string[]): Immutable<State<Value, ChildState>> {
