@@ -1,12 +1,14 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
+import { readOneCWUAwardedProposal, readSubmittedCWUProposalCount } from 'back-end/lib/db/proposal/code-with-us';
 import { RawCWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/code-with-us';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
+import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Addendum, CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUProposalSlim, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -222,10 +224,8 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     result.addenda = (await connection<{ id: Id }>('cwuOpportunityAddenda')
       .where({ opportunity: id })
       .select('id')).map(row => row.id);
-  }
 
-  // Get published date if applicable
-  if (result) {
+    // Get published date if applicable
     const publishedDate = await connection<{ createdAt: Date}>('cwuOpportunityStatuses')
       .where({ opportunity: result.id, status: CWUOpportunityStatus.Published })
       .select('createdAt')
@@ -233,23 +233,54 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       .first();
 
     result.publishedAt = publishedDate?.createdAt;
-  }
 
-  // Add on subscription flag, if authenticated user
-  if (result && session.user) {
-    const subscription = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
-      .where({ opportunity: result.id, user: session.user.id })
-      .first();
-    result.subscribed = !!subscription;
-  }
+    // Set awarded proponent flag if applicable
+    let awardedProposal: CWUProposalSlim | null;
+    if (result.status === CWUOpportunityStatus.Awarded) {
+      awardedProposal = getValidValue(await readOneCWUAwardedProposal(connection, result.id, session), null);
+      result.successfulProponentName = awardedProposal?.proponent.value.legalName;
+    } else {
+      awardedProposal = null;
+    }
 
-  // If admin/owner, add on list of change records
-  if (result && session.user && (session.user.type === UserType.Admin || result.createdBy === session.user.id)) {
-    const rawStatusArray = await connection<RawCWUOpportunityHistoryRecord>('cwuOpportunityStatuses')
-      .where({ opportunity: result.id })
-      .orderBy('createdAt', 'desc');
+    // Add on subscription flag, if authenticated user
+    if (session.user) {
+      const subscription = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
+        .where({ opportunity: result.id, user: session.user.id })
+        .first();
+      result.subscribed = !!subscription;
+    }
 
-    result.history = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
+    // If admin/owner, add on list of change records and reporting metrics if public
+    if (session.user?.type === UserType.Admin || result.createdBy === session.user?.id) {
+      const rawStatusArray = await connection<RawCWUOpportunityHistoryRecord>('cwuOpportunityStatuses')
+        .where({ opportunity: result.id })
+        .orderBy('createdAt', 'desc');
+
+      result.history = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
+
+      result.successfulProposal = awardedProposal || undefined;
+
+      if (publicOpportunityStatuses.includes(result.status)) {
+        // Retrieve opportunity views
+        const numViews = (await connection<{ count: number }>('viewCounters')
+        .where({ name: getCWUOpportunityViewsCounterName(result.id) })
+        .first())?.count || 0;
+
+        // Retrieve watchers/subscribers
+        const numWatchers = (await connection('cwuOpportunitySubscribers')
+          .where({ opportunity: result.id }))?.length || 0;
+
+        // Retrieve number of submitted proposals (exclude draft/withdrawn)
+        const numProposals = getValidValue(await readSubmittedCWUProposalCount(connection, result.id), 0);
+
+        result.reporting = {
+          numViews,
+          numWatchers,
+          numProposals
+        };
+      }
+    }
   }
 
   return valid(result ? await rawCWUOpportunityToCWUOpportunity(connection, result) : null);

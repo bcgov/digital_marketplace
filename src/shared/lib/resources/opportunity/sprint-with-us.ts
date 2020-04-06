@@ -1,5 +1,6 @@
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
+import { SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -91,9 +92,8 @@ export interface SWUOpportunity {
   createdBy?: UserSlim;
   updatedBy?: UserSlim;
 
-  // TODO:
-  successfulProponent?: true;
-
+  successfulProposal?: SWUProposalSlim;
+  successfulProponentName?: string;
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -120,8 +120,6 @@ export interface SWUOpportunity {
   history?: SWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
-
-  // TODO:
   reporting?: {
     numProposals: number;
     numWatchers: number;

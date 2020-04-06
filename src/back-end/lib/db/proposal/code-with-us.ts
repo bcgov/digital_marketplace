@@ -670,3 +670,48 @@ export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connec
   result.attachments = [];
   return valid(await rawCWUProposalToCWUProposal(connection, session, result));
 });
+
+export const readSubmittedCWUProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
+  return valid((await connection<RawCWUProposal>('cwuProposals as proposals')
+    .join('cwuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+        connection.raw('(select max("createdAt") from "cwuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity
+    })
+    .whereNotIn('statuses.status', [CWUProposalStatus.Draft, CWUProposalStatus.Withdrawn]))?.length || 0);
+});
+
+export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | null>(async (connection, opportunity, session) => {
+  const result = await connection<RawCWUProposalSlim>('cwuProposals as proposals')
+    .join('cwuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+        connection.raw('(select max("createdAt") from "cwuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .where({
+      'proposals.opportunity': opportunity,
+      'statuses.status': CWUProposalStatus.Awarded
+    })
+    .select<RawCWUProposalSlim[]>(
+      'proposals.id',
+      'proposals.createdBy',
+      'proposals.createdAt',
+      'updatedBy',
+      'updatedAt',
+      'proponentIndividual',
+      'proponentOrganization'
+    )
+    .first();
+
+  return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result)) : valid(null);
+});
+

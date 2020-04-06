@@ -1,6 +1,7 @@
 import { isDateInTheFuture } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
+import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -51,10 +52,8 @@ export interface CWUOpportunity {
   createdBy?: UserSlim;
   updatedBy?: UserSlim;
 
-  // TODO
-  // @successful-proponent
-  successfulProponent?: true;
-
+  successfulProposal?: CWUProposalSlim;
+  successfulProponentName?: string;
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -76,8 +75,6 @@ export interface CWUOpportunity {
   history?: CWUOpportunityHistoryRecord[];
   publishedAt?: Date;
   subscribed?: boolean;
-
-  // TODO
   reporting?: {
     numProposals: number;
     numWatchers: number;
