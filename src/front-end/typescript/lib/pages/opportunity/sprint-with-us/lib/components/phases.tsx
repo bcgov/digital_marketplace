@@ -24,14 +24,28 @@ export type Msg
   | ADT<'implementationPhase', Phase.Msg>;
 
 export async function updateAssignmentDate(state: Immutable<State>, assignmentDate: Date = new Date()): Promise<Immutable<State>> {
-  switch (state.startingPhase) {
-    case SWUOpportunityPhaseType.Inception:
-      return state.set('inceptionPhase', await Phase.setValidateStartDate(state.inceptionPhase, raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate)));
-    case SWUOpportunityPhaseType.Prototype:
-      return state.set('prototypePhase', await Phase.setValidateStartDate(state.prototypePhase, raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, assignmentDate)));
-    case SWUOpportunityPhaseType.Implementation:
-      return state.set('implementationPhase', await Phase.setValidateStartDate(state.implementationPhase, raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, assignmentDate)));
-  }
+  return state
+    .set(
+      'inceptionPhase',
+      await Phase.setValidateStartDate(
+        state.inceptionPhase,
+        raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate)
+      )
+    )
+    .set(
+      'prototypePhase',
+      await Phase.setValidateStartDate(
+        state.prototypePhase,
+        raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, state.startingPhase === SWUOpportunityPhaseType.Prototype ? assignmentDate : DateField.getDate(state.inceptionPhase.completionDate))
+      )
+    )
+    .set(
+      'implementationPhase',
+      await Phase.setValidateStartDate(
+        state.implementationPhase,
+        raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, state.startingPhase === SWUOpportunityPhaseType.Implementation ? assignmentDate : DateField.getDate(state.prototypePhase.completionDate))
+      )
+    );
 }
 
 export async function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Promise<Immutable<State>> {
@@ -39,6 +53,10 @@ export async function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudg
     .set('inceptionPhase', await Phase.updateTotalMaxBudget(state.inceptionPhase, totalMaxBudget))
     .set('prototypePhase', await Phase.updateTotalMaxBudget(state.prototypePhase, totalMaxBudget))
     .set('implementationPhase', await Phase.updateTotalMaxBudget(state.implementationPhase, totalMaxBudget));
+}
+
+export function setStartingPhase(state: Immutable<State>, startingPhase: SWUOpportunityPhaseType = SWUOpportunityPhaseType.Inception): Immutable<State> {
+  return state.set('startingPhase', startingPhase);
 }
 
 export const init: Init<Params, State> = async ({ opportunity, startingPhase = SWUOpportunityPhaseType.Inception }) => {
@@ -76,10 +94,6 @@ export const init: Init<Params, State> = async ({ opportunity, startingPhase = S
     }))
   };
 };
-
-export function setStartingPhase(state: Immutable<State>, startingPhase: SWUOpportunityPhaseType = SWUOpportunityPhaseType.Inception): Immutable<State> {
-  return state.set('startingPhase', startingPhase);
-}
 
 function hasPhase(state: Immutable<State>, phase: SWUOpportunityPhaseType): boolean {
   switch (phase) {

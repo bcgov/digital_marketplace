@@ -788,7 +788,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           return [
             state
               .set('phases', Phases.setStartingPhase(state.phases, startingPhase || undefined))
-              .set('showPhaseInfo', true)
+              .set('showPhaseInfo', true),
+            async state1 => {
+              return state1.set('phases', await Phases.updateAssignmentDate(state.phases, DateField.getDate(state.assignmentDate)));
+            }
           ];
         }
       });
