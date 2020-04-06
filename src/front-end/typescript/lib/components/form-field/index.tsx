@@ -77,7 +77,7 @@ function makeInit<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
   });
 }
 
-function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Immutable<State<Value, ChildState>> {
+export function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Immutable<State<Value, ChildState>> {
   return state.validate
     ? validateAndSetValue(state, getValue(state), state.validate)
     : state;

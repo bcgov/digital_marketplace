@@ -1,14 +1,18 @@
+import * as FormField from 'front-end/lib/components/form-field';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
+import { invalid } from 'shared/lib/validation';
+import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
 
 interface Question {
   question: Immutable<LongText.State>;
-  responseGuideline: Immutable<LongText.State>;
+  guideline: Immutable<LongText.State>;
   wordLimit: Immutable<NumberField.State>;
   score: Immutable<NumberField.State>;
 }
@@ -17,55 +21,76 @@ export interface State {
   questions: Question[];
 }
 
-export type Msg =
-  ADT<'addQuestion'>                                                          |
-  ADT<'deleteQuestion', number>                                               |
-  ADT<'questionText',  { childMsg: LongText.Msg; qIndex: number; } >          |
-  ADT<'responseGuidelineText',  { childMsg: LongText.Msg; qIndex: number; } > |
-  ADT<'wordLimit',  { childMsg: NumberField.Msg; qIndex: number; } >          |
-  ADT<'score',  { childMsg: NumberField.Msg; qIndex: number; } >
-  ;
+export type Msg
+  = ADT<'addQuestion'>
+  | ADT<'deleteQuestion', number>
+  | ADT<'questionText', { childMsg: LongText.Msg; qIndex: number; }>
+  | ADT<'guidelineText', { childMsg: LongText.Msg; qIndex: number; }>
+  | ADT<'wordLimit', { childMsg: NumberField.Msg; qIndex: number; }>
+  | ADT<'score', { childMsg: NumberField.Msg; qIndex: number; }>;
 
-export type Params = {};
+export interface Params {
+  questions: SWUTeamQuestion[];
+}
 
-export const init: Init<Params, State> = async params => {
+export const init: Init<Params, State> = async ({ questions }) => {
   return {
-    ...params,
-    questions: []
+    questions: await Promise.all([...questions]
+      .sort((a, b) => {
+        if (a.order < b.order) {
+          return -1;
+        } else if (a.order > b.order) {
+          return 1;
+        } else {
+          return 0;
+        }
+      })
+      .map(q => createQuestion(q)))
   };
 };
 
-async function defaultQuestion(): Promise<Question> {
+async function createQuestion(question?: SWUTeamQuestion): Promise<Question> {
+  const idNamespace = String(Math.random());
   return {
     question: immutable( await LongText.init({
       errors: [],
+      validate: opportunityValidation.validateTeamQuestionQuestion,
       child: {
-        value: '',
-        id: 'team-questions-question'
+        value: question?.question || '',
+        id: `${idNamespace}-team-questions-question`
       }
     })),
-    responseGuideline: immutable( await LongText.init({
+    guideline: immutable( await LongText.init({
       errors: [],
+      validate: opportunityValidation.validateTeamQuestionGuideline,
       child: {
-        value: '',
-        id: 'team-questions-response-guidelines'
+        value: question?.guideline || '',
+        id: `${idNamespace}-team-questions-response-guidelines`
       }
     })),
 
     wordLimit: immutable(await NumberField.init({
       errors: [],
+      validate: v => {
+        if (v === null) { return invalid(['Please enter a valid word limit.']); }
+        return opportunityValidation.validateTeamQuestionWordLimit(v);
+      },
       child: {
-        value: 300,
-        id: 'team-questions-word-limit',
+        value: question ? question.wordLimit : null,
+        id: `${idNamespace}-team-questions-word-limit`,
         min: 1
       }
     })),
 
     score: immutable(await NumberField.init({
       errors: [],
+      validate: v => {
+        if (v === null) { return invalid(['Please enter a valid score.']); }
+        return opportunityValidation.validateTeamQuestionScore(v);
+      },
       child: {
-        value: 5,
-        id: 'team-questions-score',
+        value: question ? question.score : null,
+        id: `${idNamespace}-team-questions-score`,
         min: 1
       }
     }))
@@ -78,7 +103,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
     case 'addQuestion': {
       return [ state, async (state) => {
-        return state.set('questions', [ ...state.questions, await defaultQuestion() ]);
+        return state.set('questions', [ ...state.questions, await createQuestion() ]);
       }];
     }
 
@@ -101,15 +126,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
     }
 
-    case 'responseGuidelineText': {
+    case 'guidelineText': {
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
       return updateComponentChild({
         state,
-        childStatePath: ['questions', `${qIndex}`, 'responseGuideline'],
+        childStatePath: ['questions', `${qIndex}`, 'guideline'],
         childUpdate: LongText.update,
         childMsg: componentMessage,
-        mapChildMsg: value => adt('responseGuidelineText', { qIndex, childMsg: value } )
+        mapChildMsg: value => adt('guidelineText', { qIndex, childMsg: value } )
       });
     }
 
@@ -139,6 +164,48 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
   }
 };
+
+export type Values = CreateSWUTeamQuestionBody[];
+
+export function getValues(state: Immutable<State>): Values | null {
+  return state.questions.reduce<Values | null>((acc, q, order) => {
+    if (!acc) { return acc; }
+    const score = FormField.getValue(q.score);
+    const wordLimit = FormField.getValue(q.wordLimit);
+    if (score === null || wordLimit === null) { return null; }
+    acc.push({
+      question: FormField.getValue(q.question),
+      guideline: FormField.getValue(q.guideline),
+      wordLimit,
+      score,
+      order
+    });
+    return acc;
+  }, []);
+}
+
+export type Errors = CreateSWUTeamQuestionValidationErrors[];
+
+export function setErrors(state: Immutable<State>, errors: Errors = []): Immutable<State> {
+  return errors.reduce((acc, e) => {
+    return state
+      .updateIn(['questions', e.order, 'question'], s => FormField.setErrors(s, e.question || []))
+      .updateIn(['questions', e.order, 'guideline'], s => FormField.setErrors(s, e.guideline || []))
+      .updateIn(['questions', e.order, 'wordLimit'], s => FormField.setErrors(s, e.wordLimit || []))
+      .updateIn(['questions', e.order, 'score'], s => FormField.setErrors(s, e.score || []));
+  }, state);
+}
+
+export function isValid(state: Immutable<State>): boolean {
+  if (!state.questions.length) { return false; }
+  return state.questions.reduce((acc, q) => {
+    return acc
+        && FormField.isValid(q.question)
+        && FormField.isValid(q.guideline)
+        && FormField.isValid(q.wordLimit)
+        && FormField.isValid(q.score);
+  }, true as boolean);
+}
 
 interface QuestionViewProps {
   index: number;
@@ -178,12 +245,12 @@ const QuestionView: View<QuestionViewProps> = props => {
       <LongText.view
         extraChildProps={{}}
         label='Response Guidelines'
-        placeholder='Provide some guidance on how a Vendor can effectively respond to your question.'
+        placeholder='Provide some guidance on how proponents can effectively respond to your question.'
         required
         style={{ height: '160px' }}
         disabled={disabled}
-        state={question.responseGuideline}
-        dispatch={mapComponentDispatch(dispatch, value => adt('responseGuidelineText' as const, { childMsg: value, qIndex: index } )) }
+        state={question.guideline}
+        dispatch={mapComponentDispatch(dispatch, value => adt('guidelineText' as const, { childMsg: value, qIndex: index } )) }
       />
       <Row>
         <Col xs='12' md='6' lg='5'>
@@ -192,6 +259,7 @@ const QuestionView: View<QuestionViewProps> = props => {
               suffix: 'words'
             }}
             label='Word Limit'
+            placeholder='Word Limit'
             required
             disabled={disabled}
             state={question.wordLimit}
@@ -202,6 +270,7 @@ const QuestionView: View<QuestionViewProps> = props => {
               suffix: 'points'
             }}
             label='Score'
+            placeholder='Score'
             required
             disabled={disabled}
             state={question.score}
