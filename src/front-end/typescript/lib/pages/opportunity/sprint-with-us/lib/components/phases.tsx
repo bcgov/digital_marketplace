@@ -23,40 +23,45 @@ export type Msg
   | ADT<'prototypePhase', Phase.Msg>
   | ADT<'implementationPhase', Phase.Msg>;
 
-export async function updateAssignmentDate(state: Immutable<State>, assignmentDate: Date = new Date()): Promise<Immutable<State>> {
+export function updateAssignmentDate(state: Immutable<State>, assignmentDate: Date = new Date()): Immutable<State> {
   return state
-    .set(
+    .update(
       'inceptionPhase',
-      await Phase.setValidateStartDate(
-        state.inceptionPhase,
+      s => Phase.setValidateStartDate(
+        s,
         raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate)
       )
     )
-    .set(
+    .update(
       'prototypePhase',
-      await Phase.setValidateStartDate(
-        state.prototypePhase,
+      s => Phase.setValidateStartDate(
+        s,
         raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, state.startingPhase === SWUOpportunityPhaseType.Prototype ? assignmentDate : DateField.getDate(state.inceptionPhase.completionDate))
       )
     )
-    .set(
+    .update(
       'implementationPhase',
-      await Phase.setValidateStartDate(
-        state.implementationPhase,
+      s => Phase.setValidateStartDate(
+        s,
         raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, state.startingPhase === SWUOpportunityPhaseType.Implementation ? assignmentDate : DateField.getDate(state.prototypePhase.completionDate))
       )
     );
 }
 
-export async function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Promise<Immutable<State>> {
+export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Immutable<State> {
   return state
-    .set('inceptionPhase', await Phase.updateTotalMaxBudget(state.inceptionPhase, totalMaxBudget))
-    .set('prototypePhase', await Phase.updateTotalMaxBudget(state.prototypePhase, totalMaxBudget))
-    .set('implementationPhase', await Phase.updateTotalMaxBudget(state.implementationPhase, totalMaxBudget));
+    .update('inceptionPhase', s => Phase.updateTotalMaxBudget(s, totalMaxBudget))
+    .update('prototypePhase', s => Phase.updateTotalMaxBudget(s, totalMaxBudget))
+    .update('implementationPhase', s => Phase.updateTotalMaxBudget(s, totalMaxBudget));
 }
 
-export function setStartingPhase(state: Immutable<State>, startingPhase: SWUOpportunityPhaseType = SWUOpportunityPhaseType.Inception): Immutable<State> {
-  return state.set('startingPhase', startingPhase);
+export function setStartingPhase(state: Immutable<State>, startingPhase: SWUOpportunityPhaseType = SWUOpportunityPhaseType.Inception, assignmentDate: Date = new Date()): Immutable<State> {
+  state = state
+    .set('startingPhase', startingPhase)
+    .update('inceptionPhase', s => Phase.setIsAccordianOpen(s, false))
+    .update('prototypePhase', s => Phase.setIsAccordianOpen(s, false))
+    .update('implementationPhase', s => startingPhase === SWUOpportunityPhaseType.Implementation ? Phase.setIsAccordianOpen(s, true) : Phase.setIsAccordianOpen(s, false));
+  return updateAssignmentDate(state, assignmentDate);
 }
 
 export const init: Init<Params, State> = async ({ opportunity, startingPhase = SWUOpportunityPhaseType.Inception }) => {
@@ -191,6 +196,9 @@ export interface Props extends ComponentViewProps<State, Msg> {
 }
 
 export const view: View<Props> = ({ state, dispatch, disabled }) => {
+  const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
+  const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
+  const isImplementationPhaseValid = Phase.isValid(state.implementationPhase);
   return (
     <div>
       {hasPhase(state, SWUOpportunityPhaseType.Inception)
@@ -198,7 +206,8 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             className='mb-4'
             state={state.inceptionPhase}
             dispatch={mapComponentDispatch(dispatch, value => adt('inceptionPhase' as const, value))}
-            icon='map'
+            icon={isInceptionPhaseValid ? 'map' : 'exclamation-circle'}
+            iconColor={isInceptionPhaseValid ? undefined : 'warning'}
             title='Inception'
             description='During the Inception phase, you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
             deliverables={[
@@ -211,7 +220,8 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             className='mb-4'
             state={state.prototypePhase}
             dispatch={mapComponentDispatch(dispatch, value => adt('prototypePhase' as const, value))}
-            icon='rocket'
+            icon={isPrototypePhaseValid ? 'rocket' : 'exclamation-circle'}
+            iconColor={isPrototypePhaseValid ? undefined : 'warning'}
             title='Proof of Concept'
             description='During the Proof of Concept phase, you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!'
             deliverables={[
@@ -225,7 +235,8 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
       <Phase.view
         state={state.implementationPhase}
         dispatch={mapComponentDispatch(dispatch, value => adt('implementationPhase' as const, value))}
-        icon='cogs'
+        icon={isImplementationPhaseValid ? 'cogs' : 'exclamation-circle'}
+        iconColor={isImplementationPhaseValid ? undefined : 'warning'}
         title='Implementation'
         description='As you reach the Implementation phase, you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.'
         deliverables={[

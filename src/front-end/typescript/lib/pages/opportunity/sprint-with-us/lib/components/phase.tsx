@@ -2,6 +2,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -40,81 +41,68 @@ export type Msg
   | ADT<'completionDate', DateField.Msg>
   | ADT<'maxBudget', NumberField.Msg>;
 
-interface InitDateFieldParams {
-  value: DateField.Value;
-  dateType: 'start' | 'completion';
-  validate(raw: string): Validation<Date | null>;
+export function setValidateStartDate(state: Immutable<State>, validate: Params['validateStartDate']): Immutable<State> {
+  return state.update('startDate', s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
 }
 
-async function initDateField(params: InitDateFieldParams): Promise<Immutable<DateField.State>> {
-  return immutable(await DateField.init({
-    errors: [],
-    validate: DateField.validateDate(params.validate),
-    child: {
-      value: params.value,
-      id: `swu-opportunity-phase-${Math.random()}-${params.dateType}-date`
-    }
-  }));
+function resetCompletionDate(state: Immutable<State>): Immutable<State> {
+  return state.update('completionDate', s => FormField.setValidate(
+    s,
+    DateField.validateDate(raw => state.validateCompletionDate(raw, DateField.getDate(state.startDate))),
+    !!FormField.getValue(s)
+  ));
 }
 
-async function initMaxBudget(value: NumberField.Value, totalMaxBudget?: number): Promise<Immutable<NumberField.State>> {
-  return immutable(await NumberField.init({
-    errors: [],
-    validate: v => {
+export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Immutable<State> {
+  return state.update('maxBudget', s => FormField.setValidate(
+    s,
+    v => {
       if (v === null) { return invalid(['Please enter a valid Maximum Phase Budget.']); }
       return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(v, totalMaxBudget);
     },
-    child: {
-      value,
-      id: `swu-opportunity-phase-${Math.random()}-max-budget`,
-      min: 1
-    }
-  }));
+    FormField.getValue(s) !== null
+  ));
 }
 
-export async function setValidateStartDate(state: Immutable<State>, validate: Params['validateStartDate']): Promise<Immutable<State>> {
-  const value = FormField.getValue(state.startDate);
-  const startDate = await initDateField({
-    value,
-    dateType: 'start',
-    validate
-  });
-  return state.set('startDate', value ? FormField.validate(startDate) : startDate);
-}
-
-async function resetCompletionDate(state: Immutable<State>): Promise<Immutable<State>> {
-  const value = FormField.getValue(state.completionDate);
-  const completionDate = await initDateField({
-    value,
-    dateType: 'completion',
-    validate: raw => state.validateCompletionDate(raw, DateField.getDate(state.startDate))
-  });
-  return state.set('completionDate', value ? FormField.validate(completionDate) : completionDate);
-}
-
-export async function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Promise<Immutable<State>> {
-  const value = FormField.getValue(state.maxBudget);
-  const maxBudget = await initMaxBudget(value, totalMaxBudget);
-  return state.set('maxBudget', value ? FormField.validate(maxBudget) : maxBudget);
+export function setIsAccordianOpen(state: Immutable<State>, isAccordianOpen: boolean): Immutable<State> {
+  return state.set('isAccordianOpen', isAccordianOpen);
 }
 
 export const init: Init<Params, State> = async ({ isAccordianOpen, totalMaxBudget, phase, validateStartDate, validateCompletionDate }) => {
+  const idNamespace = String(Math.random());
   return {
     isAccordianOpen,
     validateCompletionDate,
     capabilities: CAPABILITIES.map(capability => ({ capability, fullTime: true, checked: false })),
     collapsed: false,
-    startDate: await initDateField({
-      value: phase?.startDate ? DateField.dateToValue(phase.startDate) : null,
-      dateType: 'start',
-      validate: validateStartDate
-    }),
-    completionDate: await initDateField({
-      value: phase?.completionDate ? DateField.dateToValue(phase.completionDate) : null,
-      dateType: 'completion',
-      validate: raw => validateCompletionDate(raw, phase?.startDate)
-    }),
-    maxBudget: await initMaxBudget(phase ? phase.maxBudget : null, totalMaxBudget)
+    startDate: immutable(await DateField.init({
+      errors: [],
+      validate: DateField.validateDate(validateStartDate),
+      child: {
+        value: phase?.startDate ? DateField.dateToValue(phase.startDate) : null,
+        id: `swu-opportunity-phase-${idNamespace}-start-date`
+      }
+    })),
+    completionDate: immutable(await DateField.init({
+      errors: [],
+      validate: DateField.validateDate(raw => validateCompletionDate(raw, phase?.startDate)),
+      child: {
+        value: phase?.completionDate ? DateField.dateToValue(phase.completionDate) : null,
+        id: `swu-opportunity-phase-${idNamespace}-completion-date`
+      }
+    })),
+    maxBudget: immutable(await NumberField.init({
+      errors: [],
+      validate: v => {
+        if (v === null) { return invalid(['Please enter a valid Maximum Phase Budget.']); }
+        return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(v, totalMaxBudget);
+      },
+      child: {
+        value: phase ? phase.maxBudget : null,
+        id: `swu-opportunity-phase-${idNamespace}-max-budget`,
+        min: 1
+      }
+    }))
   };
 };
 
@@ -140,10 +128,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('startDate', value),
-        updateAfter: state => [
-          state,
-          async state1 => await resetCompletionDate(state1)
-        ]
+        updateAfter: state => [resetCompletionDate(state)]
       });
 
     case 'completionDate':
@@ -206,6 +191,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
   title: string;
   description: string;
   icon: AvailableIcons;
+  iconColor?: ThemeColor;
   deliverables: string[];
   disabled?: boolean;
   className?: string;
@@ -345,7 +331,7 @@ const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 export const view: View<Props> = props => {
-  const { state, title, icon, dispatch, className } = props;
+  const { state, title, icon, iconColor, dispatch, className } = props;
   return (
     <Accordion
       className={className}
@@ -357,6 +343,7 @@ export const view: View<Props> = props => {
       iconWidth={2}
       iconHeight={2}
       iconClassName='mr-3'
+      iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={state.isAccordianOpen}>

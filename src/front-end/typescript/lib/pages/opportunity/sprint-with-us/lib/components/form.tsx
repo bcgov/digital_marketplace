@@ -127,17 +127,14 @@ function getStartingPhase(opportunity?: SWUOpportunity): SWUOpportunityPhaseType
   }
 }
 
-async function resetAssignmentDate(state: Immutable<State>): Promise<Immutable<State>> {
-  const value = FormField.getValue(state.assignmentDate);
-  const assignmentDate = immutable(await DateField.init({
-    errors: [],
-    validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, DateField.getDate(state.proposalDeadline) || new Date())),
-    child: {
-      value,
-      id: 'swu-opportunity-assignment-date'
-    }
-  }));
-  return state.set('assignmentDate', value ? FormField.validate(assignmentDate) : assignmentDate);
+function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
+  return state.update('assignmentDate', s => {
+    return FormField.setValidate(
+      s,
+      DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, DateField.getDate(state.proposalDeadline) || new Date())),
+      !!FormField.getValue(s)
+    );
+  });
 }
 
 export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
@@ -707,10 +704,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('proposalDeadline', value),
-        updateAfter: state => [
-          state,
-          async state1 => await resetAssignmentDate(state1)
-        ]
+        updateAfter: state => [resetAssignmentDate(state)]
       });
 
     case 'assignmentDate':
@@ -720,10 +714,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('assignmentDate', value),
-        updateAfter: state => [
-          state,
-          async state1 => state1.set('phases', await Phases.updateAssignmentDate(state1.phases, DateField.getDate(state1.assignmentDate)))
-        ]
+        updateAfter: state => [state.update('phases', s => Phases.updateAssignmentDate(s, DateField.getDate(state.assignmentDate)))]
       });
 
     case 'totalMaxBudget':
@@ -733,10 +724,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('totalMaxBudget', value),
-        updateAfter: state => [
-          state,
-          async state1 => state1.set('phases', await Phases.updateTotalMaxBudget(state1.phases, FormField.getValue(state1.totalMaxBudget) || undefined))
-        ]
+        updateAfter: state => [state.update('phases', s => Phases.updateTotalMaxBudget(s, FormField.getValue(state.totalMaxBudget) || undefined))]
       });
 
     case 'minTeamMembers':
@@ -787,11 +775,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           const startingPhase = rawStartingPhase ? parseSWUOpportunityPhaseType(rawStartingPhase) : undefined;
           return [
             state
-              .set('phases', Phases.setStartingPhase(state.phases, startingPhase || undefined))
-              .set('showPhaseInfo', true),
-            async state1 => {
-              return state1.set('phases', await Phases.updateAssignmentDate(state.phases, DateField.getDate(state.assignmentDate)));
-            }
+              .set('phases', Phases.setStartingPhase(state.phases, startingPhase || undefined, DateField.getDate(state.assignmentDate)))
+              .set('showPhaseInfo', true)
           ];
         }
       });
