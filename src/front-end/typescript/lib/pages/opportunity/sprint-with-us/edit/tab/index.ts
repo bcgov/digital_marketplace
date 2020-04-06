@@ -132,7 +132,7 @@ export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Pro
         text: 'Read Guide',
         active: false,
         newTab: true,
-        dest: routeDest(adt('content', 'code-with-us-opportunity-guide'))
+        dest: routeDest(adt('content' as const, 'code-with-us-opportunity-guide'))
       }
     ]
   }));

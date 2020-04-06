@@ -13,7 +13,7 @@ const links: AnchorProps[] = [
   },
   {
     children: 'About',
-    dest: routeDest(adt('content', 'about'))
+    dest: routeDest(adt('content' as const, 'about'))
   },
   {
     children: 'Disclaimer',

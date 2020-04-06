@@ -18,9 +18,12 @@ import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
+
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+import * as PageOrgView from 'front-end/lib/pages/organization/view';
+
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
 import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
@@ -50,7 +53,9 @@ export type Route
   | ADT<'notFound',             PageNotFound.RouteParams>
   | ADT<'userList',             PageUserList.RouteParams>
   | ADT<'userProfile',          PageUserProfile.RouteParams>
+
   | ADT<'orgCreate',            PageOrgCreate.RouteParams>
+  | ADT<'orgView',              PageOrgView.RouteParams>
   | ADT<'orgList',              PageOrgList.RouteParams>
   | ADT<'orgEdit',              PageOrgEdit.RouteParams>
 
@@ -117,6 +122,7 @@ export interface State {
     orgCreate?: Immutable<PageOrgCreate.State>;
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
+    orgView?: Immutable<PageOrgView.State>;
 
     proposalSWUCreate?: Immutable<PageProposalSWUCreate.State>;
     proposalSWUEdit?: Immutable<PageProposalSWUEdit.State>;
@@ -158,9 +164,11 @@ type InnerMsg
   | ADT<'pageNotFound',             PageNotFound.Msg>
   | ADT<'pageUserList',             PageUserList.Msg>
   | ADT<'pageUserProfile',          PageUserProfile.Msg>
+
   | ADT<'pageOrgCreate',            PageOrgCreate.Msg>
   | ADT<'pageOrgList',              PageOrgList.Msg>
   | ADT<'pageOrgEdit',              PageOrgEdit.Msg>
+  | ADT<'pageOrgView',              PageOrgView.Msg>
 
   | ADT<'pageProposalSWUCreate',    PageProposalSWUCreate.Msg>
   | ADT<'pageProposalSWUEdit',      PageProposalSWUEdit.Msg>

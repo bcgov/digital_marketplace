@@ -387,6 +387,13 @@ table {
     @extend .bg-light;
   }
 
+  /* Note(Jesse) : In order to have the table cells not 'pop' when content
+   * that's hidden gets its display property toggled, this can be set to
+   * visibility: hidden.  I did this in an earlier PR, and it was reverted, for
+   * what reason I'm not sure.  This popping is visible on
+   * organizations/:id?tab=team when hovering over the team members.
+   * Grep for : @popping_remove_button
+   **/
   .table-show-on-hover {
     display: none;
   }

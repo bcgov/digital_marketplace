@@ -3,6 +3,7 @@ import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as OrganizationTab from 'front-end/lib/pages/organization/lib/components/tab';
 import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
@@ -241,6 +242,18 @@ const router: Router.Router<Route> = {
       }
     },
     {
+      path: '/organizations/:id',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'orgView',
+          value: {
+            orgId: params.id || '',
+            tab: OrganizationTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
       path: '/users/:id',
       makeRoute({ params, query }) {
         return {
@@ -362,12 +375,15 @@ const router: Router.Router<Route> = {
         return `/users/${route.value.userId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'userList':
         return '/users';
+
       case 'orgList':
         return '/organizations';
       case 'orgEdit':
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
+      case 'orgView':
+        return `/organizations/${route.value.orgId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
 
       case 'proposalSWUCreate':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;

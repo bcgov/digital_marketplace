@@ -28,6 +28,7 @@ import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+import * as PageOrgView from 'front-end/lib/pages/organization/view';
 
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
@@ -283,6 +284,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageOrgCreate.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageOrgCreate' as const, value };
+        }
+      });
+
+    case 'orgView':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'orgView'],
+        childRouteParams: route.value,
+        childInit: PageOrgView.component.init,
+        childGetMetadata: PageOrgView.component.getMetadata,
+        childGetModal: PageOrgView.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOrgView' as const, value };
         }
       });
 
@@ -711,6 +725,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageOrgCreate.component.update,
         childGetMetadata: PageOrgCreate.component.getMetadata,
         childGetModal: PageOrgCreate.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOrgView':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOrgView', value }),
+        childStatePath: ['pages', 'orgView'],
+        childUpdate: PageOrgView.component.update,
+        childGetMetadata: PageOrgView.component.getMetadata,
+        childGetModal: PageOrgView.component.getModal,
         childMsg: msg.value
       });
 
