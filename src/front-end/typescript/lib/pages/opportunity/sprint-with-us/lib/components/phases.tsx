@@ -24,8 +24,14 @@ export type Msg
   | ADT<'implementationPhase', Phase.Msg>;
 
 export async function updateAssignmentDate(state: Immutable<State>, assignmentDate: Date = new Date()): Promise<Immutable<State>> {
-  return state
-    .set('inceptionPhase', await Phase.setValidateStartDate(state.inceptionPhase, raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate)));
+  switch (state.startingPhase) {
+    case SWUOpportunityPhaseType.Inception:
+      return state.set('inceptionPhase', await Phase.setValidateStartDate(state.inceptionPhase, raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate)));
+    case SWUOpportunityPhaseType.Prototype:
+      return state.set('prototypePhase', await Phase.setValidateStartDate(state.prototypePhase, raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, assignmentDate)));
+    case SWUOpportunityPhaseType.Implementation:
+      return state.set('implementationPhase', await Phase.setValidateStartDate(state.implementationPhase, raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, assignmentDate)));
+  }
 }
 
 export async function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Promise<Immutable<State>> {
@@ -51,14 +57,21 @@ export const init: Init<Params, State> = async ({ opportunity, startingPhase = S
       phase: opportunity?.prototypePhase,
       totalMaxBudget,
       isAccordianOpen: false,
-      validateStartDate: raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, opportunity?.inceptionPhase?.completionDate),
+      validateStartDate: raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
+        raw,
+        startingPhase === SWUOpportunityPhaseType.Prototype ? opportunity?.assignmentDate : opportunity?.inceptionPhase?.completionDate
+      ),
       validateCompletionDate: opportunityValidation.validateSWUOpportunityPhaseCompletionDate
     })),
     implementationPhase: immutable(await Phase.init({
       phase: opportunity?.implementationPhase,
       totalMaxBudget,
-      isAccordianOpen: false,
-      validateStartDate: raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, opportunity?.prototypePhase?.completionDate),
+      // If only implementation phase, have it be open.
+      isAccordianOpen: startingPhase === SWUOpportunityPhaseType.Implementation,
+      validateStartDate: raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
+        raw,
+        startingPhase === SWUOpportunityPhaseType.Implementation ? opportunity?.assignmentDate : opportunity?.prototypePhase?.completionDate
+      ),
       validateCompletionDate: opportunityValidation.validateSWUOpportunityPhaseCompletionDate
     }))
   };
