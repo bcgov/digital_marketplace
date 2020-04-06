@@ -1,16 +1,20 @@
 import * as db from 'back-end/lib/db';
-import { get } from 'lodash';
+import { get, union } from 'lodash';
+import { getNumber, getString } from 'shared/lib';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
-import { Session } from 'shared/lib/resources/session';
+import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
+import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { ArrayValidation, invalid, isInvalid, isValid, valid, validateArrayAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 import { validateIndividualProponent } from 'shared/lib/validation/proposal/code-with-us';
+import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberPending, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
+import { isArray } from 'util';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
   // Validate the provided id
@@ -142,6 +146,26 @@ export async function validateCWUProposalId(connection: db.Connection, proposalI
   }
 }
 
+export async function validateSWUProposalId(connection: db.Connection, proposalId: Id, session: AuthenticatedSession): Promise<Validation<SWUProposal>> {
+  try {
+    const validatedId = validateUUID(proposalId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneSWUProposal(connection, proposalId, session);
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const proposal = dbResult.value;
+    if (!proposal) {
+      return invalid(['The specified proposal was not found.']);
+    }
+    return valid(proposal);
+  } catch (exception) {
+    return invalid(['Please select a valid proposal.']);
+  }
+}
+
 export async function validateProponent(connection: db.Connection, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
     case 'individual':
@@ -180,4 +204,73 @@ export async function validateSWUOpportunityId(connection: db.Connection, opport
   } catch (exception) {
     return invalid(['Please select a valid Sprint With Us opportunity.']);
   }
+}
+
+export async function validateTeamMember(connection: db.Connection, raw: any): Promise<Validation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
+  const validatedMember = await validateUserId(connection, getString(raw, 'member'));
+  const validatedScrumMaster = validateSWUProposalTeamMemberScrumMaster(get(raw, 'scrumMaster'));
+  const validatedPending = validateSWUProposalTeamMemberPending(get(raw, 'pending'));
+
+  if (allValid([validatedMember, validatedScrumMaster, validatedPending])) {
+    return valid({
+      member: (validatedMember.value as User).id,
+      scrumMaster: validatedScrumMaster.value,
+      pending: validatedPending.value
+    } as CreateSWUProposalTeamMemberBody);
+  } else {
+    return invalid({
+      member: getInvalidValue(validatedMember, undefined),
+      scrumMaster: getInvalidValue(validatedScrumMaster, undefined),
+      pending: getInvalidValue(validatedPending, undefined)
+    });
+  }
+}
+
+export async function validateSWUProposalTeamMembers(connection: db.Connection, raw: any): Promise<ArrayValidation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
+  if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of selected team members.'] }]); }
+  if (!raw.length) { return invalid([{ members: ['Please select at least one team member.'] }]); }
+  return validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v), {});
+}
+
+export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase: SWUOpportunityPhase | null): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
+
+  if (!raw && opportunityPhase) {
+    return invalid({
+      phase: ['This opportunity requires this phase.']
+    });
+  }
+
+  if (!raw) {
+    return valid(undefined);
+  }
+
+  if (!opportunityPhase) {
+    return invalid({
+      phase: ['This opportunity does not require this phase.']
+    });
+  }
+
+  const validatedMembers = await validateSWUProposalTeamMembers(connection, get(raw, 'members'));
+  const validatedProposedCost = validateSWUPhaseProposedCost(getNumber<number>(raw, 'proposedCost'), opportunityPhase.maxBudget);
+
+  if (allValid([validatedMembers, validatedProposedCost])) {
+    return valid({
+      members: validatedMembers.value,
+      proposedCost: validatedProposedCost.value
+    } as CreateSWUProposalPhaseBody);
+  } else {
+    return invalid({
+      members: getInvalidValue(validatedMembers, undefined),
+      proposedCost: getInvalidValue(validatedProposedCost, undefined)
+    });
+  }
+}
+
+export async function validateSWUProposalCapabilities(connection: db.Connection, opportunity: SWUOpportunity, inceptionMemberIds: Id[], prototypeMemberIds: Id[], implementationMemberIds: Id[]): Promise<Validation<string[]>> {
+  // Extract a flattened set of team members across phases
+  const teamMemberIds = union(inceptionMemberIds, prototypeMemberIds, implementationMemberIds);
+
+  const dbResults = (await Promise.all(teamMemberIds.map(async id => await db.readOneUser(connection, id), undefined)));
+  const teamMembers = dbResults.map(v => getValidValue(v, null)).filter(v => !!v) as User[];
+  return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
 }

@@ -36,6 +36,7 @@ export * from 'back-end/lib/db/opportunity/code-with-us';
 export * from 'back-end/lib/db/opportunity/sprint-with-us';
 export * from 'back-end/lib/db/organization';
 export * from 'back-end/lib/db/proposal/code-with-us';
+export * from 'back-end/lib/db/proposal/sprint-with-us';
 export * from 'back-end/lib/db/session';
 export * from 'back-end/lib/db/subscribers/code-with-us';
 export * from 'back-end/lib/db/user';

@@ -121,6 +121,15 @@ export async function validateArrayAsync<A, B>(raw: A[], validate: (v: A) => Pro
   }
 }
 
+export async function validateArrayCustomAsync<A, B, C>(raw: A[], validate: (v: A) => Promise<Validation<B, C>>, defaultInvalidValue: C): Promise<ArrayValidation<B, C>> {
+  const validations = await Promise.all(raw.map(v => validate(v)));
+  if (allValid(validations)) {
+    return valid(validations.map(({ value }) => value));
+  } else {
+    return invalid(validations.map(validation => getInvalidValue(validation, defaultInvalidValue)));
+  }
+}
+
 // Single Value Validators.
 
 // Validate a field only if it is truthy.

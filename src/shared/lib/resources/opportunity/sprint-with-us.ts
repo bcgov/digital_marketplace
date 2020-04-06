@@ -240,8 +240,8 @@ export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submitForReview', string>
   | ADT<'publish', string>
-  | ADT<'evaluateCodeChallenge', string>
-  | ADT<'evaluateTeamScenario', string>
+  | ADT<'startCodeChallenge', string>
+  | ADT<'startTeamScenario', string>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>;
@@ -252,8 +252,8 @@ type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submitForReview', string[]>
   | ADT<'publish', string[]>
-  | ADT<'evaluateCodeChallenge', string[]>
-  | ADT<'evaluateTeamScenario', string[]>
+  | ADT<'startCodeChallenge', string[]>
+  | ADT<'startTeamScenario', string[]>
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
@@ -310,5 +310,16 @@ export function doesSWUOpportunityStatusAllowGovToViewProposals(s: SWUOpportunit
       return false;
     default:
       return true;
+  }
+}
+
+export function doesSWUOpportunityStatusAllowGovToViewFullProposal(s: SWUOpportunityStatus): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
   }
 }
