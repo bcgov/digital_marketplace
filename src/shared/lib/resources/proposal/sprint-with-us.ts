@@ -14,6 +14,23 @@ export enum SWUProposalPhaseType {
   Implementation = 'IMPLEMENTATION'
 }
 
+export function parseSWUProposalPhaseType(raw: string): SWUProposalPhaseType | null {
+  switch (raw) {
+    case SWUProposalPhaseType.Inception: return SWUProposalPhaseType.Inception;
+    case SWUProposalPhaseType.Prototype: return SWUProposalPhaseType.Prototype;
+    case SWUProposalPhaseType.Implementation: return SWUProposalPhaseType.Implementation;
+    default: return null;
+  }
+}
+
+export function swuProposalPhaseTypeToTitleCase(phase: SWUProposalPhaseType): string {
+  switch (phase) {
+    case SWUProposalPhaseType.Inception: return 'Inception';
+    case SWUProposalPhaseType.Prototype: return 'Proof of Concept';
+    case SWUProposalPhaseType.Implementation: return 'Implementation';
+  }
+}
+
 export enum SWUProposalStatus {
   Draft                     = 'DRAFT',
   Submitted                 = 'SUBMITTED',

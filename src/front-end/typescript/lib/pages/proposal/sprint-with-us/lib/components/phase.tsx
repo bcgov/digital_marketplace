@@ -6,107 +6,59 @@ import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import { find } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import CAPABILITIES from 'shared/lib/data/capabilities';
-import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseValidationErrors, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { OrganizationSlim } from 'shared/lib/resources/organization';
+import { CreateSWUProposalPhaseBody, CreateSWUProposalTeamMemberBody, SWUProposalPhase } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
-
-export interface Capability extends CreateSWUOpportunityPhaseRequiredCapabilityBody {
-  checked: boolean;
-}
+import { invalid } from 'shared/lib/validation';
+import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
 export interface Params {
-  phase?: SWUOpportunityPhase;
-  totalMaxBudget?: number;
+  organization: OrganizationSlim;
+  opportunityPhase?: SWUOpportunityPhase;
+  proposalPhase?: SWUProposalPhase;
   isAccordianOpen: boolean;
-  validateStartDate(raw: string): Validation<Date>;
-  validateCompletionDate(raw: string, startDate?: Date): Validation<Date>;
 }
 
-export interface State extends Pick<Params, 'isAccordianOpen' | 'validateCompletionDate'> {
-  startDate: Immutable<DateField.State>;
-  completionDate: Immutable<DateField.State>;
-  maxBudget: Immutable<NumberField.State>;
-  capabilities: Capability[];
+type ModalId = 'addTeamMember';
+
+export interface State extends Params {
+  addTeamMemberLoading: number;
+  showModal: ModalId | null;
+  proposedCost: Immutable<NumberField.State>;
+  members: CreateSWUProposalTeamMemberBody[];
 }
 
 export type Msg
   = ADT<'toggleAccordion'>
-  | ADT<'toggleCapabilityChecked', number> //index
-  | ADT<'toggleCapabilityIsFullTime', number> //index
-  | ADT<'startDate', DateField.Msg>
-  | ADT<'completionDate', DateField.Msg>
-  | ADT<'maxBudget', NumberField.Msg>;
-
-export function setValidateStartDate(state: Immutable<State>, validate: Params['validateStartDate']): Immutable<State> {
-  return state.update('startDate', s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
-}
-
-function resetCompletionDate(state: Immutable<State>): Immutable<State> {
-  return state.update('completionDate', s => FormField.setValidate(
-    s,
-    DateField.validateDate(raw => state.validateCompletionDate(raw, DateField.getDate(state.startDate))),
-    !!FormField.getValue(s)
-  ));
-}
-
-export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Immutable<State> {
-  return state.update('maxBudget', s => FormField.setValidate(
-    s,
-    v => {
-      if (v === null) { return invalid(['Please enter a valid Maximum Phase Budget.']); }
-      return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(v, totalMaxBudget);
-    },
-    FormField.getValue(s) !== null
-  ));
-}
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'addTeamMember'>
+  | ADT<'proposedCost', NumberField.Msg>;
 
 export function setIsAccordianOpen(state: Immutable<State>, isAccordianOpen: boolean): Immutable<State> {
   return state.set('isAccordianOpen', isAccordianOpen);
 }
 
-export const init: Init<Params, State> = async ({ isAccordianOpen, totalMaxBudget, phase, validateStartDate, validateCompletionDate }) => {
+export const init: Init<Params, State> = async params => {
+  const { opportunityPhase, proposalPhase } = params;
   const idNamespace = String(Math.random());
-  const existingCapabilities = phase?.requiredCapabilities || [];
   return {
-    isAccordianOpen,
-    validateCompletionDate,
-    capabilities: CAPABILITIES.map(capability => {
-      const found = find(existingCapabilities, { capability });
-      return {
-        capability,
-        fullTime: found?.fullTime || true,
-        checked: !!found
-      };
-    }),
-    startDate: immutable(await DateField.init({
-      errors: [],
-      validate: DateField.validateDate(validateStartDate),
-      child: {
-        value: phase?.startDate ? DateField.dateToValue(phase.startDate) : null,
-        id: `swu-opportunity-phase-${idNamespace}-start-date`
-      }
-    })),
-    completionDate: immutable(await DateField.init({
-      errors: [],
-      validate: DateField.validateDate(raw => validateCompletionDate(raw, phase?.startDate)),
-      child: {
-        value: phase?.completionDate ? DateField.dateToValue(phase.completionDate) : null,
-        id: `swu-opportunity-phase-${idNamespace}-completion-date`
-      }
-    })),
-    maxBudget: immutable(await NumberField.init({
+    ...params,
+    addTeamMemberLoading: 0,
+    showModal: null,
+    members: (proposalPhase?.members || []).map(({ member, scrumMaster, pending }) => ({ member: member.id, scrumMaster, pending })),
+
+    proposedCost: immutable(await NumberField.init({
       errors: [],
       validate: v => {
         if (v === null) { return invalid(['Please enter a valid Maximum Phase Budget.']); }
-        return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(v, totalMaxBudget);
+        return proposalValidation.validateSWUPhaseProposedCost(v, opportunityPhase?.maxBudget || 0);
       },
       child: {
-        value: phase ? phase.maxBudget : null,
+        value: proposalPhase ? proposalPhase.proposedCost : null,
         id: `swu-opportunity-phase-${idNamespace}-max-budget`,
         min: 1
       }
@@ -119,56 +71,35 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'toggleAccordion':
       return [state.update('isAccordianOpen', v => !v)];
 
-    case 'toggleCapabilityChecked':
-      return [state.update('capabilities', cs => cs.map((c, i) => {
-        return i === msg.value ? { ...c, checked: !c.checked } : c;
-      }))];
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
 
-    case 'toggleCapabilityIsFullTime':
-      return [state.update('capabilities', cs => cs.map((c, i) => {
-        return i === msg.value ? { ...c, fullTime: !c.fullTime } : c;
-      }))];
+    case 'addTeamMember':
+      return [state];
 
-    case 'startDate':
+    case 'hideModal':
+      if (state.addTeamMemberLoading > 0) { return [state]; }
+      return [state.set('showModal', null)];
+
+    case 'proposedCost':
       return updateComponentChild({
         state,
-        childStatePath: ['startDate'],
-        childUpdate: DateField.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('startDate', value),
-        updateAfter: state => [resetCompletionDate(state)]
-      });
-
-    case 'completionDate':
-      return updateComponentChild({
-        state,
-        childStatePath: ['completionDate'],
-        childUpdate: DateField.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('completionDate', value)
-      });
-
-    case 'maxBudget':
-      return updateComponentChild({
-        state,
-        childStatePath: ['maxBudget'],
+        childStatePath: ['proposedCost'],
         childUpdate: NumberField.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('maxBudget', value)
+        mapChildMsg: value => adt('proposedCost', value)
       });
   }
 };
 
-export type Values = CreateSWUOpportunityPhaseBody;
+export type Values = CreateSWUProposalPhaseBody;
 
 export function getValues(state: Immutable<State>): Values | null {
-  const maxBudget = FormField.getValue(state.maxBudget);
-  if (maxBudget === null) { return null; }
+  const proposedCost = FormField.getValue(state.proposedCost);
+  if (proposedCost === null) { return null; }
   return {
-    startDate: DateField.getValueAsString(state.startDate),
-    completionDate: DateField.getValueAsString(state.completionDate),
-    maxBudget,
-    requiredCapabilities: state.capabilities.map(({ capability, fullTime }) => ({ capability, fullTime }))
+    proposedCost,
+    members
   };
 }
 
