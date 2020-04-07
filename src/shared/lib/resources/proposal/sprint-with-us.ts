@@ -106,6 +106,7 @@ export interface SWUProposalTeamMember {
   member: UserSlim;
   scrumMaster: boolean;
   pending: boolean;
+  capabilities: string[];
 }
 
 export interface SWUProposalReference {

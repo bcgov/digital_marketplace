@@ -240,9 +240,15 @@ async function createSWUProposalAttachments(trx: Transaction, proposalId: Id, at
 }
 
 export const readManyTeamMembersByPhaseId = tryDb<[Id], SWUProposalTeamMember[]>(async (connection, phaseId) => {
-  const results = await connection<RawProposalTeamMember>('swuProposalTeamMembers')
-    .where({ phase: phaseId })
-    .select('member', 'scrumMaster', 'pending');
+  const results = await connection<RawProposalTeamMember>('swuProposalTeamMembers as members')
+    .join('users', 'users.id', '=', 'members.member')
+    .where({ 'members.phase': phaseId })
+    .select<RawProposalTeamMember[]>(
+      'members.member',
+      'members.scrumMaster',
+      'members.pending',
+      'users.capabilities'
+    );
 
   if (!results) {
     throw new Error('unable to read selected phase team members');
