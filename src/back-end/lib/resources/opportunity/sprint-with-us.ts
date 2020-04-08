@@ -186,18 +186,21 @@ const resource: Resource = {
         const inceptionPhaseStartDate = getString(inceptionPhase || {}, 'startDate');
         const validatedInceptionPhaseStartDate = opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(inceptionPhaseStartDate, getValidValue(validatedAssignmentDate, now));
         const inceptionPhaseCompletionDate = getString(inceptionPhase || {}, 'completionDate');
-        const validatedInceptionPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(inceptionPhaseCompletionDate, getValidValue(validatedInceptionPhaseStartDate, now));
+        const validatedInceptionPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(inceptionPhaseCompletionDate, getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, now)));
+
         const prototypePhaseStartDate = getString(prototypePhase || {}, 'startDate');
-        const validatedPrototypePhaseStartDate = opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(prototypePhaseStartDate, getValidValue(validatedInceptionPhaseCompletionDate, now));
+        const validatedPrototypePhaseStartDate = opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(prototypePhaseStartDate, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
         const prototypePhaseCompletionDate = getString(prototypePhase || {}, 'completionDate');
-        const validatedPrototypePhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(prototypePhaseCompletionDate, getValidValue(validatedPrototypePhaseStartDate, now));
+        const validatedPrototypePhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(prototypePhaseCompletionDate, getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, now)));
+
         const implementationPhaseStartDate = getString(implementationPhase || {}, 'startDate');
-        const validatedImplementationPhaseStartDate = opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(implementationPhaseStartDate, getValidValue(validatedPrototypePhaseCompletionDate, now));
+        const validatedImplementationPhaseStartDate = opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(implementationPhaseStartDate, getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
         const implementationPhaseCompletionDate = getString(implementationPhase || {}, 'completionDate');
-        const validatedImplementationPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(implementationPhaseCompletionDate, getValidValue(validatedImplementationPhaseStartDate, now));
+        const validatedImplementationPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(implementationPhaseCompletionDate, getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, now)));
 
         // Do not validate other fields if the opportunity a draft
         if (validatedStatus.value === SWUOpportunityStatus.Draft) {
+          const defaultPhaseLength = 7;
           const defaultDate = addDays(new Date(), 14);
           return valid({
             ...request.body,
@@ -209,18 +212,18 @@ const resource: Resource = {
             assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
             inceptionPhase: inceptionPhase ? {
               ...inceptionPhase,
-              startDate: getValidValue(validatedInceptionPhaseStartDate, defaultDate),
-              completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, now), 14))
+              startDate: getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+              completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             } : undefined,
             prototypePhase: prototypePhase ? {
               ...prototypePhase,
-              startDate: getValidValue(validatedPrototypePhaseStartDate, defaultDate),
-              completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, now), 14))
+              startDate: getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+              completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             } : undefined,
             implementationPhase: {
               ...implementationPhase,
-              startDate: getValidValue(validatedImplementationPhaseStartDate, defaultDate),
-              completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, now), 14))
+              startDate: getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+              completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             }
           });
         }
@@ -240,8 +243,8 @@ const resource: Resource = {
         const validatedTeamScenarioWeight = opportunityValidation.validateTeamScenarioWeight(scenarioWeight);
         const validatedPriceWeight = opportunityValidation.validatePriceWeight(priceWeight);
         const validatedInceptionPhase = optional(inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, getValidValue(validatedAssignmentDate, new Date())));
-        const validatedPrototypePhase = optional(prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, getValidValue(validatedInceptionPhaseCompletionDate, new Date())));
-        const validatedImplementationPhase = opportunityValidation.validateSWUOpportunityImplementationPhase(implementationPhase, getValidValue(validatedPrototypePhaseCompletionDate, new Date()));
+        const validatedPrototypePhase = optional(prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, new Date()))));
+        const validatedImplementationPhase = opportunityValidation.validateSWUOpportunityImplementationPhase(implementationPhase, getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, new Date())));
         const validatedTeamQuestions = opportunityValidation.validateTeamQuestions(teamQuestions);
 
         if (allValid([
@@ -469,20 +472,21 @@ const resource: Resource = {
             const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline, swuOpportunity);
             const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, now));
             const inceptionPhaseStartDate = getString(inceptionPhase || {}, 'startDate');
-            const validatedInceptionPhaseStartDate = opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(inceptionPhaseStartDate, getValidValue(validatedAssignmentDate, now));
+            const validatedInceptionPhaseStartDate = opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(inceptionPhaseStartDate, getValidValue(validatedAssignmentDate, getValidValue(validatedAssignmentDate, now)));
             const inceptionPhaseCompletionDate = getString(inceptionPhase || {}, 'completionDate');
-            const validatedInceptionPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(inceptionPhaseCompletionDate, getValidValue(validatedInceptionPhaseStartDate, now));
+            const validatedInceptionPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(inceptionPhaseCompletionDate, getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, now)));
             const prototypePhaseStartDate = getString(prototypePhase || {}, 'startDate');
-            const validatedPrototypePhaseStartDate = opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(prototypePhaseStartDate, getValidValue(validatedInceptionPhaseCompletionDate, now));
+            const validatedPrototypePhaseStartDate = opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(prototypePhaseStartDate, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
             const prototypePhaseCompletionDate = getString(prototypePhase || {}, 'completionDate');
-            const validatedPrototypePhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(prototypePhaseCompletionDate, getValidValue(validatedPrototypePhaseStartDate, now));
+            const validatedPrototypePhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(prototypePhaseCompletionDate, getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, now)));
             const implementationPhaseStartDate = getString(implementationPhase || {}, 'startDate');
-            const validatedImplementationPhaseStartDate = opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(implementationPhaseStartDate, getValidValue(validatedPrototypePhaseCompletionDate, now));
+            const validatedImplementationPhaseStartDate = opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(implementationPhaseStartDate, getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
             const implementationPhaseCompletionDate = getString(implementationPhase || {}, 'completionDate');
-            const validatedImplementationPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(implementationPhaseCompletionDate, getValidValue(validatedImplementationPhaseStartDate, now));
+            const validatedImplementationPhaseCompletionDate = opportunityValidation.validateSWUOpportunityPhaseCompletionDate(implementationPhaseCompletionDate, getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, now)));
 
             // Do not validate other fields if the opportunity a draft
             if (swuOpportunity.status === SWUOpportunityStatus.Draft) {
+              const defaultPhaseLength = 7;
               const defaultDate = addDays(new Date(), 14);
               return valid({
                 session: request.session,
@@ -494,18 +498,18 @@ const resource: Resource = {
                   assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
                   inceptionPhase: inceptionPhase ? {
                     ...inceptionPhase,
-                    startDate: getValidValue(validatedInceptionPhaseStartDate, defaultDate),
-                    completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, now), 14))
+                    startDate: getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+                    completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   } : undefined,
                   prototypePhase: prototypePhase ? {
                     ...prototypePhase,
-                    startDate: getValidValue(validatedPrototypePhaseStartDate, defaultDate),
-                    completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, now), 14))
+                    startDate: getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+                    completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   } : undefined,
                   implementationPhase: {
                     ...implementationPhase,
-                    startDate: getValidValue(validatedImplementationPhaseStartDate, defaultDate),
-                    completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, now), 14))
+                    startDate: getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+                    completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   }
                 })
               } as ValidatedUpdateRequestBody);
@@ -525,9 +529,9 @@ const resource: Resource = {
             const validatedCodeChallengeWeight = opportunityValidation.validateCodeChallengeWeight(codeChallengeWeight);
             const validatedTeamScenarioWeight = opportunityValidation.validateTeamScenarioWeight(scenarioWeight);
             const validatedPriceWeight = opportunityValidation.validatePriceWeight(priceWeight);
-            const validatedInceptionPhase = optional(inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, getValidValue(validatedAssignmentDate, new Date())));
-            const validatedPrototypePhase = optional(prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, getValidValue(validatedInceptionPhaseCompletionDate, new Date())));
-            const validatedImplementationPhase = opportunityValidation.validateSWUOpportunityImplementationPhase(implementationPhase, getValidValue(validatedPrototypePhaseCompletionDate, new Date()));
+            const validatedInceptionPhase = optional(inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, getValidValue(validatedAssignmentDate, now)));
+            const validatedPrototypePhase = optional(prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, now))));
+            const validatedImplementationPhase = opportunityValidation.validateSWUOpportunityImplementationPhase(implementationPhase, getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
             const validatedTeamQuestions = opportunityValidation.validateTeamQuestions(teamQuestions);
 
             if (allValid([
@@ -645,8 +649,8 @@ const resource: Resource = {
               opportunityValidation.validatePriceWeight(validatedSWUOpportunity.value.priceWeight),
               opportunityValidation.validatePriceWeight(validatedSWUOpportunity.value.priceWeight),
               optional(validatedSWUOpportunity.value.inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, validatedSWUOpportunity.value.assignmentDate)),
-              optional(validatedSWUOpportunity.value.prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, validatedSWUOpportunity.value.inceptionPhase?.completionDate)),
-              opportunityValidation.validateSWUOpportunityImplementationPhase(validatedSWUOpportunity.value.implementationPhase)
+              optional(validatedSWUOpportunity.value.prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, validatedSWUOpportunity.value.inceptionPhase?.completionDate || validatedSWUOpportunity.value.assignmentDate)),
+              opportunityValidation.validateSWUOpportunityImplementationPhase(validatedSWUOpportunity.value.implementationPhase, validatedSWUOpportunity.value.prototypePhase?.completionDate || validatedSWUOpportunity.value.assignmentDate)
             ])) {
               return invalid({
                 opportunity: adt('submitForReview' as const, ['This opportunity could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])
