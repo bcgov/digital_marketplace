@@ -3,16 +3,16 @@ import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, validateSWUProposalCapabilities, validateSWUProposalId, validateSWUProposalPhase } from 'back-end/lib/validation';
+import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, validateSWUProposalCapabilities, validateSWUProposalId, validateSWUProposalPhase, validateSWUProposalTeamMembers } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, optionalAsync, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
 interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'attachments'> {
@@ -185,8 +185,8 @@ const resource: Resource = {
           });
         }
 
-        const validatedInceptionPhase = await optionalAsync(inceptionPhase, async v => await validateSWUProposalPhase(connection, v, validatedSWUOpportunity.value.inceptionPhase || null));
-        const validatedPrototypePhase = await optionalAsync(prototypePhase, async v => await validateSWUProposalPhase(connection, v, validatedSWUOpportunity.value.prototypePhase || null));
+        const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, validatedSWUOpportunity.value.inceptionPhase || null);
+        const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, validatedSWUOpportunity.value.prototypePhase || null);
         const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, validatedSWUOpportunity.value.implementationPhase);
         const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses);
         const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
@@ -358,10 +358,6 @@ const resource: Resource = {
               });
             }
 
-            const validatedInceptionPhase = await optionalAsync(inceptionPhase, async v => await validateSWUProposalPhase(connection, v, swuOpportunity.inceptionPhase || null));
-            const validatedPrototypePhase = await optionalAsync(prototypePhase, async v => await validateSWUProposalPhase(connection, v, swuOpportunity.prototypePhase || null));
-            const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase);
-
             // Do not validate other fields if the proposal is a draft.
             if (validatedSWUProposal.value.status === SWUProposalStatus.Draft) {
               return valid({
@@ -369,14 +365,14 @@ const resource: Resource = {
                 body: adt('edit' as const, {
                   ...request.body.value,
                   organization: validatedOrganization.value.id,
-                  attachments: validatedAttachments.value,
-                  inceptionPhase: validatedInceptionPhase.value as CreateSWUProposalPhaseBody | undefined,
-                  prototypePhase: validatedPrototypePhase.value as CreateSWUProposalPhaseBody | undefined,
-                  implementationPhase: validatedImplementationPhase.value as CreateSWUProposalPhaseBody
+                  attachments: validatedAttachments.value
                 })
               });
             }
 
+            const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, swuOpportunity.inceptionPhase || null);
+            const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, swuOpportunity.prototypePhase || null);
+            const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase);
             const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses);
             const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
             // Validate that the total proposed cost does not exceed the max budget of the opportunity
@@ -454,6 +450,60 @@ const resource: Resource = {
               return invalid({
                 proposal: adt('submit' as const, ['This proposal could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to submit it again.'])
               });
+            }
+
+            // Ensure that all required phases have been provided
+            if ((swuOpportunity.inceptionPhase && !validatedSWUProposal.value.inceptionPhase) ||
+                (swuOpportunity.prototypePhase && !validatedSWUProposal.value.prototypePhase)) {
+              return invalid({
+                proposal: adt('submit' as const, ['A required phase is missing from this proposal.'])
+              });
+            }
+
+            // Validate parts of phases that have not been validated yet (proposed cost and team members, dates are already validated)
+            if (validatedSWUProposal.value.inceptionPhase) {
+              const validatedInceptionCost = proposalValidation.validateSWUPhaseProposedCost(validatedSWUProposal.value.inceptionPhase.proposedCost, swuOpportunity.inceptionPhase?.maxBudget || 0);
+              const validatedInceptionMembers = await validateSWUProposalTeamMembers(connection, validatedSWUProposal.value.inceptionPhase.members.map(member => {
+                return {
+                  ...member,
+                  member: member.member.id
+                };
+              }));
+              if (!allValid([validatedInceptionCost, validatedInceptionMembers])) {
+                return invalid({
+                  proposal: adt('submit' as const, ['The inception phase is incomplete or invalid.  This proposal could not be submitted.'])
+                });
+              }
+            }
+
+            if (validatedSWUProposal.value.prototypePhase) {
+              const validatedPrototypeCost = proposalValidation.validateSWUPhaseProposedCost(validatedSWUProposal.value.prototypePhase.proposedCost, swuOpportunity.prototypePhase?.maxBudget || 0);
+              const validatedPrototypeMembers = await validateSWUProposalTeamMembers(connection, validatedSWUProposal.value.prototypePhase.members.map(member => {
+                return {
+                  ...member,
+                  member: member.member.id
+                };
+              }));
+              if (!allValid([validatedPrototypeCost, validatedPrototypeMembers])) {
+                return invalid({
+                  proposal: adt('submit' as const, ['The prototype phase is incomplete or invalid.  This proposal could not be submitted.'])
+                });
+              }
+            }
+
+            if (validatedSWUProposal.value.implementationPhase) {
+              const validatedImplementationCost = proposalValidation.validateSWUPhaseProposedCost(validatedSWUProposal.value.implementationPhase.proposedCost, swuOpportunity.implementationPhase?.maxBudget || 0);
+              const validatedImplementationMembers = await validateSWUProposalTeamMembers(connection, validatedSWUProposal.value.implementationPhase.members.map(member => {
+                return {
+                  ...member,
+                  member: member.member.id
+                };
+              }));
+              if (!allValid([validatedImplementationCost, validatedImplementationMembers])) {
+                return invalid({
+                  proposal: adt('submit' as const, ['The implementation phase is incomplete or invalid.  This proposal could not be submitted.'])
+                });
+              }
             }
 
             const validatedSubmissionNote = proposalValidation.validateNote(request.body.value);
