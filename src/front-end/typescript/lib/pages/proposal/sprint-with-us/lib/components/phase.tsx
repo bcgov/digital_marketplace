@@ -23,7 +23,7 @@ export interface Params {
   organization?: OrganizationSlim;
   opportunityPhase?: SWUOpportunityPhase;
   proposalPhase?: SWUProposalPhase;
-  isAccordianOpen: boolean;
+  isAccordionOpen: boolean;
 }
 
 type ModalId = 'addTeamMembers';
@@ -45,8 +45,8 @@ export type Msg
   | ADT<'addTeamMembers'>
   | ADT<'capabilities', CapabilityGrid.Msg>;
 
-export function setIsAccordianOpen(state: Immutable<State>, isAccordianOpen: boolean): Immutable<State> {
-  return state.set('isAccordianOpen', isAccordianOpen);
+export function setIsAccordionOpen(state: Immutable<State>, isAccordionOpen: boolean): Immutable<State> {
+  return state.set('isAccordionOpen', isAccordionOpen);
 }
 
 function memberHasCapability(members: SWUProposalTeamMember[], capability: string): boolean {
@@ -97,7 +97,7 @@ const stopAddTeamMembersLoading = makeStopLoading<State>('addTeamMembersLoading'
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'toggleAccordion':
-      return [state.update('isAccordianOpen', v => !v)];
+      return [state.update('isAccordionOpen', v => !v)];
 
     case 'showModal':
       return [
@@ -154,6 +154,10 @@ export function getValues(state: Immutable<State>): Values {
       pending: false //TODO remove
     }))
   };
+}
+
+export function getMembers(state: Immutable<State>): SWUProposalTeamMember[] {
+  return state.members;
 }
 
 export type Errors = CreateSWUProposalPhaseValidationErrors;
@@ -250,7 +254,7 @@ export const view: View<Props> = props => {
       iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}
-      open={state.isAccordianOpen}>
+      open={state.isAccordionOpen}>
       <Dates {...props} />
       <TeamMembers {...props} />
       <Capabilities {...props} />

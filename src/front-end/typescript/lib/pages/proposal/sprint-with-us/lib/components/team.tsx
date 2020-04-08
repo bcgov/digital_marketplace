@@ -3,7 +3,7 @@ import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/componen
 import React from 'react';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface Params {
@@ -31,19 +31,19 @@ export const init: Init<Params, State> = async params => {
       organization,
       opportunityPhase: opportunity.inceptionPhase,
       proposalPhase: proposal?.inceptionPhase,
-      isAccordianOpen: false
+      isAccordionOpen: false
     })),
     prototypePhase: immutable(await Phase.init({
       organization,
       opportunityPhase: opportunity.prototypePhase,
       proposalPhase: proposal?.prototypePhase,
-      isAccordianOpen: false
+      isAccordionOpen: false
     })),
     implementationPhase: immutable(await Phase.init({
       organization,
       opportunityPhase: opportunity.implementationPhase,
       proposalPhase: proposal?.implementationPhase,
-      isAccordianOpen: !opportunity.prototypePhase
+      isAccordionOpen: !opportunity.prototypePhase
     }))
   };
 };
@@ -101,6 +101,24 @@ export function getValues(state: Immutable<State>): Values {
   const prototypePhase = hasPhase(state, SWUProposalPhaseType.Prototype) ? Phase.getValues(state.prototypePhase) : undefined;
   const implementationPhase = Phase.getValues(state.implementationPhase);
   return { inceptionPhase, prototypePhase, implementationPhase };
+}
+
+interface MemberValues {
+  inceptionPhase?: SWUProposalTeamMember[];
+  prototypePhase?: SWUProposalTeamMember[];
+  implementationPhase: SWUProposalTeamMember[];
+}
+
+export function getMembers(state: Immutable<State>): MemberValues {
+  return {
+    inceptionPhase: hasPhase(state, SWUProposalPhaseType.Inception)
+      ? Phase.getMembers(state.inceptionPhase)
+      : undefined,
+    prototypePhase: hasPhase(state, SWUProposalPhaseType.Prototype)
+      ? Phase.getMembers(state.prototypePhase)
+      : undefined,
+    implementationPhase: Phase.getMembers(state.implementationPhase)
+  };
 }
 
 export type Errors = Pick<CreateValidationErrors, 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;

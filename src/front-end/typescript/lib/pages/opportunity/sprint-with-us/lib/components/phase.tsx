@@ -22,12 +22,12 @@ export interface Capability extends CreateSWUOpportunityPhaseRequiredCapabilityB
 export interface Params {
   phase?: SWUOpportunityPhase;
   totalMaxBudget?: number;
-  isAccordianOpen: boolean;
+  isAccordionOpen: boolean;
   validateStartDate(raw: string): Validation<Date>;
   validateCompletionDate(raw: string, startDate?: Date): Validation<Date>;
 }
 
-export interface State extends Pick<Params, 'isAccordianOpen' | 'validateCompletionDate'> {
+export interface State extends Pick<Params, 'isAccordionOpen' | 'validateCompletionDate'> {
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
@@ -64,15 +64,15 @@ export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: n
   ));
 }
 
-export function setIsAccordianOpen(state: Immutable<State>, isAccordianOpen: boolean): Immutable<State> {
-  return state.set('isAccordianOpen', isAccordianOpen);
+export function setIsAccordionOpen(state: Immutable<State>, isAccordionOpen: boolean): Immutable<State> {
+  return state.set('isAccordionOpen', isAccordionOpen);
 }
 
-export const init: Init<Params, State> = async ({ isAccordianOpen, totalMaxBudget, phase, validateStartDate, validateCompletionDate }) => {
+export const init: Init<Params, State> = async ({ isAccordionOpen, totalMaxBudget, phase, validateStartDate, validateCompletionDate }) => {
   const idNamespace = String(Math.random());
   const existingCapabilities = phase?.requiredCapabilities || [];
   return {
-    isAccordianOpen,
+    isAccordionOpen,
     validateCompletionDate,
     capabilities: immutable(await CapabilityGrid.init({
       showFullTimeSwitch: true,
@@ -119,7 +119,7 @@ export const init: Init<Params, State> = async ({ isAccordianOpen, totalMaxBudge
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'toggleAccordion':
-      return [state.update('isAccordianOpen', v => !v)];
+      return [state.update('isAccordionOpen', v => !v)];
 
     case 'startDate':
       return updateComponentChild({
@@ -290,7 +290,7 @@ export const view: View<Props> = props => {
       iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}
-      open={state.isAccordianOpen}>
+      open={state.isAccordionOpen}>
       <Description {...props} />
       <Details {...props} />
       <Capabilities {...props} />

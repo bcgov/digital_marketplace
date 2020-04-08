@@ -102,7 +102,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'name':
       return updateComponentChild({
         state,
-        childStatePath: [String(msg.value[0]), 'name'],
+        childStatePath: ['references', String(msg.value[0]), 'name'],
         childUpdate: ShortText.update,
         childMsg: msg.value[1],
         mapChildMsg: value => adt('name', [msg.value[0], value])
@@ -110,7 +110,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'company':
       return updateComponentChild({
         state,
-        childStatePath: [String(msg.value[0]), 'company'],
+        childStatePath: ['references', String(msg.value[0]), 'company'],
         childUpdate: ShortText.update,
         childMsg: msg.value[1],
         mapChildMsg: value => adt('company', [msg.value[0], value])
@@ -118,7 +118,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'phone':
       return updateComponentChild({
         state,
-        childStatePath: [String(msg.value[0]), 'phone'],
+        childStatePath: ['references', String(msg.value[0]), 'phone'],
         childUpdate: ShortText.update,
         childMsg: msg.value[1],
         mapChildMsg: value => adt('phone', [msg.value[0], value])
@@ -126,7 +126,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'email':
       return updateComponentChild({
         state,
-        childStatePath: [String(msg.value[0]), 'email'],
+        childStatePath: ['references', String(msg.value[0]), 'email'],
         childUpdate: ShortText.update,
         childMsg: msg.value[1],
         mapChildMsg: value => adt('email', [msg.value[0], value])

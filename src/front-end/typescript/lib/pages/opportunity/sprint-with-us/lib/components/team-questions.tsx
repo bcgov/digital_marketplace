@@ -187,12 +187,12 @@ export function getValues(state: Immutable<State>): Values | null {
 export type Errors = CreateSWUTeamQuestionValidationErrors[];
 
 export function setErrors(state: Immutable<State>, errors: Errors = []): Immutable<State> {
-  return errors.reduce((acc, e) => {
+  return errors.reduce((acc, e, i) => {
     return state
-      .updateIn(['questions', e.order, 'question'], s => FormField.setErrors(s, e.question || []))
-      .updateIn(['questions', e.order, 'guideline'], s => FormField.setErrors(s, e.guideline || []))
-      .updateIn(['questions', e.order, 'wordLimit'], s => FormField.setErrors(s, e.wordLimit || []))
-      .updateIn(['questions', e.order, 'score'], s => FormField.setErrors(s, e.score || []));
+      .updateIn(['questions', i, 'question'], s => FormField.setErrors(s, e.question || []))
+      .updateIn(['questions', i, 'guideline'], s => FormField.setErrors(s, e.guideline || []))
+      .updateIn(['questions', i, 'wordLimit'], s => FormField.setErrors(s, e.wordLimit || []))
+      .updateIn(['questions', i, 'score'], s => FormField.setErrors(s, e.score || []));
   }, state);
 }
 
@@ -305,12 +305,12 @@ export const view: View<Props> = props => {
   const { state, disabled } = props;
   return (
     <div>
-      {state.questions.map((file, i) => (
+      {state.questions.map((question, i) => (
         <QuestionView
           key={`team-questions-question-${i}`}
           index={i}
           disabled={disabled}
-          question={state.questions[i]}
+          question={question}
           dispatch={props.dispatch}
         />
       ))}

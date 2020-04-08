@@ -1,20 +1,25 @@
+import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH, DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as References from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/references';
-import * as Review from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/review';
 import * as Team from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team';
 import * as TeamQuestions from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team-questions';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import Accordion from 'front-end/lib/views/accordion';
+import Badge from 'front-end/lib/views/badge';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import Link, { imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
+import { find } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
-import { formatAmount } from 'shared/lib';
-import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { formatAmount, formatDate } from 'shared/lib';
+import { fileBlobPath } from 'shared/lib/resources/file';
+import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid } from 'shared/lib/validation';
@@ -33,7 +38,7 @@ export interface Params {
   activeTab?: TabId;
 }
 
-export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'evaluationContent'> {
+export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'evaluationContent' | 'organizations'> {
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   viewerUser: User;
   // Team Tab
@@ -49,7 +54,9 @@ export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'eval
   // References Tab
   references: Immutable<References.State>;
   // Review Proposal Tab
-  review: Immutable<Review.State>;
+  isReviewInceptionPhaseAccordionOpen: boolean;
+  isReviewPrototypePhaseAccordionOpen: boolean;
+  isReviewImplementationPhaseAccordionOpen: boolean;
 }
 
 export type Msg
@@ -67,7 +74,9 @@ export type Msg
   // References Tab
   | ADT<'references', References.Msg>
   // Review Proposal Tab
-  | ADT<'review', Review.Msg>;
+  | ADT<'toggleReviewInceptionPhaseAccordion'>
+  | ADT<'toggleReviewPrototypePhaseAccordion'>
+  | ADT<'toggleReviewImplementationPhaseAccordion'>;
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Evaluation';
 
@@ -85,6 +94,10 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     viewerUser,
     evaluationContent,
     opportunity,
+    organizations,
+    isReviewInceptionPhaseAccordionOpen: true,
+    isReviewPrototypePhaseAccordionOpen: true,
+    isReviewImplementationPhaseAccordionOpen: true,
 
     tabbedForm: immutable(await TabbedFormComponent.init({
       tabs: [
@@ -170,16 +183,12 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     })),
 
     teamQuestions: immutable(await TeamQuestions.init({
-      questions: proposal?.teamQuestionResponses || []
+      questions: opportunity.teamQuestions,
+      responses: proposal?.teamQuestionResponses || []
     })),
 
     references: immutable(await References.init({
       references: proposal?.references || []
-    })),
-
-    review: immutable(await Review.init({
-      //TODO provide proposal data as view prop
-      opportunity
     }))
   };
 };
@@ -262,6 +271,11 @@ export function getValues(state: Immutable<State>): Values | null {
     teamQuestionResponses: TeamQuestions.getValues(state.teamQuestions),
     attachments: []
   };
+}
+
+export function getSelectedOrganization(state: Immutable<State>): OrganizationSlim | null {
+  const value = FormField.getValue(state.organization);
+  return (value && find(state.organizations, { id: value.value })) || null;
 }
 
 /*type PersistAction
@@ -404,14 +418,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => adt('references', value)
       });
 
-    case 'review':
-      return updateComponentChild({
-        state,
-        childStatePath: ['review'],
-        childUpdate: Review.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('review', value)
-      });
+    case 'toggleReviewInceptionPhaseAccordion':
+      return [state.update('isReviewInceptionPhaseAccordionOpen', v => !v)];
+
+    case 'toggleReviewPrototypePhaseAccordion':
+      return [state.update('isReviewPrototypePhaseAccordionOpen', v => !v)];
+
+    case 'toggleReviewImplementationPhaseAccordion':
+      return [state.update('isReviewImplementationPhaseAccordionOpen', v => !v)];
   }
 };
 
@@ -557,17 +571,139 @@ const ReferencesView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const ReviewProposalView: View<Props> = ({ state, dispatch, disabled }) => {
+interface ReviewPhaseViewProps {
+  title: string;
+  icon: AvailableIcons;
+  proposedCost: number;
+  opportunityPhase: SWUOpportunityPhase;
+  members: SWUProposalTeamMember[];
+  isOpen: boolean;
+  className?: string;
+  toggleAccordion(): void;
+}
+
+const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen, className }) => {
+  return (
+    <Accordion
+      className={className}
+      toggle={() => toggleAccordion()}
+      color='blue-dark'
+      title={title}
+      titleClassName='h3 mb-0'
+      icon={icon}
+      iconWidth={2}
+      iconHeight={2}
+      iconClassName='mr-3'
+      chevronWidth={1.5}
+      chevronHeight={1.5}
+      open={isOpen}>
+      <div className='d-flex flex-nowrap align-items-center mb-3'>
+        <Icon name='calendar' width={0.9} height={0.9} className='mr-1' />
+        <span className='font-weight-bold mr-2'>Phase Dates</span>
+        <span>
+          {formatDate(opportunityPhase.startDate)} to {formatDate(opportunityPhase.completionDate)}
+        </span>
+      </div>
+      <div className='d-flex flex-nowrap align-items-center'>
+        <Icon name='calendar' width={0.9} height={0.9} className='mr-1' />
+        <span className='font-weight-bold mr-2'>Proposed Phase Cost</span>
+        <span>{formatAmount(proposedCost, '$')}</span>
+      </div>
+      {members.length
+        ? (<div>
+            <h4 className='mt-4'>Team Member(s)</h4>
+            <div className='border-top'>
+              {members.map((m, i) => (
+                <div className='py-2 px-3 d-flex flex-nowrap align-items-center'>
+                  <Link
+                    key={`swu-proposal-review-phase-member-${i}`}
+                    newTab
+                    symbol_={leftPlacement(imageLinkSymbol(m.member.avatarImageFile ? fileBlobPath(m.member.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
+                    {m.member.name}
+                  </Link>
+                  {m.scrumMaster
+                    ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
+                    : null}
+                  {m.pending
+                    ? (<Badge text='Pending' color='yellow' className='ml-3' />)
+                    : null}
+                </div>
+              ) )}
+            </div>
+          </div>)
+        : null}
+    </Accordion>
+  );
+};
+
+const ReviewReferencesView: View<Props> = ({ state, dispatch }) => {
+  return null;
+};
+
+const ReviewTeamQuestionsView: View<Props> = ({ state, dispatch }) => {
+  return null;
+};
+
+const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
+  const phaseMembers = Team.getMembers(state.team);
+  const organization = getSelectedOrganization(state);
+  const opportunity = state.opportunity;
   return (
     <Row>
       <Col xs='12'>
+        <p className='mb-0'>This is a summary of your proposal for the Sprint With Us opportunity. Be sure to review all information for accuracy prior to submitting your proposal.</p>
       </Col>
+      {organization
+        ? (<Col xs='12' className='mt-5'>
+            <p className='mb-4'>Please review your organization's information to ensure it is up-to-date.</p>
+            <Link
+              newTab
+              symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
+              dest={routeDest(adt('orgEdit', { orgId: organization.id }))}>
+              {organization.legalName}
+            </Link>
+          </Col>)
+        : null}
+        {phaseMembers.inceptionPhase && opportunity.inceptionPhase
+          ? (<ReviewPhaseView
+              className='mb-4'
+              title='Inception'
+              icon='map'
+              proposedCost={FormField.getValue(state.inceptionCost) || 0}
+              opportunityPhase={opportunity.inceptionPhase}
+              members={phaseMembers.inceptionPhase}
+              isOpen={state.isReviewInceptionPhaseAccordionOpen}
+              toggleAccordion={() => dispatch(adt('toggleReviewInceptionPhaseAccordion'))}
+              />)
+          : null}
+        {phaseMembers.prototypePhase && opportunity.prototypePhase
+          ? (<ReviewPhaseView
+              className='mb-4'
+              title='Prototype'
+              icon='map'
+              proposedCost={FormField.getValue(state.prototypeCost) || 0}
+              opportunityPhase={opportunity.prototypePhase}
+              members={phaseMembers.prototypePhase}
+              isOpen={state.isReviewPrototypePhaseAccordionOpen}
+              toggleAccordion={() => dispatch(adt('toggleReviewPrototypePhaseAccordion'))}
+              />)
+          : null}
+        <ReviewPhaseView
+          className='mb-4'
+          title='Implementation'
+          icon='cogs'
+          proposedCost={FormField.getValue(state.implementationCost) || 0}
+          opportunityPhase={opportunity.implementationPhase}
+          members={phaseMembers.implementationPhase}
+          isOpen={state.isReviewImplementationPhaseAccordionOpen}
+          toggleAccordion={() => dispatch(adt('toggleReviewImplementationPhaseAccordion'))}
+          />
     </Row>
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
-  disabled?: boolean;
+interface Props extends ComponentViewProps<State,  Msg> {
+  disabled ?: boolean;
 }
 
 export const view: View<Props> = props => {
@@ -604,7 +740,7 @@ export const view: View<Props> = props => {
   );
 };
 
-export const component: Component<Params, State, Msg> = {
+export const component: Component<Params,  State, Msg> = {
   init,
   update,
   view

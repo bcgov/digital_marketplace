@@ -58,9 +58,9 @@ export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: n
 export function setStartingPhase(state: Immutable<State>, startingPhase: SWUOpportunityPhaseType = SWUOpportunityPhaseType.Inception, assignmentDate: Date = new Date()): Immutable<State> {
   state = state
     .set('startingPhase', startingPhase)
-    .update('inceptionPhase', s => Phase.setIsAccordianOpen(s, false))
-    .update('prototypePhase', s => Phase.setIsAccordianOpen(s, false))
-    .update('implementationPhase', s => startingPhase === SWUOpportunityPhaseType.Implementation ? Phase.setIsAccordianOpen(s, true) : Phase.setIsAccordianOpen(s, false));
+    .update('inceptionPhase', s => Phase.setIsAccordionOpen(s, false))
+    .update('prototypePhase', s => Phase.setIsAccordionOpen(s, false))
+    .update('implementationPhase', s => startingPhase === SWUOpportunityPhaseType.Implementation ? Phase.setIsAccordionOpen(s, true) : Phase.setIsAccordionOpen(s, false));
   return updateAssignmentDate(state, assignmentDate);
 }
 
@@ -72,14 +72,14 @@ export const init: Init<Params, State> = async ({ opportunity, startingPhase = S
     inceptionPhase: immutable(await Phase.init({
       phase: opportunity?.inceptionPhase,
       totalMaxBudget,
-      isAccordianOpen: false,
+      isAccordionOpen: false,
       validateStartDate: raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate),
       validateCompletionDate: opportunityValidation.validateSWUOpportunityPhaseCompletionDate
     })),
     prototypePhase: immutable(await Phase.init({
       phase: opportunity?.prototypePhase,
       totalMaxBudget,
-      isAccordianOpen: false,
+      isAccordionOpen: false,
       validateStartDate: raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
         raw,
         startingPhase === SWUOpportunityPhaseType.Prototype ? opportunity?.assignmentDate : opportunity?.inceptionPhase?.completionDate
@@ -90,7 +90,7 @@ export const init: Init<Params, State> = async ({ opportunity, startingPhase = S
       phase: opportunity?.implementationPhase,
       totalMaxBudget,
       // If only implementation phase, have it be open.
-      isAccordianOpen: startingPhase === SWUOpportunityPhaseType.Implementation,
+      isAccordionOpen: startingPhase === SWUOpportunityPhaseType.Implementation,
       validateStartDate: raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
         raw,
         startingPhase === SWUOpportunityPhaseType.Implementation ? opportunity?.assignmentDate : opportunity?.prototypePhase?.completionDate
