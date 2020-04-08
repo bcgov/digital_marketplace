@@ -1,5 +1,5 @@
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { CrudApi, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
@@ -532,20 +532,42 @@ interface AffiliationResourceTypes extends Pick<UndefinedResourceTypes, 'readOne
   };
 }
 
+type AffiliationReadManyForOrganizationActionTypes = ReadManyActionTypes<{
+  rawResponse: AffiliationResource.AffiliationMember;
+  validResponse: AffiliationResource.AffiliationMember;
+  invalidResponse: string[];
+}>;
+
+interface AffiliationsApi extends CrudApi<AffiliationResourceTypes> {
+  readManyForOrganization(organizationId: Id): ReturnType<CrudClientAction<AffiliationReadManyForOrganizationActionTypes>>;
+}
+
 const affiliationActionParams = {
   transformValid: rawAffiliationToAffiliation
 };
 
-export const affiliations: CrudApi<AffiliationResourceTypes> = makeCrudApi({
-  routeNamespace: apiNamespace('affiliations'),
-  create: affiliationActionParams,
-  update: affiliationActionParams,
-  delete: affiliationActionParams,
-  readMany: {
-    transformValid: a => a
-  },
-  readOne: undefined
-});
+const AFFILIATIONS_ROUTE_NAMESPACE = apiNamespace('affiliations');
+
+export const affiliations: AffiliationsApi = {
+  ...makeCrudApi<AffiliationResourceTypes>({
+    routeNamespace: AFFILIATIONS_ROUTE_NAMESPACE,
+    create: affiliationActionParams,
+    update: affiliationActionParams,
+    delete: affiliationActionParams,
+    readMany: {
+      transformValid: a => a
+    },
+    readOne: undefined
+  }),
+
+  async readManyForOrganization(organizationId) {
+    return await makeRequest<AffiliationReadManyForOrganizationActionTypes & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${AFFILIATIONS_ROUTE_NAMESPACE}?organization=${window.encodeURIComponent(organizationId)}`,
+      body: null
+    });
+  }
+};
 
 // Files
 

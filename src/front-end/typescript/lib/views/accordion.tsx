@@ -10,7 +10,7 @@ export interface Props {
   color: ThemeColor;
   title: string;
   titleClassName?: string;
-  icon: AvailableIcons;
+  icon?: AvailableIcons;
   iconWidth?: number;
   iconHeight?: number;
   iconClassName?: string;
@@ -46,7 +46,7 @@ export const view: View<Props> = props => {
     <div className={`py-2 ${className}`}>
       <Link color={color} disabled={disabled} className='align-items-center flex-nowrap w-100' onClick={toggle}>
         <div className='d-flex align-items-center flex-nowrap'>
-          <Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />
+          {icon ? (<Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />) : null}
           <div className={titleClassName}>{title}</div>
         </div>
         <Icon className={`ml-auto`} name={open ? 'chevron-up' : 'chevron-down'} width={chevronWidth} height={chevronHeight} />

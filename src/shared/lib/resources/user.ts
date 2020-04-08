@@ -49,6 +49,7 @@ export interface User {
 export interface UserSlim {
   id: Id;
   name: string;
+  avatarImageFile?: FileRecord;
 }
 
 export function usersAreEquivalent(a: User, b: User): boolean {
