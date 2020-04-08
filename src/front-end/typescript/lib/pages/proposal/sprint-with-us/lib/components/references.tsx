@@ -39,14 +39,8 @@ function makeBlankReference(order: number): SWUProposalReference {
 }
 
 export const init: Init<Params, State> = async ({ references }) => {
-  // Ensure there are only three references.
-  references = [
-    references[0] || makeBlankReference(0),
-    references[1] || makeBlankReference(1),
-    references[2] || makeBlankReference(2)
-  ];
   // Sort references by order.
-  references = references.sort((a, b) => {
+  references = [...references].sort((a, b) => {
     if (a.order < b.order) {
       return -1;
     } else if (a.order > b.order) {
@@ -55,6 +49,12 @@ export const init: Init<Params, State> = async ({ references }) => {
       return 0;
     }
   });
+  // Ensure there are only three references.
+  references = [
+    references[0] || makeBlankReference(0),
+    references[1] || makeBlankReference(1),
+    references[2] || makeBlankReference(2)
+  ];
   return {
     references: await Promise.all(references.map(async r => ({
       name: immutable(await ShortText.init({
