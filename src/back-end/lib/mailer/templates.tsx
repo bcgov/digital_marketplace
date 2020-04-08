@@ -333,10 +333,14 @@ export interface SimpleProps extends TemplateBaseProps {
   linkLists?: LinkListProps[];
   descriptionLists?: DescriptionListProps[];
   callToAction?: LinkProps;
+  body?: {
+    title?: string;
+    content: Child;
+  };
 }
 
 const Simple: View<SimpleProps> = props => {
-  const { linkLists, descriptionLists, callToAction } = props;
+  const { linkLists, descriptionLists, callToAction, body } = props;
   return (
     <Layout {...props}>
       <Fragment>
@@ -347,6 +351,14 @@ const Simple: View<SimpleProps> = props => {
       <Fragment>
         {descriptionLists
           ? descriptionLists.map((list, i) => (<DescriptionList key={`description-list-${i}`} {...list} />))
+          : null}
+      </Fragment>
+      <Fragment>
+        {body
+          ? (<Fragment>
+              {body.title ? (<div style={{...styles.utilities.font.bold, ...styles.utilities.text.center}}>{body.title}</div>) : null}
+              {body.content}
+            </Fragment>)
           : null}
       </Fragment>
       {callToAction
