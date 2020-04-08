@@ -2,6 +2,7 @@ import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
 import * as CapabilityGrid from 'front-end/lib/components/capability-grid';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Badge from 'front-end/lib/views/badge';
@@ -25,7 +26,9 @@ export interface Params {
   isAccordionOpen: boolean;
 }
 
-type ModalId = 'addTeamMembers';
+type ModalId
+  = ADT<'addTeamMembers'>
+  | ADT<'viewTeamMember', Member>;
 
 export interface Member extends AffiliationMember {
   scrumMaster: boolean;
@@ -298,7 +301,7 @@ const TeamMembers: View<Props> = props => {
           outline
           size='sm'
           disabled={disabled}
-          onClick={() => dispatch(adt('showModal', 'addTeamMembers') as Msg)}
+          onClick={() => dispatch(adt('showModal', adt('addTeamMembers')) as Msg)}
           symbol_={leftPlacement(iconLinkSymbol('user-plus'))}>
           Add Team Member(s)
         </Link>
@@ -358,9 +361,47 @@ export const view: View<Props> = props => {
 };
 
 export const getModal: PageGetModal<State, Msg> = state => {
-  switch (state.showModal) {
-    case null:
-      return null;
+  if (!state.showModal) { return null; }
+  switch (state.showModal.tag) {
+    case 'viewTeamMember': {
+      const member = state.showModal.value;
+      return {
+        title: 'View Team Member',
+        onCloseMsg: adt('hideModal'),
+        body: dispatch => {
+          const numCapabilities = member.user.capabilities.length + 1;
+          return (
+            <div>
+              <div className='d-flex flex-nowrap align-items-center'>
+                <img
+                  className='rounded-circle border'
+                  style={{
+                    width: '5rem',
+                    height: '5rem',
+                    objectFit: 'cover'
+                  }}
+                  src={userAvatarPath(member.user)} />
+                <div className='ml-3 d-flex flex-column align-items-start'>
+                  <strong className='mb-3'>{member.user.name}</strong>
+                  <span className='font-size-small'>{numCapabilities} Capabilit{numCapabilities === 1 ? 'y' : 'ies'}</span>
+                </div>
+              </div>
+              <div className='border-top border-left'>
+                {member.user.capabilities.map((c, i) => {
+                  return (
+                    <div key={`swu-proposal-phase-view-member-capability-${i}`} className='d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom'>
+                      <Icon className='mr-2' name='check-circle' color='success' />
+                      <span>{c}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        },
+        actions: []
+      };
+    }
 
     case 'addTeamMembers':
       return {
@@ -380,18 +421,16 @@ export const getModal: PageGetModal<State, Msg> = state => {
                         onClick={() => dispatch(adt('toggleAffiliationToBeAdded', i))}
                         symbol_={leftPlacement(iconLinkSymbol(m.toBeAdded ? 'check-circle' : 'circle'))}
                         symbolClassName={m.toBeAdded ? 'text-success' : 'text-body'}
-                        className='font-size-small text-nowrap flex-nowrap'
-                        iconSymbolSize={0.9}
+                        className='text-nowrap flex-nowrap'
                         color='body'>
                         <img
-                          src={m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH}
+                          className='rounded-circle border'
                           style={{
                             width: '1.75rem',
                             height: '1.75rem',
-                            objectFit: 'cover',
-                            borderRadius: '50%'
+                            objectFit: 'cover'
                           }}
-                          className='mr-2' />
+                          src={userAvatarPath(m.user)} />
                         {m.user.name}
                       </Link>
                       {m.membershipStatus === MembershipStatus.Pending
