@@ -217,12 +217,12 @@ const resource: Resource = {
             } : undefined,
             prototypePhase: prototypePhase ? {
               ...prototypePhase,
-              startDate: getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+              startDate: getValidValue(validatedPrototypePhaseStartDate, inceptionPhase ? getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
               completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             } : undefined,
             implementationPhase: {
               ...implementationPhase,
-              startDate: getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+              startDate: getValidValue(validatedImplementationPhaseStartDate, prototypePhase ? getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
               completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             }
           });
@@ -503,12 +503,12 @@ const resource: Resource = {
                   } : undefined,
                   prototypePhase: prototypePhase ? {
                     ...prototypePhase,
-                    startDate: getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+                    startDate: getValidValue(validatedPrototypePhaseStartDate, inceptionPhase ? getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
                     completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   } : undefined,
                   implementationPhase: {
                     ...implementationPhase,
-                    startDate: getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
+                    startDate: getValidValue(validatedImplementationPhaseStartDate, prototypePhase ? getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
                     completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   }
                 })
