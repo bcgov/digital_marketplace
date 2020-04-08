@@ -55,7 +55,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
         <Col xs='12'>
           <div className='mt-4'>
             <h3>Terms & Conditions</h3>
-            <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Review the Terms & Conditions</Link>
+            <Link newTab dest={routeDest(adt('content' as const, 'terms-and-conditions'))}>Review the Terms & Conditions</Link>
           </div>
         </Col>
       </Row>

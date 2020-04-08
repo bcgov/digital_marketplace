@@ -29,6 +29,7 @@ import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+import * as PageOrgView from 'front-end/lib/pages/organization/view';
 
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
@@ -117,6 +118,13 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageOrgList.component,
         state => state.pages.orgList,
         value => ({ tag: 'pageOrgList', value })
+      );
+    case 'orgView':
+      return makeViewPageProps(
+        props,
+        PageOrgView.component,
+        state => state.pages.orgView,
+        value => ({ tag: 'pageOrgView', value })
       );
 
     case 'proposalSWUCreate':

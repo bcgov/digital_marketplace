@@ -168,7 +168,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
         <span>
-          Need help? <Link dest={routeDest(adt('content', 'code-with-us-proposal-guide'))}>Read the guide</Link> for creating and managing a CWU proposal
+          Need help? <Link dest={routeDest(adt('content' as const, 'code-with-us-proposal-guide'))}>Read the guide</Link> for creating and managing a CWU proposal
         </span>
       )
     })

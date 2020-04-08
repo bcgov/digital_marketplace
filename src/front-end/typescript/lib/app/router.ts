@@ -241,6 +241,17 @@ const router: Router.Router<Route> = {
       }
     },
     {
+      path: '/organizations/:id',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'orgView',
+          value: {
+            orgId: params.id || ''
+          }
+        };
+      }
+    },
+    {
       path: '/users/:id',
       makeRoute({ params, query }) {
         return {
@@ -362,12 +373,15 @@ const router: Router.Router<Route> = {
         return `/users/${route.value.userId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'userList':
         return '/users';
+
       case 'orgList':
         return '/organizations';
       case 'orgEdit':
         return `/organizations/${route.value.orgId}/edit`;
       case 'orgCreate':
         return '/organizations/create';
+      case 'orgView':
+        return `/organizations/${route.value.orgId}`;
 
       case 'proposalSWUCreate':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;

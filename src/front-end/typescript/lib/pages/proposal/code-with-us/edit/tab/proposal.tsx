@@ -317,10 +317,10 @@ const view: ComponentView<State, Msg> = viewValid(props => {
 const SubmitTerms: View<ComponentViewProps<ValidState, Msg> & { action: string; }> = ({ action, state, dispatch }) => {
   return (
     <div>
-      <p>Please ensure you have reviewed the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link> prior to {action} your proposal for this Code With Us opportunity.</p>
+      <p>Please ensure you have reviewed the <Link newTab dest={routeDest(adt('content' as const, 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link> prior to {action} your proposal for this Code With Us opportunity.</p>
       <Checkbox.view
         extraChildProps={{
-          inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link>.</span>)
+          inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <Link newTab dest={routeDest(adt('content' as const, 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link>.</span>)
         }}
         className='font-weight-bold'
         state={state.submitTermsCheckbox}
