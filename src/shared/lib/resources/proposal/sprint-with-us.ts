@@ -123,7 +123,6 @@ export type CreateSWUProposalStatus
 export interface CreateSWUProposalTeamMemberBody {
   member: Id;
   scrumMaster: boolean;
-  pending: boolean;
 }
 
 export interface CreateSWUProposalPhaseBody {
