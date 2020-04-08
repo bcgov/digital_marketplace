@@ -3,17 +3,21 @@ import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
+import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
-import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
+import * as OrganizationTab from 'front-end/lib/pages/organization/lib/components/tab/organizations';
+import * as QualificationTab from 'front-end/lib/pages/organization/lib/components/tab/qualifications';
+import * as TeamTab from 'front-end/lib/pages/organization/lib/components/tab/team';
+import { routeDest } from 'front-end/lib/views/link';
+// import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
-import { User } from 'shared/lib/resources/user';
-import { UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { User, UserType } from 'shared/lib/resources/user';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState {
@@ -39,6 +43,66 @@ export interface RouteParams {
   orgId: string;
 }
 
+type Params = {};
+
+export interface Tabs {
+  organization: TabbedPage.Tab<Params, OrganizationTab.State, OrganizationTab.InnerMsg>;
+  team: TabbedPage.Tab<Params, TeamTab.State, TeamTab.InnerMsg>;
+  qualification: TabbedPage.Tab<Params, QualificationTab.State, QualificationTab.InnerMsg>;
+}
+
+export type TabId = TabbedPage.TabId<Tabs>;
+
+export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition<Tabs, K> {
+  switch (id) {
+
+    case 'team':
+      return {
+        component: TeamTab.component,
+        icon: 'bell',
+        title: 'Team'
+      } as TabbedPage.TabDefinition<Tabs, K>;
+
+    case 'qualification':
+      return {
+        component: QualificationTab.component,
+        icon: 'balance-scale',
+        title: 'SWU Qaulification'
+      } as TabbedPage.TabDefinition<Tabs, K>;
+
+    case 'organization':
+    default:
+      return {
+        component: OrganizationTab.component,
+        icon: 'user',
+        title: 'Organization'
+      } as TabbedPage.TabDefinition<Tabs, K>;
+  }
+}
+
+// @duplicated_from_profile_tab
+export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+  const { icon, title } = idToDefinition(tab);
+  return {
+    icon,
+    text: title,
+    active: activeTab === tab,
+    dest: routeDest(adt('landing', null))
+  };
+}
+
+// @duplicated_from_profile_tab
+export async function makeSidebarState(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+  const links = (() => {
+    return [
+      makeSidebarLink('organization', profileUser.id, activeTab),
+      makeSidebarLink('team', profileUser.id, activeTab),
+      makeSidebarLink('qualification', profileUser.id, activeTab)
+    ];
+  })();
+  return immutable(await MenuSidebar.init({ links }));
+}
+
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor, UserType.Admin],
 
@@ -51,7 +115,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         user: shared.sessionUser,
         organization: result.value,
         sidebar: shared.sessionUser.type === UserType.Vendor
-                  ? await makeSidebarState(shared.sessionUser, shared.sessionUser, 'organizations')
+                  ? await makeSidebarState(shared.sessionUser, shared.sessionUser, 'organization')
                   : immutable(await MenuSidebar.init({ links: [] })),
         orgForm: immutable(await OrgForm.init({organization: result.value }))
       }));

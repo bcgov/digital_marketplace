@@ -89,6 +89,7 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
   }
 }
 
+// @duplicated_from_profile_tab
 export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
   const { icon, title } = idToDefinition(tab);
   return {
@@ -99,6 +100,7 @@ export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuS
   };
 }
 
+// @duplicated_from_profile_tab
 export async function makeSidebarState(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   const links = (() => {
     switch (viewerUser.type) {
