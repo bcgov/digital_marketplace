@@ -10,8 +10,12 @@ export interface Capability {
   fullTime: boolean;
 }
 
+export type CapabilityWithOptionalFullTime
+  = Omit<Capability, 'fullTime'>
+  & { fullTime?: boolean; };
+
 export interface Params {
-  capabilities: Array<Omit<Capability, 'fullTime'> & { fullTime?: boolean; }>;
+  capabilities: CapabilityWithOptionalFullTime[];
   showFullTimeSwitch?: boolean;
 }
 
@@ -46,6 +50,13 @@ export function isAtLeastOneChecked(state: Immutable<State>): boolean {
 
 export function areAllChecked(state: Immutable<State>): boolean {
   return state.capabilities.reduce((acc, { checked }) => acc && checked, true as boolean);
+}
+
+export function setCapabilities(state: Immutable<State>, cs: CapabilityWithOptionalFullTime[]): Immutable<State> {
+  return state.set('capabilities', cs.map(c => ({
+    ...c,
+    fullTime: !!c.fullTime
+  })));
 }
 
 export const init: Init<Params, State> = async ({ capabilities, showFullTimeSwitch = false }) => {
