@@ -123,7 +123,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         activeTab
       }));
     } else {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, {})));
       return invalid(null);
     }
   },
@@ -133,7 +133,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         redirectOnSuccess: router.routeToUrl(adt('orgEdit', {orgId: routeParams.orgId}))
       })));
     } else {
-      dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
+      dispatch(replaceRoute(adt('notFound' as const, {})));
     }
 
     return invalid(null);

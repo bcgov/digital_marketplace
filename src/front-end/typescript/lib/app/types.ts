@@ -42,7 +42,6 @@ import { ADT } from 'shared/lib/types';
 
 // Note(Jesse): @add_new_page_location
 export type Route
-
   = ADT<'landing',              PageLanding.RouteParams>
   | ADT<'opportunities',        PageOpportunities.RouteParams>
   | ADT<'content',              PageContent.RouteParams>
@@ -55,10 +54,10 @@ export type Route
   | ADT<'userList',             PageUserList.RouteParams>
   | ADT<'userProfile',          PageUserProfile.RouteParams>
 
-  | ADT<'orgCreate',             PageOrgCreate.RouteParams>
-  | ADT<'orgEdit',               PageOrgEdit.RouteParams>
-  | ADT<'orgList',               PageOrgList.RouteParams>
-  | ADT<'orgView',               PageOrgView.RouteParams>
+  | ADT<'orgCreate',            PageOrgCreate.RouteParams>
+  | ADT<'orgView',              PageOrgView.RouteParams>
+  | ADT<'orgList',              PageOrgList.RouteParams>
+  | ADT<'orgEdit',              PageOrgEdit.RouteParams>
 
   | ADT<'proposalSWUCreate',    PageProposalSWUCreate.RouteParams>
   | ADT<'proposalSWUEdit',      PageProposalSWUEdit.RouteParams>
