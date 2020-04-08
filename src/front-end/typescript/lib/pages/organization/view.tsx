@@ -4,14 +4,20 @@ import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import * as Table from 'front-end/lib/components/table';
+import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import Badge from 'front-end/lib/views/badge';
+import Caps from 'shared/lib/data/capabilities';
+
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
+import * as OrgTabs from 'front-end/lib/pages/organization/lib/components/tab';
 import * as OrganizationTab from 'front-end/lib/pages/organization/lib/components/tab/organizations';
 import * as QualificationTab from 'front-end/lib/pages/organization/lib/components/tab/qualifications';
 import * as TeamTab from 'front-end/lib/pages/organization/lib/components/tab/team';
+
+import Icon from 'front-end/lib/views/icon';
 import { routeDest } from 'front-end/lib/views/link';
-// import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -27,6 +33,9 @@ interface ValidState {
   organization: OrgResource.Organization;
   orgForm: Immutable<OrgForm.State>;
   sidebar: Immutable<MenuSidebar.State>;
+  activeTab?: OrgTabs.TabId;
+
+  teamMemberTable: Immutable<Table.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -34,6 +43,7 @@ export type State = Validation<Immutable<ValidState>, null>;
 type InnerMsg
   = ADT<'orgForm', OrgForm.Msg>
   | ADT<'archive'>
+  | ADT<'table', Table.Msg>
   | ADT<'hideArchiveModal'>
   | ADT<'sidebar', MenuSidebar.Msg>;
 
@@ -41,34 +51,24 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export interface RouteParams {
   orgId: string;
+  tab?: OrgTabs.TabId;
 }
 
-type Params = {};
-
-export interface Tabs {
-  organization: TabbedPage.Tab<Params, OrganizationTab.State, OrganizationTab.InnerMsg>;
-  team: TabbedPage.Tab<Params, TeamTab.State, TeamTab.InnerMsg>;
-  qualification: TabbedPage.Tab<Params, QualificationTab.State, QualificationTab.InnerMsg>;
-}
-
-export type TabId = TabbedPage.TabId<Tabs>;
-
-export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition<Tabs, K> {
+export function idToDefinition<K extends OrgTabs.TabId>(id: K): TabbedPage.TabDefinition<OrgTabs.Tabs, K> {
   switch (id) {
-
     case 'team':
       return {
         component: TeamTab.component,
         icon: 'bell',
         title: 'Team'
-      } as TabbedPage.TabDefinition<Tabs, K>;
+      } as TabbedPage.TabDefinition<OrgTabs.Tabs, K>;
 
     case 'qualification':
       return {
         component: QualificationTab.component,
         icon: 'balance-scale',
-        title: 'SWU Qaulification'
-      } as TabbedPage.TabDefinition<Tabs, K>;
+        title: 'SWU Qualification'
+      } as TabbedPage.TabDefinition<OrgTabs.Tabs, K>;
 
     case 'organization':
     default:
@@ -76,28 +76,26 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         component: OrganizationTab.component,
         icon: 'user',
         title: 'Organization'
-      } as TabbedPage.TabDefinition<Tabs, K>;
+      } as TabbedPage.TabDefinition<OrgTabs.Tabs, K>;
   }
 }
 
-// @duplicated_from_profile_tab
-export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: OrgTabs.TabId, userId: Id, activeTab: OrgTabs.TabId, orgId: Id): MenuSidebar.SidebarLink {
   const { icon, title } = idToDefinition(tab);
   return {
     icon,
     text: title,
     active: activeTab === tab,
-    dest: routeDest(adt('landing', null))
+    dest: routeDest(adt('orgView', {orgId, tab}))
   };
 }
 
-// @duplicated_from_profile_tab
-export async function makeSidebarState(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+export async function makeSidebarState(profileUser: User, viewerUser: User, activeTab: OrgTabs.TabId, orgId: Id): Promise<Immutable<MenuSidebar.State>> {
   const links = (() => {
     return [
-      makeSidebarLink('organization', profileUser.id, activeTab),
-      makeSidebarLink('team', profileUser.id, activeTab),
-      makeSidebarLink('qualification', profileUser.id, activeTab)
+      makeSidebarLink('organization',   profileUser.id,  activeTab, orgId),
+      makeSidebarLink('team',           profileUser.id,  activeTab, orgId),
+      makeSidebarLink('qualification',  profileUser.id,  activeTab, orgId)
     ];
   })();
   return immutable(await MenuSidebar.init({ links }));
@@ -108,6 +106,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
 
   async success({ dispatch, routeParams, shared }) {
     const result = await api.organizations.readOne(routeParams.orgId);
+    const activeTab = routeParams.tab || 'organization';
     if (api.isValid(result)) {
       return valid(immutable({
         archiveLoading: 0,
@@ -115,9 +114,13 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         user: shared.sessionUser,
         organization: result.value,
         sidebar: shared.sessionUser.type === UserType.Vendor
-                  ? await makeSidebarState(shared.sessionUser, shared.sessionUser, 'organization')
+                  ? await makeSidebarState(shared.sessionUser, shared.sessionUser, activeTab, result.value.id )
                   : immutable(await MenuSidebar.init({ links: [] })),
-        orgForm: immutable(await OrgForm.init({organization: result.value }))
+        orgForm: immutable(await OrgForm.init({organization: result.value })),
+        teamMemberTable: immutable(await Table.init({
+          idNamespace: 'team-member-table'
+        })),
+        activeTab
       }));
     } else {
       dispatch(replaceRoute(adt('notice' as const, adt('notFound' as const))));
@@ -193,9 +196,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   }
 });
 
-const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
+const OrgFormView = (state: ValidState, dispatch: Dispatch<Msg>) => {
   const isArchiveLoading = state.archiveLoading > 0;
   const isLoading = isArchiveLoading;
+
   return (
     <div>
       <Row>
@@ -229,6 +233,188 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
 
     </div>
   );
+};
+
+const orgTeamMembers = [
+  { id: '12345',    name: 'A team member', pending: false, capabilities: ['Backend Development', 'Security Engineering']},
+  { id: '123456',   name: 'Team Member 2', pending: false, capabilities: ['DevOps Engineering', 'Agile Coaching', 'Security Engineering']},
+  { id: '1234567',  name: 'Team Member 3', pending: true,  capabilities: ['Agile Coaching', 'Security Engineering', 'Frontend Development']},
+  { id: '12345678', name: 'Team Member 4', pending: false, capabilities: ['Delivery Management', 'Technical Architecture', 'User Research', 'User Experience Design']}
+];
+
+function tableHeadCells(): Table.HeadCells {
+  return [
+    {
+      children: 'Team Member',
+      style: {
+        width: '60%',
+        minWidth: '240px'
+      }
+    },
+    {
+      children: 'Capabilities',
+      style: {
+        width: '20%'
+      }
+    },
+    {
+      children: '',
+      style: {
+        width: '20%'
+      }
+    }
+  ];
+}
+
+function reduceCapabilities( current: string[], append: string[] ) {
+  append.map( (cap) => {
+    if (!current.includes(cap)) {
+      current.push(cap);
+    }
+  });
+
+  return current;
+}
+
+function tableBodyRows(): Table.BodyRows {
+  return orgTeamMembers.map( member => {
+    return [
+      { children:
+        <div>
+          <Link dest={routeDest(adt('userProfile', { userId: member.id }))}>{member.name}</Link>
+           { member.pending ? <Badge className='ml-2' text='pending' color='warning' /> : null }
+        </div> },
+      { children: <div>{member.capabilities.length}</div>},
+
+      /* Note(Jesse): This button popping may be fixed by changing the
+       * mecahnism that showOnHover is showing/hiding elements with.
+       * Grep for : @popping_remove_button
+       **/
+      { showOnHover: true, children: <Link symbol_={leftPlacement(iconLinkSymbol('user-times'))} size='sm' button color='danger'>Remove</Link> }
+
+    ];
+  });
+}
+
+const TeamTabView = (state: ValidState, dispatch: Dispatch<Msg>, teamCapabilities: string[]) => {
+  const org = state.organization;
+  const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
+  return (
+    <div>
+      <Row>
+        <Col xs='12' className='mb-5 px-0'>
+          <h2>{org.legalName}</h2>
+        </Col>
+        <Col className='px-0 pb-4 border-bottom'>
+          <h3>Team Memeber(s)</h3>
+          <Table.view
+            headCells={tableHeadCells()}
+            bodyRows={tableBodyRows()}
+            state={state.teamMemberTable}
+            dispatch={dispatchTable} />
+        </Col>
+      </Row>
+
+      <Row className='pt-5'>
+        <Col xs='12'>
+          <h3>Team Capabilities</h3>
+          <p className='pb-3'>This is a summary of the capabilities that your organization's team posses as a whole.</p>
+        </Col>
+        <Col xs='12'>
+          <h4>Capabilities</h4>
+        </Col>
+        {
+          Caps.map( c => {
+            let icon = <Icon className='mx-2' name='circle'></Icon>;
+            if (teamCapabilities.includes(c)) {
+              icon = <Icon color='green' className='mx-2' name='check-circle'></Icon>;
+            }
+            return (
+              <Col xs='6' className='border p-2'>
+                {icon}
+                {c}
+              </Col>
+            );
+          })
+        }
+      </Row>
+
+    </div>
+  );
+};
+
+function predicatedOption(predicate: boolean, mainText: string, subtext: string) {
+  return (
+    <div className='d-flex py-2'>
+      <div>
+        { predicate ?
+            <Icon color='green' className='mx-2' name='check-circle'></Icon> :
+            <Icon className='mx-2' name='circle'></Icon> }
+      </div>
+      <div>
+        <span>{mainText}</span>
+        <div><span><small>{subtext}</small></span></div>
+      </div>
+    </div>
+    );
+}
+
+const QualificationTabView = (state: ValidState, dispatch: Dispatch<Msg>, capabilityPredicate: boolean) => {
+  const org = state.organization;
+  return (
+    <div>
+      <Row className='pb-5 border-bottom'>
+        <Col xs='12' className='mb-5 px-0'>
+          <h3>{org.legalName}</h3>
+          <p>To qualify to apply on Sprint With Us opportunities, your organization must meet the following requirements:</p>
+        </Col>
+        <Col xs='12'>
+          <h3>Requirements</h3>
+            {predicatedOption(orgTeamMembers.length >= 2,
+                              'At least two team members',
+                              'Send a request to one or more potential team members from the “Team” tab to begin the process of satisfying this requirement.')
+            }
+            {predicatedOption(capabilityPredicate,
+                              'Team members collectively possess all capabilities',
+                              'Your team members must update the capabilities on their user profile.')
+            }
+            {predicatedOption(org.acceptedSWUTerms != null,
+                              'Agree to \'Sprint WIth Us\' Terms & Conditions',
+                              'You may view the terms and conditions in the section below.')
+            }
+
+        </Col>
+      </Row>
+
+      <Row className='mt-5'>
+        <Col xs='12' className='mb-5 px-0'>
+          <h3>Terms & Conditions</h3>
+          <p>View the Sprint With Us terms and conditions using the button below.</p>
+          <Link button color='primary'>View Terms & Conditions</Link>
+        </Col>
+      </Row>
+
+    </div>
+  );
+};
+
+const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
+  const teamCapabilities = orgTeamMembers.reduce((current, member) => {
+    return reduceCapabilities(current, member.capabilities);
+  }, [] as string[]);
+
+  switch (state.activeTab) {
+    case 'team': {
+      return TeamTabView(state, dispatch, teamCapabilities);
+    }
+    case 'qualification': {
+      return QualificationTabView(state, dispatch, teamCapabilities.length === Caps.length);
+    }
+    case 'organization':
+    default: {
+      return OrgFormView(state, dispatch);
+    }
+  }
 });
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
