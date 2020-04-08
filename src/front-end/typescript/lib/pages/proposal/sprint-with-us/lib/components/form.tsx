@@ -4,6 +4,8 @@ import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import * as References from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/references';
 import * as Team from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team';
 import * as TeamQuestions from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team-questions';
@@ -17,12 +19,13 @@ import { find } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
+import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
@@ -83,6 +86,11 @@ export type Msg
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Evaluation';
 
+async function getAffiliations(orgId?: Id): Promise<AffiliationMember[]> {
+  if (!orgId) { return []; }
+  return api.getValidValue(await api.affiliations.readManyForOrganization(orgId), []);
+}
+
 export const init: Init<Params, State> = async ({ viewerUser, opportunity, organizations, evaluationContent, proposal, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const inceptionCost = proposal?.inceptionPhase?.proposedCost || 0;
   const prototypeCost = proposal?.prototypePhase?.proposedCost || 0;
@@ -131,6 +139,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     team: immutable(await Team.init({
       opportunity,
       organization: proposal?.organization,
+      affiliations: await getAffiliations(proposal?.organization?.id),
       proposal
     })),
 
@@ -353,7 +362,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['organization'],
         childUpdate: Select.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('organization', value)
+        mapChildMsg: value => adt('organization', value),
+        updateAfter: state => [
+          state,
+          async state1 => {
+            const orgId = FormField.getValue(state.organization)?.value;
+            return state1.set('team', Team.setAffiliations(state.team, await getAffiliations(orgId)));
+          }
+        ]
       });
 
     case 'team':
@@ -500,6 +516,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
       {inceptionPhase
         ? (<Col xs='12' md='4'>
             <NumberField.view
+              required
               extraChildProps={{ prefix: '$' }}
               label='Inception Cost'
               placeholder='Inception Cost'
@@ -512,6 +529,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
       {prototypePhase
         ? (<Col xs='12' md='4'>
             <NumberField.view
+              required
               extraChildProps={{ prefix: '$' }}
               label='Prototype Cost'
               placeholder='Prototype Cost'
@@ -523,6 +541,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
         : null}
         <Col xs='12' md='4'>
           <NumberField.view
+            required
             extraChildProps={{ prefix: '$' }}
             label='Implementation Cost'
             placeholder='Implementation Cost'
@@ -590,7 +609,7 @@ interface ReviewPhaseViewProps {
   icon: AvailableIcons;
   proposedCost: number;
   opportunityPhase: SWUOpportunityPhase;
-  members: SWUProposalTeamMember[];
+  members: Phase.Member[];
   isOpen: boolean;
   className?: string;
   toggleAccordion(): void;
@@ -632,13 +651,13 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
                   <Link
                     key={`swu-proposal-review-phase-member-${i}`}
                     newTab
-                    symbol_={leftPlacement(imageLinkSymbol(m.member.avatarImageFile ? fileBlobPath(m.member.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
-                    {m.member.name}
+                    symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
+                    {m.user.name}
                   </Link>
                   {m.scrumMaster
                     ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
                     : null}
-                  {m.pending
+                  {m.membershipStatus === MembershipStatus.Pending
                     ? (<Badge text='Pending' color='yellow' className='ml-3' />)
                     : null}
                 </div>

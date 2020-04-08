@@ -1,13 +1,15 @@
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import React from 'react';
+import { AffiliationMember } from 'shared/lib/resources/affiliation';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface Params {
   organization?: OrganizationSlim;
+  affiliations: AffiliationMember[];
   opportunity: SWUOpportunity;
   proposal?: SWUProposal;
 }
@@ -23,24 +25,34 @@ export type Msg
   | ADT<'prototypePhase', Phase.Msg>
   | ADT<'implementationPhase', Phase.Msg>;
 
+export function setAffiliations(state: Immutable<State>, affiliations: AffiliationMember[]): Immutable<State> {
+  return state
+    .update('inceptionPhase', s => Phase.setAffiliations(s, affiliations))
+    .update('prototypePhase', s => Phase.setAffiliations(s, affiliations))
+    .update('implementationPhase', s => Phase.setAffiliations(s, affiliations));
+}
+
 export const init: Init<Params, State> = async params => {
-  const { organization, opportunity, proposal } = params;
+  const { organization, affiliations, opportunity, proposal } = params;
   return {
     ...params,
     inceptionPhase: immutable(await Phase.init({
       organization,
+      affiliations,
       opportunityPhase: opportunity.inceptionPhase,
       proposalPhase: proposal?.inceptionPhase,
       isAccordionOpen: false
     })),
     prototypePhase: immutable(await Phase.init({
       organization,
+      affiliations,
       opportunityPhase: opportunity.prototypePhase,
       proposalPhase: proposal?.prototypePhase,
       isAccordionOpen: false
     })),
     implementationPhase: immutable(await Phase.init({
       organization,
+      affiliations,
       opportunityPhase: opportunity.implementationPhase,
       proposalPhase: proposal?.implementationPhase,
       isAccordionOpen: !opportunity.prototypePhase
@@ -104,9 +116,9 @@ export function getValues(state: Immutable<State>): Values {
 }
 
 interface MemberValues {
-  inceptionPhase?: SWUProposalTeamMember[];
-  prototypePhase?: SWUProposalTeamMember[];
-  implementationPhase: SWUProposalTeamMember[];
+  inceptionPhase?: Phase.Member[];
+  prototypePhase?: Phase.Member[];
+  implementationPhase: Phase.Member[];
 }
 
 export function getMembers(state: Immutable<State>): MemberValues {

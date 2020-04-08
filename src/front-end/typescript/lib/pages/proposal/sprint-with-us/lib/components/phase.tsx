@@ -1,17 +1,15 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
-import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as CapabilityGrid from 'front-end/lib/components/capability-grid';
+import * as Table from 'front-end/lib/components/table';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
 import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Badge from 'front-end/lib/views/badge';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
+import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { formatDate } from 'shared/lib';
+import { Col, CustomInput, Row } from 'reactstrap';
+import { find, formatDate } from 'shared/lib';
 import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -21,6 +19,7 @@ import { adt, ADT, Id } from 'shared/lib/types';
 
 export interface Params {
   organization?: OrganizationSlim;
+  affiliations: AffiliationMember[];
   opportunityPhase?: SWUOpportunityPhase;
   proposalPhase?: SWUProposalPhase;
   isAccordionOpen: boolean;
@@ -28,12 +27,16 @@ export interface Params {
 
 type ModalId = 'addTeamMembers';
 
-export interface State extends Params {
-  showAddTeamMembersModalLoading: number;
-  addTeamMembersLoading: number;
+export interface Member extends AffiliationMember {
+  scrumMaster: boolean;
+  added: boolean;
+  toBeAdded: boolean;
+}
+
+export interface State extends Omit<Params, 'affiliations'> {
   showModal: ModalId | null;
-  members: SWUProposalTeamMember[];
-  affiliations: Array<AffiliationMember & { checked: boolean; }>;
+  members: Member[];
+  membersTable: Immutable<Table.State>;
   capabilities: Immutable<CapabilityGrid.State>;
 }
 
@@ -41,58 +44,76 @@ export type Msg
   = ADT<'toggleAccordion'>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
-  | ADT<'toggleAffiliationChecked', number>
+  | ADT<'toggleAffiliationToBeAdded', number>
   | ADT<'addTeamMembers'>
+  | ADT<'setScrumMaster', Id>
+  | ADT<'removeTeamMember', Id>
+  | ADT<'membersTable', Table.Msg>
   | ADT<'capabilities', CapabilityGrid.Msg>;
 
 export function setIsAccordionOpen(state: Immutable<State>, isAccordionOpen: boolean): Immutable<State> {
   return state.set('isAccordionOpen', isAccordionOpen);
 }
 
-function memberHasCapability(members: SWUProposalTeamMember[], capability: string): boolean {
+function memberHasCapability(members: Member[], capability: string): boolean {
   for (const m of members) {
-    if (m.capabilities.indexOf(capability) !== -1) {
+    if (m.user.capabilities.indexOf(capability) !== -1) {
       return true;
     }
   }
   return false;
 }
 
-function isTeamMember(state: Immutable<State>, userId: Id): boolean {
-  for (const m of state.members) {
-    if (m.member.id === userId) {
-      return true;
-    }
-  }
-  return false;
+function affiliationsToMembers(affiliations: AffiliationMember[], existingMembers: SWUProposalTeamMember[]): Member[] {
+  return affiliations
+    .map(a => {
+      const existingTeamMember = find(existingMembers, ({ member }) => member.id === a.user.id);
+      return {
+        ...a,
+        scrumMaster: existingTeamMember?.scrumMaster || false,
+        added: !!existingTeamMember,
+        toBeAdded: false
+      };
+    })
+    .sort((a, b) => a.user.name.localeCompare(b.user.name));
+}
+
+export function determineCapabilities(members: Member[], opportunityPhase?: SWUOpportunityPhase): CapabilityGrid.CapabilityWithOptionalFullTime[] {
+  return opportunityPhase
+    ? opportunityPhase.requiredCapabilities.map(c => ({
+        ...c,
+        checked: memberHasCapability(members, c.capability)
+      }))
+    : [];
+}
+
+export function resetCapabilities(state: Immutable<State>): Immutable<State> {
+  return state
+    .update('capabilities', s => CapabilityGrid.setCapabilities(s, determineCapabilities(state.members, state.opportunityPhase)));
+}
+
+export function setAffiliations(state: Immutable<State>, affiliations: AffiliationMember[]): Immutable<State> {
+  state = state.set('members', affiliationsToMembers(affiliations, state.proposalPhase?.members || []));
+  return resetCapabilities(state);
 }
 
 export const init: Init<Params, State> = async params => {
   const { opportunityPhase, proposalPhase } = params;
-  const members = proposalPhase?.members || [];
+  const { affiliations, ...paramsForState } = params;
+  const members = affiliationsToMembers(affiliations, proposalPhase?.members || []);
   return {
-    ...params,
-    showAddTeamMembersModalLoading: 0,
-    addTeamMembersLoading: 0,
+    ...paramsForState,
     showModal: null,
     members,
-    affiliations: [], // Loaded when clicking the "Add Team Members" button
     capabilities: immutable(await CapabilityGrid.init({
       showFullTimeSwitch: true,
-      capabilities: opportunityPhase
-        ? opportunityPhase.requiredCapabilities.map(c => ({
-          ...c,
-          checked: memberHasCapability(members, c.capability)
-        }))
-        : []
+      capabilities: determineCapabilities(members, opportunityPhase)
+    })),
+    membersTable: immutable(await Table.init({
+      idNamespace: `swu-proposal-phase-members-${Math.random()}`
     }))
   };
 };
-
-const startShowAddTeamMembersModalLoading = makeStartLoading<State>('showAddTeamMembersModalLoading');
-const stopShowAddTeamMembersModalLoading = makeStopLoading<State>('showAddTeamMembersModalLoading');
-const startAddTeamMembersLoading = makeStartLoading<State>('addTeamMembersLoading');
-const stopAddTeamMembersLoading = makeStopLoading<State>('addTeamMembersLoading');
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -100,38 +121,47 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return [state.update('isAccordionOpen', v => !v)];
 
     case 'showModal':
-      return [
-        startShowAddTeamMembersModalLoading(state).set('showModal', null),
-        async state => {
-          state = stopShowAddTeamMembersModalLoading(state);
-          if (!state.organization) { return state; }
-          const result = await api.affiliations.readManyForOrganization(state.organization.id);
-          if (!api.isValid(result)) { return state; }
-          return state
-            .set('affiliations', result.value.map(a => ({
-              ...a,
-              checked: isTeamMember(state, a.user.id)
-            })))
-            .set('showModal', 'addTeamMembers');
-        }
-      ];
+      return [state.set('showModal', msg.value)];
 
     case 'hideModal':
-      if (state.addTeamMembersLoading > 0) { return [state]; }
       return [state.set('showModal', null)];
 
-    case 'toggleAffiliationChecked':
-      return [state.update('affiliations', affs => affs.map((a, i) => {
+    case 'toggleAffiliationToBeAdded':
+      return [state.update('members', ms => ms.map((a, i) => {
         return i === msg.value
-          ? { ...a, checked: !a.checked }
+          ? { ...a, toBeAdded: !a.toBeAdded }
           : a;
       }))];
 
-    case 'addTeamMembers':
-      return [
-        startAddTeamMembersLoading(state),
-        async state => stopAddTeamMembersLoading(state)
-      ];
+    case 'addTeamMembers': {
+      state = state.update('members', ms => ms.map(a => ({
+        ...a,
+        added: a.added || a.toBeAdded,
+        toBeAdded: false
+      })));
+      return [resetCapabilities(state)];
+    }
+
+    case 'setScrumMaster':
+      return [state.update('members', ms => ms.map(m => ({
+        ...m,
+        scrumMaster: m.user.id === msg.value
+      })))];
+
+    case 'removeTeamMember':
+      return [state.update('members', ms => ms.map(m => ({
+        ...m,
+        added: m.user.id === msg.value ? false : m.added
+      })))];
+
+    case 'membersTable':
+      return updateComponentChild({
+        state,
+        childStatePath: ['membersTable'],
+        childUpdate: Table.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'membersTable', value })
+      });
 
     case 'capabilities':
       return updateComponentChild({
@@ -148,15 +178,15 @@ export type Values = Pick<CreateSWUProposalPhaseBody, 'members'>;
 
 export function getValues(state: Immutable<State>): Values {
   return {
-    members: state.members.map(({ member, scrumMaster }) => ({
+    members: state.members.map(({ user, scrumMaster }) => ({
       scrumMaster,
-      member: member.id,
+      member: user.id,
       pending: false //TODO remove
     }))
   };
 }
 
-export function getMembers(state: Immutable<State>): SWUProposalTeamMember[] {
+export function getMembers(state: Immutable<State>): Member[] {
   return state.members;
 }
 
@@ -196,25 +226,90 @@ const Dates: View<Props> = ({ state }) => {
   );
 };
 
-const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
-  const isLoading = state.addTeamMembersLoading > 0;
+function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
+  return [
+    {
+      children: 'Team Member',
+      style: {
+      }
+    },
+    {
+      children: 'Scrum Master',
+      style: {
+      }
+    },
+    {
+      children: null,
+      style: {
+      }
+    }
+  ];
+}
+
+function membersTableBodyRows(props: Props): Table.BodyRows {
+  const { state, dispatch, disabled } = props;
+  //TODO member view modal
+  return state.members.map(m => [
+    {
+      children: (<div className='d-flex align-items-center flex-nowrap'>
+        <Link
+          symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
+          {m.user.name}
+        </Link>
+        <Badge text='Pending' color='yellow' className='ml-3' />
+      </div>)
+    },
+    {
+      children: (
+        <CustomInput
+          checked={m.scrumMaster}
+          disabled={disabled}
+          type='radio'
+          onChange={e => {
+            if (e.currentTarget.checked) {
+              dispatch(adt('setScrumMaster', m.user.id));
+            }
+          }} />
+      )
+    },
+    {
+      children: (
+        <Link
+          button
+          size='sm'
+          symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
+          onClick={() => dispatch(adt('removeTeamMember', m.user.id))}
+          color='danger'>
+          Remove
+        </Link>
+      )
+    }
+  ]);
+}
+
+const TeamMembers: View<Props> = props => {
+  const { state, dispatch, disabled } = props;
   return (
     <Row className='mb-4'>
       <Col xs='12' className='mb-4'>
         <h4>Team Members</h4>
-        <LoadingButton
+        <Link
+          button
           outline
           size='sm'
-          loading={isLoading}
-          disabled={isLoading}
-          onClick={() => dispatch(adt('showModal', 'addTeamMembers'))}
+          disabled={disabled}
+          onClick={() => dispatch(adt('showModal', 'addTeamMembers') as Msg)}
           symbol_={leftPlacement(iconLinkSymbol('user-plus'))}>
           Add Team Member(s)
-        </LoadingButton>
+        </Link>
       </Col>
       <Col xs='12'>
         {state.members.length
-          ? 'Table'
+          ? (<Table.view
+              headCells={membersTableHeadCells(state)}
+              bodyRows={membersTableBodyRows(props)}
+              state={state.membersTable}
+              dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />)
           : null}
       </Col>
     </Row>
@@ -263,7 +358,6 @@ export const view: View<Props> = props => {
 };
 
 export const getModal: PageGetModal<State, Msg> = state => {
-  const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
   switch (state.showModal) {
     case null:
       return null;
@@ -277,19 +371,20 @@ export const getModal: PageGetModal<State, Msg> = state => {
             <div>
               <p>Select the team member(s) that you want to propose to be part of your team for this opportunity. If you do no see the team member that you want to add, you must send them a <Link>request to join your organization</Link>.</p>
               <div className='border-top border-left'>
-                {state.affiliations.map((a, i) => {
+                {state.members.map((m, i) => {
+                  //Only show team members that have not yet been added.
+                  if (m.added) { return null; }
                   return (
                     <div key={`swu-proposal-phase-affiliation-${i}`} className='d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom'>
                       <Link
-                        onClick={() => dispatch(adt('toggleAffiliationChecked', i))}
-                        symbol_={leftPlacement(iconLinkSymbol(a.checked ? 'check-circle' : 'circle'))}
-                        symbolClassName={a.checked ? 'text-success' : 'text-body'}
+                        onClick={() => dispatch(adt('toggleAffiliationToBeAdded', i))}
+                        symbol_={leftPlacement(iconLinkSymbol(m.toBeAdded ? 'check-circle' : 'circle'))}
+                        symbolClassName={m.toBeAdded ? 'text-success' : 'text-body'}
                         className='font-size-small text-nowrap flex-nowrap'
                         iconSymbolSize={0.9}
-                        color='body'
-                        disabled={isAddTeamMembersLoading}>
+                        color='body'>
                         <img
-                          src={a.user.avatarImageFile ? fileBlobPath(a.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH}
+                          src={m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH}
                           style={{
                             width: '1.75rem',
                             height: '1.75rem',
@@ -297,9 +392,9 @@ export const getModal: PageGetModal<State, Msg> = state => {
                             borderRadius: '50%'
                           }}
                           className='mr-2' />
-                        {a.user.name}
+                        {m.user.name}
                       </Link>
-                      {a.membershipStatus === MembershipStatus.Pending
+                      {m.membershipStatus === MembershipStatus.Pending
                         ? (<Badge text='pending' color='yellow' className='ml-3' />)
                         : null}
                     </div>
