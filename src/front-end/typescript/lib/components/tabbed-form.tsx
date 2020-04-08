@@ -101,7 +101,7 @@ export function view<TabId>(): View<Props<TabId>> {
                 symbol_={valid ? undefined : leftPlacement(iconLinkSymbol('exclamation-circle'))}
                 symbolClassName='text-warning'
                 color='body'>
-                {getTabLabel(activeTab)}
+                {String(state.tabs.indexOf(activeTab) + 1)}. {getTabLabel(activeTab)}
               </Link>
               <Icon name='caret' color='body' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
             </DropdownToggle>
@@ -113,7 +113,7 @@ export function view<TabId>(): View<Props<TabId>> {
                     symbolClassName='text-warning'
                     onClick={() => dispatch(adt('setActiveTab', tab))}
                     color='body'>
-                    {getTabLabel(tab)}
+                    {String(i + 1)}. {getTabLabel(tab)}
                   </Link>
                 </div>
               ))}

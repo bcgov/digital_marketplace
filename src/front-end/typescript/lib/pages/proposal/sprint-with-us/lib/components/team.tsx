@@ -1,19 +1,18 @@
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import React from 'react';
-import { CreateRequestBody, CreateValidationErrors, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { SWUProposal, SWUProposalPhaseType } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface Params {
-  organization: OrganizationSlim;
+  organization?: OrganizationSlim;
   opportunity: SWUOpportunity;
   proposal?: SWUProposal;
 }
 
 export interface State extends Params {
-  organization: OrganizationSlim;
   inceptionPhase: Immutable<Phase.State>;
   prototypePhase: Immutable<Phase.State>;
   implementationPhase: Immutable<Phase.State>;
@@ -91,7 +90,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-export type Values = Pick<CreateRequestBody, 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
+export interface Values {
+  inceptionPhase?: Phase.Values;
+  prototypePhase?: Phase.Values;
+  implementationPhase: Phase.Values;
+}
 
 export function getValues(state: Immutable<State>): Values {
   const inceptionPhase = hasPhase(state, SWUProposalPhaseType.Inception) ? Phase.getValues(state.inceptionPhase) : undefined;

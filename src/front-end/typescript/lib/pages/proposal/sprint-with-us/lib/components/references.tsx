@@ -1,248 +1,247 @@
-import * as DateField from 'front-end/lib/components/form-field/date';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as Phase from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/phase';
 import React from 'react';
-import { CreateRequestBody, CreateValidationErrors, SWUOpportunity, SWUOpportunityPhaseType } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { Col, Row } from 'reactstrap';
+import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, SWUProposalReference } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
-import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
+import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
+
+interface ReferenceState {
+  name: Immutable<ShortText.State>;
+  company: Immutable<ShortText.State>;
+  phone: Immutable<ShortText.State>;
+  email: Immutable<ShortText.State>;
+}
 
 export interface Params {
-  opportunity?: SWUOpportunity;
-  startingPhase?: SWUOpportunityPhaseType;
+  references: SWUProposalReference[];
 }
 
 export interface State {
-  startingPhase: SWUOpportunityPhaseType;
-  inceptionPhase: Immutable<Phase.State>;
-  prototypePhase: Immutable<Phase.State>;
-  implementationPhase: Immutable<Phase.State>;
+  references: ReferenceState[];
 }
 
 export type Msg
-  = ADT<'inceptionPhase', Phase.Msg>
-  | ADT<'prototypePhase', Phase.Msg>
-  | ADT<'implementationPhase', Phase.Msg>;
+  = ADT<'name', [number, ShortText.Msg]>
+  | ADT<'company', [number, ShortText.Msg]>
+  | ADT<'phone', [number, ShortText.Msg]>
+  | ADT<'email', [number, ShortText.Msg]>;
 
-export function updateAssignmentDate(state: Immutable<State>, assignmentDate: Date = new Date()): Immutable<State> {
-  return state
-    .update(
-      'inceptionPhase',
-      s => Phase.setValidateStartDate(
-        s,
-        raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate)
-      )
-    )
-    .update(
-      'prototypePhase',
-      s => Phase.setValidateStartDate(
-        s,
-        raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, state.startingPhase === SWUOpportunityPhaseType.Prototype ? assignmentDate : DateField.getDate(state.inceptionPhase.completionDate))
-      )
-    )
-    .update(
-      'implementationPhase',
-      s => Phase.setValidateStartDate(
-        s,
-        raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, state.startingPhase === SWUOpportunityPhaseType.Implementation ? assignmentDate : DateField.getDate(state.prototypePhase.completionDate))
-      )
-    );
-}
-
-export function updateTotalMaxBudget(state: Immutable<State>, totalMaxBudget?: number): Immutable<State> {
-  return state
-    .update('inceptionPhase', s => Phase.updateTotalMaxBudget(s, totalMaxBudget))
-    .update('prototypePhase', s => Phase.updateTotalMaxBudget(s, totalMaxBudget))
-    .update('implementationPhase', s => Phase.updateTotalMaxBudget(s, totalMaxBudget));
-}
-
-export function setStartingPhase(state: Immutable<State>, startingPhase: SWUOpportunityPhaseType = SWUOpportunityPhaseType.Inception, assignmentDate: Date = new Date()): Immutable<State> {
-  state = state
-    .set('startingPhase', startingPhase)
-    .update('inceptionPhase', s => Phase.setIsAccordianOpen(s, false))
-    .update('prototypePhase', s => Phase.setIsAccordianOpen(s, false))
-    .update('implementationPhase', s => startingPhase === SWUOpportunityPhaseType.Implementation ? Phase.setIsAccordianOpen(s, true) : Phase.setIsAccordianOpen(s, false));
-  return updateAssignmentDate(state, assignmentDate);
-}
-
-export const init: Init<Params, State> = async ({ opportunity, startingPhase = SWUOpportunityPhaseType.Inception }) => {
-  const totalMaxBudget = opportunity?.totalMaxBudget;
-  const assignmentDate = opportunity?.assignmentDate || new Date();
+function makeBlankReference(order: number): SWUProposalReference {
   return {
-    startingPhase,
-    inceptionPhase: immutable(await Phase.init({
-      phase: opportunity?.inceptionPhase,
-      totalMaxBudget,
-      isAccordianOpen: false,
-      validateStartDate: raw => opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(raw, assignmentDate),
-      validateCompletionDate: opportunityValidation.validateSWUOpportunityPhaseCompletionDate
-    })),
-    prototypePhase: immutable(await Phase.init({
-      phase: opportunity?.prototypePhase,
-      totalMaxBudget,
-      isAccordianOpen: false,
-      validateStartDate: raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
-        raw,
-        startingPhase === SWUOpportunityPhaseType.Prototype ? opportunity?.assignmentDate : opportunity?.inceptionPhase?.completionDate
-      ),
-      validateCompletionDate: opportunityValidation.validateSWUOpportunityPhaseCompletionDate
-    })),
-    implementationPhase: immutable(await Phase.init({
-      phase: opportunity?.implementationPhase,
-      totalMaxBudget,
-      // If only implementation phase, have it be open.
-      isAccordianOpen: startingPhase === SWUOpportunityPhaseType.Implementation,
-      validateStartDate: raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
-        raw,
-        startingPhase === SWUOpportunityPhaseType.Implementation ? opportunity?.assignmentDate : opportunity?.prototypePhase?.completionDate
-      ),
-      validateCompletionDate: opportunityValidation.validateSWUOpportunityPhaseCompletionDate
-    }))
+    name: '',
+    company: '',
+    phone: '',
+    email: '',
+    order
+  };
+}
+
+export const init: Init<Params, State> = async ({ references }) => {
+  // Ensure there are only three references.
+  references = [
+    references[0] || makeBlankReference(0),
+    references[1] || makeBlankReference(1),
+    references[2] || makeBlankReference(2)
+  ];
+  // Sort references by order.
+  references = references.sort((a, b) => {
+    if (a.order < b.order) {
+      return -1;
+    } else if (a.order > b.order) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+  return {
+    references: await Promise.all(references.map(async r => ({
+      name: immutable(await ShortText.init({
+        errors: [],
+        validate: proposalValidation.validateSWUProposalReferenceName,
+        child: {
+          type: 'text',
+          value: r.name,
+          id: `swu-proposal-reference-${r.order}-name`
+        }
+      })),
+      company: immutable(await ShortText.init({
+        errors: [],
+        validate: proposalValidation.validateSWUProposalReferenceCompany,
+        child: {
+          type: 'text',
+          value: r.company,
+          id: `swu-proposal-reference-${r.order}-company`
+        }
+      })),
+      phone: immutable(await ShortText.init({
+        errors: [],
+        validate: proposalValidation.validateSWUProposalReferencePhone,
+        child: {
+          type: 'text',
+          value: r.phone,
+          id: `swu-proposal-reference-${r.order}-phone`
+        }
+      })),
+      email: immutable(await ShortText.init({
+        errors: [],
+        validate: proposalValidation.validateSWUProposalReferenceEmail,
+        child: {
+          type: 'text',
+          value: r.email,
+          id: `swu-proposal-reference-${r.order}-email`
+        }
+      }))
+    })))
   };
 };
 
-function hasPhase(state: Immutable<State>, phase: SWUOpportunityPhaseType): boolean {
-  switch (phase) {
-    case SWUOpportunityPhaseType.Inception:
-      return state.startingPhase === SWUOpportunityPhaseType.Inception;
-    case SWUOpportunityPhaseType.Prototype:
-      return state.startingPhase !== SWUOpportunityPhaseType.Implementation;
-    case SWUOpportunityPhaseType.Implementation:
-      return true;
-  }
-}
-
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'inceptionPhase':
+    case 'name':
       return updateComponentChild({
         state,
-        childStatePath: ['inceptionPhase'],
-        childUpdate: Phase.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('inceptionPhase', value),
-        updateAfter: state => {
-          if (msg.value.tag === 'completionDate') {
-            return [
-              state,
-              async state1 => state1.set('prototypePhase', await Phase.setValidateStartDate(
-                state1.prototypePhase,
-                raw => opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(raw, DateField.getDate(state1.inceptionPhase.completionDate))
-              ))
-            ];
-          }
-          return [state];
-        }
+        childStatePath: [String(msg.value[0]), 'name'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value[1],
+        mapChildMsg: value => adt('name', [msg.value[0], value])
       });
-
-    case 'prototypePhase':
+    case 'company':
       return updateComponentChild({
         state,
-        childStatePath: ['prototypePhase'],
-        childUpdate: Phase.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('prototypePhase', value),
-        updateAfter: state => {
-          if (msg.value.tag === 'completionDate') {
-            return [
-              state,
-              async state1 => state1.set('implementationPhase', await Phase.setValidateStartDate(
-                state1.implementationPhase,
-                raw => opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(raw, DateField.getDate(state1.prototypePhase.completionDate))
-              ))
-            ];
-          }
-          return [state];
-        }
+        childStatePath: [String(msg.value[0]), 'company'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value[1],
+        mapChildMsg: value => adt('company', [msg.value[0], value])
       });
-
-    case 'implementationPhase':
+    case 'phone':
       return updateComponentChild({
         state,
-        childStatePath: ['implementationPhase'],
-        childUpdate: Phase.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('implementationPhase', value)
+        childStatePath: [String(msg.value[0]), 'phone'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value[1],
+        mapChildMsg: value => adt('phone', [msg.value[0], value])
+      });
+    case 'email':
+      return updateComponentChild({
+        state,
+        childStatePath: [String(msg.value[0]), 'email'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value[1],
+        mapChildMsg: value => adt('email', [msg.value[0], value])
       });
   }
 };
 
-export type Values = Pick<CreateRequestBody, 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
+export type Values = CreateSWUProposalReferenceBody[];
 
-export function getValues(state: Immutable<State>): Values | null {
-  const inceptionPhase = hasPhase(state, SWUOpportunityPhaseType.Inception) ? Phase.getValues(state.inceptionPhase) : undefined;
-  const prototypePhase = hasPhase(state, SWUOpportunityPhaseType.Prototype) ? Phase.getValues(state.prototypePhase) : undefined;
-  const implementationPhase = Phase.getValues(state.implementationPhase);
-  if (inceptionPhase === null || prototypePhase === null || implementationPhase === null) { return null; }
-  return { inceptionPhase, prototypePhase, implementationPhase };
+export function getValues(state: Immutable<State>): Values {
+  return state.references.map((r, order) => ({
+    name: FormField.getValue(r.name),
+    company: FormField.getValue(r.company),
+    phone: FormField.getValue(r.phone),
+    email: FormField.getValue(r.email),
+    order
+  }));
 }
 
-export type Errors = Pick<CreateValidationErrors, 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
+export type Errors = CreateSWUProposalReferenceValidationErrors[];
 
 export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
-  return state
-    .update('inceptionPhase', s => Phase.setErrors(s, errors.inceptionPhase))
-    .update('prototypePhase', s => Phase.setErrors(s, errors.prototypePhase))
-    .update('implementationPhase', s => Phase.setErrors(s, errors.implementationPhase));
+  return errors.reduce(
+    (acc, e, i) => state
+      .updateIn([i, 'name'], s => FormField.setErrors(s, e.name || []))
+      .updateIn([i, 'company'], s => FormField.setErrors(s, e.company || []))
+      .updateIn([i, 'phone'], s => FormField.setErrors(s, e.phone || []))
+      .updateIn([i, 'email'], s => FormField.setErrors(s, e.email || [])),
+    state
+  );
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return (!hasPhase(state, SWUOpportunityPhaseType.Inception) || Phase.isValid(state.inceptionPhase))
-      && (!hasPhase(state, SWUOpportunityPhaseType.Prototype) || Phase.isValid(state.prototypePhase))
-      && Phase.isValid(state.implementationPhase);
+  return state.references.reduce((acc, r) => {
+    return acc
+        && FormField.isValid(r.name)
+        && FormField.isValid(r.company)
+        && FormField.isValid(r.phone)
+        && FormField.isValid(r.email);
+  }, true as boolean);
 }
 
 export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
-  const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
-  const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
-  const isImplementationPhaseValid = Phase.isValid(state.implementationPhase);
+interface ReferenceViewProps extends Pick<Props, 'dispatch' | 'disabled'> {
+  reference: ReferenceState;
+  index: number;
+}
+
+export const ReferenceView: View<ReferenceViewProps> = ({ dispatch, disabled, index, reference }) => {
   return (
     <div>
-      {hasPhase(state, SWUOpportunityPhaseType.Inception)
-        ? (<Phase.view
-            className='mb-4'
-            state={state.inceptionPhase}
-            dispatch={mapComponentDispatch(dispatch, value => adt('inceptionPhase' as const, value))}
-            icon={isInceptionPhaseValid ? 'map' : 'exclamation-circle'}
-            iconColor={isInceptionPhaseValid ? undefined : 'warning'}
-            title='Inception'
-            description='During the Inception phase, you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
-            deliverables={[
-              'Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release'
-            ]}
-            disabled={disabled} />)
-        : null}
-      {hasPhase(state, SWUOpportunityPhaseType.Prototype)
-        ? (<Phase.view
-            className='mb-4'
-            state={state.prototypePhase}
-            dispatch={mapComponentDispatch(dispatch, value => adt('prototypePhase' as const, value))}
-            icon={isPrototypePhaseValid ? 'rocket' : 'exclamation-circle'}
-            iconColor={isPrototypePhaseValid ? undefined : 'warning'}
-            title='Proof of Concept'
-            description='During the Proof of Concept phase, you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!'
-            deliverables={[
-              'Alpha release of the product',
-              'A build/buy/licence decision',
-              'Product Roadmap',
-              'Resourcing plan for Implementation'
-            ]}
-            disabled={disabled} />)
-        : null}
-      <Phase.view
-        state={state.implementationPhase}
-        dispatch={mapComponentDispatch(dispatch, value => adt('implementationPhase' as const, value))}
-        icon={isImplementationPhaseValid ? 'cogs' : 'exclamation-circle'}
-        iconColor={isImplementationPhaseValid ? undefined : 'warning'}
-        title='Implementation'
-        description='As you reach the Implementation phase, you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.'
-        deliverables={[
-          'Delivery of the functional components in the Product Roadmap'
-        ]}
-        disabled={disabled} />
+      <Row>
+        <Col xs='12' md='7'>
+          <ShortText.view
+            required
+            extraChildProps={{}}
+            label='Name'
+            placeholder='Name'
+            state={reference.name}
+            dispatch={mapComponentDispatch(dispatch, v => adt('name', [index, v]) as Msg)}
+            disabled={disabled} />
+        </Col>
+        <Col xs='12' md='5'>
+          <ShortText.view
+            required
+            extraChildProps={{}}
+            label='Company'
+            placeholder='Company'
+            state={reference.company}
+            dispatch={mapComponentDispatch(dispatch, v => adt('company', [index, v]) as Msg)}
+            disabled={disabled} />
+        </Col>
+      </Row>
+      <Row>
+        <Col xs='12' md='5'>
+          <ShortText.view
+            required
+            extraChildProps={{}}
+            label='Phone Number'
+            placeholder='Phone Number'
+            state={reference.phone}
+            dispatch={mapComponentDispatch(dispatch, v => adt('phone', [index, v]) as Msg)}
+            disabled={disabled} />
+        </Col>
+        <Col xs='12' md='5'>
+          <ShortText.view
+            required
+            extraChildProps={{}}
+            label='Email'
+            placeholder='Email'
+            state={reference.email}
+            dispatch={mapComponentDispatch(dispatch, v => adt('email', [index, v]) as Msg)}
+            disabled={disabled} />
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+export const view: View<Props> = ({ state, dispatch, disabled }) => {
+  return (
+    <div>
+      {state.references.map((r, i) => (
+        <div className={i < state.references.length - 1 ? 'mb-4' : ''} key={`swu-proposal-reference-${i}`}>
+          <h4 className='mb-4'>Reference {i + 1}</h4>
+          <ReferenceView
+            dispatch={dispatch}
+            disabled={disabled}
+            reference={r}
+            index={i} />
+        </div>
+      ))}
     </div>
   );
 };

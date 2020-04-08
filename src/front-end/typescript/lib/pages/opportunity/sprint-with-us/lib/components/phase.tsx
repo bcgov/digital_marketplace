@@ -1,11 +1,11 @@
+import * as CapabilityGrid from 'front-end/lib/components/capability-grid';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
 import * as NumberField from 'front-end/lib/components/form-field/number';
-import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { find } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -31,16 +31,15 @@ export interface State extends Pick<Params, 'isAccordianOpen' | 'validateComplet
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
-  capabilities: Capability[];
+  capabilities: Immutable<CapabilityGrid.State>;
 }
 
 export type Msg
   = ADT<'toggleAccordion'>
-  | ADT<'toggleCapabilityChecked', number> //index
-  | ADT<'toggleCapabilityIsFullTime', number> //index
   | ADT<'startDate', DateField.Msg>
   | ADT<'completionDate', DateField.Msg>
-  | ADT<'maxBudget', NumberField.Msg>;
+  | ADT<'maxBudget', NumberField.Msg>
+  | ADT<'capabilities', CapabilityGrid.Msg>;
 
 export function setValidateStartDate(state: Immutable<State>, validate: Params['validateStartDate']): Immutable<State> {
   return state.update('startDate', s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
@@ -75,14 +74,17 @@ export const init: Init<Params, State> = async ({ isAccordianOpen, totalMaxBudge
   return {
     isAccordianOpen,
     validateCompletionDate,
-    capabilities: CAPABILITIES.map(capability => {
-      const found = find(existingCapabilities, { capability });
-      return {
-        capability,
-        fullTime: found?.fullTime || true,
-        checked: !!found
-      };
-    }),
+    capabilities: immutable(await CapabilityGrid.init({
+      showFullTimeSwitch: true,
+      capabilities: CAPABILITIES.map(capability => {
+        const found = find(existingCapabilities, { capability });
+        return {
+          capability,
+          fullTime: found?.fullTime || true,
+          checked: !!found
+        };
+      })
+    })),
     startDate: immutable(await DateField.init({
       errors: [],
       validate: DateField.validateDate(validateStartDate),
@@ -119,16 +121,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'toggleAccordion':
       return [state.update('isAccordianOpen', v => !v)];
 
-    case 'toggleCapabilityChecked':
-      return [state.update('capabilities', cs => cs.map((c, i) => {
-        return i === msg.value ? { ...c, checked: !c.checked } : c;
-      }))];
-
-    case 'toggleCapabilityIsFullTime':
-      return [state.update('capabilities', cs => cs.map((c, i) => {
-        return i === msg.value ? { ...c, fullTime: !c.fullTime } : c;
-      }))];
-
     case 'startDate':
       return updateComponentChild({
         state,
@@ -156,6 +148,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('maxBudget', value)
       });
+
+    case 'capabilities':
+      return updateComponentChild({
+        state,
+        childStatePath: ['capabilities'],
+        childUpdate: CapabilityGrid.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('capabilities', value)
+      });
   }
 };
 
@@ -168,7 +169,9 @@ export function getValues(state: Immutable<State>): Values | null {
     startDate: DateField.getValueAsString(state.startDate),
     completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
-    requiredCapabilities: state.capabilities.map(({ capability, fullTime }) => ({ capability, fullTime }))
+    requiredCapabilities: CapabilityGrid
+      .getValues(state.capabilities)
+      .map(({ capability, fullTime }) => ({ capability, fullTime }))
   };
 }
 
@@ -181,18 +184,11 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
     .update('maxBudget', s => FormField.setErrors(s, errors?.maxBudget || []));
 }
 
-function capabilitiesAreValid(capabilities: Capability[]): boolean {
-  for (const c of capabilities) {
-    if (c.checked) { return true; }
-  }
-  return false;
-}
-
 export function isValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.startDate)
       && FormField.isValid(state.completionDate)
       && FormField.isValid(state.maxBudget)
-      && capabilitiesAreValid(state.capabilities);
+      && CapabilityGrid.isAtLeastOneChecked(state.capabilities);
 }
 
 export interface Props extends ComponentViewProps<State, Msg> {
@@ -259,59 +255,6 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-interface FullTimeSwitchProps {
-  fullTime: boolean;
-  disabled?: boolean;
-  index: number;
-  dispatch: Dispatch<Msg>;
-}
-
-const FullTimeSwitch: View<FullTimeSwitchProps> = ({ fullTime, disabled, index, dispatch }) => {
-  const selectedClassName = (selected: boolean) => {
-    return selected ? 'bg-purple text-white' : 'text-secondary border';
-  };
-  const baseSwitchClassName = 'd-flex justify-content-center align-items-center';
-  const width = '2rem';
-  const padding = '0.15rem 0.25rem';
-  return (
-    <div
-      onClick={() => dispatch(adt('toggleCapabilityIsFullTime', index))}
-      style={{ cursor: 'pointer' }}
-      className='d-flex align-items-stretch font-size-extra-small font-weight-bold ml-auto'>
-      <div className={`${baseSwitchClassName} ${selectedClassName(!fullTime)} rounded-left border-right-0`} style={{ width, padding }}>
-        P/T
-      </div>
-      <div className={`${baseSwitchClassName} ${selectedClassName(fullTime)} rounded-right border-left-0`} style={{ width, padding }}>
-        F/T
-      </div>
-    </div>
-  );
-};
-
-interface CapabilityProps extends Capability {
-  index: number;
-  disabled?: boolean;
-  dispatch: Dispatch<Msg>;
-}
-
-const Capability: View<CapabilityProps> = ({ capability, fullTime, checked, dispatch, index, disabled }) => {
-  return (
-    <div className='border-right border-bottom d-flex flex-nowrap align-items-center p-2'>
-      <Link
-        onClick={() => dispatch(adt('toggleCapabilityChecked', index))}
-        symbol_={leftPlacement(iconLinkSymbol(checked ? 'check-circle' : 'circle'))}
-        symbolClassName={checked ? 'text-success' : 'text-body'}
-        className='py-1 font-size-small text-nowrap'
-        iconSymbolSize={0.9}
-        color='body'
-        disabled={disabled}>
-        {capability}
-      </Link>
-      {checked ? (<FullTimeSwitch fullTime={fullTime} disabled={disabled} index={index} dispatch={dispatch} />) : null}
-    </div>
-  );
-};
-
 const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
@@ -322,17 +265,10 @@ const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
           full-time.</p>
       </Col>
       <Col xs='12'>
-        <Row noGutters className='border-top border-left'>
-          {state.capabilities.map((c, i) => (
-            <Col xs='12' md='6' key={`phase-capability-${i}`}>
-              <Capability
-                {...c}
-                dispatch={dispatch}
-                disabled={disabled}
-                index={i} />
-            </Col>
-          ))}
-        </Row>
+        <CapabilityGrid.view
+          state={state.capabilities}
+          dispatch={mapComponentDispatch(dispatch, v => adt('capabilities' as const, v))}
+          disabled={disabled} />
       </Col>
     </Row>
   );

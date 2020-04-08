@@ -60,7 +60,7 @@ export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, Inne
   placeholder?: string;
   label?: string;
   help?: ViewElementChildren;
-  hint?: string;
+  hint?: ViewElementChildren;
   action?: {
     icon: AvailableIcons;
     onClick(): void;
