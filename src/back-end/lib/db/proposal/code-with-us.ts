@@ -714,4 +714,3 @@ export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | 
 
   return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result)) : valid(null);
 });
-

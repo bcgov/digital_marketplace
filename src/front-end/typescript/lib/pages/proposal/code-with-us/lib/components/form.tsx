@@ -29,6 +29,11 @@ export type TabId = 'Proponent' | 'Proposal' | 'Attachments';
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
+const newAttachmentMetadata = [
+  adt('userType' as const, UserType.Admin),
+  adt('userType' as const, UserType.Government)
+];
+
 export interface State {
   opportunity: CWUOpportunity;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
@@ -79,6 +84,7 @@ export type Msg
 
 export interface Params {
   opportunity: CWUOpportunity;
+  canRemoveExistingAttachments: boolean;
   proposal?: CWUProposal;
   activeTab?: TabId;
   affiliations: AffiliationSlim[];
@@ -97,7 +103,7 @@ function getProponent(proposal: CWUProposal | undefined, proponentType: CWUPropo
   return fallback;
 }
 
-export const init: Init<Params, State> = async ({ opportunity, proposal, affiliations, activeTab = DEFAULT_ACTIVE_TAB }) => {
+export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, proposal, affiliations, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const selectedOrganizationOption: Select.Option | null = (() => {
     if (proposal?.proponent.tag !== 'organization') { return null; }
     return {
@@ -269,12 +275,10 @@ export const init: Init<Params, State> = async ({ opportunity, proposal, affilia
     })),
 
     attachments: immutable(await Attachments.init({
+      canRemoveExistingAttachments,
       existingAttachments: proposal?.attachments || [],
       //TODO need to figure out how to set permissions for proposal attachments here
-      newAttachmentMetadata: [
-        adt('userType', UserType.Admin),
-        adt('userType', UserType.Government)
-      ]
+      newAttachmentMetadata
     }))
 
   };
@@ -567,7 +571,13 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
 
   switch (actionResult.tag) {
     case 'valid':
-      return valid([setErrors(state, {}), actionResult.value]);
+      state = setErrors(state, {});
+      // Update the attachments component accordingly.
+      state = state.set('attachments', immutable(await Attachments.init({
+        existingAttachments: actionResult.value.attachments || [],
+        newAttachmentMetadata
+      })));
+      return valid([state, actionResult.value]);
     case 'unhandled':
     case 'invalid':
       return invalid(setErrors(state, actionResult.value));

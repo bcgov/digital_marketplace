@@ -69,7 +69,8 @@ async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSl
     opportunity,
     proposal,
     affiliations,
-    activeTab
+    activeTab,
+    canRemoveExistingAttachments: proposal.status === CWUProposalStatus.Draft || proposal.status === CWUProposalStatus.Submitted
   }));
 }
 

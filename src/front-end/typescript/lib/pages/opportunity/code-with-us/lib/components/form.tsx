@@ -28,6 +28,8 @@ export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Ad
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
+const newAttachmentMetadata = [adt('any' as const)];
+
 export interface State {
   opportunity?: CWUOpportunity;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
@@ -82,6 +84,7 @@ export type Msg
   | ADT<'addenda',            Addenda.Msg>;
 
 export interface Params {
+  canRemoveExistingAttachments: boolean;
   opportunity?: CWUOpportunity;
   activeTab?: TabId;
   showAddendaTab?: boolean;
@@ -98,7 +101,7 @@ export function setValidateDate(state: Immutable<State>, k: DateFieldKey, valida
   return state.update(k, s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
 }
 
-export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
+export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
   activeTab = !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab;
   return {
     opportunity,
@@ -284,8 +287,9 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
     })),
 
     attachments: immutable(await Attachments.init({
+      canRemoveExistingAttachments,
       existingAttachments: opportunity?.attachments || [],
-      newAttachmentMetadata: [adt('any')]
+      newAttachmentMetadata
     })),
 
     addenda: showAddendaTab
@@ -492,6 +496,11 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
       return invalid(setErrors(state, actionResult.value));
     case 'valid':
       state = setErrors(state, {});
+      // Update the attachments component accordingly.
+      state = state.set('attachments', immutable(await Attachments.init({
+        existingAttachments: actionResult.value.attachments || [],
+        newAttachmentMetadata
+      })));
       return valid([state, actionResult.value]);
   }
 }

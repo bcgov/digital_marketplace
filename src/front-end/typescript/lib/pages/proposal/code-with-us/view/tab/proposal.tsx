@@ -55,7 +55,8 @@ async function initForm(opportunity: CWUOpportunity, proposal: CWUProposal): Pro
   return immutable(await Form.init({
     opportunity,
     proposal,
-    affiliations: []
+    affiliations: [],
+    canRemoveExistingAttachments: false
   }));
 }
 
