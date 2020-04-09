@@ -124,27 +124,19 @@ async function getCWUProposalSubmittedAt(connection: Connection, proposal: RawCW
     .first())?.submittedAt;
 }
 
-async function createCWUProposalAttachments(connection: Connection, trx: Transaction, proposalId: Id, attachments: FileRecord[]) {
+async function createCWUProposalAttachments(trx: Transaction, proposalId: Id, attachments: FileRecord[]) {
+  // Delete existing and recreate
+  await trx('cwuProposalAttachments')
+    .where({ proposal: proposalId })
+    .delete();
   for (const attachment of attachments) {
-    // Check to see for existing attachment relation.
-    const existing = await connection('cwuProposalAttachments')
-      .where({
+    const [attachmentResult] = await trx('cwuProposalAttachments')
+      .insert({
         proposal: proposalId,
         file: attachment.id
-      })
-      .select('*')
-      .first();
-    // If it doesn't exist, create relation.
-    if (!existing) {
-      const [attachmentResult] = await connection('cwuProposalAttachments')
-        .transacting(trx)
-        .insert({
-          proposal: proposalId,
-          file: attachment.id
-        }, '*');
-      if (!attachmentResult) {
-        throw new Error('Unable to create proposal attachment');
-      }
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create proposal attachment');
     }
   }
 }
@@ -419,7 +411,7 @@ export const createCWUProposal = tryDb<[CreateCWUProposalParams, AuthenticatedSe
       }, '*');
 
     // Create attachment records
-    await createCWUProposalAttachments(connection, trx, rootRecord.id, attachments);
+    await createCWUProposalAttachments(trx, rootRecord.id, attachments);
 
     const dbResult = await readOneCWUProposal(trx, rootRecord.id, session);
     if (isInvalid(dbResult) || !dbResult.value) {
@@ -486,7 +478,7 @@ export const updateCWUProposal = tryDb<[UpdateCWUProposalParams, AuthenticatedSe
       throw new Error('unable to update proposal');
     }
 
-    await createCWUProposalAttachments(connection, trx, result.id, attachments || []);
+    await createCWUProposalAttachments(trx, result.id, attachments || []);
 
     const dbResult = await readOneCWUProposal(trx, result.id, session);
     if (isInvalid(dbResult) || !dbResult.value) {
@@ -714,4 +706,3 @@ export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | 
 
   return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result)) : valid(null);
 });
-
