@@ -580,10 +580,10 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs='12'>
         <ShortText.view
           disabled={disabled}
-          placeholder='Vendor Name'
+          placeholder='Legal Name'
           required
           extraChildProps={{}}
-          label='Name'
+          label='Legal Name'
           state={state.legalName}
           dispatch={mapComponentDispatch(dispatch, value => adt('legalName' as const, value)) }
         />
