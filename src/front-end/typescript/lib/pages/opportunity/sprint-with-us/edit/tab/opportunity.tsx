@@ -72,6 +72,7 @@ function addErrorAlertsFromUpdate(state: Immutable<State>, errors: UpdateValidat
 
 async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
   return immutable(await Form.init({
+    canRemoveExistingAttachments: false, //TODO
     opportunity,
     activeTab,
     showAddendaTab: canAddAddendumToCWUOpportunity(opportunity)

@@ -4,11 +4,14 @@ import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import * as References from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/references';
 import * as Team from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team';
 import * as TeamQuestions from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team-questions';
 import Accordion from 'front-end/lib/views/accordion';
 import Badge from 'front-end/lib/views/badge';
+import DescriptionList from 'front-end/lib/views/description-list';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
@@ -16,12 +19,13 @@ import { find } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
+import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
@@ -57,6 +61,7 @@ export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'eval
   isReviewInceptionPhaseAccordionOpen: boolean;
   isReviewPrototypePhaseAccordionOpen: boolean;
   isReviewImplementationPhaseAccordionOpen: boolean;
+  openReviewTeamQuestionResponseAccordions: Set<number>;
 }
 
 export type Msg
@@ -76,9 +81,15 @@ export type Msg
   // Review Proposal Tab
   | ADT<'toggleReviewInceptionPhaseAccordion'>
   | ADT<'toggleReviewPrototypePhaseAccordion'>
-  | ADT<'toggleReviewImplementationPhaseAccordion'>;
+  | ADT<'toggleReviewImplementationPhaseAccordion'>
+  | ADT<'toggleReviewTeamQuestionResponseAccordion', number>;
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Evaluation';
+
+async function getAffiliations(orgId?: Id): Promise<AffiliationMember[]> {
+  if (!orgId) { return []; }
+  return api.getValidValue(await api.affiliations.readManyForOrganization(orgId), []);
+}
 
 export const init: Init<Params, State> = async ({ viewerUser, opportunity, organizations, evaluationContent, proposal, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const inceptionCost = proposal?.inceptionPhase?.proposedCost || 0;
@@ -98,6 +109,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     isReviewInceptionPhaseAccordionOpen: true,
     isReviewPrototypePhaseAccordionOpen: true,
     isReviewImplementationPhaseAccordionOpen: true,
+    openReviewTeamQuestionResponseAccordions: new Set(),
 
     tabbedForm: immutable(await TabbedFormComponent.init({
       tabs: [
@@ -127,6 +139,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     team: immutable(await Team.init({
       opportunity,
       organization: proposal?.organization,
+      affiliations: await getAffiliations(proposal?.organization?.id),
       proposal
     })),
 
@@ -349,7 +362,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['organization'],
         childUpdate: Select.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('organization', value)
+        mapChildMsg: value => adt('organization', value),
+        updateAfter: state => [
+          state,
+          async state1 => {
+            const orgId = FormField.getValue(state.organization)?.value;
+            return state1.set('team', Team.setAffiliations(state.team, await getAffiliations(orgId)));
+          }
+        ]
       });
 
     case 'team':
@@ -426,6 +446,16 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
     case 'toggleReviewImplementationPhaseAccordion':
       return [state.update('isReviewImplementationPhaseAccordionOpen', v => !v)];
+
+    case 'toggleReviewTeamQuestionResponseAccordion':
+      return [state.update('openReviewTeamQuestionResponseAccordions', s => {
+        if (s.has(msg.value)) {
+          s.delete(msg.value);
+        } else {
+          s.add(msg.value);
+        }
+        return s;
+      })];
   }
 };
 
@@ -486,6 +516,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
       {inceptionPhase
         ? (<Col xs='12' md='4'>
             <NumberField.view
+              required
               extraChildProps={{ prefix: '$' }}
               label='Inception Cost'
               placeholder='Inception Cost'
@@ -498,6 +529,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
       {prototypePhase
         ? (<Col xs='12' md='4'>
             <NumberField.view
+              required
               extraChildProps={{ prefix: '$' }}
               label='Prototype Cost'
               placeholder='Prototype Cost'
@@ -509,6 +541,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
         : null}
         <Col xs='12' md='4'>
           <NumberField.view
+            required
             extraChildProps={{ prefix: '$' }}
             label='Implementation Cost'
             placeholder='Implementation Cost'
@@ -576,7 +609,7 @@ interface ReviewPhaseViewProps {
   icon: AvailableIcons;
   proposedCost: number;
   opportunityPhase: SWUOpportunityPhase;
-  members: SWUProposalTeamMember[];
+  members: Phase.Member[];
   isOpen: boolean;
   className?: string;
   toggleAccordion(): void;
@@ -605,7 +638,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
         </span>
       </div>
       <div className='d-flex flex-nowrap align-items-center'>
-        <Icon name='calendar' width={0.9} height={0.9} className='mr-1' />
+        <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
         <span className='font-weight-bold mr-2'>Proposed Phase Cost</span>
         <span>{formatAmount(proposedCost, '$')}</span>
       </div>
@@ -618,30 +651,46 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
                   <Link
                     key={`swu-proposal-review-phase-member-${i}`}
                     newTab
-                    symbol_={leftPlacement(imageLinkSymbol(m.member.avatarImageFile ? fileBlobPath(m.member.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
-                    {m.member.name}
+                    symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
+                    {m.user.name}
                   </Link>
                   {m.scrumMaster
                     ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
                     : null}
-                  {m.pending
+                  {m.membershipStatus === MembershipStatus.Pending
                     ? (<Badge text='Pending' color='yellow' className='ml-3' />)
                     : null}
                 </div>
               ) )}
             </div>
           </div>)
-        : null}
+        : 'You have not yet assigned team members for this phase.'}
     </Accordion>
   );
 };
 
-const ReviewReferencesView: View<Props> = ({ state, dispatch }) => {
-  return null;
-};
+interface ReviewTeamQuestionResponseViewProps {
+  response: CreateSWUProposalTeamQuestionResponseBody;
+  index: number;
+  isOpen: boolean;
+  className?: string;
+  toggleAccordion(): void;
+}
 
-const ReviewTeamQuestionsView: View<Props> = ({ state, dispatch }) => {
-  return null;
+const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> = ({ response, index, isOpen, className, toggleAccordion }) => {
+  return (
+    <Accordion
+      className={className}
+      toggle={() => toggleAccordion()}
+      color='blue-dark'
+      title={`Question ${index + 1}`}
+      titleClassName='h3 mb-0'
+      chevronWidth={1.5}
+      chevronHeight={1.5}
+      open={isOpen}>
+      {response.response || 'You have not yet entered a response for this question.'}
+    </Accordion>
+  );
 };
 
 const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
@@ -653,17 +702,27 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
       <Col xs='12'>
         <p className='mb-0'>This is a summary of your proposal for the Sprint With Us opportunity. Be sure to review all information for accuracy prior to submitting your proposal.</p>
       </Col>
-      {organization
-        ? (<Col xs='12' className='mt-5'>
-            <p className='mb-4'>Please review your organization's information to ensure it is up-to-date.</p>
-            <Link
-              newTab
-              symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
-              dest={routeDest(adt('orgEdit', { orgId: organization.id }))}>
-              {organization.legalName}
-            </Link>
-          </Col>)
-        : null}
+      <Col xs='12' className='mt-5'>
+        <h3>Organization Info</h3>
+        {organization
+          ? (<div>
+              <p className='mb-4'>Please review your organization's information to ensure it is up-to-date by clicking on the link below.</p>
+              <Link
+                newTab
+                symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
+                dest={routeDest(adt('orgEdit', { orgId: organization.id }))}>
+                {organization.legalName}
+              </Link>
+            </div>)
+          : 'You have not yet selected an organization for this proposal.'}
+      </Col>
+      <Col xs='12' className='mt-5'>
+        <h3>Phases</h3>
+        <div className='d-flex flex-nowrap align-items-center'>
+          <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
+          <span className='font-weight-bold mr-2'>Total Proposed Cost</span>
+          <span>{formatAmount(FormField.getValue(state.totalCost) || 0, '$')}</span>
+        </div>
         {phaseMembers.inceptionPhase && opportunity.inceptionPhase
           ? (<ReviewPhaseView
               className='mb-4'
@@ -689,7 +748,6 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
               />)
           : null}
         <ReviewPhaseView
-          className='mb-4'
           title='Implementation'
           icon='cogs'
           proposedCost={FormField.getValue(state.implementationCost) || 0}
@@ -698,6 +756,37 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           isOpen={state.isReviewImplementationPhaseAccordionOpen}
           toggleAccordion={() => dispatch(adt('toggleReviewImplementationPhaseAccordion'))}
           />
+      </Col>
+      <Col xs='12' className='mt-5'>
+        <h3 className='mb-4'>References</h3>
+        <DescriptionList
+          items={References.getValues(state.references).map((r, i) => ({
+            name: `Reference ${i + 1}`,
+            children: (
+              <div>
+                {r.name}
+                <br />
+                {r.company}
+                <br />
+                {r.email}
+                <br />
+                {r.phone}
+              </div>
+            )
+          }))} />
+      </Col>
+      <Col xs='12' className='mt-5'>
+        <h3 className='mb-4'>Team Questions</h3>
+        {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
+          <ReviewTeamQuestionResponseView
+            key={`swu-proposal-review-team-question-response-${i}`}
+            className={i < rs.length - 1 ? 'mb-4' : ''}
+            isOpen={state.openReviewTeamQuestionResponseAccordions.has(i)}
+            toggleAccordion={() => dispatch(adt('toggleReviewTeamQuestionResponseAccordion', i))}
+            index={i}
+            response={r} />
+        ))}
+      </Col>
     </Row>
   );
 };

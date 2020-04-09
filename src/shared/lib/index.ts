@@ -2,6 +2,13 @@ import { get, isArray, isBoolean, repeat } from 'lodash';
 import moment, { isDate } from 'moment-timezone';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
+export function find<T>(arr: T[], pred: (_: T) => boolean): T | null {
+  for (const a of arr) {
+    if (pred(a)) { return a; }
+  }
+  return null;
+}
+
 export function getString(obj: any, keyPath: string | string[], fallback = ''): string {
   const value = get(obj, keyPath);
   return String(value === undefined || value === null ? fallback : value);

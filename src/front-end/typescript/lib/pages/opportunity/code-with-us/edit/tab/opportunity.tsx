@@ -12,7 +12,7 @@ import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { canAddAddendumToCWUOpportunity, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { canAddAddendumToCWUOpportunity, canCWUOpportunityDetailsBeEdited, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 type ModalId = 'publish' | 'publishChanges' | 'saveChangesAndPublish' | 'delete' | 'cancel' | 'suspend';
@@ -68,7 +68,8 @@ async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Pr
   return immutable(await Form.init({
     opportunity,
     activeTab,
-    showAddendaTab: canAddAddendumToCWUOpportunity(opportunity)
+    showAddendaTab: canAddAddendumToCWUOpportunity(opportunity),
+    canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(opportunity)
   }));
 }
 
