@@ -93,42 +93,9 @@ export function getActiveTab(state: Immutable<State>): TabId {
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Overview';
 
-async function initAssignmentDate(value: DateField.Value, proposalDeadline?: Date): Promise<Immutable<DateField.State>> {
-  return immutable(await DateField.init({
-    errors: [],
-    validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, proposalDeadline || new Date())),
-    child: {
-      value,
-      id: 'cwu-opportunity-assignment-date'
-    }
-  }));
-}
-
-async function initStartDate(value: DateField.Value, assignmentDate?: Date): Promise<Immutable<DateField.State>> {
-  return immutable(await DateField.init({
-    errors: [],
-    validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, assignmentDate || new Date())),
-    child: {
-      value,
-      id: 'cwu-opportunity-start-date'
-    }
-  }));
-}
-
-async function initCompletionDate(value: DateField.Value, startDate?: Date): Promise<Immutable<DateField.State>> {
-  return immutable(await DateField.init({
-    errors: [],
-    validate: DateField.validateDate(v => {
-      return mapValid(
-        opportunityValidation.validateCompletionDate(v, startDate || new Date()),
-        w => w || null
-      );
-    }),
-    child: {
-      value,
-      id: 'cwu-opportunity-completion-date'
-    }
-  }));
+type DateFieldKey = 'startDate' | 'assignmentDate' | 'completionDate';
+export function setValidateDate(state: Immutable<State>, k: DateFieldKey, validate: (_: string) => Validation<Date | null>): Immutable<State> {
+  return state.update(k, s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
 }
 
 export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
@@ -254,9 +221,37 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
       }
     })),
 
-    assignmentDate: await initAssignmentDate(opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null, opportunity?.proposalDeadline),
-    startDate: await initStartDate(opportunity ? DateField.dateToValue(opportunity.startDate) : null, opportunity?.assignmentDate),
-    completionDate: await initCompletionDate(opportunity?.completionDate ? DateField.dateToValue(opportunity.completionDate) : null, opportunity?.startDate),
+    assignmentDate: immutable(await DateField.init({
+      errors: [],
+      validate: DateField.validateDate(v => opportunityValidation.validateAssignmentDate(v, opportunity?.proposalDeadline || new Date())),
+      child: {
+        value: opportunity ? DateField.dateToValue(opportunity.assignmentDate) : null,
+        id: 'cwu-opportunity-assignment-date'
+      }
+    })),
+
+    startDate: immutable(await DateField.init({
+      errors: [],
+      validate: DateField.validateDate(v => opportunityValidation.validateStartDate(v, opportunity?.assignmentDate || new Date())),
+      child: {
+        value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
+        id: 'cwu-opportunity-start-date'
+      }
+    })),
+
+    completionDate: immutable(await DateField.init({
+      errors: [],
+      validate: DateField.validateDate(v => {
+        return mapValid(
+          opportunityValidation.validateCompletionDate(v, opportunity?.startDate || new Date()),
+          w => w || null
+        );
+      }),
+      child: {
+        value: opportunity?.completionDate ? DateField.dateToValue(opportunity.completionDate) : null,
+        id: 'cwu-opportunity-completion-date'
+      }
+    })),
 
     submissionInfo: immutable(await ShortText.init({
       errors: [],
@@ -585,63 +580,45 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case 'proposalDeadline': {
-      const result = updateComponentChild({
+      return updateComponentChild({
         state,
         childStatePath: ['proposalDeadline'],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('proposalDeadline' as const, value)
+        mapChildMsg: (value) => adt('proposalDeadline' as const, value),
+        updateAfter: state => [
+          setValidateDate(state, 'assignmentDate', v => opportunityValidation.validateAssignmentDate(v, DateField.getDate(state.proposalDeadline) || new Date()))
+        ]
       });
-      return [
-        result[0],
-        async (state, dispatch) => {
-          if (result[1]) {
-            state = await result[1](state, dispatch) || state;
-          }
-          return state
-            .set('assignmentDate', await initAssignmentDate(FormField.getValue(state.assignmentDate), DateField.getDate(state.proposalDeadline)));
-        }
-      ];
     }
 
     case 'assignmentDate': {
-      const result = updateComponentChild({
+      return updateComponentChild({
         state,
         childStatePath: ['assignmentDate'],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('assignmentDate' as const, value)
+        mapChildMsg: value => adt('assignmentDate' as const, value),
+        updateAfter: state => [
+          setValidateDate(state, 'startDate', v => opportunityValidation.validateStartDate(v, DateField.getDate(state.assignmentDate) || new Date()))
+        ]
       });
-      return [
-        result[0],
-        async (state, dispatch) => {
-          if (result[1]) {
-            state = await result[1](state, dispatch) || state;
-          }
-          return state
-            .set('startDate', await initStartDate(FormField.getValue(state.startDate), DateField.getDate(state.assignmentDate)));
-        }
-      ];
     }
 
     case 'startDate': {
-      const result = updateComponentChild({
+      return updateComponentChild({
         state,
         childStatePath: ['startDate'],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('startDate' as const, value)
+        mapChildMsg: (value) => adt('startDate' as const, value),
+        updateAfter: state => [
+          setValidateDate(state, 'completionDate', v => mapValid(
+            opportunityValidation.validateCompletionDate(v, DateField.getDate(state.startDate) || new Date()),
+            w => w || null
+          ))
+        ]
       });
-      return [
-        result[0],
-        async (state, dispatch) => {
-          if (result[1]) {
-            state = await result[1](state, dispatch) || state;
-          }
-          return state
-            .set('completionDate', await initCompletionDate(FormField.getValue(state.completionDate), DateField.getDate(state.startDate)));
-        }
-      ];
     }
 
     case 'completionDate':
