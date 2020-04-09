@@ -23,10 +23,6 @@ export function validateSWUProposalTeamMemberScrumMaster(raw: any): Validation<b
   return isBoolean(raw) ? valid(raw) : invalid(['Invalid value provided for scrum master.']);
 }
 
-export function validateSWUProposalTeamMemberPending(raw: any): Validation<boolean> {
-  return isBoolean(raw) ? valid(raw) : invalid(['Invalid value provided for pending.']);
-}
-
 export function validateSWUPhaseProposedCost(raw: number, phaseMaxBudget: number): Validation<number> {
   return validateNumber(raw, 0, phaseMaxBudget, 'Proposed Cost');
 }

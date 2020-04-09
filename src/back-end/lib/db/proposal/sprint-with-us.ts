@@ -5,6 +5,7 @@ import { readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { readOneUserSlim } from 'back-end/lib/db/user';
 import { readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
+import { MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { doesSWUOpportunityStatusAllowGovToViewFullProposal, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -158,6 +159,28 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
     return result;
   }));
 
+  // Populate team member status for each phase
+  for (const member of inceptionPhase?.members || []) {
+    member.pending = (await connection('affiliations')
+      .where({ user: member.member.id, organization: organizationId })
+      .select('membershipStatus')
+      .first())?.membershipStatus === MembershipStatus.Pending;
+  }
+
+  for (const member of prototypePhase?.members || []) {
+    member.pending = (await connection('affiliations')
+      .where({ user: member.member.id, organization: organizationId })
+      .select('membershipStatus')
+      .first())?.membershipStatus === MembershipStatus.Pending;
+  }
+
+  for (const member of implementationPhase.members) {
+    member.pending = (await connection('affiliations')
+      .where({ user: member.member.id, organization: organizationId })
+      .select('membershipStatus')
+      .first())?.membershipStatus === MembershipStatus.Pending;
+  }
+
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
@@ -246,7 +269,6 @@ export const readManyTeamMembersByPhaseId = tryDb<[Id], SWUProposalTeamMember[]>
     .select<RawProposalTeamMember[]>(
       'members.member',
       'members.scrumMaster',
-      'members.pending',
       'users.capabilities'
     );
 
