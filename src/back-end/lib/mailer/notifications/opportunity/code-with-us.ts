@@ -9,13 +9,18 @@ import { AuthenticatedSession } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { getValidValue } from 'shared/lib/validation';
 
-export async function handleCWUPublished(connection: db.Connection, opportunity: CWUOpportunity, session: AuthenticatedSession): Promise<void> {
+export async function handleCWUPublished(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
   // Notify all users with notifications turned on
   const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
   await Promise.all(subscribedUsers.map(async user => await newCWUOpportunityPublished(user, opportunity)));
 
-  // Notify publishing gov user of successful publish
-  await successfulCWUPublication(session.user, opportunity);
+  // Notify authoring gov user of successful publish
+  if (opportunity.createdBy) {
+    const author = getValidValue(await db.readOneUser(connection, opportunity.createdBy.id), null);
+    if (author) {
+      await successfulCWUPublication(author, opportunity);
+    }
+  }
 }
 
 export async function handleCWUUpdated(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {

@@ -255,7 +255,7 @@ const resource: Resource = {
           }
           // If published, notify subscribed users
           if (dbResult.value.status === CWUOpportunityStatus.Published) {
-            cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value, request.body.session);
+            cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -544,7 +544,7 @@ const resource: Resource = {
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);
               // Notify subscribers of publication
               if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value, request.session);
+                cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value);
               }
               break;
             case 'startEvaluation':
