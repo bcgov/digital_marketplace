@@ -81,7 +81,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       opportunity,
       form: immutable(await Form.init({
         opportunity,
-        affiliations
+        affiliations,
+        canRemoveExistingAttachments: true //moot
       }))
     }));
   },
