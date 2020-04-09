@@ -83,7 +83,7 @@ async function successfulCWUProposalSubmission(recipient: User, opportunity: CWU
             },
             suffix: ' and access the proposal via your dashboard.  All changes must be submitted prior to the proposal deadline.'
           },
-          { prefix: 'Once the proposal deadline has been reached, your proposal will be reviewed and assigned a score.  After all proposals have been evaluated, you will be notified if you will be proceeding to the next stage of the opportunity or if your proposal was unsuccessful.' },
+          { prefix: 'Once the proposal deadline has been reached, your proposal will be reviewed and assigned a score.  After all proposals have been evaluated, you will be notified if you have been awarded the opportunity or if your proposal was unsuccessful.' },
           { prefix: 'Good luck!'}
         ]
       },
@@ -106,7 +106,7 @@ async function awardedCWUProposalSubmission(recipient: User, opportunity: CWUOpp
         title: 'What Happens Next?',
         content: [
           {
-            prefix: 'If you would like to view your scores for each stage of the opportunity, ',
+            prefix: 'If you would like to view your total score, ',
             link: {
               text: 'sign in',
               url: templates.makeUrl('sign-in')
@@ -137,7 +137,7 @@ async function unsuccessfulCWUProposalSubmission(recipient: User, opportunity: C
         content: [
           { prefix: `The opportunity has been awarded to ${opportunity.successfulProponentName}`},
           {
-            prefix: 'If you would like to view your scores for each stage of the opportunity, ',
+            prefix: 'If you would like to view your total score, ',
             link: {
               text: 'sign in',
               url: templates.makeUrl('sign-in')
