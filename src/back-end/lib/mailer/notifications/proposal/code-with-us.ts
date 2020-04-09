@@ -145,7 +145,7 @@ async function unsuccessfulCWUProposalSubmission(recipient: User, opportunity: C
             suffix: ' and access your proposal via your dashboard.'
           },
           {
-            prefix: 'Thank you for submission and we wish you luck on the next opportunity.'
+            prefix: 'Thank you for your submission and we wish you luck on the next opportunity.'
           }
         ]
       },
