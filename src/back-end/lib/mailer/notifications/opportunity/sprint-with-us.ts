@@ -19,7 +19,7 @@ export async function newSWUOpportunityPublished(recipient: User, opportunity: S
       title,
       description: `Hi ${recipient.name}, a New Sprint With Us opportunity is available:`,
       descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-      callToAction: viewSWUOpportunityCallToAction(opportunity)
+      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
     })
   });
 }

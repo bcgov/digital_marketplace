@@ -85,7 +85,8 @@ const styles: Styles = (() => {
       md: { fontSize: px(scale(1)) },
       lg: { fontSize: px(scale(1.1)) },
       xl: { fontSize: px(scale(1.3)) },
-      bold: { fontWeight: 'bold' }
+      bold: { fontWeight: 'bold' },
+      italic: { fontStyle: 'italic' }
     },
     border: {
       radius: {
@@ -207,13 +208,13 @@ export const Link: View<LinkProps> = ({ text, url }) => {
   );
 };
 
-const CallToAction: View<LinkProps> = ({ text, url }) => {
+const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style }) => {
   return (
-    <Row style={styles.utilities.text.center}>
-      <a href={url} target='_blank' style={styles.classes.button}>
+    <Fragment>
+      <a href={url} target='_blank' style={{...styles.classes.button, ...style}}>
         {text}
       </a>
-    </Row>
+    </Fragment>
   );
 };
 
@@ -332,15 +333,12 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
 export interface SimpleProps extends TemplateBaseProps {
   linkLists?: LinkListProps[];
   descriptionLists?: DescriptionListProps[];
-  callToAction?: LinkProps;
-  body?: {
-    title?: string;
-    content: Child;
-  };
+  callsToAction?: LinkProps[];
+  body?: SimpleBodyProps;
 }
 
 const Simple: View<SimpleProps> = props => {
-  const { linkLists, descriptionLists, callToAction, body } = props;
+  const { linkLists, descriptionLists, callsToAction, body } = props;
   return (
     <Layout {...props}>
       <Fragment>
@@ -355,16 +353,53 @@ const Simple: View<SimpleProps> = props => {
       </Fragment>
       <Fragment>
         {body
-          ? (<Fragment>
-              {body.title ? (<div style={{...styles.utilities.font.bold, ...styles.utilities.text.center}}>{body.title}</div>) : null}
-              {body.content}
-            </Fragment>)
+          ? (<SimpleBody {...body} />)
           : null}
       </Fragment>
-      {callToAction
-        ? (<CallToAction {...callToAction} />)
-        : null}
+      <Fragment>
+        {callsToAction
+          ? <Row style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', ...styles.utilities.text.center}}>
+              {callsToAction.map((call, i) => (<CallToAction style={{ ...styles.utilities.m[2] }} key={`call-to-action-${i}`} {...call} />))}
+            </Row>
+          : null}
+      </Fragment>
     </Layout>
+  );
+};
+
+export interface SimpleBodyProps {
+  title?: string;
+  content?: ContentItemProps[];
+}
+
+const SimpleBody: View<SimpleBodyProps> = props => {
+  const { title, content } = props;
+  return (
+    <Row>
+      <Fragment>
+        {title ? (<div style={{...styles.utilities.font.italic, ...styles.utilities.text.center, ...styles.utilities.mb[4]}}>{title}</div>) : null}
+      </Fragment>
+      <Fragment>
+        {content ? content.map((contentItem, i) => (<div style={{...styles.utilities.mb[2]}} key={`content-item-${i}`}><ContentItem {...contentItem} /></div> )) : null}
+      </Fragment>
+    </Row>
+  );
+};
+
+export interface ContentItemProps {
+  prefix?: string;
+  link?: LinkProps;
+  suffix?: string;
+}
+
+const ContentItem: View<ContentItemProps> = props => {
+  const { prefix, link, suffix } = props;
+  return (
+    <Fragment>
+      { prefix ? (prefix) : null }
+      { link ? <Link {...link} /> : null }
+      { suffix ? (suffix) : null }
+    </Fragment>
   );
 };
 

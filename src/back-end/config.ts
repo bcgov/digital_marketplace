@@ -34,6 +34,8 @@ export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
 
 export const ORIGIN = get('ORIGIN', 'http://digital-marketplace.bcgov.realfolk.io').replace(/\/*$/, '');
 
+export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'TODO';
+
 export function getPostgresUrl(): string | null {
   // *SERVICE* variables are set automatically by OpenShift.
   const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');

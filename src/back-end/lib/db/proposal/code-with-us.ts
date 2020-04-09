@@ -3,7 +3,7 @@ import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
 import { readOneCWUOpportunitySlim, updateCWUOpportunityStatus } from 'back-end/lib/db/opportunity/code-with-us';
 import { readOneOrganization } from 'back-end/lib/db/organization';
-import { readOneUserSlim } from 'back-end/lib/db/user';
+import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { readCWUProposalHistory, readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { valid } from 'shared/lib/http';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -715,3 +715,15 @@ export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | 
   return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result)) : valid(null);
 });
 
+export const readManyProposalAuthors = tryDb<[Id], User[]>(async (connection, opportunity) => {
+  const result = await connection<RawUser>('users')
+    .join('cwuProposals as proposals', 'proposals.createdBy', '=', 'users.id')
+    .where({ 'proposals.opportunity': opportunity })
+    .select<RawUser[]>('users.*');
+
+  if (!result) {
+    throw new Error('unable to read proposal users');
+  }
+
+  return valid(await Promise.all(result.map(async raw => await rawUserToUser(connection, raw))));
+});

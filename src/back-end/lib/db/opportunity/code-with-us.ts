@@ -4,6 +4,7 @@ import { readOneFileById } from 'back-end/lib/db/file';
 import { readOneCWUAwardedProposal, readSubmittedCWUProposalCount } from 'back-end/lib/db/proposal/code-with-us';
 import { RawCWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/code-with-us';
 import { readOneUserSlim } from 'back-end/lib/db/user';
+import * as cwuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { valid } from 'shared/lib/http';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -147,9 +148,8 @@ async function createCWUOpportunityAttachments(connection: Connection, trx: Tran
   }
 }
 
-export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
-  let query = connection<RawCWUOpportunity>('cwuOpportunities as opp')
-    .where({ 'opp.id': id })
+function generateCWUOpportunityQuery(connection: Connection) {
+  return connection<RawCWUOpportunity>('cwuOpportunities as opp')
     // Join on latest CWU status
     .join<RawCWUOpportunity>('cwuOpportunityStatuses as stat', function() {
       this
@@ -166,7 +166,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
           connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
             version2.opportunity = opp.id)'));
     })
-    .select<RawCWUOpportunity>(
+    .select<RawCWUOpportunity[]>(
       'opp.id',
       'opp.createdAt',
       'opp.createdBy',
@@ -190,6 +190,12 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
       'version.evaluationCriteria',
       'stat.status'
     );
+}
+
+export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
+
+  let query = generateCWUOpportunityQuery(connection)
+    .where({ 'opp.id': id });
 
   if (!session.user || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
@@ -556,36 +562,18 @@ export const deleteCWUOpportunity = tryDb<[Id], CWUOpportunity>(async (connectio
 export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
-    const lapsedOpportunitiesIds = (await connection<{ id: Id }>('cwuOpportunities as opportunities')
-      .transacting(trx)
-      .join('cwuOpportunityStatuses as statuses', function() {
-        this
-          .on('opportunities.id', '=', 'statuses.opportunity')
-          .andOn('statuses.createdAt', '=',
-            connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as statuses2 where \
-              statuses2.opportunity = opportunities.id and statuses2.status is not null)'));
-      })
-      .join('cwuOpportunityVersions as versions', function() {
-        this
-          .on('opportunities.id', '=', 'versions.opportunity')
-          .andOn('versions.createdAt', '=',
-            connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as versions2 where \
-              versions2.opportunity = opportunities.id)'));
-      })
-      .where({
-        'statuses.status': CWUOpportunityStatus.Published
-      })
-      .andWhere('versions.proposalDeadline', '<=', now)
-      .select<Array<{ id: Id }>>('opportunities.id'))?.map(result => result.id) || [];
+    const lapsedOpportunities = await generateCWUOpportunityQuery(trx)
+      .where({ status: CWUOpportunityStatus.Published })
+      .andWhere('proposalDeadline', '<=', now);
 
-    for (const lapsedOpportunityId of lapsedOpportunitiesIds) {
+    for (const lapsedOpportunity of lapsedOpportunities) {
       // Set the opportunity to EVALUATION status
       await connection('cwuOpportunityStatuses')
         .transacting(trx)
         .insert({
           id: generateUuid(),
           createdAt: now,
-          opportunity: lapsedOpportunityId,
+          opportunity: lapsedOpportunity.id,
           status: CWUOpportunityStatus.Evaluation,
           note: 'This opportunity has closed.'
         });
@@ -602,7 +590,7 @@ export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
                 statuses2.proposal = proposals.id and statuses2.status is not null)'));
         })
         .where({
-          'proposals.opportunity': lapsedOpportunityId,
+          'proposals.opportunity': lapsedOpportunity.id,
           'statuses.status': CWUProposalStatus.Submitted
         })
         .select<Array<{ id: Id }>>('proposals.id'))?.map(result => result.id) || [];
@@ -620,6 +608,13 @@ export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
           });
       }
     }
-    return lapsedOpportunitiesIds.length;
+    // Generate notifications for each of the lapsed opportunities
+    for (const rawOpportunity of lapsedOpportunities) {
+      // We don't need attachments/addenda, but insert empty arrays so we can convert
+      rawOpportunity.attachments = [];
+      rawOpportunity.addenda = [];
+      cwuOpportunityNotifications.handleCWUReadyForEvaluation(connection, await rawCWUOpportunityToCWUOpportunity(connection, rawOpportunity));
+    }
+    return lapsedOpportunities.length;
   }));
 });

@@ -1,5 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as cwuProposalNotifications from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -228,6 +229,10 @@ const resource: Resource = {
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
+          // Notify of successful submission if submitted
+          if (dbResult.value.status === CWUProposalStatus.Submitted) {
+            cwuProposalNotifications.handleCWUProposalSubmitted(connection, dbResult.value.id, request.body.session);
+          }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
@@ -423,18 +428,26 @@ const resource: Resource = {
               break;
             case 'submit':
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Submitted, body.value, session);
+              // Notify of successful submission
+              cwuProposalNotifications.handleCWUProposalSubmitted(connection, request.params.id, session);
               break;
             case 'score':
               dbResult = await db.updateCWUProposalScore(connection, request.params.id, body.value, session);
               break;
             case 'award':
               dbResult = await db.awardCWUProposal(connection, request.params.id, body.value, session);
+              // Notify of award (also notifies unsuccessful proponents)
+              cwuProposalNotifications.handleCWUProposalAwarded(connection, request.params.id, session);
               break;
             case 'disqualify':
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Disqualified, body.value, session);
+              // Notify of disqualification
+              cwuProposalNotifications.handleCWUProposalDisqualified(connection, request.params.id, session);
               break;
             case 'withdraw':
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Withdrawn, body.value, session);
+              // Notify opportunity author of the withdrawal, if the opportunity is closed
+              cwuProposalNotifications.handleCWUProposalWithdrawn(connection, request.params.id, session);
               break;
           }
           if (isInvalid(dbResult)) {
