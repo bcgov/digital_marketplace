@@ -16,7 +16,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationSlim } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
@@ -456,10 +456,11 @@ export const component: Tab.Component<State, Msg> = {
     const isValid = () => Form.isValid(state.form);
     const disabled = isLoading(state);
     const isDraft = propStatus === CWUProposalStatus.Draft;
+    const isAcceptingProposals = isCWUOpportunityAcceptingProposals(state.opportunity);
     if (state.isEditing) {
       return adt('links', compact([
         // Submit Changes
-        isDraft
+        isDraft && isAcceptingProposals
           ? {
               children: 'Submit Changes',
               symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
@@ -502,21 +503,23 @@ export const component: Tab.Component<State, Msg> = {
           text: 'Actions',
           loading: isSubmitLoading || isStartEditingLoading || isDeleteLoading,
           linkGroups: [
-            {
-              links: [
-                {
-                  children: 'Submit',
-                  symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
-                  disabled: !isValid(),
-                  onClick: () => dispatch(adt('showModal', 'submit' as const))
-                },
-                {
-                  children: 'Edit',
-                  symbol_: leftPlacement(iconLinkSymbol('edit')),
-                  onClick: () => dispatch(adt('startEditing'))
-                }
-              ]
-            },
+            ...(isAcceptingProposals
+              ? [{
+                  links: [
+                    {
+                      children: 'Submit',
+                      symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
+                      disabled: !isValid(),
+                      onClick: () => dispatch(adt('showModal', 'submit' as const))
+                    },
+                    {
+                      children: 'Edit',
+                      symbol_: leftPlacement(iconLinkSymbol('edit')),
+                      onClick: () => dispatch(adt('startEditing'))
+                    }
+                  ]
+                }]
+              : []),
             {
               links: [
                 {
@@ -527,18 +530,20 @@ export const component: Tab.Component<State, Msg> = {
               ]
             }
           ]
-        });
+        }) as PageContextualActions;
       case CWUProposalStatus.Submitted:
         return adt('links', [
-          {
-            children: 'Edit',
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            button: true,
-            color: 'primary',
-            disabled,
-            loading: isStartEditingLoading,
-            onClick: () => dispatch(adt('startEditing'))
-          },
+          ...(isAcceptingProposals
+            ? [{
+                children: 'Edit',
+                symbol_: leftPlacement(iconLinkSymbol('edit')),
+                button: true,
+                color: 'primary',
+                disabled,
+                loading: isStartEditingLoading,
+                onClick: () => dispatch(adt('startEditing'))
+              }]
+            : []),
           {
             children: 'Withdraw',
             symbol_: leftPlacement(iconLinkSymbol('ban')),
@@ -549,7 +554,7 @@ export const component: Tab.Component<State, Msg> = {
             loading: isWithdrawLoading,
             onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
           }
-        ]);
+        ]) as PageContextualActions;
       case CWUProposalStatus.UnderReview:
       case CWUProposalStatus.Evaluated:
       case CWUProposalStatus.Awarded:
@@ -566,8 +571,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       case CWUProposalStatus.Withdrawn:
-        if (state.opportunity.status === CWUOpportunityStatus.Published) {
-          // Still accepting proposals.
+        if (isAcceptingProposals) {
           return adt('links', [
             {
               children: 'Resubmit',
