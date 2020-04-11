@@ -1,288 +1,405 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
+import * as Table from 'front-end/lib/components/table';
+import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
-import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import * as toasts from 'front-end/lib/pages/organization/lib/toasts';
+import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
+import { makeViewTeamMemberModal, OwnerBadge, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
+import { userAvatarPath } from 'front-end/lib/pages/user/lib';
+import Capabilities, { Capability } from 'front-end/lib/views/capabilities';
+import Icon from 'front-end/lib/views/icon';
+import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import LoadingButton from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import * as OrgResource from 'shared/lib/resources/organization';
-import { User } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import CAPABILITIES from 'shared/lib/data/capabilities';
+import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
+import { adt, ADT, Id } from 'shared/lib/types';
+import { validateUserEmail } from 'shared/lib/validation/affiliation';
+
+type ModalId
+  = ADT<'addTeamMembers'>
+  | ADT<'viewTeamMember', AffiliationMember>;
 
 export interface State extends Tab.Params {
-  isEditing: boolean;
-  editingLoading: number;
-  saveChangesLoading: number;
-  archiveLoading: number;
-  showArchiveModal: boolean;
-  showSaveChangesModal: boolean;
-  orgForm: Immutable<OrgForm.State>;
+  showModal: ModalId | null;
+  addTeamMembersLoading: number;
+  removeTeamMemberLoading: Id | null; //Id of affiliation, not user
+  membersTable: Immutable<Table.State>;
+  capabilities: Capability[];
+  addTeamMembersEmails: Array<Immutable<ShortText.State>>;
 }
 
 export type InnerMsg
-  = ADT<'orgForm', OrgForm.Msg>
-  | ADT<'startEditing'>
-  | ADT<'cancelEditing'>
-  | ADT<'saveChanges'>
-  | ADT<'archive'>
-  | ADT<'hideArchiveModal'>
-  | ADT<'hideSaveChangesModal'>;
+  = ADT<'addTeamMembers'>
+  | ADT<'removeTeamMember', Id> //Id of affiliation, not user
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'membersTable', Table.Msg>
+  | ADT<'addTeamMembersEmails', [number, ShortText.Msg]> //[index, msg]
+  | ADT<'addTeamMembersEmailsAddField'>
+  | ADT<'addTeamMembersEmailsRemoveField', number>; //index
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function resetOrgForm(organization: OrgResource.Organization): Promise<Immutable<OrgForm.State>> {
-  return immutable(await OrgForm.init({ organization }));
+export function determineCapabilities(members: AffiliationMember[]): Capability[] {
+  //Don't include pending members in capability calculation.
+  members = members.filter(m => !memberIsPending(m));
+  return CAPABILITIES.map(capability => ({
+    capability,
+    checked: membersHaveCapability(members, capability)
+  }));
 }
 
-export interface RouteParams {
-  orgId: string;
+function resetCapabilities(state: Immutable<State>): Immutable<State> {
+  return state.set('capabilities', determineCapabilities(state.affiliations));
+}
+
+async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>> {
+  return immutable(await ShortText.init({
+    errors: [],
+    validate: validateUserEmail,
+    child: {
+      id: 'organization-team-add-team-members-emails',
+      type: 'email',
+      value: ''
+    }
+  }));
 }
 
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
-    isEditing: false,
-    editingLoading: 0,
-    saveChangesLoading: 0,
-    archiveLoading: 0,
-    showArchiveModal: false,
-    showSaveChangesModal: false,
-    orgForm: immutable(await OrgForm.init({ organization: params.organization }))
+    showModal: null,
+    addTeamMembersLoading: 0,
+    removeTeamMemberLoading: null,
+    capabilities: determineCapabilities(params.affiliations),
+    membersTable: immutable(await Table.init({
+      idNamespace: 'organization-members'
+    })),
+    addTeamMembersEmails: [await initAddTeamMemberEmailField()]
   };
 };
 
-const startEditingLoading = makeStartLoading<State>('editingLoading');
-const stopEditingLoading = makeStopLoading<State>('editingLoading');
-const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
-const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
-const startArchiveLoading = makeStartLoading<State>('archiveLoading');
-const stopArchiveLoading = makeStopLoading<State>('archiveLoading');
-
-function isOwner(user: User, org: OrgResource.Organization): boolean {
-  return user.id === org.owner.id;
-}
+const startAddTeamMembersLoading = makeStartLoading<State>('addTeamMembersLoading');
+const stopAddTeamMembersLoading = makeStopLoading<State>('addTeamMembersLoading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'archive':
-      if (!state.showArchiveModal) {
-        return [state.set('showArchiveModal', true)];
-      } else {
-        state = startArchiveLoading(state)
-          .set('showArchiveModal', false);
-      }
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [state.set('showModal', null)];
+
+    case 'addTeamMembers': {
+      state = state.set('showModal', null);
       return [
-        state,
+        startAddTeamMembersLoading(state),
         async (state, dispatch) => {
-          const result = await api.organizations.delete(state.organization.id);
-          if (api.isValid(result)) {
-            // TODO show confirmation alert on page redirected to.
-            if (isOwner(state.viewerUser, state.organization)) {
-              dispatch(replaceRoute(adt('userProfile' as const, { userId: state.viewerUser.id, tab: 'organizations' as const })));
-            } else {
-              dispatch(replaceRoute(adt('orgList' as const, null)));
+          state = stopAddTeamMembersLoading(state);
+          const successToasts: string[] = []; //emails
+          const warningToasts: string[] = []; //emails
+          const errorToasts: string[] = []; //emails
+          for (const s of state.addTeamMembersEmails) {
+            const userEmail = FormField.getValue(s);
+            const result = await api.affiliations.create({
+              userEmail,
+              organization: state.organization.id,
+              membershipType: MembershipType.Member
+            });
+            switch (result.tag) {
+              case 'valid':
+                successToasts.push(userEmail);
+                state = state.update('affiliations', affs => [...affs, result.value]);
+                break;
+              case 'invalid':
+                if (result.value.inviteeNotRegistered?.length) {
+                  warningToasts.push(userEmail);
+                } else {
+                  errorToasts.push(userEmail);
+                }
+                break;
+              case 'unhandled':
+                errorToasts.push(userEmail);
+                break;
             }
-          } else {
-            state = stopArchiveLoading(state);
           }
-          return state;
-        }
-      ];
-    case 'saveChanges':
-      if (!state.showSaveChangesModal) {
-        return [state.set('showSaveChangesModal', true)];
-      } else {
-        state = startSaveChangesLoading(state)
-          .set('showSaveChangesModal', false);
-      }
-      return [
-        state,
-        async state => {
-          state = stopSaveChangesLoading(state);
-          const result = await OrgForm.persist(adt('update', {
-            state: state.orgForm,
-            orgId: state.organization.id,
-            extraBody: {
-              logoImageFile: state.organization.logoImageFile && state.organization.logoImageFile.id
-            }
-          }));
-          switch (result.tag) {
-            case 'valid':
-              return state = state
-                .set('isEditing', false)
-                .set('organization', result.value[1])
-                .set('orgForm', result.value[0]);
-            case 'invalid':
-              return state.set('orgForm', result.value);
+          //Dispatch resulting toasts to user.
+          if (successToasts.length) {
+            dispatch(toast(adt('success', toasts.addedTeamMembers.success(successToasts))));
           }
-        }
-      ];
-    case 'startEditing':
-      return [
-        startEditingLoading(state),
-        async state => {
-          state = stopEditingLoading(state);
-          const result = await api.organizations.readOne(state.organization.id);
-          if (api.isValid(result)) {
-            state = state
-              .set('isEditing', true)
-              .set('organization', result.value)
-              .set('orgForm', await resetOrgForm(result.value));
+          if (warningToasts.length) {
+            dispatch(toast(adt('warning', toasts.addedTeamMembers.warning(warningToasts))));
           }
-          // Do nothing if an error occurs.
-          return state;
+          if (errorToasts.length) {
+            dispatch(toast(adt('error', toasts.addedTeamMembers.error(errorToasts))));
+          }
+          //Update the capabilities grid.
+          return resetCapabilities(state);
         }
       ];
-    case 'cancelEditing':
+    }
+
+    case 'removeTeamMember':
       return [
-        state,
-        async state => {
-          return state
-            .set('isEditing', false)
-            .set('orgForm', await resetOrgForm(state.organization));
+        state.set('removeTeamMemberLoading', msg.value),
+        async (state, dispatch) => {
+          state = state.set('removeTeamMemberLoading', null);
+          const result = await api.affiliations.delete(msg.value);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.removedTeamMember.error)));
+            return state;
+          }
+          state = state.update('affiliations', affs => affs.filter(({ id }) => id !== msg.value));
+          dispatch(toast(adt('success', toasts.removedTeamMember.success)));
+          return resetCapabilities(state);
         }
       ];
-    case 'hideArchiveModal':
-      return [state.set('showArchiveModal', false)];
-    case 'hideSaveChangesModal':
-      return [state.set('showSaveChangesModal', false)];
-    case 'orgForm':
-      return updateGlobalComponentChild({
+
+    case 'membersTable':
+      return updateComponentChild({
         state,
-        childStatePath: ['orgForm'],
-        childUpdate: OrgForm.update,
+        childStatePath: ['membersTable'],
+        childUpdate: Table.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('orgForm', value)
+        mapChildMsg: value => ({ tag: 'membersTable', value })
       });
+
+    case 'addTeamMembersEmails':
+      return updateComponentChild({
+        state,
+        childStatePath: ['addTeamMembersEmails', String(msg.value[0])],
+        childUpdate: ShortText.update,
+        childMsg: msg.value[1],
+        mapChildMsg: value => adt('addTeamMembersEmails', [msg.value[0], value]) as Msg
+      });
+
+    case 'addTeamMembersEmailsAddField':
+      return [
+        state,
+        async state => state.set('addTeamMembersEmails', [
+          ...state.addTeamMembersEmails,
+          await initAddTeamMemberEmailField()
+        ])
+      ];
+
+    case 'addTeamMembersEmailsRemoveField':
+      return [
+        state.update('addTeamMembersEmails', vs => {
+          return vs.filter((v, i) => i !== msg.value);
+        })
+      ];
+
     default:
       return [state];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const isEditingLoading = state.editingLoading > 0;
-  const isSaveChangesLoading = state.saveChangesLoading > 0;
-  const isArchiveLoading = state.archiveLoading > 0;
-  const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
+function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
+  return [
+    {
+      children: 'Team Member',
+      style: {
+        width: '100%'
+      }
+    },
+    {
+      children: 'Capabilities',
+      className: 'text-center'
+    },
+    {
+      children: null
+    }
+  ];
+}
+
+function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.BodyRows {
+  const { state, dispatch } = props;
+  const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
+  const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
+  const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+  return state.affiliations.map(m => [
+    {
+      children: (<div className='d-flex align-items-center flex-nowrap'>
+        <Link
+          onClick={() => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
+          symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
+          {m.user.name}
+        </Link>
+        {memberIsOwner(m)
+          ? (<OwnerBadge className='ml-3' />)
+          : null}
+        {memberIsPending(m)
+          ? (<PendingBadge className='ml-3' />)
+          : null}
+      </div>),
+      className: 'text-nowrap align-middle'
+    },
+    {
+      children: String(m.user.capabilities.length),
+      className: 'text-center align-middle'
+    },
+    {
+      children: memberIsOwner(m)
+        ? null
+        : (
+            <LoadingButton
+              button
+              disabled={isLoading}
+              loading={state.removeTeamMemberLoading === m.id}
+              size='sm'
+              symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+              onClick={() => dispatch(adt('removeTeamMember', m.id))}
+              color='danger'>
+              Remove
+            </LoadingButton>
+          ),
+      className: 'text-right align-middle'
+    }
+  ]);
+}
+
+const view: ComponentView<State, Msg> = props => {
+  const { state, dispatch } = props;
   return (
     <div>
-      <Row>
-        <Col xs='12' className='mb-5'>
-          <h2>{state.organization.legalName}</h2>
-        </Col>
-      </Row>
-      <Row>
+      <EditTabHeader
+        legalName={state.organization.legalName}
+        swuQualified={state.organization.swuQualified} />
+      <Row className='mt-5'>
         <Col xs='12'>
-          <OrgForm.view
-            state={state.orgForm}
-            disabled={isLoading || !state.isEditing}
-            dispatch={mapComponentDispatch(dispatch, value => adt('orgForm' as const, value))} />
+          <h3 className='mb-4'>Team Members</h3>
+          {state.affiliations.length
+            ? (<Table.view
+                headCells={membersTableHeadCells(state)}
+                bodyRows={membersTableBodyRows(props)}
+                state={state.membersTable}
+                dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />)
+            : null}
         </Col>
       </Row>
-      <Row>
-        <Col>
-          <div className='mt-5 pt-5 border-top'>
-            <h3>Archive Organization</h3>
-            <p className='mb-4'>Archiving this organization means that it will no longer be available for opportunity proposals.</p>
-          </div>
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          <Link button loading={isArchiveLoading} disabled={isLoading} color='danger' symbol_={leftPlacement(iconLinkSymbol('minus-circle'))} onClick={() => dispatch(adt('archive'))}>
-            Archive Organization
-          </Link>
-        </Col>
-      </Row>
-
+      <div className='mt-5 pt-5 border-top'>
+        <Row>
+          <Col xs='12'>
+            <h3>Team Capabilities</h3>
+            <p className='mb-4'>This is a summary of the capabilities your organization's team possesses as whole. It only includes the capabilities of confirmed (non-pending) team members.</p>
+            <Capabilities grid capabilities={state.capabilities} />
+          </Col>
+        </Row>
+      </div>
     </div>
   );
 };
+
+function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
+  for (const s of state.addTeamMembersEmails) {
+    if (!FormField.isValid(s)) { return false; }
+  }
+  return true;
+}
 
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
   getModal: state => {
-    if (state.showArchiveModal) {
-      return {
-        title: 'Archive Organization?',
-        body: () => 'Are you sure you want to archive this organization?',
-        onCloseMsg: adt('hideArchiveModal'),
-        actions: [
-          {
-            text: 'Archive Organization',
-            icon: 'minus-circle',
-            color: 'danger',
-            msg: adt('archive'),
-            button: true
+    if (!state.showModal) { return null; }
+    switch (state.showModal.tag) {
+      case 'viewTeamMember':
+        return makeViewTeamMemberModal({
+          member: state.showModal.value,
+          onCloseMsg: adt('hideModal')
+        });
+
+      case 'addTeamMembers': {
+        const isValid = isAddTeamMembersEmailsValid(state);
+        return {
+          title: 'Add Team Member(s)',
+          onCloseMsg: adt('hideModal'),
+          body: dispatch => {
+            return (
+              <div>
+                <p>Provide an email address for each team member to invite to join your organization.</p>
+                {state.addTeamMembersEmails.map((s, i) => {
+                  const props = {
+                    extraChildProps: {},
+                    className: 'flex-grow-1 mb-0',
+                    placeholder: 'Email Address',
+                    dispatch: mapComponentDispatch(dispatch, v => adt('addTeamMembersEmails', [i, v]) as Msg),
+                    state: s
+                  };
+                  const isFirst = i === 0;
+                  const isLast = i === state.addTeamMembersEmails.length - 1;
+                  return (
+                    <div key={`organization-add-team-member-email-${i}`}>
+                      {isFirst
+                        ? (<FormField.ConditionalLabel label='Email Addresses' required {...props} />)
+                        : null}
+                      <div className='mb-3 d-flex align-items-start flex-nowrap'>
+                        <ShortText.view {...props} />
+                        <div className='d-flex flex-nowrap align-items-center' style={{ marginTop: '0.625rem' }}>
+                          {state.addTeamMembersEmails.length === 1
+                            ? null
+                            : (<Icon
+                                hover
+                                name='trash'
+                                color='info'
+                                className='ml-2'
+                                width={0.9}
+                                height={0.9}
+                                onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
+                          <Icon
+                            hover={isLast}
+                            name='plus'
+                            color='primary'
+                            className={`ml-2 ${isLast ? 'o-100' : 'o-0'}`}
+                            width={1.1}
+                            height={1.1}
+                            onClick={() => isLast && dispatch(adt('addTeamMembersEmailsAddField'))} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
           },
-          {
-            text: 'Cancel',
-            color: 'secondary',
-            msg: adt('hideArchiveModal')
-          }
-        ]
-      };
-    } else if (state.showSaveChangesModal) {
-      return {
-        title: 'Save Changes?',
-        body: () => 'Are you sure you want to save the changes you\'ve made to this organization?',
-        onCloseMsg: adt('hideSaveChangesModal'),
-        actions: [
-          {
-            text: 'Save Changes',
-            icon: 'check',
-            color: 'primary',
-            msg: adt('saveChanges'),
-            button: true
-          },
-          {
-            text: 'Cancel',
-            color: 'secondary',
-            msg: adt('hideSaveChangesModal')
-          }
-        ]
-      };
+          actions: [
+            {
+              text: 'Add Team Member(s)',
+              button: true,
+              disabled: !isValid,
+              color: 'primary',
+              icon: 'user-plus',
+              msg: adt('addTeamMembers')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      }
     }
-    return null;
   },
   getContextualActions: ({ state, dispatch }) => {
-    const isEditingLoading = state.editingLoading > 0;
-    const isSaveChangesLoading = state.saveChangesLoading > 0;
-    const isArchiveLoading = state.archiveLoading > 0;
-    const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
-    const isValid = OrgForm.isValid(state.orgForm);
-    if (!state.isEditing) {
-      return adt('links', [{
-        children: 'Edit Organization',
-        onClick: () => dispatch(adt('startEditing')),
-        button: true,
-        loading: isEditingLoading,
-        disabled: isLoading,
-        symbol_: leftPlacement(iconLinkSymbol('user-edit')),
-        color: 'primary'
-      }]);
-    } else {
-      return adt('links', [
-        {
-          children: 'Save Changes',
-          disabled: !isValid || isLoading,
-          onClick: () => dispatch(adt('saveChanges')),
-          button: true,
-          loading: isSaveChangesLoading,
-          symbol_: leftPlacement(iconLinkSymbol('check')),
-          color: 'primary'
-        },
-        {
-          children: 'Cancel',
-          disabled: isLoading,
-          onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
-        }
-      ]);
-    }
+    const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
+    const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
+    const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+    return adt('links', [{
+      children: 'Add Team Member(s)',
+      onClick: () => dispatch(adt('showModal', adt('addTeamMembers')) as Msg),
+      button: true,
+      loading: isAddTeamMembersLoading,
+      disabled: isLoading,
+      symbol_: leftPlacement(iconLinkSymbol('user-plus')),
+      color: 'primary'
+    }]);
   }
 };

@@ -39,7 +39,7 @@ export interface AffiliationMember {
 
 export interface CreateRequestBody {
   userEmail: string;
-  organization: string;
+  organization: Id;
   membershipType: MembershipType;
 }
 
@@ -65,4 +65,21 @@ export function parseMembershipType(raw: string): MembershipType | null {
     default:
       return null;
   }
+}
+
+export function membersHaveCapability(members: AffiliationMember[], capability: string): boolean {
+  for (const m of members) {
+    if (m.user.capabilities.indexOf(capability) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function memberIsPending(member: AffiliationMember): boolean {
+  return member.membershipStatus === MembershipStatus.Pending;
+}
+
+export function memberIsOwner(member: AffiliationMember): boolean {
+  return member.membershipType === MembershipType.Owner;
 }

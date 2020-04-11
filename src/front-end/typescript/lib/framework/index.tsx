@@ -230,6 +230,14 @@ export function mapPageAlerts<MsgA, MsgB, Route>(alerts: PageAlerts<GlobalCompon
   };
 }
 
+export function mergePageAlerts<Msg>(a: PageAlerts<Msg>, b: PageAlerts<Msg>): PageAlerts<Msg> {
+  return {
+    info: [...(a.info || []), ...(b.info || [])],
+    warnings: [...(a.warnings || []), ...(b.warnings || [])],
+    errors: [...(a.errors || []), ...(b.errors || [])]
+  };
+}
+
 export interface PageBreadcrumb<Msg> {
   text: string;
   onClickMsg?: Msg;

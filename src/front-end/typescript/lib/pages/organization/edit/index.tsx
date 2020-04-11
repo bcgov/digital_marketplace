@@ -3,16 +3,19 @@ import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { Immutable, immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
+import { Immutable, immutable, mergePageAlerts, PageAlerts, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
+import Link, { routeDest } from 'front-end/lib/views/link';
+import React from 'react';
 import { Organization } from 'shared/lib/resources/organization';
-import { UserType } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   organization: Organization;
+  viewerUser: User;
 }
 
 export type State_<K extends Tab.TabId> = Validation<Immutable<ValidState<K>>, null>;
@@ -55,6 +58,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       // Everything checks out, return valid state.
       return valid(immutable({
         organization,
+        viewerUser,
         tab: [tabId, tabState],
         sidebar: await Tab.makeSidebarState(organization, tabId)
       })) as State_<K>;
@@ -82,12 +86,31 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     })),
     view: viewValid(TabbedPage.makeParentView(idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
-    getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(idToDefinition)),
+    getAlerts: getAlertsValid(state => {
+      return mergePageAlerts(
+        {
+          info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor
+          ? [{
+              text: (
+                <div>
+                  This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
+                </div>
+              )
+            }]
+          : []
+        },
+        TabbedPage.makeGetParentAlerts(idToDefinition) as PageAlerts<Msg>
+      );
+    }),
     getModal: getModalValid(TabbedPage.makeGetParentModal(idToDefinition)),
     getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition,
-      getTitleSuffix: state => `— ${state.organization.legalName} — Edit Organization`
+      getTitleSuffix: state => {
+        return state.tab[0] === 'organization'
+          ? 'Edit Organization'
+          : `${state.organization.legalName} — Edit Organization`;
+      }
     }), makePageMetadata('Edit Organization'))
   };
 }

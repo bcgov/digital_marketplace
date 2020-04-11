@@ -4,11 +4,12 @@ import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapCompo
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
-import { User, UserType } from 'shared/lib/resources/user';
+import { User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -34,10 +35,6 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 async function resetOrgForm(organization: OrgResource.Organization): Promise<Immutable<OrgForm.State>> {
   return immutable(await OrgForm.init({ organization }));
-}
-
-export interface RouteParams {
-  orgId: string;
 }
 
 const init: Init<Tab.Params, State> = async params => {
@@ -168,12 +165,10 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
   return (
     <div>
-      <Row>
-        <Col xs='12' className='mb-5'>
-          <h2>{state.organization.legalName}</h2>
-        </Col>
-      </Row>
-      <Row>
+      <EditTabHeader
+        legalName={state.organization.legalName}
+        swuQualified={state.organization.swuQualified} />
+      <Row className='mt-5'>
         <Col xs='12'>
           <OrgForm.view
             state={state.orgForm}
@@ -205,19 +200,6 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-  getAlerts: state => {
-    return {
-      info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor
-      ? [{
-          text: (
-            <div>
-              This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
-            </div>
-          )
-        }]
-      : []
-    };
-  },
   getModal: state => {
     if (state.showArchiveModal) {
       return {

@@ -18,6 +18,8 @@ export type ChildParamsBase<Value> = ChildStateBase<Value>;
 // Allows child components to trigger state validation.
 export type ChildMsg<InnerChildMsg> = InnerChildMsg | ADT<'@validate'>;
 
+export type OnChange<Value> = (value: Value) => void;
+
 export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg> {
   state: Immutable<ChildState>;
   dispatch: Dispatch<ChildMsg<InnerChildMsg>>;
@@ -25,7 +27,7 @@ export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, Inn
   className?: string;
   disabled?: boolean;
   placeholder?: string;
-  onChange(value: Value): void;
+  onChange: OnChange<Value>;
 }
 
 export type ChildComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<ChildParams, ChildState, ChildMsg<InnerChildMsg>, ChildProps<Value, ChildState, InnerChildMsg> & ExtraChildProps>;
@@ -140,7 +142,7 @@ export const ViewRequiredAsterisk: View<{}> = () => {
   return (<span className='font-weight-bold text-yellow ml-1'>*</span>);
 };
 
-function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+export function ConditionalLabel<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg>(props: ViewProps<Value, ChildState, InnerChildMsg>): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state, label, required, disabled, labelClassName, action } = props;
   const className = `font-weight-bold d-flex flex-nowrap align-items-end ${labelClassName || ''}`;
   if (label) {

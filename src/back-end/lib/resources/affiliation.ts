@@ -97,7 +97,13 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedUser = await db.readOneUserByEmail(connection, userEmail);
+        const validatedUserEmail = affiliationValidation.validateUserEmail(userEmail);
+        if (isInvalid(validatedUserEmail)) {
+          return invalid({
+            userEmail: validatedUserEmail.value
+          });
+        }
+        const validatedUser = await db.readOneUserByEmail(connection, validatedUserEmail.value);
         const validatedOrganization = await validateOrganizationId(connection, organization);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
@@ -155,7 +161,8 @@ const resource: Resource = {
           }
           if (request.body.inviteeNotRegistered) {
             // TODO: send invitee notification requesting registration once email notifications in place
-            return basicResponse(200, request.session, makeJsonResponseBody(request.body));
+            // Use a status code 400 because the response body is a subset of `CreateValidationErrors`
+            return basicResponse(400, request.session, makeJsonResponseBody(request.body));
           }
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
         })
