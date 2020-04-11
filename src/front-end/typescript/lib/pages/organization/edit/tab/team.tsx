@@ -205,21 +205,16 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
     {
       children: 'Team Member',
       style: {
-        minWidth: '260px'
+        minWidth: '260px',
+        width: '100%'
       }
     },
     {
       children: 'Capabilities',
-      className: 'text-center',
-      style: {
-        width: '130px'
-      }
+      className: 'text-center'
     },
     {
-      children: null,
-      style: {
-        width: '0px' //"Hide" the column when no "Remove" buttons present
-      }
+      children: null
     }
   ];
 }
