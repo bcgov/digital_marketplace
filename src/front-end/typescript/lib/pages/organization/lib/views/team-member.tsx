@@ -19,7 +19,7 @@ export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalPara
       const numCapabilities = member.user.capabilities.length;
       return (
         <div>
-          <div className='d-flex flex-nowrap align-items-center mb-4'>
+          <div className='d-flex flex-nowrap align-items-center'>
             <img
               className='rounded-circle border'
               style={{
