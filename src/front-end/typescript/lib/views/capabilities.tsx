@@ -9,6 +9,7 @@ export interface Capability {
 }
 
 export interface Props {
+  className?: string;
   capabilities: Capability[];
   grid?: boolean;
 }
@@ -26,9 +27,9 @@ const Capability: View<CapabilityProps> = ({ capability, checked, index }) => {
   );
 };
 
-const Capabilities: View<Props> = ({ capabilities, grid }) => {
+const Capabilities: View<Props> = ({ className = '', capabilities, grid }) => {
   return (
-    <Row noGutters className='border-top border-left'>
+    <Row noGutters className={`border-top border-left ${className}`}>
       {capabilities.map((c, i) => (
         <Col xs='12' md={grid ? '6' : undefined} key={`phase-capability-${i}`}>
           <Capability

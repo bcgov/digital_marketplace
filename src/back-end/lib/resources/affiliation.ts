@@ -161,7 +161,8 @@ const resource: Resource = {
           }
           if (request.body.inviteeNotRegistered) {
             // TODO: send invitee notification requesting registration once email notifications in place
-            return basicResponse(200, request.session, makeJsonResponseBody(request.body));
+            // Use a status code 400 because the response body is a subset of `CreateValidationErrors`
+            return basicResponse(400, request.session, makeJsonResponseBody(request.body));
           }
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
         })

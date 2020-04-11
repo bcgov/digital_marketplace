@@ -562,6 +562,11 @@ nav.navbar .nav-link:hover {
 
   .toast {
     max-width: unset;
+
+    &-body > *:last-child,
+    &-body > *:last-child > *:last-child {
+      margin-bottom: 0 !important;
+    }
   }
 }
 

@@ -3,21 +3,21 @@ import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-//import * as api from 'front-end/lib/http/api';
+import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
+import * as toasts from 'front-end/lib/pages/organization/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
-import { makeViewTeamMemberModal, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
+import { makeViewTeamMemberModal, OwnerBadge, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import Capabilities, { Capability } from 'front-end/lib/views/capabilities';
 import Icon from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
-import { AffiliationMember, memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
-import { UserType } from 'shared/lib/resources/user';
+import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { validateUserEmail } from 'shared/lib/validation/affiliation';
 
@@ -97,26 +97,69 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [state.set('showModal', null)];
 
     case 'addTeamMembers': {
-      //TODO
+      state = state.set('showModal', null);
       return [
         startAddTeamMembersLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopAddTeamMembersLoading(state);
+          const successToasts: string[] = []; //emails
+          const warningToasts: string[] = []; //emails
+          const errorToasts: string[] = []; //emails
+          for (const s of state.addTeamMembersEmails) {
+            const userEmail = FormField.getValue(s);
+            const result = await api.affiliations.create({
+              userEmail,
+              organization: state.organization.id,
+              membershipType: MembershipType.Member
+            });
+            switch (result.tag) {
+              case 'valid':
+                successToasts.push(userEmail);
+                state = state.update('affiliations', affs => [...affs, result.value]);
+                break;
+              case 'invalid':
+                if (result.value.inviteeNotRegistered?.length) {
+                  warningToasts.push(userEmail);
+                } else {
+                  errorToasts.push(userEmail);
+                }
+                break;
+              case 'unhandled':
+                errorToasts.push(userEmail);
+                break;
+            }
+          }
+          //Dispatch resulting toasts to user.
+          if (successToasts.length) {
+            dispatch(toast(adt('success', toasts.addedTeamMembers.success(successToasts))));
+          }
+          if (warningToasts.length) {
+            dispatch(toast(adt('warning', toasts.addedTeamMembers.warning(warningToasts))));
+          }
+          if (errorToasts.length) {
+            dispatch(toast(adt('error', toasts.addedTeamMembers.error(errorToasts))));
+          }
+          //Update the capabilities grid.
           return resetCapabilities(state);
         }
       ];
     }
 
-    case 'removeTeamMember': {
-      //TODO
+    case 'removeTeamMember':
       return [
         state.set('removeTeamMemberLoading', msg.value),
-        async state => {
+        async (state, dispatch) => {
           state = state.set('removeTeamMemberLoading', null);
+          const result = await api.affiliations.delete(msg.value);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.removedTeamMember.error)));
+            return state;
+          }
+          state = state.update('affiliations', affs => affs.filter(({ id }) => id !== msg.value));
+          dispatch(toast(adt('success', toasts.removedTeamMember.success)));
           return resetCapabilities(state);
         }
       ];
-    }
 
     case 'membersTable':
       return updateComponentChild({
@@ -162,7 +205,7 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
     {
       children: 'Team Member',
       style: {
-        width: '220px'
+        minWidth: '260px'
       }
     },
     {
@@ -175,7 +218,7 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
     {
       children: null,
       style: {
-        width: '130px'
+        width: '0px' //"Hide" the column when no "Remove" buttons present
       }
     }
   ];
@@ -194,6 +237,9 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
           symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
           {m.user.name}
         </Link>
+        {memberIsOwner(m)
+          ? (<OwnerBadge className='ml-3' />)
+          : null}
         {memberIsPending(m)
           ? (<PendingBadge className='ml-3' />)
           : null}
@@ -201,22 +247,24 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
       className: 'text-wrap align-middle'
     },
     {
-      children: String(m.user.capabilities.length + 1),
+      children: String(m.user.capabilities.length),
       className: 'text-center align-middle'
     },
     {
-      children: (
-        <LoadingButton
-          button
-          disabled={isLoading}
-          loading={state.removeTeamMemberLoading === m.id}
-          size='sm'
-          symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-          onClick={() => dispatch(adt('removeTeamMember', m.id))}
-          color='danger'>
-          Remove
-        </LoadingButton>
-      ),
+      children: memberIsOwner(m)
+        ? null
+        : (
+            <LoadingButton
+              button
+              disabled={isLoading}
+              loading={state.removeTeamMemberLoading === m.id}
+              size='sm'
+              symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+              onClick={() => dispatch(adt('removeTeamMember', m.id))}
+              color='danger'>
+              Remove
+            </LoadingButton>
+          ),
       className: 'text-right align-middle'
     }
   ]);
@@ -248,7 +296,7 @@ const view: ComponentView<State, Msg> = props => {
             <p className='mb-4'>This is a summary of the capabilities your organization's team possesses as whole. It only includes the capabilities of confirmed (non-pending) team members.</p>
           </Col>
           <Col xs='12'>
-            <h4 className='mb-3'>Capabilities</h4>
+            <h4 className='mb-4'>Capabilities</h4>
             <Capabilities grid capabilities={state.capabilities} />
           </Col>
         </Row>
@@ -257,23 +305,17 @@ const view: ComponentView<State, Msg> = props => {
   );
 };
 
+function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
+  for (const s of state.addTeamMembersEmails) {
+    if (!FormField.isValid(s)) { return false; }
+  }
+  return true;
+}
+
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-  getAlerts: state => {
-    return {
-      info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor
-      ? [{
-          text: (
-            <div>
-              This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
-            </div>
-          )
-        }]
-      : []
-    };
-  },
   getModal: state => {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
@@ -283,7 +325,8 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt('hideModal')
         });
 
-      case 'addTeamMembers':
+      case 'addTeamMembers': {
+        const isValid = isAddTeamMembersEmailsValid(state);
         return {
           title: 'Add Team Member(s)',
           onCloseMsg: adt('hideModal'),
@@ -302,7 +345,7 @@ export const component: Tab.Component<State, Msg> = {
                   const isFirst = i === 0;
                   const isLast = i === state.addTeamMembersEmails.length - 1;
                   return (
-                    <div>
+                    <div key={`organization-add-team-member-email-${i}`}>
                       {isFirst
                         ? (<FormField.ConditionalLabel label='Email Addresses' required {...props} />)
                         : null}
@@ -339,6 +382,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Add Team Member(s)',
               button: true,
+              disabled: !isValid,
               color: 'primary',
               icon: 'user-plus',
               msg: adt('addTeamMembers')
@@ -350,6 +394,7 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         };
+      }
     }
   },
   getContextualActions: ({ state, dispatch }) => {

@@ -39,7 +39,7 @@ export interface AffiliationMember {
 
 export interface CreateRequestBody {
   userEmail: string;
-  organization: string;
+  organization: Id;
   membershipType: MembershipType;
 }
 
@@ -78,4 +78,8 @@ export function membersHaveCapability(members: AffiliationMember[], capability: 
 
 export function memberIsPending(member: AffiliationMember): boolean {
   return member.membershipStatus === MembershipStatus.Pending;
+}
+
+export function memberIsOwner(member: AffiliationMember): boolean {
+  return member.membershipType === MembershipType.Owner;
 }

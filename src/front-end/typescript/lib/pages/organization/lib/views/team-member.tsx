@@ -16,7 +16,7 @@ export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalPara
     title: 'View Team Member',
     onCloseMsg,
     body: () => {
-      const numCapabilities = member.user.capabilities.length + 1;
+      const numCapabilities = member.user.capabilities.length;
       return (
         <div>
           <div className='d-flex flex-nowrap align-items-center mb-4'>
@@ -29,17 +29,18 @@ export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalPara
               }}
               src={userAvatarPath(member.user)} />
             <div className='ml-3 d-flex flex-column align-items-start'>
-              <strong className='mb-2'>{member.user.name}</strong>
+              <strong className='mb-1'>{member.user.name}</strong>
               <span className='font-size-small'>{numCapabilities} Capabilit{numCapabilities === 1 ? 'y' : 'ies'}</span>
             </div>
           </div>
-          <div className='border-top border-left'>
-            <Capabilities
-              capabilities={member.user.capabilities.map(capability => ({
-                capability,
-                checked: true
-              }))} />
-          </div>
+          {numCapabilities
+            ? (<Capabilities
+                className='mt-4'
+                capabilities={member.user.capabilities.map(capability => ({
+                  capability,
+                  checked: true
+                }))} />)
+            : null}
         </div>
       );
     },
@@ -48,5 +49,9 @@ export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalPara
 }
 
 export const PendingBadge: View<{ className?: string; }> = ({ className }) => (
-  <Badge text='pending' color='yellow' className={className} />
+  <Badge text='Pending' color='yellow' className={className} />
+);
+
+export const OwnerBadge: View<{ className?: string; }> = ({ className }) => (
+  <Badge text='Owner' color='success' className={className} />
 );
