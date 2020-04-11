@@ -294,9 +294,6 @@ const view: ComponentView<State, Msg> = props => {
           <Col xs='12'>
             <h3>Team Capabilities</h3>
             <p className='mb-4'>This is a summary of the capabilities your organization's team possesses as whole. It only includes the capabilities of confirmed (non-pending) team members.</p>
-          </Col>
-          <Col xs='12'>
-            <h4 className='mb-4'>Capabilities</h4>
             <Capabilities grid capabilities={state.capabilities} />
           </Col>
         </Row>
