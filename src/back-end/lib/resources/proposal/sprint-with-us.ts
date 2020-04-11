@@ -1,5 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as swuProposalNotifications from 'back-end/lib/mailer/notifications/proposal/sprint-with-us';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -12,7 +13,7 @@ import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
 interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'attachments'> {
@@ -244,6 +245,10 @@ const resource: Resource = {
           const dbResult = await db.createSWUProposal(connection, omit(request.body, 'session'), request.body.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          // Notify of submitted proposal if applicable
+          if (dbResult.value.status === SWUProposalStatus.Submitted) {
+            swuProposalNotifications.handleSWUProposalSubmitted(connection, dbResult.value.id, request.body.session);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -692,6 +697,10 @@ const resource: Resource = {
               break;
             case 'submit':
               dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.Submitted, body.value, session);
+              // Notify of submission
+              if (isValid(dbResult)) {
+                swuProposalNotifications.handleSWUProposalSubmitted(connection, request.params.id, request.body.session);
+              }
               break;
             case 'scoreQuestions':
               dbResult = await db.updateSWUProposalTeamQuestionScore(connection, request.params.id, body.value, session);
@@ -710,12 +719,23 @@ const resource: Resource = {
               break;
             case 'award':
               dbResult = await db.awardSWUProposal(connection, request.params.id, body.value, session);
+              // Notify of award (also notifies unsuccessful proponents)
+              if (isValid(dbResult)) {
+                swuProposalNotifications.handleSWUProposalAwarded(connection, request.params.id, request.body.session);
+              }
               break;
             case 'disqualify':
               dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.Disqualified, body.value, session);
+              // Notify of disqualification
+              if (isValid(dbResult)) {
+                swuProposalNotifications.handleSWUProposalDisqualified(connection, request.params.id, request.body.session);
+              }
               break;
             case 'withdraw':
               dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.Withdrawn, body.value, session);
+              if (isValid(dbResult)) {
+                swuProposalNotifications.handleSWUProposalWithdrawn(connection, request.params.id, request.body.session);
+              }
               break;
           }
           if (isInvalid(dbResult)) {

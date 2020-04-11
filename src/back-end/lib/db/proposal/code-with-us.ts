@@ -715,7 +715,7 @@ export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | 
   return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result)) : valid(null);
 });
 
-export const readManyProposalAuthors = tryDb<[Id], User[]>(async (connection, opportunity) => {
+export const readManyCWUProposalAuthors = tryDb<[Id], User[]>(async (connection, opportunity) => {
   const result = await connection<RawUser>('users')
     .join('cwuProposals as proposals', 'proposals.createdBy', '=', 'users.id')
     .where({ 'proposals.opportunity': opportunity })

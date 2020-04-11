@@ -3,7 +3,7 @@ import * as db from 'back-end/lib/db';
 import { makeCWUOpportunityInformation, viewCWUOpportunityCallToAction } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import * as templates from 'back-end/lib/mailer/templates';
 import { send } from 'back-end/lib/mailer/transport';
-import { canCWUOpportunityBeAwarded, CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, isCWUOpportunityClosed } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
@@ -54,10 +54,18 @@ export async function handleCWUProposalWithdrawn(connection: db.Connection, prop
   //Notify the opportunity author if the opportunity is in an awardable state
   const proposal = getValidValue(await db.readOneCWUProposal(connection, proposalId, session), null);
   const opportunity = proposal && getValidValue(await db.readOneCWUOpportunity(connection, proposal.opportunity.id, session), null);
-  if (proposal && opportunity && canCWUOpportunityBeAwarded(opportunity)) {
-    const withdrawnProponent = proposal && getValidValue(await db.readOneUser(connection, proposal.createdBy.id), null);
+  // Need to read opportunityAuthor separate here, as this session will not be allowed to read from opportunity itself
+  const opportunityAuthor = proposal && getValidValue(await db.readOneCWUOpportunityAuthor(connection, proposal.opportunity.id), null);
+
+  if (proposal && opportunity) {
+    const withdrawnProponent = proposal.createdBy && getValidValue(await db.readOneUser(connection, proposal.createdBy.id), null);
+    // Notify opportunity author if opportunity is closed
+    if (opportunityAuthor && withdrawnProponent && isCWUOpportunityClosed(opportunity)) {
+      await withdrawnCWUProposalSubmission(opportunityAuthor, withdrawnProponent, opportunity);
+    }
+    // Notify proposal author
     if (withdrawnProponent) {
-      await withdrawnCWUProposalSubmission(session.user, withdrawnProponent, opportunity);
+      await withdrawnCWUProposalSubmissionProposalAuthor(withdrawnProponent, opportunity);
     }
   }
 }
@@ -170,6 +178,26 @@ async function disqualifiedCWUProposalSubmission(recipient: User, opportunity: C
         ]
       },
       callsToAction: [viewCWUOpportunityCallToAction(opportunity), viewCWUProposalCallToAction(proposal)]
+    })
+  });
+}
+
+async function withdrawnCWUProposalSubmissionProposalAuthor(recipient: User, opportunity: CWUOpportunity): Promise<void> {
+  const title = 'Your Proposal Has Been Withdrawn';
+  const description = 'Your proposal for the following Digital Marketplace opportunity has been withdrawn:';
+  await send({
+    to: recipient.email,
+    subject: title,
+    html: templates.simple({
+      title,
+      description,
+      descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+      body: {
+        content: [
+          { prefix: 'If you would like to resubmit a proposal to the opportunity you may do so prior to the proposal deadline.' }
+        ]
+      },
+      callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
   });
 }

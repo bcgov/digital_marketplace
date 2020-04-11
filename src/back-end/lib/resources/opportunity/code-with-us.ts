@@ -554,14 +554,14 @@ const resource: Resource = {
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Suspended, body.value, session);
               // Notify subscribers of suspension
               if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUSuspended(connection, dbResult.value, request.session);
+                cwuOpportunityNotifications.handleCWUSuspended(connection, dbResult.value);
               }
               break;
             case 'cancel':
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Canceled, body.value, session);
               // Notify subscribers of cancellation
               if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUCancelled(connection, dbResult.value, request.session);
+                cwuOpportunityNotifications.handleCWUCancelled(connection, dbResult.value);
               }
               break;
             case 'addAddendum':

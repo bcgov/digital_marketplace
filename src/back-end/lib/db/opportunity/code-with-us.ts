@@ -3,7 +3,7 @@ import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
 import { readOneCWUAwardedProposal, readSubmittedCWUProposalCount } from 'back-end/lib/db/proposal/code-with-us';
 import { RawCWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/code-with-us';
-import { readOneUserSlim } from 'back-end/lib/db/user';
+import { readOneUser, readOneUserSlim } from 'back-end/lib/db/user';
 import * as cwuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { valid } from 'shared/lib/http';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
@@ -617,4 +617,13 @@ export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
     }
     return lapsedOpportunities.length;
   }));
+});
+
+export const readOneCWUOpportunityAuthor = tryDb<[Id], User | null>(async (connection, id) => {
+  const authorId = (await connection<{ createdBy: Id }>('cwuOpportunities as opportunities')
+    .where({ id })
+    .select<{ createdBy: Id }>('createdBy')
+    .first())?.createdBy || null;
+
+  return authorId ? await readOneUser(connection, authorId) : valid(null);
 });

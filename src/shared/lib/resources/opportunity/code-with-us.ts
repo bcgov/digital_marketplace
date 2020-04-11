@@ -224,3 +224,7 @@ export function doesCWUOpportunityStatusAllowGovToViewProposals(s: CWUOpportunit
       return true;
   }
 }
+
+export function isCWUOpportunityClosed(o: CWUOpportunity): boolean {
+  return !!o.publishedAt && o.status !== CWUOpportunityStatus.Published;
+}

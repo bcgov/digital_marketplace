@@ -5,7 +5,6 @@ import { send } from 'back-end/lib/mailer/transport';
 import { unionBy } from 'lodash';
 import { formatAmount, formatDate, formatTime } from 'shared/lib';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { AuthenticatedSession } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { getValidValue } from 'shared/lib/validation';
 
@@ -26,31 +25,37 @@ export async function handleCWUPublished(connection: db.Connection, opportunity:
 export async function handleCWUUpdated(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
   // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
   const subscribedUsers = getValidValue(await db.readManyCWUSubscribedUsers(connection, opportunity.id), null) || [];
-  const usersWithProposals = getValidValue(await db.readManyProposalAuthors(connection, opportunity.id), null) || [];
+  const usersWithProposals = getValidValue(await db.readManyCWUProposalAuthors(connection, opportunity.id), null) || [];
   const unionedUsers = unionBy(subscribedUsers, usersWithProposals, 'id');
   await Promise.all(unionedUsers.map(async user => await updatedCWUOpportunity(user, opportunity)));
 }
 
-export async function handleCWUCancelled(connection: db.Connection, opportunity: CWUOpportunity, session: AuthenticatedSession): Promise<void> {
+export async function handleCWUCancelled(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
   // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
   const subscribedUsers = getValidValue(await db.readManyCWUSubscribedUsers(connection, opportunity.id), null) || [];
-  const usersWithProposals = getValidValue(await db.readManyProposalAuthors(connection, opportunity.id), null) || [];
+  const usersWithProposals = getValidValue(await db.readManyCWUProposalAuthors(connection, opportunity.id), null) || [];
   const unionedUsers = unionBy(subscribedUsers, usersWithProposals, 'id');
   await Promise.all(unionedUsers.map(async user => await cancelledCWUOpportunitySubscribed(user, opportunity)));
 
-  // Notify gov user that has cancelled
-  await cancelledCWUOpportunityActioned(session.user, opportunity);
+  // Notify gov user that opportunity is cancelled
+  const author = opportunity.createdBy && getValidValue(await db.readOneUser(connection, opportunity.createdBy.id), null);
+  if (author) {
+    await cancelledCWUOpportunityActioned(author, opportunity);
+  }
 }
 
-export async function handleCWUSuspended(connection: db.Connection, opportunity: CWUOpportunity, session: AuthenticatedSession): Promise<void> {
+export async function handleCWUSuspended(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
   // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
   const subscribedUsers = getValidValue(await db.readManyCWUSubscribedUsers(connection, opportunity.id), null) || [];
-  const usersWithProposals = getValidValue(await db.readManyProposalAuthors(connection, opportunity.id), null) || [];
+  const usersWithProposals = getValidValue(await db.readManyCWUProposalAuthors(connection, opportunity.id), null) || [];
   const unionedUsers = unionBy(subscribedUsers, usersWithProposals, 'id');
   await Promise.all(unionedUsers.map(async user => await suspendedCWUOpportunitySubscribed(user, opportunity)));
 
-  // Notify gov user that has cancelled
-  await suspendedCWUOpportunityActioned(session.user, opportunity);
+  // Notify gov user that opportunity is suspended
+  const author = opportunity.createdBy && getValidValue(await db.readOneUser(connection, opportunity.createdBy.id), null);
+  if (author) {
+    await suspendedCWUOpportunityActioned(author, opportunity);
+  }
 }
 
 export async function handleCWUReadyForEvaluation(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
@@ -207,6 +212,11 @@ async function readyForEvalCWUOpportunity(recipient: User, opportunity: CWUOppor
       title,
       description,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+      body: {
+        content: [
+          { prefix: 'You may now view proposals submitted by Vendors and assign scores to each submission.' }
+        ]
+      },
       callsToAction: [viewCWUOpportunityCallToAction(opportunity, true)]
     })
   });

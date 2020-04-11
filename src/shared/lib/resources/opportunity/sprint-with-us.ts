@@ -300,6 +300,10 @@ export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportuni
   }
 }
 
+export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
+  return !!o.publishedAt && o.status !== SWUOpportunityStatus.Published;
+}
+
 export function doesSWUOpportunityStatusAllowGovToViewProposals(s: SWUOpportunityStatus): boolean {
   switch (s) {
     case SWUOpportunityStatus.Draft:
