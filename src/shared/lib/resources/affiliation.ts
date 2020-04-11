@@ -66,3 +66,16 @@ export function parseMembershipType(raw: string): MembershipType | null {
       return null;
   }
 }
+
+export function membersHaveCapability(members: AffiliationMember[], capability: string): boolean {
+  for (const m of members) {
+    if (m.user.capabilities.indexOf(capability) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function memberIsPending(member: AffiliationMember): boolean {
+  return member.membershipStatus === MembershipStatus.Pending;
+}

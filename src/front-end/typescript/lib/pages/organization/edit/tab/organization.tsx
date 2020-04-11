@@ -4,6 +4,7 @@ import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapCompo
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
+import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -34,10 +35,6 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 async function resetOrgForm(organization: OrgResource.Organization): Promise<Immutable<OrgForm.State>> {
   return immutable(await OrgForm.init({ organization }));
-}
-
-export interface RouteParams {
-  orgId: string;
 }
 
 const init: Init<Tab.Params, State> = async params => {
@@ -168,12 +165,10 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
   return (
     <div>
-      <Row>
-        <Col xs='12' className='mb-5'>
-          <h2>{state.organization.legalName}</h2>
-        </Col>
-      </Row>
-      <Row>
+      <EditTabHeader
+        legalName={state.organization.legalName}
+        swuQualified={state.organization.swuQualified} />
+      <Row className='mt-5'>
         <Col xs='12'>
           <OrgForm.view
             state={state.orgForm}

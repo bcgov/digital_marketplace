@@ -1,18 +1,16 @@
-import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
 import * as CapabilityGrid from 'front-end/lib/components/capability-grid';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { makeViewTeamMemberModal, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
-import Badge from 'front-end/lib/views/badge';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, CustomInput, Row } from 'reactstrap';
 import { find, formatDate } from 'shared/lib';
-import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
-import { fileBlobPath } from 'shared/lib/resources/file';
+import { AffiliationMember, memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
 import { SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, SWUProposalPhase, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -58,15 +56,6 @@ export function setIsAccordionOpen(state: Immutable<State>, isAccordionOpen: boo
   return state.set('isAccordionOpen', isAccordionOpen);
 }
 
-function memberHasCapability(members: Member[], capability: string): boolean {
-  for (const m of members) {
-    if (m.user.capabilities.indexOf(capability) !== -1) {
-      return true;
-    }
-  }
-  return false;
-}
-
 function affiliationsToMembers(affiliations: AffiliationMember[], existingMembers: SWUProposalTeamMember[]): Member[] {
   return affiliations
     .map(a => {
@@ -85,7 +74,7 @@ export function determineCapabilities(members: Member[], opportunityPhase?: SWUO
   return opportunityPhase
     ? opportunityPhase.requiredCapabilities.map(c => ({
         ...c,
-        checked: memberHasCapability(members, c.capability)
+        checked: membersHaveCapability(members, c.capability)
       }))
     : [];
 }
@@ -109,7 +98,7 @@ export const init: Init<Params, State> = async params => {
     showModal: null,
     members,
     capabilities: immutable(await CapabilityGrid.init({
-      showFullTimeSwitch: true,
+      showFullTimeSwitch: false,
       capabilities: determineCapabilities(members, opportunityPhase)
     })),
     membersTable: immutable(await Table.init({
@@ -251,15 +240,16 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 function membersTableBodyRows(props: Props): Table.BodyRows {
   const { state, dispatch, disabled } = props;
-  //TODO member view modal
   return state.members.map(m => [
     {
       children: (<div className='d-flex align-items-center flex-nowrap'>
         <Link
-          symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
+          symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
           {m.user.name}
         </Link>
-        <Badge text='Pending' color='yellow' className='ml-3' />
+        {memberIsPending(m)
+          ? (<PendingBadge className='ml-3' />)
+          : null}
       </div>)
     },
     {
@@ -280,7 +270,7 @@ function membersTableBodyRows(props: Props): Table.BodyRows {
         <Link
           button
           size='sm'
-          symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
+          symbol_={leftPlacement(iconLinkSymbol('user-times'))}
           onClick={() => dispatch(adt('removeTeamMember', m.user.id))}
           color='danger'>
           Remove
@@ -363,45 +353,11 @@ export const view: View<Props> = props => {
 export const getModal: PageGetModal<State, Msg> = state => {
   if (!state.showModal) { return null; }
   switch (state.showModal.tag) {
-    case 'viewTeamMember': {
-      const member = state.showModal.value;
-      return {
-        title: 'View Team Member',
-        onCloseMsg: adt('hideModal'),
-        body: dispatch => {
-          const numCapabilities = member.user.capabilities.length + 1;
-          return (
-            <div>
-              <div className='d-flex flex-nowrap align-items-center'>
-                <img
-                  className='rounded-circle border'
-                  style={{
-                    width: '5rem',
-                    height: '5rem',
-                    objectFit: 'cover'
-                  }}
-                  src={userAvatarPath(member.user)} />
-                <div className='ml-3 d-flex flex-column align-items-start'>
-                  <strong className='mb-3'>{member.user.name}</strong>
-                  <span className='font-size-small'>{numCapabilities} Capabilit{numCapabilities === 1 ? 'y' : 'ies'}</span>
-                </div>
-              </div>
-              <div className='border-top border-left'>
-                {member.user.capabilities.map((c, i) => {
-                  return (
-                    <div key={`swu-proposal-phase-view-member-capability-${i}`} className='d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom'>
-                      <Icon className='mr-2' name='check-circle' color='success' />
-                      <span>{c}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        },
-        actions: []
-      };
-    }
+    case 'viewTeamMember':
+      return makeViewTeamMemberModal({
+        member: state.showModal.value,
+        onCloseMsg: adt('hideModal')
+      });
 
     case 'addTeamMembers':
       return {
@@ -433,8 +389,8 @@ export const getModal: PageGetModal<State, Msg> = state => {
                           src={userAvatarPath(m.user)} />
                         {m.user.name}
                       </Link>
-                      {m.membershipStatus === MembershipStatus.Pending
-                        ? (<Badge text='pending' color='yellow' className='ml-3' />)
+                      {memberIsPending(m)
+                        ? (<PendingBadge className='ml-3' />)
                         : null}
                     </div>
                   );

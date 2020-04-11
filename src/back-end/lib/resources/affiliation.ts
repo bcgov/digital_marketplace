@@ -97,7 +97,13 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedUser = await db.readOneUserByEmail(connection, userEmail);
+        const validatedUserEmail = affiliationValidation.validateUserEmail(userEmail);
+        if (isInvalid(validatedUserEmail)) {
+          return invalid({
+            userEmail: validatedUserEmail.value
+          });
+        }
+        const validatedUser = await db.readOneUserByEmail(connection, validatedUserEmail.value);
         const validatedOrganization = await validateOrganizationId(connection, organization);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {

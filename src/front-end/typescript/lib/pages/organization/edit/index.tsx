@@ -87,7 +87,11 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition,
-      getTitleSuffix: state => `— ${state.organization.legalName} — Edit Organization`
+      getTitleSuffix: state => {
+        return state.tab[0] === 'organization'
+          ? 'Edit Organization'
+          : `${state.organization.legalName} — Edit Organization`;
+      }
     }), makePageMetadata('Edit Organization'))
   };
 }
