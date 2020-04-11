@@ -20,7 +20,7 @@ export const addedTeamMembers = {
     title: 'Unable to Add Unregistered Team Members',
     body: (
       <div>
-        <p>The following people are not yet registered with the Digital Marketplace. However, they have been sent an email that invites them to create an account. Once they have registered, please try adding them to this organization again.</p>
+        <p>The following people have not yet registered with the Digital Marketplace. However, they have been sent an email that invites them to create an account. Once they have registered, please try adding them to this organization again.</p>
         <ul>
           {emails.map((e, i) => (
             <li key={`organization-add-team-members-warning-toast-${i}`}>{e}</li>
