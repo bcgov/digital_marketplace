@@ -5,11 +5,11 @@ import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
 import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
-import { User, UserType } from 'shared/lib/resources/user';
+import { User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -200,19 +200,6 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-  getAlerts: state => {
-    return {
-      info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor
-      ? [{
-          text: (
-            <div>
-              This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
-            </div>
-          )
-        }]
-      : []
-    };
-  },
   getModal: state => {
     if (state.showArchiveModal) {
       return {
