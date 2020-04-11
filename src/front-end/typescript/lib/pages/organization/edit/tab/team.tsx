@@ -205,7 +205,6 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
     {
       children: 'Team Member',
       style: {
-        minWidth: '260px',
         width: '100%'
       }
     },
@@ -239,7 +238,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
           ? (<PendingBadge className='ml-3' />)
           : null}
       </div>),
-      className: 'text-wrap align-middle'
+      className: 'text-nowrap align-middle'
     },
     {
       children: String(m.user.capabilities.length),
