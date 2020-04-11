@@ -72,6 +72,10 @@ async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>
   }));
 }
 
+async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immutable<State>> {
+  return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
+}
+
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
@@ -94,8 +98,18 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'showModal':
       return [state.set('showModal', msg.value)];
 
-    case 'hideModal':
-      return [state.set('showModal', null)];
+    case 'hideModal': {
+      const existingShowModal = state.showModal;
+      return [
+        state.set('showModal', null),
+        async state => {
+          if (existingShowModal && existingShowModal.tag === 'addTeamMembers') {
+            return await resetAddTeamMemberEmails(state);
+          }
+          return null;
+        }
+      ];
+    }
 
     case 'addTeamMembers': {
       state = state.set('showModal', null);
@@ -140,8 +154,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (errorToasts.length) {
             dispatch(toast(adt('error', toasts.addedTeamMembers.error(errorToasts))));
           }
-          //Update the capabilities grid.
-          return resetCapabilities(state);
+          state = resetCapabilities(state);
+          return await resetAddTeamMemberEmails(state);
         }
       ];
     }
