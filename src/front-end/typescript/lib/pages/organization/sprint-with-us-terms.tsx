@@ -11,7 +11,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
 import { Organization } from 'shared/lib/resources/organization';
-import { UserType } from 'shared/lib/resources/user';
+import { isAdmin, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -30,6 +30,7 @@ export interface RouteParams {
 interface ValidState {
   acceptLoading: number;
   organization: Organization;
+  viewerUser: User;
   body: string;
 }
 
@@ -40,9 +41,9 @@ type InnerMsg = ADT<'accept'>;
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
-  userType: [UserType.Vendor],
+  userType: [UserType.Vendor, UserType.Admin],
 
-  async success({ routePath, routeParams, dispatch }) {
+  async success({ shared, routePath, routeParams, dispatch }) {
     const fail = () => {
       dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
@@ -54,6 +55,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     return valid(immutable({
       acceptLoading: 0,
       organization: orgResult.value,
+      viewerUser: shared.sessionUser,
       body: markdownResult.value
     }));
   },
@@ -103,7 +105,7 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
       <Col xs='12'>
         <h1 className='mb-5'>{TITLE}</h1>
         <Markdown source={state.body} openLinksInNewTabs className={acceptedSWUTerms ? '' : 'mb-5'} />
-        {acceptedSWUTerms
+        {acceptedSWUTerms || isAdmin(state.viewerUser)
           ? null
           : (<div className='d-flex flex-nowrap flex-row-reverse'>
               <Link
