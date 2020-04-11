@@ -1,4 +1,6 @@
+import { TITLE as SWU_TERMS_TITLE } from 'front-end/lib/pages/organization/sprint-with-us-terms';
 import React from 'react';
+import { Organization } from 'shared/lib/resources/organization';
 
 export const addedTeamMembers = {
   success: (emails: string[]) => ({
@@ -51,4 +53,15 @@ export const removedTeamMember = {
     title: 'Unable to Remove Team Member',
     body: 'This team member could not be removed from this organization.'
   }
+};
+
+export const acceptedSWUTerms = {
+  success: (organization: Organization) => ({
+    title: 'Accepted Terms & Conditions',
+    body: `Successfully accepted the ${SWU_TERMS_TITLE} for ${organization.legalName}.`
+  }),
+  error: (organization: Organization) => ({
+    title: 'Unable to Accept Terms & Conditions',
+    body: `An error occurred while attempting to accept the ${SWU_TERMS_TITLE} for ${organization.legalName}. Please try again later.`
+  })
 };

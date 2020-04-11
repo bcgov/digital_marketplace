@@ -3,8 +3,9 @@ import { getAlertsValid, makePageMetadata, makeStartLoading, makeStopLoading, up
 import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, newRoute, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, newRoute, PageComponent, PageInit, replaceRoute, toast, Update } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import * as toasts from 'front-end/lib/pages/organization/lib/toasts';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
@@ -84,8 +85,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const orgId = state.organization.id;
           const result = await api.organizations.update(orgId, adt('acceptSWUTerms'));
           if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.acceptedSWUTerms.error(state.organization))));
             return stopAcceptLoading(state);
           }
+          dispatch(toast(adt('success', toasts.acceptedSWUTerms.success(state.organization))));
           dispatch(newRoute(adt('orgEdit', {
             orgId,
             tab: 'qualification'
