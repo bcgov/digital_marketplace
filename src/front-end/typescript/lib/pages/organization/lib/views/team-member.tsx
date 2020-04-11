@@ -49,7 +49,7 @@ export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalPara
 }
 
 export const PendingBadge: View<{ className?: string; }> = ({ className }) => (
-  <Badge text='Pending' color='yellow' className={className} />
+  <Badge text='Pending' color='warning' className={className} />
 );
 
 export const OwnerBadge: View<{ className?: string; }> = ({ className }) => (
