@@ -17,6 +17,7 @@ interface NewAttachment extends CreateFileRequestBody {
 }
 
 export interface State {
+  canRemoveExistingAttachments?: boolean;
   existingAttachments: FileRecord[];
   newAttachments: NewAttachment[];
   newAttachmentMetadata: FileUploadMetadata;
@@ -28,7 +29,7 @@ export type Msg
   | ADT<'removeNewAttachment', number>
   | ADT<'onChangeNewAttachmentName', [number, string]>;
 
-export type Params = Pick<State, 'existingAttachments' | 'newAttachmentMetadata'>;
+export type Params = Pick<State, 'canRemoveExistingAttachments' | 'existingAttachments' | 'newAttachmentMetadata'>;
 
 export function isValid(state: Immutable<State>): boolean {
   return state.newAttachments.reduce((valid, attachment) => valid && !attachment.errors.length, true as boolean);
@@ -90,6 +91,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 interface FileFieldProps {
   defaultName: string;
   value: string;
+  editable: boolean;
   disabled?: boolean;
   url: string;
   errors?: string[];
@@ -98,7 +100,7 @@ interface FileFieldProps {
 }
 
 const FileField: View<FileFieldProps> = props => {
-  const { defaultName, value, disabled, url, onChange, onRemove, errors = [] } = props;
+  const { defaultName, value, disabled, editable, url, onChange, onRemove, errors = [] } = props;
   return (
     <div className='form-group'>
       <div className='d-flex flex-nowrap align-items-center'>
@@ -106,7 +108,7 @@ const FileField: View<FileFieldProps> = props => {
           type='text'
           placeholder={defaultName}
           value={value}
-          disabled={disabled}
+          disabled={disabled || !editable}
           className={`form-control ${errors.length ? 'is-invalid' : ''}`}
           onChange={onChange && (e => onChange(e.currentTarget.value))} />
         {disabled
@@ -160,7 +162,8 @@ export const view: View<Props> = props => {
           key={`attachments-existing-${i}`}
           defaultName={file.name}
           value={file.name}
-          disabled
+          disabled={disabled || !state.canRemoveExistingAttachments}
+          editable={false}
           url={fileBlobPath(file)}
           onRemove={() => dispatch(adt('removeExistingAttachment', i))}
         />
@@ -171,6 +174,7 @@ export const view: View<Props> = props => {
           defaultName={file.name}
           value={file.newName}
           disabled={disabled}
+          editable
           url={file.url}
           errors={file.errors}
           onChange={value => dispatch(adt('onChangeNewAttachmentName', [i, value] as [number, string]))}

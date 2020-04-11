@@ -3,6 +3,7 @@ import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as OrganizationEditTab from 'front-end/lib/pages/organization/edit/tab';
 import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
@@ -235,7 +236,8 @@ const router: Router.Router<Route> = {
         return {
           tag: 'orgEdit',
           value: {
-            orgId: params.id || ''
+            orgId: params.id || '',
+            tab: OrganizationEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -365,7 +367,7 @@ const router: Router.Router<Route> = {
       case 'orgList':
         return '/organizations';
       case 'orgEdit':
-        return `/organizations/${route.value.orgId}/edit`;
+        return `/organizations/${route.value.orgId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'orgCreate':
         return '/organizations/create';
 

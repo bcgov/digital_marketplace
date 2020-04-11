@@ -48,7 +48,7 @@ interface ViewAlertsProps<PageMsg> {
 }
 
 function ViewAlerts<PageMsg>({ alerts, dispatchPage }: ViewAlertsProps<PageMsg>) {
-  const { info, warnings, errors } = alerts;
+  const { info = [], warnings = [], errors = [] } = alerts;
   //Show highest priority alerts first.
   return (
     <Row>
@@ -89,7 +89,7 @@ type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps<PageMsg> & ViewBre
 
 function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<PageMsg>) {
   const { dispatchPage, alerts, breadcrumbs, container = false } = props;
-  const hasAlerts = alerts.info.length || alerts.warnings.length || alerts.errors.length;
+  const hasAlerts = !!(alerts.info?.length || alerts.warnings?.length || alerts.errors?.length);
   const hasBreadcrumbs = !!breadcrumbs.length;
   const className = `${hasAlerts ? 'pb-5 mb-n3' : ''} ${!hasAlerts && hasBreadcrumbs ? 'pb-md-5 mb-md-n3' : ''} ${props.className || ''}`;
   if (container) {

@@ -308,26 +308,28 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
     <Modal isOpen={open} toggle={closeModal}>
       <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{content.title}</ModalHeader>
       <ModalBody>{content.body(dispatch)}</ModalBody>
-      <ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
-        <div className='p-3 d-flex flex-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
-          {content.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
-            const props = {
-              key: `modal-action-${i}`,
-              symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
-              color,
-              loading,
-              disabled,
-              onClick: () => dispatch(msg),
-              className: i === 0 ? 'mx-0' : 'mr-3'
-            };
-            if (button) {
-              return (<Link button {...props}>{text}</Link>);
-            } else {
-              return (<Link {...props}>{text}</Link>);
-            }
-          })}
-        </div>
-      </ModalFooter>
+      {content.actions.length
+        ? (<ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
+            <div className='p-3 d-flex flex-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
+              {content.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
+                const props = {
+                  key: `modal-action-${i}`,
+                  symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
+                  color,
+                  loading,
+                  disabled,
+                  onClick: () => dispatch(msg),
+                  className: i === 0 ? 'mx-0' : 'mr-3'
+                };
+                if (button) {
+                  return (<Link button {...props}>{text}</Link>);
+                } else {
+                  return (<Link {...props}>{text}</Link>);
+                }
+              })}
+            </div>
+          </ModalFooter>)
+        : null}
     </Modal>
   );
 };

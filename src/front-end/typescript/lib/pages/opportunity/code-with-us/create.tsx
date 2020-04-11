@@ -44,7 +44,9 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       publishLoading: 0,
       saveDraftLoading: 0,
       showErrorAlert: null,
-      form: immutable(await Form.init({}))
+      form: immutable(await Form.init({
+        canRemoveExistingAttachments: true //moot
+      }))
     }));
   },
   async fail({ routePath, dispatch }) {

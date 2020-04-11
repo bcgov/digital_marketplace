@@ -44,6 +44,8 @@ export type ParseTabId<T extends TabsRecord<T>> = (raw: unknown) => TabId<T> | n
 
 export type IdToDefinition<T extends TabsRecord<T>, K extends TabId<T>> = (id: K) => TabDefinition<T, K>;
 
+export type IdToDefinitionWithState<T extends TabsRecord<T>, K extends TabId<T>, ExtraState> = (state: ExtraState & ParentState<T, K>) => (id: K) => TabDefinition<T, K>;
+
 // Types & functions to assist with constructing parents of TabComponents.
 
 export interface ParentState<T extends TabsRecord<T>, K extends TabId<T>> {
@@ -59,10 +61,10 @@ export function makeGetParentModal<
   K extends TabId<T>,
   ExtraState,
   InnerMsg
-  >(idToDefinition: IdToDefinition<T, K>): PageGetModal<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+  >(idToDefinition: IdToDefinitionWithState<T, K, ExtraState>): PageGetModal<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
   return state => {
     const tabId = state.tab[0];
-    const definition = idToDefinition(tabId);
+    const definition = idToDefinition(state)(tabId);
     if (!definition.component.getModal) { return null; }
     return mapPageModalMsg(
       definition.component.getModal(state.tab[1]),
@@ -76,10 +78,10 @@ export function makeGetParentContextualActions<
   K extends TabId<T>,
   ExtraState,
   InnerMsg
-  >(idToDefinition: IdToDefinition<T, K>): PageGetContextualActions<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+  >(idToDefinition: IdToDefinitionWithState<T, K, ExtraState>): PageGetContextualActions<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
   return ({ state, dispatch }) => {
     const tabId = state.tab[0];
-    const definition = idToDefinition(tabId);
+    const definition = idToDefinition(state)(tabId);
     if (!definition.component.getContextualActions) { return null; }
     return definition.component.getContextualActions({
       state: state.tab[1],
@@ -89,7 +91,7 @@ export function makeGetParentContextualActions<
 }
 
 interface MakeGetParentMetadataParams<T extends TabsRecord<T>, K extends TabId<T>, ExtraState> {
-  idToDefinition: IdToDefinition<T, K>;
+  idToDefinition: IdToDefinitionWithState<T, K, ExtraState>;
   getTitleSuffix(state: Immutable<ExtraState & ParentState<T, K>>): string;
 }
 
@@ -99,7 +101,7 @@ export function makeGetParentMetadata<
   ExtraState
   >(params: MakeGetParentMetadataParams<T, K, ExtraState>): PageGetMetadata<ExtraState & ParentState<T, K>> {
   return state => {
-    return makePageMetadata(`${params.idToDefinition(state.tab[0]).title} — ${params.getTitleSuffix(state)}`);
+    return makePageMetadata(`${params.idToDefinition(state)(state.tab[0]).title} — ${params.getTitleSuffix(state)}`);
   };
 }
 
@@ -108,10 +110,10 @@ export function makeGetParentAlerts<
   K extends TabId<T>,
   ExtraState,
   InnerMsg
-  >(idToDefinition: IdToDefinition<T, K>): PageGetAlerts<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+  >(idToDefinition: IdToDefinitionWithState<T, K, ExtraState>): PageGetAlerts<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
   return state => {
     const tabId = state.tab[0];
-    const definition = idToDefinition(tabId);
+    const definition = idToDefinition(state)(tabId);
     if (!definition.component.getAlerts) { return emptyPageAlerts(); }
     return mapPageAlerts(
       definition.component.getAlerts(state.tab[1]),
@@ -150,7 +152,7 @@ interface MakeParentUpdateParams<
   InnerMsg extends ADT<any, any>
   > {
   extraUpdate: ParentExtraUpdate<T, K, ExtraState, InnerMsg>;
-  idToDefinition: IdToDefinition<T, K>;
+  idToDefinition: IdToDefinitionWithState<T, K, ExtraState>;
 }
 
 export function makeParentUpdate<
@@ -163,7 +165,7 @@ export function makeParentUpdate<
     switch (msg.tag) {
       case 'tab':
         const tabId = state.tab[0];
-        const definition = params.idToDefinition(tabId);
+        const definition = params.idToDefinition(state)(tabId);
         return updateGlobalComponentChild({
           state,
           childStatePath: ['tab', '1'],
@@ -193,10 +195,10 @@ export function makeParentView<
   K extends TabId<T>,
   ExtraState,
   InnerMsg
-  >(idToDefinition: IdToDefinition<T, K>): ComponentView<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+  >(idToDefinition: IdToDefinitionWithState<T, K, ExtraState>): ComponentView<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
   return ({ state, dispatch }) => {
     const [tabId, tabState] = state.tab;
-    const definition = idToDefinition(tabId);
+    const definition = idToDefinition(state)(tabId);
     return (
       <definition.component.view
         dispatch={mapComponentDispatch(dispatch, v => adt('tab' as const, v))}
