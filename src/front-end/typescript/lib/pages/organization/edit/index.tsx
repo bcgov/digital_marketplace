@@ -89,7 +89,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getAlerts: getAlertsValid(state => {
       return mergePageAlerts(
         {
-          info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor
+          info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor && state.tab[0] !== 'qualification'
           ? [{
               text: (
                 <div>

@@ -4,29 +4,26 @@ import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
-// Note(Jesse): @add_new_page_location
-
-import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
-import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
-import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
-
-import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
-import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
-import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
-
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
+import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
+import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
+import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
+import * as PageOrgSWUTerms from 'front-end/lib/pages/organization/sprint-with-us-terms';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
 import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
 import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
+import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
+import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
@@ -37,7 +34,6 @@ import { includes } from 'lodash';
 import { Session } from 'shared/lib/resources/session';
 import { ADT } from 'shared/lib/types';
 
-// Note(Jesse): @add_new_page_location
 export type Route
   = ADT<'landing',              PageLanding.RouteParams>
   | ADT<'opportunities',        PageOpportunities.RouteParams>
@@ -53,27 +49,22 @@ export type Route
   | ADT<'orgCreate',            PageOrgCreate.RouteParams>
   | ADT<'orgList',              PageOrgList.RouteParams>
   | ADT<'orgEdit',              PageOrgEdit.RouteParams>
-
+  | ADT<'orgSWUTerms',          PageOrgSWUTerms.RouteParams>
   | ADT<'proposalSWUCreate',    PageProposalSWUCreate.RouteParams>
   | ADT<'proposalSWUEdit',      PageProposalSWUEdit.RouteParams>
   | ADT<'proposalSWUView',      PageProposalSWUView.RouteParams>
-
   | ADT<'opportunitySWUCreate', PageOpportunitySWUCreate.RouteParams>
   | ADT<'opportunitySWUEdit',   PageOpportunitySWUEdit.RouteParams>
   | ADT<'opportunitySWUView',   PageOpportunitySWUView.RouteParams>
-
   | ADT<'opportunityCWUCreate', PageOpportunityCWUCreate.RouteParams>
   | ADT<'opportunityCWUEdit',   PageOpportunityCWUEdit.RouteParams>
   | ADT<'opportunityCWUView',   PageOpportunityCWUView.RouteParams>
-
   | ADT<'proposalCWUCreate',    PageProposalCWUCreate.RouteParams>
   | ADT<'proposalCWUEdit',      PageProposalCWUEdit.RouteParams>
   | ADT<'proposalCWUView',      PageProposalCWUView.RouteParams>
-
   | ADT<'proposalCWUExportOne', PageProposalCWUExportOne.RouteParams>
   | ADT<'proposalCWUExportAll', PageProposalCWUExportAll.RouteParams>
-  | ADT<'proposalList',         PageProposalList.RouteParams>
-  ;
+  | ADT<'proposalList',         PageProposalList.RouteParams>;
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
   'signUpStepTwo',
@@ -100,8 +91,6 @@ export interface State {
   shared: SharedState;
   activeRoute: Route;
   nav: Immutable<Nav.State>;
-
-// Note(Jesse): @add_new_page_location
   pages: {
     landing?: Immutable<PageLanding.State>;
     opportunities?: Immutable<PageOpportunities.State>;
@@ -117,33 +106,28 @@ export interface State {
     orgCreate?: Immutable<PageOrgCreate.State>;
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
-
+    orgSWUTerms?: Immutable<PageOrgSWUTerms.State>;
     proposalSWUCreate?: Immutable<PageProposalSWUCreate.State>;
     proposalSWUEdit?: Immutable<PageProposalSWUEdit.State>;
     proposalSWUView?: Immutable<PageProposalSWUView.State>;
-
     opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
-
     opportunityCWUCreate?: Immutable<PageOpportunityCWUCreate.State>;
     opportunityCWUEdit?: Immutable<PageOpportunityCWUEdit.State>;
     opportunityCWUView?: Immutable<PageOpportunityCWUView.State>;
-
     proposalCWUCreate?: Immutable<PageProposalCWUCreate.State>;
     proposalCWUEdit?: Immutable<PageProposalCWUEdit.State>;
     proposalCWUView?: Immutable<PageProposalCWUView.State>;
-
     proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
     proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
     proposalList?: Immutable<PageProposalList.State>;
   };
 }
 
-// Note(Jesse): @add_new_page_location
 type InnerMsg
   = ADT<'noop'>
-  | ADT<'dismissToast', number>
+  | ADT<'dismissToast',             number>
   | ADT<'dismissLapsedToasts'>
   | ADT<'closeModal'>
   | ADT<'nav',                      Nav.Msg>
@@ -161,23 +145,19 @@ type InnerMsg
   | ADT<'pageOrgCreate',            PageOrgCreate.Msg>
   | ADT<'pageOrgList',              PageOrgList.Msg>
   | ADT<'pageOrgEdit',              PageOrgEdit.Msg>
-
+  | ADT<'pageOrgSWUTerms',          PageOrgSWUTerms.Msg>
   | ADT<'pageProposalSWUCreate',    PageProposalSWUCreate.Msg>
   | ADT<'pageProposalSWUEdit',      PageProposalSWUEdit.Msg>
   | ADT<'pageProposalSWUView',      PageProposalSWUView.Msg>
-
   | ADT<'pageOpportunitySWUCreate', PageOpportunitySWUCreate.Msg>
   | ADT<'pageOpportunitySWUEdit',   PageOpportunitySWUEdit.Msg>
   | ADT<'pageOpportunitySWUView',   PageOpportunitySWUView.Msg>
-
   | ADT<'pageOpportunityCWUCreate', PageOpportunityCWUCreate.Msg>
   | ADT<'pageOpportunityCWUEdit',   PageOpportunityCWUEdit.Msg>
   | ADT<'pageOpportunityCWUView',   PageOpportunityCWUView.Msg>
-
   | ADT<'pageProposalCWUCreate',    PageProposalCWUCreate.Msg>
   | ADT<'pageProposalCWUEdit',      PageProposalCWUEdit.Msg>
   | ADT<'pageProposalCWUView',      PageProposalCWUView.Msg>
-
   | ADT<'pageProposalCWUExportOne', PageProposalCWUExportOne.Msg>
   | ADT<'pageProposalCWUExportAll', PageProposalCWUExportAll.Msg>
   | ADT<'pageProposalList',         PageProposalList.Msg>;
