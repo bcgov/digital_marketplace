@@ -365,7 +365,7 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt('hideModal'),
           actions: [
             {
-              text: 'Approve',
+              text: 'Approve Request',
               icon: 'user-check',
               color: 'success',
               msg: adt('approveAffiliation', state.showModal.value),
@@ -385,7 +385,7 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt('hideModal'),
           actions: [
             {
-              text: 'Reject',
+              text: 'Reject Request',
               icon: 'user-times',
               color: 'danger',
               msg: adt('rejectAffiliation', state.showModal.value),
