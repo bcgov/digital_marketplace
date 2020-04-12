@@ -16,7 +16,9 @@ import { adt, ADT, Id } from 'shared/lib/types';
 type TableAffiliation = AffiliationSlim;
 
 type ModalId
-  = ADT<'deleteAffiliation', Id>;
+  = ADT<'deleteAffiliation', Id>
+  | ADT<'approveAffiliation', Id>
+  | ADT<'rejectAffiliation', Id>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -235,7 +237,7 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
                   color='success'
                   className='mr-2'
                   symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-                  onClick={() => dispatch(adt('approveAffiliation', affiliation.id))}>
+                  onClick={() => dispatch(adt('showModal', adt('approveAffiliation', affiliation.id)) as Msg)}>
                   Approve
                 </LoadingButton>
                 <LoadingButton
@@ -244,12 +246,20 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
                   size='sm'
                   color='danger'
                   symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-                  onClick={() => dispatch(adt('rejectAffiliation', affiliation.id))}>
+                  onClick={() => dispatch(adt('showModal', adt('rejectAffiliation', affiliation.id)) as Msg)}>
                   Reject
                 </LoadingButton>
               </div>
             )
-          : (<LoadingButton disabled={isDisabled} loading={isDeleteLoading} size='sm' color='danger' symbol_={leftPlacement(iconLinkSymbol('user-times'))} onClick={() => dispatch(adt('deleteAffiliation', affiliation.id))}>Leave</LoadingButton>),
+          : (<LoadingButton
+              disabled={isDisabled}
+              loading={isDeleteLoading}
+              size='sm'
+              color='danger'
+              symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+              onClick={() => dispatch(adt('showModal', adt('deleteAffiliation', affiliation.id)) as Msg)}>
+              Leave
+            </LoadingButton>),
         className: 'py-2',
         showOnHover: !isPending
       }
@@ -328,6 +338,46 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'user-times',
               color: 'danger',
               msg: adt('deleteAffiliation', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'approveAffiliation':
+        return {
+          title: 'Approve Request?',
+          body: () => 'Approving this request will allow this company to put you forward as a team member on proposals for opportunities.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Approve',
+              icon: 'user-check',
+              color: 'success',
+              msg: adt('approveAffiliation', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'rejectAffiliation':
+        return {
+          title: 'Reject Request?',
+          body: () => 'Are you sure you want to reject this organization\'s request for you to join their team?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Reject',
+              icon: 'user-times',
+              color: 'danger',
+              msg: adt('rejectAffiliation', state.showModal.value),
               button: true
             },
             {
