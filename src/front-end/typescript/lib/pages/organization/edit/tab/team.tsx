@@ -24,7 +24,8 @@ import { validateUserEmail } from 'shared/lib/validation/affiliation';
 
 type ModalId
   = ADT<'addTeamMembers'>
-  | ADT<'viewTeamMember', AffiliationMember>;
+  | ADT<'viewTeamMember', AffiliationMember>
+  | ADT<'removeTeamMember', Id>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -161,6 +162,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     }
 
     case 'removeTeamMember':
+      state = state.set('showModal', null);
       return [
         state.set('removeTeamMemberLoading', msg.value),
         async (state, dispatch) => {
@@ -280,7 +282,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
                 loading={state.removeTeamMemberLoading === m.id}
                 size='sm'
                 symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-                onClick={() => dispatch(adt('removeTeamMember', m.id))}
+                onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m.id)) as Msg)}
                 color='danger'>
                 Remove
               </LoadingButton>
@@ -413,6 +415,27 @@ export const component: Tab.Component<State, Msg> = {
           ]
         };
       }
+
+      case 'removeTeamMember':
+        return {
+          title: 'Remove Team Member?',
+          body: () => 'Are you sure you want to remove this person from your team?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Remove',
+              icon: 'user-times',
+              color: 'danger',
+              msg: adt('removeTeamMember', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
     }
   },
   getContextualActions: ({ state, dispatch }) => {
