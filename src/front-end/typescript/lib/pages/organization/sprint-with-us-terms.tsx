@@ -10,7 +10,7 @@ import Link, { routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatDateAndTime } from 'shared/lib';
+import { formatDate, formatTime } from 'shared/lib';
 import { Organization } from 'shared/lib/resources/organization';
 import { isAdmin, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -20,7 +20,7 @@ export const TITLE = 'Sprint With Us Terms & Conditions';
 
 export function acceptedSWUTermsText(organization: Organization, ifNotAcceptedText: string) {
   return organization.acceptedSWUTerms
-    ? `${organization.legalName} agreed to the ${TITLE} on ${formatDateAndTime(organization.acceptedSWUTerms)}.`
+    ? `${organization.legalName} agreed to the ${TITLE} on ${formatDate(organization.acceptedSWUTerms)} at ${formatTime(organization.acceptedSWUTerms)}.`
     : ifNotAcceptedText;
 }
 

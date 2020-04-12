@@ -1,21 +1,28 @@
-//import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import { PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
+import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
+import { AffiliationSlim, memberIsPending, MembershipType } from 'shared/lib/resources/affiliation';
 import { adt, ADT, Id } from 'shared/lib/types';
 
 type TableAffiliation = AffiliationSlim;
 
+type ModalId
+  = ADT<'deleteAffiliation', Id>;
+
 export interface State extends Tab.Params {
+  showModal: ModalId | null;
   deleteAffiliationLoading: Id | null;
-  showDeleteAffiliationModal: Id | null;
+  approveAffiliationLoading: Id | null;
+  rejectAffiliationLoading: Id | null;
   ownedRecords: TableAffiliation[];
   affiliatedRecords: TableAffiliation[];
   ownedTable: Immutable<Table.State>;
@@ -26,7 +33,10 @@ export type InnerMsg
   = ADT<'ownedTable', Table.Msg>
   | ADT<'affiliatedTable', Table.Msg>
   | ADT<'deleteAffiliation', Id>
-  | ADT<'hideDeleteAffiliationModal'>;
+  | ADT<'approveAffiliation', Id>
+  | ADT<'rejectAffiliation', Id>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -37,8 +47,10 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
     affiliations = result.value.sort((a, b) => a.organization.legalName.localeCompare(b.organization.legalName));
   }
   return {
+    showModal: null,
     deleteAffiliationLoading: null,
-    showDeleteAffiliationModal: null,
+    approveAffiliationLoading: null,
+    rejectAffiliationLoading: null,
     profileUser,
     viewerUser,
     ownedRecords: affiliations.filter(a => a.membershipType === MembershipType.Owner),
@@ -54,6 +66,10 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal':
+      return [state.set('showModal', null)];
     case 'ownedTable':
       return updateComponentChild({
         state,
@@ -71,15 +87,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => ({ tag: 'affiliatedTable', value })
       });
     case 'deleteAffiliation':
-      if (!state.showDeleteAffiliationModal) {
-        return [state.set('showDeleteAffiliationModal', msg.value)];
-      } else {
-        state = state
-          .set('deleteAffiliationLoading', msg.value)
-          .set('showDeleteAffiliationModal', null);
-      }
       return [
-        state,
+        state
+          .set('deleteAffiliationLoading', msg.value)
+          .set('showModal', null),
         async state => {
           state = state.set('deleteAffiliationLoading', null);
           const result = await api.affiliations.delete(msg.value);
@@ -90,8 +101,37 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }));
         }
       ];
-    case 'hideDeleteAffiliationModal':
-      return [state.set('showDeleteAffiliationModal', null)];
+    case 'approveAffiliation':
+      return [
+        state
+          .set('approveAffiliationLoading', msg.value)
+          .set('showModal', null),
+        async state => {
+          state = state.set('approveAffiliationLoading', null);
+          const result = await api.affiliations.update(msg.value, null);
+          if (!api.isValid(result)) { return state; }
+          return immutable(await init({
+            profileUser: state.profileUser,
+            viewerUser: state.viewerUser
+          }));
+        }
+      ];
+    case 'rejectAffiliation':
+      return [
+        state
+          .set('rejectAffiliationLoading', msg.value)
+          .set('showModal', null),
+        async state => {
+          state = state.set('rejectAffiliationLoading', null);
+          //TODO fix following API call once implemented
+          const result = await api.affiliations.update(msg.value, null);
+          if (!api.isValid(result)) { return state; }
+          return immutable(await init({
+            profileUser: state.profileUser,
+            viewerUser: state.viewerUser
+          }));
+        }
+      ];
     default:
       return [state];
   }
@@ -101,8 +141,24 @@ function ownedTableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Legal Name',
+      className: 'text-nowrap',
       style: {
-        width: '100%'
+        width: '100%',
+        minWidth: '240px'
+      }
+    },
+    {
+      children: 'Team Members',
+      className: 'text-center text-nowrap',
+      style: {
+        width: '0px'
+      }
+    },
+    {
+      children: 'SWU Qualified?',
+      className: 'text-center text-nowrap',
+      style: {
+        width: '0px'
       }
     }
   ];
@@ -112,6 +168,18 @@ function ownedTableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.ownedRecords.map(affiliation => [
     {
       children: (<Link dest={routeDest(adt('orgEdit', { orgId: affiliation.organization.id})) }>{affiliation.organization.legalName}</Link>)
+    },
+    {
+      className: 'text-center',
+      children: String(affiliation.organization.numTeamMembers || EMPTY_STRING)
+    },
+    {
+      className: 'text-center',
+      children: (
+        <Icon
+          name={affiliation.organization.swuQualified ? 'check' : 'times'}
+          color={affiliation.organization.swuQualified ? 'success' : 'body'} />
+      )
     }
   ]);
 }
@@ -120,15 +188,16 @@ function affiliatedTableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Legal Name',
+      className: 'text-nowrap',
       style: {
-        width: '80%',
-        minWidth: '200px'
+        width: '100%',
+        minWidth: '240px'
       }
     },
     {
       children: '',
       style: {
-        width: '20%'
+        width: '0px'
       }
     }
   ];
@@ -137,18 +206,52 @@ function affiliatedTableHeadCells(state: Immutable<State>): Table.HeadCells {
 function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg>): Table.BodyRows {
   return state.affiliatedRecords.map(affiliation => {
     const isDeleteLoading = state.deleteAffiliationLoading === affiliation.id;
-    const isDisabled = !!state.deleteAffiliationLoading;
+    const isApproveLoading = state.approveAffiliationLoading === affiliation.id;
+    const isRejectLoading = state.rejectAffiliationLoading === affiliation.id;
+    const isDisabled = isDeleteLoading || isApproveLoading || isRejectLoading;
+    const isPending = memberIsPending(affiliation);
     return [
       {
-        children: affiliation.organization.legalName,
+        children: (
+          <div>
+            <span>{affiliation.organization.legalName}</span>
+            {isPending
+              ? (<PendingBadge className='ml-3' />)
+              : null}
+          </div>
+        ),
         style: {
           verticalAlign: 'middle'
         }
       },
       {
-        children: (<LoadingButton disabled={isDisabled} loading={isDeleteLoading} size='sm' color='danger' symbol_={leftPlacement(iconLinkSymbol('user-times'))} onClick={() => dispatch(adt('deleteAffiliation', affiliation.id))}>Leave</LoadingButton>),
+        children: isPending
+          ? (
+              <div className='d-flex align-items-center flex-nowrap'>
+                <LoadingButton
+                  disabled={isDisabled}
+                  loading={isApproveLoading}
+                  size='sm'
+                  color='success'
+                  className='mr-2'
+                  symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+                  onClick={() => dispatch(adt('approveAffiliation', affiliation.id))}>
+                  Approve
+                </LoadingButton>
+                <LoadingButton
+                  disabled={isDisabled}
+                  loading={isRejectLoading}
+                  size='sm'
+                  color='danger'
+                  symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+                  onClick={() => dispatch(adt('rejectAffiliation', affiliation.id))}>
+                  Reject
+                </LoadingButton>
+              </div>
+            )
+          : (<LoadingButton disabled={isDisabled} loading={isDeleteLoading} size='sm' color='danger' symbol_={leftPlacement(iconLinkSymbol('user-times'))} onClick={() => dispatch(adt('deleteAffiliation', affiliation.id))}>Leave</LoadingButton>),
         className: 'py-2',
-        showOnHover: true
+        showOnHover: !isPending
       }
     ];
   });
@@ -164,7 +267,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <h2>Owned Organizations</h2>
           <p className={state.ownedRecords.length ? 'mb-5' : 'mb-0'}>
             {state.ownedRecords.length
-              ? 'You are the owner of the following organizations.'
+              ? 'You are the owner of the following organizations:'
               : 'You do not own any organizations.'}
           </p>
         </Col>
@@ -186,8 +289,8 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             <h2>Affiliated Organizations</h2>
             <p className='mb-5'>
               {state.affiliatedRecords.length
-                ? 'You\'ve given these companies permission to put you forward as a team member on proposals for opportunities.'
-                : 'You are not affiliated with any organizations'}
+                ? 'You have given these companies permission to put you forward as a team member on proposals for opportunities.'
+                : 'You are not affiliated with any organizations.'}
             </p>
           </div>
         </Col>
@@ -212,28 +315,29 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
   getModal(state) {
-    if (state.showDeleteAffiliationModal) {
-      return {
-        title: 'Leave Organization?',
-        body: () => 'Are you sure you want to leave this organization? You will no longer be able to be included as a team member in its opportunity proposals.',
-        onCloseMsg: adt('hideDeleteAffiliationModal'),
-        actions: [
-          {
-            text: 'Leave Organization',
-            icon: 'user-times',
-            color: 'danger',
-            msg: adt('deleteAffiliation', state.showDeleteAffiliationModal),
-            button: true
-          },
-          {
-            text: 'Cancel',
-            color: 'secondary',
-            msg: adt('hideDeleteAffiliationModal')
-          }
-        ]
-      };
+    if (!state.showModal) { return null; }
+    switch (state.showModal.tag) {
+      case 'deleteAffiliation':
+        return {
+          title: 'Leave Organization?',
+          body: () => 'Are you sure you want to leave this organization? You will no longer be able to be included as a team member in its opportunity proposals.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Leave Organization',
+              icon: 'user-times',
+              color: 'danger',
+              msg: adt('deleteAffiliation', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
     }
-    return null;
   },
   getContextualActions({ state }) {
     return adt('links', [{
