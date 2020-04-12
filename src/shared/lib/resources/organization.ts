@@ -26,6 +26,8 @@ export interface Organization {
   deactivatedBy?: Id;
   acceptedSWUTerms: Date | null;
   swuQualified: boolean;
+  //TODO implement for owners/admins
+  numTeamMembers?: number;
 }
 
 export interface OrganizationSlim {
@@ -34,9 +36,11 @@ export interface OrganizationSlim {
   logoImageFile?: FileRecord;
   owner?: UserSlim;       // Admin/owner only
   swuQualified?: boolean; // Admin/owner only
+  //TODO implement for owners/admins
+  numTeamMembers?: number;
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualified'> {
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualified' | 'numTeamMembers'> {
   logoImageFile?: Id;
 }
 

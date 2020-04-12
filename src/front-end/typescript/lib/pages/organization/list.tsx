@@ -3,11 +3,11 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { User, UserType } from 'shared/lib/resources/user';
+import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 type TableOrganization = OrganizationSlim;
@@ -127,5 +127,28 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata() {
     return makePageMetadata('Organizations');
+  },
+  getContextualActions: ({ state, dispatch }) => {
+    if (!state.sessionUser || !isVendor(state.sessionUser)) { return null; }
+    return adt('links', [
+      {
+        children: 'Create Organization',
+        button: true,
+        symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+        color: 'primary',
+        dest: routeDest(adt('orgCreate', null))
+      },
+      {
+        children: 'My Organizations',
+        button: true,
+        outline: true,
+        symbol_: leftPlacement(iconLinkSymbol('building')),
+        color: 'white',
+        dest: routeDest(adt('userProfile', {
+          userId: state.sessionUser.id,
+          tab: 'organizations' as const
+        }))
+      }
+    ]);
   }
 };

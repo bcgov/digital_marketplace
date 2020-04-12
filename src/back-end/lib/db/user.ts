@@ -14,12 +14,25 @@ export interface RawUser extends Omit<User, 'avatarImageFile'> {
   avatarImageFile: Id | null;
 }
 
+export interface RawUserSlim extends Omit<UserSlim, 'avatarImageFile'> {
+  avatarImageFile?: Id;
+}
+
 export async function rawUserToUser(connection: Connection, params: RawUser): Promise<User> {
   const { avatarImageFile: fileId, ...restOfRawUser } = params;
   const avatarImageFile = fileId ? getValidValue(await readOneFileById(connection, fileId), null) : null;
   return {
     ...restOfRawUser,
     avatarImageFile
+  };
+}
+
+export async function rawUserSlimToUserSlim(connection: Connection, params: RawUserSlim): Promise<UserSlim> {
+  const { avatarImageFile: fileId, ...restOfRawUser } = params;
+  const avatarImageFile = fileId ? getValidValue(await readOneFileById(connection, fileId), null) : null;
+  return {
+    ...restOfRawUser,
+    avatarImageFile: avatarImageFile || undefined
   };
 }
 
@@ -33,7 +46,7 @@ export const readOneUser = tryDb<[Id], User | null>(async (connection, id) => {
 export const readOneUserSlim = tryDb<[Id], UserSlim | null>(async (connection, id) => {
   const result = await connection<UserSlim>('users')
     .where({ id })
-    .select('id', 'name')
+    .select('id', 'name', 'avatarImageFile')
     .first();
   return valid(result ? result : null);
 });

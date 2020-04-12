@@ -35,7 +35,7 @@ async function rawAffiliationToAffiliation(connection: Connection, params: RawAf
 }
 
 async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliation): Promise<AffiliationSlim> {
-  const { id, organization: orgId, membershipType } = params;
+  const { id, organization: orgId, membershipType, membershipStatus } = params;
   const organization = getValidValue(await readOneOrganization(connection, orgId), null);
   if (!organization) {
     throw new Error('unable to process affiliation'); // Will be caught by calling function
@@ -43,9 +43,11 @@ async function rawAffiliationToAffiliationSlim(connection: Connection, params: R
   return {
     id,
     membershipType,
+    membershipStatus,
     organization: {
       id: organization.id,
-      legalName: organization.legalName
+      legalName: organization.legalName,
+      swuQualified: organization.swuQualified //TODO only populate for owners/admins
     }
   };
 }
