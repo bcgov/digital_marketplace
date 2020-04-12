@@ -13,7 +13,7 @@ import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 import { validateIndividualProponent } from 'shared/lib/validation/proposal/code-with-us';
-import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberPending, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
+import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
 import { isArray } from 'util';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
@@ -209,19 +209,16 @@ export async function validateSWUOpportunityId(connection: db.Connection, opport
 export async function validateTeamMember(connection: db.Connection, raw: any): Promise<Validation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
   const validatedMember = await validateUserId(connection, getString(raw, 'member'));
   const validatedScrumMaster = validateSWUProposalTeamMemberScrumMaster(get(raw, 'scrumMaster'));
-  const validatedPending = validateSWUProposalTeamMemberPending(get(raw, 'pending'));
 
-  if (allValid([validatedMember, validatedScrumMaster, validatedPending])) {
+  if (allValid([validatedMember, validatedScrumMaster])) {
     return valid({
       member: (validatedMember.value as User).id,
-      scrumMaster: validatedScrumMaster.value,
-      pending: validatedPending.value
+      scrumMaster: validatedScrumMaster.value
     } as CreateSWUProposalTeamMemberBody);
   } else {
     return invalid({
       member: getInvalidValue(validatedMember, undefined),
-      scrumMaster: getInvalidValue(validatedScrumMaster, undefined),
-      pending: getInvalidValue(validatedPending, undefined)
+      scrumMaster: getInvalidValue(validatedScrumMaster, undefined)
     });
   }
 }
@@ -229,7 +226,13 @@ export async function validateTeamMember(connection: db.Connection, raw: any): P
 export async function validateSWUProposalTeamMembers(connection: db.Connection, raw: any): Promise<ArrayValidation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
   if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of selected team members.'] }]); }
   if (!raw.length) { return invalid([{ members: ['Please select at least one team member.'] }]); }
-  return validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v), {});
+  const validatedMembers = await validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v), {});
+  if (getValidValue(validatedMembers, []).filter(member => member.scrumMaster).length > 1) {
+    return invalid([{
+      members: ['You may only specify a single scrum master.']
+    }]);
+  }
+  return validatedMembers;
 }
 
 export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase: SWUOpportunityPhase | null): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
