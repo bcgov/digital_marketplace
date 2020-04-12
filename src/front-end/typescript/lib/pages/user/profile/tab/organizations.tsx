@@ -1,8 +1,9 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import * as toasts from 'front-end/lib/pages/organization/lib/toasts';
 import { PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Icon from 'front-end/lib/views/icon';
@@ -16,9 +17,9 @@ import { adt, ADT, Id } from 'shared/lib/types';
 type TableAffiliation = AffiliationSlim;
 
 type ModalId
-  = ADT<'deleteAffiliation', Id>
-  | ADT<'approveAffiliation', Id>
-  | ADT<'rejectAffiliation', Id>;
+  = ADT<'deleteAffiliation', AffiliationSlim>
+  | ADT<'approveAffiliation', AffiliationSlim>
+  | ADT<'rejectAffiliation', AffiliationSlim>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -34,9 +35,9 @@ export interface State extends Tab.Params {
 export type InnerMsg
   = ADT<'ownedTable', Table.Msg>
   | ADT<'affiliatedTable', Table.Msg>
-  | ADT<'deleteAffiliation', Id>
-  | ADT<'approveAffiliation', Id>
-  | ADT<'rejectAffiliation', Id>
+  | ADT<'deleteAffiliation', AffiliationSlim>
+  | ADT<'approveAffiliation', AffiliationSlim>
+  | ADT<'rejectAffiliation', AffiliationSlim>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>;
 
@@ -91,12 +92,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'deleteAffiliation':
       return [
         state
-          .set('deleteAffiliationLoading', msg.value)
+          .set('deleteAffiliationLoading', msg.value.id)
           .set('showModal', null),
-        async state => {
+        async (state, dispatch) => {
           state = state.set('deleteAffiliationLoading', null);
-          const result = await api.affiliations.delete(msg.value);
-          if (!api.isValid(result)) { return state; }
+          const result = await api.affiliations.delete(msg.value.id);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.leftOrganization.error(msg.value))));
+            return state;
+          }
+          dispatch(toast(adt('success', toasts.leftOrganization.success(msg.value))));
           return immutable(await init({
             profileUser: state.profileUser,
             viewerUser: state.viewerUser
@@ -106,12 +111,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'approveAffiliation':
       return [
         state
-          .set('approveAffiliationLoading', msg.value)
+          .set('approveAffiliationLoading', msg.value.id)
           .set('showModal', null),
-        async state => {
+        async (state, dispatch) => {
           state = state.set('approveAffiliationLoading', null);
-          const result = await api.affiliations.update(msg.value, null);
-          if (!api.isValid(result)) { return state; }
+          const result = await api.affiliations.update(msg.value.id, null);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.approvedOrganizationRequest.error(msg.value))));
+            return state;
+          }
+          dispatch(toast(adt('success', toasts.approvedOrganizationRequest.success(msg.value))));
           return immutable(await init({
             profileUser: state.profileUser,
             viewerUser: state.viewerUser
@@ -121,13 +130,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'rejectAffiliation':
       return [
         state
-          .set('rejectAffiliationLoading', msg.value)
+          .set('rejectAffiliationLoading', msg.value.id)
           .set('showModal', null),
-        async state => {
+        async (state, dispatch) => {
           state = state.set('rejectAffiliationLoading', null);
           //TODO fix following API call once implemented
-          const result = await api.affiliations.update(msg.value, null);
-          if (!api.isValid(result)) { return state; }
+          const result = await api.affiliations.update(msg.value.id, null);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.rejectedOrganizationRequest.error(msg.value))));
+            return state;
+          }
+          dispatch(toast(adt('success', toasts.rejectedOrganizationRequest.success(msg.value))));
           return immutable(await init({
             profileUser: state.profileUser,
             viewerUser: state.viewerUser
@@ -237,7 +250,7 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
                   color='success'
                   className='mr-2'
                   symbol_={leftPlacement(iconLinkSymbol('user-check'))}
-                  onClick={() => dispatch(adt('showModal', adt('approveAffiliation', affiliation.id)) as Msg)}>
+                  onClick={() => dispatch(adt('showModal', adt('approveAffiliation', affiliation)) as Msg)}>
                   Approve
                 </LoadingButton>
                 <LoadingButton
@@ -246,7 +259,7 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
                   size='sm'
                   color='danger'
                   symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-                  onClick={() => dispatch(adt('showModal', adt('rejectAffiliation', affiliation.id)) as Msg)}>
+                  onClick={() => dispatch(adt('showModal', adt('rejectAffiliation', affiliation)) as Msg)}>
                   Reject
                 </LoadingButton>
               </div>
@@ -257,11 +270,10 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
               size='sm'
               color='danger'
               symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-              onClick={() => dispatch(adt('showModal', adt('deleteAffiliation', affiliation.id)) as Msg)}>
+              onClick={() => dispatch(adt('showModal', adt('deleteAffiliation', affiliation)) as Msg)}>
               Leave
             </LoadingButton>),
-        className: 'py-2',
-        showOnHover: !isPending
+        className: 'py-2'
       }
     ];
   });

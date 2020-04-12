@@ -25,7 +25,7 @@ import { validateUserEmail } from 'shared/lib/validation/affiliation';
 type ModalId
   = ADT<'addTeamMembers'>
   | ADT<'viewTeamMember', AffiliationMember>
-  | ADT<'removeTeamMember', Id>;
+  | ADT<'removeTeamMember', AffiliationMember>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -38,7 +38,7 @@ export interface State extends Tab.Params {
 
 export type InnerMsg
   = ADT<'addTeamMembers'>
-  | ADT<'removeTeamMember', Id> //Id of affiliation, not user
+  | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
   | ADT<'membersTable', Table.Msg>
@@ -164,16 +164,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'removeTeamMember':
       state = state.set('showModal', null);
       return [
-        state.set('removeTeamMemberLoading', msg.value),
+        state.set('removeTeamMemberLoading', msg.value.id),
         async (state, dispatch) => {
           state = state.set('removeTeamMemberLoading', null);
-          const result = await api.affiliations.delete(msg.value);
+          const result = await api.affiliations.delete(msg.value.id);
           if (!api.isValid(result)) {
-            dispatch(toast(adt('error', toasts.removedTeamMember.error)));
+            dispatch(toast(adt('error', toasts.removedTeamMember.error(msg.value))));
             return state;
           }
-          state = state.update('affiliations', affs => affs.filter(({ id }) => id !== msg.value));
-          dispatch(toast(adt('success', toasts.removedTeamMember.success)));
+          state = state.update('affiliations', affs => affs.filter(({ id }) => id !== msg.value.id));
+          dispatch(toast(adt('success', toasts.removedTeamMember.success(msg.value))));
           return resetCapabilities(state);
         }
       ];
@@ -282,7 +282,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
                 loading={state.removeTeamMemberLoading === m.id}
                 size='sm'
                 symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-                onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m.id)) as Msg)}
+                onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}
                 color='danger'>
                 Remove
               </LoadingButton>
@@ -416,17 +416,18 @@ export const component: Tab.Component<State, Msg> = {
         };
       }
 
-      case 'removeTeamMember':
+      case 'removeTeamMember': {
+        const affiliation = state.showModal.value;
         return {
-          title: 'Remove Team Member?',
-          body: () => 'Are you sure you want to remove this person from your team?',
+          title: `Remove ${affiliation.user.name}?`,
+          body: () => `Are you sure you want to remove ${affiliation.user.name} from this organization?`,
           onCloseMsg: adt('hideModal'),
           actions: [
             {
               text: 'Remove',
               icon: 'user-times',
               color: 'danger',
-              msg: adt('removeTeamMember', state.showModal.value),
+              msg: adt('removeTeamMember', affiliation),
               button: true
             },
             {
@@ -436,6 +437,7 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         };
+      }
     }
   },
   getContextualActions: ({ state, dispatch }) => {
