@@ -59,7 +59,7 @@ export function idToDefinition<K extends TabId>(id: K, organization: Organizatio
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'qualification':
       return {
-        component: OrganizationTab.component,
+        component: QualificationTab.component,
         icon: 'user',
         title: 'SWU Qualification'
       } as TabbedPage.TabDefinition<Tabs, K>;

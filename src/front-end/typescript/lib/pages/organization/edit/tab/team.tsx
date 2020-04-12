@@ -12,12 +12,13 @@ import { makeViewTeamMemberModal, OwnerBadge, PendingBadge } from 'front-end/lib
 import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import Capabilities, { Capability } from 'front-end/lib/views/capabilities';
 import Icon from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import LoadingButton from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
+import { isAdmin, isVendor } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { validateUserEmail } from 'shared/lib/validation/affiliation';
 
@@ -71,6 +72,10 @@ async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>
   }));
 }
 
+async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immutable<State>> {
+  return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
+}
+
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
@@ -93,8 +98,18 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'showModal':
       return [state.set('showModal', msg.value)];
 
-    case 'hideModal':
-      return [state.set('showModal', null)];
+    case 'hideModal': {
+      const existingShowModal = state.showModal;
+      return [
+        state.set('showModal', null),
+        async state => {
+          if (existingShowModal && existingShowModal.tag === 'addTeamMembers') {
+            return await resetAddTeamMemberEmails(state);
+          }
+          return null;
+        }
+      ];
+    }
 
     case 'addTeamMembers': {
       state = state.set('showModal', null);
@@ -139,8 +154,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (errorToasts.length) {
             dispatch(toast(adt('error', toasts.addedTeamMembers.error(errorToasts))));
           }
-          //Update the capabilities grid.
-          return resetCapabilities(state);
+          state = resetCapabilities(state);
+          return await resetAddTeamMemberEmails(state);
         }
       ];
     }
@@ -223,45 +238,57 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
   const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
   const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
   const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
-  return state.affiliations.map(m => [
-    {
-      children: (<div className='d-flex align-items-center flex-nowrap'>
-        <Link
-          onClick={() => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
-          symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
-          {m.user.name}
-        </Link>
-        {memberIsOwner(m)
-          ? (<OwnerBadge className='ml-3' />)
-          : null}
-        {memberIsPending(m)
-          ? (<PendingBadge className='ml-3' />)
-          : null}
-      </div>),
-      className: 'text-nowrap align-middle'
-    },
-    {
-      children: String(m.user.capabilities.length),
-      className: 'text-center align-middle'
-    },
-    {
-      children: memberIsOwner(m)
-        ? null
-        : (
-            <LoadingButton
-              button
-              disabled={isLoading}
-              loading={state.removeTeamMemberLoading === m.id}
-              size='sm'
-              symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-              onClick={() => dispatch(adt('removeTeamMember', m.id))}
-              color='danger'>
-              Remove
-            </LoadingButton>
-          ),
-      className: 'text-right align-middle'
-    }
-  ]);
+  const isViewerAdmin = isAdmin(state.viewerUser);
+  return state.affiliations.map(m => {
+    const onClickName = isViewerAdmin
+      ? undefined
+      : (() => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg));
+    const nameDest = isViewerAdmin
+      ? routeDest(adt('userProfile', { userId: m.user.id }))
+      : undefined;
+    return [
+      {
+        children: (
+          <div className='d-flex align-items-center flex-nowrap'>
+            <Link
+              onClick={onClickName}
+              dest={nameDest}
+              symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
+              {m.user.name}
+            </Link>
+            {memberIsOwner(m)
+              ? (<OwnerBadge className='ml-3' />)
+              : null}
+            {memberIsPending(m)
+              ? (<PendingBadge className='ml-3' />)
+              : null}
+          </div>
+        ),
+        className: 'text-nowrap align-middle'
+      },
+      {
+        children: String(m.user.capabilities.length),
+        className: 'text-center align-middle'
+      },
+      {
+        children: memberIsOwner(m) || !isVendor(state.viewerUser)
+          ? null
+          : (
+              <LoadingButton
+                button
+                disabled={isLoading}
+                loading={state.removeTeamMemberLoading === m.id}
+                size='sm'
+                symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+                onClick={() => dispatch(adt('removeTeamMember', m.id))}
+                color='danger'>
+                Remove
+              </LoadingButton>
+            ),
+        className: 'text-right align-middle'
+      }
+    ];
+  });
 }
 
 const view: ComponentView<State, Msg> = props => {
@@ -389,6 +416,7 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getContextualActions: ({ state, dispatch }) => {
+    if (!isVendor(state.viewerUser)) { return null; }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;

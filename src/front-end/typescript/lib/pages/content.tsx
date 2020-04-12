@@ -103,7 +103,7 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h1>{state.definition.title}</h1>
+        <h1 className='mb-5'>{state.definition.title}</h1>
         <Markdown source={state.body} openLinksInNewTabs />
       </Col>
     </Row>

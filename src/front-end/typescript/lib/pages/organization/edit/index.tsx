@@ -9,7 +9,7 @@ import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Organization } from 'shared/lib/resources/organization';
-import { User, UserType } from 'shared/lib/resources/user';
+import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -89,7 +89,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getAlerts: getAlertsValid(state => {
       return mergePageAlerts(
         {
-          info: !state.organization.swuQualified && state.viewerUser.type === UserType.Vendor
+          info: !state.organization.swuQualified && isVendor(state.viewerUser) && state.tab[0] !== 'qualification'
           ? [{
               text: (
                 <div>

@@ -10,10 +10,6 @@ export enum UserType {
   Admin = 'ADMIN'
 }
 
-export function isPublicSectorUserType(userType: UserType): boolean {
-  return userType === UserType.Admin || userType === UserType.Government;
-}
-
 export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloakIdentityProvider {
   switch (userType) {
     case UserType.Vendor:
@@ -56,12 +52,24 @@ export function usersAreEquivalent(a: User, b: User): boolean {
   return a.id === b.id;
 }
 
-export function isAdmin(user: User): boolean {
+export function isAdmin(user: Pick<User, 'type'>): boolean {
   return user.type === UserType.Admin;
 }
 
-export function isPublicSectorEmployee(user: User): boolean {
-  return isPublicSectorUserType(user.type);
+export function isGovernment(user: Pick<User, 'type'>): boolean {
+  return user.type === UserType.Government;
+}
+
+export function isPublicSectorEmployee(user: Pick<User, 'type'>): boolean {
+  return isAdmin(user) || isGovernment(user);
+}
+
+export function isVendor(user: Pick<User, 'type'>): boolean {
+  return user.type === UserType.Vendor;
+}
+
+export function isPublicSectorUserType(userType: UserType): boolean {
+  return isPublicSectorEmployee({ type: userType });
 }
 
 export interface UpdateProfileRequestBody {

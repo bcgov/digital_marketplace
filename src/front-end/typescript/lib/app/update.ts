@@ -5,37 +5,30 @@ import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'fr
 import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-// Note(Jesse): @add_new_page_location
-
-import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
-import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
-import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
-
-import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
-import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
-import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
-
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
-
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
-
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
+import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
+import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
+import * as PageOpportunitySWUView from 'front-end/lib/pages/opportunity/sprint-with-us/view';
 import * as PageOrgCreate from 'front-end/lib/pages/organization/create';
 import * as PageOrgEdit from 'front-end/lib/pages/organization/edit';
 import * as PageOrgList from 'front-end/lib/pages/organization/list';
-
+import * as PageOrgSWUTerms from 'front-end/lib/pages/organization/sprint-with-us-terms';
 import * as PageProposalCWUCreate from 'front-end/lib/pages/proposal/code-with-us/create';
 import * as PageProposalCWUEdit from 'front-end/lib/pages/proposal/code-with-us/edit';
 import * as PageProposalCWUExportAll from 'front-end/lib/pages/proposal/code-with-us/export/all';
 import * as PageProposalCWUExportOne from 'front-end/lib/pages/proposal/code-with-us/export/one';
 import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/view';
-
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
+import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
+import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
 import * as PageSignUpStepOne from 'front-end/lib/pages/sign-up/step-one';
@@ -72,8 +65,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
 
   switch (route.tag) {
 
-    // Note(Jesse): @add_new_page_location
-
     case 'orgEdit':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -84,6 +75,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageOrgEdit.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageOrgEdit' as const, value };
+        }
+      });
+
+    case 'orgSWUTerms':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'orgSWUTerms'],
+        childRouteParams: route.value,
+        childInit: PageOrgSWUTerms.component.init,
+        childGetMetadata: PageOrgSWUTerms.component.getMetadata,
+        childGetModal: PageOrgSWUTerms.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOrgSWUTerms' as const, value };
         }
       });
 
@@ -544,6 +548,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageOrgEdit.component.update,
         childGetMetadata: PageOrgEdit.component.getMetadata,
         childGetModal: PageOrgEdit.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOrgSWUTerms':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOrgSWUTerms', value }),
+        childStatePath: ['pages', 'orgSWUTerms'],
+        childUpdate: PageOrgSWUTerms.component.update,
+        childGetMetadata: PageOrgSWUTerms.component.getMetadata,
+        childGetModal: PageOrgSWUTerms.component.getModal,
         childMsg: msg.value
       });
 
