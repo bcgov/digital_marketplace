@@ -49,7 +49,7 @@ export const readOneUserByEmail = tryDb<[string, boolean?], User | null>(async (
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 
-export const findOneUserByTypeAndUsername = tryDb<[UserType.Vendor | UserType.Government, string], User | null>(async (connection, userType, idpUsername) => {
+export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | null>(async (connection, userType, idpUsername) => {
   const query = connection<User>('users')
     .where({ type: userType, idpUsername })
     // Support querying admin statuses even if the desired user could be a vendor.
@@ -67,6 +67,13 @@ export const readManyUsers = tryDb<[], User[]>(async (connection) => {
 export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection) => {
   const results = await connection<RawUser>('users')
     .whereNotNull('notificationsOn')
+    .select('*');
+  return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+});
+
+export const readManyUsersByRole = tryDb<[UserType], User[]>(async (connection, type) => {
+  const results = await connection<RawUser>('users')
+    .where({ type })
     .select('*');
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });

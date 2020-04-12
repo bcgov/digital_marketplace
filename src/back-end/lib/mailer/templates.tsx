@@ -14,6 +14,13 @@ interface Styles {
   variables: StyleVariables;
   utilities: StyleUtilities;
   classes: StyleClasses;
+  helpers: {
+    scale: (n: number) => number;
+    units: (n: number | string, unit: StyleUnit) => string;
+    px: (n: number | string) => string;
+    style: (property: string, value: string) => Record<string, string>;
+    styleScale: (property: string, n: number, unit: StyleUnit) => Record<string, string>;
+  };
 }
 
 type CSSProperty = keyof CSSProperties;
@@ -30,7 +37,7 @@ type StyleLevelUtilities = {
   [level in StyleLevel]: CSSProperties;
 };
 
-const styles: Styles = (() => {
+export const styles: Styles = (() => {
   const spacer = 16;
   const scale = (n: number) => n * spacer;
   const units = (n: number | string, unit: StyleUnit) => `${n}${unit}`;
@@ -172,7 +179,18 @@ const styles: Styles = (() => {
       height: px(scale(2))
     }
   };
-  return { variables, utilities, classes };
+  return {
+    variables,
+    utilities,
+    classes,
+    helpers: {
+      spacer,
+      scale,
+      units,
+      px,
+      style,
+      styleScale
+    }};
 })();
 
 // Utility types and functions.
@@ -191,7 +209,7 @@ interface WithStyle {
   style: CSSProperties;
 }
 
-type View<Props> = (props: Props) => ReactElement | null;
+export type View<Props> = (props: Props) => ReactElement | null;
 
 type TemplateBaseProps = Omit<LayoutProps, 'children'>;
 
@@ -334,7 +352,7 @@ export interface SimpleProps extends TemplateBaseProps {
   linkLists?: LinkListProps[];
   descriptionLists?: DescriptionListProps[];
   callsToAction?: LinkProps[];
-  body?: SimpleBodyProps;
+  body?: string | ReactElement;
 }
 
 const Simple: View<SimpleProps> = props => {
@@ -353,7 +371,7 @@ const Simple: View<SimpleProps> = props => {
       </Fragment>
       <Fragment>
         {body
-          ? (<SimpleBody {...body} />)
+          ? (<Row>{body}</Row>)
           : null}
       </Fragment>
       <Fragment>
@@ -364,42 +382,6 @@ const Simple: View<SimpleProps> = props => {
           : null}
       </Fragment>
     </Layout>
-  );
-};
-
-export interface SimpleBodyProps {
-  title?: string;
-  content?: ContentItemProps[];
-}
-
-const SimpleBody: View<SimpleBodyProps> = props => {
-  const { title, content } = props;
-  return (
-    <Row>
-      <Fragment>
-        {title ? (<div style={{...styles.utilities.font.italic, ...styles.utilities.text.center, ...styles.utilities.mb[4]}}>{title}</div>) : null}
-      </Fragment>
-      <Fragment>
-        {content ? content.map((contentItem, i) => (<div style={{...styles.utilities.mb[2]}} key={`content-item-${i}`}><ContentItem {...contentItem} /></div> )) : null}
-      </Fragment>
-    </Row>
-  );
-};
-
-export interface ContentItemProps {
-  prefix?: string;
-  link?: LinkProps;
-  suffix?: string;
-}
-
-const ContentItem: View<ContentItemProps> = props => {
-  const { prefix, link, suffix } = props;
-  return (
-    <Fragment>
-      { prefix ? (prefix) : null }
-      { link ? <Link {...link} /> : null }
-      { suffix ? (suffix) : null }
-    </Fragment>
   );
 };
 

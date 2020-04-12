@@ -20,6 +20,7 @@ import sessionResource from 'back-end/lib/resources/session';
 import codeWithUsSubscriberResource from 'back-end/lib/resources/subscribers/code-with-us';
 import sprintWithUsSubscriberResource from 'back-end/lib/resources/subscribers/sprint-with-us';
 import userResource from 'back-end/lib/resources/user';
+import adminRouter from 'back-end/lib/routers/admin';
 import authRouter from 'back-end/lib/routers/auth';
 import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
@@ -101,6 +102,8 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     flippedConcat(crudRoutes),
     // Authentication router for SSO with OpenID Connect.
     flippedConcat(await authRouter(connection)),
+    // Admin router
+    flippedConcat(adminRouter().map(route => namespaceRoute('/admin', route))),
     // Front-end router.
     flippedConcat(frontEndRouter('index.html')),
     // Add global hooks to all routes.

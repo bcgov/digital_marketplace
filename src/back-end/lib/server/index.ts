@@ -86,6 +86,15 @@ export function basicResponse<Body, Session>(code: number, session: Session, bod
   };
 }
 
+export type HtmlResponseBody = ADT<'html', string>;
+
+export function makeHtmlResponseBody(value: string): HtmlResponseBody {
+  return {
+    tag: 'html',
+    value
+  };
+}
+
 export type TextResponseBody = ADT<'text', string>;
 
 export function makeTextResponseBody(value: string): TextResponseBody {

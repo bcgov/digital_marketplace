@@ -1,8 +1,11 @@
+
 import { CONTACT_EMAIL } from 'back-end/config';
 import * as db from 'back-end/lib/db';
+import { Emails } from 'back-end/lib/mailer';
 import { makeCWUOpportunityInformation, viewCWUOpportunityCallToAction } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import * as templates from 'back-end/lib/mailer/templates';
-import { send } from 'back-end/lib/mailer/transport';
+import { makeSend } from 'back-end/lib/mailer/transport';
+import React from 'react';
 import { CWUOpportunity, isCWUOpportunityClosed } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession } from 'shared/lib/resources/session';
@@ -70,142 +73,129 @@ export async function handleCWUProposalWithdrawn(connection: db.Connection, prop
   }
 }
 
-async function successfulCWUProposalSubmission(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal): Promise<void> {
+export const successfulCWUProposalSubmission = makeSend(successfulCWUProposalSubmissionT);
+
+export async function successfulCWUProposalSubmissionT(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal): Promise<Emails> {
   const title = 'Your Code With Us Opportunity Has Been Submitted';
   const description = 'You have successfully submitted a proposal for the following Digital Marketplace opportunity:';
-  await send({
+  return [{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      body: {
-        title: 'What Happens Next?',
-        content: [
-          {
-            prefix: 'If you would like to make changes to your proposal simply ',
-            link: {
-              text: 'sign in',
-              url: templates.makeUrl('sign-in')
-            },
-            suffix: ' and access the proposal via your dashboard.  All changes must be submitted prior to the proposal deadline.'
-          },
-          { prefix: 'Once the proposal deadline has been reached, your proposal will be reviewed and assigned a score.  After all proposals have been evaluated, you will be notified if you have been awarded the opportunity or if your proposal was unsuccessful.' },
-          { prefix: 'Good luck!'}
-        ]
-      },
+      body: (
+        <div>
+          <p style={{...templates.styles.utilities.font.italic}}>What Happens Next?</p>
+          <p>If you would like to make changes to your proposal, simply <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access the proposal via your dashboard.  All changes must be submitted prior to the proposal deadline.</p>
+          <p>Once the proposal deadline has been reached, your proposal will be reviewed and assigned a score.  After all proposals have been evaluated, you will be notified if you have been awarded the opportunity or if your proposal was unsuccessful.</p>
+          <p>Good luck!</p>
+        </div>
+      ),
       callsToAction: [viewCWUOpportunityCallToAction(opportunity), viewCWUProposalCallToAction(proposal)]
     })
-  });
+  }];
 }
 
-async function awardedCWUProposalSubmission(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal | CWUProposalSlim): Promise<void> {
+export const awardedCWUProposalSubmission = makeSend(awardedCWUProposalSubmissionT);
+
+export async function awardedCWUProposalSubmissionT(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal | CWUProposalSlim): Promise<Emails> {
   const title = 'You Have Been Awarded a Code With Us Opportunity';
   const description = 'Congratulations!  You have been awarded the following Digital Marketplace opportunity:';
-  await send({
+  return[{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      body: {
-        title: 'What Happens Next?',
-        content: [
-          {
-            prefix: 'If you would like to view your total score, ',
-            link: {
-              text: 'sign in',
-              url: templates.makeUrl('sign-in')
-            },
-            suffix: ' and access your proposal via your dashboard.'
-          },
-          {
-            prefix: 'A member of the Digital Marketplace or the owner of the opportunity will be in touch with you shortly to discuss next steps.'
-          }
-        ]
-      },
+      body: (
+        <div>
+          <p style={{...templates.styles.utilities.font.italic}}>What Happens Next?</p>
+          <p>If you would like to view your total score, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
+          <p>A member of the Digital Marketplace or the owner of the opportunity will be in touch with you shortly to discuss next steps.</p>
+        </div>
+      ),
       callsToAction: [viewCWUOpportunityCallToAction(opportunity), viewCWUProposalCallToAction(proposal)]
     })
-  });
+  }];
 }
 
-async function unsuccessfulCWUProposalSubmission(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal | CWUProposalSlim): Promise<void> {
+export const unsuccessfulCWUProposalSubmission = makeSend(unsuccessfulCWUProposalSubmissionT);
+
+export async function unsuccessfulCWUProposalSubmissionT(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal | CWUProposalSlim): Promise<Emails> {
   const title = 'A Code With Us Opportunity Has Closed';
   const description = 'The following Digital Marketplace opportunity that you submitted a proposal to has closed:';
-  await send({
+  return[{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      body: {
-        content: [
-          { prefix: `The opportunity has been awarded to ${opportunity.successfulProponentName}`},
-          {
-            prefix: 'If you would like to view your total score, ',
-            link: {
-              text: 'sign in',
-              url: templates.makeUrl('sign-in')
-            },
-            suffix: ' and access your proposal via your dashboard.'
-          },
-          {
-            prefix: 'Thank you for your submission and we wish you luck on the next opportunity.'
-          }
-        ]
-      },
+      body: (
+        <div>
+          <p>The opportunity has been awarded to {opportunity.successfulProponentName}</p>
+          <p>If you would like to view your total score, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
+          <p>Thank you for your submission and we wish you luck on the next opportunity.</p>
+        </div>
+      ),
       callsToAction: [viewCWUOpportunityCallToAction(opportunity), viewCWUProposalCallToAction(proposal)]
     })
-  });
+  }];
 }
 
-async function disqualifiedCWUProposalSubmission(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal | CWUProposalSlim): Promise<void> {
+export const disqualifiedCWUProposalSubmission = makeSend(disqualifiedCWUProposalSubmissionT);
+
+export async function disqualifiedCWUProposalSubmissionT(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal | CWUProposalSlim): Promise<Emails> {
   const title = 'Your Code With Us Proposal Has Been Disqualified';
   const description = 'The proposal that you submitted for the following Digital Marketplace opportunity has been disqualified:';
-  await send({
+  return[{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      body: {
-        content: [
-          { prefix: `If you have any questions, please send an email to ${CONTACT_EMAIL}`}
-        ]
-      },
+      body: (
+        <div>
+          <p>If you have any questions, please send an email to {CONTACT_EMAIL}</p>
+        </div>
+      ),
       callsToAction: [viewCWUOpportunityCallToAction(opportunity), viewCWUProposalCallToAction(proposal)]
     })
-  });
+  }];
 }
 
-async function withdrawnCWUProposalSubmissionProposalAuthor(recipient: User, opportunity: CWUOpportunity): Promise<void> {
+export const withdrawnCWUProposalSubmissionProposalAuthor = makeSend(withdrawnCWUProposalSubmissionProposalAuthorT);
+
+export async function withdrawnCWUProposalSubmissionProposalAuthorT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
   const title = 'Your Proposal Has Been Withdrawn';
   const description = 'Your proposal for the following Digital Marketplace opportunity has been withdrawn:';
-  await send({
+  return[{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      body: {
-        content: [
-          { prefix: 'If you would like to resubmit a proposal to the opportunity you may do so prior to the proposal deadline.' }
-        ]
-      },
+      body: (
+        <div>
+          <p>If you would like to resubmit a proposal to the opportunity you may do so prior to the proposal deadline.</p>
+        </div>
+      ),
       callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
-  });
+  }];
 }
 
-async function withdrawnCWUProposalSubmission(recipient: User, withdrawnProponent: User, opportunity: CWUOpportunity): Promise<void> {
+export const withdrawnCWUProposalSubmission = makeSend(withdrawnCWUProposalSubmissionT);
+
+export async function withdrawnCWUProposalSubmissionT(recipient: User, withdrawnProponent: User, opportunity: CWUOpportunity): Promise<Emails> {
   const title = 'A Proposal Has Been Withdrawn';
   const description = `${withdrawnProponent.name} has withdrawn their proposal for the following Digital Marketplace opportunity:`;
-  await send({
+  return[{
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -214,7 +204,7 @@ async function withdrawnCWUProposalSubmission(recipient: User, withdrawnProponen
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
       callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
-  });
+  }];
 }
 
 export function viewCWUProposalCallToAction(proposal: CWUProposal | CWUProposalSlim): templates.LinkProps {

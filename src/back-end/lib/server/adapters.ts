@@ -2,8 +2,8 @@ import { COOKIE_SECRET, TMP_DIR } from 'back-end/config';
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { ErrorResponseBody, FileRequestBody, FileResponseBody, JsonRequestBody, JsonResponseBody, makeErrorResponseBody, makeFileRequestBody, makeJsonRequestBody, parseSessionId, Request, Response, Route, Router, SessionIdToSession, SessionToSessionId, TextResponseBody } from 'back-end/lib/server';
-import { parseServerHttpMethod, ServerHttpMethod,  } from 'back-end/lib/types';
+import { ErrorResponseBody, FileRequestBody, FileResponseBody, HtmlResponseBody, JsonRequestBody, JsonResponseBody, makeErrorResponseBody, makeFileRequestBody, makeJsonRequestBody, parseSessionId, Request, Response, Route, Router, SessionIdToSession, SessionToSessionId, TextResponseBody } from 'back-end/lib/server';
+import { parseServerHttpMethod, ServerHttpMethod } from 'back-end/lib/types';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import expressLib from 'express';
@@ -31,7 +31,7 @@ export type Adapter<App, SupportedRequestBodies, ParsedReqBody, ValidatedReqBody
 
 export type ExpressRequestBodies<FileUploadMetaData> = JsonRequestBody | FileRequestBody<FileUploadMetaData>;
 
-export type ExpressResponseBodies = JsonResponseBody | FileResponseBody | TextResponseBody | ErrorResponseBody;
+export type ExpressResponseBodies = HtmlResponseBody | JsonResponseBody | FileResponseBody | TextResponseBody | ErrorResponseBody;
 
 export type ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session, FileUploadMetaData> = Adapter<expressLib.Application, ExpressRequestBodies<FileUploadMetaData>, ParsedReqBody, ValidatedReqBody, ReqBodyErrors, ExpressResponseBodies, HookState, Session, FileUploadMetaData>;
 
@@ -156,6 +156,11 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         case 'text':
           expressRes
             .set('Content-Type', 'text/plain')
+            .send(response.body.value);
+          break;
+        case 'html':
+          expressRes
+            .set('Content-Type', 'text/html')
             .send(response.body.value);
           break;
       }
