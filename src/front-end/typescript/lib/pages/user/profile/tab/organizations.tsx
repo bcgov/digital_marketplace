@@ -134,8 +134,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           .set('showModal', null),
         async (state, dispatch) => {
           state = state.set('rejectAffiliationLoading', null);
-          //TODO fix following API call once implemented
-          const result = await api.affiliations.update(msg.value.id, null);
+          const result = await api.affiliations.delete(msg.value.id);
           if (!api.isValid(result)) {
             dispatch(toast(adt('error', toasts.rejectedOrganizationRequest.error(msg.value))));
             return state;
