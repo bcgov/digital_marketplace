@@ -424,7 +424,7 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt('hideModal'),
           actions: [
             {
-              text: 'Remove',
+              text: 'Remove Team Member',
               icon: 'user-times',
               color: 'danger',
               msg: adt('removeTeamMember', affiliation),
