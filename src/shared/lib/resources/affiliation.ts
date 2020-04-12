@@ -27,7 +27,9 @@ export interface Affiliation {
 export interface AffiliationSlim {
   id: Id;
   membershipType: MembershipType;
-  organization: Pick<Organization, 'id' | 'legalName'>;
+  membershipStatus: MembershipStatus;
+  //TODO change organization property to OrganizationSlim
+  organization: Pick<Organization, 'id' | 'legalName' | 'swuQualified' | 'numTeamMembers'>;
 }
 
 export interface AffiliationMember {
@@ -39,7 +41,7 @@ export interface AffiliationMember {
 
 export interface CreateRequestBody {
   userEmail: string;
-  organization: string;
+  organization: Id;
   membershipType: MembershipType;
 }
 
@@ -65,4 +67,21 @@ export function parseMembershipType(raw: string): MembershipType | null {
     default:
       return null;
   }
+}
+
+export function membersHaveCapability(members: AffiliationMember[], capability: string): boolean {
+  for (const m of members) {
+    if (m.user.capabilities.indexOf(capability) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function memberIsPending(member: Pick<Affiliation, 'membershipStatus'>): boolean {
+  return member.membershipStatus === MembershipStatus.Pending;
+}
+
+export function memberIsOwner(member: Pick<Affiliation, 'membershipType'>): boolean {
+  return member.membershipType === MembershipType.Owner;
 }

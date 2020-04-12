@@ -1,45 +1,35 @@
-import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
-import { isUserType } from 'front-end/lib/access-control';
-import router from 'front-end/lib/app/router';
-import { Route, SharedState } from 'front-end/lib/app/types';
-import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { Route } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
-import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
+import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import * as OrgResource from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
-import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
 
-interface ValidState {
+export interface State extends Tab.Params {
   isEditing: boolean;
   editingLoading: number;
   saveChangesLoading: number;
   archiveLoading: number;
   showArchiveModal: boolean;
   showSaveChangesModal: boolean;
-  user: User;
-  organization: OrgResource.Organization;
   orgForm: Immutable<OrgForm.State>;
-  sidebar: Immutable<MenuSidebar.State>;
 }
 
-export type State = Validation<Immutable<ValidState>, null>;
-
-type InnerMsg
+export type InnerMsg
   = ADT<'orgForm', OrgForm.Msg>
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
   | ADT<'archive'>
   | ADT<'hideArchiveModal'>
-  | ADT<'hideSaveChangesModal'>
-  | ADT<'sidebar', MenuSidebar.Msg>;
+  | ADT<'hideSaveChangesModal'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -47,60 +37,31 @@ async function resetOrgForm(organization: OrgResource.Organization): Promise<Imm
   return immutable(await OrgForm.init({ organization }));
 }
 
-export interface RouteParams {
-  orgId: string;
-}
+const init: Init<Tab.Params, State> = async params => {
+  return {
+    ...params,
+    isEditing: false,
+    editingLoading: 0,
+    saveChangesLoading: 0,
+    archiveLoading: 0,
+    showArchiveModal: false,
+    showSaveChangesModal: false,
+    orgForm: immutable(await OrgForm.init({ organization: params.organization }))
+  };
+};
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
-  userType: [UserType.Vendor, UserType.Admin],
-
-  async success({ routePath, dispatch, routeParams, shared }) {
-    const result = await api.organizations.readOne(routeParams.orgId);
-    if (api.isValid(result)) {
-      return valid(immutable({
-        isEditing: false,
-        editingLoading: 0,
-        saveChangesLoading: 0,
-        archiveLoading: 0,
-        showArchiveModal: false,
-        showSaveChangesModal: false,
-        user: shared.sessionUser,
-        organization: result.value,
-        sidebar: shared.sessionUser.type === UserType.Vendor
-                  ? await makeSidebarState(shared.sessionUser, shared.sessionUser, 'organizations')
-                  : immutable(await MenuSidebar.init({ links: [] })),
-        orgForm: immutable(await OrgForm.init({organization: result.value }))
-      }));
-    } else {
-      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
-      return invalid(null);
-    }
-  },
-  async fail({ routePath, dispatch, shared, routeParams }) {
-    if (!shared.session || !shared.session.user) {
-      dispatch(replaceRoute(adt('signIn' as const, {
-        redirectOnSuccess: router.routeToUrl(adt('orgEdit', {orgId: routeParams.orgId}))
-      })));
-    } else {
-      dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
-    }
-
-    return invalid(null);
-  }
-});
-
-const startEditingLoading = makeStartLoading<ValidState>('editingLoading');
-const stopEditingLoading = makeStopLoading<ValidState>('editingLoading');
-const startSaveChangesLoading = makeStartLoading<ValidState>('saveChangesLoading');
-const stopSaveChangesLoading = makeStopLoading<ValidState>('saveChangesLoading');
-const startArchiveLoading = makeStartLoading<ValidState>('archiveLoading');
-const stopArchiveLoading = makeStopLoading<ValidState>('archiveLoading');
+const startEditingLoading = makeStartLoading<State>('editingLoading');
+const stopEditingLoading = makeStopLoading<State>('editingLoading');
+const startSaveChangesLoading = makeStartLoading<State>('saveChangesLoading');
+const stopSaveChangesLoading = makeStopLoading<State>('saveChangesLoading');
+const startArchiveLoading = makeStartLoading<State>('archiveLoading');
+const stopArchiveLoading = makeStopLoading<State>('archiveLoading');
 
 function isOwner(user: User, org: OrgResource.Organization): boolean {
   return user.id === org.owner.id;
 }
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
+const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'archive':
       if (!state.showArchiveModal) {
@@ -115,8 +76,8 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.organizations.delete(state.organization.id);
           if (api.isValid(result)) {
             // TODO show confirmation alert on page redirected to.
-            if (isOwner(state.user, state.organization)) {
-              dispatch(replaceRoute(adt('userProfile' as const, { userId: state.user.id, tab: 'organizations' as const })));
+            if (isOwner(state.viewerUser, state.organization)) {
+              dispatch(replaceRoute(adt('userProfile' as const, { userId: state.viewerUser.id, tab: 'organizations' as const })));
             } else {
               dispatch(replaceRoute(adt('orgList' as const, null)));
             }
@@ -192,32 +153,22 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('orgForm', value)
       });
-    case 'sidebar':
-      return updateComponentChild({
-        state,
-        childStatePath: ['sidebar'],
-        childUpdate: MenuSidebar.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('sidebar', value)
-      });
     default:
       return [state];
   }
-});
+};
 
-const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
+const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const isEditingLoading = state.editingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isArchiveLoading = state.archiveLoading > 0;
   const isLoading = isEditingLoading || isSaveChangesLoading || isArchiveLoading;
   return (
     <div>
-      <Row>
-        <Col xs='12' className='mb-5'>
-          <h2>{state.organization.legalName}</h2>
-        </Col>
-      </Row>
-      <Row>
+      <EditTabHeader
+        legalName={state.organization.legalName}
+        swuQualified={state.organization.swuQualified} />
+      <Row className='mt-5'>
         <Col xs='12'>
           <OrgForm.view
             state={state.orgForm}
@@ -243,25 +194,13 @@ const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
 
     </div>
   );
-});
+};
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-  sidebar: {
-    size: 'medium',
-    color: 'light',
-    view: viewValid(({ state, dispatch }) => {
-      return (<MenuSidebar.view
-        state={state.sidebar}
-        dispatch={mapComponentDispatch(dispatch, msg => adt('sidebar' as const, msg))} />);
-    })
-  },
-  getMetadata: withValid((state) => {
-    return makePageMetadata(`${state.organization.legalName} — Organizations`);
-  }, makePageMetadata('Edit Organization')),
-  getModal: getModalValid<ValidState, Msg>(state => {
+  getModal: state => {
     if (state.showArchiveModal) {
       return {
         title: 'Archive Organization?',
@@ -304,8 +243,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       };
     }
     return null;
-  }),
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  },
+  getContextualActions: ({ state, dispatch }) => {
     const isEditingLoading = state.editingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
     const isArchiveLoading = state.archiveLoading > 0;
@@ -340,5 +279,5 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         }
       ]);
     }
-  })
+  }
 };

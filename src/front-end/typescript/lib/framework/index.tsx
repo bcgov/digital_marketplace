@@ -210,27 +210,31 @@ export interface PageAlert<Msg> {
 }
 
 export interface PageAlerts<Msg> {
-  info: Array<PageAlert<Msg>>;
-  warnings: Array<PageAlert<Msg>>;
-  errors: Array<PageAlert<Msg>>;
+  info?: Array<PageAlert<Msg>>;
+  warnings?: Array<PageAlert<Msg>>;
+  errors?: Array<PageAlert<Msg>>;
 }
 
 export type PageGetAlerts<State, Msg> = (state: Immutable<State>) => PageAlerts<Msg>;
 
 export function emptyPageAlerts<Msg>(): PageAlerts<Msg> {
-  return {
-    info: [],
-    warnings: [],
-    errors: []
-  };
+  return {};
 }
 
 export function mapPageAlerts<MsgA, MsgB, Route>(alerts: PageAlerts<GlobalComponentMsg<MsgA, Route>>, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageAlerts<GlobalComponentMsg<MsgB, Route>> {
   const { info, warnings, errors } = alerts;
   return {
-    info: info.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) })),
-    warnings: warnings.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) })),
-    errors: errors.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) }))
+    info: info?.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) })),
+    warnings: warnings?.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) })),
+    errors: errors?.map(i => ({ ...i, dismissMsg: i.dismissMsg && mapGlobalComponentMsg(i.dismissMsg, mapMsg) }))
+  };
+}
+
+export function mergePageAlerts<Msg>(a: PageAlerts<Msg>, b: PageAlerts<Msg>): PageAlerts<Msg> {
+  return {
+    info: [...(a.info || []), ...(b.info || [])],
+    warnings: [...(a.warnings || []), ...(b.warnings || [])],
+    errors: [...(a.errors || []), ...(b.errors || [])]
   };
 }
 

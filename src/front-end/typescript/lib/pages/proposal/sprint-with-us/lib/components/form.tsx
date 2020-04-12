@@ -5,6 +5,7 @@ import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import { PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import * as References from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/references';
 import * as Team from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team';
@@ -616,6 +617,7 @@ interface ReviewPhaseViewProps {
 }
 
 const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen, className }) => {
+  //TODO view team member modal when clicking on team member name
   return (
     <Accordion
       className={className}
@@ -650,7 +652,6 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
                 <div className='py-2 px-3 d-flex flex-nowrap align-items-center'>
                   <Link
                     key={`swu-proposal-review-phase-member-${i}`}
-                    newTab
                     symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
                     {m.user.name}
                   </Link>
@@ -658,7 +659,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
                     ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
                     : null}
                   {m.membershipStatus === MembershipStatus.Pending
-                    ? (<Badge text='Pending' color='yellow' className='ml-3' />)
+                    ? (<PendingBadge className='ml-3' />)
                     : null}
                 </div>
               ) )}

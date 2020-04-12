@@ -84,8 +84,8 @@ async function calculateSWUQualifiedStatus(connection: Connection, organization:
   return false;
 }
 
-export const readOneOrganizationSlim = tryDb<[Id, boolean?], OrganizationSlim | null>(async (connection, opportunityId, allowInactive = false) => {
-  const dbResult = await readOneOrganization(connection, opportunityId, allowInactive);
+export const readOneOrganizationSlim = tryDb<[Id, boolean?], OrganizationSlim | null>(async (connection, orgId, allowInactive = false) => {
+  const dbResult = await readOneOrganization(connection, orgId, allowInactive);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error('unable to read organization');
   }

@@ -1,18 +1,16 @@
-import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
-import * as CapabilityGrid from 'front-end/lib/components/capability-grid';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { makeViewTeamMemberModal, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
-import Badge from 'front-end/lib/views/badge';
+import Capabilities, { Capability } from 'front-end/lib/views/capabilities';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, CustomInput, Row } from 'reactstrap';
 import { find, formatDate } from 'shared/lib';
-import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
-import { fileBlobPath } from 'shared/lib/resources/file';
+import { AffiliationMember, memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
 import { SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, SWUProposalPhase, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -40,7 +38,7 @@ export interface State extends Omit<Params, 'affiliations'> {
   showModal: ModalId | null;
   members: Member[];
   membersTable: Immutable<Table.State>;
-  capabilities: Immutable<CapabilityGrid.State>;
+  capabilities: Capability[];
 }
 
 export type Msg
@@ -51,20 +49,10 @@ export type Msg
   | ADT<'addTeamMembers'>
   | ADT<'setScrumMaster', Id>
   | ADT<'removeTeamMember', Id>
-  | ADT<'membersTable', Table.Msg>
-  | ADT<'capabilities', CapabilityGrid.Msg>;
+  | ADT<'membersTable', Table.Msg>;
 
 export function setIsAccordionOpen(state: Immutable<State>, isAccordionOpen: boolean): Immutable<State> {
   return state.set('isAccordionOpen', isAccordionOpen);
-}
-
-function memberHasCapability(members: Member[], capability: string): boolean {
-  for (const m of members) {
-    if (m.user.capabilities.indexOf(capability) !== -1) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function affiliationsToMembers(affiliations: AffiliationMember[], existingMembers: SWUProposalTeamMember[]): Member[] {
@@ -81,18 +69,17 @@ function affiliationsToMembers(affiliations: AffiliationMember[], existingMember
     .sort((a, b) => a.user.name.localeCompare(b.user.name));
 }
 
-export function determineCapabilities(members: Member[], opportunityPhase?: SWUOpportunityPhase): CapabilityGrid.CapabilityWithOptionalFullTime[] {
+export function determineCapabilities(members: Member[], opportunityPhase?: SWUOpportunityPhase): Capability[] {
   return opportunityPhase
     ? opportunityPhase.requiredCapabilities.map(c => ({
         ...c,
-        checked: memberHasCapability(members, c.capability)
+        checked: membersHaveCapability(members, c.capability)
       }))
     : [];
 }
 
-export function resetCapabilities(state: Immutable<State>): Immutable<State> {
-  return state
-    .update('capabilities', s => CapabilityGrid.setCapabilities(s, determineCapabilities(state.members, state.opportunityPhase)));
+function resetCapabilities(state: Immutable<State>): Immutable<State> {
+  return state.set('capabilities', determineCapabilities(state.members));
 }
 
 export function setAffiliations(state: Immutable<State>, affiliations: AffiliationMember[]): Immutable<State> {
@@ -108,10 +95,7 @@ export const init: Init<Params, State> = async params => {
     ...paramsForState,
     showModal: null,
     members,
-    capabilities: immutable(await CapabilityGrid.init({
-      showFullTimeSwitch: true,
-      capabilities: determineCapabilities(members, opportunityPhase)
-    })),
+    capabilities: determineCapabilities(members, opportunityPhase),
     membersTable: immutable(await Table.init({
       idNamespace: `swu-proposal-phase-members-${Math.random()}`
     }))
@@ -165,15 +149,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'membersTable', value })
       });
-
-    case 'capabilities':
-      return updateComponentChild({
-        state,
-        childStatePath: ['capabilities'],
-        childUpdate: CapabilityGrid.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('capabilities', value)
-      });
   }
 };
 
@@ -200,9 +175,18 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
   return state;
 }
 
+function areAllCapabilitiesChecked(capabilities: Capability[]): boolean {
+  for (const c of capabilities) {
+    if (!c.checked) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function isValid(state: Immutable<State>): boolean {
   return !!state.members.length
-      && CapabilityGrid.areAllChecked(state.capabilities);
+      && areAllCapabilitiesChecked(state.capabilities);
 }
 
 export interface Props extends ComponentViewProps<State, Msg> {
@@ -251,15 +235,16 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 function membersTableBodyRows(props: Props): Table.BodyRows {
   const { state, dispatch, disabled } = props;
-  //TODO member view modal
   return state.members.map(m => [
     {
       children: (<div className='d-flex align-items-center flex-nowrap'>
         <Link
-          symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
+          symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
           {m.user.name}
         </Link>
-        <Badge text='Pending' color='yellow' className='ml-3' />
+        {memberIsPending(m)
+          ? (<PendingBadge className='ml-3' />)
+          : null}
       </div>)
     },
     {
@@ -280,7 +265,7 @@ function membersTableBodyRows(props: Props): Table.BodyRows {
         <Link
           button
           size='sm'
-          symbol_={leftPlacement(iconLinkSymbol('user-minus'))}
+          symbol_={leftPlacement(iconLinkSymbol('user-times'))}
           onClick={() => dispatch(adt('removeTeamMember', m.user.id))}
           color='danger'>
           Remove
@@ -319,7 +304,7 @@ const TeamMembers: View<Props> = props => {
   );
 };
 
-const Capabilities: View<Props> = ({ state, dispatch }) => {
+const CapabilitiesView: View<Props> = ({ state, dispatch }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -327,10 +312,7 @@ const Capabilities: View<Props> = ({ state, dispatch }) => {
         <p className='mb-4'>This grid will automatically update to reflect the combined capabilities of your selected team members. To satisfy this phase's requirements, your team must collectively possess all capabilities listed here.</p>
       </Col>
       <Col xs='12'>
-        <CapabilityGrid.view
-          state={state.capabilities}
-          dispatch={mapComponentDispatch(dispatch, v => adt('capabilities' as const, v))}
-          disabled={true} />
+        <Capabilities grid capabilities={state.capabilities} />
       </Col>
     </Row>
   );
@@ -355,7 +337,7 @@ export const view: View<Props> = props => {
       open={state.isAccordionOpen}>
       <Dates {...props} />
       <TeamMembers {...props} />
-      <Capabilities {...props} />
+      <CapabilitiesView {...props} />
     </Accordion>
   );
 };
@@ -363,45 +345,11 @@ export const view: View<Props> = props => {
 export const getModal: PageGetModal<State, Msg> = state => {
   if (!state.showModal) { return null; }
   switch (state.showModal.tag) {
-    case 'viewTeamMember': {
-      const member = state.showModal.value;
-      return {
-        title: 'View Team Member',
-        onCloseMsg: adt('hideModal'),
-        body: dispatch => {
-          const numCapabilities = member.user.capabilities.length + 1;
-          return (
-            <div>
-              <div className='d-flex flex-nowrap align-items-center'>
-                <img
-                  className='rounded-circle border'
-                  style={{
-                    width: '5rem',
-                    height: '5rem',
-                    objectFit: 'cover'
-                  }}
-                  src={userAvatarPath(member.user)} />
-                <div className='ml-3 d-flex flex-column align-items-start'>
-                  <strong className='mb-3'>{member.user.name}</strong>
-                  <span className='font-size-small'>{numCapabilities} Capabilit{numCapabilities === 1 ? 'y' : 'ies'}</span>
-                </div>
-              </div>
-              <div className='border-top border-left'>
-                {member.user.capabilities.map((c, i) => {
-                  return (
-                    <div key={`swu-proposal-phase-view-member-capability-${i}`} className='d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom'>
-                      <Icon className='mr-2' name='check-circle' color='success' />
-                      <span>{c}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        },
-        actions: []
-      };
-    }
+    case 'viewTeamMember':
+      return makeViewTeamMemberModal({
+        member: state.showModal.value,
+        onCloseMsg: adt('hideModal')
+      });
 
     case 'addTeamMembers':
       return {
@@ -433,8 +381,8 @@ export const getModal: PageGetModal<State, Msg> = state => {
                           src={userAvatarPath(m.user)} />
                         {m.user.name}
                       </Link>
-                      {m.membershipStatus === MembershipStatus.Pending
-                        ? (<Badge text='pending' color='yellow' className='ml-3' />)
+                      {memberIsPending(m)
+                        ? (<PendingBadge className='ml-3' />)
                         : null}
                     </div>
                   );

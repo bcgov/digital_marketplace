@@ -64,21 +64,22 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
 }
 
 function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
+  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = () => Tab.idToDefinition;
   return {
     init: makeInit(),
     update: updateValid(TabbedPage.makeParentUpdate({
       extraUpdate: ({ state }) => [state],
-      idToDefinition: Tab.idToDefinition
+      idToDefinition
     })),
-    view: viewValid(TabbedPage.makeParentView(Tab.idToDefinition)),
+    view: viewValid(TabbedPage.makeParentView(idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
-    getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(Tab.idToDefinition)),
-    getModal: getModalValid(TabbedPage.makeGetParentModal(Tab.idToDefinition)),
-    getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(Tab.idToDefinition)),
+    getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(idToDefinition)),
+    getModal: getModalValid(TabbedPage.makeGetParentModal(idToDefinition)),
+    getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
-      idToDefinition: Tab.idToDefinition,
+      idToDefinition,
       getTitleSuffix: state => state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
-    }), makePageMetadata('Edit SprintWithUs Opportunity'))
+    }), makePageMetadata('Edit Sprint With Us Opportunity'))
   };
 }
 

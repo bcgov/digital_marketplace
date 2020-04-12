@@ -1,3 +1,4 @@
+import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
 import { makePageMetadata, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
@@ -38,7 +39,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     if (!api.isValid(opportunityResult)) { return fail(); }
     const organizationsResult = await api.organizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }
-    const evalContentResult = await api.getMarkdownFile('swu-proposal-evaluation');
+    const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
     if (!api.isValid(evalContentResult)) { return fail(); }
     return valid(immutable({
       form: immutable(await Form.init({

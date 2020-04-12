@@ -3,6 +3,7 @@ import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as OrganizationEditTab from 'front-end/lib/pages/organization/edit/tab';
 import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
@@ -34,8 +35,6 @@ export function back() {
 }
 
 const router: Router.Router<Route> = {
-
-  // Note(Jesse): @add_new_page_location
 
   routes: [
     {
@@ -235,6 +234,18 @@ const router: Router.Router<Route> = {
         return {
           tag: 'orgEdit',
           value: {
+            orgId: params.id || '',
+            tab: OrganizationEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: '/organizations/:id/sprint-with-us-terms-and-conditions',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'orgSWUTerms',
+          value: {
             orgId: params.id || ''
           }
         };
@@ -340,8 +351,6 @@ const router: Router.Router<Route> = {
     }
   ],
 
-  // Note(Jesse): @add_new_page_location
-
   routeToUrl(route) {
     switch (route.tag) {
       case 'landing':
@@ -365,43 +374,39 @@ const router: Router.Router<Route> = {
       case 'orgList':
         return '/organizations';
       case 'orgEdit':
-        return `/organizations/${route.value.orgId}/edit`;
+        return `/organizations/${route.value.orgId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+      case 'orgSWUTerms':
+        return `/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`;
       case 'orgCreate':
         return '/organizations/create';
-
       case 'proposalSWUCreate':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;
       case 'proposalSWUEdit':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
       case 'proposalSWUView':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
-
       case 'opportunitySWUCreate':
         return '/opportunities/sprint-with-us/create';
       case 'opportunitySWUEdit':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/edit`;
       case 'opportunitySWUView':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}`;
-
       case 'opportunityCWUCreate':
         return '/opportunities/code-with-us/create';
       case 'opportunityCWUEdit':
         return `/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'opportunityCWUView':
         return `/opportunities/code-with-us/${route.value.opportunityId}`;
-
       case 'proposalCWUCreate':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
       case 'proposalCWUEdit':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
-
       case 'proposalCWUView':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'proposalCWUExportOne':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`;
       case 'proposalCWUExportAll':
         return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`;
-
       case 'proposalList':
         return '/proposals';
       case 'notice':
