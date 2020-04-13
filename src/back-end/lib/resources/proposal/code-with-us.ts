@@ -60,7 +60,7 @@ type Resource = crud.Resource<
   db.Connection
 >;
 
-async function parseProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
+async function parseProponentRequestBody(raw: any, connection: db.Connection, session: Session): Promise<CreateProponentRequestBody> {
   const value = get(raw, 'value');
   switch (getString(raw, 'tag')) {
     case 'individual':
@@ -77,7 +77,7 @@ async function parseProponentRequestBody(raw: any, connection: db.Connection): P
       });
     case 'organization':
       // Validate the org id provided.  If not valid, default to blank individual proponent
-      const validatedOrganizationProponent = await validateOrganizationId(connection, value);
+      const validatedOrganizationProponent = await validateOrganizationId(connection, value, session);
       if (isInvalid(validatedOrganizationProponent)) {
         return createBlankIndividualProponent();
       }
@@ -137,7 +137,7 @@ const resource: Resource = {
           opportunity: getString(body, 'opportunity'),
           proposalText: getString(body, 'proposalText'),
           additionalComments: getString(body, 'additionalComments'),
-          proponent: await parseProponentRequestBody(get(body, 'proponent'), connection),
+          proponent: await parseProponentRequestBody(get(body, 'proponent'), connection, request.session),
           attachments: getStringArray(body, 'attachments'),
           status: getString(body, 'status')
         };
@@ -203,7 +203,7 @@ const resource: Resource = {
 
         const validatedProposalText = proposalValidation.validateProposalText(proposalText);
         const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
-        const validatedProponent = await validateProponent(connection, proponent);
+        const validatedProponent = await validateProponent(connection, request.session, proponent);
 
         if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
           return valid({
@@ -253,7 +253,7 @@ const resource: Resource = {
             return adt('edit', {
               proposalText: getString(value, 'proposalText'),
               additionalComments: getString(value, 'additionalComments'),
-              proponent: await parseProponentRequestBody(get(value, 'proponent'), connection),
+              proponent: await parseProponentRequestBody(get(value, 'proponent'), connection, request.session),
               attachments: getStringArray(value, 'attachments')
             });
           case 'submit':
@@ -314,7 +314,7 @@ const resource: Resource = {
 
             const validatedProposalText = proposalValidation.validateProposalText(proposalText);
             const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
-            const validatedProponent = await validateProponent(connection, proponent);
+            const validatedProponent = await validateProponent(connection, request.session, proponent);
 
             if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
               return valid({

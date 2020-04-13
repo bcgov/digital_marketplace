@@ -4,19 +4,14 @@ import router from 'front-end/lib/app/router';
 import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { Immutable, immutable, mergePageAlerts, PageAlerts, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
-import { Organization } from 'shared/lib/resources/organization';
-import { isVendor, User, UserType } from 'shared/lib/resources/user';
+import { isVendor, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
-interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
-  organization: Organization;
-  viewerUser: User;
-}
+type ValidState<K extends Tab.TabId> = Tab.ParentState<K>;
 
 export type State_<K extends Tab.TabId> = Validation<Immutable<ValidState<K>>, null>;
 
@@ -36,31 +31,18 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
     userType: [UserType.Vendor, UserType.Admin],
 
     async success({ routePath, dispatch, routeParams, shared }) {
-      const organizationResult = await api.organizations.readOne(routeParams.orgId);
-      if (!api.isValid(organizationResult)) {
+      const params = await Tab.initParams(routeParams.orgId, shared.sessionUser);
+      if (!params) {
         dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
         return invalid(null);
       }
-      const organization = organizationResult.value;
-      const affiliationsResult = await api.affiliations.readManyForOrganization(organization.id);
-      if (!api.isValid(affiliationsResult)) {
-        dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
-        return invalid(null);
-      }
-      const viewerUser = shared.sessionUser;
       // Set up the visible tab state.
       const tabId = routeParams.tab || 'organization';
-      const tabState = immutable(await Tab.idToDefinition(tabId, organization).component.init({
-        organization,
-        affiliations: affiliationsResult.value,
-        viewerUser
-      }));
+      const tabState = immutable(await Tab.idToDefinition(tabId, params.organization).component.init(params));
       // Everything checks out, return valid state.
       return valid(immutable({
-        organization,
-        viewerUser,
         tab: [tabId, tabState],
-        sidebar: await Tab.makeSidebarState(organization, tabId)
+        sidebar: await Tab.makeSidebarState(params.organization, tabId)
       })) as State_<K>;
     },
     async fail({ routePath, dispatch, shared, routeParams }) {
@@ -77,7 +59,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
 }
 
 function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
-  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = state => id => Tab.idToDefinition(id, state.organization);
+  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = state => id => Tab.idToDefinition(id, state.tab[1].organization);
   return {
     init: makeInit(),
     update: updateValid(TabbedPage.makeParentUpdate({
@@ -89,11 +71,11 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getAlerts: getAlertsValid(state => {
       return mergePageAlerts(
         {
-          info: !state.organization.swuQualified && isVendor(state.viewerUser) && state.tab[0] !== 'qualification'
+          info: !state.tab[1].swuQualified && isVendor(state.tab[1].viewerUser) && state.tab[0] !== 'qualification'
           ? [{
               text: (
                 <div>
-                  This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
+                  This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.tab[1].organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
                 </div>
               )
             }]
@@ -109,7 +91,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
       getTitleSuffix: state => {
         return state.tab[0] === 'organization'
           ? 'Edit Organization'
-          : `${state.organization.legalName} — Edit Organization`;
+          : `${state.tab[1].organization.legalName} — Edit Organization`;
       }
     }), makePageMetadata('Edit Organization'))
   };

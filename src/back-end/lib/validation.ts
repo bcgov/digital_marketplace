@@ -57,14 +57,14 @@ export async function validateAttachments(connection: db.Connection, raw: string
   return await validateArrayAsync(raw, v => validateFileRecord(connection, v));
 }
 
-export async function validateOrganizationId(connection: db.Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
+export async function validateOrganizationId(connection: db.Connection, orgId: Id, session: Session, allowInactive = false): Promise<Validation<Organization>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(orgId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneOrganization(connection, orgId, allowInactive);
+    const dbResult = await db.readOneOrganization(connection, orgId, allowInactive, session);
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
@@ -166,7 +166,7 @@ export async function validateSWUProposalId(connection: db.Connection, proposalI
   }
 }
 
-export async function validateProponent(connection: db.Connection, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
+export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
     case 'individual':
       const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
@@ -175,7 +175,7 @@ export async function validateProponent(connection: db.Connection, raw: any): Pr
       }
       return invalid(adt('individual', validatedIndividualProponentRequestBody.value));
     case 'organization':
-      const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), false);
+      const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), session, false);
       if (isValid(validatedOrganization)) {
         return valid(adt('organization', validatedOrganization.value.id));
       }

@@ -3,7 +3,7 @@ import { isSWUProposalAuthor } from 'back-end/lib/db/proposal/sprint-with-us';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CreateSWUOpportunityStatus, doesSWUOpportunityStatusAllowGovToViewProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { Organization } from 'shared/lib/resources/organization';
+import { doesOrganizationMeetSWUQualification, Organization } from 'shared/lib/resources/organization';
 import { CWUProposal, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment } from 'shared/lib/resources/proposal/code-with-us';
 import { isSWUProposalStatusVisibleToGovernment, SWUProposal, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, CURRENT_SESSION_ID, Session } from 'shared/lib/resources/session';
@@ -271,7 +271,7 @@ export async function readSWUProposalScore(connection: Connection, session: Sess
 }
 
 export async function createSWUProposal(connection: Connection, session: Session, organization: Organization): Promise<boolean> {
-  return isVendor(session) && organization.swuQualified && !!session.user && await isUserOwnerOfOrg(connection, session.user, organization.id);
+  return isVendor(session) && !!session.user && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
 }
 
 export async function editSWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {

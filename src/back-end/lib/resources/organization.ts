@@ -64,7 +64,7 @@ const resource: Resource = {
       }
       // Only admins or the org owner can read the full org details
       if (await permissions.readOneOrganization(connection, request.session, validatedId.value)) {
-        const dbResult = await db.readOneOrganization(connection, validatedId.value);
+        const dbResult = await db.readOneOrganization(connection, validatedId.value, false, request.session);
         if (isInvalid(dbResult)) {
           return respond(503, [db.ERROR_MESSAGE]);
         }
@@ -184,7 +184,7 @@ const resource: Resource = {
           if (!request.session.user) {
             return basicResponse(401, request.session, makeJsonResponseBody({ permissions: [permissions.ERROR_MESSAGE]}));
           }
-          const dbResult = await db.createOrganization(connection, request.session.user.id, request.body);
+          const dbResult = await db.createOrganization(connection, request.session.user.id, request.body, request.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
@@ -233,7 +233,7 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedOrganization = await validateOrganizationId(connection, request.params.id);
+        const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         switch (request.body.tag) {
           case 'updateProfile':
             const {
@@ -333,10 +333,10 @@ const resource: Resource = {
           let dbResult: Validation<Organization, null>;
           switch (request.body.tag) {
             case 'updateProfile':
-              dbResult = await db.updateOrganization(connection, request.body.value);
+              dbResult = await db.updateOrganization(connection, request.body.value, request.session);
               break;
             case 'acceptSWUTerms':
-              dbResult = await db.updateOrganization(connection, { acceptedSWUTerms: new Date(), id: request.params.id });
+              dbResult = await db.updateOrganization(connection, { acceptedSWUTerms: new Date(), id: request.params.id }, request.session);
           }
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
@@ -358,7 +358,7 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedOrganization = await validateOrganizationId(connection, request.params.id);
+        const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         if (isValid(validatedOrganization)) {
           return validatedOrganization;
         } else {
@@ -373,7 +373,8 @@ const resource: Resource = {
             active: false,
             deactivatedOn: new Date(),
             deactivatedBy: request.session.user && request.session.user.id
-          });
+          },
+          request.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
