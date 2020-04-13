@@ -2,16 +2,17 @@ import { generateUuid } from 'back-end/lib';
 import { Connection, tryDb } from 'back-end/lib/db';
 import { createAffiliation, readManyAffiliationsForOrganization } from 'back-end/lib/db/affiliation';
 import { readOneFileById } from 'back-end/lib/db/file';
+import { readOneUserSlim } from 'back-end/lib/db/user';
+import { isAdmin } from 'back-end/lib/permissions';
 import { spread, union } from 'lodash';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { valid } from 'shared/lib/http';
 import { MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
-import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
+import { Organization, OrganizationSlim, OrganizationSWUQualification } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
-import { UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
-import { isInvalid } from 'shared/lib/validation';
+import { getValidValue, isInvalid } from 'shared/lib/validation';
 
 type CreateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & { logoImageFile?: Id };
 
@@ -19,19 +20,18 @@ type UpdateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & {
 
 interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
   logoImageFile: Id;
-  ownerId: Id;
-  ownerName: string;
+  owner: Id;
 }
 
 interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | 'owner'> {
   logoImageFile?: Id;
-  ownerId?: Id;
-  ownerName?: string;
-  acceptedSWUTerms?: boolean;
+  owner?: Id;
+  swuQualification?: OrganizationSWUQualification;
+  numTeamMembers?: number;
 }
 
 async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
-  const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  const { logoImageFile, owner: ownerId, ...restOfRawOrg } = raw;
   let fetchedLogoFile: FileRecord | undefined;
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
@@ -40,18 +40,16 @@ async function rawOrganizationToOrganization(connection: Connection, raw: RawOrg
     }
     fetchedLogoFile = dbResult.value;
   }
+  const owner = ownerId ? getValidValue(await readOneUserSlim(connection, ownerId), null) : null;
   return {
     ...restOfRawOrg,
     logoImageFile: fetchedLogoFile,
-    owner: {
-      id: ownerId,
-      name: ownerName
-    }
+    owner: owner || undefined
   };
 }
 
 async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
-  const { logoImageFile, ownerId, ownerName, ...restOfRawOrg } = raw;
+  const { id, legalName, logoImageFile, owner: ownerId, swuQualification } = raw;
   let fetchedLogoImageFile: FileRecord | undefined;
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
@@ -60,16 +58,17 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
     }
     fetchedLogoImageFile = dbResult.value;
   }
+  const owner = ownerId ? getValidValue(await readOneUserSlim(connection, ownerId), null) : null;
   return {
-    ...restOfRawOrg,
+    id,
+    legalName,
     logoImageFile: fetchedLogoImageFile,
-    owner: ownerId && ownerName
-      ? { id: ownerId, name: ownerName }
-      : undefined
+    owner: owner || undefined,
+    swuQualification
   };
 }
 
-async function calculateSWUQualifiedStatus(connection: Connection, organization: RawOrganization | RawOrganizationSlim): Promise<boolean> {
+async function doesOrganizationMeetAllCapabilities(connection: Connection, organization: RawOrganization | RawOrganizationSlim): Promise<boolean> {
   const dbResult = await readManyAffiliationsForOrganization(connection, organization.id);
   if (isInvalid(dbResult) || !dbResult.value) {
     return false;
@@ -78,46 +77,90 @@ async function calculateSWUQualifiedStatus(connection: Connection, organization:
   // Need at least two ACTIVE members, all capabilities between members, and accepted terms
   const activeMembers = dbResult.value.filter(a => a.membershipStatus === MembershipStatus.Active);
   const unionedCapabilities = spread<string[]>(union)(activeMembers.map(m => m.user.capabilities));
-  if (activeMembers.length >= 2 && CAPABILITIES.every(v => unionedCapabilities.includes(v)) && organization.acceptedSWUTerms) {
+  if (CAPABILITIES.every(v => unionedCapabilities.includes(v))) {
     return true;
   }
   return false;
 }
 
-export const readOneOrganizationSlim = tryDb<[Id, boolean?], OrganizationSlim | null>(async (connection, orgId, allowInactive = false) => {
-  const dbResult = await readOneOrganization(connection, orgId, allowInactive);
-  if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error('unable to read organization');
+/**
+ * Helper function that returns all organizations with owner id, and an active member count.
+ */
+function generateOrganizationQuery(connection: Connection) {
+  return connection<RawOrganization>('organizations')
+    .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
+    .join('users', 'users.id', '=', 'affiliations.user')
+    .where({ 'affiliations.membershipType': MembershipType.Owner })
+    .select(
+      'organizations.*',
+      'users.id as owner',
+      (connection
+        .countDistinct('user')
+        .from('affiliations')
+        .where({ organization: connection.ref('organizations.id') })
+        .andWhereNot({ membershipStatus: MembershipStatus.Inactive})
+      ).as('numTeamMembers')
+    );
+}
+
+/**
+ * Return a single slimmed-down organization.
+ * Only return ownership/RFQ data if admin/owner.
+ */
+export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], OrganizationSlim | null>(async (connection, orgId, allowInactive = false, session) => {
+  let query = generateOrganizationQuery(connection).where({ 'organizations.id': orgId });
+
+  if (!allowInactive) {
+    query = query.andWhere({ 'organizations.active': true });
   }
 
-  const { id, legalName, logoImageFile, owner, swuQualified } = dbResult.value;
-  return valid({
-    id,
-    legalName,
-    logoImageFile,
-    owner,
-    swuQualified
-  });
+  const result = await query.first<RawOrganization>();
+  const { id, legalName, logoImageFile, owner, acceptedSWUTerms } = result;
+  // If no session, or user is not an admin or owner, do not include ownership/RFQ data.
+  if (!session || (!isAdmin(session) && owner !== session.user?.id)) {
+    return valid(await rawOrganizationSlimToOrganizationSlim(connection, {
+      id,
+      legalName,
+      logoImageFile
+    }));
+  } else {
+    return valid(await rawOrganizationSlimToOrganizationSlim(connection, {
+      id,
+      legalName,
+      logoImageFile,
+      owner,
+      swuQualification: {
+        possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, result),
+        acceptedSWUTerms
+      }
+    }));
+  }
 });
 
-export const readOneOrganization = tryDb<[Id, boolean?], Organization | null>(async (connection, id, allowInactive = false) => {
-  const where = {
-    'organizations.id': id,
-    'affiliations.membershipType': MembershipType.Owner
-  };
-  if (!allowInactive) {
-    (where as any)['organizations.active'] = true;
-  }
-  const result = await connection<RawOrganization>('organizations')
-    .select('organizations.*', 'users.id as ownerId', 'users.name as ownerName')
-    .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
-    .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
-    .where(where)
-    .first() as RawOrganization;
+/**
+ * Return a single organization.
+ * Only return ownership/RFQ data if admin/owner.
+ */
+export const readOneOrganization = tryDb<[Id, boolean?, Session?], Organization | null>(async (connection, id, allowInactive = false, session) => {
+  let query = generateOrganizationQuery(connection).where({ 'organizations.id': id });
 
-  // Calculate swuQualified status
+  if (!allowInactive) {
+    query = query.andWhere({ 'organizations.active': true });
+  }
+
+  const result = await query.first<RawOrganization>();
   if (result) {
-    result.swuQualified = await calculateSWUQualifiedStatus(connection, result);
+    if (!session || (!isAdmin(session) && result.owner !== session.user?.id)) {
+      delete result.owner;
+      delete result.numTeamMembers;
+      delete result.acceptedSWUTerms;
+    } else {
+      // Calculate SWU qualification status and attach
+      result.swuQualification = {
+        possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, result),
+        acceptedSWUTerms: result.acceptedSWUTerms
+      };
+    }
   }
   return valid(result ? await rawOrganizationToOrganization(connection, result) : null);
 });
@@ -129,44 +172,43 @@ export const readOneOrganization = tryDb<[Id, boolean?], Organization | null>(as
  *
  * - An admin: Include owner information for all organizations.
  * - A vendor: Include owner information only for owned organizations.
+ * - Owner information includes owner id/name, swuQualification status and numTeamMembers
  */
-export const readManyOrganizations = tryDb<[Session], OrganizationSlim[]>(async (connection, session) => {
-  const query = connection<RawOrganizationSlim>('organizations')
-    .select('organizations.id', 'legalName', 'logoImageFile')
-    .where({ active: true });
-  // If a user is attached to this session, we need to add owner info to some or all of the orgs
-  if (session?.user?.type === UserType.Admin || session?.user?.type === UserType.Vendor) {
-    query
-      .select<RawOrganizationSlim>('users.id as ownerId', 'users.name as ownerName', 'organizations.acceptedSWUTerms')
-      .leftOuterJoin('affiliations', 'organizations.id', '=', 'affiliations.organization')
-      .leftOuterJoin('users', 'affiliations.user', '=', 'users.id')
-      .andWhere({ 'affiliations.membershipType': MembershipType.Owner });
-  }
-  const results = await query as RawOrganizationSlim[];
+export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim[]>(async (connection, session, allowInactive = false) => {
+  let query = generateOrganizationQuery(connection);
 
-  // Calculate swuQualified status if Admin/Owner
-  if (session?.user?.type === UserType.Admin || session?.user?.type === UserType.Vendor) {
-    for (const result of results) {
-      result.swuQualified = await calculateSWUQualifiedStatus(connection, result);
-    }
+  if (!allowInactive) {
+    query = query.andWhere({ 'organizations.active': true });
   }
 
-  // Only include ownership/qualified information for vendors' owned organizations.
+  // Execute query, and the destructure results to only choose 'slim' fields that user has access to
+  // Admin/owners get additional fields related to ownership/rfq status
+  const results = await query as RawOrganization[] || [];
   return valid(await Promise.all(results.map(async raw => {
-    if (session?.user?.type === UserType.Vendor && raw.ownerId !== session?.user?.id) {
-      raw = {
-        ...raw,
-        ownerId: undefined,
-        ownerName: undefined,
-        acceptedSWUTerms: undefined,
-        swuQualified: undefined
-      };
+    const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms } = raw;
+    if (!isAdmin(session) && raw.owner !== session.user?.id) {
+      return await rawOrganizationSlimToOrganizationSlim(connection, {
+        id,
+        legalName,
+        logoImageFile
+      });
+    } else {
+      return await rawOrganizationSlimToOrganizationSlim(connection, {
+        id,
+        legalName,
+        logoImageFile,
+        owner,
+        numTeamMembers,
+        swuQualification: {
+          possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, raw),
+          acceptedSWUTerms
+        }
+      });
     }
-    return await rawOrganizationSlimToOrganizationSlim(connection, raw);
   })));
 });
 
-export const createOrganization = tryDb<[Id, CreateOrganizationParams], Organization>(async (connection, user, organization) => {
+export const createOrganization = tryDb<[Id, CreateOrganizationParams, Session], Organization>(async (connection, user, organization, session) => {
   const now = new Date();
   const result: RawOrganization = await connection.transaction(async trx => {
     // Create organization
@@ -191,14 +233,14 @@ export const createOrganization = tryDb<[Id, CreateOrganizationParams], Organiza
     });
     return result;
   });
-  const dbResult = await readOneOrganization(connection, result.id);
+  const dbResult = await readOneOrganization(connection, result.id, false, session);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error('unable to create organization');
   }
   return valid(dbResult.value);
 });
 
-export const updateOrganization = tryDb<[UpdateOrganizationParams], Organization>(async (connection, organization) => {
+export const updateOrganization = tryDb<[UpdateOrganizationParams, Session], Organization>(async (connection, organization, session) => {
   const now = new Date();
   const [result] = await connection<UpdateOrganizationParams>('organizations')
     .where({
@@ -212,7 +254,7 @@ export const updateOrganization = tryDb<[UpdateOrganizationParams], Organization
   if (!result || !result.id) {
     throw new Error('unable to update organization');
   }
-  const dbResult = await readOneOrganization(connection, result.id, true);
+  const dbResult = await readOneOrganization(connection, result.id, true, session);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error('unable to update organization');
   }

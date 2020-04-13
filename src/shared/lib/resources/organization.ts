@@ -21,13 +21,12 @@ export interface Organization {
   contactPhone: string;
   websiteUrl: string;
   active: boolean;
-  owner: UserSlim;
+  owner?: UserSlim; // Admin/owner only
   deactivatedOn?: Date;
   deactivatedBy?: Id;
   acceptedSWUTerms: Date | null;
-  swuQualified: boolean;
-  //TODO implement for owners/admins
-  numTeamMembers?: number;
+  numTeamMembers?: number; // Admin/owner only
+  swuQualification?: OrganizationSWUQualification; // Admin/owner only
 }
 
 export interface OrganizationSlim {
@@ -35,12 +34,16 @@ export interface OrganizationSlim {
   legalName: string;
   logoImageFile?: FileRecord;
   owner?: UserSlim;       // Admin/owner only
-  swuQualified?: boolean; // Admin/owner only
-  //TODO implement for owners/admins
-  numTeamMembers?: number;
+  numTeamMembers?: number; // Admin/owner only
+  swuQualification?: OrganizationSWUQualification; // Admin/owner only
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualified' | 'numTeamMembers'> {
+export interface OrganizationSWUQualification {
+  possessAllCapabilities: boolean;
+  acceptedSWUTerms: Date | null;
+}
+
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualification' | 'numTeamMembers'> {
   logoImageFile?: Id;
 }
 
@@ -64,3 +67,7 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 }
 
 export type DeleteValidationErrors = BodyWithErrors;
+
+export function doesOrganizationMeetSWUQualification(organization: Organization | OrganizationSlim): boolean {
+  return (organization.numTeamMembers || 0) >= 2 && !!organization.swuQualification?.acceptedSWUTerms && organization.swuQualification.possessAllCapabilities;
+}

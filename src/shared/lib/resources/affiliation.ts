@@ -1,4 +1,4 @@
-import { Organization } from 'shared/lib/resources/organization';
+import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 import { BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -28,8 +28,7 @@ export interface AffiliationSlim {
   id: Id;
   membershipType: MembershipType;
   membershipStatus: MembershipStatus;
-  //TODO change organization property to OrganizationSlim
-  organization: Pick<Organization, 'id' | 'legalName' | 'swuQualified' | 'numTeamMembers'>;
+  organization: OrganizationSlim;
 }
 
 export interface AffiliationMember {

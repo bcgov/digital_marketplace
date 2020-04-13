@@ -1,6 +1,6 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, tryDb } from 'back-end/lib/db';
-import { readOneOrganization } from 'back-end/lib/db/organization';
+import { readOneOrganization, readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { readOneUser } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
 import { Affiliation, AffiliationMember, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
@@ -22,7 +22,7 @@ interface RawAffiliation {
 
 async function rawAffiliationToAffiliation(connection: Connection, params: RawAffiliation): Promise<Affiliation> {
   const { user: userId, organization: orgId } = params;
-  const organization = getValidValue(await readOneOrganization(connection, orgId), null);
+  const organization = getValidValue(await readOneOrganization(connection, orgId, false), null);
   const user = getValidValue(await readOneUser(connection, userId), null);
   if (!user || !organization) {
     throw new Error('unable to process affiliation'); // Will be caught by calling function
@@ -36,7 +36,7 @@ async function rawAffiliationToAffiliation(connection: Connection, params: RawAf
 
 async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliation): Promise<AffiliationSlim> {
   const { id, organization: orgId, membershipType, membershipStatus } = params;
-  const organization = getValidValue(await readOneOrganization(connection, orgId), null);
+  const organization = getValidValue(await readOneOrganizationSlim(connection, orgId, false), null);
   if (!organization) {
     throw new Error('unable to process affiliation'); // Will be caught by calling function
   }
@@ -44,11 +44,7 @@ async function rawAffiliationToAffiliationSlim(connection: Connection, params: R
     id,
     membershipType,
     membershipStatus,
-    organization: {
-      id: organization.id,
-      legalName: organization.legalName,
-      swuQualified: organization.swuQualified //TODO only populate for owners/admins
-    }
+    organization
   };
 }
 
