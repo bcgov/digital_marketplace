@@ -115,7 +115,7 @@ async function rawSWUOpportunityToSWUOpportunity(connection: Connection, raw: Ra
     return result;
   }));
   const addenda = getValidValue(await readManyAddendum(connection, raw.id), undefined);
-  const teamQuestions = getValidValue(await readManyTeamQuestions(connection, raw.id), undefined);
+  const teamQuestions = getValidValue(await readManyTeamQuestions(connection, raw.versionId), undefined);
   const inceptionPhase = inceptionPhaseId ? getValidValue(await readOneSWUOpportunityPhase(connection, inceptionPhaseId), undefined) : undefined;
   const prototypePhase = prototypePhaseId ? getValidValue(await readOneSWUOpportunityPhase(connection, prototypePhaseId), undefined) : undefined;
   const implementationPhase = getValidValue(await readOneSWUOpportunityPhase(connection, implementationPhaseId), undefined);
