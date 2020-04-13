@@ -8,13 +8,14 @@ import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
-import { Organization } from 'shared/lib/resources/organization';
+import { doesOrganizationMeetSWUQualification, Organization } from 'shared/lib/resources/organization';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   organization: Organization;
+  swuQualified: boolean;
   viewerUser: User;
 }
 
@@ -42,6 +43,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
         return invalid(null);
       }
       const organization = organizationResult.value;
+      const swuQualified = doesOrganizationMeetSWUQualification(organization);
       const affiliationsResult = await api.affiliations.readManyForOrganization(organization.id);
       if (!api.isValid(affiliationsResult)) {
         dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
@@ -52,12 +54,14 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       const tabId = routeParams.tab || 'organization';
       const tabState = immutable(await Tab.idToDefinition(tabId, organization).component.init({
         organization,
+        swuQualified,
         affiliations: affiliationsResult.value,
         viewerUser
       }));
       // Everything checks out, return valid state.
       return valid(immutable({
         organization,
+        swuQualified,
         viewerUser,
         tab: [tabId, tabState],
         sidebar: await Tab.makeSidebarState(organization, tabId)
@@ -89,7 +93,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getAlerts: getAlertsValid(state => {
       return mergePageAlerts(
         {
-          info: !state.organization.swuQualified && isVendor(state.viewerUser) && state.tab[0] !== 'qualification'
+          info: !state.swuQualified && isVendor(state.viewerUser) && state.tab[0] !== 'qualification'
           ? [{
               text: (
                 <div>

@@ -23,7 +23,7 @@ import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { OrganizationSlim } from 'shared/lib/resources/organization';
+import { doesOrganizationMeetSWUQualification, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -97,7 +97,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
   const prototypeCost = proposal?.prototypePhase?.proposedCost || 0;
   const implementationCost = proposal?.implementationPhase?.proposedCost || 0;
   const organizationOptions = organizations
-    .filter(({ swuQualified }) => swuQualified)
+    .filter(o => doesOrganizationMeetSWUQualification(o))
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
   const selectedOrganizationOption = proposal?.organization
     ? { label: proposal.organization.legalName, value: proposal.organization.id }

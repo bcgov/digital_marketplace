@@ -58,7 +58,7 @@ const startArchiveLoading = makeStartLoading<State>('archiveLoading');
 const stopArchiveLoading = makeStopLoading<State>('archiveLoading');
 
 function isOwner(user: User, org: OrgResource.Organization): boolean {
-  return user.id === org.owner.id;
+  return !!org.owner && user.id === org.owner.id;
 }
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -167,7 +167,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <div>
       <EditTabHeader
         legalName={state.organization.legalName}
-        swuQualified={state.organization.swuQualified} />
+        swuQualified={state.swuQualified} />
       <Row className='mt-5'>
         <Col xs='12'>
           <OrgForm.view

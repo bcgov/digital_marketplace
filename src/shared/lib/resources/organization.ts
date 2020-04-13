@@ -3,7 +3,16 @@ import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
 
-export interface Organization {
+// Properties to include on Organization and OrganizationSlim
+// for admins/owners only.
+export interface OrganizationAdmin {
+  owner?: UserSlim;
+  acceptedSWUTerms?: Date | null;
+  possessAllCapabilities?: boolean;
+  numTeamMembers?: boolean;
+}
+
+export interface Organization extends OrganizationAdmin {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
@@ -21,29 +30,17 @@ export interface Organization {
   contactPhone: string;
   websiteUrl: string;
   active: boolean;
-  owner?: UserSlim; // Admin/owner only
   deactivatedOn?: Date;
   deactivatedBy?: Id;
-  acceptedSWUTerms: Date | null;
-  numTeamMembers?: number; // Admin/owner only
-  swuQualification?: OrganizationSWUQualification; // Admin/owner only
 }
 
-export interface OrganizationSlim {
+export interface OrganizationSlim extends OrganizationAdmin {
   id: Id;
   legalName: string;
   logoImageFile?: FileRecord;
-  owner?: UserSlim;       // Admin/owner only
-  numTeamMembers?: number; // Admin/owner only
-  swuQualification?: OrganizationSWUQualification; // Admin/owner only
 }
 
-export interface OrganizationSWUQualification {
-  possessAllCapabilities: boolean;
-  acceptedSWUTerms: Date | null;
-}
-
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'swuQualification' | 'numTeamMembers'> {
+export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'possessAllCapabilities' | 'numTeamMembers'> {
   logoImageFile?: Id;
 }
 
@@ -68,6 +65,10 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 
 export type DeleteValidationErrors = BodyWithErrors;
 
+export function doesOrganizationMeetSWUQualificationNumTeamMembers(organization: Organization | OrganizationSlim): boolean {
+  return (organization.numTeamMembers || 0) >= 2;
+}
+
 export function doesOrganizationMeetSWUQualification(organization: Organization | OrganizationSlim): boolean {
-  return (organization.numTeamMembers || 0) >= 2 && !!organization.swuQualification?.acceptedSWUTerms && organization.swuQualification.possessAllCapabilities;
+  return doesOrganizationMeetSWUQualificationNumTeamMembers(organization) && !!organization.acceptedSWUTerms && !!organization.possessAllCapabilities;
 }

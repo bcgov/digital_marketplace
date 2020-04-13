@@ -9,25 +9,25 @@ import CAPABILITIES from 'shared/lib/data/capabilities';
 import { valid } from 'shared/lib/http';
 import { MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
-import { Organization, OrganizationSlim, OrganizationSWUQualification } from 'shared/lib/resources/organization';
+import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
 import { getValidValue, isInvalid } from 'shared/lib/validation';
 
 type CreateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & { logoImageFile?: Id };
 
-type UpdateOrganizationParams = Partial<Omit<Organization, 'logoImageFile'>> & { logoImageFile?: Id };
+interface UpdateOrganizationParams extends Partial<Omit<Organization, 'logoImageFile' | 'owner' | 'possessAllCapabilities' | 'numTeamMembers'>> {
+  logoImageFile?: Id;
+}
 
 interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
-  logoImageFile: Id;
+  logoImageFile?: Id;
   owner: Id;
 }
 
 interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | 'owner'> {
   logoImageFile?: Id;
   owner?: Id;
-  swuQualification?: OrganizationSWUQualification;
-  numTeamMembers?: number;
 }
 
 async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
@@ -49,7 +49,7 @@ async function rawOrganizationToOrganization(connection: Connection, raw: RawOrg
 }
 
 async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
-  const { id, legalName, logoImageFile, owner: ownerId, swuQualification } = raw;
+  const { id, legalName, logoImageFile, owner: ownerId, acceptedSWUTerms, possessAllCapabilities, numTeamMembers } = raw;
   let fetchedLogoImageFile: FileRecord | undefined;
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
@@ -64,7 +64,9 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
     legalName,
     logoImageFile: fetchedLogoImageFile,
     owner: owner || undefined,
-    swuQualification
+    acceptedSWUTerms,
+    possessAllCapabilities,
+    numTeamMembers
   };
 }
 
@@ -115,7 +117,7 @@ export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], Organizat
   }
 
   const result = await query.first<RawOrganization>();
-  const { id, legalName, logoImageFile, owner, acceptedSWUTerms } = result;
+  const { id, legalName, logoImageFile, owner, acceptedSWUTerms, numTeamMembers } = result;
   // If no session, or user is not an admin or owner, do not include ownership/RFQ data.
   if (!session || (!isAdmin(session) && owner !== session.user?.id)) {
     return valid(await rawOrganizationSlimToOrganizationSlim(connection, {
@@ -129,10 +131,9 @@ export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], Organizat
       legalName,
       logoImageFile,
       owner,
-      swuQualification: {
-        possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, result),
-        acceptedSWUTerms
-      }
+      possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, result),
+      acceptedSWUTerms,
+      numTeamMembers
     }));
   }
 });
@@ -155,11 +156,7 @@ export const readOneOrganization = tryDb<[Id, boolean?, Session?], Organization 
       delete result.numTeamMembers;
       delete result.acceptedSWUTerms;
     } else {
-      // Calculate SWU qualification status and attach
-      result.swuQualification = {
-        possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, result),
-        acceptedSWUTerms: result.acceptedSWUTerms
-      };
+      result.possessAllCapabilities = await doesOrganizationMeetAllCapabilities(connection, result);
     }
   }
   return valid(result ? await rawOrganizationToOrganization(connection, result) : null);
@@ -199,10 +196,8 @@ export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim
         logoImageFile,
         owner,
         numTeamMembers,
-        swuQualification: {
-          possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, raw),
-          acceptedSWUTerms
-        }
+        possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, raw),
+        acceptedSWUTerms
       });
     }
   })));

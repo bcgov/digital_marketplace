@@ -1,5 +1,5 @@
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeReadMany, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
@@ -465,34 +465,74 @@ export const opportunities = {
 
 // Organizations
 
-interface OrganizationSimpleResourceTypesParams {
-  record: OrgResource.Organization;
-  create: {
-    request: OrgResource.CreateRequestBody;
-    invalidResponse: OrgResource.CreateValidationErrors;
-  };
-  update: {
-    request: OrgResource.UpdateRequestBody;
-    invalidResponse: OrgResource.UpdateValidationErrors;
+interface RawOrganization extends Omit<OrgResource.Organization, 'acceptedSWUTerms'> {
+  acceptedSWUTerms?: Date | null;
+}
+
+function rawOrganizationToOrganization(raw: RawOrganization): OrgResource.Organization {
+  return {
+    ...raw,
+    acceptedSWUTerms: raw.acceptedSWUTerms && new Date(raw.acceptedSWUTerms)
   };
 }
 
-interface OrganizationResourceTypes extends Omit<SimpleResourceTypes<OrganizationSimpleResourceTypesParams>, 'readMany'> {
+interface RawOrganizationSlim extends Omit<OrgResource.OrganizationSlim, 'acceptedSWUTerms'> {
+  acceptedSWUTerms?: Date | null;
+}
+
+function rawOrganizationSlimToOrganizationSlim(raw: RawOrganizationSlim): OrgResource.OrganizationSlim {
+  return {
+    ...raw,
+    acceptedSWUTerms: raw.acceptedSWUTerms && new Date(raw.acceptedSWUTerms)
+  };
+}
+
+interface OrganizationResourceTypes {
+  create: {
+    request: OrgResource.CreateRequestBody;
+    rawResponse: RawOrganization;
+    validResponse: OrgResource.Organization;
+    invalidResponse: OrgResource.CreateValidationErrors;
+  };
+  readOne: {
+    rawResponse: RawOrganization;
+    validResponse: OrgResource.Organization;
+    invalidResponse: OrgResource.DeleteValidationErrors;
+  };
   readMany: {
     rawResponse: OrgResource.OrganizationSlim;
     validResponse: OrgResource.OrganizationSlim;
     invalidResponse: string[];
   };
+  update: {
+    request: OrgResource.UpdateRequestBody;
+    rawResponse: RawOrganization;
+    validResponse: OrgResource.Organization;
+    invalidResponse: OrgResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawOrganization;
+    validResponse: OrgResource.Organization;
+    invalidResponse: OrgResource.DeleteValidationErrors;
+  };
 }
 
 const ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace('organizations');
 
-export const organizations: CrudApi<OrganizationResourceTypes> = {
-  ...makeSimpleCrudApi<OrganizationSimpleResourceTypesParams>(ORGANIZATIONS_ROUTE_NAMESPACE),
-  readMany: makeReadMany<OrganizationResourceTypes['readMany']>({
-    routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE
-  })
+const organizationActionParams = {
+  transformValid: rawOrganizationToOrganization
 };
+
+export const organizations: CrudApi<OrganizationResourceTypes> = makeCrudApi<OrganizationResourceTypes>({
+  routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE,
+  create: organizationActionParams,
+  readOne: organizationActionParams,
+  update: organizationActionParams,
+  delete: organizationActionParams,
+  readMany: {
+    transformValid: rawOrganizationSlimToOrganizationSlim
+  }
+});
 
 // Affiliations
 
