@@ -5,6 +5,8 @@ import { compareDates, formatAmount, formatDate, formatDateAndTime, formatTime }
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { adt, ADT, Id } from 'shared/lib/types';
 
+import { count } from '@wordpress/wordcount';
+
 export type ErrorTypeFrom<T> = {
   [p in keyof T]?: string[];
 };
@@ -97,6 +99,10 @@ export function validateThenMapInvalid<A, B, C>(validate: (_: A) => Validation<A
   return a => mapInvalid(validate(a), fn);
 }
 
+export function countWords(raw: string): number {
+  return count(raw, 'words', {});
+}
+
 // Array Validators.
 
 export function validateArrayCustom<A, B, C>(raw: A[], validate: (v: A) => Validation<B, C>, defaultInvalidValue: C): ArrayValidation<B, C> {
@@ -144,6 +150,15 @@ export async function optionalAsync<Value, Valid, Invalid>(v: Value | undefined,
 export function validateGenericString(value: string, name: string, min = 1, max = 100, characters = 'characters'): Validation<string> {
   if (value.length < min || value.length > max) {
     return invalid([`${name} must be between ${min} and ${max} ${characters} long.`]);
+  } else {
+    return valid(value);
+  }
+}
+
+export function validateGenericStringWords(value: string, name: string, min = 1, max = 3000, words = 'words'): Validation<string> {
+  const count = countWords(value);
+  if (count < 1 || count > max) {
+    return invalid([`${name} must be between ${min} and ${max} ${words} long.`]);
   } else {
     return valid(value);
   }

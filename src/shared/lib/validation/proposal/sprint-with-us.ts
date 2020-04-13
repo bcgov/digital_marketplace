@@ -3,10 +3,8 @@ import { getNumber, getString } from 'shared/lib';
 import { MAX_TEAM_QUESTION_WORD_LIMIT, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
-import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateGenericStringWords, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
-
-import { count } from '@wordpress/wordcount';
 
 export function validateSWUProposalStatus(raw: string, isOneOf: SWUProposalStatus[]): Validation<SWUProposalStatus> {
   const parsed = parseSWUProposalStatus(raw);
@@ -86,11 +84,7 @@ export function validateSWUProposalReferences(raw: any): ArrayValidation<CreateS
 }
 
 export function validateSWUProposalTeamQuestionResponseResponse(raw: string, wordLimit = MAX_TEAM_QUESTION_WORD_LIMIT): Validation<string> {
-  if (count(raw, 'words', {}) > wordLimit) {
-    return invalid([`The question response must be less than ${wordLimit} words.`]);
-  } else {
-    return validateGenericString(raw, 'Response', 1);
-  }
+  return validateGenericStringWords(raw, 'Response', 1, wordLimit);
 }
 
 export function validateSWUProposalTeamQuestionResponseOrder(raw: number, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<number> {
@@ -104,7 +98,7 @@ export function validateSWUProposalTeamQuestionResponse(raw: any, opportunityTea
       order: getInvalidValue(validatedOrder, undefined)
     });
   }
-  const wordLimit = opportunityTeamQuestions.find(q => q.order === validatedOrder.value)?.wordLimit || 0;
+  const wordLimit = opportunityTeamQuestions.find(q => q.order === validatedOrder.value)?.wordLimit || null;
   if (!wordLimit) {
     return invalid({
       order: ['No matching opportunity question.']
