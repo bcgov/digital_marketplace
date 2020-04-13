@@ -64,8 +64,6 @@ function makeViewPageProps<RouteParams, PageState, PageMsg>(
 
 function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPageProps<any, any, any> {
   switch (props.state.activeRoute.tag) {
-
-    // Note(Jesse): @add_new_page_location
     case 'landing':
       return makeViewPageProps(
         props,

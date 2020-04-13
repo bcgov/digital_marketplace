@@ -1,5 +1,6 @@
 import { TITLE as SWU_TERMS_TITLE } from 'front-end/lib/pages/organization/sprint-with-us-terms';
 import React from 'react';
+import { AffiliationMember, AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { Organization } from 'shared/lib/resources/organization';
 
 export const addedTeamMembers = {
@@ -45,14 +46,14 @@ export const addedTeamMembers = {
 };
 
 export const removedTeamMember = {
-  success: {
+  success: (aff: AffiliationMember) => ({
     title: 'Removed Team Member',
-    body: 'You have successfully removed a team member from this organization.'
-  },
-  error: {
+    body: `You have successfully removed ${aff.user.name} from this organization.`
+  }),
+  error: (aff: AffiliationMember) => ({
     title: 'Unable to Remove Team Member',
-    body: 'This team member could not be removed from this organization.'
-  }
+    body: `${aff.user.name} could not be removed from this organization.`
+  })
 };
 
 export const acceptedSWUTerms = {
@@ -63,5 +64,38 @@ export const acceptedSWUTerms = {
   error: (organization: Organization) => ({
     title: 'Unable to Accept Terms & Conditions',
     body: `An error occurred while attempting to accept the ${SWU_TERMS_TITLE} for ${organization.legalName}. Please try again later.`
+  })
+};
+
+export const leftOrganization = {
+  success: (aff: AffiliationSlim) => ({
+    title: 'Left Organization',
+    body: `Successfully left ${aff.organization.legalName}.`
+  }),
+  error: (aff: AffiliationSlim) => ({
+    title: 'Unable to Leave Organization',
+    body: `An error occurred while attempting to leave ${aff.organization.legalName}. Please try again later.`
+  })
+};
+
+export const approvedOrganizationRequest = {
+  success: (aff: AffiliationSlim) => ({
+    title: 'Approved Request',
+    body: `Successfully approved the request to join ${aff.organization.legalName}.`
+  }),
+  error: (aff: AffiliationSlim) => ({
+    title: 'Unable to Approve Request',
+    body: `An error occurred while attempting to approve the request to join ${aff.organization.legalName}. Please try again later.`
+  })
+};
+
+export const rejectedOrganizationRequest = {
+  success: (aff: AffiliationSlim) => ({
+    title: 'Rejected Request',
+    body: `Successfully rejected the request to join ${aff.organization.legalName}.`
+  }),
+  error: (aff: AffiliationSlim) => ({
+    title: 'Unable to Reject Request',
+    body: `An error occurred while attempting to reject the request to join ${aff.organization.legalName}. Please try again later.`
   })
 };

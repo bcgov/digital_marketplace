@@ -86,8 +86,8 @@ const view: ComponentView<State, Msg> = ({ state }) => {
             description='Your team members can choose their capabilities on their user profiles.'
             checked={state.possessAllCapabilities} />
           <Requirement
-            name='Agreed to Sprint With Us Terms & Conditions.'
-            description='Add team members from the "Team" tab to begin the process of satisfying this requirement.'
+            name={`Agreed to ${SWU_TERMS_TITLE}.`}
+            description={`You can view the ${SWU_TERMS_TITLE} below.`}
             checked={!!state.organization.acceptedSWUTerms} />
         </Col>
       </Row>

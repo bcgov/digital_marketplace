@@ -27,7 +27,9 @@ export interface Affiliation {
 export interface AffiliationSlim {
   id: Id;
   membershipType: MembershipType;
-  organization: Pick<Organization, 'id' | 'legalName'>;
+  membershipStatus: MembershipStatus;
+  //TODO change organization property to OrganizationSlim
+  organization: Pick<Organization, 'id' | 'legalName' | 'swuQualified' | 'numTeamMembers'>;
 }
 
 export interface AffiliationMember {
@@ -76,10 +78,10 @@ export function membersHaveCapability(members: AffiliationMember[], capability: 
   return false;
 }
 
-export function memberIsPending(member: AffiliationMember): boolean {
+export function memberIsPending(member: Pick<Affiliation, 'membershipStatus'>): boolean {
   return member.membershipStatus === MembershipStatus.Pending;
 }
 
-export function memberIsOwner(member: AffiliationMember): boolean {
+export function memberIsOwner(member: Pick<Affiliation, 'membershipType'>): boolean {
   return member.membershipType === MembershipType.Owner;
 }

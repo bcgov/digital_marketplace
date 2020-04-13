@@ -460,8 +460,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   };
 
   switch (msg.tag) {
-
-    // Note(Jesse): @add_new_page_location
     case 'noop':
       return [state];
 
