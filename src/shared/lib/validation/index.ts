@@ -157,7 +157,7 @@ export function validateGenericString(value: string, name: string, min = 1, max 
 
 export function validateGenericStringWords(value: string, name: string, min = 1, max = 3000, words = 'words'): Validation<string> {
   const count = countWords(value);
-  if (count < 1 || count > max) {
+  if (count < min || count > max) {
     return invalid([`${name} must be between ${min} and ${max} ${words} long.`]);
   } else {
     return valid(value);
