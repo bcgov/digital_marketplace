@@ -16,7 +16,7 @@ const EditTabHeader: View<Props> = ({ legalName, swuQualified }) => {
         {swuQualified
           ? (<div className='d-flex align-items-center flex-nowrap'>
               <Icon name='shield-check' color='success' width={0.9} height={0.9} className='mr-2' />
-              <span className='small'>Sprint With Us Qualified</span>
+              <span className='font-size-small'>Sprint With Us Qualified</span>
             </div>)
           : null}
       </Col>

@@ -1,29 +1,37 @@
-import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Form from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toasts';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { UserType } from 'shared/lib/resources/user';
+import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { isAdmin, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
+type SWUCreateSubmitStatus
+  = SWUOpportunityStatus.Published
+  | SWUOpportunityStatus.UnderReview;
+
+type ModalId = ADT<'publish', SWUCreateSubmitStatus>;
+
 interface ValidState {
+  showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
-  showErrorAlert: 'publish' | 'save' | null;
-  showPublishModal: boolean;
+  viewerUser: User;
   form: Immutable<Form.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg
-  = ADT<'dismissErrorAlert'>
-  | ADT<'hidePublishModal'>
-  | ADT<'publish'>
+  = ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'publish', SWUCreateSubmitStatus>
   | ADT<'saveDraft'>
   | ADT<'form', Form.Msg>;
 
@@ -33,12 +41,12 @@ export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RouteParams, State, Msg>({
   userType: [UserType.Government, UserType.Admin],
-  async success() {
+  async success({ shared }) {
     return valid(immutable({
+      showModal: null,
       publishLoading: 0,
       saveDraftLoading: 0,
-      showErrorAlert: null,
-      showPublishModal: false,
+      viewerUser: shared.sessionUser,
       form: immutable(await Form.init({}))
     }));
   },
@@ -48,45 +56,60 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
   }
 });
 
-export const startPublishLoading = makeStartLoading<ValidState>('publishLoading');
-export const stopPublishLoading = makeStopLoading<ValidState>('publishLoading');
-export const startSaveDraftLoading = makeStartLoading<ValidState>('saveDraftLoading');
-export const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
+const startPublishLoading = makeStartLoading<ValidState>('publishLoading');
+const stopPublishLoading = makeStopLoading<ValidState>('publishLoading');
+const startSaveDraftLoading = makeStartLoading<ValidState>('saveDraftLoading');
+const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
-    case 'dismissErrorAlert':
-      return [state.set('showErrorAlert', null)];
-    case 'hidePublishModal':
-      return [state.set('showPublishModal', false)];
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [state.set('showModal', null)];
+
     case 'publish':
-    case 'saveDraft':
-      const isPublish = msg.tag === 'publish';
-      if (isPublish) {
-        if (!state.showPublishModal) {
-          return [state.set('showPublishModal', true)];
-        } else {
-          state = state.set('showPublishModal', false);
-        }
-      }
+      state = state.set('showModal', null);
       return [
-        isPublish ? startPublishLoading(state) : startSaveDraftLoading(state)
-        // async (state, dispatch) => {
-        //   const result = adt('invalid', ['TODO(Jesse): Implement me!']); // await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published as const : CWUOpportunityStatus.Draft as const));
-        //   switch (result.tag) {
-        //     case 'valid':
-        //       dispatch(newRoute(adt('opportunityCWUEdit' as const, {
-        //         opportunityId: result.value[1].id,
-        //         tab: isPublish ? 'summary' as const : 'opportunity' as const
-        //       })));
-        //       return state.set('form', result.value[0]);
-        //     case 'invalid':
-        //       state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
-        //       return state
-        //         .set('showErrorAlert', isPublish ? 'publish' : 'save')
-        //         .set('form', result.value);
-        //   }
-        // }
+        startPublishLoading(state),
+        async (state, dispatch) => {
+          const result = await Form.persist(state.form, adt('create', msg.value));
+          switch (result.tag) {
+            case 'valid':
+              dispatch(newRoute(adt('opportunitySWUEdit', {
+                opportunityId: result.value[1].id,
+                tab: 'summary'
+              })) as Msg);
+              dispatch(toast(adt('success', toasts.statusChanged.success(msg.value))));
+              return state.set('form', result.value[0]);
+            case 'invalid':
+              dispatch(toast(adt('error', toasts.statusChanged.error(msg.value))));
+              return stopPublishLoading(state);
+          }
+          return state;
+        }
+      ];
+
+    case 'saveDraft':
+      return [
+        startSaveDraftLoading(state),
+        async (state, dispatch) => {
+          const result = await Form.persist(state.form, adt('create', SWUOpportunityStatus.Draft as const));
+          switch (result.tag) {
+            case 'valid':
+              dispatch(newRoute(adt('opportunitySWUEdit', {
+                opportunityId: result.value[1].id,
+                tab: 'opportunity'
+              })) as Msg);
+              dispatch(toast(adt('success', toasts.draftCreated.success)));
+              return state.set('form', result.value[0]);
+            case 'invalid':
+              dispatch(toast(adt('error', toasts.draftCreated.error)));
+              return stopSaveDraftLoading(state);
+          }
+          return state;
+        }
       ];
 
     case 'form':
@@ -136,16 +159,17 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
     const isLoading = isPublishLoading || isSaveDraftLoading;
-    const isValid = true; //Form.isValid(state.form);
+    const isValid = Form.isValid(state.form);
+    const isViewerAdmin = isAdmin(state.viewerUser);
     return adt('links', [
       {
-        children: 'Publish',
-        symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
+        children: isViewerAdmin ? 'Publish' : 'Submit for Review',
+        symbol_: leftPlacement(iconLinkSymbol(isViewerAdmin ? 'bullhorn' : 'paper-plane')),
         button: true,
         loading: isPublishLoading,
         disabled: isLoading || !isValid,
         color: 'primary',
-        onClick: () => dispatch(adt('publish'))
+        onClick: () => dispatch(adt('showModal', adt('publish', isViewerAdmin ? SWUOpportunityStatus.Published : SWUOpportunityStatus.UnderReview)) as Msg)
       },
       {
         children: 'Save Draft',
@@ -164,40 +188,40 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       }
     ]);
   }),
-  getAlerts: getAlertsValid(state => ({
-    ...emptyPageAlerts(),
-    errors: state.showErrorAlert
-    ? [{
-        text: `We were unable to ${state.showErrorAlert} your opportunity. Please fix the errors in the form below and try again.`,
-        dismissMsg: adt('dismissErrorAlert')
-      }]
-      : []
-  })),
   getModal: getModalValid<ValidState, Msg>(state => {
-    if (state.showPublishModal) {
-      return {
-        title: 'Publish Sprint With Us Opportunity?',
-        body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.',
-        onCloseMsg: adt('hidePublishModal'),
-        actions: [
-          {
-            text: 'Publish Opportunity',
-            icon: 'bullhorn',
-            color: 'primary',
-            msg: adt('publish'),
-            button: true
-          },
-          {
-            text: 'Cancel',
-            color: 'secondary',
-            msg: adt('hidePublishModal')
-          }
-        ]
-      };
+    if (!state.showModal) { return null; }
+    switch (state.showModal.tag) {
+      case 'publish': {
+        const publishStatus = state.showModal.value;
+        return {
+          title: publishStatus === SWUOpportunityStatus.Published
+            ? 'Publish Sprint With Us Opportunity?'
+            : 'Submit Opportunity for Review?',
+          body: () => publishStatus === SWUOpportunityStatus.Published
+            ? 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.'
+            : 'Are you sure you want to submit this Sprint With Us opportunity for review?',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: publishStatus === SWUOpportunityStatus.Published
+                ? 'Publish Opportunity'
+                : 'Submit for Review',
+              icon: publishStatus === SWUOpportunityStatus.Published ? 'bullhorn' : 'paper-plane',
+              color: 'primary',
+              msg: adt('publish', publishStatus),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      }
     }
-    return null;
   }),
   getMetadata() {
-    return makePageMetadata('Create Sprint With Us Opportunity');
+    return makePageMetadata('Create a Sprint With Us Opportunity');
   }
 };

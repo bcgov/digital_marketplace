@@ -162,9 +162,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
 export type Values = CreateSWUOpportunityPhaseBody;
 
-export function getValues(state: Immutable<State>): Values | null {
-  const maxBudget = FormField.getValue(state.maxBudget);
-  if (maxBudget === null) { return null; }
+export function getValues(state: Immutable<State>): Values {
+  const maxBudget = FormField.getValue(state.maxBudget) || 0;
   return {
     startDate: DateField.getValueAsString(state.startDate),
     completionDate: DateField.getValueAsString(state.completionDate),
@@ -235,6 +234,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
       </Col>
       <Col xs='12' md='6'>
         <DateField.view
+          required
           extraChildProps={{}}
           label='Phase Completion Date'
           state={state.completionDate}
