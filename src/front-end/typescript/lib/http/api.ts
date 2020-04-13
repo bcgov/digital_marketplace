@@ -407,7 +407,7 @@ function rawSWUOpportunityToSWUOpportunity(raw: RawSWUOpportunity): SWUOpportuni
     inceptionPhase: raw.inceptionPhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.inceptionPhase),
     prototypePhase: raw.prototypePhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.prototypePhase),
     implementationPhase: rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.implementationPhase),
-  teamQuestions: raw.teamQuestions.map(tq => rawSWUTeamQuestionToSWUTeamQuestion(tq))
+    teamQuestions: raw.teamQuestions.map(tq => rawSWUTeamQuestionToSWUTeamQuestion(tq))
   };
 }
 
@@ -446,7 +446,7 @@ const swuOpportunityActionParams = {
 };
 
 export const swuOpportunities: CrudApi<SWUOpportunityResourceTypes> = makeCrudApi({
-  routeNamespace: apiNamespace('opportunities/code-with-us'),
+  routeNamespace: apiNamespace('opportunities/sprint-with-us'),
   create: swuOpportunityActionParams,
   readOne: swuOpportunityActionParams,
   update: swuOpportunityActionParams,

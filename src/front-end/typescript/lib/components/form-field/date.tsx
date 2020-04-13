@@ -20,12 +20,12 @@ export function stringToValue(raw: string): Value {
   return [year, month, day];
 }
 
-function prefixZero(n: number): string {
-  return padStart(String(n), 2, '0');
+function prefixZero(n: number, nZeros: number): string {
+  return padStart(String(n), nZeros, '0');
 }
 
 export function valueToString(value?: Value): string {
-  return value ? `${value[0]}-${prefixZero(value[1])}-${prefixZero(value[2])}` : '';
+  return value ? `${prefixZero(value[0], 4)}-${prefixZero(value[1], 2)}-${prefixZero(value[2], 2)}` : '';
 }
 
 export function getDate(state: Immutable<State>): Date | undefined {
