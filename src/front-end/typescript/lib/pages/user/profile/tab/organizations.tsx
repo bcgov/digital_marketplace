@@ -12,6 +12,7 @@ import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { AffiliationSlim, memberIsPending, MembershipType } from 'shared/lib/resources/affiliation';
+import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import { adt, ADT, Id } from 'shared/lib/types';
 
 type TableAffiliation = AffiliationSlim;
@@ -179,23 +180,26 @@ function ownedTableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 function ownedTableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return state.ownedRecords.map(affiliation => [
-    {
-      children: (<Link dest={routeDest(adt('orgEdit', { orgId: affiliation.organization.id})) }>{affiliation.organization.legalName}</Link>)
-    },
-    {
-      className: 'text-center',
-      children: String(affiliation.organization.numTeamMembers || EMPTY_STRING)
-    },
-    {
-      className: 'text-center',
-      children: (
-        <Icon
-          name={affiliation.organization.swuQualified ? 'check' : 'times'}
-          color={affiliation.organization.swuQualified ? 'success' : 'body'} />
-      )
-    }
-  ]);
+  return state.ownedRecords.map(affiliation => {
+    const swuQualified = doesOrganizationMeetSWUQualification(affiliation.organization);
+    return [
+      {
+        children: (<Link dest={routeDest(adt('orgEdit', { orgId: affiliation.organization.id})) }>{affiliation.organization.legalName}</Link>)
+      },
+      {
+        className: 'text-center',
+        children: String(affiliation.organization.numTeamMembers || EMPTY_STRING)
+      },
+      {
+        className: 'text-center',
+        children: (
+          <Icon
+            name={swuQualified ? 'check' : 'times'}
+            color={swuQualified ? 'success' : 'body'} />
+        )
+      }
+    ];
+  });
 }
 
 function affiliatedTableHeadCells(state: Immutable<State>): Table.HeadCells {

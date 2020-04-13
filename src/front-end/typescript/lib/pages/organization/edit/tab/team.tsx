@@ -299,7 +299,7 @@ const view: ComponentView<State, Msg> = props => {
     <div>
       <EditTabHeader
         legalName={state.organization.legalName}
-        swuQualified={state.organization.swuQualified} />
+        swuQualified={state.swuQualified} />
       <Row className='mt-5'>
         <Col xs='12'>
           <h3 className='mb-4'>Team Members</h3>

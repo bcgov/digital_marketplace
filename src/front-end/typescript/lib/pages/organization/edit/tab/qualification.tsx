@@ -9,6 +9,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { AffiliationMember, memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
+import { doesOrganizationMeetSWUQualificationNumTeamMembers } from 'shared/lib/resources/organization';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -70,7 +71,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
     <div>
       <EditTabHeader
         legalName={state.organization.legalName}
-        swuQualified={state.organization.swuQualified} />
+        swuQualified={state.swuQualified} />
       <Row className='mt-5'>
         <Col xs='12'>
           <h3>Requirements</h3>
@@ -79,12 +80,12 @@ const view: ComponentView<State, Msg> = ({ state }) => {
             className='mb-4'
             name='At least two team members.'
             description='Add team members from the "Team" tab to begin the process of satisfying this requirement.'
-            checked={state.atLeastTwoMembers} />
+            checked={doesOrganizationMeetSWUQualificationNumTeamMembers(state.organization)} />
           <Requirement
             className='mb-4'
             name='Team members collectively possess all capabilities.'
             description='Your team members can choose their capabilities on their user profiles.'
-            checked={state.possessAllCapabilities} />
+            checked={!!state.organization.possessAllCapabilities} />
           <Requirement
             name={`Agreed to ${SWU_TERMS_TITLE}.`}
             description={`You can view the ${SWU_TERMS_TITLE} below.`}
