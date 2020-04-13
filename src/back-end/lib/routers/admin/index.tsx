@@ -1,4 +1,5 @@
 import * as mailer from 'back-end/lib/mailer';
+import { acceptedInvitationT, sendInvitationT } from 'back-end/lib/mailer/notifications/affiliation';
 import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
@@ -45,6 +46,14 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     {
       title: 'Account Registered',
       emails: await userAccountRegisteredT(mocks.govUser)
+    },
+    {
+      title: 'User Invited To Organization',
+      emails: await sendInvitationT(mocks.vendorUser, mocks.organization)
+    },
+    {
+      title: 'User Accepted Invitation to Join Organization',
+      emails: await acceptedInvitationT(mocks.govUser, mocks.vendorUser, mocks.organization)
     },
     {
       title: 'CWU Opportunity Published',
