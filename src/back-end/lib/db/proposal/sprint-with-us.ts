@@ -163,6 +163,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   for (const member of inceptionPhase?.members || []) {
     member.pending = (await connection('affiliations')
       .where({ user: member.member.id, organization: organizationId })
+      .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
       .select('membershipStatus')
       .first())?.membershipStatus === MembershipStatus.Pending;
   }
@@ -170,6 +171,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   for (const member of prototypePhase?.members || []) {
     member.pending = (await connection('affiliations')
       .where({ user: member.member.id, organization: organizationId })
+      .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
       .select('membershipStatus')
       .first())?.membershipStatus === MembershipStatus.Pending;
   }
@@ -177,6 +179,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   for (const member of implementationPhase.members) {
     member.pending = (await connection('affiliations')
       .where({ user: member.member.id, organization: organizationId })
+      .andWhereNot({ membershipStatus: MembershipStatus.Inactive })
       .select('membershipStatus')
       .first())?.membershipStatus === MembershipStatus.Pending;
   }
