@@ -52,7 +52,7 @@ const resource: Resource = {
       const respond = (code: number, body: AffiliationSlim[] | AffiliationMember[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       // If a query parameter scoping to single org was provided, return affiliations for that org (must be admin or owner for specified org)
       if (request.query.organization) {
-        const validatedOrganization = await validateOrganizationId(connection, request.query.organization, false);
+        const validatedOrganization = await validateOrganizationId(connection, request.query.organization, request.session, false);
         if (isInvalid(validatedOrganization)) {
           return respond(404, validatedOrganization.value);
         }
@@ -104,7 +104,7 @@ const resource: Resource = {
           });
         }
         const validatedUser = await db.readOneUserByEmail(connection, validatedUserEmail.value);
-        const validatedOrganization = await validateOrganizationId(connection, organization);
+        const validatedOrganization = await validateOrganizationId(connection, organization, request.session);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
           const user = getValidValue(validatedUser, null);

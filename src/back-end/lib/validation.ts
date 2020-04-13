@@ -166,7 +166,7 @@ export async function validateSWUProposalId(connection: db.Connection, proposalI
   }
 }
 
-export async function validateProponent(connection: db.Connection, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
+export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
     case 'individual':
       const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
@@ -175,7 +175,7 @@ export async function validateProponent(connection: db.Connection, raw: any): Pr
       }
       return invalid(adt('individual', validatedIndividualProponentRequestBody.value));
     case 'organization':
-      const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), false);
+      const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), session, false);
       if (isValid(validatedOrganization)) {
         return valid(adt('organization', validatedOrganization.value.id));
       }

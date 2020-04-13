@@ -344,7 +344,7 @@ const resource: Resource = {
               });
             }
 
-            const validatedOrganization = await validateOrganizationId(connection, organization, false);
+            const validatedOrganization = await validateOrganizationId(connection, organization, request.session, false);
             if (isInvalid(validatedOrganization)) {
               return invalid({
                 proposal: adt('edit' as const, {

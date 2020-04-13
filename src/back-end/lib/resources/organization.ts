@@ -233,7 +233,7 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedOrganization = await validateOrganizationId(connection, request.params.id);
+        const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         switch (request.body.tag) {
           case 'updateProfile':
             const {
@@ -358,7 +358,7 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedOrganization = await validateOrganizationId(connection, request.params.id);
+        const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         if (isValid(validatedOrganization)) {
           return validatedOrganization;
         } else {
