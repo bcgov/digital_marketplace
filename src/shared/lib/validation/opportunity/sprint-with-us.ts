@@ -179,7 +179,7 @@ export function validateTeamQuestionWordLimit(raw: number): Validation<number> {
 
 // Allow up to 100 team questions per opportunity.
 export function validateTeamQuestionOrder(raw: number): Validation<number> {
-  return validateNumber(raw, 1, MAX_TEAM_QUESTIONS, 'Order');
+  return validateNumber(raw, 0, MAX_TEAM_QUESTIONS, 'Order', 'an');
 }
 
 export function validateTeamQuestion(raw: any): Validation<CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors> {

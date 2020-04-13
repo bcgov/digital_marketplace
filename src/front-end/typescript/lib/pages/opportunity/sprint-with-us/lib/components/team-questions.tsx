@@ -167,12 +167,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
 export type Values = CreateSWUTeamQuestionBody[];
 
-export function getValues(state: Immutable<State>): Values | null {
-  return state.questions.reduce<Values | null>((acc, q, order) => {
+export function getValues(state: Immutable<State>): Values {
+  return state.questions.reduce<Values>((acc, q, order) => {
     if (!acc) { return acc; }
-    const score = FormField.getValue(q.score);
-    const wordLimit = FormField.getValue(q.wordLimit);
-    if (score === null || wordLimit === null) { return null; }
+    const score = FormField.getValue(q.score) || 0;
+    const wordLimit = FormField.getValue(q.wordLimit) || 0;
     acc.push({
       question: FormField.getValue(q.question),
       guideline: FormField.getValue(q.guideline),

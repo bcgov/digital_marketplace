@@ -70,11 +70,18 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       linkGroups: [{
         links: [
           {
-            children: 'Create CodeWithUs Opportunity',
+            children: 'Create Code With Us Opportunity',
             button: true,
             color: 'primary' as const,
             symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
             dest: routeDest(adt('opportunityCWUCreate', null))
+          },
+          {
+            children: 'Create Sprint With Us Opportunity',
+            button: true,
+            color: 'primary' as const,
+            symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+            dest: routeDest(adt('opportunitySWUCreate', null))
           }
         ]
       }]

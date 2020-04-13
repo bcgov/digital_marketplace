@@ -168,11 +168,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 
 export type Values = Pick<CreateRequestBody, 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
 
-export function getValues(state: Immutable<State>): Values | null {
+export function getValues(state: Immutable<State>): Values {
   const inceptionPhase = hasPhase(state, SWUOpportunityPhaseType.Inception) ? Phase.getValues(state.inceptionPhase) : undefined;
   const prototypePhase = hasPhase(state, SWUOpportunityPhaseType.Prototype) ? Phase.getValues(state.prototypePhase) : undefined;
   const implementationPhase = Phase.getValues(state.implementationPhase);
-  if (inceptionPhase === null || prototypePhase === null || implementationPhase === null) { return null; }
   return { inceptionPhase, prototypePhase, implementationPhase };
 }
 
