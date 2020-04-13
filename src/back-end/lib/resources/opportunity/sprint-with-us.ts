@@ -1,6 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
-import { newSWUOpportunityPublished, SWUEditsToNotifyOn, updatedSWUOpportunity } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
+import * as swuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -60,16 +60,6 @@ type Resource = crud.Resource<
   Session,
   db.Connection
 >;
-
-async function notifySWUPublished(connection: db.Connection, opportunity: SWUOpportunity): Promise<void> {
-  const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
-  await Promise.all(subscribedUsers.map(async user => await newSWUOpportunityPublished(user, opportunity)));
-}
-
-async function notifySWUUpdated(connection: db.Connection, opportunity: SWUOpportunity, edits: SWUEditsToNotifyOn): Promise<void> {
-  const subscribedUsers = getValidValue(await db.readManyCWUSubscribedUsers(connection, opportunity.id), null) || [];
-  await Promise.all(subscribedUsers.map(async user => await updatedSWUOpportunity(user, opportunity, edits)));
-}
 
 const resource: Resource = {
   routeNamespace: 'opportunities/sprint-with-us',
@@ -344,9 +334,13 @@ const resource: Resource = {
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
+          // If submitted for review, notify
+          if (dbResult.value.status === SWUOpportunityStatus.UnderReview) {
+            swuOpportunityNotifications.handleSWUSubmittedForReview(connection, dbResult.value);
+          }
           // If published, notify subscribed users
           if (dbResult.value.status === SWUOpportunityStatus.Published) {
-            notifySWUPublished(connection, dbResult.value);
+            swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -763,16 +757,23 @@ const resource: Resource = {
           switch (body.tag) {
             case 'edit':
               dbResult = await db.updateSWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
+              // Notify all subscribed users on the opportunity of the update (only if published status)
+              if (isValid(dbResult) && dbResult.value.status === SWUOpportunityStatus.Published) {
+                swuOpportunityNotifications.handleSWUUpdated(connection, dbResult.value);
+              }
               break;
             case 'submitForReview':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.UnderReview, body.value, session);
-              // TODO: Notify admins that an opportunity has been submitted for review
+              //Notify of submission
+              if (isValid(dbResult)) {
+                swuOpportunityNotifications.handleSWUSubmittedForReview(connection, dbResult.value);
+              }
               break;
             case 'publish':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.Published, body.value, session);
               // Notify all users with notifications on of the new opportunity
               if (isValid(dbResult)) {
-                notifySWUPublished(connection, dbResult.value);
+                swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value);
               }
               break;
             case 'startCodeChallenge':
@@ -783,23 +784,23 @@ const resource: Resource = {
               break;
             case 'suspend':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.Suspended, body.value, session);
-              // Notify all subscribed users on the opportunity of the suspension
+              // Notify all subscribed users of suspension
               if (isValid(dbResult)) {
-                notifySWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
+                swuOpportunityNotifications.handleSWUSuspended(connection, dbResult.value);
               }
               break;
             case 'cancel':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.Canceled, body.value, session);
-              // Notify all subscribed users on the opportunity of the cancellation
+              // Notify all subscribed users of cancellation
               if (isValid(dbResult)) {
-                notifySWUUpdated(connection, dbResult.value, { tag: 'status', value: dbResult.value.status });
+                swuOpportunityNotifications.handleSWUCancelled(connection, dbResult.value);
               }
               break;
             case 'addAddendum':
               dbResult = await db.addSWUOpportunityAddendum(connection, request.params.id, body.value, session);
               // Notify all subscribed users on the opportunity of the addendum
               if (isValid(dbResult)) {
-                notifySWUUpdated(connection, dbResult.value, { tag: 'addendum', value: body.value });
+                swuOpportunityNotifications.handleSWUUpdated(connection, dbResult.value);
               }
               break;
           }

@@ -1,5 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as cwuProposalNotifications from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -59,7 +60,7 @@ type Resource = crud.Resource<
   db.Connection
 >;
 
-async function parseProponentRequestBody(raw: any, connection: db.Connection): Promise<CreateProponentRequestBody> {
+async function parseProponentRequestBody(raw: any, connection: db.Connection, session: Session): Promise<CreateProponentRequestBody> {
   const value = get(raw, 'value');
   switch (getString(raw, 'tag')) {
     case 'individual':
@@ -76,7 +77,7 @@ async function parseProponentRequestBody(raw: any, connection: db.Connection): P
       });
     case 'organization':
       // Validate the org id provided.  If not valid, default to blank individual proponent
-      const validatedOrganizationProponent = await validateOrganizationId(connection, value);
+      const validatedOrganizationProponent = await validateOrganizationId(connection, value, session);
       if (isInvalid(validatedOrganizationProponent)) {
         return createBlankIndividualProponent();
       }
@@ -136,7 +137,7 @@ const resource: Resource = {
           opportunity: getString(body, 'opportunity'),
           proposalText: getString(body, 'proposalText'),
           additionalComments: getString(body, 'additionalComments'),
-          proponent: await parseProponentRequestBody(get(body, 'proponent'), connection),
+          proponent: await parseProponentRequestBody(get(body, 'proponent'), connection, request.session),
           attachments: getStringArray(body, 'attachments'),
           status: getString(body, 'status')
         };
@@ -202,7 +203,7 @@ const resource: Resource = {
 
         const validatedProposalText = proposalValidation.validateProposalText(proposalText);
         const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
-        const validatedProponent = await validateProponent(connection, proponent);
+        const validatedProponent = await validateProponent(connection, request.session, proponent);
 
         if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
           return valid({
@@ -228,6 +229,10 @@ const resource: Resource = {
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
+          // Notify of successful submission if submitted
+          if (dbResult.value.status === CWUProposalStatus.Submitted) {
+            cwuProposalNotifications.handleCWUProposalSubmitted(connection, dbResult.value.id, request.body.session);
+          }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
@@ -248,7 +253,7 @@ const resource: Resource = {
             return adt('edit', {
               proposalText: getString(value, 'proposalText'),
               additionalComments: getString(value, 'additionalComments'),
-              proponent: await parseProponentRequestBody(get(value, 'proponent'), connection),
+              proponent: await parseProponentRequestBody(get(value, 'proponent'), connection, request.session),
               attachments: getStringArray(value, 'attachments')
             });
           case 'submit':
@@ -309,7 +314,7 @@ const resource: Resource = {
 
             const validatedProposalText = proposalValidation.validateProposalText(proposalText);
             const validatedAdditionalComments = proposalValidation.validateAdditionalComments(additionalComments);
-            const validatedProponent = await validateProponent(connection, proponent);
+            const validatedProponent = await validateProponent(connection, request.session, proponent);
 
             if (allValid([validatedProposalText, validatedAdditionalComments, validatedProponent, validatedAttachments])) {
               return valid({
@@ -423,18 +428,26 @@ const resource: Resource = {
               break;
             case 'submit':
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Submitted, body.value, session);
+              // Notify of successful submission
+              cwuProposalNotifications.handleCWUProposalSubmitted(connection, request.params.id, session);
               break;
             case 'score':
               dbResult = await db.updateCWUProposalScore(connection, request.params.id, body.value, session);
               break;
             case 'award':
               dbResult = await db.awardCWUProposal(connection, request.params.id, body.value, session);
+              // Notify of award (also notifies unsuccessful proponents)
+              cwuProposalNotifications.handleCWUProposalAwarded(connection, request.params.id, session);
               break;
             case 'disqualify':
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Disqualified, body.value, session);
+              // Notify of disqualification
+              cwuProposalNotifications.handleCWUProposalDisqualified(connection, request.params.id, session);
               break;
             case 'withdraw':
               dbResult = await db.updateCWUProposalStatus(connection, request.params.id, CWUProposalStatus.Withdrawn, body.value, session);
+              // Notify opportunity author of the withdrawal, if the opportunity is closed
+              cwuProposalNotifications.handleCWUProposalWithdrawn(connection, request.params.id, session);
               break;
           }
           if (isInvalid(dbResult)) {

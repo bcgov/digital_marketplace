@@ -1,6 +1,7 @@
 import { MAILER_CONFIG, MAILER_FROM } from 'back-end/config';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
+import { Emails } from 'back-end/lib/mailer';
 import { fromString } from 'html-to-text';
 import nodemailer from 'nodemailer';
 
@@ -35,4 +36,13 @@ export function send(params: SendParams): Promise<void> {
       resolve();
     });
   });
+}
+
+export function makeSend<Args extends unknown[]>(makeEmails: (...args: Args) => Promise<Emails>): (...args: Args) => Promise<void> {
+  return async (...args) => {
+    const emails = await makeEmails(...args);
+    for (const email of emails) {
+      await send(email);
+    }
+  };
 }

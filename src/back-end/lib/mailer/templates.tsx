@@ -14,6 +14,13 @@ interface Styles {
   variables: StyleVariables;
   utilities: StyleUtilities;
   classes: StyleClasses;
+  helpers: {
+    scale: (n: number) => number;
+    units: (n: number | string, unit: StyleUnit) => string;
+    px: (n: number | string) => string;
+    style: (property: string, value: string) => Record<string, string>;
+    styleScale: (property: string, n: number, unit: StyleUnit) => Record<string, string>;
+  };
 }
 
 type CSSProperty = keyof CSSProperties;
@@ -30,7 +37,7 @@ type StyleLevelUtilities = {
   [level in StyleLevel]: CSSProperties;
 };
 
-const styles: Styles = (() => {
+export const styles: Styles = (() => {
   const spacer = 16;
   const scale = (n: number) => n * spacer;
   const units = (n: number | string, unit: StyleUnit) => `${n}${unit}`;
@@ -85,7 +92,8 @@ const styles: Styles = (() => {
       md: { fontSize: px(scale(1)) },
       lg: { fontSize: px(scale(1.1)) },
       xl: { fontSize: px(scale(1.3)) },
-      bold: { fontWeight: 'bold' }
+      bold: { fontWeight: 'bold' },
+      italic: { fontStyle: 'italic' }
     },
     border: {
       radius: {
@@ -171,7 +179,18 @@ const styles: Styles = (() => {
       height: px(scale(2))
     }
   };
-  return { variables, utilities, classes };
+  return {
+    variables,
+    utilities,
+    classes,
+    helpers: {
+      spacer,
+      scale,
+      units,
+      px,
+      style,
+      styleScale
+    }};
 })();
 
 // Utility types and functions.
@@ -190,7 +209,7 @@ interface WithStyle {
   style: CSSProperties;
 }
 
-type View<Props> = (props: Props) => ReactElement | null;
+export type View<Props> = (props: Props) => ReactElement | null;
 
 type TemplateBaseProps = Omit<LayoutProps, 'children'>;
 
@@ -207,13 +226,13 @@ export const Link: View<LinkProps> = ({ text, url }) => {
   );
 };
 
-const CallToAction: View<LinkProps> = ({ text, url }) => {
+const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style }) => {
   return (
-    <Row style={styles.utilities.text.center}>
-      <a href={url} target='_blank' style={styles.classes.button}>
+    <Fragment>
+      <a href={url} target='_blank' style={{...styles.classes.button, ...style}}>
         {text}
       </a>
-    </Row>
+    </Fragment>
   );
 };
 
@@ -332,11 +351,12 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
 export interface SimpleProps extends TemplateBaseProps {
   linkLists?: LinkListProps[];
   descriptionLists?: DescriptionListProps[];
-  callToAction?: LinkProps;
+  callsToAction?: LinkProps[];
+  body?: string | ReactElement;
 }
 
 const Simple: View<SimpleProps> = props => {
-  const { linkLists, descriptionLists, callToAction } = props;
+  const { linkLists, descriptionLists, callsToAction, body } = props;
   return (
     <Layout {...props}>
       <Fragment>
@@ -349,9 +369,18 @@ const Simple: View<SimpleProps> = props => {
           ? descriptionLists.map((list, i) => (<DescriptionList key={`description-list-${i}`} {...list} />))
           : null}
       </Fragment>
-      {callToAction
-        ? (<CallToAction {...callToAction} />)
-        : null}
+      <Fragment>
+        {body
+          ? (<Row>{body}</Row>)
+          : null}
+      </Fragment>
+      <Fragment>
+        {callsToAction
+          ? <Row style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', ...styles.utilities.text.center}}>
+              {callsToAction.map((call, i) => (<CallToAction style={{ ...styles.utilities.m[2] }} key={`call-to-action-${i}`} {...call} />))}
+            </Row>
+          : null}
+      </Fragment>
     </Layout>
   );
 };

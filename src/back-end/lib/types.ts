@@ -1,4 +1,4 @@
-import { ErrorResponseBody, FileRequestBody, FileResponseBody, JsonRequestBody, JsonResponseBody, TextResponseBody } from 'back-end/lib/server';
+import { ErrorResponseBody, FileRequestBody, FileResponseBody, HtmlResponseBody, JsonRequestBody, JsonResponseBody, TextResponseBody } from 'back-end/lib/server';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
 
 export enum ServerHttpMethod {
@@ -36,4 +36,5 @@ export type SupportedResponseBodies
   = JsonResponseBody
   | FileResponseBody
   | TextResponseBody
+  | HtmlResponseBody
   | ErrorResponseBody;

@@ -84,6 +84,13 @@ export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection)
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
+export const readManyUsersByRole = tryDb<[UserType], User[]>(async (connection, type) => {
+  const results = await connection<RawUser>('users')
+    .where({ type })
+    .select('*');
+  return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
+});
+
 export const createUser = tryDb<[CreateUserParams], User>(async (connection, user) => {
   const now = new Date();
   const [result] = await connection<RawUser>('users')
