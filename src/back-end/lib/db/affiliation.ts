@@ -4,6 +4,7 @@ import { readOneOrganization, readOneOrganizationSlim } from 'back-end/lib/db/or
 import { readOneUser } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
 import { Affiliation, AffiliationMember, AffiliationSlim, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
+import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { getValidValue } from 'shared/lib/validation';
@@ -34,9 +35,9 @@ async function rawAffiliationToAffiliation(connection: Connection, params: RawAf
   };
 }
 
-async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliation): Promise<AffiliationSlim> {
+async function rawAffiliationToAffiliationSlim(connection: Connection, params: RawAffiliation, session?: Session): Promise<AffiliationSlim> {
   const { id, organization: orgId, membershipType, membershipStatus } = params;
-  const organization = getValidValue(await readOneOrganizationSlim(connection, orgId, false), null);
+  const organization = getValidValue(await readOneOrganizationSlim(connection, orgId, false, session), null);
   if (!organization) {
     throw new Error('unable to process affiliation'); // Will be caught by calling function
   }
@@ -99,7 +100,7 @@ export const readOneAffiliationById = tryDb<[Id], Affiliation | null>(async (con
   return valid(result ? await rawAffiliationToAffiliation(connection, result) : null);
 });
 
-export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connection, userId) => {
+export const readManyAffiliations = tryDb<[Id, Session?], AffiliationSlim[]>(async (connection, userId, session) => {
   const results: RawAffiliation[] = await connection<RawAffiliation>('affiliations')
     .join('organizations', 'affiliations.organization', '=', 'organizations.id')
     .select('affiliations.*')
@@ -108,7 +109,7 @@ export const readManyAffiliations = tryDb<[Id], AffiliationSlim[]>(async (connec
       'organizations.active': true
     })
     .andWhereNot({ membershipStatus: MembershipStatus.Inactive });
-  return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw))));
+  return valid(await Promise.all(results.map(async raw => await rawAffiliationToAffiliationSlim(connection, raw, session))));
 });
 
 export const readManyAffiliationsForOrganization = tryDb<[Id], AffiliationMember[]>(async (connection, orgId) => {

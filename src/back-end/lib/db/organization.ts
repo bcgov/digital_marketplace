@@ -20,18 +20,20 @@ interface UpdateOrganizationParams extends Partial<Omit<Organization, 'logoImage
   logoImageFile?: Id;
 }
 
-interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner'> {
+interface RawOrganization extends Omit<Organization, 'logoImageFile' | 'owner' | 'numTeamMembers'> {
   logoImageFile?: Id;
   owner: Id;
+  numTeamMembers?: string;
 }
 
-interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | 'owner'> {
+interface RawOrganizationSlim extends Omit<OrganizationSlim, 'logoImageFile' | 'owner' | 'numTeamMembers'> {
   logoImageFile?: Id;
   owner?: Id;
+  numTeamMembers?: string;
 }
 
 async function rawOrganizationToOrganization(connection: Connection, raw: RawOrganization): Promise<Organization> {
-  const { logoImageFile, owner: ownerId, ...restOfRawOrg } = raw;
+  const { logoImageFile, owner: ownerId, numTeamMembers, ...restOfRawOrg } = raw;
   let fetchedLogoFile: FileRecord | undefined;
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
@@ -43,6 +45,7 @@ async function rawOrganizationToOrganization(connection: Connection, raw: RawOrg
   const owner = ownerId ? getValidValue(await readOneUserSlim(connection, ownerId), null) : null;
   return {
     ...restOfRawOrg,
+    numTeamMembers: numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10),
     logoImageFile: fetchedLogoFile,
     owner: owner || undefined
   };
@@ -66,7 +69,7 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
     owner: owner || undefined,
     acceptedSWUTerms,
     possessAllCapabilities,
-    numTeamMembers
+    numTeamMembers: numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10)
   };
 }
 

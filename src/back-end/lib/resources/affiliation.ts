@@ -70,7 +70,7 @@ const resource: Resource = {
         if (!request.session.user || !permissions.readManyAffiliations(request.session)) {
           return respond(401, [permissions.ERROR_MESSAGE]);
         }
-        const dbResult = await db.readManyAffiliations(connection, request.session.user.id);
+        const dbResult = await db.readManyAffiliations(connection, request.session.user.id, request.session);
         if (isInvalid(dbResult)) {
           return respond(503, [db.ERROR_MESSAGE]);
         }
