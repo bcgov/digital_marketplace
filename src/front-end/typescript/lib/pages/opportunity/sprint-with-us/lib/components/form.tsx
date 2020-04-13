@@ -485,18 +485,15 @@ export function isValid(state: Immutable<State>): boolean {
 
 export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
 
-export function getValues(state: Immutable<State>): Values | null {
-  const totalMaxBudget = FormField.getValue(state.totalMaxBudget);
-  const minTeamMembers = FormField.getValue(state.minTeamMembers);
-  const questionsWeight = FormField.getValue(state.questionsWeight);
-  const codeChallengeWeight = FormField.getValue(state.codeChallengeWeight);
-  const scenarioWeight = FormField.getValue(state.scenarioWeight);
-  const priceWeight = FormField.getValue(state.priceWeight);
+export function getValues(state: Immutable<State>): Values {
+  const totalMaxBudget = FormField.getValue(state.totalMaxBudget) || 0;
+  const minTeamMembers = FormField.getValue(state.minTeamMembers) || 1;
+  const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
+  const codeChallengeWeight = FormField.getValue(state.codeChallengeWeight) || 0;
+  const scenarioWeight = FormField.getValue(state.scenarioWeight) || 0;
+  const priceWeight = FormField.getValue(state.priceWeight) || 0;
   const teamQuestions = TeamQuestions.getValues(state.teamQuestions);
   const phases = Phases.getValues(state.phases);
-  if (totalMaxBudget === null || minTeamMembers === null || questionsWeight === null || codeChallengeWeight === null || scenarioWeight === null || priceWeight === null || teamQuestions === null || phases === null) {
-    return null;
-  }
   return {
     ...phases,
     title:            FormField.getValue(state.title),
@@ -525,7 +522,6 @@ type PersistAction
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, SWUOpportunity], Immutable<State>>> {
   const values = getValues(state);
-  if (!values) { return invalid(state); }
   const isRemoteOkChecked = RadioGroup.isChecked(state.remoteOk);
   const isCreateDraft = action.tag === 'create' && action.value === SWUOpportunityStatus.Draft;
   // Transform remoteOk
@@ -962,6 +958,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
       <Col md='8' xs='12'>
         <NumberField.view
           extraChildProps={{}}
+          required
           label='Minimum Team Members Required'
           placeholder='Minimum Team Members Required'
           disabled={disabled}
