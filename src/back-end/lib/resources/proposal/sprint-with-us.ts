@@ -125,7 +125,7 @@ const resource: Resource = {
                 teamQuestionResponses,
                 references } = request.body;
 
-        const validatedOrganization = await validateOrganizationId(connection, organization);
+        const validatedOrganization = await validateOrganizationId(connection, organization, request.session);
         if (isInvalid(validatedOrganization)) {
           return invalid({
             organization: validatedOrganization.value
