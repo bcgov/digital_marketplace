@@ -18,9 +18,27 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<Tabs, K,
 
 // Tab component types & functions.
 
+export type InvitationResponseParam
+  = 'approve'
+  | 'reject';
+
+export function parseInvitationResponseParam(raw: string): InvitationResponseParam | null {
+  switch (raw) {
+    case 'approve':
+    case 'reject':
+      return raw;
+    default:
+      return null;
+  }
+}
+
 export interface Params {
   profileUser: User;
   viewerUser: User;
+  invitation?: {
+    affiliationId: Id;
+    response: InvitationResponseParam;
+  };
 }
 
 export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;

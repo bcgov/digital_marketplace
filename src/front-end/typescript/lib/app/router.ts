@@ -254,11 +254,16 @@ const router: Router.Router<Route> = {
     {
       path: '/users/:id',
       makeRoute({ params, query }) {
+        const affiliationId = getString(query, 'invitationAffiliationId') || undefined;
+        const response = UserProfileTab.parseInvitationResponseParam(getString(query, 'invitationResponse')) || undefined;
         return {
           tag: 'userProfile',
           value: {
             userId: params.id || '',
-            tab: UserProfileTab.parseTabId(query.tab) || undefined
+            tab: UserProfileTab.parseTabId(query.tab) || undefined,
+            invitation: affiliationId && response
+              ? { affiliationId, response }
+              : undefined
           }
         };
       }
