@@ -326,26 +326,8 @@ export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connec
 });
 
 export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
-  // Retrieve the opportunity and most recent opportunity status
-
-  let query = connection<RawCWUOpportunitySlim>('cwuOpportunities as opp')
-    // Join on latest CWU status
-    .join<RawCWUOpportunitySlim>('cwuOpportunityStatuses as stat', function() {
-      this
-        .on('opp.id', '=', 'stat.opportunity')
-        .andOn('stat.createdAt', '=',
-          connection.raw('(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
-            stat2.opportunity = opp.id)'));
-    })
-    // Join on latest CWU version
-    .join<RawCWUOpportunitySlim>('cwuOpportunityVersions as version', function() {
-      this
-        .on('opp.id', '=', 'version.opportunity')
-        .andOn('version.createdAt', '=',
-          connection.raw('(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
-            version2.opportunity = opp.id)'));
-    })
-    // Select fields for 'slim' opportunity
+  let query = generateCWUOpportunityQuery(connection)
+    .clearSelect()
     .select<RawCWUOpportunitySlim[]>(
       'opp.id',
       'version.title',
