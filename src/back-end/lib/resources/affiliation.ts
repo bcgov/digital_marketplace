@@ -155,7 +155,7 @@ const resource: Resource = {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
           // Notify invited user
-          affiliationNotifications.handleUserInvited(connection, dbResult.value);
+          affiliationNotifications.handleUserInvited(dbResult.value);
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
@@ -206,7 +206,7 @@ const resource: Resource = {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE]}));
           }
           // Notify organization admin that new member has joined
-          affiliationNotifications
+          affiliationNotifications.handleUserAcceptedInvitation(connection, dbResult.value);
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {

@@ -210,6 +210,6 @@ export async function withdrawnCWUProposalSubmissionT(recipient: User, withdrawn
 export function viewCWUProposalCallToAction(proposal: CWUProposal | CWUProposalSlim): templates.LinkProps {
   return {
     text: 'View Proposal',
-    url: templates.makeUrl(`sign-in?redirectOnSuccess=${encodeURIComponent(`/proposals/code-with-us/${proposal.id}`)}`)
+    url: templates.makeUrl(`/proposals/code-with-us/${proposal.id}`)
   };
 }

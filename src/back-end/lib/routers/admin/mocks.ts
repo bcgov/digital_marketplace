@@ -1,4 +1,5 @@
 import { generateUuid } from 'back-end/lib';
+import { Affiliation, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
@@ -222,4 +223,13 @@ export const swuProposal: SWUProposal = {
   organization: organizatonSlim,
   teamQuestionResponses: [swuProposalTeamQuestionResponse],
   anonymousProponentName: 'Proponent 1'
+};
+
+export const affiliation: Affiliation = {
+  id,
+  createdAt: date,
+  user: vendorUser,
+  organization,
+  membershipType: MembershipType.Member,
+  membershipStatus: MembershipStatus.Active
 };

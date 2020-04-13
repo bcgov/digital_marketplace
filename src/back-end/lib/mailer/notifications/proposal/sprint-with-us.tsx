@@ -210,6 +210,6 @@ export async function withdrawnSWUProposalSubmissionT(recipient: User, withdrawn
 export function viewSWUProposalCallToAction(proposal: SWUProposal | SWUProposalSlim): templates.LinkProps {
   return {
     text: 'View Proposal',
-    url: templates.makeUrl(`sign-in?redirectOnSuccess=${encodeURIComponent(`/proposals/sprint-with-us/${proposal.id}`)}`)
+    url: templates.makeUrl(`/proposals/sprint-with-us/${proposal.id}`)
   };
 }

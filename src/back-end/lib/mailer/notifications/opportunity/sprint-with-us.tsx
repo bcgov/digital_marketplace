@@ -135,7 +135,7 @@ export async function newSWUOpportunitySubmittedForReviewT(recipient: User, oppo
           <p>You can also edit the opportunity prior to publishing.  The opportunity author will be notified when you publish, and the opportunity will made visible to the public.</p>
         </div>
       ),
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity, true)]
+      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
     })
   }];
 }
@@ -158,7 +158,7 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(recipient: User
           <p>If you have any questions, please send an email to {CONTACT_EMAIL}.</p>
         </div>
       ),
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity, true)]
+      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
     })
   }];
 }
@@ -183,7 +183,7 @@ export async function successfulSWUPublicationT(recipient: User, opportunity: SW
           <p>If you would like to make a change to your opportunity, such as adding an addendum, simply <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access the opportunity via your dashboard.</p>
         </div>
       ),
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity, true)]
+      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
     })
   }];
 }
@@ -280,7 +280,7 @@ export async function readyForEvalSWUOpportunityT(recipient: User, opportunity: 
           <p>You may now view proposals submitted by vendors and assign scores to each submission.  Please note that each vendor with a submitted proposal will remain anonymous until the next phase of the opportunity has begun.</p>
         </div>
       ),
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity, true)]
+      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
     })
   }];
 }
@@ -299,9 +299,9 @@ export function makeSWUOpportunityInformation(opportunity: SWUOpportunity): temp
   };
 }
 
-export function viewSWUOpportunityCallToAction(opportunity: SWUOpportunity, authenticatedView = false): templates.LinkProps {
+export function viewSWUOpportunityCallToAction(opportunity: SWUOpportunity): templates.LinkProps {
   return {
     text: 'View Opportunity',
-    url: authenticatedView ? templates.makeUrl(`sign-in?redirectOnSuccess=${encodeURIComponent(`/opportunities/sprint-with-us/${opportunity.id}`)}`) : templates.makeUrl(`opportunities/sprint-with-us/${opportunity.id}`)
+    url: templates.makeUrl(`/opportunities/sprint-with-us/${opportunity.id}`)
   };
 }
