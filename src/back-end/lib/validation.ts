@@ -57,14 +57,14 @@ export async function validateAttachments(connection: db.Connection, raw: string
   return await validateArrayAsync(raw, v => validateFileRecord(connection, v));
 }
 
-export async function validateOrganizationId(connection: db.Connection, orgId: Id, allowInactive = false): Promise<Validation<Organization>> {
+export async function validateOrganizationId(connection: db.Connection, orgId: Id, session: Session, allowInactive = false): Promise<Validation<Organization>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(orgId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneOrganization(connection, orgId, allowInactive);
+    const dbResult = await db.readOneOrganization(connection, orgId, allowInactive, session);
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
