@@ -1,10 +1,12 @@
 import { spread, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
-import { MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { MAX_TEAM_QUESTION_WORD_LIMIT, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
-import { allValid, ArrayValidation, getInvalidValue, invalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
+
+import { count } from '@wordpress/wordcount';
 
 export function validateSWUProposalStatus(raw: string, isOneOf: SWUProposalStatus[]): Validation<SWUProposalStatus> {
   const parsed = parseSWUProposalStatus(raw);
@@ -83,34 +85,47 @@ export function validateSWUProposalReferences(raw: any): ArrayValidation<CreateS
   return validateArrayCustom(raw, validateSWUProposalReference, {});
 }
 
-// TODO validate word limit
 export function validateSWUProposalTeamQuestionResponseResponse(raw: string, wordLimit = MAX_TEAM_QUESTION_WORD_LIMIT): Validation<string> {
-  return validateGenericString(raw, 'Response', 1);
+  if (count(raw, 'words', {}) > wordLimit) {
+    return invalid([`The question response must be less than ${wordLimit} words.`]);
+  } else {
+    return validateGenericString(raw, 'Response', 1);
+  }
 }
 
-export function validateSWUProposalTeamQuestionResponseOrder(raw: number): Validation<number> {
-  return validateNumber(raw, 1, MAX_TEAM_QUESTIONS, 'Order');
+export function validateSWUProposalTeamQuestionResponseOrder(raw: number, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<number> {
+  return validateNumber(raw, 1, opportunityTeamQuestions.length, 'Order');
 }
 
-export function validateSWUProposalTeamQuestionResponse(raw: any): Validation<CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors> {
-  const validatedResponse = validateSWUProposalTeamQuestionResponseResponse(getString(raw, 'response'));
-  const validatedOrder = validateSWUProposalTeamQuestionResponseOrder(getNumber(raw, 'order'));
-  if (allValid([validatedResponse, validatedOrder])) {
+export function validateSWUProposalTeamQuestionResponse(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors> {
+  const validatedOrder = validateSWUProposalTeamQuestionResponseOrder(getNumber(raw, 'order'), opportunityTeamQuestions);
+  if (isInvalid(validatedOrder)) {
+    return invalid({
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+  const wordLimit = opportunityTeamQuestions.find(q => q.order === validatedOrder.value)?.wordLimit || 0;
+  if (!wordLimit) {
+    return invalid({
+      order: ['No matching opportunity question.']
+    });
+  }
+  const validatedResponse = validateSWUProposalTeamQuestionResponseResponse(getString(raw, 'response'), wordLimit);
+  if (isInvalid(validatedResponse)) {
+    return invalid({
+      response: getInvalidValue(validatedResponse, undefined)
+    });
+  } else {
     return valid({
       response: validatedResponse.value,
       order: validatedOrder.value
     } as CreateSWUProposalTeamQuestionResponseBody);
-  } else {
-    return invalid({
-      response: getInvalidValue(validatedResponse, undefined),
-      order: getInvalidValue(validatedOrder, undefined)
-    });
   }
 }
 
-export function validateSWUProposalTeamQuestionResponses(raw: any): ArrayValidation<CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors> {
+export function validateSWUProposalTeamQuestionResponses(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): ArrayValidation<CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors> {
   if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of responses.'] }]); }
-  return validateArrayCustom(raw, validateSWUProposalTeamQuestionResponse, {});
+  return validateArrayCustom(raw, v => validateSWUProposalTeamQuestionResponse(v, opportunityTeamQuestions), {});
 }
 
 export function validateSWUProposalProposedCost(inceptionCost: number, prototypeCost: number, implementationCost: number, opportunityBudget: number): Validation<number> {

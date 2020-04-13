@@ -189,7 +189,7 @@ const resource: Resource = {
         const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, validatedSWUOpportunity.value.inceptionPhase || null);
         const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, validatedSWUOpportunity.value.prototypePhase || null);
         const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, validatedSWUOpportunity.value.implementationPhase);
-        const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses);
+        const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses, validatedSWUOpportunity.value.teamQuestions);
         const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
         // Validate that the total proposed cost does not exceed the max budget of the opportunity
         const validatedTotalProposedCost = proposalValidation.validateSWUProposalProposedCost(
@@ -378,7 +378,7 @@ const resource: Resource = {
             const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, swuOpportunity.inceptionPhase || null);
             const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, swuOpportunity.prototypePhase || null);
             const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase);
-            const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses);
+            const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses, swuOpportunity.teamQuestions);
             const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
             // Validate that the total proposed cost does not exceed the max budget of the opportunity
             const validatedTotalProposedCost = proposalValidation.validateSWUProposalProposedCost(
@@ -436,7 +436,7 @@ const resource: Resource = {
             }
             // Validate draft proposal here to make sure it has everything
             if (!allValid([
-              proposalValidation.validateSWUProposalTeamQuestionResponses(validatedSWUProposal.value.teamQuestionResponses),
+              proposalValidation.validateSWUProposalTeamQuestionResponses(validatedSWUProposal.value.teamQuestionResponses, swuOpportunity.teamQuestions),
               proposalValidation.validateSWUProposalReferences(validatedSWUProposal.value.references),
               proposalValidation.validateSWUProposalProposedCost(
                 validatedSWUProposal.value.inceptionPhase?.proposedCost || 0,
