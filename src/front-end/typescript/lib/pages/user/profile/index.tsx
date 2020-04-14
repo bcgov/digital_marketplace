@@ -7,7 +7,7 @@ import { Immutable, immutable, PageComponent, PageInit, replaceRoute } from 'fro
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
@@ -23,8 +23,8 @@ export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, ADT<'noop'>>;
 
 export type Msg = Msg_<Tab.TabId>;
 
-export interface RouteParams {
-  userId: string;
+export interface RouteParams extends Pick<Tab.Params, 'invitation'> {
+  userId: Id;
   tab?: Tab.TabId;
 }
 
@@ -60,7 +60,11 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
           return routeParams.tab || 'profile';
         }
       })();
-      const tabState = immutable(await Tab.idToDefinition(tabId).component.init({ profileUser, viewerUser }));
+      const tabState = immutable(await Tab.idToDefinition(tabId).component.init({
+        profileUser,
+        viewerUser,
+        invitation: routeParams.invitation
+      }));
       // Everything checks out, return valid state.
       return valid(immutable({
         viewerUser,

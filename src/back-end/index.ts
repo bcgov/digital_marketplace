@@ -151,23 +151,32 @@ async function start() {
   adapter({
     router,
     sessionIdToSession: async id => {
-      if (SCHEDULED_DOWNTIME) {
-        return emptySession(id || '');
-      }
+      const empty = emptySession(id || '');
+      if (SCHEDULED_DOWNTIME) { return empty; }
       try {
+        //Try reading anonymous session.
         if (!id) { throw new Error('session ID is undefined'); }
         const dbResult = await readOneSession(connection, id);
         if (isValid(dbResult)) {
           return dbResult.value;
         } else {
-          throw new Error();
+          throw new Error('Failed to read session.');
         }
       } catch (e) {
-        const dbResult = await createAnonymousSession(connection);
-        if (isValid(dbResult)) {
-          return dbResult.value;
-        } else {
-          throw new Error();
+        logger.warn(e.message);
+        try {
+          //If can't read session, try creating a new one.
+          const dbResult = await createAnonymousSession(connection);
+          if (isValid(dbResult)) {
+            return dbResult.value;
+          } else {
+            throw new Error('Failed to create anonymous session.');
+          }
+        } catch (f) {
+          logger.warn(f.message);
+          //If can't read existing or create a new session,
+          //return an empty session.
+          return empty;
         }
       }
     },

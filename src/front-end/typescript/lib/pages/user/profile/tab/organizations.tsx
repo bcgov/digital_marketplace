@@ -11,6 +11,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { find } from 'shared/lib';
 import { AffiliationSlim, memberIsPending, MembershipType } from 'shared/lib/resources/affiliation';
 import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -44,14 +45,24 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
+const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser, invitation }) => {
   const result = await api.affiliations.readMany();
   let affiliations: TableAffiliation[] = [];
   if (api.isValid(result)) {
     affiliations = result.value.sort((a, b) => a.organization.legalName.localeCompare(b.organization.legalName));
   }
+  let showModal: State['showModal'] = null;
+  if (invitation) {
+    const affiliation = find(affiliations, a => a.id === invitation.affiliationId);
+    if (affiliation && memberIsPending(affiliation)) {
+      showModal = adt(
+        invitation.response === 'approve' ? 'approveAffiliation' : 'rejectAffiliation',
+        affiliation
+      );
+    }
+  }
   return {
-    showModal: null,
+    showModal,
     deleteAffiliationLoading: null,
     approveAffiliationLoading: null,
     rejectAffiliationLoading: null,

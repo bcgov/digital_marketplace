@@ -254,11 +254,16 @@ const router: Router.Router<Route> = {
     {
       path: '/users/:id',
       makeRoute({ params, query }) {
+        const affiliationId = getString(query, 'invitationAffiliationId') || undefined;
+        const response = UserProfileTab.parseInvitationResponseParam(getString(query, 'invitationResponse')) || undefined;
         return {
           tag: 'userProfile',
           value: {
             userId: params.id || '',
-            tab: UserProfileTab.parseTabId(query.tab) || undefined
+            tab: UserProfileTab.parseTabId(query.tab) || undefined,
+            invitation: affiliationId && response
+              ? { affiliationId, response }
+              : undefined
           }
         };
       }
@@ -367,8 +372,19 @@ const router: Router.Router<Route> = {
         return `/sign-up`;
       case 'signUpStepTwo':
         return `/sign-up/complete`;
-      case 'userProfile':
-        return `/users/${route.value.userId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+      case 'userProfile': {
+        const query: string[] = [];
+        if (route.value.tab) { query.push(`tab=${route.value.tab}`); }
+        if (route.value.invitation) {
+          query.push(`invitationAffiliationId=${route.value.invitation.affiliationId}`);
+          query.push(`invitationResponse=${route.value.invitation.response}`);
+        }
+        let qs = '';
+        if (query.length) {
+          qs = `?${query.join('&')}`;
+        }
+        return `/users/${route.value.userId}${qs}`;
+      }
       case 'userList':
         return '/users';
       case 'orgList':

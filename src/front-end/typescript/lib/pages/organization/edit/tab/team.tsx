@@ -172,7 +172,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             dispatch(toast(adt('error', toasts.removedTeamMember.error(msg.value))));
             return state;
           }
-          state = state.update('affiliations', affs => affs.filter(({ id }) => id !== msg.value.id));
+          const params = await Tab.initParams(state.organization.id, state.viewerUser);
+          if (params) {
+            state = state
+              .set('organization', params.organization)
+              .set('affiliations', params.affiliations)
+              .set('viewerUser', params.viewerUser)
+              .set('swuQualified', params.swuQualified);
+          }
           dispatch(toast(adt('success', toasts.removedTeamMember.success(msg.value))));
           return resetCapabilities(state);
         }

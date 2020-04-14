@@ -1,14 +1,15 @@
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import * as OrganizationTab from 'front-end/lib/pages/organization/edit/tab/organization';
 import * as QualificationTab from 'front-end/lib/pages/organization/edit/tab/qualification';
 import * as TeamTab from 'front-end/lib/pages/organization/edit/tab/team';
 import { routeDest } from 'front-end/lib/views/link';
 import { AffiliationMember } from 'shared/lib/resources/affiliation';
-import { Organization } from 'shared/lib/resources/organization';
+import { doesOrganizationMeetSWUQualification, Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
-import { adt } from 'shared/lib/types';
+import { adt, Id } from 'shared/lib/types';
 
 // Parent page types & functions.
 
@@ -92,4 +93,23 @@ export async function makeSidebarState(organization: Organization, activeTab: Ta
       makeSidebarLink('qualification', organization, activeTab)
     ]
   }));
+}
+
+export async function initParams(orgId: Id, viewerUser: User): Promise<Params | null> {
+  const organizationResult = await api.organizations.readOne(orgId);
+  if (!api.isValid(organizationResult)) {
+    return null;
+  }
+  const organization = organizationResult.value;
+  const swuQualified = doesOrganizationMeetSWUQualification(organization);
+  const affiliationsResult = await api.affiliations.readManyForOrganization(organization.id);
+  if (!api.isValid(affiliationsResult)) {
+    return null;
+  }
+  return {
+    organization,
+    swuQualified,
+    viewerUser,
+    affiliations: affiliationsResult.value
+  };
 }

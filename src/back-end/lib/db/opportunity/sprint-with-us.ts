@@ -315,35 +315,17 @@ export const readManyTeamQuestions = tryDb<[Id], SWUTeamQuestion[]>(async (conne
 });
 
 export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(async (connection, session) => {
-  // Retrieve the opportunity and most recent opportunity status
-
-  let query = connection<RawSWUOpportunitySlim>('swuOpportunities as opp')
-    // Join on latest SWU status
-    .join<RawSWUOpportunitySlim>('swuOpportunityStatuses as stat', function() {
-      this
-        .on('opp.id', '=', 'stat.opportunity')
-        .andOn('stat.createdAt', '=',
-          connection.raw('(select max("createdAt") from "swuOpportunityStatuses" as stat2 where \
-            stat2.opportunity = opp.id and stat2.status is not null)'));
-    })
-    // Join on latest SWU version
-    .join<RawSWUOpportunitySlim>('swuOpportunityVersions as version', function() {
-      this
-        .on('opp.id', '=', 'version.opportunity')
-        .andOn('version.createdAt', '=',
-          connection.raw('(select max("createdAt") from "swuOpportunityVersions" as version2 where \
-            version2.opportunity = opp.id)'));
-    })
-    // Select fields for 'slim' opportunity
+  let query = generateSWUOpportunityQuery(connection)
+    .clearSelect()
     .select(
-      'opp.id',
-      'version.title',
-      'opp.createdBy',
-      'opp.createdAt',
-      'version.createdAt as updatedAt',
-      'version.createdBy as updatedBy',
-      'version.proposalDeadline',
-      'stat.status'
+      'opportunities.id',
+      'versions.title',
+      'opportunities.createdBy',
+      'opportunities.createdAt',
+      'versions.createdAt as updatedAt',
+      'versions.createdBy as updatedBy',
+      'versions.proposalDeadline',
+      'statuses.status'
     );
 
   if (!session.user || session.user.type === UserType.Vendor) {

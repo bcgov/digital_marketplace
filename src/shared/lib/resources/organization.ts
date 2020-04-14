@@ -9,7 +9,7 @@ export interface OrganizationAdmin {
   owner?: UserSlim;
   acceptedSWUTerms?: Date | null;
   possessAllCapabilities?: boolean;
-  numTeamMembers?: boolean;
+  numTeamMembers?: number;
 }
 
 export interface Organization extends OrganizationAdmin {
