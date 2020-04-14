@@ -1,6 +1,6 @@
 import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
-import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib/db';
+import { Connection, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
 import loggerHook from 'back-end/lib/hooks/logger';
 import sprintWithUsHook from 'back-end/lib/hooks/sprint-with-us';
@@ -159,29 +159,16 @@ async function start() {
         return createEmptySession();
       }
       try {
-        //Try reading anonymous session.
+        //Try reading user session.
         const dbResult = await readOneSession(connection, id);
-        if (isValid(dbResult)) {
+        if (isValid(dbResult) && dbResult.value) {
           return dbResult.value;
         } else {
           throw new Error(`Failed to read session: ${id}`);
         }
       } catch (e) {
         logger.warn(e.message);
-        try {
-          //If can't read session, try creating a new one.
-          const dbResult = await createAnonymousSession(connection);
-          if (isValid(dbResult)) {
-            return dbResult.value;
-          } else {
-            throw new Error('Failed to create anonymous session');
-          }
-        } catch (f) {
-          logger.warn(f.message);
-          //If can't read existing or create a new session,
-          //return an empty session.
-          return createEmptySession();
-        }
+        return createEmptySession();
       }
     },
     sessionToSessionId: ({ id }) => id,

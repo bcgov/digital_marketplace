@@ -7,6 +7,8 @@ const EMPTY_SESSION_ID = '@@EMPTY_SESSION@@';
 
 export interface Session {
   id: Id;
+  createdAt?: Date;
+  updatedAt?: Date;
   accessToken?: string;
   user?: User;
 }

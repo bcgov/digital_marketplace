@@ -7,10 +7,10 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateFileRecord, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
-import { Session } from 'shared/lib/resources/session';
+import { createEmptySession, Session } from 'shared/lib/resources/session';
 import { adminPermissionsToUserType, DeleteValidationErrors, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
 import * as userValidation from 'shared/lib/validation/user';
 import { isArray } from 'util';
 
@@ -277,13 +277,8 @@ const resource: Resource = {
             // Sign the user out of the current session if they are deactivating their own account.
             let session = request.session;
             if (isOwnAccount) {
-              const result = await signOut(connection, session);
-              if (isInvalid(result)) {
-                const dbResult = await db.createAnonymousSession(connection);
-                session = isValid(dbResult) ? getValidValue(dbResult, session) : session;
-              } else {
-                session = result.value;
-              }
+              await signOut(connection, session);
+              session = createEmptySession();
             }
             return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
           } else {
