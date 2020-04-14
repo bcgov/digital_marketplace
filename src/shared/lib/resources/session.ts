@@ -3,6 +3,8 @@ import { Id } from 'shared/lib/types';
 
 export const CURRENT_SESSION_ID = 'current';
 
+const EMPTY_SESSION_ID = '@@EMPTY_SESSION@@';
+
 export interface Session {
   id: Id;
   accessToken?: string;
@@ -19,6 +21,14 @@ export function hasAcceptedTermsOrIsAnonymous(session?: Session): boolean {
     : true;
 }
 
-export function emptySession(id: Id): Session {
-  return { id };
+export function createEmptySession(): Session {
+  return { id: EMPTY_SESSION_ID };
+}
+
+export function isEmptySession(session: Session): boolean {
+  return isEmptySessionId(session.id);
+}
+
+export function isEmptySessionId(sessionId: Id): boolean {
+  return sessionId === EMPTY_SESSION_ID;
 }
