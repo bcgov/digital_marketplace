@@ -1,4 +1,4 @@
-import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -142,10 +142,10 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   init,
   update,
   view,
-  sidebar: {
+  sidebar: sidebarValid({
     size: 'large',
     color: 'blue-light',
-    view: makeInstructionalSidebar<State,  Msg>({
+    view: makeInstructionalSidebar<ValidState,  Msg>({
       getTitle: () => 'Create a Sprint With Us Opportunity',
       getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
       getFooter: () => (
@@ -154,7 +154,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
         </span>
       )
     })
-  },
+  }),
   getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;

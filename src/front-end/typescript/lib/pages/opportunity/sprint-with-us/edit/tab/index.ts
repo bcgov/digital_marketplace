@@ -9,7 +9,7 @@ import * as ProposalsTab from 'front-end/lib/pages/opportunity/sprint-with-us/ed
 import * as SummaryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary';
 import * as TeamScenarioTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario';
 import { routeDest } from 'front-end/lib/views/link';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 
@@ -22,19 +22,19 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<Tabs, K,
 // Tab component types & functions.
 
 export interface Params {
-  opportunity: CWUOpportunity;
+  opportunity: SWUOpportunity;
   viewerUser: User;
 }
 
 export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 
 export interface Tabs {
-  summary: TabbedPage.Tab<Params, SummaryTab.State,             SummaryTab.InnerMsg>;
-  opportunity: TabbedPage.Tab<Params, OpportunityTab.State,         OpportunityTab.InnerMsg>;
-  proposals: TabbedPage.Tab<Params, ProposalsTab.State,           ProposalsTab.InnerMsg>;
-  history: TabbedPage.Tab<Params, HistoryTab.State,             HistoryTab.InnerMsg>;
-  codeChallenge: TabbedPage.Tab<Params, CodeChallengeTab.State,       CodeChallengeTab.InnerMsg>;
-  teamScenario: TabbedPage.Tab<Params, TeamScenarioTab.State,        TeamScenarioTab.InnerMsg>;
+  summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
+  opportunity: TabbedPage.Tab<Params, OpportunityTab.State, OpportunityTab.InnerMsg>;
+  proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
+  history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
+  codeChallenge: TabbedPage.Tab<Params, CodeChallengeTab.State, CodeChallengeTab.InnerMsg>;
+  teamScenario: TabbedPage.Tab<Params, TeamScenarioTab.State, TeamScenarioTab.InnerMsg>;
   proponentScoresheet: TabbedPage.Tab<Params, ProponentScoresheetTab.State, ProponentScoresheetTab.InnerMsg>;
 }
 
@@ -76,19 +76,19 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
     case 'codeChallenge':
       return {
         component: CodeChallengeTab.component,
-        icon: 'cog', // TODO
+        icon: 'code',
         title: 'Code Challenge'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'teamScenario':
       return {
         component: TeamScenarioTab.component,
-        icon: 'cog', // TODO
+        icon: 'users-class',
         title: 'Team Scenario'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'proponentScoresheet':
       return {
         component: ProponentScoresheetTab.component,
-        icon: 'cog', // TODO
+        icon: 'star-full',
         title: 'Proponent Scoresheet'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'history':
@@ -132,7 +132,7 @@ export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Pro
         text: 'Read Guide',
         active: false,
         newTab: true,
-        dest: routeDest(adt('content', 'code-with-us-opportunity-guide'))
+        dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide'))
       }
     ]
   }));

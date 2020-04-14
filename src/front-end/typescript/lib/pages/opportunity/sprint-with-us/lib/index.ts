@@ -1,5 +1,6 @@
+import * as History from 'front-end/lib/components/table/history';
 import { ThemeColor } from 'front-end/lib/types';
-import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity, SWUOpportunityEvent, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 
 export function swuOpportunityStatusToColor(s: SWUOpportunityStatus): ThemeColor {
   switch (s) {
@@ -49,4 +50,25 @@ export function swuOpportunityStatusToPastTenseVerb(s: SWUOpportunityStatus): st
     case SWUOpportunityStatus.Canceled: return 'Cancelled'; //British spelling
     default: return 'Saved';
   }
+}
+
+export function swuOpportunityEventToTitleCase(e: SWUOpportunityEvent): string {
+  switch (e) {
+    case SWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
+    case SWUOpportunityEvent.Edited: return 'Edited';
+  }
+}
+
+export function opportunityToHistoryItems({ history }: SWUOpportunity): History.Item[] {
+  if (!history) { return []; }
+  return history
+    .map(s => ({
+      type: {
+        text: s.type.tag === 'status' ? swuOpportunityStatusToTitleCase(s.type.value) : swuOpportunityEventToTitleCase(s.type.value),
+        color: s.type.tag === 'status' ? swuOpportunityStatusToColor(s.type.value) : undefined
+      },
+      note: s.note,
+      createdAt: s.createdAt,
+      createdBy: s.createdBy || undefined
+    }));
 }

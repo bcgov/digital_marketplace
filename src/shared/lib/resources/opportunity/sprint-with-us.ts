@@ -300,6 +300,20 @@ export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportuni
   }
 }
 
+export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+    case SWUOpportunityStatus.Canceled:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
   return !!o.publishedAt && o.status !== SWUOpportunityStatus.Published;
 }

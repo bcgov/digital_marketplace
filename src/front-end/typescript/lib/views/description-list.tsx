@@ -10,7 +10,7 @@ interface DescriptionItem {
 export const DescriptionItem: View<DescriptionItem> = ({ className = '', name, children }) => {
   return (
     <div className={`d-flex flex-row flex-nowrap align-items-stretch ${className}`}>
-      <div className='font-weight-bold align-self-start'>{name}:</div>
+      <div className='font-weight-bold align-self-start'>{name}</div>
       <div className='ml-3 d-flex align-items-center'>{children}</div>
     </div>
   );
