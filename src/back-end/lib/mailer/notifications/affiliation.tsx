@@ -17,7 +17,18 @@ export async function handleUserAcceptedInvitation(connection: db.Connection, af
   // Notify owner of the affiliated organization
   const owner = getValidValue(await db.readOneOrganizationOwner(connection, affiliation.organization.id), null);
   if (owner) {
-    await acceptedInvitation(owner, affiliation.user, affiliation.organization);
+    await approvedRequestToJoin(owner, affiliation.user, affiliation.organization);
+  }
+
+  // Notify the new member
+  await membershipComplete(affiliation);
+}
+
+export async function handleUserRejectedInvitation(connection: db.Connection, affiliation: Affiliation): Promise<void> {
+  // Notify owner of the affiliated organizatoin
+  const owner = getValidValue(await db.readOneOrganizationOwner(connection, affiliation.organization.id), null);
+  if (owner) {
+    await rejectRequestToJoin(owner, affiliation.user, affiliation.organization);
   }
 }
 
@@ -78,6 +89,29 @@ export async function rejectRequestToJoinT(recipient: User, member: User, organi
     html: templates.simple({
       title,
       description
+    })
+  }];
+}
+
+export const membershipComplete = makeSend(membershipCompleteT);
+
+export async function membershipCompleteT(affiliation: Affiliation): Promise<Emails> {
+  const recipient = affiliation.user;
+  const organizationName = affiliation.organization.legalName;
+  const title = `You Are Now a Member of ${organizationName}`;
+  const description = `You are now a member of ${organizationName} on the Digital Marketplace`;
+  return [{
+    to: recipient.email,
+    subject: title,
+    html: templates.simple({
+      title,
+      description,
+      body: (
+        <div>
+          <p>{organizationName} can now include you on proposals to  Sprint With Us opportunities.</p>
+        </div>
+      ),
+      callsToAction: [viewOrganizationCallToAction(affiliation.organization)]
     })
   }];
 }

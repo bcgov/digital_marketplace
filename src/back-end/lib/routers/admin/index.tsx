@@ -1,10 +1,10 @@
 import * as mailer from 'back-end/lib/mailer';
-import { addedToTeamT, approvedRequestToJoinT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
+import { addedToTeamT, approvedRequestToJoinT, membershipCompleteT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
 import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import { awardedSWUProposalSubmissionT, disqualifiedSWUProposalSubmissionT, successfulSWUProposalSubmissionT, unsuccessfulSWUProposalSubmissionT, withdrawnSWUProposalSubmissionProposalAuthorT, withdrawnSWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/sprint-with-us';
-import { userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
+import { inviteToRegisterT, userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
 import { styles, View } from 'back-end/lib/mailer/templates';
 import * as permissions from 'back-end/lib/permissions';
 import * as mocks from 'back-end/lib/routers/admin/mocks';
@@ -52,8 +52,15 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
       emails: await addedToTeamT(mocks.affiliation)
     },
     {
+      title: 'User Asked To Register',
+      emails: await inviteToRegisterT(mocks.email)
+    },
+    {
       title: 'User Approved Being Added To Organization',
-      emails: await approvedRequestToJoinT(mocks.govUser, mocks.vendorUser, mocks.organization)
+      emails: [
+        ...await approvedRequestToJoinT(mocks.govUser, mocks.vendorUser, mocks.organization),
+        ...await membershipCompleteT(mocks.affiliation)
+      ]
     },
     {
       title: 'User Rejected Being Added To Organization',
