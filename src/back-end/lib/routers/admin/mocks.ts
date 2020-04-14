@@ -1,7 +1,8 @@
 import { generateUuid } from 'back-end/lib';
+import { Affiliation, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { OrganizationSlim } from 'shared/lib/resources/organization';
+import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CWUIndividualProponent, CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { SWUProposal, SWUProposalStatus, SWUProposalTeamQuestionResponse } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -184,6 +185,25 @@ export const swuOpportunitySlim: SWUOpportunitySlim = {
   proposalDeadline: swuOpportunity.proposalDeadline
 };
 
+export const organization: Organization = {
+  id,
+  createdAt: date,
+  updatedAt: date,
+  legalName: 'Organization',
+  streetAddress1: 'Street Address 1',
+  streetAddress2: 'Street Address 2',
+  city: 'City',
+  region: 'Region',
+  mailCode: 'Mail Code',
+  country: 'Country',
+  contactName: 'Contact Name',
+  contactEmail: 'Contact Email',
+  contactTitle: 'Contact Title',
+  contactPhone: 'Contact Phone',
+  websiteUrl: 'Website',
+  active: true
+};
+
 export const organizatonSlim: OrganizationSlim = {
   id,
   legalName: 'Organization Legal Name'
@@ -203,4 +223,13 @@ export const swuProposal: SWUProposal = {
   organization: organizatonSlim,
   teamQuestionResponses: [swuProposalTeamQuestionResponse],
   anonymousProponentName: 'Proponent 1'
+};
+
+export const affiliation: Affiliation = {
+  id,
+  createdAt: date,
+  user: vendorUser,
+  organization,
+  membershipType: MembershipType.Member,
+  membershipStatus: MembershipStatus.Active
 };

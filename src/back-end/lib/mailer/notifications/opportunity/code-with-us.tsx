@@ -104,7 +104,7 @@ export async function successfulCWUPublicationT(recipient: User, opportunity: CW
           <p>If you would like to make a change to your opportunity, such as adding an addendum, simply <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access the opportunity via your dashboard. </p>
         </div>
       ),
-      callsToAction: [viewCWUOpportunityCallToAction(opportunity, true)]
+      callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
   }];
 }
@@ -218,7 +218,7 @@ export async function readyForEvalCWUOpportunityT(recipient: User, opportunity: 
           <p>You may now view proposals submitted by Vendors and assign scores to each submission.</p>
         </div>
       ),
-      callsToAction: [viewCWUOpportunityCallToAction(opportunity, true)]
+      callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
   }];
 }
@@ -237,9 +237,9 @@ export function makeCWUOpportunityInformation(opportunity: CWUOpportunity): temp
   };
 }
 
-export function viewCWUOpportunityCallToAction(opportunity: CWUOpportunity, authenticatedView = false): templates.LinkProps {
+export function viewCWUOpportunityCallToAction(opportunity: CWUOpportunity): templates.LinkProps {
   return {
     text: 'View Opportunity',
-    url: authenticatedView ? templates.makeUrl(`sign-in?redirectOnSuccess=${encodeURIComponent(`/opportunities/code-with-us/${opportunity.id}`)}`) : templates.makeUrl(`opportunities/code-with-us/${opportunity.id}`)
+    url: templates.makeUrl(`/opportunities/code-with-us/${opportunity.id}`)
   };
 }

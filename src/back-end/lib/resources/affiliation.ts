@@ -1,5 +1,7 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as affiliationNotifications from 'back-end/lib/mailer/notifications/affiliation';
+import { inviteToRegister } from 'back-end/lib/mailer/notifications/user';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -109,6 +111,7 @@ const resource: Resource = {
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
           const user = getValidValue(validatedUser, null);
           if (!user) {
+            inviteToRegister(validatedUserEmail.value);
             return invalid({
               inviteeNotRegistered: ['User is not registered, but has been notified.']
             });
@@ -153,6 +156,8 @@ const resource: Resource = {
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
+          // Notify invited user
+          affiliationNotifications.handleUserInvited(dbResult.value);
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
@@ -160,7 +165,6 @@ const resource: Resource = {
             return basicResponse(409, request.session, makeJsonResponseBody(request.body));
           }
           if (request.body.inviteeNotRegistered) {
-            // TODO: send invitee notification requesting registration once email notifications in place
             // Use a status code 400 because the response body is a subset of `CreateValidationErrors`
             return basicResponse(400, request.session, makeJsonResponseBody(request.body));
           }
@@ -202,6 +206,8 @@ const resource: Resource = {
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE]}));
           }
+          // Notify organization admin that new member has joined
+          affiliationNotifications.handleUserAcceptedInvitation(connection, dbResult.value);
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
@@ -240,9 +246,14 @@ const resource: Resource = {
       respond: wrapRespond({
         valid: (async request => {
           const affiliationId = request.body;
+          const existingAffiliationStatus = getValidValue(await db.readOneAffiliationById(connection, affiliationId), null)?.membershipStatus;
           const dbResult = await db.deleteAffiliation(connection, affiliationId);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          // If this was a pending notification, notify of rejected invite
+          if (existingAffiliationStatus === MembershipStatus.Pending) {
+            affiliationNotifications.handleUserRejectedInvitation(connection, dbResult.value);
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
         }),

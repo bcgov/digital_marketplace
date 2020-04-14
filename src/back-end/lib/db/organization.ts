@@ -2,7 +2,7 @@ import { generateUuid } from 'back-end/lib';
 import { Connection, tryDb } from 'back-end/lib/db';
 import { createAffiliation, readManyAffiliationsForOrganization } from 'back-end/lib/db/affiliation';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { readOneUserSlim } from 'back-end/lib/db/user';
+import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { isAdmin } from 'back-end/lib/permissions';
 import { spread, union } from 'lodash';
 import CAPABILITIES from 'shared/lib/data/capabilities';
@@ -11,6 +11,7 @@ import { MembershipStatus, MembershipType } from 'shared/lib/resources/affiliati
 import { FileRecord } from 'shared/lib/resources/file';
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
+import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
 import { getValidValue, isInvalid } from 'shared/lib/validation';
 
@@ -257,4 +258,18 @@ export const updateOrganization = tryDb<[UpdateOrganizationParams, Session], Org
     throw new Error('unable to update organization');
   }
   return valid(dbResult.value);
+});
+
+export const readOneOrganizationOwner = tryDb<[Id], User | null>(async (connection, organization) => {
+  const result = await connection('organizations')
+    .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
+    .join('users', 'affiliations.user', '=', 'users.id')
+    .where({
+      'organizations.id': organization,
+      'affiliations.membershipType': MembershipType.Owner
+    })
+    .select('users.*')
+    .first<RawUser>();
+
+  return valid(result ? await rawUserToUser(connection, result) : null);
 });
