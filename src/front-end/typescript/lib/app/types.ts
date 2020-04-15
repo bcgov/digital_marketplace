@@ -77,7 +77,7 @@ export function isAllowedRouteForUsersWithUnacceptedTerms(route: Route): boolean
 }
 
 export interface SharedState {
-  session?: Session;
+  session: Session;
 }
 
 export interface State {
