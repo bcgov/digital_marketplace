@@ -41,7 +41,7 @@ const resource: Resource = {
           const { name } = validatedRequestBody.value;
           const validatedFileName = fileValidation.validateAvatarFilename(name);
           if (isValid(validatedFileName)) {
-            if (!request.session.user) {
+            if (!request.session) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });

@@ -7,7 +7,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateFileRecord, validateUserId } from 'back-end/lib/validation';
 import { get, isBoolean } from 'lodash';
 import { getString } from 'shared/lib';
-import { createEmptySession, Session } from 'shared/lib/resources/session';
+import { Session } from 'shared/lib/resources/session';
 import { adminPermissionsToUserType, DeleteValidationErrors, notificationsBooleanToNotificationsOn, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
@@ -265,7 +265,7 @@ const resource: Resource = {
           // Track the date the user was made inactive, and the user id of the user that made them inactive
           const isOwnAccount = permissions.isOwnAccount(request.session, request.params.id);
           const status = isOwnAccount ? UserStatus.InactiveByUser : UserStatus.InactiveByAdmin;
-          const deactivatingUserId = request.session.user ? request.session.user.id : undefined;
+          const deactivatingUserId = request.session ? request.session.user.id : undefined;
           const dbResult = await db.updateUser(connection, {
             id: request.params.id,
             status,
@@ -278,7 +278,7 @@ const resource: Resource = {
             let session = request.session;
             if (isOwnAccount) {
               await signOut(connection, session);
-              session = createEmptySession();
+              session = null;
             }
             return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
           } else {

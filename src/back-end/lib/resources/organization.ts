@@ -7,20 +7,28 @@ import { validateFileRecord, validateOrganizationId } from 'back-end/lib/validat
 import { get } from 'lodash';
 import { getString } from 'shared/lib';
 import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, OrganizationSlim, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
-import { Session } from 'shared/lib/resources/session';
+import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateUUID, Validation } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-export type ValidatedUpdateRequestBody
-  = ADT<'updateProfile', UpdateProfileRequestBody>
-  | ADT<'acceptSWUTerms'>;
+export interface ValidatedCreateRequestBody {
+  session: AuthenticatedSession;
+  body: CreateRequestBody;
+}
 
-export type ValidatedCreateRequestBody = CreateRequestBody;
+export interface ValidatedUpdateRequestBody {
+  session: AuthenticatedSession;
+  body: ADT<'updateProfile', UpdateProfileRequestBody>
+      | ADT<'acceptSWUTerms'>;
+}
 
-type DeleteValidatedReqBody = Organization;
+export interface DeleteValidatedReqBody {
+  session: AuthenticatedSession;
+  body: Organization;
+}
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -96,7 +104,7 @@ const resource: Resource = {
           contactTitle: getString(body, 'contactTitle'),
           contactEmail: getString(body, 'contactEmail'),
           contactPhone: getString(body, 'contactPhone')
-        };
+        } as CreateRequestBody;
       },
       async validateRequestBody(request) {
         const { legalName,
@@ -141,25 +149,28 @@ const resource: Resource = {
                       validatedContactEmail,
                       validatedContactPhone
                     ])) {
-                      if (!permissions.createOrganization(request.session) || !request.session.user) {
+                      if (!permissions.createOrganization(request.session) || !permissions.isSignedIn(request.session)) {
                         return invalid({
                           permissions: [permissions.ERROR_MESSAGE]
                         });
                       }
                       return valid({
-                        legalName: validatedLegalName.value,
-                        logoImageFile: isValid(validatedLogoImageFile) && validatedLogoImageFile.value && validatedLogoImageFile.value.id,
-                        websiteUrl: validatedWebsiteUrl.value,
-                        streetAddress1: validatedStreetAddress1.value,
-                        streetAddress2: validatedStreetAddress2.value,
-                        city: validatedCity.value,
-                        region: validatedRegion.value,
-                        mailCode: validatedMailCode.value,
-                        country: validatedCountry.value,
-                        contactName: validatedContactName.value,
-                        contactTitle: validatedContactTitle.value,
-                        contactEmail: validatedContactEmail.value,
-                        contactPhone: validatedContactPhone.value
+                        session: request.session,
+                        body: {
+                          legalName: validatedLegalName.value,
+                          logoImageFile: isValid(validatedLogoImageFile) && validatedLogoImageFile.value && validatedLogoImageFile.value.id,
+                          websiteUrl: validatedWebsiteUrl.value,
+                          streetAddress1: validatedStreetAddress1.value,
+                          streetAddress2: validatedStreetAddress2.value,
+                          city: validatedCity.value,
+                          region: validatedRegion.value,
+                          mailCode: validatedMailCode.value,
+                          country: validatedCountry.value,
+                          contactName: validatedContactName.value,
+                          contactTitle: validatedContactTitle.value,
+                          contactEmail: validatedContactEmail.value,
+                          contactPhone: validatedContactPhone.value
+                        }
                       } as ValidatedCreateRequestBody);
                     } else {
                       return invalid({
@@ -179,12 +190,12 @@ const resource: Resource = {
                       });
                     }
       },
-      respond: wrapRespond<CreateRequestBody, CreateValidationErrors, JsonResponseBody<Organization>, JsonResponseBody<CreateValidationErrors>, Session>({
+      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<Organization>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
-          if (!request.session.user) {
+          if (!request.session) {
             return basicResponse(401, request.session, makeJsonResponseBody({ permissions: [permissions.ERROR_MESSAGE]}));
           }
-          const dbResult = await db.createOrganization(connection, request.session.user.id, request.body, request.session);
+          const dbResult = await db.createOrganization(connection, request.body.session.user.id, request.body.body, request.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
@@ -228,7 +239,7 @@ const resource: Resource = {
       },
       async validateRequestBody(request): Promise<Validation<ValidatedUpdateRequestBody, UpdateValidationErrors>> {
         if (!request.body) { return invalid({ organization: adt('parseFailure' as const)}); }
-        if (!await permissions.updateOrganization(connection, request.session, request.params.id)) {
+        if (!await permissions.updateOrganization(connection, request.session, request.params.id) || !permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -281,22 +292,25 @@ const resource: Resource = {
               validatedContactEmail,
               validatedContactPhone
             ])) {
-              return valid(adt('updateProfile', {
-                id: (validatedOrganization.value as Organization).id,
-                legalName: validatedLegalName.value,
-                logoImageFile: isValid(validatedLogoImageFile) && validatedLogoImageFile.value && validatedLogoImageFile.value.id,
-                websiteUrl: validatedWebsiteUrl.value,
-                streetAddress1: validatedStreetAddress1.value,
-                streetAddress2: validatedStreetAddress2.value,
-                city: validatedCity.value,
-                region: validatedRegion.value,
-                mailCode: validatedMailCode.value,
-                country: validatedCountry.value,
-                contactName: validatedContactName.value,
-                contactTitle: validatedContactTitle.value,
-                contactEmail: validatedContactEmail.value,
-                contactPhone: validatedContactPhone.value
-              } as UpdateProfileRequestBody));
+              return valid({
+                session: request.session,
+                body: adt('updateProfile' as const, {
+                  id: (validatedOrganization.value as Organization).id,
+                  legalName: validatedLegalName.value,
+                  logoImageFile: isValid(validatedLogoImageFile) && validatedLogoImageFile.value && validatedLogoImageFile.value.id,
+                  websiteUrl: validatedWebsiteUrl.value,
+                  streetAddress1: validatedStreetAddress1.value,
+                  streetAddress2: validatedStreetAddress2.value,
+                  city: validatedCity.value,
+                  region: validatedRegion.value,
+                  mailCode: validatedMailCode.value,
+                  country: validatedCountry.value,
+                  contactName: validatedContactName.value,
+                  contactTitle: validatedContactTitle.value,
+                  contactEmail: validatedContactEmail.value,
+                  contactPhone: validatedContactPhone.value
+                } as UpdateProfileRequestBody)
+              });
             } else {
               return invalid({
                 organization: adt('updateProfile' as const, {
@@ -322,7 +336,7 @@ const resource: Resource = {
               if (validatedOrganization.value.acceptedSWUTerms) {
                 return invalid({ organization: adt('acceptSWUTerms' as const, ['The SWU Terms have already been accepted for this organization.'])});
               }
-              return valid(adt('acceptSWUTerms' as const));
+              return valid({ session: request.session, body: adt('acceptSWUTerms' as const) });
             }
           default:
             return invalid({ organization: adt('parseFailure' as const) });
@@ -331,17 +345,18 @@ const resource: Resource = {
       respond: wrapRespond({
         valid: (async request => {
           let dbResult: Validation<Organization, null>;
-          switch (request.body.tag) {
+          const { session, body } = request.body;
+          switch (body.tag) {
             case 'updateProfile':
-              dbResult = await db.updateOrganization(connection, request.body.value, request.session);
+              dbResult = await db.updateOrganization(connection, body.value, session);
               break;
             case 'acceptSWUTerms':
-              dbResult = await db.updateOrganization(connection, { acceptedSWUTerms: new Date(), id: request.params.id }, request.session);
+              dbResult = await db.updateOrganization(connection, { acceptedSWUTerms: new Date(), id: request.params.id }, session);
           }
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(503, session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+          return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
@@ -353,14 +368,17 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request): Promise<Validation<DeleteValidatedReqBody, DeleteValidationErrors>> {
-        if (!(await permissions.deleteOrganization(connection, request.session, request.params.id))) {
+        if (!(await permissions.deleteOrganization(connection, request.session, request.params.id)) || !permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
         const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         if (isValid(validatedOrganization)) {
-          return validatedOrganization;
+          return valid({
+            session: request.session,
+            body: validatedOrganization.value
+          });
         } else {
           return invalid({ notFound: ['Organization not found.']});
         }
@@ -372,13 +390,13 @@ const resource: Resource = {
             id: request.params.id,
             active: false,
             deactivatedOn: new Date(),
-            deactivatedBy: request.session.user && request.session.user.id
+            deactivatedBy: request.body.session.user.id
           },
           request.session);
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(503, request.body.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+          return basicResponse(200, request.body.session, makeJsonResponseBody(dbResult.value));
         }),
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));

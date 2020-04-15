@@ -125,7 +125,7 @@ async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(conne
 
 function processForRole<T extends RawCWUOpportunity | RawCWUOpportunitySlim>(result: T, session: Session) {
   // Remove createdBy/updatedBy for non-admin or non-author
-  if (!session.user || (session.user.type !== UserType.Admin &&
+  if (!session || (session.user.type !== UserType.Admin &&
     session.user.id !== result.createdBy &&
     session.user.id !== result.updatedBy)) {
       delete result.createdBy;
@@ -197,7 +197,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
   let query = generateCWUOpportunityQuery(connection)
     .where({ 'opp.id': id });
 
-  if (!session.user || session.user.type === UserType.Vendor) {
+  if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
       .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);
@@ -250,7 +250,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     }
 
     // Add on subscription flag, if authenticated user
-    if (session.user) {
+    if (session) {
       const subscription = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
         .where({ opportunity: result.id, user: session.user.id })
         .first();
@@ -258,7 +258,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     }
 
     // If admin/owner, add on list of change records and reporting metrics if public
-    if (session.user?.type === UserType.Admin || result.createdBy === session.user?.id) {
+    if (session?.user.type === UserType.Admin || result.createdBy === session?.user.id) {
       const rawStatusArray = await connection<RawCWUOpportunityHistoryRecord>('cwuOpportunityStatuses')
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');
@@ -339,7 +339,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
       'stat.status'
     );
 
-  if (!session.user || session.user.type === UserType.Vendor) {
+  if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
       .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[]);

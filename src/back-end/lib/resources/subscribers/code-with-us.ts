@@ -88,7 +88,7 @@ const resource: Resource = {
       },
       respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUOpportunitySubscriber>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
-          const dbResult = await db.createCWUOpportunitySubscriber(connection, omit(request.body, 'session'), request.body.session);
+          const dbResult = await db.createCWUOpportunitySubscriber(connection, omit(request.body, 'session'), request.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }

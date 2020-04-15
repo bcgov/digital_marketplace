@@ -5,7 +5,7 @@ import { Session } from 'shared/lib/resources/session';
 const hook: RouteHook<unknown, unknown, unknown, unknown, number, Session>  = {
 
   async before(request) {
-    request.logger.info(`${chalk.gray('->')} ${request.method} ${request.path}`, { sessionId: request.session.id });
+    request.logger.info(`${chalk.gray('->')} ${request.method} ${request.path}`, { sessionId: request.session?.id || 'anonymous' });
     return Date.now();
   },
 

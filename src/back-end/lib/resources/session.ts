@@ -28,7 +28,7 @@ type Resource = crud.Resource<
 >;
 
 export async function signOut(connection: Connection, session: Session): Promise<Validation<Session, string[]>> {
-  if (!session.accessToken && !session.user) {
+  if (!session) {
     return valid(session);
   }
   // Sign out of KeyCloak.

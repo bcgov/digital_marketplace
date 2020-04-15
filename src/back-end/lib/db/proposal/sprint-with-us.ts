@@ -116,7 +116,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   if (!opportunity || !teamQuestionResponses) {
     throw new Error('unable to process proposal');
   }
-  if (session.user?.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
+  if (session?.user.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
     // Return anonymous proposal only
     return {
       id: raw.id,
@@ -206,7 +206,7 @@ async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: 
   if (!opportunity) {
     throw new Error('unable to process proposal');
   }
-  if (session.user?.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
+  if (session?.user.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
     // Return anonymous proposal only
     return {
       id: raw.id,
@@ -360,7 +360,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 });
 
 export const readOneSWUProposalByOpportunityAndAuthor = tryDb<[Id, Session], Id | null>(async (connection, opportunityId, session) => {
-  if (!session.user) {
+  if (!session) {
     return valid(null);
   }
   const result = (await connection<{ id: Id }>('swuProposals')

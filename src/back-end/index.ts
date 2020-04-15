@@ -31,7 +31,7 @@ import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
-import { createEmptySession, isEmptySessionId, Session } from 'shared/lib/resources/session';
+import { Session } from 'shared/lib/resources/session';
 import { isValid } from 'shared/lib/validation';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
@@ -154,24 +154,23 @@ async function start() {
       //Do not touch the database:
       //1. During scheduled downtime.
       //2. If the ID is empty.
-      //3. If the session is a special "empty" session.
-      if (SCHEDULED_DOWNTIME || !id || isEmptySessionId(id)) {
-        return createEmptySession();
+      if (SCHEDULED_DOWNTIME || !id) {
+        return null;
       }
       try {
         //Try reading user session.
         const dbResult = await readOneSession(connection, id);
-        if (isValid(dbResult) && dbResult.value) {
+        if (isValid(dbResult)) {
           return dbResult.value;
         } else {
           throw new Error(`Failed to read session: ${id}`);
         }
       } catch (e) {
         logger.warn(e.message);
-        return createEmptySession();
+        return null;
       }
     },
-    sessionToSessionId: ({ id }) => id,
+    sessionToSessionId: (session) => session?.id || '',
     host: SERVER_HOST,
     port: SERVER_PORT,
     maxMultipartFilesSize: MAX_MULTIPART_FILES_SIZE,

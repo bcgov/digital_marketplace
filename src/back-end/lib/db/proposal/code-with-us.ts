@@ -170,7 +170,7 @@ export async function hasAttachmentPermission(connection: Connection, session: S
   }
 
   // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
-  if (session.user) {
+  if (session) {
     const rawProposals = await connection('cwuProposalAttachments as attachments')
       .innerJoin('cwuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
       .where({ 'attachments.file': id })
@@ -333,7 +333,7 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
 });
 
 export const readOneProposalByOpportunityAndAuthor = tryDb<[Id, Session], CWUProposal | null>(async (connection, oppId, session) => {
-  if (!session.user) {
+  if (!session) {
     return valid(null);
   }
   const result = await connection<RawCWUProposal>('cwuProposals')

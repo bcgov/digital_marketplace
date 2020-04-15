@@ -1,6 +1,7 @@
 import assert from 'assert';
 import loggerHook from 'back-end/lib/hooks/logger';
 import { DomainLogger } from 'back-end/lib/logger';
+import * as mocks from 'back-end/lib/routers/admin/mocks';
 import { Request } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { noop } from 'lodash';
@@ -19,7 +20,11 @@ function makeStubRequest(onLog: (kind: LogFunctionKind, msg: string, data?: obje
     path: '/path__',
     body: null,
     session: {
-      id: 'sId__'
+      id: 'sId__',
+      accessToken: 'token__',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      user: mocks.vendorUser
     },
     logger: {
       info: makeLogFn('info'),
@@ -55,7 +60,7 @@ describe('loggerHook', () => {
         await loggerHook.before(request);
         assert(msg.indexOf(request.method) !== -1, 'contains the request method');
         assert(msg.indexOf(request.path) !== -1, 'contains the request path');
-        assert(data.sessionId === request.session.id, 'contains the session ID');
+        assert(data.sessionId === request.session?.id, 'contains the session ID');
       });
 
       it('returns the current epoch time', async () => {

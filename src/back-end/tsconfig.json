@@ -14,15 +14,15 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "incremental": true,
-    "baseUrl": ".",
+    "baseUrl": "../../src",
     "paths": {
-      "back-end/*": ["./*"],
-      "migrations/*": ["../migrations/*"],
-      "shared/*": ["../shared/*"]
+      "back-end/*": ["./back-end/*"],
+      "migrations/*": ["./migrations/*"],
+      "shared/*": ["./shared/*"]
     },
     "types": [
       "node"
-    ]
+    ],
   },
   "include": [
     "**/*.ts",
