@@ -19,9 +19,10 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
-import { CreateRequestBody, CreateSWUOpportunityStatus, CreateValidationErrors, DEFAULT_CODE_CHALLENGE_WEIGHT, DEFAULT_PRICE_WEIGHT, DEFAULT_QUESTIONS_WEIGHT, DEFAULT_SCENARIO_WEIGHT, parseSWUOpportunityPhaseType, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase, SWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityDetailsBeEdited, CreateRequestBody, CreateSWUOpportunityStatus, CreateValidationErrors, DEFAULT_CODE_CHALLENGE_WEIGHT, DEFAULT_PRICE_WEIGHT, DEFAULT_QUESTIONS_WEIGHT, DEFAULT_SCENARIO_WEIGHT, parseSWUOpportunityPhaseType, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase, SWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Addendum } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { adt, ADT, Id } from 'shared/lib/types';
+import { isAdmin, User } from 'shared/lib/resources/user';
+import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
 
@@ -33,7 +34,11 @@ export type TabId = 'Overview' | 'Description' | 'Phases' | 'Team Questions' | '
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
+const newAttachmentMetadata = [adt('any' as const)];
+
 export interface State {
+  opportunity?: SWUOpportunity;
+  viewerUser: User;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   showPhaseInfo: boolean;
   // Overview Tab
@@ -101,9 +106,15 @@ export type Msg
   | ADT<'addenda', Addenda.Msg>;
 
 export interface Params {
+  canRemoveExistingAttachments: boolean;
   opportunity?: SWUOpportunity;
+  viewerUser: User;
   activeTab?: TabId;
   showAddendaTab?: boolean;
+}
+
+export function getActiveTab(state: Immutable<State>): TabId {
+  return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = 'Overview';
@@ -137,7 +148,7 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
   });
 }
 
-export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
+export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, viewerUser, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
   activeTab = !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab;
   const startingPhase = getStartingPhase(opportunity);
   const questionsWeight = opportunity?.questionsWeight || DEFAULT_QUESTIONS_WEIGHT;
@@ -145,6 +156,8 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
   const scenarioWeight = opportunity?.scenarioWeight || DEFAULT_SCENARIO_WEIGHT;
   const priceWeight = opportunity?.priceWeight || DEFAULT_PRICE_WEIGHT;
   return {
+    opportunity,
+    viewerUser,
     showPhaseInfo: true,
     tabbedForm: immutable(await TabbedFormComponent.init({
       tabs: [
@@ -393,6 +406,7 @@ export const init: Init<Params, State> = async ({ opportunity, activeTab = DEFAU
     })),
 
     attachments: immutable(await Attachments.init({
+      canRemoveExistingAttachments,
       existingAttachments: opportunity?.attachments || [],
       newAttachmentMetadata: [adt('any')]
     })),
@@ -518,12 +532,13 @@ export function getValues(state: Immutable<State>): Values {
 
 type PersistAction
   = ADT<'create', CreateSWUOpportunityStatus>
-  | ADT<'update', Id>;
+  | ADT<'update'>;
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, SWUOpportunity], Immutable<State>>> {
   const values = getValues(state);
   const isRemoteOkChecked = RadioGroup.isChecked(state.remoteOk);
   const isCreateDraft = action.tag === 'create' && action.value === SWUOpportunityStatus.Draft;
+  const shouldUploadAttachmentsAndUpdate = action.tag === 'create' || (action.tag === 'update' && !!state.opportunity && canSWUOpportunityDetailsBeEdited(state.opportunity, isAdmin(state.viewerUser)));
   // Transform remoteOk
   if (!isRemoteOkChecked && !isCreateDraft) {
     return invalid(state);
@@ -534,7 +549,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   let attachments = state.attachments.existingAttachments.map(({ id }) => id);
   // Upload new attachments if necessary.
-  if (newAttachments.length) {
+  if (shouldUploadAttachmentsAndUpdate && newAttachments.length) {
     const result = await api.uploadFiles(newAttachments);
     switch (result.tag) {
       case 'valid':
@@ -546,14 +561,14 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state);
     }
   }
-  if (action.tag === 'update' && state.addenda) {
+  if (action.tag === 'update' && state.opportunity && state.addenda) {
     const newAddenda = Addenda.getNewAddenda(state.addenda);
     if (newAddenda.length) {
       let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
       const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
       //Persist each addendum.
       for (const addendum of newAddenda) {
-        const addAddendumResult: api.ResponseValidation<SWUOpportunity, UpdateValidationErrors> = await api.opportunities.swu.update(action.value, adt('addAddendum', addendum));
+        const addAddendumResult: api.ResponseValidation<SWUOpportunity, UpdateValidationErrors> = await api.opportunities.swu.update(state.opportunity.id, adt('addAddendum', addendum));
         switch (addAddendumResult.tag) {
           case 'valid':
             updatedExistingAddenda = addAddendumResult.value.addenda;
@@ -594,18 +609,26 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
             status: action.value
           });
         case 'update':
-          const updateResult = await api.opportunities.swu.update(action.value, adt('edit' as const, {
-            ...values,
-            remoteOk,
-            attachments
-          }));
-          return api.mapInvalid(updateResult, errors => {
-            if (errors.opportunity && errors.opportunity.tag === 'edit') {
-              return errors.opportunity.value;
-            } else {
-              return {};
-            }
-          });
+          if (state.opportunity && shouldUploadAttachmentsAndUpdate) {
+            const updateResult = await api.opportunities.swu.update(state.opportunity.id, adt('edit' as const, {
+              ...values,
+              remoteOk,
+              attachments
+            }));
+            return api.mapInvalid(updateResult, errors => {
+              if (errors.opportunity && errors.opportunity.tag === 'edit') {
+                return errors.opportunity.value;
+              } else {
+                return {};
+              }
+            });
+          } else if (state.opportunity) {
+            return valid(state.opportunity);
+          } else {
+            // Should never happen because state.opportunity should be defined
+            // when updating.
+            return invalid({});
+          }
     }
   })();
   switch (actionResult.tag) {
@@ -615,6 +638,11 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
       return invalid(setErrors(state, actionResult.value));
     case 'valid':
       state = setErrors(state, {});
+      // Update the attachments component accordingly.
+      state = state.set('attachments', immutable(await Attachments.init({
+        existingAttachments: actionResult.value.attachments || [],
+        newAttachmentMetadata
+      })));
       return valid([state, actionResult.value]);
   }
 }
@@ -864,7 +892,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
+function areNonAddendaDisabled(viewerUser: User, opportunity?: SWUOpportunity, disabledProp?: boolean): boolean {
+  return disabledProp || (!!opportunity && !canSWUOpportunityDetailsBeEdited(opportunity, isAdmin(viewerUser)));
+}
+
+const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -991,7 +1024,8 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
+const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   return (
     <Row>
 
@@ -1011,7 +1045,8 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
+const PhasesView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   const rawStartingPhase = FormField.getValue(state.startingPhase);
   const startingPhase = rawStartingPhase ? parseSWUOpportunityPhaseType(rawStartingPhase.value) : null;
   return (
@@ -1075,7 +1110,8 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
+const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   return (
     <Row>
       <Col xs='12'>
@@ -1088,7 +1124,8 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
+const ScoringView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   return (
     <div>
       <Row>
@@ -1146,7 +1183,8 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
+  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   return (
     <Row>
       <Col xs='12'>

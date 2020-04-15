@@ -300,6 +300,48 @@ export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportuni
   }
 }
 
+export function canSWUOpportunityDetailsBeEdited(o: SWUOpportunity, adminsOnly: boolean): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.Draft:
+    case SWUOpportunityStatus.UnderReview:
+      return true;
+    case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.Suspended:
+      return adminsOnly;
+    default:
+      return false;
+  }
+}
+
+export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+    case SWUOpportunityStatus.Canceled:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+    case SWUOpportunityStatus.Suspended:
+    case SWUOpportunityStatus.Canceled:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
   return !!o.publishedAt && o.status !== SWUOpportunityStatus.Published;
 }

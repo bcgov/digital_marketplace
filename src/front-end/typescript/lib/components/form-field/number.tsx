@@ -62,7 +62,7 @@ const ChildView: ChildComponent['view'] = props => {
       min={state.min}
       max={state.max}
       step={state.step}
-      value={state.value === null ? undefined : state.value}
+      value={state.value === null ? '' /*enforces controlled component*/ : state.value}
       className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = parseValue(e.currentTarget.value);

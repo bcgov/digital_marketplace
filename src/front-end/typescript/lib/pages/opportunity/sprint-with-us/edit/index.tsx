@@ -5,13 +5,13 @@ import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
-import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
+import { DEFAULT_OPPORTUNITY_TITLE, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
-  opportunity: CWUOpportunity;
+  opportunity: SWUOpportunity;
 }
 
 export type State_<K extends Tab.TabId> = Validation<Immutable<ValidState<K>>, null>;
@@ -33,7 +33,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
 
     async success({ routePath, routeParams, shared, dispatch }) {
       // Get the opportunity.
-      const opportunityResult = await api.opportunities.cwu.readOne(routeParams.opportunityId);
+      const opportunityResult = await api.opportunities.swu.readOne(routeParams.opportunityId);
       // If the request failed, then show the "Not Found" page.
       // The back-end will return a 404 if the viewer is a Government
       // user and is not the owner.

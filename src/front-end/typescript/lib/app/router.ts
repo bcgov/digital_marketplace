@@ -3,9 +3,12 @@ import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
+import * as SWUOpportunityEditTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
 import * as OrganizationEditTab from 'front-end/lib/pages/organization/edit/tab';
 import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
+//import * as SWUProposalEditTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
+//import * as SWUProposalViewTab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
@@ -59,11 +62,12 @@ const router: Router.Router<Route> = {
     },
     {
       path: '/opportunities/sprint-with-us/:opportunityId/edit',
-      makeRoute({ params }) {
+      makeRoute({ params, query }) {
         return {
           tag: 'opportunitySWUEdit',
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || '',
+            tab: SWUOpportunityEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -82,24 +86,26 @@ const router: Router.Router<Route> = {
     },
     {
       path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/edit',
-      makeRoute({params}) {
+      makeRoute({ params, query }) {
         return {
           tag: 'proposalSWUEdit',
           value: {
             proposalId: params.proposalId || '',
             opportunityId: params.opportunityId || ''
+            //tab: SWUProposalEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
     },
     {
       path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId',
-      makeRoute({ params }) {
+      makeRoute({ params, query }) {
         return {
           tag: 'proposalSWUView',
           value: {
             proposalId: params.proposalId || '',
             opportunityId: params.opportunityId || ''
+            //tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -399,12 +405,14 @@ const router: Router.Router<Route> = {
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;
       case 'proposalSWUEdit':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
+        //return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'proposalSWUView':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
+        //return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'opportunitySWUCreate':
         return '/opportunities/sprint-with-us/create';
       case 'opportunitySWUEdit':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/edit`;
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'opportunitySWUView':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}`;
       case 'opportunityCWUCreate':
