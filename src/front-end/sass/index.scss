@@ -327,10 +327,6 @@ nav {
   color: $white !important;
 }
 
-.ta-left {
-  text-align: left;
-}
-
 .btn,
 button {
 
@@ -435,6 +431,10 @@ nav.navbar .nav-link:hover {
   }
 }
 
+.spinner-border-sm {
+  border-width: 0.15em;
+}
+
 // Custom utilities.
 
 .o-0 {
@@ -488,6 +488,9 @@ nav.navbar .nav-link:hover {
   }
 }
 @each $color, $value in $grays {
+  .text-gray-#{$color} {
+    color: $value;
+  }
   .text-hover-gray-#{$color} {
     @include hover {
       color: darken($value, $emphasized-link-hover-darken-percentage) !important;
@@ -623,11 +626,11 @@ nav.navbar .nav-link:hover {
       height: auto;
 
       &--is-disabled {
-        background-color: $input-disabled-bg;
-        opacity: 1;
+        background-color: $input-disabled-bg !important;
+        opacity: 1 !important;
 
         .react-select__placeholder {
-          opacity: 0;
+          opacity: 0 !important;
         }
       }
 

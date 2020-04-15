@@ -6,11 +6,13 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUOpportunitySlim, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
+import { SWUOpportunitySlim } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
-  opportunities: CWUOpportunitySlim[];
+  cwu: CWUOpportunitySlim[];
+  swu: SWUOpportunitySlim[];
   viewerUser?: User;
 }
 
@@ -19,13 +21,17 @@ export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 export type RouteParams = null;
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
-  let opportunities: CWUOpportunitySlim[] = [];
-  const apiResult = await api.opportunities.cwu.readMany();
-  if (apiResult.tag === 'valid') {
-    opportunities = apiResult.value;
+  let cwu: CWUOpportunitySlim[] = [];
+  let swu: SWUOpportunitySlim[] = [];
+  const cwuR = await api.opportunities.cwu.readMany();
+  const swuR = await api.opportunities.swu.readMany();
+  if (api.isValid(cwuR) && api.isValid(swuR)) {
+    cwu = cwuR.value;
+    swu = swuR.value;
   }
   return {
-    opportunities,
+    cwu,
+    swu,
     viewerUser: shared.session?.user
   };
 };
@@ -38,11 +44,27 @@ const view: ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
+        <h2>CWU</h2>
         {
-          state.opportunities.map(o => {
+          state.cwu.map(o => {
             const route: Route = state.viewerUser && isAdmin(state.viewerUser)
               ? adt('opportunityCWUEdit', { opportunityId: o.id })
               : adt('opportunityCWUView', { opportunityId: o.id });
+            return (
+              <div>
+                <Link dest={routeDest(route)}>
+                  {o.status}: {o.title || DEFAULT_OPPORTUNITY_TITLE}
+                </Link>
+              </div>
+            );
+          })
+        }
+        <h2 className='mt-5'>SWU</h2>
+        {
+          state.swu.map(o => {
+            const route: Route = state.viewerUser && isAdmin(state.viewerUser)
+              ? adt('opportunitySWUEdit', { opportunityId: o.id })
+              : adt('opportunitySWUView', { opportunityId: o.id });
             return (
               <div>
                 <Link dest={routeDest(route)}>

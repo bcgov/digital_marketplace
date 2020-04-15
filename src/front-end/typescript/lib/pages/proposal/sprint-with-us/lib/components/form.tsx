@@ -1,4 +1,5 @@
 import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH, DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
@@ -44,6 +45,7 @@ export interface Params {
 }
 
 export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'evaluationContent' | 'organizations'> {
+  getAffiliationsLoading: number;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   viewerUser: User;
   // Team Tab
@@ -103,6 +105,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     ? { label: proposal.organization.legalName, value: proposal.organization.id }
     : null;
   return {
+    getAffiliationsLoading: 0,
     viewerUser,
     evaluationContent,
     opportunity,
@@ -255,6 +258,10 @@ export function isValid(state: Immutable<State>): boolean {
       && isReferencesTabValid(state);
 }
 
+export function isLoading(state: Immutable<State>): boolean {
+  return state.getAffiliationsLoading > 0;
+}
+
 export type Values = Omit<CreateRequestBody, 'status'>;
 
 export function getValues(state: Immutable<State>): Values | null {
@@ -346,6 +353,9 @@ function updateTotalCost(state: Immutable<State>): Immutable<State> {
   });
 }
 
+const startGetAffiliationsLoading = makeStartLoading<State>('getAffiliationsLoading');
+const stopGetAffiliationsLoading = makeStopLoading<State>('getAffiliationsLoading');
+
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'tabbedForm':
@@ -364,13 +374,19 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Select.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('organization', value),
-        updateAfter: state => [
-          state,
-          async state1 => {
-            const orgId = FormField.getValue(state.organization)?.value;
-            return state1.set('team', Team.setAffiliations(state.team, await getAffiliations(orgId)));
-          }
-        ]
+        updateAfter: state => {
+          if (msg.value.value?.tag !== 'onChange' || !FormField.getValue(state.organization)) { return [state]; }
+          state = startGetAffiliationsLoading(state);
+          state = state.update('organization', s => FormField.setErrors(s, []));
+          return [
+            state,
+            async state1 => {
+              state1 = stopGetAffiliationsLoading(state1);
+              const orgId = FormField.getValue(state1.organization)?.value;
+              return state1.set('team', Team.setAffiliations(state1.team, await getAffiliations(orgId)));
+            }
+          ];
+        }
       });
 
     case 'team':
@@ -471,6 +487,7 @@ const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
+  const isGetAffiliationsLoading = state.getAffiliationsLoading > 0;
   return (
     <div>
       <Row>
@@ -483,19 +500,21 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
         </Col>
         <Col xs='12'>
           <Select.view
-            extraChildProps={{}}
+            extraChildProps={{
+              loading: isGetAffiliationsLoading
+            }}
             required
             className='mb-0'
             label='Organization'
             placeholder='Organization'
             hint={state.viewerUser.type === UserType.Vendor
-              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tabId: 'organizations' }))}>your user profile</Link> and that it is qualified to apply for Sprint With Us opportunities.</span>)
+              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities.</span>)
               : undefined}
             state={state.organization}
             dispatch={mapComponentDispatch(dispatch, v => adt('organization' as const, v))}
             disabled={disabled} />
         </Col>
-        {FormField.getValue(state.organization)
+        {FormField.getValue(state.organization) && !isGetAffiliationsLoading
           ? (<Col xs='12'>
               <div className='mt-5 pt-5 border-top'>
                 <Team.view
@@ -793,11 +812,15 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
 };
 
 interface Props extends ComponentViewProps<State,  Msg> {
-  disabled ?: boolean;
+  disabled?: boolean;
 }
 
-export const view: View<Props> = props => {
-  const { state, dispatch } = props;
+export const view: View<Props> = ({ state, dispatch, disabled }) => {
+  const props = {
+    state,
+    dispatch,
+    disabled: disabled || isLoading(state)
+  };
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case 'Evaluation':      return (<EvaluationView {...props} />);

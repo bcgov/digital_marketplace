@@ -1,5 +1,5 @@
 import * as router from 'front-end/lib/app/router';
-import { ComponentView, ComponentViewProps, View } from 'front-end/lib/framework';
+import { ComponentView, ComponentViewProps, View, ViewElementChildren } from 'front-end/lib/framework';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
@@ -8,8 +8,8 @@ interface Params<State, Msg> {
   showBackLink?: boolean;
   showOnMobile?: boolean;
   getFooter: ComponentView<State, Msg>;
-  getTitle(state: State): string;
-  getDescription(state: State): string;
+  getTitle(state: State): ViewElementChildren;
+  getDescription(state: State): ViewElementChildren;
 }
 
 function makeSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>>(params: Params<State, Msg>): View<Props> {
@@ -30,7 +30,7 @@ function makeSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = 
                 </Link>)
             : null}
           <h1 className='mb-3 font-weight-bolder'>{getTitle(state)}</h1>
-          <p className={footer ? 'mb-3' : 'mb-0'}>{getDescription(state)}</p>
+          <div className={footer ? 'mb-3' : 'mb-0'}>{getDescription(state)}</div>
           <div className='font-size-small'>{footer}</div>
         </Sticky>
       </div>

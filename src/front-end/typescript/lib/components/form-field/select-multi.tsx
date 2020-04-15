@@ -20,7 +20,9 @@ type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'options'
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+interface ExtraChildProps {
+  loading?: boolean;
+}
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -42,7 +44,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder = '', className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, placeholder = '', className = '', validityClassName, loading, disabled = false } = props;
   const selectProps: MultiProps = {
     multi: true,
     creatable: state.creatable,
@@ -51,6 +53,7 @@ const ChildView: ChildComponent['view'] = props => {
     placeholder,
     value: state.value,
     disabled,
+    loading,
     options: state.options,
     className: `${className} ${validityClassName}`,
     onChange: value => {
