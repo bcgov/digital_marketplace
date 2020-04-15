@@ -25,17 +25,18 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
-  errorAlerts: string[];
   form: Immutable<Form.State>;
 }
 
-type UpdateStatus = 'publish' | 'cancel' | 'suspend';
+type UpdateStatus
+  = CWUOpportunityStatus.Published
+  | CWUOpportunityStatus.Canceled
+  | CWUOpportunityStatus.Suspended;
 
 export type InnerMsg
   = ADT<'form', Form.Msg>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
-  | ADT<'dismissErrorAlert', number>
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
@@ -44,25 +45,6 @@ export type InnerMsg
   | ADT<'delete'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
-
-function addErrorAlert(state: Immutable<State>, text: string): Immutable<State> {
-  return state.update('errorAlerts', alerts => alerts.concat(text));
-}
-
-function addErrorAlertsFromUpdate(state: Immutable<State>, errors: UpdateValidationErrors): Immutable<State> {
-  if (!errors.opportunity) { return state; }
-  switch (errors.opportunity.tag) {
-    case 'publish':
-    case 'suspend':
-    case 'cancel':
-      return errors.opportunity.value.reduce((state: Immutable<State>, error: string) => addErrorAlert(state, error), state);
-    case 'edit':
-    case 'addAddendum':
-      return addErrorAlert(state, 'Your changes could not be saved. Please review the form below, fix any errors and try again.');
-    case 'parseFailure':
-      return addErrorAlert(state, 'Sorry, a system error has occurred. Please contact us to report this issue.');
-  }
-}
 
 async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
   return immutable(await Form.init({
@@ -82,7 +64,6 @@ const init: Init<Tab.Params, State> = async params => ({
   updateStatusLoading: 0,
   deleteLoading: 0,
   isEditing: false,
-  errorAlerts: [],
   form: await initForm(params.opportunity)
 });
 
@@ -113,7 +94,14 @@ async function saveChanges(state: Immutable<State>, onValid?: AsyncWithState<Sta
 }
 
 async function updateStatus(state: Immutable<State>, newStatus: UpdateStatus, onValid?: AsyncWithState<State, [CWUOpportunity]>, onInvalid?: AsyncWithState<State, [UpdateValidationErrors?]>): Promise<Immutable<State>> {
-  const result = await api.opportunities.cwu.update(state.opportunity.id, adt(newStatus, ''));
+  const updateAction = (() => {
+    switch (newStatus) {
+      case CWUOpportunityStatus.Published: return 'publish';
+      case CWUOpportunityStatus.Suspended: return 'suspend';
+      case CWUOpportunityStatus.Canceled: return 'cancel';
+    }
+  })();
+  const result = await api.opportunities.cwu.update(state.opportunity.id, adt(updateAction, ''));
   switch (result.tag) {
     case 'valid':
       state = state
@@ -141,14 +129,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [state.set('showModal', msg.value)];
     case 'hideModal':
       return [state.set('showModal', null)];
-    case 'dismissErrorAlert':
-      return [
-        state.update('errorAlerts', alerts => alerts.filter((a, i) => i !== msg.value))
-      ];
     case 'startEditing':
       return [
         startStartEditingLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopStartEditingLoading(state);
           const result = await api.opportunities.cwu.readOne(state.opportunity.id);
           if (api.isValid(result)) {
@@ -156,7 +140,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               .set('isEditing', true)
               .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
           } else {
-            return addErrorAlert(state, 'This opportunity cannot currently be edited.');
+            dispatch(toast(adt('error', toasts.startedEditing.error)));
+            return state;
           }
         }
       ];
@@ -181,7 +166,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               dispatch(toast(adt('success', isCWUOpportunityPublic(state1.opportunity) ? toasts.changesPublished.success : toasts.changesSaved.success)));
               return state1;
             },
-            async state1 => addErrorAlertsFromUpdate(state1, { opportunity: adt('edit', {}) })
+            async state1 => {
+              dispatch(toast(adt('error', isCWUOpportunityPublic(state1.opportunity) ? toasts.changesPublished.error : toasts.changesSaved.error)));
+              return state1;
+            }
           );
         }
       ];
@@ -193,14 +181,20 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           state = stopSaveChangesAndUpdateStatusLoading(state);
           return await saveChanges(
             state,
-            state1 => updateStatus(state1, 'publish',
+            state1 => updateStatus(state1, CWUOpportunityStatus.Published,
               async state2 => {
                 dispatch(toast(adt('success', toasts.changesPublished.success)));
                 return state2;
               },
-              async state2 => addErrorAlert(state2, 'Your changes were saved, but could not be published.')
+              async state2 => {
+                dispatch(toast(adt('error', toasts.changesPublished.error)));
+                return state2;
+              }
             ),
-            async state1 => addErrorAlertsFromUpdate(state1, { opportunity: adt('edit', {}) })
+            async state1 => {
+              dispatch(toast(adt('error', toasts.changesPublished.error)));
+              return state1;
+            }
           );
           return state;
         }
@@ -218,7 +212,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               dispatch(toast(adt('success', toasts.statusChanged.success(opportunity.status))));
               return state1;
             },
-            async (state1, errors) => errors ? addErrorAlertsFromUpdate(state1, errors) : state
+            async (state1) => {
+              dispatch(toast(adt('error', toasts.statusChanged.error(msg.value))));
+              return state1;
+            }
           );
         }
       ];
@@ -308,12 +305,7 @@ export const component: Tab.Component<State, Msg> = {
     return {
       warnings: state.opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(state.form)
         ? [{ text: 'This opportunity is a draft. Please select "Edit" from the Actions dropdown to complete and publish this opportunity.' }]
-        : [],
-      info: [],
-      errors: state.errorAlerts.map((text, i) => ({
-        text,
-        dismissMsg: adt('dismissErrorAlert', i)
-      }))
+        : []
     };
   },
 
@@ -329,7 +321,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'bullhorn',
               color: 'primary',
               button: true,
-              msg: adt('updateStatus', 'publish' as const)
+              msg: adt('updateStatus', CWUOpportunityStatus.Published) as Msg
             },
             {
               text: 'Cancel',
@@ -389,7 +381,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'pause-circle',
               color: 'warning',
               button: true,
-              msg: adt('updateStatus', 'suspend' as const)
+              msg: adt('updateStatus', CWUOpportunityStatus.Suspended) as Msg
             },
             {
               text: 'Cancel',
@@ -429,7 +421,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'minus-circle',
               color: 'danger',
               button: true,
-              msg: adt('updateStatus', 'cancel' as const)
+              msg: adt('updateStatus', CWUOpportunityStatus.Canceled) as Msg
             },
             {
               text: 'Cancel',

@@ -8,7 +8,7 @@ import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { DEFAULT_OPPORTUNITY_TITLE, isSWUOpportunityPublic, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { User, UserType } from 'shared/lib/resources/user';
+import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
 export interface Props {
@@ -41,7 +41,7 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
     createdBy
       ? {
           name: 'Created By',
-          children: viewerUser.type === UserType.Admin
+          children: isAdmin(viewerUser)
             ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
             : createdBy.name
         }

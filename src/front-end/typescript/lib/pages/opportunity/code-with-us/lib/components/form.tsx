@@ -484,7 +484,8 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
           } else if (state.opportunity) {
             return valid(state.opportunity);
           } else {
-            // Should never happen.
+            // Should never happen because state.opportunity should be defined
+            // when updating.
             return invalid({});
           }
     }

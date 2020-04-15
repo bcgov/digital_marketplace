@@ -24,6 +24,30 @@ export function cwuOpportunityStatusToTitleCase(s: CWUOpportunityStatus): string
   }
 }
 
+export function cwuOpportunityStatusToPresentTenseVerb(s: CWUOpportunityStatus): string {
+  switch (s) {
+    case CWUOpportunityStatus.Suspended: return 'Suspend';
+    case CWUOpportunityStatus.Canceled: return 'Cancel';
+    case CWUOpportunityStatus.Published: return 'Publish';
+    case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Draft:
+      return 'Update';
+  }
+}
+
+export function cwuOpportunityStatusToPastTenseVerb(s: CWUOpportunityStatus): string {
+  switch (s) {
+    case CWUOpportunityStatus.Suspended: return 'Suspended';
+    case CWUOpportunityStatus.Canceled: return 'Cancelled';
+    case CWUOpportunityStatus.Published: return 'Published';
+    case CWUOpportunityStatus.Awarded:
+    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Draft:
+      return 'Updated';
+  }
+}
+
 export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
   switch (e) {
     case CWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
