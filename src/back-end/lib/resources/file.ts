@@ -123,7 +123,7 @@ const resource: Resource = {
       },
       respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
-          const createdById = getString(request.session.user, 'id');
+          const createdById = getString(request.session?.user || {}, 'id');
           const dbResult = await db.createFile(connection, request.body, createdById);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));

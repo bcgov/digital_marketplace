@@ -58,7 +58,7 @@ const resource: Resource = {
         if (isInvalid(validatedOrganization)) {
           return respond(404, validatedOrganization.value);
         }
-        if (!request.session.user || !permissions.readManyAffiliationsForOrganization(connection, request.session, request.query.organization)) {
+        if (!request.session || !permissions.readManyAffiliationsForOrganization(connection, request.session, request.query.organization)) {
           return respond(401, [permissions.ERROR_MESSAGE]);
         }
         const dbResult = await db.readManyAffiliationsForOrganization(connection, validatedOrganization.value.id);
@@ -69,7 +69,7 @@ const resource: Resource = {
 
       } else {
         // Otherwise return all affiliations for the current user
-        if (!request.session.user || !permissions.readManyAffiliations(request.session)) {
+        if (!request.session || !permissions.readManyAffiliations(request.session)) {
           return respond(401, [permissions.ERROR_MESSAGE]);
         }
         const dbResult = await db.readManyAffiliations(connection, request.session.user.id, request.session);

@@ -65,7 +65,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     };
   },
   async fail({ routePath, shared, dispatch }) {
-    if (!shared.session || !shared.session.user) {
+    if (!shared.session) {
       dispatch(replaceRoute(adt('signIn' as const, {
         redirectOnSuccess: router.routeToUrl(adt('userList', null))
       })));

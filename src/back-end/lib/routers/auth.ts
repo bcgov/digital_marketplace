@@ -1,5 +1,5 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
-import { Connection, createUser, findOneUserByTypeAndUsername, updateSession, updateUser } from 'back-end/lib/db';
+import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
 import { userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
@@ -160,10 +160,9 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             return makeAuthErrorRedirect(request);
           }
 
-          const result = await updateSession(connection, {
-            ...request.session,
-            user: user && user.id,
-            accessToken: tokens.refresh_token
+          const result = await createSession(connection, {
+            accessToken: tokens.refresh_token,
+            user: user.id
           });
           if (isInvalid(result)) {
             return makeAuthErrorRedirect(request);

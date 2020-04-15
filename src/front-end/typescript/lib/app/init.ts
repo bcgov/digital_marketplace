@@ -17,7 +17,7 @@ const init: Init<null, State> = async () => {
       }
     },
     shared: {
-      session: undefined
+      session: null
     },
     activeRoute: { tag: 'landing', value: null },
     nav: immutable(await Nav.init(null)),

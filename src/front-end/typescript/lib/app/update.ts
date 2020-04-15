@@ -39,8 +39,8 @@ import { CURRENT_SESSION_ID, hasAcceptedTermsOrIsAnonymous, Session } from 'shar
 import { adt, ADT, adtCurried } from 'shared/lib/types';
 
 function setSession(state: Immutable<State>, validated: api.ResponseValidation<Session, string[]>): Immutable<State> {
-return state.set('shared', {
-  session: validated.tag === 'valid' ? validated.value : undefined
+  return state.set('shared', {
+    session: validated.tag === 'valid' ? validated.value : null
   });
 }
 

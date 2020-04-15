@@ -187,7 +187,7 @@ export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim
   const results = await query as RawOrganization[] || [];
   return valid(await Promise.all(results.map(async raw => {
     const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms } = raw;
-    if (!isAdmin(session) && raw.owner !== session.user?.id) {
+    if (!isAdmin(session) && raw.owner !== session?.user.id) {
       return await rawOrganizationSlimToOrganizationSlim(connection, {
         id,
         legalName,

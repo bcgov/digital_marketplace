@@ -108,7 +108,7 @@ export async function hasFilePermission(connection: Connection, session: Session
     const query = connection<FileRecord>('files')
       .where({ id });
 
-    if (!session.user) {
+    if (!session) {
       query
         .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
     } else {

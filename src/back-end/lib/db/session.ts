@@ -4,78 +4,55 @@ import { readOneUser } from 'back-end/lib/db/user';
 import { valid } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { Id } from 'shared/lib/types';
-import { isValid } from 'shared/lib/validation';
+import { getValidValue } from 'shared/lib/validation';
 
 interface RawSession {
   id: Id;
-  accessToken?: string;
-  user?: Id;
+  createdAt: Date;
+  updatedAt: Date;
+  accessToken: string;
+  user: Id;
 }
 
-type UpdateSessionParams = Omit<Session, 'user'> & { user: Id, updatedAt?: Date };
+interface CreateSessionParams {
+  accessToken: string;
+  user: Id;
+}
 
-async function rawSessionToSession(connection: Connection, params: RawSession): Promise<Session> {
-  const session = {
-    id: params.id,
-    accessToken: params.accessToken
-  };
-  if (params.user) {
-    const dbResult = await readOneUser(connection, params.user);
-    if (isValid(dbResult) && dbResult.value) {
-      return {
-        ...session,
-        user: dbResult.value
-      };
-    }
+async function rawSessionToSession(connection: Connection, raw: RawSession): Promise<Session> {
+  const { user: userId, ...restOfRaw } = raw;
+  const user = getValidValue(await readOneUser(connection, userId), null);
+  if (!user) {
+    throw new Error('unable to read session');
   }
-  return session;
+  return {
+    ...restOfRaw,
+    user
+  };
 }
 
-export const readOneSession = tryDb<[Id], Session>(async (connection, id) => {
+export const readOneSession = tryDb<[Id], Session | null>(async (connection, id) => {
   const result = await connection<RawSession>('sessions')
     .where({ id })
     .first();
 
-  if (!result) { return await createAnonymousSession(connection); }
-  return valid(await rawSessionToSession(connection, {
-    id: result.id,
-    accessToken: result.accessToken,
-    user: result.user
-  }));
+  return valid(result ? await rawSessionToSession(connection, result) : null);
 });
 
-export const createAnonymousSession = tryDb<[], Session>(async (connection) => {
+export const createSession = tryDb<[CreateSessionParams], Session>(async (connection, session) => {
   const now = new Date();
-  const [result] = await connection<Session>('sessions')
+  const [result] = await connection<RawSession>('sessions')
     .insert({
+      ...session,
       id: generateUuid(),
       createdAt: now,
       updatedAt: now
-    } as Session, '*');
-  if (!result) {
-    throw new Error('unable to create anonymous session');
-  }
-  return valid(await rawSessionToSession(connection, {
-    id: result.id
-  }));
-});
+    }, '*');
 
-export const updateSession = tryDb<[UpdateSessionParams], Session>(async (connection, session) => {
-  const now = new Date();
-  const [result] = await connection<UpdateSessionParams>('sessions')
-    .where({ id: session && session.id })
-    .update({
-      ...session,
-      updatedAt: now
-    } as UpdateSessionParams, '*');
   if (!result) {
-    throw new Error('unable to update session');
+    throw new Error('unable to create session');
   }
-  return valid(await rawSessionToSession(connection, {
-    id: result.id,
-    accessToken: result.accessToken,
-    user: result.user
-  }));
+  return valid(await rawSessionToSession(connection, result));
 });
 
 export const deleteSession = tryDb<[Id], null>(async (connection, id) => {

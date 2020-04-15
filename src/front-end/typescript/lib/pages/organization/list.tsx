@@ -15,7 +15,7 @@ type TableOrganization = OrganizationSlim;
 export interface State {
   table: Immutable<Table.State>;
   organizations: TableOrganization[];
-  sessionUser?: User;
+  sessionUser: User | null;
 }
 
 type InnerMsg = ADT<'table', Table.Msg>;
@@ -29,7 +29,8 @@ async function baseState(): Promise<State> {
     organizations: [],
     table: immutable(await Table.init({
       idNamespace: 'org-list-table'
-    }))
+    })),
+    sessionUser: null
   };
 }
 

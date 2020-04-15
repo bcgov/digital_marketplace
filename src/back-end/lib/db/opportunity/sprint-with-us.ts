@@ -328,7 +328,7 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(a
       'statuses.status'
     );
 
-  if (!session.user || session.user.type === UserType.Vendor) {
+  if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
       .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[]);
@@ -376,7 +376,7 @@ async function createSWUOpportunityAttachments(connection: Connection, trx: Tran
 
 function processForRole<T extends RawSWUOpportunity>(result: T, session: Session) {
   // Remove createdBy/updatedBy for non-admin or non-author
-  if (!session.user || (session.user.type !== UserType.Admin &&
+  if (!session || (session.user.type !== UserType.Admin &&
     session.user.id !== result.createdBy &&
     session.user.id !== result.updatedBy)) {
       delete result.createdBy;
@@ -423,7 +423,7 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
   let query = generateSWUOpportunityQuery(connection)
     .where({ 'opportunities.id': id });
 
-  if (!session.user || session.user.type === UserType.Vendor) {
+  if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
       .whereIn('statuses.status', publicOpportunityStatuses as SWUOpportunityStatus[]);
@@ -473,14 +473,14 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
     }
 
     // If authenticated, add on subscription status flag
-    if (session.user) {
+    if (session) {
       result.subscribed = !!(await connection<RawSWUOpportunitySubscriber>('swuOpportunitySubscribers')
         .where({ opportunity: result.id, user: session.user.id })
         .first());
     }
 
     // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
-    if (session.user?.type === UserType.Admin || result.createdBy === session.user?.id) {
+    if (session?.user.type === UserType.Admin || result.createdBy === session?.user.id) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>('swuOpportunityStatuses')
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');

@@ -1,6 +1,6 @@
 import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
-import { Connection, createAnonymousSession, readOneSession } from 'back-end/lib/db';
+import { Connection, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
 import loggerHook from 'back-end/lib/hooks/logger';
 import sprintWithUsHook from 'back-end/lib/hooks/sprint-with-us';
@@ -31,7 +31,7 @@ import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
-import { createEmptySession, isEmptySessionId, Session } from 'shared/lib/resources/session';
+import { Session } from 'shared/lib/resources/session';
 import { isValid } from 'shared/lib/validation';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
@@ -154,12 +154,11 @@ async function start() {
       //Do not touch the database:
       //1. During scheduled downtime.
       //2. If the ID is empty.
-      //3. If the session is a special "empty" session.
-      if (SCHEDULED_DOWNTIME || !id || isEmptySessionId(id)) {
-        return createEmptySession();
+      if (SCHEDULED_DOWNTIME || !id) {
+        return null;
       }
       try {
-        //Try reading anonymous session.
+        //Try reading user session.
         const dbResult = await readOneSession(connection, id);
         if (isValid(dbResult)) {
           return dbResult.value;
@@ -168,23 +167,10 @@ async function start() {
         }
       } catch (e) {
         logger.warn(e.message);
-        try {
-          //If can't read session, try creating a new one.
-          const dbResult = await createAnonymousSession(connection);
-          if (isValid(dbResult)) {
-            return dbResult.value;
-          } else {
-            throw new Error('Failed to create anonymous session');
-          }
-        } catch (f) {
-          logger.warn(f.message);
-          //If can't read existing or create a new session,
-          //return an empty session.
-          return createEmptySession();
-        }
+        return null;
       }
     },
-    sessionToSessionId: ({ id }) => id,
+    sessionToSessionId: (session) => session?.id || '',
     host: SERVER_HOST,
     port: SERVER_PORT,
     maxMultipartFilesSize: MAX_MULTIPART_FILES_SIZE,

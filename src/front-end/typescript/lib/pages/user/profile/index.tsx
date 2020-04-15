@@ -75,7 +75,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
     },
 
     async fail({ routeParams, dispatch, shared }) {
-      if (!shared.session || !shared.session.user) {
+      if (!shared.session) {
         dispatch(replaceRoute(adt('signIn' as const, {
           redirectOnSuccess: router.routeToUrl(adt('userProfile', { userId: routeParams.userId }))
         })));
