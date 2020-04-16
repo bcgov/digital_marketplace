@@ -182,7 +182,7 @@ export async function readOneCWUProposal(connection: Connection, session: Sessio
     // Only provide permission to admins/gov owners if opportunity is not in draft/published
     // And proposal is not in draft/submitted
     return isSignedIn(session) && doesCWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
-          isCWUProposalStatusVisibleToGovernment(proposal.status, session.user.type);
+          isCWUProposalStatusVisibleToGovernment(proposal.status, session.user.type as UserType.Admin | UserType.Government);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return (session && await isCWUProposalAuthor(connection, session.user, proposal.id)) || false;
@@ -251,7 +251,7 @@ export async function readOneSWUProposal(connection: Connection, session: Sessio
     // Only provide permission to admins/gov owners if opportunity is not in draft/published
     // And proposal is not in draft/submitted
     return isSignedIn(session) && doesSWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
-          isSWUProposalStatusVisibleToGovernment(proposal.status, session.user.type);
+          isSWUProposalStatusVisibleToGovernment(proposal.status, session.user.type as UserType.Government | UserType.Admin);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return (session && await isSWUProposalAuthor(connection, session.user, proposal.id)) || false;

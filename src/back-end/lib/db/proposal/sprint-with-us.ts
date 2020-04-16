@@ -314,7 +314,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 
   // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
   if (session.user && session.user.type !== UserType.Vendor) {
-    results = results.filter(result => isSWUProposalStatusVisibleToGovernment(result.status, session.user.type));
+    results = results.filter(result => isSWUProposalStatusVisibleToGovernment(result.status, session.user.type as UserType.Admin | UserType.Government));
   }
 
   // Calculate scores and rankings for proposals (helper function will limit based on role/status)
