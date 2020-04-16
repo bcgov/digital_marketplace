@@ -104,7 +104,7 @@ export const view: View<Props> = props => {
               : (<Icon
                   hover
                   color='gray-500'
-                  name='chevron-down' />)}
+                  name='caret-down' />)}
           </div>
         );
       }
