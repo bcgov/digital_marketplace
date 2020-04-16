@@ -189,6 +189,18 @@ export function validateNumber(raw: string | number, min?: number, max?: number,
   return valid(parsed);
 }
 
+export function validateNumberWithPrecision(raw: string | number, min?: number, max?: number, maxPrecision = 5, name = 'number', article = 'a', format = true): Validation<number> {
+  const validatedNumber = validateNumber(raw, min, max, name, article, format, false);
+  if (isInvalid(validatedNumber)) {
+    return validatedNumber;
+  }
+  const parts = validatedNumber.value.toString().split('.');
+  if (parts.length > 1 && parts[1].length > maxPrecision) {
+    return invalid([`Please enter ${article} ${name} with precision less than or equal to ${maxPrecision}`]);
+  }
+  return validatedNumber;
+}
+
 // Date Validators.
 
 function parseDate(raw: string): Date | null {

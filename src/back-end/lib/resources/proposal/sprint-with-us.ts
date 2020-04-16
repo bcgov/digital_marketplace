@@ -10,7 +10,7 @@ import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateTeamQuestionScoreBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
@@ -25,7 +25,7 @@ interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submit', string>
-      | ADT<'scoreQuestions', number>
+      | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
       | ADT<'screenInToCodeChallenge', string>
       | ADT<'scoreCodeChallenge', number>
       | ADT<'screenInToTeamScenario', string>
@@ -279,7 +279,7 @@ const resource: Resource = {
           case 'submit':
             return adt('submit', getString(body, 'value', ''));
           case 'scoreQuestions':
-            return adt('scoreQuestions', getNumber<number>(body, 'value', -1, false));
+            return adt('scoreQuestions', value as UpdateTeamQuestionScoreBody[]);
           case 'screenInToCodeChallenge':
             return adt('screenInToCodeChallenge', getString(body, 'value'));
           case 'scoreCodeChallenge':
@@ -520,7 +520,7 @@ const resource: Resource = {
               body: adt('submit' as const, validatedSubmissionNote.value)
             } as ValidatedUpdateRequestBody);
           case 'scoreQuestions':
-            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReviewTeamQuestions) {
+            if (![SWUProposalStatus.UnderReviewTeamQuestions, SWUProposalStatus.EvaluatedTeamQuestions].includes(validatedSWUProposal.value.status)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -531,7 +531,7 @@ const resource: Resource = {
                 permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
-            const validatedQuestionsScore = proposalValidation.validateTeamQuestionsScore(request.body.value, swuOpportunity.questionsWeight);
+            const validatedQuestionsScore = proposalValidation.validateTeamQuestionScores(request.body.value, swuOpportunity.teamQuestions);
             if (isInvalid(validatedQuestionsScore)) {
               return invalid({
                 proposal: adt('scoreQuestions' as const, getInvalidValue(validatedQuestionsScore, []))
@@ -564,7 +564,7 @@ const resource: Resource = {
               body: adt('screenInToCodeChallenge' as const, validatedScreenInCCNote.value)
             });
           case 'scoreCodeChallenge':
-            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReviewCodeChallenge) {
+            if (![SWUProposalStatus.UnderReviewCodeChallenge, SWUProposalStatus.EvaluatedCodeChallenge].includes(validatedSWUProposal.value.status)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -575,7 +575,7 @@ const resource: Resource = {
                 permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
-            const validatedCodeChallengeScore = proposalValidation.validateCodeChallengeScore(request.body.value, swuOpportunity.codeChallengeWeight);
+            const validatedCodeChallengeScore = proposalValidation.validateCodeChallengeScore(request.body.value);
             if (isInvalid(validatedCodeChallengeScore)) {
               return invalid({
                 proposal: adt('scoreCodeChallenge' as const, getInvalidValue(validatedCodeChallengeScore, []))
@@ -608,7 +608,7 @@ const resource: Resource = {
               body: adt('screenInToTeamScenario' as const, validatedScreenInTSNote.value)
             });
           case 'scoreTeamScenario':
-            if (validatedSWUProposal.value.status !== SWUProposalStatus.UnderReviewTeamScenario) {
+            if (![SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario].includes(validatedSWUProposal.value.status)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
@@ -619,7 +619,7 @@ const resource: Resource = {
                 permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
-            const validatedTeamScenarioScore = proposalValidation.validateTeamScenarioScore(request.body.value, swuOpportunity.scenarioWeight);
+            const validatedTeamScenarioScore = proposalValidation.validateTeamScenarioScore(request.body.value);
             if (isInvalid(validatedTeamScenarioScore)) {
               return invalid({
                 proposal: adt('scoreTeamScenario' as const, getInvalidValue(validatedTeamScenarioScore, []))
@@ -703,7 +703,7 @@ const resource: Resource = {
               }
               break;
             case 'scoreQuestions':
-              dbResult = await db.updateSWUProposalTeamQuestionScore(connection, request.params.id, body.value, session);
+              dbResult = await db.updateSWUProposalTeamQuestionScores(connection, request.params.id, body.value, session);
               break;
             case 'screenInToCodeChallenge':
               dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.UnderReviewCodeChallenge, body.value, session);
