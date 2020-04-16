@@ -1,11 +1,9 @@
 import * as immutable from 'immutable';
 import { isEmpty, uniq } from 'lodash';
 import moment from 'moment';
-import { compareDates, formatAmount, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
+import { compareDates, countWords, formatAmount, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { adt, ADT, Id } from 'shared/lib/types';
-
-import { count } from '@wordpress/wordcount';
 
 export type ErrorTypeFrom<T> = {
   [p in keyof T]?: string[];
@@ -97,10 +95,6 @@ export function validateThenMapValid<A, B, C>(validate: (_: A) => Validation<A, 
 
 export function validateThenMapInvalid<A, B, C>(validate: (_: A) => Validation<A, B>, fn: (_: B) => C): (_: A) => Validation<A, C> {
   return a => mapInvalid(validate(a), fn);
-}
-
-export function countWords(raw: string): number {
-  return count(raw, 'words', {});
 }
 
 // Array Validators.

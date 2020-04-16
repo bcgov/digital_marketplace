@@ -283,16 +283,20 @@ export interface PageModal<Msg> {
   body(dispatch: Dispatch<Msg>): ViewElementChildren;
 }
 
-export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<GlobalComponentMsg<MsgA, Route>> | null, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageModal<GlobalComponentMsg<MsgB, Route>> | null {
+export function mapPageModalGlobalComponentMsg<MsgA, MsgB, Route>(modal: PageModal<GlobalComponentMsg<MsgA, Route>> | null, mapMsg: (msgA: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): PageModal<GlobalComponentMsg<MsgB, Route>> | null {
+  return mapPageModalMsg(modal, msg => mapGlobalComponentMsg(msg, mapMsg));
+}
+
+export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<MsgA> | null, mapMsg: (msgA: MsgA) => MsgB): PageModal<MsgB> | null {
   if (!modal) { return null; }
   return {
     ...modal,
     body: dispatch => modal.body(mapComponentDispatch(dispatch, mapMsg)),
-    onCloseMsg: mapGlobalComponentMsg(modal.onCloseMsg, mapMsg),
+    onCloseMsg: mapMsg(modal.onCloseMsg),
     actions: modal.actions.map(action => {
       return {
         ...action,
-        msg: mapGlobalComponentMsg(action.msg, mapMsg)
+        msg: mapMsg(action.msg)
       };
     })
   };

@@ -1,20 +1,20 @@
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import React from 'react';
 import { AffiliationMember } from 'shared/lib/resources/affiliation';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType } from 'shared/lib/resources/proposal/sprint-with-us';
-import { adt, ADT } from 'shared/lib/types';
+import { adt, ADT, Id } from 'shared/lib/types';
 
 export interface Params {
-  organization?: OrganizationSlim;
+  orgId?: Id;
   affiliations: AffiliationMember[];
   opportunity: SWUOpportunity;
   proposal?: SWUProposal;
 }
 
-export interface State extends Params {
+export interface State extends Omit<Params, 'orgId'> {
+  orgId: Id | null;
   inceptionPhase: Immutable<Phase.State>;
   prototypePhase: Immutable<Phase.State>;
   implementationPhase: Immutable<Phase.State>;
@@ -25,33 +25,37 @@ export type Msg
   | ADT<'prototypePhase', Phase.Msg>
   | ADT<'implementationPhase', Phase.Msg>;
 
-export function setAffiliations(state: Immutable<State>, affiliations: AffiliationMember[]): Immutable<State> {
+export function setAffiliations(state: Immutable<State>, affiliations: AffiliationMember[], orgId: Id): Immutable<State> {
   return state
-    .update('inceptionPhase', s => Phase.setAffiliations(s, affiliations))
-    .update('prototypePhase', s => Phase.setAffiliations(s, affiliations))
-    .update('implementationPhase', s => Phase.setAffiliations(s, affiliations));
+    .set('orgId', orgId)
+    .update('inceptionPhase', s => Phase.setAffiliations(s, affiliations, orgId))
+    .update('prototypePhase', s => Phase.setAffiliations(s, affiliations, orgId))
+    .update('implementationPhase', s => Phase.setAffiliations(s, affiliations, orgId));
 }
 
 export const init: Init<Params, State> = async params => {
-  const { organization, affiliations, opportunity, proposal } = params;
+  const { orgId, affiliations, opportunity, proposal } = params;
   return {
-    ...params,
+    affiliations,
+    opportunity,
+    proposal,
+    orgId: orgId || null,
     inceptionPhase: immutable(await Phase.init({
-      organization,
+      orgId,
       affiliations,
       opportunityPhase: opportunity.inceptionPhase,
       proposalPhase: proposal?.inceptionPhase,
       isAccordionOpen: false
     })),
     prototypePhase: immutable(await Phase.init({
-      organization,
+      orgId,
       affiliations,
       opportunityPhase: opportunity.prototypePhase,
       proposalPhase: proposal?.prototypePhase,
       isAccordionOpen: false
     })),
     implementationPhase: immutable(await Phase.init({
-      organization,
+      orgId,
       affiliations,
       opportunityPhase: opportunity.implementationPhase,
       proposalPhase: proposal?.implementationPhase,
@@ -121,15 +125,15 @@ interface MemberValues {
   implementationPhase: Phase.Member[];
 }
 
-export function getMembers(state: Immutable<State>): MemberValues {
+export function getAddedMembers(state: Immutable<State>): MemberValues {
   return {
     inceptionPhase: hasPhase(state, SWUProposalPhaseType.Inception)
-      ? Phase.getMembers(state.inceptionPhase)
+      ? Phase.getAddedMembers(state.inceptionPhase)
       : undefined,
     prototypePhase: hasPhase(state, SWUProposalPhaseType.Prototype)
-      ? Phase.getMembers(state.prototypePhase)
+      ? Phase.getAddedMembers(state.prototypePhase)
       : undefined,
-    implementationPhase: Phase.getMembers(state.implementationPhase)
+    implementationPhase: Phase.getAddedMembers(state.implementationPhase)
   };
 }
 
@@ -187,4 +191,15 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         disabled={disabled} />
     </div>
   );
+};
+
+export const getModal: PageGetModal<State, Msg> = state => {
+  const inceptionModal = () => hasPhase(state, SWUProposalPhaseType.Inception)
+    ? mapPageModalMsg(Phase.getModal(state.inceptionPhase), msg => adt('inceptionPhase', msg) as Msg)
+    : null;
+  const prototypeModal = () => hasPhase(state, SWUProposalPhaseType.Prototype)
+    ? mapPageModalMsg(Phase.getModal(state.prototypePhase), msg => adt('prototypePhase', msg) as Msg)
+    : null;
+  const implementationModal = () => mapPageModalMsg(Phase.getModal(state.implementationPhase), msg => adt('implementationPhase', msg) as Msg);
+  return inceptionModal() || prototypeModal() || implementationModal();
 };

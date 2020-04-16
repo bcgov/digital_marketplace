@@ -7,7 +7,7 @@
 import { makePageMetadata } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, Init, mapComponentDispatch, mapPageAlerts, mapPageModalMsg, PageComponent, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageSidebar, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, Init, mapComponentDispatch, mapPageAlerts, mapPageModalGlobalComponentMsg, PageComponent, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageSidebar, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import { AvailableIcons } from 'front-end/lib/views/icon';
 import React from 'react';
 import { adt, ADT } from 'shared/lib/types';
@@ -66,7 +66,7 @@ export function makeGetParentModal<
     const tabId = state.tab[0];
     const definition = idToDefinition(state)(tabId);
     if (!definition.component.getModal) { return null; }
-    return mapPageModalMsg(
+    return mapPageModalGlobalComponentMsg(
       definition.component.getModal(state.tab[1]),
       v => adt('tab', v)
     );

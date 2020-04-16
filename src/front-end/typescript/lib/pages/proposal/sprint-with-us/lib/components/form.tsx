@@ -4,7 +4,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
-import { Component, ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { Component, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
@@ -142,7 +142,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
 
     team: immutable(await Team.init({
       opportunity,
-      organization: proposal?.organization,
+      orgId: proposal?.organization?.id,
       affiliations: await getAffiliations(proposal?.organization?.id),
       proposal
     })),
@@ -233,12 +233,13 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
 }
 
 export function isTeamTabValid(state: Immutable<State>): boolean {
-  return Team.isValid(state.team);
+  return FormField.isValid(state.organization)
+      && Team.isValid(state.team);
 }
 
 export function isPricingTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.inceptionCost)
-      && FormField.isValid(state.prototypeCost)
+  return (state.opportunity.inceptionPhase ? FormField.isValid(state.inceptionCost) : true)
+      && (state.opportunity.prototypePhase ? FormField.isValid(state.prototypeCost) : true)
       && FormField.isValid(state.implementationCost)
       && FormField.isValid(state.totalCost);
 }
@@ -375,7 +376,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('organization', value),
         updateAfter: state => {
-          if (msg.value.value?.tag !== 'onChange' || !FormField.getValue(state.organization)) { return [state]; }
+          const orgId = FormField.getValue(state.organization)?.value;
+          if (msg.value.value?.tag !== 'onChange' || !orgId || orgId === state.team.orgId) { return [state]; }
           state = startGetAffiliationsLoading(state);
           state = state.update('organization', s => FormField.setErrors(s, []));
           return [
@@ -383,7 +385,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             async state1 => {
               state1 = stopGetAffiliationsLoading(state1);
               const orgId = FormField.getValue(state1.organization)?.value;
-              return state1.set('team', Team.setAffiliations(state1.team, await getAffiliations(orgId)));
+              if (orgId) {
+                return state1.set('team', Team.setAffiliations(state1.team, await getAffiliations(orgId), orgId));
+              }
+              return state1;
             }
           ];
         }
@@ -514,7 +519,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
             dispatch={mapComponentDispatch(dispatch, v => adt('organization' as const, v))}
             disabled={disabled} />
         </Col>
-        {FormField.getValue(state.organization) && !isGetAffiliationsLoading
+        {FormField.getValue(state.organization)
           ? (<Col xs='12'>
               <div className='mt-5 pt-5 border-top'>
                 <Team.view
@@ -532,55 +537,63 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
 const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
   const { inceptionPhase, prototypePhase, implementationPhase, totalMaxBudget } = state.opportunity;
   return (
-    <Row>
+    <div>
       {inceptionPhase
-        ? (<Col xs='12' md='4'>
-            <NumberField.view
-              required
-              extraChildProps={{ prefix: '$' }}
-              label='Inception Cost'
-              placeholder='Inception Cost'
-              hint={`Maximum phase budget is ${formatAmount(inceptionPhase.maxBudget, '$')}`}
-              disabled={disabled}
-              state={state.inceptionCost}
-              dispatch={mapComponentDispatch(dispatch, value => adt('inceptionCost' as const, value))} />
-          </Col>)
+        ? (<Row>
+            <Col xs='12' md='6'>
+              <NumberField.view
+                required
+                extraChildProps={{ prefix: '$' }}
+                label='Inception Cost'
+                placeholder='Inception Cost'
+                hint={`Maximum phase budget is ${formatAmount(inceptionPhase.maxBudget, '$')}`}
+                disabled={disabled}
+                state={state.inceptionCost}
+                dispatch={mapComponentDispatch(dispatch, value => adt('inceptionCost' as const, value))} />
+            </Col>
+          </Row>)
         : null}
       {prototypePhase
-        ? (<Col xs='12' md='4'>
+        ? (<Row>
+            <Col xs='12' md='6'>
+              <NumberField.view
+                required
+                extraChildProps={{ prefix: '$' }}
+                label='Prototype Cost'
+                placeholder='Prototype Cost'
+                hint={`Maximum phase budget is ${formatAmount(prototypePhase.maxBudget, '$')}`}
+                disabled={disabled}
+                state={state.prototypeCost}
+                dispatch={mapComponentDispatch(dispatch, value => adt('prototypeCost' as const, value))} />
+            </Col>
+          </Row>)
+        : null}
+        <Row>
+          <Col xs='12' md='6'>
             <NumberField.view
               required
               extraChildProps={{ prefix: '$' }}
-              label='Prototype Cost'
-              placeholder='Prototype Cost'
-              hint={`Maximum phase budget is ${formatAmount(prototypePhase.maxBudget, '$')}`}
+              label='Implementation Cost'
+              placeholder='Implementation Cost'
+              hint={`Maximum phase budget is ${formatAmount(implementationPhase.maxBudget, '$')}`}
               disabled={disabled}
-              state={state.prototypeCost}
-              dispatch={mapComponentDispatch(dispatch, value => adt('prototypeCost' as const, value))} />
-          </Col>)
-        : null}
-        <Col xs='12' md='4'>
-          <NumberField.view
-            required
-            extraChildProps={{ prefix: '$' }}
-            label='Implementation Cost'
-            placeholder='Implementation Cost'
-            hint={`Maximum phase budget is ${formatAmount(implementationPhase.maxBudget, '$')}`}
-            disabled={disabled}
-            state={state.implementationCost}
-            dispatch={mapComponentDispatch(dispatch, value => adt('implementationCost' as const, value))} />
-        </Col>
-        <Col xs='12' md='4'>
-          <NumberField.view
-            extraChildProps={{ prefix: '$' }}
-            label='Total Proposed Cost'
-            placeholder='Total Proposed Cost'
-            hint={`Maximum budget is ${formatAmount(totalMaxBudget, '$')}`}
-            disabled
-            state={state.totalCost}
-            dispatch={mapComponentDispatch(dispatch, value => adt('totalCost' as const, value))} />
-        </Col>
-    </Row>
+              state={state.implementationCost}
+              dispatch={mapComponentDispatch(dispatch, value => adt('implementationCost' as const, value))} />
+          </Col>
+        </Row>
+        <Row>
+          <Col xs='12' md='6'>
+            <NumberField.view
+              extraChildProps={{ prefix: '$' }}
+              label='Total Proposed Cost'
+              placeholder='Total Proposed Cost'
+              hint={`Maximum budget is ${formatAmount(totalMaxBudget, '$')}`}
+              disabled
+              state={state.totalCost}
+              dispatch={mapComponentDispatch(dispatch, value => adt('totalCost' as const, value))} />
+          </Col>
+      </Row>
+    </div>
   );
 };
 
@@ -589,7 +602,7 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
     <Row>
       <Row>
         <Col xs='12'>
-          <p className='mb-4'>Provide a response to each of the team questions belows. Please note that responses that exceed the word limit will receive a score of zero.</p>
+          <p className='mb-4'>Provide a response to each of the team questions below. Please note that responses that exceed the word limit will receive a score of zero.</p>
           <Alert color='danger' fade={false} className='mb-5'>
             <strong>Important!</strong> Do not reference your organization's name, a team member's name or specific company software in any of your responses.
           </Alert>
@@ -714,7 +727,7 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
 };
 
 const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
-  const phaseMembers = Team.getMembers(state.team);
+  const phaseMembers = Team.getAddedMembers(state.team);
   const organization = getSelectedOrganization(state);
   const opportunity = state.opportunity;
   return (
@@ -857,4 +870,8 @@ export const component: Component<Params,  State, Msg> = {
   init,
   update,
   view
+};
+
+export const getModal: PageGetModal<State, Msg> = state => {
+  return mapPageModalMsg(Team.getModal(state.team), msg => adt('team', msg) as Msg);
 };

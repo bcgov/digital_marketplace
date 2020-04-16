@@ -214,7 +214,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({ dispatch, disabled, in
             dispatch={mapComponentDispatch(dispatch, v => adt('phone', [index, v]) as Msg)}
             disabled={disabled} />
         </Col>
-        <Col xs='12' md='5'>
+        <Col xs='12' md='7'>
           <ShortText.view
             required
             extraChildProps={{}}

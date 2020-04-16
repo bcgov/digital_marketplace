@@ -1,3 +1,4 @@
+import { count } from '@wordpress/wordcount';
 import { get, isArray, isBoolean, repeat } from 'lodash';
 import moment, { isDate } from 'moment-timezone';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -185,4 +186,8 @@ export function megabytesToBytes(megabytes: number): number {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(() => resolve(), ms));
+}
+
+export function countWords(raw: string): number {
+  return count(raw, 'words', {});
 }

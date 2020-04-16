@@ -1,8 +1,8 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
-import { makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/form';
 import Link, { routeDest } from 'front-end/lib/views/link';
@@ -106,6 +106,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         </span>
       )
     })
+  }),
+
+  getModal: getModalValid(state => {
+    return mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
   }),
 
   getMetadata() {

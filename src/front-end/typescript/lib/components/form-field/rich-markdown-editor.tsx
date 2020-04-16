@@ -6,7 +6,8 @@ import FileLink from 'front-end/lib/views/file-link';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
 import React from 'react';
-import { Spinner } from 'reactstrap';
+import { FormText, Spinner } from 'reactstrap';
+import { countWords } from 'shared/lib';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { adt, ADT } from 'shared/lib/types';
 import { Validation } from 'shared/lib/validation';
@@ -30,6 +31,7 @@ function isStackEmpty(stack: Stack): boolean {
 }
 
 interface ChildState extends FormField.ChildStateBase<Value> {
+  wordLimit: number | null;
   currentStackEntry: StackEntry | null; // When in the middle of undoing/redoing to ensure continuity in UX.
   undo: Stack;
   redo: Stack;
@@ -40,6 +42,7 @@ interface ChildState extends FormField.ChildStateBase<Value> {
 }
 
 export interface ChildParams extends FormField.ChildParamsBase<Value> {
+  wordLimit?: number;
   uploadImage: UploadImage;
 }
 
@@ -70,6 +73,7 @@ export type Msg = FormField.Msg<InnerChildMsg>;
 
 const childInit: ChildComponent['init'] = async params => ({
   ...params,
+  wordLimit: params.wordLimit === undefined ? null : params.wordLimit,
   currentStackEntry: null,
   undo: emptyStack(),
   redo: emptyStack(),
@@ -401,52 +405,57 @@ const ChildView: ChildComponent['view'] = props => {
     }
   };
   return (
-    <div className={`form-control ${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
-      <Controls {...props} />
-      <textarea
-        id={state.id}
-        value={state.value}
-        placeholder={placeholder}
-        disabled={isDisabled}
-        className={`${validityClassName} form-control flex-grow-1 border-left-0 border-right-0 border-bottom-0`}
-        style={{
-          borderTopLeftRadius: 0,
-          borderTopRightRadius: 0
-        }}
-        ref={ref => {
-          const start = state.selectionStart;
-          const end = state.selectionEnd;
-          if (ref) {
-            if (ref.selectionStart !== start) { ref.selectionStart = start; }
-            if (ref.selectionEnd !== end) { ref.selectionEnd = end; }
-          }
-        }}
-        onChange={e => {
-          const value = e.currentTarget.value;
-          dispatch(adt('onChangeTextArea', [
-            value,
-            e.currentTarget.selectionStart,
-            e.currentTarget.selectionEnd
-          ]));
-          // Let the parent form field component know that the value has been updated.
-          props.onChange(value);
-        }}
-        onKeyDown={e => {
-          const isModifier = e.ctrlKey || e.metaKey;
-          const isUndo = isModifier && !e.shiftKey && e.keyCode === 90; //Ctrl-Z or Cmd-Z
-          const isRedo = isModifier && ((e.shiftKey && e.keyCode === 90) || e.keyCode === 89); //Ctrl-Shift-Z, Cmd-Shift-Z, Ctrl-Y or Cmd-Y
-          const run = (msg: InnerChildMsg) => {
-            e.preventDefault();
-            dispatch(msg);
-          };
-          if (isUndo) {
-            run(adt('controlUndo'));
-          } else if (isRedo) {
-            run(adt('controlRedo'));
-          }
-        }}
-        onSelect={e => onChangeSelection(e.currentTarget)}>
-      </textarea>
+    <div className='d-flex flex-column flex-grow-1'>
+      <div className={`form-control ${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
+        <Controls {...props} />
+        <textarea
+          id={state.id}
+          value={state.value}
+          placeholder={placeholder}
+          disabled={isDisabled}
+          className={`${validityClassName} form-control flex-grow-1 border-left-0 border-right-0 border-bottom-0`}
+          style={{
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0
+          }}
+          ref={ref => {
+            const start = state.selectionStart;
+            const end = state.selectionEnd;
+            if (ref) {
+              if (ref.selectionStart !== start) { ref.selectionStart = start; }
+              if (ref.selectionEnd !== end) { ref.selectionEnd = end; }
+            }
+          }}
+          onChange={e => {
+            const value = e.currentTarget.value;
+            dispatch(adt('onChangeTextArea', [
+              value,
+              e.currentTarget.selectionStart,
+              e.currentTarget.selectionEnd
+            ]));
+            // Let the parent form field component know that the value has been updated.
+            props.onChange(value);
+          }}
+          onKeyDown={e => {
+            const isModifier = e.ctrlKey || e.metaKey;
+            const isUndo = isModifier && !e.shiftKey && e.keyCode === 90; //Ctrl-Z or Cmd-Z
+            const isRedo = isModifier && ((e.shiftKey && e.keyCode === 90) || e.keyCode === 89); //Ctrl-Shift-Z, Cmd-Shift-Z, Ctrl-Y or Cmd-Y
+            const run = (msg: InnerChildMsg) => {
+              e.preventDefault();
+              dispatch(msg);
+            };
+            if (isUndo) {
+              run(adt('controlUndo'));
+            } else if (isRedo) {
+              run(adt('controlRedo'));
+            }
+          }}
+          onSelect={e => onChangeSelection(e.currentTarget)}>
+        </textarea>
+      </div>
+      {state.wordLimit !== null
+        ? (<FormText color='secondary'>{countWords(state.value)} / {state.wordLimit} word{state.wordLimit === 1 ? '' : 's'}</FormText>)
+        : null}
     </div>
   );
 };
