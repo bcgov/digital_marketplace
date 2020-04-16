@@ -228,8 +228,8 @@ export function publishSWUOpportunity(session: Session): boolean {
 }
 
 export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string, status: SWUOpportunityStatus): Promise<boolean> {
-  return isAdmin(session) && [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview].includes(status)
-    || (session && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId) && status === SWUOpportunityStatus.Draft) || false;
+  return (isAdmin(session) && [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview].includes(status))
+    || (isSignedIn(session) && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId) && status === SWUOpportunityStatus.Draft) || false;
 }
 
 export function addSWUAddendum(session: Session): boolean {
