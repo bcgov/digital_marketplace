@@ -29,6 +29,7 @@ type ModalId
   | ADT<'viewTeamMember', Member>;
 
 export interface Member extends AffiliationMember {
+  index: number;
   scrumMaster: boolean;
   added: boolean;
   toBeAdded: boolean;
@@ -59,10 +60,11 @@ export function setIsAccordionOpen(state: Immutable<State>, isAccordionOpen: boo
 
 function affiliationsToMembers(affiliations: AffiliationMember[], existingMembers: SWUProposalTeamMember[]): Member[] {
   return affiliations
-    .map(a => {
+    .map((a, index) => {
       const existingTeamMember = find(existingMembers, ({ member }) => member.id === a.user.id);
       return {
         ...a,
+        index,
         scrumMaster: existingTeamMember?.scrumMaster || false,
         added: !!existingTeamMember,
         toBeAdded: false
@@ -141,8 +143,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       return [state.set('showModal', null)];
 
     case 'toggleAffiliationToBeAdded':
-      return [state.update('members', ms => ms.map((a, i) => {
-        return i === msg.value
+      return [state.update('members', ms => ms.map(a => {
+        return a.index === msg.value
           ? { ...a, toBeAdded: !a.toBeAdded }
           : a;
       }))];
@@ -174,7 +176,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           scrumMaster: shouldRemove ? false : m.scrumMaster
         };
       }));
-      return [enforceScrumMaster(state)];
+      state = enforceScrumMaster(state);
+      return [resetCapabilities(state)];
 
     case 'membersTable':
       return updateComponentChild({
@@ -228,7 +231,7 @@ function areAllCapabilitiesChecked(capabilities: Capability[]): boolean {
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return !!state.members.length
+  return !!getAddedMembers(state).length
       && areAllCapabilitiesChecked(state.capabilities);
 }
 
@@ -431,7 +434,7 @@ export const getModal: PageGetModal<State, Msg> = state => {
                       return (
                         <div key={`swu-proposal-phase-affiliation-${i}`} className='d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom'>
                           <Link
-                            onClick={() => dispatch(adt('toggleAffiliationToBeAdded', i))}
+                            onClick={() => dispatch(adt('toggleAffiliationToBeAdded', m.index))}
                             symbol_={leftPlacement(iconLinkSymbol(m.toBeAdded ? 'check-circle' : 'circle'))}
                             symbolClassName={m.toBeAdded ? 'text-success' : 'text-body'}
                             className='text-nowrap flex-nowrap'
