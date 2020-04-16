@@ -1061,7 +1061,7 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =>
           state={state.startingPhase}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startingPhase' as const, value))} />
-        {startingPhase && state.showPhaseInfo
+        {startingPhase && state.showPhaseInfo && !state.opportunity
           ? (<Alert color='primary' fade={false} className='mt-4 mb-0'>
               <div className='d-flex align-items-start'>
                 <div className='flex-grow-1 pr-3' style={{ whiteSpace: 'pre-line' }}>
