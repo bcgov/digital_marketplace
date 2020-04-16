@@ -243,7 +243,7 @@ export function isRankableCWUProposalStatus(s: CWUProposalStatus): boolean {
   }
 }
 
-export function isCWUProposalStatusVisibleToGovernment(s: CWUProposalStatus, role: UserType): boolean {
+export function isCWUProposalStatusVisibleToGovernment(s: CWUProposalStatus, role: UserType.Government | UserType.Admin): boolean {
   switch (s) {
     case CWUProposalStatus.Draft:
     case CWUProposalStatus.Submitted:

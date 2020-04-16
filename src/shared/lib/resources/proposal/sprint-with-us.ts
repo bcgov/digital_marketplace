@@ -257,7 +257,7 @@ export interface DeleteValidationErrors extends BodyWithErrors {
   status?: string[];
 }
 
-export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus, role: UserType): boolean {
+export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus, role: UserType.Government | UserType.Admin): boolean {
   switch (s) {
     case SWUProposalStatus.Draft:
     case SWUProposalStatus.Submitted:
