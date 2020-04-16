@@ -1,3 +1,4 @@
+import { CONTACT_EMAIL } from 'back-end/config';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
@@ -37,6 +38,67 @@ export async function inviteToRegisterT(email: string): Promise<Emails> {
         </div>
       ),
       callsToAction: [signUpCallToAction()]
+    })
+  }];
+}
+
+export const accountDeactivatedSelf = makeSend(accountDeactivatedSelfT);
+
+export async function accountDeactivatedSelfT(user: User): Promise<Emails> {
+  const title = 'Your Account Has Been Deactivated';
+  const description = 'You have successfully deactivated your account on the Digital Marketplace.';
+  return [{
+    to: user.email,
+    subject: title,
+    html: templates.simple({
+      title,
+      description,
+      body: (
+        <div>
+          <p>You can reactivate your account at any time by <templates.Link text='signing in' url={templates.makeUrl('sign-in')} /> to the Digital Marketplace.</p>
+        </div>
+      )
+    })
+  }];
+}
+
+export const accountDeactivatedAdmin = makeSend(accountDeactivatedAdminT);
+
+export async function accountDeactivatedAdminT(user: User): Promise<Emails> {
+  const title = 'Your Account Has Been Deactivated';
+  const description = 'Your account on the Digital Marketplace has been deactivated by an administrator.';
+  return [{
+    to: user.email,
+    subject: title,
+    html: templates.simple({
+      title,
+      description,
+      body: (
+        <div>
+          <p>You will not be able to participate in Code With Us or Sprint With Us opportunities until your account is reactivated.</p>
+          <p>If you feel this was done in error or have any questions, please send an email to {CONTACT_EMAIL}.</p>
+        </div>
+      )
+    })
+  }];
+}
+
+export const accountReactivated = makeSend(accountReactivatedT);
+
+export async function accountReactivatedT(user: User): Promise<Emails> {
+  const title = 'Your Account Has Been Reactivated';
+  const description = 'Your account on the Digital Marketplace has been reactivated.';
+  return [{
+    to: user.email,
+    subject: title,
+    html: templates.simple({
+      title,
+      description,
+      body: (
+        <div>
+          <p>You can participate in Code With Us and Sprint With Us opportunities again.</p>
+        </div>
+      )
     })
   }];
 }
