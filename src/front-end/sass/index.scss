@@ -390,6 +390,10 @@ table {
   tr:hover .table-show-on-hover {
     display: unset;
   }
+
+  tbody tr:last-of-type td {
+    border-bottom: 1px solid $table-border-color;
+  }
 }
 
 pre {

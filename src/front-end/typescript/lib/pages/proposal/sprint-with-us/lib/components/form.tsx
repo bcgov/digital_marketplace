@@ -1,4 +1,4 @@
-import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH, DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
+import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH, DEFAULT_USER_AVATAR_IMAGE_PATH, EMPTY_STRING } from 'front-end/config';
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
@@ -113,7 +113,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     isReviewInceptionPhaseAccordionOpen: true,
     isReviewPrototypePhaseAccordionOpen: true,
     isReviewImplementationPhaseAccordionOpen: true,
-    openReviewTeamQuestionResponseAccordions: new Set(),
+    openReviewTeamQuestionResponseAccordions: new Set(opportunity.teamQuestions.map((q, i) => i)),
 
     tabbedForm: immutable(await TabbedFormComponent.init({
       tabs: [
@@ -538,6 +538,15 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
   const { inceptionPhase, prototypePhase, implementationPhase, totalMaxBudget } = state.opportunity;
   return (
     <div>
+      <Row>
+        <Col xs='12' className='mb-4'>
+          <p>Propose a Total Cost for each of this opportunity's phases using the fields provided below. In order to submit your proposal for consideration, you must:</p>
+          <ul>
+            <li>Not exceed the maximum budget for each phase; and</li>
+            <li>Not exceed the total maximum budget for the opportunity.</li>
+          </ul>
+        </Col>
+      </Row>
       {inceptionPhase
         ? (<Row>
             <Col xs='12' md='6'>
@@ -587,7 +596,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
               extraChildProps={{ prefix: '$' }}
               label='Total Proposed Cost'
               placeholder='Total Proposed Cost'
-              hint={`Maximum budget is ${formatAmount(totalMaxBudget, '$')}`}
+              hint={`Maximum opportunity budget is ${formatAmount(totalMaxBudget, '$')}`}
               disabled
               state={state.totalCost}
               dispatch={mapComponentDispatch(dispatch, value => adt('totalCost' as const, value))} />
@@ -600,14 +609,12 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
 const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
-      <Row>
-        <Col xs='12'>
-          <p className='mb-4'>Provide a response to each of the team questions below. Please note that responses that exceed the word limit will receive a score of zero.</p>
-          <Alert color='danger' fade={false} className='mb-5'>
-            <strong>Important!</strong> Do not reference your organization's name, a team member's name or specific company software in any of your responses.
-          </Alert>
-        </Col>
-      </Row>
+      <Col xs='12'>
+        <p className='mb-4'>Provide a response to each of the team questions below. Please note that responses that exceed the word limit will receive a score of zero.</p>
+        <Alert color='danger' fade={false} className='mb-5'>
+          <strong>Important!</strong> Do not reference your organization's name, a team member's name or specific company software in any of your responses.
+        </Alert>
+      </Col>
       <Col xs='12'>
         <TeamQuestions.view
           disabled={disabled}
@@ -644,15 +651,14 @@ interface ReviewPhaseViewProps {
   opportunityPhase: SWUOpportunityPhase;
   members: Phase.Member[];
   isOpen: boolean;
-  className?: string;
   toggleAccordion(): void;
 }
 
-const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen, className }) => {
+const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen }) => {
   //TODO view team member modal when clicking on team member name
   return (
     <Accordion
-      className={className}
+      className='mt-5'
       toggle={() => toggleAccordion()}
       color='blue-dark'
       title={title}
@@ -664,22 +670,20 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
-      <div className='d-flex flex-nowrap align-items-center mb-3'>
+      <div className='d-flex flex-nowrap align-items-center mb-2'>
         <Icon name='calendar' width={0.9} height={0.9} className='mr-1' />
         <span className='font-weight-bold mr-2'>Phase Dates</span>
-        <span>
-          {formatDate(opportunityPhase.startDate)} to {formatDate(opportunityPhase.completionDate)}
-        </span>
+        <span>{formatDate(opportunityPhase.startDate)} to {formatDate(opportunityPhase.completionDate)}</span>
       </div>
       <div className='d-flex flex-nowrap align-items-center'>
         <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
         <span className='font-weight-bold mr-2'>Proposed Phase Cost</span>
         <span>{formatAmount(proposedCost, '$')}</span>
       </div>
-      {members.length
-        ? (<div>
-            <h4 className='mt-4'>Team Member(s)</h4>
-            <div className='border-top'>
+      <div className='mt-4'>
+        <h4 className='mb-4'>Team Member(s)</h4>
+        {members.length
+          ? (<div className='border-top'>
               {members.map((m, i) => (
                 <div className='py-2 px-3 d-flex flex-nowrap align-items-center'>
                   <Link
@@ -695,14 +699,15 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
                     : null}
                 </div>
               ) )}
-            </div>
-          </div>)
+            </div>)
         : 'You have not yet assigned team members for this phase.'}
+      </div>
     </Accordion>
   );
 };
 
 interface ReviewTeamQuestionResponseViewProps {
+  opportunity: SWUOpportunity;
   response: CreateSWUProposalTeamQuestionResponseBody;
   index: number;
   isOpen: boolean;
@@ -710,7 +715,18 @@ interface ReviewTeamQuestionResponseViewProps {
   toggleAccordion(): void;
 }
 
-const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> = ({ response, index, isOpen, className, toggleAccordion }) => {
+function getQuestionTextByOrder(opp: SWUOpportunity, order: number): string | null {
+  for (const q of opp.teamQuestions) {
+    if (q.order === order) {
+      return q.question;
+    }
+  }
+  return null;
+}
+
+const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> = ({ opportunity, response, index, isOpen, className, toggleAccordion }) => {
+  const questionText = getQuestionTextByOrder(opportunity, response.order);
+  if (!questionText) { return null; }
   return (
     <Accordion
       className={className}
@@ -721,7 +737,10 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
-      {response.response || 'You have not yet entered a response for this question.'}
+      <p className='mb-4'>{questionText}</p>
+      <Markdown
+        box
+        source={response.response || 'You have not yet entered a response for this question.'} />
     </Accordion>
   );
 };
@@ -736,7 +755,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
         <p className='mb-0'>This is a summary of your proposal for the Sprint With Us opportunity. Be sure to review all information for accuracy prior to submitting your proposal.</p>
       </Col>
       <Col xs='12' className='mt-5'>
-        <h3>Organization Info</h3>
+        <h2>Organization Info</h2>
         {organization
           ? (<div>
               <p className='mb-4'>Please review your organization's information to ensure it is up-to-date by clicking on the link below.</p>
@@ -750,7 +769,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           : 'You have not yet selected an organization for this proposal.'}
       </Col>
       <Col xs='12' className='mt-5'>
-        <h3>Phases</h3>
+        <h2 className='mb-4'>Phases</h2>
         <div className='d-flex flex-nowrap align-items-center'>
           <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
           <span className='font-weight-bold mr-2'>Total Proposed Cost</span>
@@ -758,7 +777,6 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
         </div>
         {phaseMembers.inceptionPhase && opportunity.inceptionPhase
           ? (<ReviewPhaseView
-              className='mb-4'
               title='Inception'
               icon='map'
               proposedCost={FormField.getValue(state.inceptionCost) || 0}
@@ -770,7 +788,6 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           : null}
         {phaseMembers.prototypePhase && opportunity.prototypePhase
           ? (<ReviewPhaseView
-              className='mb-4'
               title='Prototype'
               icon='map'
               proposedCost={FormField.getValue(state.prototypeCost) || 0}
@@ -791,29 +808,29 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           />
       </Col>
       <Col xs='12' className='mt-5'>
-        <h3 className='mb-4'>References</h3>
+        <h2 className='mb-4'>References</h2>
         <DescriptionList
           items={References.getValues(state.references).map((r, i) => ({
             name: `Reference ${i + 1}`,
-            children: (
-              <div>
-                {r.name}
-                <br />
-                {r.company}
-                <br />
-                {r.email}
-                <br />
-                {r.phone}
-              </div>
-            )
+            children: r.name || r.company || r.phone || r.email
+              ? (
+                  <div>
+                    {r.name ? (<div>{r.name}</div>) : null}
+                    {r.company ? (<div>{r.company}</div>) : null}
+                    {r.phone ? (<div>{r.phone}</div>) : null}
+                    {r.email ? (<div>{r.email}</div>) : null}
+                  </div>
+                )
+              : EMPTY_STRING
           }))} />
       </Col>
       <Col xs='12' className='mt-5'>
-        <h3 className='mb-4'>Team Questions</h3>
+        <h2 className='mb-4'>Team Questions Responses</h2>
         {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
           <ReviewTeamQuestionResponseView
             key={`swu-proposal-review-team-question-response-${i}`}
-            className={i < rs.length - 1 ? 'mb-4' : ''}
+            className={i < rs.length - 1 ? 'mb-5' : ''}
+            opportunity={state.opportunity}
             isOpen={state.openReviewTeamQuestionResponseAccordions.has(i)}
             toggleAccordion={() => dispatch(adt('toggleReviewTeamQuestionResponseAccordion', i))}
             index={i}

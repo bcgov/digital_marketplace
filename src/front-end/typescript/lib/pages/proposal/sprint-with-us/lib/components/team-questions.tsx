@@ -157,7 +157,7 @@ export const view: View<Props> = props => {
     <div>
       {state.responses.map((response, i) => (
         <Row key={`swu-proposal-team-question-response-${i}`}>
-          <Col xs='12'>
+          <Col xs='12' className={i < state.responses.length - 1 ? 'mb-5' : ''}>
             <ResponseView
               index={i}
               disabled={disabled}
