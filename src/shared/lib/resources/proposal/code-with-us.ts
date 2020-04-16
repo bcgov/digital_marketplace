@@ -243,11 +243,13 @@ export function isRankableCWUProposalStatus(s: CWUProposalStatus): boolean {
   }
 }
 
-export function isCWUProposalStatusVisibleToGovernment(s: CWUProposalStatus): boolean {
+export function isCWUProposalStatusVisibleToGovernment(s: CWUProposalStatus, role: UserType.Government | UserType.Admin): boolean {
   switch (s) {
     case CWUProposalStatus.Draft:
     case CWUProposalStatus.Submitted:
       return false;
+    case CWUProposalStatus.Withdrawn:
+      return role === UserType.Admin;
     default:
       return true;
   }

@@ -1,5 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as userNotifications from 'back-end/lib/mailer/notifications/user';
 import * as permissions from 'back-end/lib/permissions';
 import { signOut } from 'back-end/lib/resources/session';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
@@ -227,6 +228,9 @@ const resource: Resource = {
               break;
             case 'reactivateUser':
               dbResult = await db.updateUser(connection, { status: UserStatus.Active, id: request.params.id });
+              if (isValid(dbResult)) {
+                userNotifications.accountReactivatedSelf(dbResult.value);
+              }
               break;
             case 'updateAdminPermissions':
               dbResult = await db.updateUser(connection, { type: request.body.value, id: request.params.id });
@@ -277,8 +281,11 @@ const resource: Resource = {
             // Sign the user out of the current session if they are deactivating their own account.
             let session = request.session;
             if (isOwnAccount) {
+              userNotifications.accountDeactivatedSelf(dbResult.value);
               await signOut(connection, session);
               session = null;
+            } else {
+              userNotifications.accountDeactivatedAdmin(dbResult.value);
             }
             return basicResponse(200, session, makeJsonResponseBody(dbResult.value));
           } else {

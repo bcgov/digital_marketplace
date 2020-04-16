@@ -711,7 +711,7 @@ const resource: Resource = {
               body: adt('startTeamScenario', validatedEvaluationTeamScenarioNote.value)
             });
           case 'suspend':
-            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Suspended)) {
+            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Suspended) || !permissions.suspendSWUOpportunity(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             const validatedSuspendNote = opportunityValidation.validateNote(request.body.value);
@@ -723,7 +723,7 @@ const resource: Resource = {
               body: adt('suspend', validatedSuspendNote.value)
             } as ValidatedUpdateRequestBody);
           case 'cancel':
-            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Canceled)) {
+            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Canceled) || !permissions.cancelSWUOpportunity(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             const validatedCancelNote = opportunityValidation.validateNote(request.body.value);
@@ -735,7 +735,7 @@ const resource: Resource = {
               body: adt('cancel', validatedCancelNote.value)
             } as ValidatedUpdateRequestBody);
           case 'addAddendum':
-            if (validatedSWUOpportunity.value.status === SWUOpportunityStatus.Draft) {
+            if (validatedSWUOpportunity.value.status === SWUOpportunityStatus.Draft || !permissions.addSWUAddendum(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             const validatedAddendumText = opportunityValidation.validateAddendumText(request.body.value);
@@ -819,17 +819,14 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request) {
-        if (!(await permissions.deleteSWUOpportunity(connection, request.session, request.params.id))) {
-          return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
-          });
-        }
         const validatedSWUOpportunity = await validateSWUOpportunityId(connection, request.params.id, request.session);
         if (isInvalid(validatedSWUOpportunity)) {
           return invalid({ notFound: ['Opportunity not found.'] });
         }
-        if (validatedSWUOpportunity.value.status !== SWUOpportunityStatus.Draft) {
-          return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+        if (!(await permissions.deleteSWUOpportunity(connection, request.session, request.params.id, validatedSWUOpportunity.value.status))) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
         }
         return valid(validatedSWUOpportunity.value.id);
       },

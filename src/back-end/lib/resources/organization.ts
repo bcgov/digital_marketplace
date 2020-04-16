@@ -1,5 +1,6 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
+import * as orgNotifications from 'back-end/lib/mailer/notifications/organization';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
@@ -395,6 +396,10 @@ const resource: Resource = {
           request.session);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.body.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          // Notify org owner if deactivation was by an admin
+          if (dbResult.value.owner && dbResult.value.owner.id !== request.body.session.user.id) {
+            orgNotifications.handleOrganizationArchived(connection, dbResult.value);
           }
           return basicResponse(200, request.body.session, makeJsonResponseBody(dbResult.value));
         }),

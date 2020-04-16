@@ -1,6 +1,6 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
 import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
-import { userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
+import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
@@ -9,7 +9,7 @@ import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
 import { ClientHttpMethod } from 'shared/lib/types';
-import { getValidValue, isInvalid } from 'shared/lib/validation';
+import { getValidValue, isInvalid, isValid } from 'shared/lib/validation';
 
 interface KeyCloakAuthQuery {
   client_id: string;
@@ -151,7 +151,11 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             }
           } else if (user.status === UserStatus.InactiveByUser) {
             const { id } = user;
-            await updateUser(connection, { id, status: UserStatus.Active });
+            const dbResult = await updateUser(connection, { id, status: UserStatus.Active });
+            // Send notification
+            if (isValid(dbResult)) {
+              accountReactivatedSelf(dbResult.value);
+            }
           } else if (user.status === UserStatus.InactiveByAdmin) {
             return makeAuthErrorRedirect(request);
           }

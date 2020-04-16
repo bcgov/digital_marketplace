@@ -181,8 +181,8 @@ export async function readOneCWUProposal(connection: Connection, session: Sessio
   if (isAdmin(session) || (session && await isCWUOpportunityAuthor(connection, session.user, proposal.opportunity.id))) {
     // Only provide permission to admins/gov owners if opportunity is not in draft/published
     // And proposal is not in draft/submitted
-    return doesCWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
-          isCWUProposalStatusVisibleToGovernment(proposal.status);
+    return isSignedIn(session) && doesCWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
+          isCWUProposalStatusVisibleToGovernment(proposal.status, session.user.type);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return (session && await isCWUProposalAuthor(connection, session.user, proposal.id)) || false;
@@ -227,8 +227,21 @@ export function publishSWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
 
-export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
-  return isAdmin(session) || (session && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string, status: SWUOpportunityStatus): Promise<boolean> {
+  return (isAdmin(session) && [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview].includes(status))
+    || (isSignedIn(session) && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId) && status === SWUOpportunityStatus.Draft) || false;
+}
+
+export function addSWUAddendum(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function cancelSWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function suspendSWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
 }
 
 // SWU Proposals.
@@ -237,8 +250,8 @@ export async function readOneSWUProposal(connection: Connection, session: Sessio
   if (isAdmin(session) || (session && await isSWUOpportunityAuthor(connection, session.user, proposal.opportunity.id))) {
     // Only provide permission to admins/gov owners if opportunity is not in draft/published
     // And proposal is not in draft/submitted
-    return doesSWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
-          isSWUProposalStatusVisibleToGovernment(proposal.status);
+    return isSignedIn(session) && doesSWUOpportunityStatusAllowGovToViewProposals(proposal.opportunity.status) &&
+          isSWUProposalStatusVisibleToGovernment(proposal.status, session.user.type);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return (session && await isSWUProposalAuthor(connection, session.user, proposal.id)) || false;

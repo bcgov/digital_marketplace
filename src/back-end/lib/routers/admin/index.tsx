@@ -2,9 +2,10 @@ import * as mailer from 'back-end/lib/mailer';
 import { addedToTeamT, approvedRequestToJoinT, membershipCompleteT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
 import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
+import { organizationArchivedT } from 'back-end/lib/mailer/notifications/organization';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import { awardedSWUProposalSubmissionT, disqualifiedSWUProposalSubmissionT, successfulSWUProposalSubmissionT, unsuccessfulSWUProposalSubmissionT, withdrawnSWUProposalSubmissionProposalAuthorT, withdrawnSWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/sprint-with-us';
-import { inviteToRegisterT, userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
+import { accountDeactivatedAdminT, accountDeactivatedSelfT, accountReactivatedAdminT, accountReactivatedSelfT, inviteToRegisterT, userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
 import { styles, View } from 'back-end/lib/mailer/templates';
 import * as permissions from 'back-end/lib/permissions';
 import * as mocks from 'back-end/lib/routers/admin/mocks';
@@ -54,6 +55,20 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     {
       title: 'User Asked To Register',
       emails: await inviteToRegisterT(mocks.email)
+    },
+    {
+      title: 'User Account Deactivated',
+      emails: [
+        ...await accountDeactivatedSelfT(mocks.vendorUser),
+        ...await accountDeactivatedAdminT(mocks.vendorUser)
+      ]
+    },
+    {
+      title: 'User Account Reactivated',
+      emails: [
+        ...await accountReactivatedSelfT(mocks.vendorUser),
+        ...await accountReactivatedAdminT(mocks.vendorUser)
+      ]
     },
     {
       title: 'User Approved Being Added To Organization',
@@ -174,6 +189,10 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
         ...await withdrawnSWUProposalSubmissionProposalAuthorT(mocks.vendorUser, mocks.swuOpportunity),
         ...await withdrawnSWUProposalSubmissionT(mocks.govUser, mocks.vendorUser, mocks.swuOpportunity)
       ]
+    },
+    {
+      title: 'Organization Archived',
+      emails: await organizationArchivedT(mocks.vendorUser, mocks.organization)
     }
   ];
   return () => {
