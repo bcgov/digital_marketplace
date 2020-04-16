@@ -1,16 +1,15 @@
 import { Route } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/framework';
-import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
+import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
+import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { isAdmin } from 'shared/lib/resources/user';
-import { adt, ADT } from 'shared/lib/types';
+import { SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { ADT } from 'shared/lib/types';
 
 export type State = Tab.Params;
 
@@ -28,7 +27,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
+//TODO
+/*const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
   const { successfulProposal } = state.opportunity;
   if (!successfulProposal || !successfulProposal.score) { return null; }
   const isViewerAdmin = isAdmin(state.viewerUser);
@@ -79,36 +79,61 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
       </Row>
     </div>
   );
-};
+};*/
 
 const Details: ComponentView<State, Msg> = ({ state }) => {
-  const opportunity = state.opportunity;
-  const skills = opportunity.skills;
+  const {
+    mandatorySkills,
+    optionalSkills,
+    inceptionPhase,
+    prototypePhase,
+    implementationPhase,
+    assignmentDate,
+    proposalDeadline,
+    totalMaxBudget,
+    minTeamMembers,
+    location
+  } = state.opportunity;
   const items = [
     {
       name: 'Assignment Date',
-      children: formatDate(opportunity.assignmentDate)
+      children: formatDate(assignmentDate)
     },
     {
-      name: 'Start Date',
-      children: formatDate(opportunity.startDate)
+      name: 'Phase Dates',
+      children: (
+        <div>
+          {inceptionPhase
+            ? (<div>{swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)}: {formatDate(inceptionPhase.startDate)} to {formatDate(inceptionPhase.completionDate)}</div>)
+            : null}
+          {prototypePhase
+            ? (<div>{swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)}: {formatDate(prototypePhase.startDate)} to {formatDate(prototypePhase.completionDate)}</div>)
+            : null}
+          <div>{swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)}: {formatDate(implementationPhase.startDate)} to {formatDate(implementationPhase.completionDate)}</div>
+        </div>
+      )
     }
   ];
   const reportCards: ReportCard[] = [
     {
       icon: 'alarm-clock',
       name: 'Proposals Due',
-      value: formatDate(opportunity.proposalDeadline)
+      value: formatDate(proposalDeadline)
     },
     {
       icon: 'badge-dollar',
-      name: 'Value',
-      value: formatAmount(opportunity.reward, '$')
+      name: 'Max. Budget',
+      value: formatAmount(totalMaxBudget, '$')
     },
     {
       icon: 'map-marker',
       name: 'Location',
-      value: opportunity.location
+      value: location
+    },
+    {
+      icon: 'users',
+      name: 'Min. Team Size',
+      value: String(minTeamMembers)
     }
   ];
   return (
@@ -124,17 +149,33 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <Row>
-        <Col xs='12' md='6'>
+        <Col xs='12'>
           <DescriptionList items={items} />
         </Col>
-        <Col xs='12' md='6'>
-          <div className='font-weight-bold mb-2 mt-3 mt-md-0'>Required Skills</div>
+      </Row>
+      <Row className='mt-3'>
+        <Col xs='12' sm='6'>
+          <div className='font-weight-bold mb-2'>Mandatory Skills</div>
           <div className='d-flex flex-wrap'>
-            {skills.length
-              ? skills.map((skill, i) => (
+            {mandatorySkills.length
+              ? mandatorySkills.map((skill, i, arr) => (
                   <Badge
-                    key={`opportunity-skill-${i}`}
-                    className={`mb-2 ${i < skills.length - 1 ? 'mr-2' : ''}`}
+                    key={`opportunity-mandatory-skill-${i}`}
+                    className={`mb-2 ${i < arr.length - 1 ? 'mr-2' : ''}`}
+                    text={skill}
+                    color='purple' />
+                ))
+              : 'None'}
+          </div>
+        </Col>
+        <Col xs='12' sm='6'>
+          <div className='font-weight-bold mb-2'>Optional Skills</div>
+          <div className='d-flex flex-wrap'>
+            {optionalSkills.length
+              ? optionalSkills.map((skill, i, arr) => (
+                  <Badge
+                    key={`opportunity-optional-skill-${i}`}
+                    className={`mb-2 ${i < arr.length - 1 ? 'mr-2' : ''}`}
                     text={skill}
                     color='purple' />
                 ))
@@ -150,7 +191,6 @@ const view: ComponentView<State, Msg> = props => {
   return (
     <div>
       <EditTabHeader opportunity={props.state.opportunity} viewerUser={props.state.viewerUser} />
-      <SuccessfulProponent {...props} />
       <Details {...props} />
     </div>
   );

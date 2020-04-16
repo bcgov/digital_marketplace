@@ -166,10 +166,15 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     color: 'blue-light',
     view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Create a Code With Us Proposal',
-      getDescription: () => 'Intruductory text placeholder.  Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
+      getDescription: state => (
+        <div className='d-flex flex-column nowrap'>
+          <Link newTab dest={routeDest(adt('opportunityCWUView', { opportunityId: state.opportunity.id }))} className='mb-3'>{state.opportunity.title}</Link>
+          <span>Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).</span>
+        </div>
+      ),
       getFooter: () => (
         <span>
-          Need help? <Link dest={routeDest(adt('content', 'code-with-us-proposal-guide'))}>Read the guide</Link> for creating and managing a CWU proposal
+          Need help? <Link dest={routeDest(adt('content', 'code-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a CWU proposal.
         </span>
       )
     })

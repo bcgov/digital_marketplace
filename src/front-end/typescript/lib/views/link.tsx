@@ -3,7 +3,7 @@ import { Route } from 'front-end/lib/app/types';
 import { View, ViewElementChildren } from 'front-end/lib/framework';
 import { ButtonColor, TextColor } from 'front-end/lib/types';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import React, { CSSProperties, MouseEvent } from 'react';
+import React, { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import { Spinner } from 'reactstrap';
 import { adt, ADT, adtCurried } from 'shared/lib/types';
 
@@ -84,7 +84,7 @@ interface BaseProps {
   disabled?: boolean;
   newTab?: boolean;
   focusable?: boolean;
-  onClick?(e: MouseEvent): void;
+  onClick?(e?: MouseEvent): void;
 }
 
 export interface AnchorProps extends BaseProps {
@@ -144,15 +144,25 @@ function AnchorLink(props: AnchorProps) {
   finalClassName += color && color !== 'inherit' && !disabled ? ` text-hover-${color}` : '';
   finalClassName += ` ${className}`;
   const finalOnClick = !disabled && onClick
-    ? ((e: MouseEvent): false | void => {
+    ? ((e: MouseEvent) => {
         if (!newTab && !e.ctrlKey && !e.metaKey) { e.preventDefault(); }
         onClick(e);
+      })
+    : undefined;
+  const finalOnKeyUp = !disabled && !newTab && !dest && onClick
+    ? ((e: KeyboardEvent) => {
+        // Simulate click if the user presses the enter or space keys.
+        if (e.keyCode === 13 || e.keyCode === 32) {
+          e.preventDefault();
+          onClick();
+        }
       })
     : undefined;
   const finalProps = {
     href,
     tabIndex: !disabled && focusable ? 0 : -1,
     onClick: finalOnClick,
+    onKeyUp: finalOnKeyUp,
     style: {
       ...style,
       color: (() => {

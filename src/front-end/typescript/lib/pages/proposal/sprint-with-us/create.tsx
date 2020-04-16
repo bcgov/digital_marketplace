@@ -1,16 +1,20 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
-import { makePageMetadata, updateValid, viewValid } from 'front-end/lib';
+import { makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/form';
+import Link, { routeDest } from 'front-end/lib/views/link';
+import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
+import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState {
+  opportunity: SWUOpportunity;
   form: Immutable<Form.State>;
 }
 
@@ -42,6 +46,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
     if (!api.isValid(evalContentResult)) { return fail(); }
     return valid(immutable({
+      opportunity: opportunityResult.value,
       form: immutable(await Form.init({
         viewerUser: shared.sessionUser,
         opportunity: opportunityResult.value,
@@ -83,6 +88,26 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+
+  sidebar: sidebarValid({
+    size: 'large',
+    color: 'blue-light',
+    view: makeInstructionalSidebar<ValidState, Msg>({
+      getTitle: () => 'Create a Sprint With Us Proposal',
+      getDescription: state => (
+        <div className='d-flex flex-column nowrap'>
+          <Link newTab dest={routeDest(adt('opportunitySWUView', { opportunityId: state.opportunity.id }))} className='mb-3'>{state.opportunity.title}</Link>
+          <span>Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).</span>
+        </div>
+      ),
+      getFooter: () => (
+        <span>
+          Need help? <Link dest={routeDest(adt('content', 'sprint-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a SWU proposal.
+        </span>
+      )
+    })
+  }),
+
   getMetadata() {
     return makePageMetadata('Create Proposal');
   }

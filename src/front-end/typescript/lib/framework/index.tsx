@@ -90,22 +90,30 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
   state = state.setIn(childStatePath, newChildState);
   let newAsyncUpdateAfterState: UpdateReturnValue<PS, PM>[1];
   if (updateAfter) {
-    [state, newAsyncUpdateAfterState] = updateAfter(state);
+    const result = updateAfter(state);
+    state = result[0];
+    newAsyncUpdateAfterState = result[1];
   }
   let asyncStateUpdate: UpdateReturnValue<PS, PM>[1];
-  if (newAsyncChildState) {
+  if (newAsyncChildState || newAsyncUpdateAfterState) {
     asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<PM>) => {
       const mappedDispatch = mapComponentDispatch(dispatch, mapChildMsg);
-      const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
-      if (!newChildState) { return null; }
-      state = state.setIn(childStatePath, newChildState);
-      if (newAsyncUpdateAfterState) {
-        const result = await newAsyncUpdateAfterState(state, dispatch);
-        if (result !== null) {
-          state = result;
+      let updated = false;
+      if (newAsyncChildState) {
+        const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
+        if (newChildState) {
+          state = state.setIn(childStatePath, newChildState);
+          updated = true;
         }
       }
-      return state;
+      if (newAsyncUpdateAfterState) {
+        const newState = await newAsyncUpdateAfterState(state, dispatch);
+        if (newState !== null) {
+          state = newState;
+          updated = true;
+        }
+      }
+      return updated ? state : null;
     };
   }
   return [
@@ -545,7 +553,7 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
         }))
         .then(newState => {
           // Update state with its asynchronous change.
-          if (newState) {
+          if (newState !== null) {
             state = newState;
             notifyStateSubscriptions();
           }

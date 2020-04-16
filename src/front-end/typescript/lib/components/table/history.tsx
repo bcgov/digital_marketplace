@@ -6,7 +6,7 @@ import Badge from 'front-end/lib/views/badge';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { compareDates, formatDate, formatTime } from 'shared/lib';
-import { User, UserSlim, UserType } from 'shared/lib/resources/user';
+import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface Item {
@@ -101,7 +101,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
               if (!item.createdBy) {
                 return (<div className='text-secondary text-uppercase small'>System</div>);
               }
-              if (state.viewerUser.type === UserType.Admin) {
+              if (isAdmin(state.viewerUser)) {
                 return (<Link color='primary' className='text-uppercase small' dest={routeDest(adt('userProfile', { userId: item.createdBy.id }))}>{item.createdBy.name}</Link>);
               }
               return (<div className='text-secondary text-uppercase small'>{item.createdBy.name}</div>);

@@ -86,7 +86,7 @@ const Capability: View<CapabilityProps> = ({ dispatch, index, loading, disabled,
         onClick={() => dispatch(adt('toggleOpen', index))}>
         <Link
           onClick={e => {
-            e.stopPropagation();
+            if (e) { e.stopPropagation(); }
             dispatch(adt('toggleChecked', index));
           }}
           symbol_={leftPlacement(iconLinkSymbol(checked ? 'check-circle' : 'circle'))}

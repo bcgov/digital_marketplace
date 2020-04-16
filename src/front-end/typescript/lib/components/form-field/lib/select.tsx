@@ -1,8 +1,10 @@
 import { View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import React from 'react';
 import Select from 'react-select';
 import { Props as SelectProps } from 'react-select/base';
 import SelectCreatable from 'react-select/creatable';
+import { Spinner } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface Option<Value = string> {
@@ -41,6 +43,7 @@ export interface BaseProps {
   id: string;
   placeholder: string;
   disabled?: boolean;
+  loading?: boolean;
   autoFocus?: boolean;
   options: Options;
   formatGroupLabel?: View<OptionGroup>;
@@ -63,19 +66,47 @@ export interface MultiProps extends BaseProps {
 export type Props = SingleProps | MultiProps;
 
 export const view: View<Props> = props => {
-  const { options, formatGroupLabel, disabled = false, className = '' } = props;
+  const { options, formatGroupLabel, disabled = false, loading = false, className = '' } = props;
   const baseProps = {
     ...props,
     value: undefined,
     onChange: undefined,
     formatGroupLabel,
     options: options.value,
+    blurInputOnSelect: true,
     isSearchable: true,
     isClearable: true,
     isDisabled: disabled,
     className: `${className} react-select-container`,
     classNamePrefix: 'react-select',
     menuPlacement: 'auto',
+    components: {
+      ClearIndicator: ({ clearValue, hasValue }) => {
+        if (!hasValue) { return null; }
+        return (
+          <div className='d-flex align-items-center justify-content-center border-right px-2' style={{ lineHeight: 0, height: '70%' }}>
+            <Icon
+              hover
+              color='gray-500'
+              onClick={() => clearValue()}
+              name='times' />
+          </div>
+        );
+      },
+      IndicatorSeparator: () => null,
+      DropdownIndicator: () => {
+        return (
+          <div className='d-flex align-items-center justify-content-center px-2' style={{ lineHeight: 0 }}>
+            {loading
+              ? (<Spinner color='gray-500' size='sm' />)
+              : (<Icon
+                  hover
+                  color='gray-500'
+                  name='chevron-down' />)}
+          </div>
+        );
+      }
+    },
     styles: {
       control(styles) {
         return {

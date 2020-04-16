@@ -1,9 +1,9 @@
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-with-us/lib';
-import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
+import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
+import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
+import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
@@ -21,7 +21,7 @@ const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
     history: immutable(await History.init({
-      idNamespace: 'cwu-opportunity-history',
+      idNamespace: 'swu-opportunity-history',
       items: opportunityToHistoryItems(params.opportunity),
       viewerUser: params.viewerUser
     }))
