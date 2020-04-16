@@ -227,8 +227,21 @@ export function publishSWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
 
-export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string): Promise<boolean> {
-  return isAdmin(session) || (session && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
+export async function deleteSWUOpportunity(connection: Connection, session: Session, opportunityId: string, status: SWUOpportunityStatus): Promise<boolean> {
+  return isAdmin(session) && [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview].includes(status)
+    || (session && isGovernment(session) && await isSWUOpportunityAuthor(connection, session.user, opportunityId) && status === SWUOpportunityStatus.Draft) || false;
+}
+
+export function addSWUAddendum(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function cancelSWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function suspendSWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
 }
 
 // SWU Proposals.
