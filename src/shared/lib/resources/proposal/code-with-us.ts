@@ -247,6 +247,7 @@ export function isCWUProposalStatusVisibleToGovernment(s: CWUProposalStatus): bo
   switch (s) {
     case CWUProposalStatus.Draft:
     case CWUProposalStatus.Submitted:
+    case CWUProposalStatus.Withdrawn:
       return false;
     default:
       return true;

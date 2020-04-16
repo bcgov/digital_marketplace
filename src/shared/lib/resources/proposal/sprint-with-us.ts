@@ -261,6 +261,7 @@ export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus): bo
   switch (s) {
     case SWUProposalStatus.Draft:
     case SWUProposalStatus.Submitted:
+    case SWUProposalStatus.Withdrawn:
       return false;
     default:
       return true;
