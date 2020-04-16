@@ -4,7 +4,7 @@ import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, n
 import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import { awardedSWUProposalSubmissionT, disqualifiedSWUProposalSubmissionT, successfulSWUProposalSubmissionT, unsuccessfulSWUProposalSubmissionT, withdrawnSWUProposalSubmissionProposalAuthorT, withdrawnSWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/sprint-with-us';
-import { accountDeactivatedAdminT, accountDeactivatedSelfT, accountReactivatedT, inviteToRegisterT, userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
+import { accountDeactivatedAdminT, accountDeactivatedSelfT, accountReactivatedAdminT, accountReactivatedSelfT, inviteToRegisterT, userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
 import { styles, View } from 'back-end/lib/mailer/templates';
 import * as permissions from 'back-end/lib/permissions';
 import * as mocks from 'back-end/lib/routers/admin/mocks';
@@ -64,7 +64,10 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     },
     {
       title: 'User Account Reactivated',
-      emails: await accountReactivatedT(mocks.vendorUser)
+      emails: [
+        ...await accountReactivatedSelfT(mocks.vendorUser),
+        ...await accountReactivatedAdminT(mocks.vendorUser)
+      ]
     },
     {
       title: 'User Approved Being Added To Organization',

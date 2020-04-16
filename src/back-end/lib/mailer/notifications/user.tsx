@@ -8,14 +8,20 @@ import { User } from 'shared/lib/resources/user';
 export const userAccountRegistered = makeSend(userAccountRegisteredT);
 
 export async function userAccountRegisteredT(recipient: User): Promise<Emails> {
-  const title = 'Your Account is Registered';
-  const description = 'You have successfully registered your account on the Digital Marketplace.';
+  const title = 'Welcome to the Digital Marketplace';
+  const description = 'Welcome to the Digital Marketplace';
   return [{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
-      description
+      description,
+      body: (
+        <div>
+          <p>Thank you for creating an account for the Digital Marketplace web application.</p>
+        </div>
+      ),
+      callsToAction: [signInCallToAction()]
     })
   }];
 }
@@ -23,8 +29,8 @@ export async function userAccountRegisteredT(recipient: User): Promise<Emails> {
 export const inviteToRegister = makeSend(inviteToRegisterT);
 
 export async function inviteToRegisterT(email: string): Promise<Emails> {
-  const title = 'Register with the Digital Marketplace';
-  const description = 'Someone wants to add you to their team on the Digital Marketplace';
+  const title = 'Sign Up with the Digital Marketplace';
+  const description = 'Sign Up with the Digital Marketplace';
   return [{
     to: email,
     subject: title,
@@ -33,7 +39,8 @@ export async function inviteToRegisterT(email: string): Promise<Emails> {
       description,
       body: (
         <div>
-          <p>Once you have signed up on the Digital Marketplace, you can join a team and be included in proposals to Sprint With Us opportunities</p>
+          <p>Someone wants to add you to their team on the Digital Marketplace.</p>
+          <p>Once you have signed up, you can join their team and be included in proposals to Sprint With Us opportunities</p>
           <p>Click <i>Sign Up</i> below to register.</p>
         </div>
       ),
@@ -46,7 +53,7 @@ export const accountDeactivatedSelf = makeSend(accountDeactivatedSelfT);
 
 export async function accountDeactivatedSelfT(user: User): Promise<Emails> {
   const title = 'Your Account Has Been Deactivated';
-  const description = 'You have successfully deactivated your account on the Digital Marketplace.';
+  const description = 'Your Account Has Been Deactivated.';
   return [{
     to: user.email,
     subject: title,
@@ -55,9 +62,10 @@ export async function accountDeactivatedSelfT(user: User): Promise<Emails> {
       description,
       body: (
         <div>
-          <p>You can reactivate your account at any time by <templates.Link text='signing in' url={templates.makeUrl('sign-in')} /> to the Digital Marketplace.</p>
+          <p>You have successfully deactivated your Digital Marketplace account. You can reactivate your account by signing into the web application again.</p>
         </div>
-      )
+      ),
+      callsToAction: [signInCallToAction('Sign In to Reactivate Account')]
     })
   }];
 }
@@ -66,7 +74,7 @@ export const accountDeactivatedAdmin = makeSend(accountDeactivatedAdminT);
 
 export async function accountDeactivatedAdminT(user: User): Promise<Emails> {
   const title = 'Your Account Has Been Deactivated';
-  const description = 'Your account on the Digital Marketplace has been deactivated by an administrator.';
+  const description = 'Your Account Has Been Deactivated.';
   return [{
     to: user.email,
     subject: title,
@@ -75,19 +83,18 @@ export async function accountDeactivatedAdminT(user: User): Promise<Emails> {
       description,
       body: (
         <div>
-          <p>You will not be able to participate in Code With Us or Sprint With Us opportunities until your account is reactivated.</p>
-          <p>If you feel this was done in error or have any questions, please send an email to {CONTACT_EMAIL}.</p>
+          <p>Your Digital Marketplace account has been deactivated by an administrator. You no longer have access to the web application. If you have any questions, you can send an email to the Digital Marketplace administrators at {CONTACT_EMAIL}.</p>
         </div>
       )
     })
   }];
 }
 
-export const accountReactivated = makeSend(accountReactivatedT);
+export const accountReactivatedSelf = makeSend(accountReactivatedSelfT);
 
-export async function accountReactivatedT(user: User): Promise<Emails> {
+export async function accountReactivatedSelfT(user: User): Promise<Emails> {
   const title = 'Your Account Has Been Reactivated';
-  const description = 'Your account on the Digital Marketplace has been reactivated.';
+  const description = 'Your Account Has Been Reactivated.';
   return [{
     to: user.email,
     subject: title,
@@ -96,9 +103,31 @@ export async function accountReactivatedT(user: User): Promise<Emails> {
       description,
       body: (
         <div>
-          <p>You can participate in Code With Us and Sprint With Us opportunities again.</p>
+          <p>You have successfully reactivated your Digital Marketplace account.</p>
         </div>
-      )
+      ),
+      callsToAction: [signInCallToAction()]
+    })
+  }];
+}
+
+export const accountReactivatedAdmin = makeSend(accountReactivatedAdminT);
+
+export async function accountReactivatedAdminT(user: User): Promise<Emails> {
+  const title = 'Your Account Has Been Reactivated';
+  const description = 'Your Account Has Been Reactivated.';
+  return [{
+    to: user.email,
+    subject: title,
+    html: templates.simple({
+      title,
+      description,
+      body: (
+        <div>
+          <p>Your Digital Marketplace account has been reactivated by an administrator. If you have any questions, you can send an email to the Digital Marketplace administrators at {CONTACT_EMAIL}</p>
+        </div>
+      ),
+      callsToAction: [signInCallToAction()]
     })
   }];
 }
@@ -107,5 +136,12 @@ export function signUpCallToAction() {
   return {
     text: 'Sign Up',
     url: templates.makeUrl('sign-up')
+  };
+}
+
+export function signInCallToAction(text = 'Sign In') {
+  return {
+    text,
+    url: templates.makeUrl('sign-in')
   };
 }

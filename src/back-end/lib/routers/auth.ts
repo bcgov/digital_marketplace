@@ -1,6 +1,6 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
 import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
-import { accountReactivated, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
+import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
@@ -154,7 +154,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             const dbResult = await updateUser(connection, { id, status: UserStatus.Active });
             // Send notification
             if (isValid(dbResult)) {
-              accountReactivated(dbResult.value);
+              accountReactivatedSelf(dbResult.value);
             }
           } else if (user.status === UserStatus.InactiveByAdmin) {
             return makeAuthErrorRedirect(request);

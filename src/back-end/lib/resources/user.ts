@@ -229,7 +229,7 @@ const resource: Resource = {
             case 'reactivateUser':
               dbResult = await db.updateUser(connection, { status: UserStatus.Active, id: request.params.id });
               if (isValid(dbResult)) {
-                userNotifications.accountReactivated(dbResult.value);
+                userNotifications.accountReactivatedSelf(dbResult.value);
               }
               break;
             case 'updateAdminPermissions':
