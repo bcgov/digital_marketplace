@@ -334,8 +334,8 @@ export function calculateProposalTeamQuestionScore(teamQuestionResponses: SWUPro
 // Calculate total score for proposal based on scores for each stage and contributing weight defined on opportunity
 export function calculateTotalProposalScore(proposal: SWUProposal, opportunity: SWUOpportunity): number {
   const teamQuestionsScore = calculateProposalTeamQuestionScore(proposal.teamQuestionResponses, opportunity.teamQuestions);
-  return (teamQuestionsScore * opportunity.questionsWeight) +
-         ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) +
-         ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) +
-         ((proposal.priceScore || 0) * opportunity.priceWeight);
+  return (teamQuestionsScore * opportunity.questionsWeight) / 100 +
+         ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) / 100 +
+         ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) / 100 +
+         ((proposal.priceScore || 0) * opportunity.priceWeight) / 100;
 }
