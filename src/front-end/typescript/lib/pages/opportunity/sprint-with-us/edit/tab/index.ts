@@ -89,7 +89,7 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
       return {
         component: ProponentScoresheetTab.component,
         icon: 'star-full',
-        title: 'Proponent Scoresheet'
+        title: 'Scoresheet'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'history':
       return {

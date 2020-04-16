@@ -103,7 +103,7 @@ export function view<TabId>(): View<Props<TabId>> {
                 color='body'>
                 {String(state.tabs.indexOf(activeTab) + 1)}. {getTabLabel(activeTab)}
               </Link>
-              <Icon name='caret' color='body' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
+              <Icon name='caret-down' color='body' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
             </DropdownToggle>
             <DropdownMenu>
               {state.tabs.map((tab, i) => (

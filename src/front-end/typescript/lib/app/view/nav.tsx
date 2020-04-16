@@ -77,7 +77,7 @@ const ContextualDropdown: View<PageContextualDropdown & { isOpen: boolean; dispa
     <ButtonDropdown isOpen={isOpen} toggle={() => toggle()}>
       <DropdownToggle tag='div'>
         <Link
-          symbol_={rightPlacement(iconLinkSymbol('caret'))}
+          symbol_={rightPlacement(iconLinkSymbol('caret-down'))}
           symbolClassName='mr-n1'
           iconSymbolSize={DROPDOWN_CARET_SIZE}
           loading={loading}
@@ -120,7 +120,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
             height: '2.75rem',
             objectFit: 'cover'
           }} />
-        <Icon name='caret' color='white' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
+        <Icon name='caret-down' color='white' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (
