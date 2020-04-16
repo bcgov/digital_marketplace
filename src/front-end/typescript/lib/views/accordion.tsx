@@ -43,7 +43,7 @@ export const view: View<Props> = props => {
     toggle
   } = props;
   return (
-    <div className={`py-2 ${className}`}>
+    <div className={`pt-2 ${open ? 'pb-4' : 'pb-2'} ${className}`}>
       <Link color={color} disabled={disabled} className='align-items-center flex-nowrap w-100' onClick={toggle}>
         <div className='d-flex align-items-center flex-nowrap'>
           {icon ? (<Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />) : null}

@@ -176,7 +176,7 @@ export const view: View<Props> = props => {
         return {
           ...styles,
           color: 'white',
-          padding: '3px 6px',
+          padding: '3px 8px',
           paddingLeft: undefined
         };
       },

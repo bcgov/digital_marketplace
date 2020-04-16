@@ -1,6 +1,7 @@
 import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
 import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
@@ -27,6 +28,7 @@ export interface ValidState {
   showErrorAlert: 'submit' | 'save' | null;
   submitLoading: number;
   saveDraftLoading: number;
+  submitTerms: Immutable<SubmitProposalTerms.State>;
 }
 
 type InnerMsg
@@ -34,6 +36,7 @@ type InnerMsg
   | ADT<'showModal', ModalId>
   | ADT<'dismissErrorAlert'>
   | ADT<'form', Form.Msg>
+  | ADT<'submitTerms', SubmitProposalTerms.Msg>
   | ADT<'submit'>
   | ADT<'saveDraft'>;
 
@@ -83,6 +86,13 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         opportunity,
         affiliations,
         canRemoveExistingAttachments: true //moot
+      })),
+      submitTerms: immutable(await SubmitProposalTerms.init({
+        errors: [],
+        child: {
+          value: false,
+          id: 'create-cwu-proposal-submit-terms'
+        }
       }))
     }));
   },
@@ -97,20 +107,26 @@ const stopSubmitLoading = makeStopLoading<ValidState>('submitLoading');
 const startSaveDraftLoading = makeStartLoading<ValidState>('saveDraftLoading');
 const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 
+function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
+  return state
+    .set('showModal', null)
+    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
+}
+
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'showModal':
       return [state.set('showModal', msg.value)];
 
     case 'hideModal':
-      return [state.set('showModal', null)];
+      return [hideModal(state)];
 
     case 'dismissErrorAlert':
       return [state.set('showErrorAlert', null)];
 
     case 'saveDraft':
     case 'submit':
-      state = state.set('showModal', null);
+      state = hideModal(state);
       const isSubmit = msg.tag === 'submit';
       return [
         isSubmit ? startSubmitLoading(state) : startSaveDraftLoading(state),
@@ -128,6 +144,15 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           return state.set('form', result.value[0]);
         }
       ];
+
+    case 'submitTerms':
+      return updateComponentChild({
+        state,
+        childStatePath: ['submitTerms'],
+        childUpdate: SubmitProposalTerms.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('submitTerms', value)
+      });
 
     case 'form':
       return updateComponentChild({
@@ -181,11 +206,20 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   }),
 
   getModal: getModalValid<ValidState, Msg>(state => {
+    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
         return {
           title: 'Review Terms and Conditions',
-          body: () => 'Please ensure you have reviewed the Digital Marketplace Terms and Conditions prior to submitting your proposal for this Code With Us opportunity.',
+          body: dispatch => (
+            <SubmitProposalTerms.view
+              opportunityType='Code With Us'
+              action='submitting'
+              termsTitle='Digital Marketplace Terms & Conditions'
+              termsRoute={adt('content', 'terms-and-conditions')}
+              state={state.submitTerms}
+              dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
+          ),
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -193,7 +227,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               icon: 'paper-plane',
               color: 'primary',
               msg: adt('submit'),
-              button: true
+              button: true,
+              disabled: !hasAcceptedTerms
             },
             {
               text: 'Cancel',

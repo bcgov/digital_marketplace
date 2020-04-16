@@ -25,10 +25,10 @@ import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affili
 import { fileBlobPath } from 'shared/lib/resources/file';
 import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { doesOrganizationMeetSWUQualification, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
-import { invalid, valid } from 'shared/lib/validation';
+import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
 export type TabId = 'Evaluation' | 'Team' | 'Pricing' | 'Team Questions' | 'References' | 'Review Proposal';
@@ -210,26 +210,22 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
   };
 };
 
-export type Errors = CreateValidationErrors;
+export type Errors = CreateValidationErrors | UpdateEditValidationErrors;
 
-export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
-  if (errors) {
-    return state
-      .update('organization', s => FormField.setErrors(s, errors.organization || []))
-      .update('team', s => Team.setErrors(s, {
-        inceptionPhase: errors.inceptionPhase,
-        prototypePhase: errors.prototypePhase,
-        implementationPhase: errors.implementationPhase
-      }))
-      .update('inceptionCost', s => FormField.setErrors(s, errors.inceptionPhase?.proposedCost || []))
-      .update('prototypeCost', s => FormField.setErrors(s, errors.prototypePhase?.proposedCost || []))
-      .update('implementationCost', s => FormField.setErrors(s, errors.implementationPhase?.proposedCost || []))
-      .update('totalCost', s => FormField.setErrors(s, errors.totalProposedCost || []))
-      .update('teamQuestions', s => TeamQuestions.setErrors(s, errors.teamQuestionResponses || []))
-      .update('references', s => References.setErrors(s, errors.references || []));
-  } else {
-    return state;
-  }
+export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
+  return state
+    .update('organization', s => FormField.setErrors(s, errors?.organization || []))
+    .update('team', s => Team.setErrors(s, {
+      inceptionPhase: errors?.inceptionPhase,
+      prototypePhase: errors?.prototypePhase,
+      implementationPhase: errors?.implementationPhase
+    }))
+    .update('inceptionCost', s => FormField.setErrors(s, errors?.inceptionPhase?.proposedCost || []))
+    .update('prototypeCost', s => FormField.setErrors(s, errors?.prototypePhase?.proposedCost || []))
+    .update('implementationCost', s => FormField.setErrors(s, errors?.implementationPhase?.proposedCost || []))
+    .update('totalCost', s => FormField.setErrors(s, errors && (errors as CreateValidationErrors).totalProposedCost || []))
+    .update('teamQuestions', s => TeamQuestions.setErrors(s, errors && (errors as CreateValidationErrors).teamQuestionResponses || []))
+    .update('references', s => References.setErrors(s, errors?.references || []));
 }
 
 export function isTeamTabValid(state: Immutable<State>): boolean {
@@ -300,48 +296,47 @@ export function getSelectedOrganization(state: Immutable<State>): OrganizationSl
   return (value && find(state.organizations, { id: value.value })) || null;
 }
 
-/*type PersistAction
-  = ADT<'create', CreateSWUOpportunityStatus>
+type PersistAction
+  = ADT<'create', CreateSWUProposalStatus>
   | ADT<'update', Id>;
 
-export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<[Immutable<State>, SWUOpportunity], Immutable<State>>> {
-  const values = getValues(state);
-  if (!values) { return invalid(state); }
-  const isCreateDraft = action.tag === 'create' && action.value === SWUOpportunityStatus.Draft;
-  // Transform remoteOk
-  if (!isCreateDraft) {
-    return invalid(state);
-  }
-  const actionResult: api.ResponseValidation<SWUOpportunity, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
+type ValidPersistResult = [Immutable<State>, SWUProposal];
+
+type InvalidPersistResult = Immutable<State>;
+
+export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<ValidPersistResult, InvalidPersistResult>> {
+  const formValues = getValues(state);
+  if (!formValues) { return invalid(state); }
+
+  const actionResult: api.ResponseValidation<SWUProposal, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
     switch (action.tag) {
         case 'create':
-          return await api.opportunities.swu.create({
-            ...values,
+          return await api.proposals.swu.create({
+            ...formValues,
+            opportunity: state.opportunity.id,
             status: action.value
           });
         case 'update':
-          const updateResult = await api.opportunities.swu.update(action.value, adt('edit' as const, {
-            ...values
-          }));
+          const updateResult = await api.proposals.swu.update(action.value, adt('edit' as const, formValues));
           return api.mapInvalid(updateResult, errors => {
-            if (errors.opportunity && errors.opportunity.tag === 'edit') {
-              return errors.opportunity.value;
+            if (errors.proposal && errors.proposal.tag === 'edit') {
+              return errors.proposal.value;
             } else {
               return {};
             }
           });
     }
   })();
+
   switch (actionResult.tag) {
-    case 'unhandled':
-      return invalid(state);
-    case 'invalid':
-      return invalid(setErrors(state, actionResult.value));
     case 'valid':
       state = setErrors(state, {});
       return valid([state, actionResult.value]);
+    case 'unhandled':
+    case 'invalid':
+      return invalid(setErrors(state, actionResult.value));
   }
-}*/
+}
 
 function updateTotalCost(state: Immutable<State>): Immutable<State> {
   const inceptionCost = FormField.getValue(state.inceptionCost) || 0;

@@ -9,6 +9,7 @@ import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-w
 import * as SWUOpportunityResource from 'shared/lib/resources/opportunity/sprint-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
+import * as SWUProposalResource from 'shared/lib/resources/proposal/sprint-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -126,7 +127,7 @@ export const users: CrudApi<UserResourceTypes> = {
   create: undefined
 };
 
-// CWUProposal
+// CWU Proposals
 
 interface RawCWUProposalHistoryRecord extends Omit<CWUProposalResource.CWUProposalHistoryRecord, 'createdAt'> {
   createdAt: string;
@@ -239,8 +240,124 @@ const cwuProposals: CWUProposalCrudApi = {
   }
 };
 
+// SWU Proposals
+
+interface RawSWUProposalHistoryRecord extends Omit<SWUProposalResource.SWUProposalHistoryRecord, 'createdAt'> {
+  createdAt: string;
+}
+
+function rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(raw: RawSWUProposalHistoryRecord): SWUProposalResource.SWUProposalHistoryRecord {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt)
+  };
+}
+
+interface RawSWUProposal extends Omit<SWUProposalResource.SWUProposal, 'createdAt' | 'updatedAt' | 'submittedAt' | 'history'> {
+  createdAt: string;
+  updatedAt: string;
+  submittedAt?: string;
+  history?: RawSWUProposalHistoryRecord[];
+}
+
+function rawSWUProposalToSWUProposal(raw: RawSWUProposal): SWUProposalResource.SWUProposal {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt),
+    submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
+    history: raw.history && raw.history.map(s => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
+  };
+}
+
+interface RawSWUProposalSlim extends Omit<SWUProposalResource.SWUProposalSlim, 'createdAt' | 'updatedAt'> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+function rawSWUProposalSlimToSWUProposalSlim(raw: RawSWUProposalSlim): SWUProposalResource.SWUProposalSlim {
+  return {
+    ...raw,
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt)
+  };
+}
+
+interface SWUProposalResourceTypes {
+  create: {
+    request: SWUProposalResource.CreateRequestBody;
+    rawResponse: RawSWUProposal;
+    validResponse: SWUProposalResource.SWUProposal;
+    invalidResponse: SWUProposalResource.CreateValidationErrors;
+  };
+  readMany: {
+    rawResponse: RawSWUProposalSlim;
+    validResponse: SWUProposalResource.SWUProposalSlim;
+    invalidResponse: string[];
+  };
+  readOne: {
+    rawResponse: RawSWUProposal;
+    validResponse: SWUProposalResource.SWUProposal;
+    invalidResponse: SWUProposalResource.UpdateValidationErrors;
+  };
+  update: {
+    request: SWUProposalResource.UpdateRequestBody;
+    rawResponse: RawSWUProposal;
+    validResponse: SWUProposalResource.SWUProposal;
+    invalidResponse: SWUProposalResource.UpdateValidationErrors;
+  };
+  delete: {
+    rawResponse: RawSWUProposal;
+    validResponse: SWUProposalResource.SWUProposal;
+    invalidResponse: SWUProposalResource.DeleteValidationErrors;
+  };
+}
+
+interface SWUProposalCrudApi extends Omit<CrudApi<SWUProposalResourceTypes>, 'readMany' | 'readOne'> {
+  readMany(opportunityId: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readMany']>;
+  readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readOne']>;
+}
+
+const SWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/sprint-with-us');
+
+const swuProposalActionParams = {
+  transformValid: rawSWUProposalToSWUProposal
+};
+
+const swuProposals: SWUProposalCrudApi = {
+  ...makeCrudApi<Omit<SWUProposalResourceTypes, 'readMany' | 'readOne'> & Pick<UndefinedResourceTypes, 'readMany' | 'readOne'>>({
+    routeNamespace: SWU_PROPOSAL_ROUTE_NAMESPACE,
+    create: swuProposalActionParams,
+    update: swuProposalActionParams,
+    delete: swuProposalActionParams,
+    readOne: undefined,
+    readMany: undefined
+  }),
+
+  async readMany(opportunityId) {
+    return await makeRequest<ReadManyActionTypes<SWUProposalResourceTypes['readMany']> & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      body: null,
+      transformValid: v => v.map(w => rawSWUProposalSlimToSWUProposalSlim(w))
+    });
+  },
+
+  async readOne(opportunityId, proposalId) {
+    return await makeRequest<SWUProposalResourceTypes['readOne'] & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(proposalId)}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      body: null,
+      transformValid: rawSWUProposalToSWUProposal
+    });
+  }
+};
+
+// Proposals
+
 export const proposals = {
-  cwu: cwuProposals
+  cwu: cwuProposals,
+  swu: swuProposals
 };
 
 // Addenda
@@ -256,7 +373,7 @@ function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
   };
 }
 
-// CodeWithUs Opportunities
+// CWU Opportunities
 
 interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityResource.CWUOpportunityHistoryRecord, 'createdAt'> {
   createdAt: string;
@@ -341,7 +458,7 @@ export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = makeCrudAp
   }
 });
 
-// SprintWithUs Opportunities
+// SWU Opportunities
 
 interface RawSWUOpportunityHistoryRecord extends Omit<SWUOpportunityResource.SWUOpportunityHistoryRecord, 'createdAt'> {
   createdAt: string;

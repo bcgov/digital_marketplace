@@ -1,27 +1,43 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
-import { getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapPageModalMsg, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/form';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
-import { invalid, valid, Validation } from 'shared/lib/validation';
+import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+
+type ModalId
+  = 'submit'
+  | 'cancel';
 
 interface ValidState {
+  showModal: ModalId | null;
+  submitLoading: number;
+  saveDraftLoading: number;
   opportunity: SWUOpportunity;
   form: Immutable<Form.State>;
+  submitTerms: Immutable<SubmitProposalTerms.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg
-  = ADT<'form', Form.Msg>;
+  = ADT<'hideModal'>
+  | ADT<'showModal', ModalId>
+  | ADT<'form', Form.Msg>
+  | ADT<'submitTerms', SubmitProposalTerms.Msg>
+  | ADT<'submit'>
+  | ADT<'saveDraft'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -46,12 +62,22 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
     if (!api.isValid(evalContentResult)) { return fail(); }
     return valid(immutable({
+      showModal: null,
+      submitLoading: 0,
+      saveDraftLoading: 0,
       opportunity: opportunityResult.value,
       form: immutable(await Form.init({
         viewerUser: shared.sessionUser,
         opportunity: opportunityResult.value,
         organizations: organizationsResult.value,
         evaluationContent: evalContentResult.value
+      })),
+      submitTerms: immutable(await SubmitProposalTerms.init({
+        errors: [],
+        child: {
+          value: false,
+          id: 'create-swu-proposal-submit-terms'
+        }
       }))
     }));
   },
@@ -61,8 +87,46 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
   }
 });
 
+const startSubmitLoading = makeStartLoading<ValidState>('submitLoading');
+const stopSubmitLoading = makeStopLoading<ValidState>('submitLoading');
+const startSaveDraftLoading = makeStartLoading<ValidState>('saveDraftLoading');
+const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
+
+function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
+  return state
+    .set('showModal', null)
+    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
+}
+
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
+    case 'saveDraft':
+    case 'submit':
+      state = hideModal(state);
+      const isSubmit = msg.tag === 'submit';
+      return [
+        isSubmit ? startSubmitLoading(state) : startSaveDraftLoading(state),
+        async (state, dispatch) => {
+          state = isSubmit ? stopSubmitLoading(state) : stopSaveDraftLoading(state);
+          const result = await Form.persist(state.form, adt('create', (isSubmit ? SWUProposalStatus.Submitted : SWUProposalStatus.Draft) as CreateSWUProposalStatus));
+          if (isInvalid(result)) {
+            return state.set('form', result.value);
+          }
+          dispatch(newRoute(adt('proposalSWUEdit' as const, {
+            proposalId: result.value[1].id,
+            opportunityId: result.value[1].opportunity.id
+          })));
+          dispatch(toast(adt('success', isSubmit ? toasts.submitted.success : toasts.draftCreated.success)));
+          return state.set('form', result.value[0]);
+        }
+      ];
+
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [hideModal(state)];
+
     case 'form':
       return updateComponentChild({
         state,
@@ -71,6 +135,16 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('form', value)
       });
+
+    case 'submitTerms':
+      return updateComponentChild({
+        state,
+        childStatePath: ['submitTerms'],
+        childUpdate: SubmitProposalTerms.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('submitTerms', value)
+      });
+
     default:
       return [state];
   }
@@ -108,8 +182,97 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     })
   }),
 
+  getContextualActions: getContextualActionsValid( ({state, dispatch}) => {
+    const isSubmitLoading   = state.submitLoading > 0;
+    const isSaveDraftLoading = state.saveDraftLoading > 0;
+    const isLoading          = isSubmitLoading || isSaveDraftLoading;
+    const isValid            = () => Form.isValid(state.form);
+    return adt('links', [
+      {
+        children: 'Submit',
+        symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
+        button: true,
+        loading: isSubmitLoading,
+        disabled: isLoading || !isValid(),
+        color: 'primary',
+        onClick: () => dispatch(adt('showModal', 'submit' as const))
+      },
+      {
+        children: 'Save Draft',
+        symbol_: leftPlacement(iconLinkSymbol('save')),
+        loading: isSaveDraftLoading,
+        disabled: isLoading,
+        button: true,
+        color: 'success',
+        onClick: () => dispatch(adt('saveDraft'))
+      },
+      {
+        children: 'Cancel',
+        color: 'white',
+        disabled: isLoading,
+        onClick: () => dispatch(adt('showModal', 'cancel' as const))
+      }
+    ]);
+  }),
+
   getModal: getModalValid(state => {
-    return mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
+    const formModal = mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
+    if (formModal !== null) { return formModal; }
+    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
+    switch (state.showModal) {
+      case 'submit':
+        return {
+          title: 'Review Terms and Conditions',
+          body: dispatch => (
+            <SubmitProposalTerms.view
+              opportunityType='Sprint With Us'
+              action='submitting'
+              termsTitle='Sprint With Us Terms & Conditions'
+              termsRoute={adt('content', 'sprint-with-us-proposal-terms-and-conditions')}
+              state={state.submitTerms}
+              dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
+          ),
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Submit Proposal',
+              icon: 'paper-plane',
+              color: 'primary',
+              msg: adt('submit'),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case 'cancel':
+        return {
+          title: 'Cancel New Sprint With Us Proposal?',
+          body: () => 'Are you sure you want to cancel? Any information you may have entered will be lost if you do so.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Yes, I want to cancel',
+              color: 'danger',
+              msg: newRoute(adt('opportunitySWUView' as const, {
+                opportunityId: state.opportunity.id
+              })),
+              button: true
+            },
+            {
+              text: 'Go Back',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      case null:
+        return null;
+    }
   }),
 
   getMetadata() {
