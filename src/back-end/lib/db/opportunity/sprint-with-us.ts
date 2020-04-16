@@ -331,15 +331,15 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(a
   if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[]);
+      .whereIn('statuses.status', publicOpportunityStatuses as SWUOpportunityStatus[]);
   } else if (session.user.type === UserType.Government) {
     // Gov basic users should only see private opportunities that they own, and public opportunities
     query = query
-      .whereIn('stat.status', publicOpportunityStatuses as SWUOpportunityStatus[])
+      .whereIn('statuses.status', publicOpportunityStatuses as SWUOpportunityStatus[])
       .orWhere(function() {
         this
-          .whereIn('stat.status', privateOpportunityStatuses as SWUOpportunityStatus[])
-          .andWhere({ 'opp.createdBy': session.user?.id });
+          .whereIn('statuses.status', privateOpportunityStatuses as SWUOpportunityStatus[])
+          .andWhere({ 'opportunities.createdBy': session.user?.id });
       });
   }
   // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match

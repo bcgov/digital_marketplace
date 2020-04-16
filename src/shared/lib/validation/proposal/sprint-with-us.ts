@@ -1,9 +1,9 @@
 import { spread, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
 import { MAX_TEAM_QUESTION_WORD_LIMIT, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus, UpdateTeamQuestionScoreBody, UpdateTeamQuestionScoreValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
-import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateGenericStringWords, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateGenericStringWords, validateNumber, validateNumberWithPrecision, validatePhoneNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
 
 export function validateSWUProposalStatus(raw: string, isOneOf: SWUProposalStatus[]): Validation<SWUProposalStatus> {
@@ -150,14 +150,53 @@ export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, 'Note', 0, 5000);
 }
 
-export function validateTeamQuestionsScore(raw: number, opportunityScoreWeight: number): Validation<number> {
-  return validateNumber(raw, 0, opportunityScoreWeight, 'Team Questions Score');
+export function validateTeamQuestionScores(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): ArrayValidation<UpdateTeamQuestionScoreBody, UpdateTeamQuestionScoreValidationErrors>  {
+  if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of scores.'] }]); }
+  if (raw.length !== opportunityTeamQuestions.length) {
+    return invalid([{ parseFailure: ['Please provide the correct number of team question scores.'] }]);
+  }
+
+  return validateArrayCustom(raw, v => validateTeamQuestionScore(v, opportunityTeamQuestions), {});
 }
 
-export function validateCodeChallengeScore(raw: number, opportunityScoreWeight: number): Validation<number> {
-  return validateNumber(raw, 0, opportunityScoreWeight, 'Code Challenge Score');
+export function validateTeamQuestionScore(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<UpdateTeamQuestionScoreBody, UpdateTeamQuestionScoreValidationErrors> {
+  const validatedOrder = validateTeamQuestionScoreOrder(getNumber(raw, 'order'), opportunityTeamQuestions.length);
+  if (isInvalid(validatedOrder)) {
+    return invalid({
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+  const maxScore = opportunityTeamQuestions.find(q => q.order === validatedOrder.value)?.score || null;
+  if (!maxScore) {
+    return invalid({
+      order: ['No matching opportunity question.']
+    });
+  }
+  const validatedScore = validateTeamQuestionScoreScore(getNumber(raw, 'score'), maxScore);
+  if (isInvalid(validatedScore)) {
+    return invalid({
+      score: getInvalidValue(validatedScore, undefined)
+    });
+  } else {
+    return valid({
+      score: validatedScore.value,
+      order: validatedOrder.value
+    });
+  }
 }
 
-export function validateTeamScenarioScore(raw: number, opportunityScoreWeight: number): Validation<number> {
-  return validateNumber(raw, 0, opportunityScoreWeight, 'Team Scenario Score');
+export function validateTeamQuestionScoreOrder(raw: number, numOpportunityQuestions: number): Validation<number> {
+  return validateNumber(raw, 1, numOpportunityQuestions, 'Order');
+}
+
+export function validateTeamQuestionScoreScore(raw: number, maxScore: number): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, maxScore, 2, 'Score');
+}
+
+export function validateCodeChallengeScore(raw: number): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, 100, 2, 'Code Challenge Score');
+}
+
+export function validateTeamScenarioScore(raw: number): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, 100, 2, 'Team Scenario Score');
 }

@@ -1,6 +1,6 @@
 import { isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { SWUOpportunitySlim } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity, SWUOpportunitySlim, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { UserSlim, UserType } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
@@ -92,6 +92,7 @@ export interface SWUProposal {
   challengeScore?: number;
   scenarioScore?: number;
   priceScore?: number;
+  totalScore?: number;
   rank?: number;
   anonymousProponentName: string;
 }
@@ -120,6 +121,7 @@ export interface SWUProposalReference {
 export interface SWUProposalTeamQuestionResponse {
   response: string;
   order: number;
+  score?: number; // Admin/owner only
 }
 
 export interface SWUProposalHistoryRecord {
@@ -198,10 +200,15 @@ export interface CreateValidationErrors extends BodyWithErrors {
 
 // Update.
 
+export interface UpdateTeamQuestionScoreBody {
+  order: number;
+  score: number;
+}
+
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
-  | ADT<'scoreQuestions', number>
+  | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
   | ADT<'screenInToCodeChallenge', string>
   | ADT<'scoreCodeChallenge', number>
   | ADT<'screenInToTeamScenario', string>
@@ -215,7 +222,7 @@ export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'sta
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
-  | ADT<'scoreQuestions', string[]>
+  | ADT<'scoreQuestions', UpdateTeamQuestionScoreValidationErrors[]>
   | ADT<'screenInToCodeChallenge', string[]>
   | ADT<'scoreCodeChallenge', string[]>
   | ADT<'screenInToTeamScenario', string[]>
@@ -224,6 +231,12 @@ type UpdateADTErrors
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>
   | ADT<'parseFailure'>;
+
+export interface UpdateTeamQuestionScoreValidationErrors {
+  order?: string[];
+  score?: string[];
+  parseFailure?: string[];
+}
 
 export interface UpdateEditValidationErrors {
   attachments?: string[][];
@@ -309,4 +322,20 @@ export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStat
     default:
       return false;
   }
+}
+
+// Return score out of 100 calculated from total points awarded to all questions / max possible
+export function calculateProposalTeamQuestionScore(teamQuestionResponses: SWUProposalTeamQuestionResponse[], teamQuestions: SWUTeamQuestion[]): number {
+  const maxPossibleScore = teamQuestions.reduce((acc, v) => acc + v.score, 0);
+  const actualScore = teamQuestionResponses.reduce((acc, v) => acc + (v.score || 0), 0);
+  return actualScore / maxPossibleScore * 100;
+}
+
+// Calculate total score for proposal based on scores for each stage and contributing weight defined on opportunity
+export function calculateTotalProposalScore(proposal: SWUProposal, opportunity: SWUOpportunity): number {
+  const teamQuestionsScore = calculateProposalTeamQuestionScore(proposal.teamQuestionResponses, opportunity.teamQuestions);
+  return (teamQuestionsScore * opportunity.questionsWeight) +
+         ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) +
+         ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) +
+         ((proposal.priceScore || 0) * opportunity.priceWeight);
 }

@@ -1,14 +1,14 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
+import { readOneSWUOpportunity, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
 import { MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { doesSWUOpportunityStatusAllowGovToViewFullProposal, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
+import { calculateProposalTeamQuestionScore, CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -33,7 +33,7 @@ interface SWUProposalStatusRecord {
   note: string;
 }
 
-interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | 'opportunity' | 'organization' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'references' | 'attachments' | 'teamQuestionResponses'> {
+interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | 'opportunity' | 'organization' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'references' | 'attachments'> {
   createdBy?: Id;
   updatedBy?: Id;
   opportunity: Id;
@@ -112,8 +112,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
   // If the user if gov/admin and the opportunity status is anything before EvaluationCodeChallenge, keep the proposal anonymous
   const { opportunity: opportunityId } = raw;
   const opportunity = getValidValue(await readOneSWUOpportunitySlim(connection, opportunityId, session), null);
-  const teamQuestionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, raw.id), undefined);
-  if (!opportunity || !teamQuestionResponses) {
+  if (!opportunity) {
     throw new Error('unable to process proposal');
   }
   if (session?.user.type !== UserType.Vendor && !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)) {
@@ -125,7 +124,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
       status: raw.status,
       submittedAt: raw.submittedAt,
       opportunity,
-      teamQuestionResponses,
+      teamQuestionResponses: raw.teamQuestionResponses,
       questionsScore: raw.questionsScore || undefined,
       anonymousProponentName: raw.anonymousProponentName
     };
@@ -194,8 +193,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
     inceptionPhase,
     prototypePhase,
     implementationPhase,
-    references,
-    teamQuestionResponses
+    references
   };
 }
 
@@ -295,7 +293,7 @@ export const readOneSWUProposalPhase = tryDb<[Id], SWUProposalPhase>(async (conn
 });
 
 export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposalSlim[]>(async (connection, session, id) => {
-  const query = connection<RawSWUProposalSlim>('swuProposals')
+  const query = connection<RawSWUProposalSlim>('swuProposals as proposals')
     .where({ opportunity: id })
     .select<RawSWUProposalSlim[]>(
       'id',
@@ -313,7 +311,11 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
   if (session.user.type === UserType.Vendor) {
     query.andWhere({ createdBy: session.user.id });
   } else {
-    query.select('questionsScore', 'challengeScore', 'scenarioScore', 'priceScore');
+    query
+      .join('swuTeamQuestionResponses as responses', 'responses.proposal', '=', 'proposals.id')
+      .sum('responses.score as questionsScore')
+      .groupBy('proposals.id');
+    query.select('challengeScore', 'scenarioScore', 'priceScore');
   }
 
   let results = await query;
@@ -343,18 +345,8 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
     results = results.filter(result => isSWUProposalStatusVisibleToGovernment(result.status));
   }
 
-  // Read ranks for rankable proposals and apply to existing result set
-  const rankableProposals = results.filter(result => rankableSWUProposalStatuses.includes(result.status));
-  const ranks = await connection
-    .from('swuProposals')
-    .whereIn('id', rankableProposals.map(r => r.id))
-    .andWhere({ opportunity: id })
-    .select(connection.raw('id, RANK () OVER (ORDER BY ("questionsScore" + "challengeScore" + "scenarioScore" + "priceScore") DESC) rank'));
-
-  for (const result of results) {
-    const match = ranks.find(r => r.id === result.id);
-    result.rank = match ? match.rank : undefined;
-  }
+  // Calculate scores and rankings for proposals
+  await calculateScores(connection, session, id, results);
 
   return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result, session))));
 });
@@ -394,11 +386,16 @@ export const readManyProposalReferences = tryDb<[Id], SWUProposalReference[]>(as
   return valid(results);
 });
 
-export const readManyProposalTeamQuestionResponses = tryDb<[Id], SWUProposalTeamQuestionResponse[]>(async (connection, proposalId) => {
-  const results = await connection<SWUProposalTeamQuestionResponse>('swuTeamQuestionResponses')
-    .where({ proposal: proposalId })
-    .select('response', 'order');
+export const readManyProposalTeamQuestionResponses = tryDb<[Id, boolean?], SWUProposalTeamQuestionResponse[]>(async (connection, proposalId, includeScores = false) => {
+  const query = connection<SWUProposalTeamQuestionResponse>('swuTeamQuestionResponses')
+    .where({ proposal: proposalId });
 
+  if (includeScores) {
+    query.select<SWUProposalTeamQuestionResponse[]>('*');
+  } else {
+    query.select<SWUProposalTeamQuestionResponse[]>('order', 'response');
+  }
+  const results = await query;
   if (!results) {
     throw new Error('unable to read proposal team question responses');
   }
@@ -407,27 +404,8 @@ export const readManyProposalTeamQuestionResponses = tryDb<[Id], SWUProposalTeam
 });
 
 export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal | null>(async (connection, id, session) => {
-  const result = await connection<RawSWUProposal>('swuProposals as proposals')
+  const result = await generateSWUProposalQuery(connection)
     .where({ 'proposals.id': id })
-    // Join on latest SWU proposal status
-    .join<RawSWUProposal>('swuProposalStatuses as statuses', function() {
-      this
-        .on('proposals.id', '=', 'statuses.proposal')
-        .andOnNotNull('statuses.status')
-        .andOn('statuses.createdAt', '=',
-          connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
-            statuses2.proposal = proposals.id and statuses2.status is not null)'));
-    })
-    .select<RawSWUProposal>(
-      'proposals.id',
-      'proposals.createdBy',
-      'proposals.createdAt',
-      'proposals.updatedBy',
-      'proposals.updatedAt',
-      'proposals.opportunity',
-      'proposals.organization',
-      'statuses.status'
-    )
     .first();
 
   if (result) {
@@ -448,27 +426,14 @@ export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal 
     // Fetch submittedAt date if applicable
     result.submittedAt = await getSWUProposalSubmittedAt(connection, result);
 
+    // Fetch team questions (scores only included if admin/owner)
+    const canReadScores = await readSWUProposalScore(connection, session, result.opportunity, result.id, result.status);
+    result.teamQuestionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, result.id, canReadScores && session.user.type !== UserType.Vendor), []);
+
     // Check for permissions on viewing scores and rank
-    if (await readSWUProposalScore(connection, session, result.opportunity, result.id, result.status)) {
-      const scores = await connection('swuProposals')
-        .where({ id })
-        .select<{ questionsScore: number, challengeScore: number, scenarioScore: number, priceScore: number}>(' questionsScore', 'challengeScore', 'scenarioScore', 'priceScore')
-        .first();
-
-      result.questionsScore = scores?.questionsScore;
-      result.challengeScore = scores?.challengeScore;
-      result.scenarioScore = scores?.scenarioScore;
-      result.priceScore = scores?.priceScore;
-
-      if (rankableSWUProposalStatuses.includes(result.status)) {
-        const ranks = await connection
-          .from('swuProposals as proposals')
-          .join('swuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
-          .whereIn('statuses.status', rankableSWUProposalStatuses as SWUProposalStatus[])
-          .andWhere({ opportunity: result.opportunity })
-          .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY "questionsScore" + "challengeScore" + "scenarioScore" + "priceScore") rank'));
-        result.rank = ranks.find(r => r.id === result.id)?.rank;
-      }
+    if (canReadScores) {
+      // Set scores and rankings
+      await calculateScores(connection, session, result.opportunity, [result]);
     }
 
     // Retrieve phases for proposal
@@ -760,22 +725,38 @@ export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, Aut
   }));
 });
 
-export const updateSWUProposalTeamQuestionScore = tryDb<[Id, number, AuthenticatedSession], SWUProposal>(async (connection, proposalId, score, session) => {
+export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestionScoreBody[], AuthenticatedSession], SWUProposal>(async (connection, proposalId, scores, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
 
-    // Update updatedAt/By stamp and score on proposal root record
+    // Update updatedAt/By on proposal root record
     const numberUpdated = await connection<{ questionsScore: number, updatedAt: Date, updatedBy: Id }>('swuProposals')
       .transacting(trx)
       .where({ id: proposalId })
       .update({
-        questionsScore: score,
         updatedAt: now,
         updatedBy: session.user.id
       });
 
     if (!numberUpdated) {
-      throw new Error('unable to update team questions score');
+      throw new Error('unable to update team question scores');
+    }
+
+    // Update the score on each question in the proposal
+    for (const score of scores) {
+      const [result] = await connection('swuTeamQuestionResponses')
+        .transacting(trx)
+        .where({
+          proposal: proposalId,
+          order: score.order
+        })
+        .update({
+          score: score.score
+        }, '*');
+
+      if (!result) {
+        throw new Error('unable to update team question scores');
+      }
     }
 
     // Create a history record for the score entry
@@ -787,11 +768,11 @@ export const updateSWUProposalTeamQuestionScore = tryDb<[Id, number, Authenticat
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.QuestionsScoreEntered,
-        note: `A team questions score of "${score}" was entered.`
+        note: `Team question scores were entered.`
       }, '*');
 
     if (!result) {
-      throw new Error('unable to update team questions score');
+      throw new Error('unable to update team question scores');
     }
 
     // Change the status to EvaluatedTeamQuestions
@@ -1018,7 +999,7 @@ async function calculatePriceScore(connection: Transaction, proposalId: Id): Pro
     throw new Error('unable to calculate price score');
   }
 
-  return (parseFloat(lowestBid) / parseFloat(proposal.bid)) * priceScoreWeight;
+  return (parseFloat(lowestBid) / parseFloat(proposal.bid)) * 100;
 }
 
 export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUProposal>(async (connection, proposalId, note, session) => {
@@ -1161,3 +1142,81 @@ export const readManySWUProposalAuthors = tryDb<[Id], User[]>(async (connection,
 
   return valid(await Promise.all(result.map(async raw => await rawUserToUser(connection, raw))));
 });
+
+function generateSWUProposalQuery(connection: Connection) {
+  return connection<RawSWUProposal>('swuProposals as proposals')
+    .join('swuProposalStatuses as statuses', function() {
+      this
+        .on('proposals.id', '=', 'statuses.proposal')
+        .andOnNotNull('statuses.status')
+        .andOn('statuses.createdAt', '=',
+          connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'));
+    })
+    .select<RawSWUProposal>(
+      'proposals.id',
+      'proposals.createdBy',
+      'proposals.createdAt',
+      'proposals.updatedBy',
+      'proposals.updatedAt',
+      'proposals.opportunity',
+      'proposals.organization',
+      'statuses.status'
+    );
+}
+
+interface ProposalScoring {
+  id: Id;
+  status: SWUProposalStatus;
+  questionsScore: number | null;
+  challengeScore: number | null;
+  scenarioScore: number | null;
+  priceScore: number | null;
+  totalScore?: number;
+  rank?: number;
+}
+
+async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(connection: Connection, session: AuthenticatedSession, opportunityId: Id, proposals: T[]): Promise<T[]> {
+  const opportunity = getValidValue(await readOneSWUOpportunity(connection, opportunityId, session), null);
+  if (!opportunity) {
+    return proposals;
+  }
+
+  const proposalScorings = await generateSWUProposalQuery(connection)
+    .where({ 'proposals.opportunity': opportunityId })
+    .join('swuTeamQuestionResponses as responses', 'responses.proposal', '=', 'proposals.id')
+    .select<ProposalScoring[]>('proposals.id', 'statuses.status', 'proposals.challengeScore', 'proposals.scenarioScore', 'proposals.priceScore');
+
+  for (const scoring of proposalScorings) {
+    const questionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, scoring.id, true), []);
+    scoring.questionsScore = calculateProposalTeamQuestionScore(questionResponses, opportunity.teamQuestions);
+    scoring.totalScore = (opportunity.questionsWeight * (scoring.questionsScore || 0) / 100) +
+                       (opportunity.codeChallengeWeight * (scoring.challengeScore || 0) / 100) +
+                       (opportunity.scenarioWeight * (scoring.scenarioScore || 0) / 100) +
+                       (opportunity.priceWeight * (scoring.priceScore || 0) / 100);
+  }
+
+  // Only calculate rankings for proposals in rankable status
+  const rankableProposalScorings = proposalScorings.filter(p => rankableSWUProposalStatuses.includes(p.status));
+  rankableProposalScorings.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+  rankableProposalScorings.forEach(v => {
+    v.rank = rankableProposalScorings.map(s => s.totalScore).indexOf(v.totalScore || 0) + 1;
+  });
+
+  proposals.forEach(proposal => {
+    // Vendors do not see intermediate scores, and only see their final score if in Awarded/Not Awarded state.
+    const proposalScoring = proposalScorings.find(s => s.id === proposal.id);
+    if (session.user.type !== UserType.Vendor) {
+      proposal.questionsScore = proposalScoring?.questionsScore || undefined;
+      proposal.challengeScore = proposalScoring?.challengeScore || undefined;
+      proposal.scenarioScore = proposalScoring?.scenarioScore || undefined;
+      proposal.priceScore = proposalScoring?.priceScore || undefined;
+      proposal.totalScore = proposalScoring?.totalScore || undefined;
+      proposal.rank = proposalScoring?.rank || undefined;
+    } else if (proposal.status === SWUProposalStatus.Awarded || proposal.status === SWUProposalStatus.NotAwarded) {
+      proposal.totalScore = proposalScoring?.totalScore || undefined;
+    }
+  });
+
+  return proposals;
+}
