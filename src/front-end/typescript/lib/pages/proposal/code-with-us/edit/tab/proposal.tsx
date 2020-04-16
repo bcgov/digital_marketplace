@@ -1,15 +1,14 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import * as FormField from 'front-end/lib/components/form-field';
-import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { ComponentView, ComponentViewProps, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
 import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/edit-tab-header';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import { compact } from 'lodash';
 import React from 'react';
@@ -35,7 +34,7 @@ interface ValidState extends Tab.Params {
   deleteLoading: number;
   showModal: ModalId | null;
   form: Immutable<Form.State>;
-  submitTermsCheckbox: Immutable<Checkbox.State>;
+  submitTerms: Immutable<SubmitProposalTerms.State>;
 }
 
 function isLoading(state: Immutable<ValidState>): boolean {
@@ -53,7 +52,7 @@ export type InnerMsg
   = ADT<'hideModal'>
   | ADT<'showModal', ModalId>
   | ADT<'form', Form.Msg>
-  | ADT<'submitTermsCheckbox', Checkbox.Msg>
+  | ADT<'submitTerms', SubmitProposalTerms.Msg>
   | ADT<'startEditing'>
   | ADT<'cancelEditing'>
   | ADT<'saveChanges'>
@@ -98,7 +97,7 @@ const init: Init<Tab.Params, State> = async params => {
     deleteLoading: 0,
     showModal: null,
     form: await initForm(opportunity, affiliations, proposal),
-    submitTermsCheckbox: immutable(await Checkbox.init({
+    submitTerms: immutable(await SubmitProposalTerms.init({
       errors: [],
       child: {
         value: false,
@@ -130,7 +129,7 @@ async function resetProposal(state: Immutable<ValidState>, proposal: CWUProposal
 function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
   return state
     .set('showModal', null)
-    .update('submitTermsCheckbox', s => FormField.setValue(s, false));
+    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
 }
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
@@ -147,13 +146,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('form', value)
       });
-    case 'submitTermsCheckbox':
+    case 'submitTerms':
       return updateComponentChild({
         state,
-        childStatePath: ['submitTermsCheckbox'],
-        childUpdate: Checkbox.update,
+        childStatePath: ['submitTerms'],
+        childUpdate: SubmitProposalTerms.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('submitTermsCheckbox', value)
+        mapChildMsg: value => adt('submitTerms', value)
       });
     case 'startEditing':
       return [
@@ -315,33 +314,26 @@ const view: ComponentView<State, Msg> = viewValid(props => {
   );
 });
 
-const SubmitTerms: View<ComponentViewProps<ValidState, Msg> & { action: string; }> = ({ action, state, dispatch }) => {
-  return (
-    <div>
-      <p>Please ensure you have reviewed the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link> prior to {action} your proposal for this Code With Us opportunity.</p>
-      <Checkbox.view
-        extraChildProps={{
-          inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Digital Marketplace Terms and Conditions</Link>.</span>)
-        }}
-        className='font-weight-bold'
-        state={state.submitTermsCheckbox}
-        dispatch={mapComponentDispatch(dispatch, value => adt('submitTermsCheckbox' as const, value))} />
-    </div>
-  );
-};
-
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
 
   getModal: getModalValid<ValidState, Msg>(state => {
-    const hasAcceptedTerms = FormField.getValue(state.submitTermsCheckbox);
+    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
         return {
           title: 'Review Terms and Conditions',
-          body: dispatch => (<SubmitTerms action='submitting' state={state} dispatch={dispatch} />),
+          body: dispatch => (
+            <SubmitProposalTerms.view
+              opportunityType='Code With Us'
+              action='submitting'
+              termsTitle='Digital Marketplace Terms & Conditions'
+              termsRoute={adt('content', 'terms-and-conditions')}
+              state={state.submitTerms}
+              dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
+          ),
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -363,7 +355,15 @@ export const component: Tab.Component<State, Msg> = {
       case 'saveChangesAndSubmit':
         return {
           title: 'Review Terms and Conditions',
-          body: dispatch => (<SubmitTerms action='submitting changes to' state={state} dispatch={dispatch} />),
+          body: dispatch => (
+            <SubmitProposalTerms.view
+              opportunityType='Code With Us'
+              action='submitting changes to'
+              termsTitle='Digital Marketplace Terms & Conditions'
+              termsRoute={adt('content', 'terms-and-conditions')}
+              state={state.submitTerms}
+              dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
+          ),
           onCloseMsg: adt('hideModal'),
           actions: [
             {

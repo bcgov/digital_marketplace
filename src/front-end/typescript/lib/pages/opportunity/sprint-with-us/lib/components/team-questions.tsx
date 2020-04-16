@@ -217,40 +217,51 @@ const QuestionView: View<QuestionViewProps> = props => {
   const { question, dispatch, index, disabled } = props;
   return (
     <div className='pb-5 mb-5 border-bottom'>
-      <div className='d-flex align-items-center mb-4'>
-        <h3 className='mb-0'>Question {index + 1}</h3>
-        {disabled
-          ? null
-          : (<Link
-              button
-              outline
-              size='sm'
-              color='blue-dark'
-              className='ml-4'
-              symbol_={leftPlacement(iconLinkSymbol('trash'))}
-              onClick={() => dispatch(adt('deleteQuestion', index))}>
-                Delete
-              </Link>)}
-      </div>
-      <LongText.view
-        extraChildProps={{}}
-        label='Question'
-        placeholder='Enter your question here.'
-        required
-        style={{ height: '200px' }}
-        disabled={disabled}
-        state={question.question}
-        dispatch={mapComponentDispatch(dispatch, value => adt('questionText' as const, { childMsg: value, qIndex: index } ))} />
-      <LongText.view
-        extraChildProps={{}}
-        label='Response Guidelines'
-        placeholder='Provide some guidance on how proponents can effectively respond to your question.'
-        required
-        style={{ height: '160px' }}
-        disabled={disabled}
-        state={question.guideline}
-        dispatch={mapComponentDispatch(dispatch, value => adt('guidelineText' as const, { childMsg: value, qIndex: index } )) }
-      />
+      <Row>
+        <Col xs='12'>
+          <div className='d-flex align-items-center mb-4'>
+            <h3 className='mb-0'>Question {index + 1}</h3>
+            {disabled
+              ? null
+              : (<Link
+                  button
+                  outline
+                  size='sm'
+                  color='blue-dark'
+                  className='ml-4'
+                  symbol_={leftPlacement(iconLinkSymbol('trash'))}
+                  onClick={() => dispatch(adt('deleteQuestion', index))}>
+                    Delete
+                  </Link>)}
+          </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs='12'>
+          <LongText.view
+            extraChildProps={{}}
+            label='Question'
+            placeholder='Enter your question here.'
+            required
+            style={{ height: '200px' }}
+            disabled={disabled}
+            state={question.question}
+            dispatch={mapComponentDispatch(dispatch, value => adt('questionText' as const, { childMsg: value, qIndex: index } ))} />
+        </Col>
+      </Row>
+      <Row>
+        <Col xs='12'>
+          <LongText.view
+            extraChildProps={{}}
+            label='Response Guidelines'
+            placeholder='Provide some guidance on how proponents can effectively respond to your question.'
+            required
+            style={{ height: '160px' }}
+            disabled={disabled}
+            state={question.guideline}
+            dispatch={mapComponentDispatch(dispatch, value => adt('guidelineText' as const, { childMsg: value, qIndex: index } )) } />
+        </Col>
+      </Row>
       <Row>
         <Col xs='12' md='6' lg='5'>
           <NumberField.view
@@ -264,12 +275,17 @@ const QuestionView: View<QuestionViewProps> = props => {
             state={question.wordLimit}
             dispatch={mapComponentDispatch(dispatch, value => adt('wordLimit' as const, { childMsg: value, qIndex: index } )) }
           />
+        </Col>
+      </Row>
+      <Row>
+        <Col xs='12' md='6' lg='5'>
           <NumberField.view
             extraChildProps={{
               suffix: 'points'
             }}
             label='Score'
             placeholder='Score'
+            className='mb-0'
             required
             disabled={disabled}
             state={question.score}

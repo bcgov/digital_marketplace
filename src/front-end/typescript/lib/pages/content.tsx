@@ -19,7 +19,8 @@ export type ContentId
   | 'code-with-us-opportunity-guide'
   | 'code-with-us-proposal-guide'
   | 'sprint-with-us-opportunity-guide'
-  | 'sprint-with-us-proposal-guide';
+  | 'sprint-with-us-proposal-guide'
+  | 'sprint-with-us-proposal-terms-and-conditions';
 
 export function parseContentId(id: any): ContentId | null {
   if (includes(Object.keys(DEFINITIONS), id)) {
@@ -67,6 +68,9 @@ const DEFINITIONS: ContentDefinitions = {
   },
   'sprint-with-us-proposal-guide': {
     title: 'Sprint With Us Proposal Guide'
+  },
+  'sprint-with-us-proposal-terms-and-conditions': {
+    title: 'Sprint With Us Terms and Conditions'
   }
 };
 

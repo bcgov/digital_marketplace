@@ -140,6 +140,7 @@ const ResponseView: View<ResponseViewProps> = props => {
         label={`${title} Response`}
         placeholder={`${title} Response`}
         style={{ height: '50vh', minHeight: '400px' }}
+        className='mb-0'
         disabled={disabled}
         state={response.response}
         dispatch={mapComponentDispatch(dispatch, value => adt('response', [index, value]) as Msg)} />
@@ -157,7 +158,7 @@ export const view: View<Props> = props => {
     <div>
       {state.responses.map((response, i) => (
         <Row key={`swu-proposal-team-question-response-${i}`}>
-          <Col xs='12' className={i < state.responses.length - 1 ? 'mb-5' : ''}>
+          <Col xs='12' className={i < state.responses.length - 1 ? 'mb-4' : ''}>
             <ResponseView
               index={i}
               disabled={disabled}
