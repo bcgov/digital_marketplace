@@ -139,7 +139,7 @@ const ResponseView: View<ResponseViewProps> = props => {
         required
         label={`${title} Response`}
         placeholder={`${title} Response`}
-        style={{ height: '60vh', minHeight: '400px' }}
+        style={{ height: '50vh', minHeight: '400px' }}
         disabled={disabled}
         state={response.response}
         dispatch={mapComponentDispatch(dispatch, value => adt('response', [index, value]) as Msg)} />
