@@ -247,7 +247,7 @@ const Dates: View<Props> = ({ state }) => {
   const opportunityPhase = state.opportunityPhase;
   if (!opportunityPhase) { return null; }
   return (
-    <Row className='mb-5'>
+    <Row className='mb-4'>
       <Col xs='12' className='d-flex flex-nowrap align-items-center'>
         <Icon name='calendar' width={0.9} height={0.9} className='mr-1' />
         <span className='font-weight-bold mr-2'>Phase Dates</span>
@@ -338,7 +338,7 @@ function membersTableBodyRows(params: MemberTableBodyRowsParams): Table.BodyRows
 const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
   const addedMembers = getAddedMembers(state);
   return (
-    <Row className='mb-5'>
+    <Row className='mb-4'>
       <Col xs='12'>
         <h4 className='mb-0'>Team Members</h4>
         <Link

@@ -84,12 +84,14 @@ export const view: View<Props> = props => {
       ClearIndicator: ({ clearValue, hasValue }) => {
         if (!hasValue) { return null; }
         return (
-          <div className='d-flex align-items-center justify-content-center border-right px-2' style={{ lineHeight: 0, height: '70%' }}>
-            <Icon
-              hover
-              color='gray-500'
-              onClick={() => clearValue()}
-              name='times' />
+          <div className='h-100 d-flex align-items-stretch justify-content-center py-1'>
+            <div className='d-flex align-items-center justify-content-center border-right px-2' style={{ lineHeight: 0 }}>
+              <Icon
+                hover
+                color='gray-500'
+                onClick={() => clearValue()}
+                name='times' />
+            </div>
           </div>
         );
       },

@@ -164,7 +164,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
     <div>
       {hasPhase(state, SWUProposalPhaseType.Inception)
         ? (<Phase.view
-            className='mb-5'
+            className='mb-4'
             state={state.inceptionPhase}
             dispatch={mapComponentDispatch(dispatch, value => adt('inceptionPhase' as const, value))}
             icon={isInceptionPhaseValid ? 'map' : 'exclamation-circle'}
@@ -174,7 +174,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         : null}
       {hasPhase(state, SWUProposalPhaseType.Prototype)
         ? (<Phase.view
-            className='mb-5'
+            className='mb-4'
             state={state.prototypePhase}
             dispatch={mapComponentDispatch(dispatch, value => adt('prototypePhase' as const, value))}
             icon={isPrototypePhaseValid ? 'rocket' : 'exclamation-circle'}

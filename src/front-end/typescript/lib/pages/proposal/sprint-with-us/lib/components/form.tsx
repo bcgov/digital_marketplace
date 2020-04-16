@@ -645,6 +645,7 @@ const ReferencesView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 interface ReviewPhaseViewProps {
+  className?: string;
   title: string;
   icon: AvailableIcons;
   proposedCost: number;
@@ -654,11 +655,11 @@ interface ReviewPhaseViewProps {
   toggleAccordion(): void;
 }
 
-const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen }) => {
+const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen }) => {
   //TODO view team member modal when clicking on team member name
   return (
     <Accordion
-      className='mt-5'
+      className={className}
       toggle={() => toggleAccordion()}
       color='blue-dark'
       title={title}
@@ -685,7 +686,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ title, icon, proposedCost
         {members.length
           ? (<div className='border-top'>
               {members.map((m, i) => (
-                <div className='py-2 px-3 d-flex flex-nowrap align-items-center'>
+                <div className='p-2 d-flex align-items-center border-bottom'>
                   <Link
                     key={`swu-proposal-review-phase-member-${i}`}
                     symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
@@ -752,7 +753,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
   return (
     <Row>
       <Col xs='12'>
-        <p className='mb-0'>This is a summary of your proposal for the Sprint With Us opportunity. Be sure to review all information for accuracy prior to submitting your proposal.</p>
+        <p className='mb-0'>This is a summary of your proposal for this Sprint With Us opportunity. Be sure to review all information for accuracy prior to submitting your proposal.</p>
       </Col>
       <Col xs='12' className='mt-5'>
         <h2>Organization Info</h2>
@@ -762,21 +763,23 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
               <Link
                 newTab
                 symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
+                symbolClassName='border'
                 dest={routeDest(adt('orgEdit', { orgId: organization.id }))}>
-                {organization.legalName}
+                Review Organization: {organization.legalName}
               </Link>
             </div>)
           : 'You have not yet selected an organization for this proposal.'}
       </Col>
       <Col xs='12' className='mt-5'>
         <h2 className='mb-4'>Phases</h2>
-        <div className='d-flex flex-nowrap align-items-center'>
+        <div className='d-flex flex-nowrap align-items-center mb-4'>
           <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
           <span className='font-weight-bold mr-2'>Total Proposed Cost</span>
           <span>{formatAmount(FormField.getValue(state.totalCost) || 0, '$')}</span>
         </div>
         {phaseMembers.inceptionPhase && opportunity.inceptionPhase
           ? (<ReviewPhaseView
+              className='mb-4'
               title='Inception'
               icon='map'
               proposedCost={FormField.getValue(state.inceptionCost) || 0}
@@ -788,6 +791,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           : null}
         {phaseMembers.prototypePhase && opportunity.prototypePhase
           ? (<ReviewPhaseView
+              className='mb-4'
               title='Prototype'
               icon='map'
               proposedCost={FormField.getValue(state.prototypeCost) || 0}
@@ -829,7 +833,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
         {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
           <ReviewTeamQuestionResponseView
             key={`swu-proposal-review-team-question-response-${i}`}
-            className={i < rs.length - 1 ? 'mb-5' : ''}
+            className={i < rs.length - 1 ? 'mb-4' : ''}
             opportunity={state.opportunity}
             isOpen={state.openReviewTeamQuestionResponseAccordions.has(i)}
             toggleAccordion={() => dispatch(adt('toggleReviewTeamQuestionResponseAccordion', i))}
