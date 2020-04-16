@@ -785,7 +785,7 @@ export const deleteSWUOpportunity = tryDb<[Id, Session], SWUOpportunity>(async (
   // Delete root record - cascade relationships in database will cleanup versions/attachments/addenda automatically
   const [result] = await connection<RawSWUOpportunity>('swuOpportunities')
     .where({ id })
-    .delete();
+    .delete('*');
 
   if (!result) {
     throw new Error('unable to delete opportunity');
