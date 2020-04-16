@@ -330,6 +330,10 @@ nav {
 .btn,
 button {
 
+  &.disabled {
+    pointer-events: none;
+  }
+
   &.disabled:not(.btn-link):not(.dropdown-item),
   &:disabled:not(.btn-link):not(.dropdown-item) {
     background-color: $secondary !important;
@@ -346,6 +350,7 @@ a,
   &.disabled,
   &:disabled {
     opacity: $btn-disabled-opacity;
+    pointer-events: none;
 
     &:hover {
       text-decoration: none;
@@ -632,6 +637,7 @@ nav.navbar .nav-link:hover {
       &--is-disabled {
         background-color: $input-disabled-bg !important;
         opacity: 1 !important;
+        cursor: not-allowed !important;
 
         .react-select__placeholder {
           opacity: 0 !important;
