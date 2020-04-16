@@ -81,30 +81,47 @@ export const view: View<Props> = props => {
     classNamePrefix: 'react-select',
     menuPlacement: 'auto',
     components: {
-      ClearIndicator: ({ clearValue, hasValue }) => {
-        if (!hasValue) { return null; }
+      ClearIndicator: ({ clearValue, hasValue, innerProps }) => {
+        if (!hasValue || disabled) { return null; }
+        return (
+          <div className='d-flex align-items-center justify-content-center' style={{ lineHeight: 0 }} onMouseDown={innerProps.onMouseDown} onTouchEnd={innerProps.onTouchEnd}>
+            <Icon
+              hover
+              color='gray-500'
+              onClick={() => clearValue()}
+              name='times' />
+          </div>
+        );
+      },
+      IndicatorSeparator: () => {
         return (
           <div className='h-100 d-flex align-items-stretch justify-content-center py-1'>
-            <div className='d-flex align-items-center justify-content-center border-right px-2' style={{ lineHeight: 0 }}>
-              <Icon
-                hover
-                color='gray-500'
-                onClick={() => clearValue()}
-                name='times' />
+            <div className='d-flex align-items-center justify-content-center border-right pr-2 mr-2'>
             </div>
           </div>
         );
       },
-      IndicatorSeparator: () => null,
-      DropdownIndicator: () => {
+      DropdownIndicator: ({ innerProps }) => {
         return (
-          <div className='d-flex align-items-center justify-content-center px-2' style={{ lineHeight: 0 }}>
+          <div className='d-flex align-items-center justify-content-center pr-2' style={{ lineHeight: 0 }} onMouseDown={innerProps.onMouseDown} onTouchEnd={innerProps.onTouchEnd}>
             {loading
               ? (<Spinner color='gray-500' size='sm' />)
               : (<Icon
                   hover
                   color='gray-500'
                   name='caret-down' />)}
+          </div>
+        );
+      },
+      MultiValueRemove: ({ innerProps }) => {
+        if (disabled) { return null; }
+        return (
+          <div className={innerProps.className} onClick={innerProps.onClick} onTouchEnd={innerProps.onTouchEnd} onMouseDown={innerProps.onMouseDown}>
+            <Icon
+              hover
+              width={0.8}
+              height={0.8}
+              name='times' />
           </div>
         );
       }
@@ -151,22 +168,28 @@ export const view: View<Props> = props => {
       multiValue(styles) {
         return {
           ...styles,
-          backgroundColor: '#52489C',
+          backgroundColor: '#52489C', //purple
           opacity: disabled ? 0.75 : undefined
         };
       },
       multiValueLabel(styles) {
         return {
           ...styles,
-          color: 'white'
+          color: 'white',
+          padding: '3px 6px',
+          paddingLeft: undefined
         };
       },
       multiValueRemove(styles) {
         return {
           ...styles,
-          color: 'white',
+          borderRadius: '0 2px 2px 0',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          color: '#8c84c6', //purple-light
           ':hover': {
-            backgroundColor: '#DC3545'
+            cursor: 'pointer',
+            color: '#fff',
+            backgroundColor: '#DC3545' //red
           }
         };
       }

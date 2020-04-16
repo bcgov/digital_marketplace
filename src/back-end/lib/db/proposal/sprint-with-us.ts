@@ -293,29 +293,12 @@ export const readOneSWUProposalPhase = tryDb<[Id], SWUProposalPhase>(async (conn
 });
 
 export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposalSlim[]>(async (connection, session, id) => {
-  const query = connection<RawSWUProposalSlim>('swuProposals as proposals')
-    .where({ opportunity: id })
-    .select<RawSWUProposalSlim[]>(
-      'id',
-      'createdBy',
-      'createdAt',
-      'updatedBy',
-      'updatedAt',
-      'organization',
-      'anonymousProponentName',
-      'opportunity'
-    );
+  const query = generateSWUProposalQuery(connection)
+    .where({ opportunity: id });
 
   // If user is vendor, scope results to those proposals they have authored
-  // If user is admin/gov, we don't scope, and include scores
   if (session.user.type === UserType.Vendor) {
     query.andWhere({ createdBy: session.user.id });
-  } else {
-    query
-      .join('swuTeamQuestionResponses as responses', 'responses.proposal', '=', 'proposals.id')
-      .sum('responses.score as questionsScore')
-      .groupBy('proposals.id');
-    query.select('challengeScore', 'scenarioScore', 'priceScore');
   }
 
   let results = await query;
@@ -326,26 +309,15 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 
   // Read latest status for each proposal, and get submittedDate if it exists
   for (const proposal of results) {
-    const statusResult = await connection<{ status: SWUProposalStatus }>('swuProposalStatuses')
-      .where({ proposal: proposal.id })
-      .whereNotNull('status')
-      .orderBy('createdAt', 'desc')
-      .first();
-
-    if (!statusResult) {
-      throw new Error('unable to read proposal status');
-    }
-    proposal.status = statusResult.status;
-
     proposal.submittedAt = await getSWUProposalSubmittedAt(connection, proposal);
   }
 
   // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
   if (session.user && session.user.type !== UserType.Vendor) {
-    results = results.filter(result => isSWUProposalStatusVisibleToGovernment(result.status));
+    results = results.filter(result => isSWUProposalStatusVisibleToGovernment(result.status, session.user.type));
   }
 
-  // Calculate scores and rankings for proposals
+  // Calculate scores and rankings for proposals (helper function will limit based on role/status)
   await calculateScores(connection, session, id, results);
 
   return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result, session))));
@@ -404,9 +376,9 @@ export const readManyProposalTeamQuestionResponses = tryDb<[Id, boolean?], SWUPr
 });
 
 export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal | null>(async (connection, id, session) => {
-  const result = await generateSWUProposalQuery(connection)
+  const result = await generateSWUProposalQuery(connection, true)
     .where({ 'proposals.id': id })
-    .first();
+    .first<RawSWUProposal>();
 
   if (result) {
     // Fetch attachments
@@ -1143,8 +1115,8 @@ export const readManySWUProposalAuthors = tryDb<[Id], User[]>(async (connection,
   return valid(await Promise.all(result.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-function generateSWUProposalQuery(connection: Connection) {
-  return connection<RawSWUProposal>('swuProposals as proposals')
+function generateSWUProposalQuery(connection: Connection, full = false) {
+  const query = connection('swuProposals as proposals')
     .join('swuProposalStatuses as statuses', function() {
       this
         .on('proposals.id', '=', 'statuses.proposal')
@@ -1153,7 +1125,7 @@ function generateSWUProposalQuery(connection: Connection) {
           connection.raw('(select max("createdAt") from "swuProposalStatuses" as statuses2 where \
             statuses2.proposal = proposals.id and statuses2.status is not null)'));
     })
-    .select<RawSWUProposal>(
+    .select<RawSWUProposalSlim[]>(
       'proposals.id',
       'proposals.createdBy',
       'proposals.createdAt',
@@ -1161,8 +1133,15 @@ function generateSWUProposalQuery(connection: Connection) {
       'proposals.updatedAt',
       'proposals.opportunity',
       'proposals.organization',
+      'proposals.anonymousProponentName',
       'statuses.status'
     );
+
+  if (full) {
+    query.select('proposals.opportunity');
+  }
+
+  return query;
 }
 
 interface ProposalScoring {
