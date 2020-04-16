@@ -300,7 +300,7 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
 
   // Filter out any proposals not in UNDER_REVIEW or later status if admin/gov owner
   if (session.user && session.user.type !== UserType.Vendor) {
-    results = results.filter(result => isCWUProposalStatusVisibleToGovernment(result.status));
+    results = results.filter(result => isCWUProposalStatusVisibleToGovernment(result.status, session.user.type));
   }
 
   // Read ranks for rankable proposals and apply to existing result set
