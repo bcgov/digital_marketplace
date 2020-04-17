@@ -196,8 +196,7 @@ export function getValues(state: Immutable<State>): Values {
   return {
     members: state.members.map(({ user, scrumMaster }) => ({
       scrumMaster,
-      member: user.id,
-      pending: false //TODO remove
+      member: user.id
     }))
   };
 }

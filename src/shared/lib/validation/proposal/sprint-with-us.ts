@@ -44,7 +44,7 @@ export function validateSWUProposalReferenceEmail(raw: string): Validation<strin
 }
 
 export function validateSWUProposalReferenceOrder(raw: number): Validation<number> {
-  return validateNumber(raw, 1, 3, 'Order');
+  return validateNumber(raw, 0, 2, 'Order');
 }
 
 export function validateSWUProposalReference(raw: any): Validation<CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors> {
@@ -88,7 +88,7 @@ export function validateSWUProposalTeamQuestionResponseResponse(raw: string, wor
 }
 
 export function validateSWUProposalTeamQuestionResponseOrder(raw: number, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<number> {
-  return validateNumber(raw, 1, opportunityTeamQuestions.length, 'Order');
+  return validateNumber(raw, 0, opportunityTeamQuestions.length, 'Order');
 }
 
 export function validateSWUProposalTeamQuestionResponse(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors> {

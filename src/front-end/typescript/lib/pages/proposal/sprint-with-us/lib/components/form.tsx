@@ -262,24 +262,24 @@ export function isLoading(state: Immutable<State>): boolean {
 export type Values = Omit<CreateRequestBody, 'status'>;
 
 export function getValues(state: Immutable<State>): Values | null {
+  const team = Team.getValues(state.team);
   const inceptionCost = FormField.getValue(state.inceptionCost);
   const prototypeCost = FormField.getValue(state.prototypeCost);
   const implementationCost = FormField.getValue(state.implementationCost);
   const organization = FormField.getValue(state.organization);
-  if (inceptionCost === null || prototypeCost === null || implementationCost === null || !organization) {
+  if ((team.inceptionPhase && inceptionCost === null) || (team.prototypePhase && prototypeCost === null) || implementationCost === null || !organization) {
     return null;
   }
-  const team = Team.getValues(state.team);
   return {
     opportunity: state.opportunity.id,
     organization: organization.value,
     inceptionPhase: team.inceptionPhase && {
       ...team.inceptionPhase,
-      proposedCost: inceptionCost
+      proposedCost: inceptionCost || 0
     },
     prototypePhase: team.prototypePhase && {
       ...team.prototypePhase,
-      proposedCost: prototypeCost
+      proposedCost: prototypeCost || 0
     },
     implementationPhase: {
       ...team.implementationPhase,
