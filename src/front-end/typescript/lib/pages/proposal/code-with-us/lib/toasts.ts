@@ -9,6 +9,10 @@ export const submitted = {
   success: {
     title: 'Proposal Submitted',
     body: 'Your Code With Us proposal has been submitted. You can make changes to, and resubmit, your proposal prior to the opportunity\'s proposal deadline.'
+  },
+  error: {
+    title: 'Unable to Submit Proposal',
+    body: 'Your Code With Us proposal could not be submitted. Please fix any errors in the form and try again.'
   }
 };
 
@@ -30,6 +34,10 @@ export const draftCreated = {
   success: {
     title: 'Draft Proposal Saved',
     body: 'Your draft Code With Us proposal has been saved. You can return to this page to complete and submit your proposal prior to the opportunity\'s proposal deadline.'
+  },
+  error: {
+    title: 'Unable to Save Draft Proposal',
+    body: 'Your draft Code With Us proposal could not be saved. Please try again later.'
   }
 };
 

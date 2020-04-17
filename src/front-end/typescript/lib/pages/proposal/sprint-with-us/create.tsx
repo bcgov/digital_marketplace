@@ -110,6 +110,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = isSubmit ? stopSubmitLoading(state) : stopSaveDraftLoading(state);
           const result = await Form.persist(state.form, adt('create', (isSubmit ? SWUProposalStatus.Submitted : SWUProposalStatus.Draft) as CreateSWUProposalStatus));
           if (isInvalid(result)) {
+            dispatch(toast(adt('error', isSubmit ? toasts.submitted.error : toasts.draftCreated.error)));
             return state.set('form', result.value);
           }
           dispatch(newRoute(adt('proposalSWUEdit' as const, {

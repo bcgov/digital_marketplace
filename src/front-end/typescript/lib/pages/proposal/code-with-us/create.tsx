@@ -1,8 +1,8 @@
-import { getAlertsValid, getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
 import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
@@ -25,7 +25,6 @@ export interface ValidState {
   showModal: ModalId | null;
   opportunity: CWUOpportunity;
   form: Immutable<Form.State>;
-  showErrorAlert: 'submit' | 'save' | null;
   submitLoading: number;
   saveDraftLoading: number;
   submitTerms: Immutable<SubmitProposalTerms.State>;
@@ -34,7 +33,6 @@ export interface ValidState {
 type InnerMsg
   = ADT<'hideModal'>
   | ADT<'showModal', ModalId>
-  | ADT<'dismissErrorAlert'>
   | ADT<'form', Form.Msg>
   | ADT<'submitTerms', SubmitProposalTerms.Msg>
   | ADT<'submit'>
@@ -80,7 +78,6 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       showModal: null,
       submitLoading: 0,
       saveDraftLoading: 0,
-      showErrorAlert: null,
       opportunity,
       form: immutable(await Form.init({
         opportunity,
@@ -121,9 +118,6 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
     case 'hideModal':
       return [hideModal(state)];
 
-    case 'dismissErrorAlert':
-      return [state.set('showErrorAlert', null)];
-
     case 'saveDraft':
     case 'submit':
       state = hideModal(state);
@@ -134,6 +128,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = isSubmit ? stopSubmitLoading(state) : stopSaveDraftLoading(state);
           const result = await Form.persist(state.form, adt('create', (isSubmit ? CWUProposalStatus.Submitted : CWUProposalStatus.Draft) as CreateCWUProposalStatus));
           if (isInvalid(result)) {
+            dispatch(toast(adt('error', isSubmit ? toasts.submitted.error : toasts.draftCreated.error)));
             return state.set('form', result.value);
           }
           dispatch(newRoute(adt('proposalCWUEdit' as const, {
@@ -298,16 +293,5 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }
     ]);
-  }),
-
-  getAlerts: getAlertsValid(state => ({
-    ...emptyPageAlerts(),
-    errors: state.showErrorAlert
-    ? [{
-        text: `We were unable to ${state.showErrorAlert} your proposal. Please fix the errors in the form below and try again.`,
-        dismissMsg: adt('dismissErrorAlert')
-      }]
-      : []
-  }))
-
+  })
 };
