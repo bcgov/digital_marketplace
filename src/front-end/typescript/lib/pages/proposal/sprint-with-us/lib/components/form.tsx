@@ -6,7 +6,7 @@ import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { Component, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
+import { makeViewTeamMemberModal, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import * as References from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/references';
 import * as Team from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/team';
@@ -44,7 +44,10 @@ export interface Params {
   activeTab?: TabId;
 }
 
+type ModalId = ADT<'viewTeamMember', Phase.Member>;
+
 export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'evaluationContent' | 'organizations'> {
+  showModal: ModalId | null;
   getAffiliationsLoading: number;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   viewerUser: User;
@@ -69,6 +72,8 @@ export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'eval
 
 export type Msg
   = ADT<'tabbedForm', TabbedForm.Msg<TabId>>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
   // Team Tab
   | ADT<'organization', Select.Msg>
   | ADT<'team', Team.Msg>
@@ -105,6 +110,7 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
     ? { label: proposal.organization.legalName, value: proposal.organization.id }
     : null;
   return {
+    showModal: null,
     getAffiliationsLoading: 0,
     viewerUser,
     evaluationContent,
@@ -261,18 +267,15 @@ export function isLoading(state: Immutable<State>): boolean {
 
 export type Values = Omit<CreateRequestBody, 'status'>;
 
-export function getValues(state: Immutable<State>): Values | null {
+export function getValues(state: Immutable<State>): Values {
   const team = Team.getValues(state.team);
   const inceptionCost = FormField.getValue(state.inceptionCost);
   const prototypeCost = FormField.getValue(state.prototypeCost);
   const implementationCost = FormField.getValue(state.implementationCost);
   const organization = FormField.getValue(state.organization);
-  if ((team.inceptionPhase && inceptionCost === null) || (team.prototypePhase && prototypeCost === null) || implementationCost === null || !organization) {
-    return null;
-  }
   return {
     opportunity: state.opportunity.id,
-    organization: organization.value,
+    organization: organization?.value || '', //TODO remove ''
     inceptionPhase: team.inceptionPhase && {
       ...team.inceptionPhase,
       proposedCost: inceptionCost || 0
@@ -283,7 +286,7 @@ export function getValues(state: Immutable<State>): Values | null {
     },
     implementationPhase: {
       ...team.implementationPhase,
-      proposedCost: implementationCost
+      proposedCost: implementationCost || 0
     },
     references: References.getValues(state.references),
     teamQuestionResponses: TeamQuestions.getValues(state.teamQuestions),
@@ -306,8 +309,6 @@ type InvalidPersistResult = Immutable<State>;
 
 export async function persist(state: Immutable<State>, action: PersistAction): Promise<Validation<ValidPersistResult, InvalidPersistResult>> {
   const formValues = getValues(state);
-  if (!formValues) { return invalid(state); }
-
   const actionResult: api.ResponseValidation<SWUProposal, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
     switch (action.tag) {
         case 'create':
@@ -327,7 +328,6 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
           });
     }
   })();
-
   switch (actionResult.tag) {
     case 'valid':
       state = setErrors(state, {});
@@ -362,6 +362,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('tabbedForm', value)
       });
+
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+
+    case 'hideModal':
+      return [state.set('showModal', null)];
 
     case 'organization':
       return updateComponentChild({
@@ -508,7 +514,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
             label='Organization'
             placeholder='Organization'
             hint={state.viewerUser.type === UserType.Vendor
-              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities.</span>)
+              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please save this proposal as a draft before creating an organization to ensure you don't lose any unsaved changes made to your proposal.</span>)
               : undefined}
             state={state.organization}
             dispatch={mapComponentDispatch(dispatch, v => adt('organization' as const, v))}
@@ -648,9 +654,10 @@ interface ReviewPhaseViewProps {
   members: Phase.Member[];
   isOpen: boolean;
   toggleAccordion(): void;
+  viewTeamMember(m: Phase.Member): void;
 }
 
-const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen }) => {
+const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen, viewTeamMember }) => {
   //TODO view team member modal when clicking on team member name
   return (
     <Accordion
@@ -683,6 +690,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, p
               {members.map((m, i) => (
                 <div className='p-2 d-flex align-items-center border-bottom'>
                   <Link
+                    onClick={() => viewTeamMember(m)}
                     key={`swu-proposal-review-phase-member-${i}`}
                     symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
                     {m.user.name}
@@ -782,6 +790,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
               members={phaseMembers.inceptionPhase}
               isOpen={state.isReviewInceptionPhaseAccordionOpen}
               toggleAccordion={() => dispatch(adt('toggleReviewInceptionPhaseAccordion'))}
+              viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
               />)
           : null}
         {phaseMembers.prototypePhase && opportunity.prototypePhase
@@ -794,6 +803,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
               members={phaseMembers.prototypePhase}
               isOpen={state.isReviewPrototypePhaseAccordionOpen}
               toggleAccordion={() => dispatch(adt('toggleReviewPrototypePhaseAccordion'))}
+              viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
               />)
           : null}
         <ReviewPhaseView
@@ -804,6 +814,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           members={phaseMembers.implementationPhase}
           isOpen={state.isReviewImplementationPhaseAccordionOpen}
           toggleAccordion={() => dispatch(adt('toggleReviewImplementationPhaseAccordion'))}
+          viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
           />
       </Col>
       <Col xs='12' className='mt-5'>
@@ -889,5 +900,14 @@ export const component: Component<Params,  State, Msg> = {
 };
 
 export const getModal: PageGetModal<State, Msg> = state => {
-  return mapPageModalMsg(Team.getModal(state.team), msg => adt('team', msg) as Msg);
+  const teamModal = mapPageModalMsg(Team.getModal(state.team), msg => adt('team', msg) as Msg);
+  if (teamModal) { return teamModal; }
+  if (!state.showModal) { return null; }
+  switch (state.showModal.tag) {
+    case 'viewTeamMember':
+      return makeViewTeamMemberModal({
+        member: state.showModal.value,
+        onCloseMsg: adt('hideModal')
+      });
+  }
 };

@@ -25,7 +25,7 @@ export function makeStopLoading<State>(key: keyof State): WithState<State> {
     if (typeof value === 'number') {
       // Need to setIn to circumvent type system's lack of support
       // for recursive types.
-      return state.setIn([key], value - 1);
+      return state.setIn([key], Math.max(0, value - 1));
     } else {
       return state;
     }

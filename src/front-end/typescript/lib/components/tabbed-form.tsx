@@ -7,6 +7,7 @@ import { Dropdown, DropdownMenu, DropdownToggle, Nav } from 'reactstrap';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State<TabId> {
+  id: string;
   isDropdownOpen: boolean;
   activeTab: TabId;
   tabs: TabId[];
@@ -52,11 +53,19 @@ export function init<TabId>(): Init<Params<TabId>, State<TabId>> {
   return async ({ tabs, activeTab }) => {
     if (!tabs.length) { throw new Error('Must provide a non-empty array of tabs for tabbed forms.'); }
     return {
+      id: `tabbed-form-${Math.random()}`,
       tabs,
       isDropdownOpen: false,
       activeTab: activeTab || tabs[0]
     };
   };
+}
+
+function scrollToFormTop<TabId>(state: Immutable<State<TabId>>): void {
+  const form = document.getElementById(state.id);
+  if (!form) { return; }
+  const toY = Math.max(0, form.getBoundingClientRect().top + (window.document.scrollingElement?.scrollTop || 0));
+  window.scrollTo(0, toY - 100); //Offset by 100px to account for nav.
 }
 
 export function update<TabId>(): Update<State<TabId>, Msg<TabId>> {
@@ -69,13 +78,23 @@ export function update<TabId>(): Update<State<TabId>, Msg<TabId>> {
           .set('isDropdownOpen', false)
           .set('activeTab', msg.value)];
       case 'next':
-        return [state
-          .set('isDropdownOpen', false)
-          .set('activeTab', getNextTab(state) || state.activeTab)];
+        return [
+          state
+            .set('isDropdownOpen', false)
+            .set('activeTab', getNextTab(state) || state.activeTab),
+          async state => {
+            scrollToFormTop(state);
+            return null;
+        }];
       case 'previous':
-        return [state
-          .set('isDropdownOpen', false)
-          .set('activeTab', getPreviousTab(state) || state.activeTab)];
+        return [
+          state
+            .set('isDropdownOpen', false)
+            .set('activeTab', getPreviousTab(state) || state.activeTab),
+          async state => {
+            scrollToFormTop(state);
+            return null;
+        }];
     }
   };
 }
@@ -139,7 +158,7 @@ export function view<TabId>(): View<Props<TabId>> {
 
   return props => {
     return (
-      <div>
+      <div id={props.state.id}>
         <Header {...props} />
         <div>
           {props.children}

@@ -216,7 +216,7 @@ interface QuestionViewProps {
 const QuestionView: View<QuestionViewProps> = props => {
   const { question, dispatch, index, disabled } = props;
   return (
-    <div className='pb-5 mb-5 border-bottom'>
+    <div className={index > 0 ? 'pt-5 mt-5 border-top' : ''}>
       <Row>
         <Col xs='12'>
           <div className='d-flex align-items-center mb-4'>
@@ -302,17 +302,24 @@ interface Props extends ComponentViewProps<State, Msg> {
 }
 
 const AddButton: View<Props> = ({ disabled, dispatch }) => {
+  if (disabled) { return null; }
   return (
-    <Link
-      button
-      outline
-      disabled={disabled}
-      size='sm'
-      color='primary'
-      symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
-      onClick={ () => { dispatch(adt('addQuestion')); } }>
-      Add Question
-    </Link>
+    <Row>
+      <Col xs='12'>
+        <div className='mt-5 pt-5 border-top'>
+          <Link
+            button
+            outline
+            disabled={disabled}
+            size='sm'
+            color='primary'
+            symbol_={leftPlacement(iconLinkSymbol('plus-circle'))}
+            onClick={ () => { dispatch(adt('addQuestion')); } }>
+            Add Question
+          </Link>
+        </div>
+      </Col>
+    </Row>
   );
 };
 
