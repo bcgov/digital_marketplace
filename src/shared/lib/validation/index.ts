@@ -208,11 +208,12 @@ function parseDate(raw: string): Date | null {
   return parsed.isValid() ? parsed.toDate() : null;
 }
 
-export function validateGenericDate(raw: string, name: string, preposition: string, format: (d: Date) => string, minDate?: Date, maxDate?: Date): Validation<Date> {
-  const date: Date | null = parseDate(raw);
+export function validateGenericDate(raw: string, name: string, preposition: string, format: (d: Date) => string, minDate?: Date, maxDate?: Date, modifyParsed?: (_: Date) => Date): Validation<Date> {
+  let date: Date | null = parseDate(raw);
   if (!date) {
     return invalid(['Please enter a valid date.']);
   }
+  date = modifyParsed ? modifyParsed(date) : date;
   const validMinDate = !minDate || compareDates(date, minDate) !== -1;
   const validMaxDate = !maxDate || compareDates(date, maxDate) !== 1;
   if (validMinDate && validMaxDate) {
@@ -229,12 +230,12 @@ export function validateGenericDate(raw: string, name: string, preposition: stri
   }
 }
 
-export function validateDatetime(raw: string, minDate?: Date, maxDate?: Date): Validation<Date> {
-  return validateGenericDate(raw, 'date/time', 'at', formatDateAndTime, minDate, maxDate);
+export function validateDatetime(raw: string, minDate?: Date, maxDate?: Date, modifyParsed?: (_: Date) => Date): Validation<Date> {
+  return validateGenericDate(raw, 'date/time', 'at', formatDateAndTime, minDate, maxDate, modifyParsed);
 }
 
-export function validateDate(raw: string, minDate?: Date, maxDate?: Date): Validation<Date> {
-  return validateGenericDate(raw, 'date', 'on', formatDate, minDate, maxDate);
+export function validateDate(raw: string, minDate?: Date, maxDate?: Date, modifyParsed?: (_: Date) => Date): Validation<Date> {
+  return validateGenericDate(raw, 'date', 'on', formatDate, minDate, maxDate, modifyParsed);
 }
 
 export function validateTime(raw: string, minDate?: Date, maxDate?: Date): Validation<Date> {

@@ -1,5 +1,5 @@
 import { uniq } from 'lodash';
-import { dateToMidnight, isDateInThePast } from 'shared/lib';
+import { isDateInThePast, setDateTo4PM } from 'shared/lib';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityStatus, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { ArrayValidation, invalid, mapValid, optional, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
@@ -59,19 +59,19 @@ export function validateProposalDeadline(raw: string, opportunity?: CWUOpportuni
   if (opportunity && opportunity.status !== CWUOpportunityStatus.Draft) {
     minDate = isDateInThePast(opportunity.proposalDeadline) ? opportunity.proposalDeadline : now;
   }
-  return validateDate(raw, dateToMidnight(minDate));
+  return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }
 
 export function validateAssignmentDate(raw: string, proposalDeadline: Date): Validation<Date> {
-  return validateDate(raw, proposalDeadline);
+  return validateDate(raw, setDateTo4PM(proposalDeadline), undefined, setDateTo4PM);
 }
 
 export function validateStartDate(raw: string, assignmentDate: Date): Validation<Date> {
-  return validateDate(raw, assignmentDate);
+  return validateDate(raw, setDateTo4PM(assignmentDate), undefined, setDateTo4PM);
 }
 
 export function validateCompletionDate(raw: string | undefined, startDate: Date): Validation<Date | undefined> {
-  return optional(raw, v => validateDate(v, startDate));
+  return optional(raw, v => validateDate(v, setDateTo4PM(startDate), undefined, setDateTo4PM));
 }
 
 export function validateSubmissionInfo(raw: string): Validation<string> {

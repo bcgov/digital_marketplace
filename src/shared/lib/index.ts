@@ -149,10 +149,18 @@ export function addDays(date: Date, days: number): Date {
   return moment(date).add(days, 'days').toDate();
 }
 
-export function dateToMidnight(date: Date): Date {
-  date = (new Date(date));
-  date.setHours(0, 0, 0, 0);
-  return date;
+export function setTime(date: Date, hour = 0, minute = 0, second = 0, millisecond = 0): Date {
+  return moment(new Date(date))
+    .tz(TIMEZONE)
+    .hour(hour)
+    .minute(minute)
+    .second(second)
+    .millisecond(millisecond)
+    .toDate();
+}
+
+export function setDateTo4PM(date: Date): Date {
+  return setTime(date, 16);
 }
 
 export function formatTermsAndConditionsAgreementDate(date?: Date, you = 'You', have = 'have'): string {
