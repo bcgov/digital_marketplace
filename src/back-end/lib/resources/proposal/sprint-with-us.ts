@@ -178,9 +178,32 @@ const resource: Resource = {
         // Only validate other fields if not in draft
         if (validatedStatus.value === SWUProposalStatus.Draft) {
           return valid({
-            ...request.body,
+            inceptionPhase: inceptionPhase ? {
+              members: get(inceptionPhase, 'members', []),
+              proposedCost: getNumber<number>(inceptionPhase, 'proposedCost')
+            } : undefined,
+            prototypePhase: prototypePhase ? {
+              members: get(prototypePhase, 'members', []),
+              proposedCost: getNumber<number>(prototypePhase, 'proposedCost')
+            } : undefined,
+            implementationPhase: {
+              members: get(implementationPhase, 'members', []),
+              proposedCost: getNumber<number>(implementationPhase, 'proposedCost')
+            },
+            references: references ? references.map(ref => ({
+              name: getString(ref, 'name'),
+              company: getString(ref, 'company'),
+              phone: getString(ref, 'phone'),
+              email: getString(ref, 'email'),
+              order: getNumber<number>(ref, 'order')
+            })) : [],
+            teamQuestionResponses: teamQuestionResponses ? teamQuestionResponses.map(q => ({
+              response: getString(q, 'response'),
+              order: getNumber<number>(q, 'order')
+            })) : [],
             session: request.session,
             opportunity: validatedSWUOpportunity.value.id,
+            organization: validatedOrganization.value.id,
             status: validatedStatus.value,
             attachments: validatedAttachments.value
           });
@@ -368,9 +391,32 @@ const resource: Resource = {
               return valid({
                 session: request.session,
                 body: adt('edit' as const, {
-                  ...request.body.value,
-                  organization: validatedOrganization.value.id,
-                  attachments: validatedAttachments.value
+                  inceptionPhase: inceptionPhase ? {
+                    members: get(inceptionPhase, 'members', []),
+                    proposedCost: getNumber<number>(inceptionPhase, 'proposedCost')
+                  } : undefined,
+                  prototypePhase: prototypePhase ? {
+                    members: get(prototypePhase, 'members', []),
+                    proposedCost: getNumber<number>(prototypePhase, 'proposedCost')
+                  } : undefined,
+                  implementationPhase: {
+                    members: get(implementationPhase, 'members', []),
+                    proposedCost: getNumber<number>(implementationPhase, 'proposedCost')
+                  },
+                  references: references ? references.map(ref => ({
+                    name: getString(ref, 'name'),
+                    company: getString(ref, 'company'),
+                    phone: getString(ref, 'phone'),
+                    email: getString(ref, 'email'),
+                    order: getNumber<number>(ref, 'order')
+                  })) : [],
+                  teamQuestionResponses: teamQuestionResponses ? teamQuestionResponses.map(q => ({
+                    response: getString(q, 'response'),
+                    order: getNumber<number>(q, 'order')
+                  })) : [],
+                  session: request.session,
+                  attachments: validatedAttachments.value,
+                  organization: validatedOrganization.value.id
                 })
               });
             }

@@ -6,7 +6,7 @@ import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyH
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { validateAttachments, validateSWUOpportunityId } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
-import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
+import { addDays, getBoolean, getNumber, getString, getStringArray } from 'shared/lib';
 import { invalid } from 'shared/lib/http';
 import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
@@ -194,25 +194,57 @@ const resource: Resource = {
           const defaultPhaseLength = 7;
           const defaultDate = addDays(new Date(), 14);
           return valid({
-            ...request.body,
+            title,
+            teaser,
+            remoteOk,
+            remoteDesc,
+            location,
+            totalMaxBudget,
+            minTeamMembers,
+            mandatorySkills,
+            optionalSkills,
+            description,
+            questionsWeight,
+            codeChallengeWeight,
+            scenarioWeight,
+            priceWeight,
             session,
             status: validatedStatus.value,
             attachments: validatedAttachments.value,
+            teamQuestions: teamQuestions ? teamQuestions.map(v => ({
+              question: getString(v, 'question'),
+              guideline: getString(v, 'guideline'),
+              score: getNumber(v, 'score'),
+              wordLimit: getNumber(v, 'wordLimit'),
+              order: getNumber(v, 'order')
+            })) : [],
             // Coerce validated dates to default values
             proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
             assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
             inceptionPhase: inceptionPhase ? {
-              ...inceptionPhase,
+              requiredCapabilities: (get(inceptionPhase, 'requiredCapabilities') || []).map(v => ({
+                capability: getString(v, 'capability'),
+                fullTime: getBoolean(v, 'fullTime')
+              })),
+              maxBudget: getNumber<number>(inceptionPhase, 'maxBudget'),
               startDate: getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
               completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             } : undefined,
             prototypePhase: prototypePhase ? {
-              ...prototypePhase,
+              requiredCapabilities: (get(prototypePhase, 'requiredCapabilities') || []).map(v => ({
+                capability: getString(v, 'capability'),
+                fullTime: getBoolean(v, 'fullTime')
+              })),
+              maxBudget: getNumber<number>(prototypePhase, 'maxBudget'),
               startDate: getValidValue(validatedPrototypePhaseStartDate, inceptionPhase ? getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
               completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             } : undefined,
             implementationPhase: {
-              ...implementationPhase,
+              requiredCapabilities: (get(implementationPhase, 'requiredCapabilities') || []).map(v => ({
+                capability: getString(v, 'capability'),
+                fullTime: getBoolean(v, 'fullTime')
+              })),
+              maxBudget: getNumber<number>(implementationPhase, 'maxBudget'),
               startDate: getValidValue(validatedImplementationPhaseStartDate, prototypePhase ? getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
               completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
             }
@@ -486,23 +518,55 @@ const resource: Resource = {
               return valid({
                 session: request.session,
                 body: adt('edit' as const , {
-                  ...request.body.value,
+                  title,
+                  teaser,
+                  remoteOk,
+                  remoteDesc,
+                  location,
+                  totalMaxBudget,
+                  minTeamMembers,
+                  mandatorySkills,
+                  optionalSkills,
+                  description,
+                  questionsWeight,
+                  codeChallengeWeight,
+                  scenarioWeight,
+                  priceWeight,
+                  teamQuestions: teamQuestions ? teamQuestions.map(v => ({
+                    question: getString(v, 'question'),
+                    guideline: getString(v, 'guideline'),
+                    score: getNumber(v, 'score'),
+                    wordLimit: getNumber(v, 'wordLimit'),
+                    order: getNumber(v, 'order')
+                  })) : [],
                   attachments: validatedAttachments.value,
                   // Coerce validated dates to default values
                   proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
                   assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
                   inceptionPhase: inceptionPhase ? {
-                    ...inceptionPhase,
+                    requiredCapabilities: (get(inceptionPhase, 'requiredCapabilities') || []).map(v => ({
+                      capability: getString(v, 'capability'),
+                      fullTime: getBoolean(v, 'fullTime')
+                    })),
+                    maxBudget: getNumber<number>(inceptionPhase, 'maxBudget'),
                     startDate: getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)),
                     completionDate: getValidValue(validatedInceptionPhaseCompletionDate, addDays(getValidValue(validatedInceptionPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   } : undefined,
                   prototypePhase: prototypePhase ? {
-                    ...prototypePhase,
+                    requiredCapabilities: (get(prototypePhase, 'requiredCapabilities') || []).map(v => ({
+                      capability: getString(v, 'capability'),
+                      fullTime: getBoolean(v, 'fullTime')
+                    })),
+                    maxBudget: getNumber<number>(prototypePhase, 'maxBudget'),
                     startDate: getValidValue(validatedPrototypePhaseStartDate, inceptionPhase ? getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
                     completionDate: getValidValue(validatedPrototypePhaseCompletionDate, addDays(getValidValue(validatedPrototypePhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   } : undefined,
                   implementationPhase: {
-                    ...implementationPhase,
+                    requiredCapabilities: (get(implementationPhase, 'requiredCapabilities') || []).map(v => ({
+                      capability: getString(v, 'capability'),
+                      fullTime: getBoolean(v, 'fullTime')
+                    })),
+                    maxBudget: getNumber<number>(implementationPhase, 'maxBudget'),
                     startDate: getValidValue(validatedImplementationPhaseStartDate, prototypePhase ? getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, defaultDate)) : getValidValue(validatedAssignmentDate, defaultDate)),
                     completionDate: getValidValue(validatedImplementationPhaseCompletionDate, addDays(getValidValue(validatedImplementationPhaseStartDate, getValidValue(validatedAssignmentDate, defaultDate)), defaultPhaseLength))
                   }
