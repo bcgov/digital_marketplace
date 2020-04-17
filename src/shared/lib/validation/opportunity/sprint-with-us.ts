@@ -1,5 +1,5 @@
 import { get, uniq } from 'lodash';
-import { dateToMidnight, getISODateString, getNumber, getString, isDateInThePast } from 'shared/lib';
+import { getISODateString, getNumber, getString, isDateInThePast, setDateTo4PM } from 'shared/lib';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, optional, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
@@ -21,23 +21,23 @@ export function validateCreateSWUOpportunityStatus(raw: string): Validation<Crea
 }
 
 export function validateSWUOpportunityInceptionPhaseStartDate(raw: string, assignmentDate: Date): Validation<Date> {
-  return validateDate(raw, assignmentDate);
+  return validateDate(raw, setDateTo4PM(assignmentDate), undefined, setDateTo4PM);
 }
 
 export function validateSWUOpportunityPrototypePhaseStartDate(raw: string, inceptionCompletionDate?: Date): Validation<Date> {
   const now = new Date();
   const minDate = inceptionCompletionDate ? inceptionCompletionDate : now;
-  return validateDate(raw, minDate);
+  return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }
 
 export function validateSWUOpportunityImplementationPhaseStartDate(raw: string, prototypeCompletionDate?: Date): Validation<Date> {
   const now = new Date();
   const minDate = prototypeCompletionDate ? prototypeCompletionDate : now;
-  return validateDate(raw, minDate);
+  return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }
 
 export function validateSWUOpportunityPhaseCompletionDate(raw: string, startDate: Date): Validation<Date> {
-  return validateDate(raw, startDate);
+  return validateDate(raw, setDateTo4PM(startDate), undefined, setDateTo4PM);
 }
 
 export function validateSWUOpportunityPhaseMaxBudget(raw: number, totalMaxBudget?: number): Validation<number> {
@@ -267,11 +267,11 @@ export function validateProposalDeadline(raw: string, opportunity?: SWUOpportuni
   if (opportunity && opportunity.status !== SWUOpportunityStatus.Draft) {
     minDate = isDateInThePast(opportunity.proposalDeadline) ? opportunity.proposalDeadline : now;
   }
-  return validateDate(raw, dateToMidnight(minDate));
+  return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }
 
 export function validateAssignmentDate(raw: string, proposalDeadline: Date): Validation<Date> {
-  return validateDate(raw, proposalDeadline);
+  return validateDate(raw, setDateTo4PM(proposalDeadline), undefined, setDateTo4PM);
 }
 
 export function validateQuestionsWeight(raw: string | number): Validation<number> {
