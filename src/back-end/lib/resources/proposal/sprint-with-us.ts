@@ -4,7 +4,7 @@ import * as swuProposalNotifications from 'back-end/lib/mailer/notifications/pro
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, validateSWUProposalCapabilities, validateSWUProposalId, validateSWUProposalPhase, validateSWUProposalTeamMembers } from 'back-end/lib/validation';
+import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, validateSWUProposalId, validateSWUProposalPhase, validateSWUProposalTeam, validateSWUProposalTeamMembers } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -222,7 +222,7 @@ const resource: Resource = {
           validatedSWUOpportunity.value.totalMaxBudget
         );
         // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
-        const validatedProposalTeam = await validateSWUProposalCapabilities(
+        const validatedProposalTeam = await validateSWUProposalTeam(
           connection,
           validatedSWUOpportunity.value,
           getValidValue(validatedInceptionPhase, null)?.members.map(m => m.member) || [],
@@ -434,7 +434,7 @@ const resource: Resource = {
               swuOpportunity.totalMaxBudget
             );
             // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
-            const validatedProposalTeam = await validateSWUProposalCapabilities(
+            const validatedProposalTeam = await validateSWUProposalTeam(
               connection,
               swuOpportunity,
               getValidValue(validatedInceptionPhase, null)?.members.map(m => m.member) || [],
@@ -490,7 +490,7 @@ const resource: Resource = {
                 validatedSWUProposal.value.implementationPhase?.proposedCost || 0,
                 swuOpportunity.totalMaxBudget
               ),
-              await validateSWUProposalCapabilities(
+              await validateSWUProposalTeam(
                 connection,
                 swuOpportunity,
                 validatedSWUProposal.value.inceptionPhase?.members.map(m => m.member.id) || [],

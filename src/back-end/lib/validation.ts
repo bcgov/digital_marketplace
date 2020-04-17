@@ -269,10 +269,9 @@ export async function validateSWUProposalPhase(connection: db.Connection, raw: a
   }
 }
 
-export async function validateSWUProposalCapabilities(connection: db.Connection, opportunity: SWUOpportunity, inceptionMemberIds: Id[], prototypeMemberIds: Id[], implementationMemberIds: Id[]): Promise<Validation<string[]>> {
+export async function validateSWUProposalTeam(connection: db.Connection, opportunity: SWUOpportunity, inceptionMemberIds: Id[], prototypeMemberIds: Id[], implementationMemberIds: Id[]): Promise<Validation<string[]>> {
   // Extract a flattened set of team members across phases
   const teamMemberIds = union(inceptionMemberIds, prototypeMemberIds, implementationMemberIds);
-
   const dbResults = (await Promise.all(teamMemberIds.map(async id => await db.readOneUser(connection, id), undefined)));
   const teamMembers = dbResults.map(v => getValidValue(v, null)).filter(v => !!v) as User[];
   return validateSWUProposalTeamCapabilities(opportunity, teamMembers);

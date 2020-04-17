@@ -16,12 +16,13 @@ import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { getValidValue, isInvalid } from 'shared/lib/validation';
 
-interface CreateSWUOpportunityParams extends Omit<SWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions'> {
+interface CreateSWUOpportunityParams extends Omit<SWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'minTeamMembers'> {
   status: CreateSWUOpportunityStatus;
   inceptionPhase?: CreateSWUOpportunityPhaseParams;
   prototypePhase?: CreateSWUOpportunityPhaseParams;
   implementationPhase: CreateSWUOpportunityPhaseParams;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  minTeamMembers: number | null;
 }
 
 interface UpdateSWUOpportunityParams extends Omit<CreateSWUOpportunityParams, 'status'> {
@@ -39,9 +40,10 @@ interface SWUOpportunityRootRecord {
   createdBy: Id;
 }
 
-interface SWUOpportunityVersionRecord extends Omit<SWUOpportunity, 'status' | 'createdBy'> {
+interface SWUOpportunityVersionRecord extends Omit<SWUOpportunity, 'status' | 'createdBy' | 'minTeamMembers'> {
   createdBy: Id;
   opportunity: Id;
+  minTeamMembers: number | null;
 }
 
 interface SWUOpportunityStatusRecord {
@@ -102,6 +104,7 @@ async function rawSWUOpportunityToSWUOpportunity(connection: Connection, raw: Ra
     inceptionPhase: inceptionPhaseId,
     prototypePhase: prototypePhaseId,
     implementationPhase: implementationPhaseId,
+    minTeamMembers,
     ...restOfRaw
   } = raw;
 
@@ -128,6 +131,7 @@ async function rawSWUOpportunityToSWUOpportunity(connection: Connection, raw: Ra
 
   return {
     ...restOfRaw,
+    minTeamMembers: minTeamMembers || undefined,
     createdBy: createdBy || undefined,
     updatedBy: updatedBy || undefined,
     attachments,

@@ -19,13 +19,14 @@ interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportuni
   completionDate: Date;
 }
 
-interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'history' | 'publishedAt' | 'subscribed' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'codeChallengeEndDate' | 'teamScenarioEndDate'> {
+interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'history' | 'publishedAt' | 'subscribed' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'codeChallengeEndDate' | 'teamScenarioEndDate' | 'minTeamMembers'> {
   status: CreateSWUOpportunityStatus;
   session: AuthenticatedSession;
   inceptionPhase?: ValidatedCreateSWUOpportunityPhaseBody;
   prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
   implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  minTeamMembers: number | null;
 }
 
 interface ValidatedUpdateRequestBody {
@@ -105,7 +106,7 @@ const resource: Resource = {
           remoteDesc: getString(body, 'remoteDesc'),
           location: getString(body, 'location'),
           totalMaxBudget: getNumber(body, 'totalMaxBudget'),
-          minTeamMembers: getNumber(body, 'minTeamMembers'),
+          minTeamMembers: getNumber<number | null>(body, 'minTeamMembers', null),
           mandatorySkills: getStringArray(body, 'mandatorySkills'),
           optionalSkills: getStringArray(body, 'optionalSkills'),
           description: getString(body, 'description'),
@@ -366,7 +367,7 @@ const resource: Resource = {
               remoteDesc: getString(value, 'remoteDesc'),
               location: getString(value, 'location'),
               totalMaxBudget: getNumber<number>(value, 'totalMaxBudget'),
-              minTeamMembers: getNumber<number>(value, 'minTeamMembers'),
+              minTeamMembers: getNumber<number | null>(value, 'minTeamMembers', null),
               mandatorySkills: getStringArray(value, 'mandatorySkills'),
               optionalSkills: getStringArray(value, 'optionalSkills'),
               description: getString(value, 'description'),
@@ -515,7 +516,7 @@ const resource: Resource = {
             const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc);
             const validatedLocation = opportunityValidation.validateLocation(location);
             const validatedTotalMaxBudget = opportunityValidation.validateTotalMaxBudget(totalMaxBudget);
-            const validatedMinTeamMembers = opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
+            const validatedMinTeamMembers = optional(minTeamMembers, v => opportunityValidation.validateMinimumTeamMembers(v));
             const validatedMandatorySkills = opportunityValidation.validateMandatorySkills(mandatorySkills);
             const validatedOptionalSkills = opportunityValidation.validateOptionalSkills(optionalSkills);
             const validatedDescription = opportunityValidation.validateDescription(description);
@@ -633,7 +634,7 @@ const resource: Resource = {
               opportunityValidation.validateRemoteDesc(validatedSWUOpportunity.value.remoteDesc),
               opportunityValidation.validateLocation(validatedSWUOpportunity.value.location),
               opportunityValidation.validateTotalMaxBudget(validatedSWUOpportunity.value.totalMaxBudget),
-              opportunityValidation.validateMinimumTeamMembers(validatedSWUOpportunity.value.minTeamMembers),
+              optional(validatedSWUOpportunity.value.minTeamMembers, v => opportunityValidation.validateMinimumTeamMembers(v)),
               opportunityValidation.validateMandatorySkills(validatedSWUOpportunity.value.mandatorySkills),
               opportunityValidation.validateOptionalSkills(validatedSWUOpportunity.value.optionalSkills),
               opportunityValidation.validateDescription(validatedSWUOpportunity.value.description),
