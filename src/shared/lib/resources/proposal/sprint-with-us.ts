@@ -155,7 +155,7 @@ export type CreateSWUProposalTeamQuestionResponseBody = SWUProposalTeamQuestionR
 
 export interface CreateRequestBody {
   opportunity: Id;
-  organization: Id;
+  organization?: Id;
   inceptionPhase?: CreateSWUProposalPhaseBody;
   prototypePhase?: CreateSWUProposalPhaseBody;
   implementationPhase: CreateSWUProposalPhaseBody;

@@ -283,7 +283,11 @@ export async function readSWUProposalScore(connection: Connection, session: Sess
           (proposalStatus === SWUProposalStatus.Awarded || proposalStatus === SWUProposalStatus.NotAwarded) || false));
 }
 
-export async function createSWUProposal(connection: Connection, session: Session, organization: Organization): Promise<boolean> {
+export function createSWUProposal(session: Session): boolean {
+  return isVendor(session);
+}
+
+export async function submitSWUProposal(connection: Connection, session: Session, organization: Organization): Promise<boolean> {
   return isVendor(session) && !!session && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
 }
 

@@ -13,7 +13,7 @@ import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateTeamQuestionScoreBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, Validation, optionalAsync } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 
 interface ValidatedCreateRequestBody extends Omit<CreateRequestBody, 'attachments'> {
@@ -104,7 +104,7 @@ const resource: Resource = {
         const body: unknown = request.body.tag === 'json' ? request.body.value : {};
         return {
           opportunity: getString(body, 'opportunity'),
-          organization: getString(body, 'organization'),
+          organization: getString(body, 'organization', undefined),
           attachments: getStringArray(body, 'attachments'),
           status: getString(body, 'status'),
           inceptionPhase: get(body, 'inceptionPhase'),
@@ -125,16 +125,16 @@ const resource: Resource = {
                 teamQuestionResponses,
                 references } = request.body;
 
-        const validatedOrganization = await validateOrganizationId(connection, organization, request.session);
-        if (isInvalid(validatedOrganization)) {
+        if (!permissions.isSignedIn(request.session) || !permissions.createSWUProposal(request.session)) {
           return invalid({
-            organization: validatedOrganization.value
+            permissions: [permissions.ERROR_MESSAGE]
           });
         }
 
-        if (!permissions.isSignedIn(request.session) || !await permissions.createSWUProposal(connection, request.session, validatedOrganization.value)) {
+        const validatedOrganization = await optionalAsync(organization, v => validateOrganizationId(connection, v, request.session));
+        if (isInvalid(validatedOrganization)) {
           return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
+            organization: validatedOrganization.value
           });
         }
 
@@ -203,9 +203,23 @@ const resource: Resource = {
             })) : [],
             session: request.session,
             opportunity: validatedSWUOpportunity.value.id,
-            organization: validatedOrganization.value.id,
+            organization: organization || undefined,
             status: validatedStatus.value,
             attachments: validatedAttachments.value
+          });
+        }
+
+        // Ensure organization was provided
+        if (!validatedOrganization.value) {
+          return invalid({
+            organization: ['An organization must be specified before submitting.']
+          });
+        }
+
+        // Prior to submitting, re-check permissions
+        if (!await permissions.submitSWUProposal(connection, request.session, validatedOrganization.value)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
           });
         }
 
@@ -357,21 +371,21 @@ const resource: Resource = {
                     teamQuestionResponses,
                     attachments } = request.body.value;
 
+            const validatedOrganization = await optionalAsync(organization, v => validateOrganizationId(connection, v, request.session, false));
+            if (isInvalid(validatedOrganization)) {
+              return invalid({
+                proposal: adt('edit' as const, {
+                  organization: getInvalidValue(validatedOrganization, undefined)
+                })
+              });
+            }
+
             // Organization can only changed for DRAFT or WITHDRAWN proposals
             if (![SWUProposalStatus.Draft, SWUProposalStatus.Withdrawn].includes(validatedSWUProposal.value.status) &&
                 organization !== validatedSWUProposal.value.organization?.id) {
               return invalid({
                 proposal: adt('edit' as const, {
                   organization: ['Organization cannot be changed once the proposal has been submitted']
-                })
-              });
-            }
-
-            const validatedOrganization = await validateOrganizationId(connection, organization, request.session, false);
-            if (isInvalid(validatedOrganization)) {
-              return invalid({
-                proposal: adt('edit' as const, {
-                  organization: getInvalidValue(validatedOrganization, undefined)
                 })
               });
             }
@@ -416,8 +430,23 @@ const resource: Resource = {
                   })) : [],
                   session: request.session,
                   attachments: validatedAttachments.value,
-                  organization: validatedOrganization.value.id
+                  organization: organization || undefined
                 })
+              });
+            }
+
+            if (!validatedOrganization.value) {
+              return invalid({
+                proposal: adt('edit' as const, {
+                  organization: ['An organization must be specified prior to submitting.']
+                })
+              });
+            }
+
+            // Prior to submitting, re-check permissions
+            if (!await permissions.submitSWUProposal(connection, request.session, validatedOrganization.value)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
               });
             }
 

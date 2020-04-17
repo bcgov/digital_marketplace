@@ -142,12 +142,12 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
    } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
-  const organization = getValidValue(await readOneOrganizationSlim(connection, organizationId, true), null);
+  const organization = organizationId ? getValidValue(await readOneOrganizationSlim(connection, organizationId, true), undefined) : undefined;
   const inceptionPhase = inceptionPhaseId ? getValidValue(await readOneSWUProposalPhase(connection, inceptionPhaseId), undefined) : undefined;
   const prototypePhase = prototypePhaseId ? getValidValue(await readOneSWUProposalPhase(connection, prototypePhaseId), undefined) : undefined;
   const implementationPhase = getValidValue(await readOneSWUProposalPhase(connection, implementationPhaseId), undefined);
   const references = getValidValue(await readManyProposalReferences(connection, raw.id), undefined);
-  if (!organization || !implementationPhase || !references) {
+  if (!implementationPhase || !references) {
     throw new Error('unable to process proposal');
   }
   const attachments = await Promise.all(attachmentIds.map(async id => {
@@ -188,7 +188,7 @@ async function rawSWUProposalToSWUProposal(connection: Connection, session: Sess
     createdBy: createdBy || undefined,
     updatedBy: updatedBy || undefined,
     opportunity,
-    organization,
+    organization: organization || undefined,
     attachments,
     inceptionPhase,
     prototypePhase,
@@ -224,17 +224,13 @@ async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: 
 
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
-  const organization = getValidValue(await readOneOrganizationSlim(connection, organizationId, false), undefined);
-
-  if (!organization) {
-    throw new Error('unable to process proposal');
-  }
+  const organization = organizationId ? getValidValue(await readOneOrganizationSlim(connection, organizationId, false), undefined) : undefined;
 
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
     updatedBy: updatedBy || undefined,
-    organization
+    organization: organization || undefined
   };
 }
 
