@@ -100,7 +100,7 @@ export interface SWUOpportunity {
   remoteDesc: string;
   location: string;
   totalMaxBudget: number;
-  minTeamMembers: number;
+  minTeamMembers?: number;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;
@@ -190,7 +190,7 @@ export interface CreateRequestBody {
   proposalDeadline: string;
   assignmentDate: string;
   totalMaxBudget: number;
-  minTeamMembers: number;
+  minTeamMembers?: number;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;
