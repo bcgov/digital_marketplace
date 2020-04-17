@@ -242,7 +242,10 @@ export function validateTotalMaxBudget(raw: string | number): Validation<number>
   return validateNumber(raw, 1, 2000000, 'Total Maximum Budget', 'a');
 }
 
-export function validateMinimumTeamMembers(raw: string | number): Validation<number> {
+export function validateMinimumTeamMembers(raw: string | number | null): Validation<number | null> {
+  if (raw === null) {
+    return valid(raw);
+  }
   return validateNumber(raw, 1, 5, 'minimum team size', 'a');
 }
 
