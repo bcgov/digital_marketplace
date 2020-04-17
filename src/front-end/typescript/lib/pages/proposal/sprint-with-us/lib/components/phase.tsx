@@ -194,7 +194,7 @@ export type Values = Pick<CreateSWUProposalPhaseBody, 'members'>;
 
 export function getValues(state: Immutable<State>): Values {
   return {
-    members: state.members.map(({ user, scrumMaster }) => ({
+    members: getAddedMembers(state).map(({ user, scrumMaster }) => ({
       scrumMaster,
       member: user.id
     }))
