@@ -128,7 +128,7 @@ export function view<TabId>(): View<Props<TabId>> {
     return (
       <div className='mt-5 d-flex flex-nowrap justify-content-between align-items-center'>
         {showPreviousButton(state)
-          ? (<Link button outline color='info' symbol_={leftPlacement(iconLinkSymbol('arrow-left'))} onClick={() => dispatch(adt('previous'))}>Previous</Link>)
+          ? (<Link button outline color='info' symbol_={leftPlacement(iconLinkSymbol('arrow-left'))} onClick={() => dispatch(adt('previous'))} focusable={false}>Previous</Link>)
           : (<div></div>)}
         {showNextButton(state)
           ? (<Link button outline color='primary' symbol_={rightPlacement(iconLinkSymbol('arrow-right'))} onClick={() => dispatch(adt('next'))}>Next</Link>)
