@@ -275,7 +275,7 @@ export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
   return {
     opportunity: state.opportunity.id,
-    organization: organization?.value || '', //TODO remove ''
+    organization: organization?.value,
     inceptionPhase: team.inceptionPhase && {
       ...team.inceptionPhase,
       proposedCost: inceptionCost || 0
