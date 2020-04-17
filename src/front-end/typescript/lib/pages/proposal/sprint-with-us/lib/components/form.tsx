@@ -514,7 +514,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
             label='Organization'
             placeholder='Organization'
             hint={state.viewerUser.type === UserType.Vendor
-              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please save this proposal as a draft before creating an organization to ensure you don't lose any unsaved changes made to your proposal.</span>)
+              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please save this proposal as a draft before doing so to ensure you don't lose any unsaved changes made to your proposal.</span>)
               : undefined}
             state={state.organization}
             dispatch={mapComponentDispatch(dispatch, v => adt('organization' as const, v))}
