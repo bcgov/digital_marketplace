@@ -27,6 +27,8 @@ import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
 import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUExportAll from 'front-end/lib/pages/proposal/sprint-with-us/export/all';
+import * as PageProposalSWUExportOne from 'front-end/lib/pages/proposal/sprint-with-us/export/one';
 import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -230,6 +232,22 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         PageProposalCWUExportAll.component,
         state => state.pages.proposalCWUExportAll,
         value => ({tag: 'pageProposalCWUExportAll', value})
+      );
+
+    case 'proposalSWUExportOne':
+      return makeViewPageProps(
+        props,
+        PageProposalSWUExportOne.component,
+        state => state.pages.proposalSWUExportOne,
+        value => ({tag: 'pageProposalSWUExportOne', value})
+      );
+
+    case 'proposalSWUExportAll':
+      return makeViewPageProps(
+        props,
+        PageProposalSWUExportAll.component,
+        state => state.pages.proposalSWUExportAll,
+        value => ({tag: 'pageProposalSWUExportAll', value})
       );
 
     case 'proposalList':

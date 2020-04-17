@@ -36,7 +36,7 @@ export interface Tabs {
 
 export type TabId = TabbedPage.TabId<Tabs>;
 
-export type TabState<K extends TabId> = TabbedPage.TabState<Tabs, K>;
+export type TabState<K extends TabId> = TabbedPage.TabState<Tabs, K> & Params;
 
 export type TabMsg<K extends TabId> = TabbedPage.TabMsg<Tabs, K>;
 

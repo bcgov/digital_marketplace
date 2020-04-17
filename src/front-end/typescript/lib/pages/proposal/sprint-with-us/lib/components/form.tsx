@@ -44,6 +44,10 @@ export interface Params {
   activeTab?: TabId;
 }
 
+export function getActiveTab(state: Immutable<State>): TabId {
+  return TabbedForm.getActiveTab(state.tabbedForm);
+}
+
 type ModalId = ADT<'viewTeamMember', Phase.Member>;
 
 export interface State extends Pick<Params, 'viewerUser' | 'opportunity' | 'evaluationContent' | 'organizations'> {
@@ -514,7 +518,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
             label='Organization'
             placeholder='Organization'
             hint={state.viewerUser.type === UserType.Vendor
-              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please save this proposal as a draft before doing so to ensure you don't lose any unsaved changes made to your proposal.</span>)
+              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please ensure that you have saved this proposal as a draft beforehand to avoid losing any unsaved changes you might have made.</span>)
               : undefined}
             state={state.organization}
             dispatch={mapComponentDispatch(dispatch, v => adt('organization' as const, v))}

@@ -229,8 +229,17 @@ function areAllCapabilitiesChecked(capabilities: Capability[]): boolean {
   return true;
 }
 
+function areAllMembersConfirmed(members: Member[]): boolean {
+  for (const m of members) {
+    if (memberIsPending(m)) { return false; }
+  }
+  return true;
+}
+
 export function isValid(state: Immutable<State>): boolean {
-  return !!getAddedMembers(state).length
+  const addedMembers = getAddedMembers(state);
+  return !!addedMembers.length
+      && areAllMembersConfirmed(addedMembers)
       && areAllCapabilitiesChecked(state.capabilities);
 }
 
@@ -320,7 +329,7 @@ function membersTableBodyRows(params: MemberTableBodyRowsParams): Table.BodyRows
       )
     },
     {
-      children: (
+      children: disabled ? null : (
         <Link
           button
           size='sm'
@@ -339,29 +348,32 @@ const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row className='mb-4'>
       <Col xs='12'>
-        <h4 className='mb-0'>Team Members</h4>
-        <Link
-          button
-          outline
-          color='primary'
-          size='sm'
-          disabled={disabled}
-          className='mt-3'
-          onClick={() => dispatch(adt('showModal', adt('addTeamMembers')) as Msg)}
-          symbol_={leftPlacement(iconLinkSymbol('user-plus'))}>
-          Add Team Member(s)
-        </Link>
+        <h4>Team Members</h4>
+        <p className='mb-0'>To satisfy this phase's requirements, your team must only consist of confirmed (non-pending) members of the selected organization.</p>
+        {disabled
+          ? null
+          : (<Link
+              button
+              outline
+              color='primary'
+              size='sm'
+              disabled={disabled}
+              className='mt-3'
+              onClick={() => dispatch(adt('showModal', adt('addTeamMembers')) as Msg)}
+              symbol_={leftPlacement(iconLinkSymbol('user-plus'))}>
+              Add Team Member(s)
+            </Link>)}
       </Col>
       {addedMembers.length
         ? (<Col xs='12' className='mt-4'>
             <Table.view
               headCells={membersTableHeadCells(state)}
-            bodyRows={membersTableBodyRows({
-              addedMembers,
-              dispatch,
-              disabled,
-              idNamespace: state.idNamespace
-            })}
+              bodyRows={membersTableBodyRows({
+                addedMembers,
+                dispatch,
+                disabled,
+                idNamespace: state.idNamespace
+              })}
               state={state.membersTable}
               dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />
            </Col>)
@@ -375,8 +387,8 @@ const CapabilitiesView: View<Props> = ({ state, dispatch }) => {
     <Row>
       <Col xs='12'>
         <h4>Required Capabilities</h4>
-        <p className='mb-4'>This grid will automatically update to reflect the combined capabilities of your selected team members. To satisfy this phase's requirements, your team must collectively possess all capabilities listed here.</p>
-      </Col>
+        <p className='mb-4'>This list will automatically update to reflect the combined capabilities of your selected team (includes pending team members). To satisfy this phase's requirements, your team must collectively possess all capabilities listed here.</p>
+    </Col>
       <Col xs='12'>
         <Capabilities grid capabilities={state.capabilities} />
       </Col>

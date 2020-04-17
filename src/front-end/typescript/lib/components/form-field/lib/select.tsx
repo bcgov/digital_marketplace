@@ -73,7 +73,7 @@ export const view: View<Props> = props => {
     onChange: undefined,
     formatGroupLabel,
     options: options.value,
-    blurInputOnSelect: true,
+    blurInputOnSelect: !props.multi,
     isSearchable: true,
     isClearable: true,
     isDisabled: disabled,

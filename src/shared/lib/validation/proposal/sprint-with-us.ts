@@ -131,7 +131,7 @@ export function validateSWUProposalProposedCost(inceptionCost: number, prototype
 }
 
 // Given a SWU opportunity and set of Users, validate that the set of capabilities for those users satisfies the requirements of the opportunity
-export function validateSWUProposalTeamCapabilities(opportunity: SWUOpportunity, team: User[]): Validation<string[]> {
+export function validateSWUProposalTeamCapabilities(opportunity: SWUOpportunity, team: Array<Pick<User, 'capabilities'>>): Validation<string[]> {
   const unionedUserCapabilities = spread<string[]>(union)(team.map(m => m.capabilities));
   const unionedOpportunityCapabilities = union(
     (opportunity.inceptionPhase?.requiredCapabilities.map(c => c.capability) || []),
