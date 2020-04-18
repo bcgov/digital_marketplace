@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2018",
     "moduleResolution": "node",
     "noErrorTruncation": true,
     "allowJs": true,

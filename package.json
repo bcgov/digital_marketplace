@@ -82,7 +82,7 @@
   "devDependencies": {
     "@types/html-to-text": "^1.4.31",
     "@types/keycloak-connect": "^4.5.1",
-    "@types/mocha": "^5.2.6",
+    "@types/mocha": "^7.0.2",
     "@types/moment-timezone": "^0.5.10",
     "@types/multiparty": "0.0.32",
     "@types/nodemailer": "^6.2.1",
@@ -112,7 +112,7 @@
     "license-checker": "^25.0.1",
     "load-grunt-tasks": "^4.0.0",
     "markdown-toc": "^1.2.0",
-    "mocha": "^5.2.0",
+    "mocha": "^7.1.1",
     "moment-timezone": "^0.5.23",
     "node-sass": "^4.13.1",
     "nodemon": "^1.19.0",
