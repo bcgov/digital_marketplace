@@ -120,15 +120,16 @@ export interface Props extends ComponentViewProps<State, Msg> {
   addButtonClassName?: string;
 }
 
-const AddButton: View<Props> = ({ addButtonClassName = '', dispatch, disabled }) => {
+const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
   if (disabled) { return null; }
+  const hasAddenda = !!(state.existingAddenda.length || state.newAddenda.length);
   return (
     <Link
       button
       outline
       size='sm'
       color='primary'
-      className={`mb-5 ${addButtonClassName}`}
+      className={`${hasAddenda ? 'mb-5' : ''} ${addButtonClassName}`}
       symbol_={leftPlacement(iconLinkSymbol('file-plus'))}
       disabled={disabled}
       onClick={() => dispatch(adt('addAddendum'))}
