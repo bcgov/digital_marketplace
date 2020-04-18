@@ -7,6 +7,7 @@ import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_SWU_PROPOSAL_TITLE = 'Unknown';
+export const NUM_SCORE_DECIMALS = 2;
 
 export enum SWUProposalPhaseType {
   Inception = 'INCEPTION',
@@ -358,4 +359,10 @@ export function swuProposalTotalProposedCost(proposal: SWUProposal): number {
     proposal.prototypePhase?.proposedCost || 0,
     proposal.implementationPhase?.proposedCost || 0
   ]);
+}
+
+export function showScoreAndRankToProponent(proposal: SWUProposal): boolean {
+   return proposal.totalScore !== undefined
+       && proposal.rank !== undefined
+       && (proposal.status === SWUProposalStatus.Awarded || proposal.status === SWUProposalStatus.NotAwarded);
 }

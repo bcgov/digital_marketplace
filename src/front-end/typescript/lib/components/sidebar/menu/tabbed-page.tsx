@@ -44,7 +44,7 @@ export type ParseTabId<T extends TabsRecord<T>> = (raw: unknown) => TabId<T> | n
 
 export type IdToDefinition<T extends TabsRecord<T>, K extends TabId<T>> = (id: K) => TabDefinition<T, K>;
 
-export type IdToDefinitionWithState<T extends TabsRecord<T>, K extends TabId<T>, ExtraState> = (state: ExtraState & ParentState<T, K>) => (id: K) => TabDefinition<T, K>;
+export type IdToDefinitionWithState<T extends TabsRecord<T>, K extends TabId<T>, ExtraState> = (state: Immutable<ExtraState & ParentState<T, K>>) => (id: K) => TabDefinition<T, K>;
 
 // Types & functions to assist with constructing parents of TabComponents.
 
