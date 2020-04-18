@@ -7,7 +7,7 @@ import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/v
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
-import { User } from 'shared/lib/resources/user';
+import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
 export interface Props {
@@ -35,6 +35,25 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     {
       name: 'Status',
       children: (<Badge text={swuProposalStatusToTitleCase(propStatus, viewerUser.type)} color={swuProposalStatusToColor(propStatus, viewerUser.type)} />)
+    },
+    {
+      name: 'Organization',
+      children: (() => {
+        if (proposal.organization) {
+          if (proposal.organization.active && (proposal.organization.owner || isAdmin(viewerUser))) {
+            return (
+              <Link
+                dest={routeDest(adt('orgEdit', { orgId: proposal.organization.id }))}>
+                {proposal.organization.legalName}
+              </Link>
+            );
+          } else {
+            return proposal.organization.legalName;
+          }
+        } else {
+          return proposal.anonymousProponentName;
+        }
+      })()
     }
   ];
   return (
