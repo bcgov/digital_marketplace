@@ -53,7 +53,7 @@ async function rawOrganizationToOrganization(connection: Connection, raw: RawOrg
 }
 
 async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw: RawOrganizationSlim): Promise<OrganizationSlim> {
-  const { id, legalName, logoImageFile, owner: ownerId, acceptedSWUTerms, possessAllCapabilities, numTeamMembers } = raw;
+  const { id, legalName, logoImageFile, owner: ownerId, acceptedSWUTerms, possessAllCapabilities, numTeamMembers, active } = raw;
   let fetchedLogoImageFile: FileRecord | undefined;
   if (logoImageFile) {
     const dbResult = await readOneFileById(connection, logoImageFile);
@@ -70,6 +70,7 @@ async function rawOrganizationSlimToOrganizationSlim(connection: Connection, raw
     owner: owner || undefined,
     acceptedSWUTerms,
     possessAllCapabilities,
+    active,
     numTeamMembers: numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10)
   };
 }
@@ -121,19 +122,21 @@ export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], Organizat
   }
 
   const result = await query.first<RawOrganization>();
-  const { id, legalName, logoImageFile, owner, acceptedSWUTerms, numTeamMembers } = result;
+  const { id, legalName, logoImageFile, owner, acceptedSWUTerms, numTeamMembers, active } = result;
   // If no session, or user is not an admin or owner, do not include ownership/RFQ data.
   if (!session || (!isAdmin(session) && owner !== session.user?.id)) {
     return valid(await rawOrganizationSlimToOrganizationSlim(connection, {
       id,
       legalName,
-      logoImageFile
+      logoImageFile,
+      active
     }));
   } else {
     return valid(await rawOrganizationSlimToOrganizationSlim(connection, {
       id,
       legalName,
       logoImageFile,
+      active,
       owner,
       possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, result),
       acceptedSWUTerms,
@@ -186,18 +189,20 @@ export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim
   // Admin/owners get additional fields related to ownership/rfq status
   const results = await query as RawOrganization[] || [];
   return valid(await Promise.all(results.map(async raw => {
-    const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms } = raw;
+    const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms, active } = raw;
     if (!isAdmin(session) && raw.owner !== session?.user.id) {
       return await rawOrganizationSlimToOrganizationSlim(connection, {
         id,
         legalName,
-        logoImageFile
+        logoImageFile,
+        active
       });
     } else {
       return await rawOrganizationSlimToOrganizationSlim(connection, {
         id,
         legalName,
         logoImageFile,
+        active,
         owner,
         numTeamMembers,
         possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, raw),
