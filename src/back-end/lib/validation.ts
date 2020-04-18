@@ -206,8 +206,21 @@ export async function validateSWUOpportunityId(connection: db.Connection, opport
   }
 }
 
-export async function validateTeamMember(connection: db.Connection, raw: any): Promise<Validation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
-  const validatedMember = await validateUserId(connection, getString(raw, 'member'));
+export async function validateMember(connection: db.Connection, memberId: Id, organization: Id): Promise<Validation<User>> {
+  const validatedUser = await validateUserId(connection, memberId);
+  if (isInvalid(validatedUser)) {
+    return validatedUser;
+  }
+  const affiliation = getValidValue(await db.readOneAffiliation(connection, validatedUser.value.id, organization), null);
+  if (affiliation?.membershipStatus === MembershipStatus.Active) {
+    return validatedUser;
+  } else {
+    return invalid(['User is not an active member of the organization.']);
+  }
+}
+
+export async function validateTeamMember(connection: db.Connection, raw: any, organization: Id): Promise<Validation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
+  const validatedMember = await validateMember(connection, getString(raw, 'member'), organization);
   const validatedScrumMaster = validateSWUProposalTeamMemberScrumMaster(get(raw, 'scrumMaster'));
 
   if (allValid([validatedMember, validatedScrumMaster])) {
@@ -223,10 +236,10 @@ export async function validateTeamMember(connection: db.Connection, raw: any): P
   }
 }
 
-export async function validateSWUProposalTeamMembers(connection: db.Connection, raw: any): Promise<ArrayValidation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
+export async function validateSWUProposalTeamMembers(connection: db.Connection, raw: any, organization: Id): Promise<ArrayValidation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
   if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of selected team members.'] }]); }
   if (!raw.length) { return invalid([{ members: ['Please select at least one team member.'] }]); }
-  const validatedMembers = await validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v), {});
+  const validatedMembers = await validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v, organization), {});
   if (getValidValue(validatedMembers, []).filter(member => member.scrumMaster).length > 1) {
     return invalid([{
       members: ['You may only specify a single scrum master.']
@@ -235,7 +248,7 @@ export async function validateSWUProposalTeamMembers(connection: db.Connection, 
   return validatedMembers;
 }
 
-export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase: SWUOpportunityPhase | null): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
+export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase: SWUOpportunityPhase | null, organization: Id): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
 
   if (!raw && opportunityPhase) {
     return invalid({
@@ -253,7 +266,7 @@ export async function validateSWUProposalPhase(connection: db.Connection, raw: a
     });
   }
 
-  const validatedMembers = await validateSWUProposalTeamMembers(connection, get(raw, 'members'));
+  const validatedMembers = await validateSWUProposalTeamMembers(connection, get(raw, 'members'), organization);
   const validatedProposedCost = validateSWUPhaseProposedCost(getNumber<number>(raw, 'proposedCost'), opportunityPhase.maxBudget);
 
   if (allValid([validatedMembers, validatedProposedCost])) {
