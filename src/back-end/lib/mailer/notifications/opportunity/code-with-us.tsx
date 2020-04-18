@@ -73,6 +73,7 @@ export const newCWUOpportunityPublished = makeSend(newCWUOpportunityPublishedT);
 export async function newCWUOpportunityPublishedT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
   const title = 'A New Code With Us Opportunity Has Been Posted';
   return [{
+    summary: 'New CWU opportunity published; sent to user with notifications turned on.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -87,9 +88,10 @@ export async function newCWUOpportunityPublishedT(recipient: User, opportunity: 
 export const successfulCWUPublication = makeSend(successfulCWUPublicationT);
 
 export async function successfulCWUPublicationT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
-  const title = 'Your Code With Us Opportunity Has Been Posted'; // Used for subject line and heading
-  const description = 'You have successfully posted the following Digital Marketplace opportunity';
+  const title = 'Your Code With Us Opportunity Has Been Posted';
+  const description = 'You have successfully posted the following Digital Marketplace opportunity:';
   return [{
+    summary: 'CWU successfully published; sent to publishing government user.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -132,6 +134,7 @@ export async function cancelledCWUOpportunitySubscribedT(recipient: User, opport
   const title = 'A Code With Us Opportunity Has Been Cancelled';
   const description = 'The following Digital Marketplace opportunity has been cancelled:';
   return [{
+    summary: 'CWU opportunity cancelled; sent to subscribed users and vendors with proposals.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -140,7 +143,7 @@ export async function cancelledCWUOpportunitySubscribedT(recipient: User, opport
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
       body: (
         <div>
-          <p>If you have any questions, please send an email to {CONTACT_EMAIL}.</p>
+          <p>If you have any questions, please send an email to <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       )
     })
@@ -153,6 +156,7 @@ export async function cancelledCWUOpportunityActionedT(recipient: User, opportun
   const title = 'A Code With Us Opportunity Has Been Cancelled';
   const description = 'You have cancelled the following opportunity on the Digital Marketplace:';
   return[{
+    summary: 'CWU opportunity cancelled; sent to the administrator who actioned.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -169,6 +173,7 @@ export async function suspendedCWUOpportunitySubscribedT(recipient: User, opport
   const title = 'A Code With Us Opportunity Has Been Suspended';
   const description = 'The following Digital Marketplace opportunity has been suspended:';
   return [{
+    summary: 'CWU opportunity suspended; sent to subscribed users and vendors with proposals.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -178,7 +183,7 @@ export async function suspendedCWUOpportunitySubscribedT(recipient: User, opport
       body: (
         <div>
           <p>If you have already submitted a proposal to this opportunity, you may make changes to it while the opportunity is suspended.</p>
-          <p>If you have any questions, please send an email to {CONTACT_EMAIL}.</p>
+          <p>If you have any questions, please send an email to <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       )
     })
@@ -191,6 +196,7 @@ export async function suspendedCWUOpportunityActionedT(recipient: User, opportun
   const title = 'A Code With Us Opportunity Has Been Suspended';
   const description = 'You have suspended the following opportunity on the Digital Marketplace:';
   return[{
+    summary: 'CWU opportunity suspended; sent to the administrator who actioned.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -223,14 +229,16 @@ export async function readyForEvalCWUOpportunityT(recipient: User, opportunity: 
   }];
 }
 
-export function makeCWUOpportunityInformation(opportunity: CWUOpportunity): templates.DescriptionListProps {
+export function makeCWUOpportunityInformation(opportunity: CWUOpportunity, showDueDate = true): templates.DescriptionListProps {
   const items = [
     { name: 'Type', value: 'Code With Us' },
     { name: 'Value', value: `$${formatAmount(opportunity.reward)}` },
     { name: 'Location', value: opportunity.location },
-    { name: 'Remote OK?', value: opportunity.remoteOk ? 'Yes' : 'No' },
-    { name: 'Proposals Due', value: `${formatDate(opportunity.proposalDeadline, false)} at ${formatTime(opportunity.proposalDeadline, true)}` }
+    { name: 'Remote OK?', value: opportunity.remoteOk ? 'Yes' : 'No' }
   ];
+  if (showDueDate) {
+    items.push({ name: 'Proposals Due', value: `${formatDate(opportunity.proposalDeadline, false)} at ${formatTime(opportunity.proposalDeadline, true)}` });
+  }
   return {
     title: opportunity.title,
     items

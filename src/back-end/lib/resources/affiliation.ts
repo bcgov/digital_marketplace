@@ -8,6 +8,7 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateAffiliationId, validateOrganizationId } from 'back-end/lib/validation';
 import { getString } from 'shared/lib';
 import { Affiliation, AffiliationMember, AffiliationSlim, CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors, DeleteValidationErrors, MembershipStatus, MembershipType, UpdateValidationErrors } from 'shared/lib/resources/affiliation';
+import { Organization } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -111,7 +112,7 @@ const resource: Resource = {
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
           const user = getValidValue(validatedUser, null);
           if (!user) {
-            inviteToRegister(validatedUserEmail.value);
+            inviteToRegister(validatedUserEmail.value, validatedOrganization.value as Organization);
             return invalid({
               inviteeNotRegistered: ['User is not registered, but has been notified.']
             });
@@ -251,8 +252,8 @@ const resource: Resource = {
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
-          // If this was a pending notification, notify of rejected invite
-          if (existingAffiliationStatus === MembershipStatus.Pending) {
+          // If this was a pending notification rejected by the invited user, notify the org owner of rejected invite
+          if (existingAffiliationStatus === MembershipStatus.Pending && request.session?.user.id === dbResult.value.user.id) {
             affiliationNotifications.handleUserRejectedInvitation(connection, dbResult.value);
           }
           return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));

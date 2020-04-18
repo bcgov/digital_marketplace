@@ -1,5 +1,5 @@
 import * as mailer from 'back-end/lib/mailer';
-import { addedToTeamT, approvedRequestToJoinT, membershipCompleteT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
+import { addedToTeamT, approvedRequestToJoinT, memberLeavesT, membershipCompleteT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
 import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import { organizationArchivedT } from 'back-end/lib/mailer/notifications/organization';
@@ -49,12 +49,12 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
       emails: await userAccountRegisteredT(mocks.govUser)
     },
     {
-      title: 'User Invited To Organization',
+      title: 'User Invited To Join Team',
       emails: await addedToTeamT(mocks.affiliation)
     },
     {
-      title: 'User Asked To Register',
-      emails: await inviteToRegisterT(mocks.email)
+      title: 'An Organization Invites Someone Who has not Registered',
+      emails: await inviteToRegisterT(mocks.email, mocks.organization)
     },
     {
       title: 'User Account Deactivated',
@@ -71,15 +71,19 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
       ]
     },
     {
-      title: 'User Approved Being Added To Organization',
+      title: 'User Approved Request to Join Organization',
       emails: [
-        ...await approvedRequestToJoinT(mocks.govUser, mocks.vendorUser, mocks.organization),
+        ...await approvedRequestToJoinT(mocks.vendorUser, mocks.affiliation),
         ...await membershipCompleteT(mocks.affiliation)
       ]
     },
     {
-      title: 'User Rejected Being Added To Organization',
-      emails: await rejectRequestToJoinT(mocks.govUser, mocks.vendorUser, mocks.organization)
+      title: 'User Rejected Request to Join Organization',
+      emails: await rejectRequestToJoinT(mocks.govUser, mocks.affiliation)
+    },
+    {
+      title: 'User Leaves an Organization',
+      emails: await memberLeavesT(mocks.vendorUser, mocks.affiliation)
     },
     {
       title: 'CWU Opportunity Published',

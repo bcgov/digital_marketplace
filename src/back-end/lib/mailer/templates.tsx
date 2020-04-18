@@ -226,10 +226,10 @@ export const Link: View<LinkProps> = ({ text, url }) => {
   );
 };
 
-const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style }) => {
+const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style = {} }) => {
   return (
     <Fragment>
-      <a href={url} target='_blank' style={{...styles.classes.button, ...style}}>
+      <a href={url} target='_blank' style={{ ...styles.classes.button, ...style, marginLeft: '1em', marginRight: '1em' }}>
         {text}
       </a>
     </Fragment>
@@ -371,13 +371,13 @@ const Simple: View<SimpleProps> = props => {
       </Fragment>
       <Fragment>
         {body
-          ? (<Row>{body}</Row>)
+          ? (<Row style={{ textAlign: 'center' }}>{body}</Row>)
           : null}
       </Fragment>
       <Fragment>
         {callsToAction
-          ? <Row style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', ...styles.utilities.text.center}}>
-              {callsToAction.map((call, i) => (<CallToAction style={{ ...styles.utilities.m[2] }} key={`call-to-action-${i}`} {...call} />))}
+          ? <Row style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', ...styles.utilities.text.center}}>
+              {callsToAction.map((call, i) => (<CallToAction key={`call-to-action-${i}`} {...call} />))}
             </Row>
           : null}
       </Fragment>

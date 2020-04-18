@@ -76,7 +76,7 @@ export async function handleCWUProposalWithdrawn(connection: db.Connection, prop
 export const successfulCWUProposalSubmission = makeSend(successfulCWUProposalSubmissionT);
 
 export async function successfulCWUProposalSubmissionT(recipient: User, opportunity: CWUOpportunity, proposal: CWUProposal): Promise<Emails> {
-  const title = 'Your Code With Us Opportunity Has Been Submitted';
+  const title = 'Your Code With Us Opportunity Proposal Has Been Submitted';
   const description = 'You have successfully submitted a proposal for the following Digital Marketplace opportunity:';
   return [{
     to: recipient.email,
@@ -104,16 +104,17 @@ export async function awardedCWUProposalSubmissionT(recipient: User, opportunity
   const title = 'You Have Been Awarded a Code With Us Opportunity';
   const description = 'Congratulations!  You have been awarded the following Digital Marketplace opportunity:';
   return[{
+    summary: 'CWU opportunity awarded; sent to successful proponent.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
-      descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+      descriptionLists: [makeCWUOpportunityInformation(opportunity, false)],
       body: (
         <div>
-          <p style={{...templates.styles.utilities.font.italic}}>What Happens Next?</p>
           <p>If you would like to view your total score, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
+          <p style={{...templates.styles.utilities.font.italic}}>What Happens Next?</p>
           <p>A member of the Digital Marketplace or the owner of the opportunity will be in touch with you shortly to discuss next steps.</p>
         </div>
       ),
@@ -128,15 +129,16 @@ export async function unsuccessfulCWUProposalSubmissionT(recipient: User, opport
   const title = 'A Code With Us Opportunity Has Closed';
   const description = 'The following Digital Marketplace opportunity that you submitted a proposal to has closed:';
   return[{
+    summary: 'CWU opportunity awarded; sent to unsuccessful proponents.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
       description,
-      descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+      descriptionLists: [makeCWUOpportunityInformation(opportunity, false)],
       body: (
         <div>
-          <p>The opportunity has been awarded to {opportunity.successfulProponentName}</p>
+          <p>The opportunity has been awarded to {opportunity.successfulProponentName}.</p>
           <p>If you would like to view your total score, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
           <p>Thank you for your submission and we wish you luck on the next opportunity.</p>
         </div>
@@ -160,7 +162,7 @@ export async function disqualifiedCWUProposalSubmissionT(recipient: User, opport
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
       body: (
         <div>
-          <p>If you have any questions, please send an email to {CONTACT_EMAIL}</p>
+          <p>If you have any questions, please send an email to <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       ),
       callsToAction: [viewCWUOpportunityCallToAction(opportunity), viewCWUProposalCallToAction(proposal)]
@@ -174,6 +176,7 @@ export async function withdrawnCWUProposalSubmissionProposalAuthorT(recipient: U
   const title = 'Your Proposal Has Been Withdrawn';
   const description = 'Your proposal for the following Digital Marketplace opportunity has been withdrawn:';
   return[{
+    summary: 'CWU proposal withdrawn; sent to proponent who has withdrawn.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -196,6 +199,7 @@ export async function withdrawnCWUProposalSubmissionT(recipient: User, withdrawn
   const title = 'A Proposal Has Been Withdrawn';
   const description = `${withdrawnProponent.name} has withdrawn their proposal for the following Digital Marketplace opportunity:`;
   return[{
+    summary: 'CWU proposal withdrawn; sent to the opportunity author.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -207,9 +211,10 @@ export async function withdrawnCWUProposalSubmissionT(recipient: User, withdrawn
   }];
 }
 
-export function viewCWUProposalCallToAction(proposal: CWUProposal | CWUProposalSlim): templates.LinkProps {
+export function viewCWUProposalCallToAction(proposal: CWUProposal | CWUProposalSlim) {
   return {
     text: 'View Proposal',
-    url: templates.makeUrl(`/proposals/code-with-us/${proposal.id}`)
+    url: templates.makeUrl(`/proposals/code-with-us/${proposal.id}`),
+    style: { backgroundColor: '#0F4C8B' }
   };
 }

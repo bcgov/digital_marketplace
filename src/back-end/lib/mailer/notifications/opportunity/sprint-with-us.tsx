@@ -84,6 +84,7 @@ export async function newSWUOpportunityPublishedT(recipient: User, opportunity: 
   const title = 'A New Sprint With Us Opportunity Has Been Posted';
   const description = 'A new opportunity has been posted to the Digital Marketplace:';
   return [{
+    summary: 'New SWU opportunity published; sent to user with notifications turned on.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -92,7 +93,7 @@ export async function newSWUOpportunityPublishedT(recipient: User, opportunity: 
       descriptionLists: [makeSWUOpportunityInformation(opportunity)],
       body: (
         <div>
-          <p>Please note that you must be a <templates.Link text='Qualified Supplier' url={templates.makeUrl('/')} /> in order to submit a proposal to a Sprint With Us opportunity</p>
+          <p>Please note that you must be a <templates.Link text='Qualified Supplier' url={templates.makeUrl('/')} /> in order to submit a proposal to a Sprint With Us opportunity.</p>
         </div>
       ),
       callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
@@ -120,9 +121,10 @@ export async function updatedSWUOpportunityT(recipient: User, opportunity: SWUOp
 export const newSWUOpportunitySubmittedForReview = makeSend(newSWUOpportunitySubmittedForReviewT);
 
 export async function newSWUOpportunitySubmittedForReviewT(recipient: User, opportunity: SWUOpportunity): Promise<Emails> {
-  const title = 'A Sprint With Us Opportunity Has Been Submitted For Review'; // Used for subject line and heading
+  const title = 'A Sprint With Us Opportunity Has Been Submitted For Review';
   const description = 'The following Digital Marketplace opportunity has been submitted for review:';
   return [{
+    summary: 'SWU opportunity submitted for review; sent to all administrators for the system.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -146,6 +148,7 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(recipient: User
   const title = 'Your Sprint With Us Opportunity Has Been Submitted For Review'; // Used for subject line and heading
   const description = 'You have submitted the following Digital Marketplace opportunity for review:';
   return[{
+    summary: 'SWU opportunity submitted for review; sent to the submitting government user.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -155,7 +158,7 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(recipient: User
       body: (
         <div>
           <p>An administrator will review your opportunity.  You will be notified once the opportunity has been posted.</p>
-          <p>If you have any questions, please send an email to {CONTACT_EMAIL}.</p>
+          <p>If you have any questions, please send an email to <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       ),
       callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
@@ -166,9 +169,10 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(recipient: User
 export const successfulSWUPublication = makeSend(successfulSWUPublicationT);
 
 export async function successfulSWUPublicationT(recipient: User, opportunity: SWUOpportunity): Promise<Emails> {
-  const title = 'Your Sprint With Us Opportunity Has Been Posted'; // Used for subject line and heading
+  const title = 'Your Sprint With Us Opportunity Has Been Posted';
   const description = 'You have successfully posted the following Digital Marketplace opportunity';
   return[{
+    summary: 'SWU successfully published; sent to publishing government user.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -194,6 +198,7 @@ export async function cancelledSWUOpportunitySubscribedT(recipient: User, opport
   const title = 'A Sprint With Us Opportunity Has Been Cancelled';
   const description = 'The following Digital Marketplace opportunity has been cancelled:';
   return [{
+    summary: 'SWU opportunity cancelled; sent to subscribed users and vendors with proposals.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -202,7 +207,7 @@ export async function cancelledSWUOpportunitySubscribedT(recipient: User, opport
       descriptionLists: [makeSWUOpportunityInformation(opportunity)],
       body: (
         <div>
-          <p>If you have any questions, please send an email to {CONTACT_EMAIL}.</p>
+          <p>If you have any questions, please send an email to <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       )
     })
@@ -215,6 +220,7 @@ export async function cancelledSWUOpportunityActionedT(recipient: User, opportun
   const title = 'A Sprint With Us Opportunity Has Been Cancelled';
   const description = 'You have cancelled the following opportunity on the Digital Marketplace:';
   return [{
+    summary: 'SWU opportunity cancelled; sent to the administrator who actioned.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -231,6 +237,7 @@ export async function suspendedSWUOpportunitySubscribedT(recipient: User, opport
   const title = 'A Sprint With Us Opportunity Has Been Suspended';
   const description = 'The following Digital Marketplace opportunity has been suspended:';
   return [{
+    summary: 'SWU opportunity suspended; sent to subscribed users and vendors with proposals.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -240,7 +247,7 @@ export async function suspendedSWUOpportunitySubscribedT(recipient: User, opport
       body: (
         <div>
           <p>If you have already submitted a proposal to this opportunity, you may make changes to it while the opportunity is suspended.</p>
-          <p>If you have any questions, please send an email to {CONTACT_EMAIL}.</p>
+          <p>If you have any questions, please send an email to <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       )
     })
@@ -253,6 +260,7 @@ export async function suspendedSWUOpportunityActionedT(recipient: User, opportun
   const title = 'A Sprint With Us Opportunity Has Been Suspended';
   const description = 'You have suspended the following opportunity on the Digital Marketplace:';
   return [{
+    summary: 'SWU opportunity suspended; sent to the administrator who actioned.',
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -285,14 +293,16 @@ export async function readyForEvalSWUOpportunityT(recipient: User, opportunity: 
   }];
 }
 
-export function makeSWUOpportunityInformation(opportunity: SWUOpportunity): templates.DescriptionListProps {
+export function makeSWUOpportunityInformation(opportunity: SWUOpportunity, showDueDate = true): templates.DescriptionListProps {
   const items = [
     { name: 'Type', value: 'Sprint With Us' },
     { name: 'Value', value: `$${formatAmount(opportunity.totalMaxBudget)}` },
     { name: 'Location', value: opportunity.location },
-    { name: 'Remote OK?', value: opportunity.remoteOk ? 'Yes' : 'No' },
-    { name: 'Proposals Due', value: `${formatDate(opportunity.proposalDeadline, false)} at ${formatTime(opportunity.proposalDeadline, true)}` }
+    { name: 'Remote OK?', value: opportunity.remoteOk ? 'Yes' : 'No' }
   ];
+  if (showDueDate) {
+    items.push({ name: 'Proposals Due', value: `${formatDate(opportunity.proposalDeadline, false)} at ${formatTime(opportunity.proposalDeadline, true)}` });
+  }
   return {
     title: opportunity.title,
     items

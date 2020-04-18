@@ -19,17 +19,16 @@ export const organizationArchived = makeSend(organizationArchivedT);
 
 export async function organizationArchivedT(recipient: User, organization: Organization): Promise<Emails> {
   const title = 'Your Organization Has Been Archived';
-  const description = `Your Digital Marketplace organization, ${organization.legalName}, has been archived by an administrator.`;
   return [{
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
-      description,
       body: (
         <div>
+          <p>Your Digital Marketplace organization, {organization.legalName}, has been archived by an administrator.</p>
           <p>You will no longer be able to use this organization in the web application. </p>
-          <p>If you have any questions, you can send an email to the Digital Marketplace administrators at {CONTACT_EMAIL}.</p>
+          <p>If you have any questions, you can send an email to the Digital Marketplace administrators at <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.</p>
         </div>
       )
     })

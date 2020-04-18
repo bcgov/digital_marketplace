@@ -1,4 +1,5 @@
 import { generateUuid } from 'back-end/lib';
+import { setDateTo4PM } from 'shared/lib';
 import { Affiliation, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -9,7 +10,7 @@ import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user'
 import { adt } from 'shared/lib/types';
 
 export const id = generateUuid();
-export const date = new Date();
+export const date = setDateTo4PM(new Date());
 export const email = 'user@example.com';
 
 export const vendorUser: User = {
@@ -84,6 +85,7 @@ export const cwuOpportunity: CWUOpportunity = {
   submissionInfo: '',
   acceptanceCriteria: '',
   evaluationCriteria: '',
+  successfulProponentName: 'Successful Proponent',
   status: CWUOpportunityStatus.Published,
   attachments: [],
   addenda: []
@@ -153,7 +155,7 @@ export const swuOpportunity: SWUOpportunity = {
   id,
   createdAt: date,
   updatedAt: date,
-  title: 'CWU Title',
+  title: 'SWU Title',
   teaser: '',
   remoteOk: true,
   remoteDesc: '',
@@ -172,6 +174,7 @@ export const swuOpportunity: SWUOpportunity = {
   status: SWUOpportunityStatus.Published,
   implementationPhase: swuOpportunityImplementationPhase,
   teamQuestions: [swuOpportunityTeamQuestion],
+  successfulProponentName: 'Successful Proponent',
   attachments: [],
   addenda: []
 };
