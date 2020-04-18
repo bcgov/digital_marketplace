@@ -38,6 +38,7 @@ export interface OrganizationSlim extends OrganizationAdmin {
   id: Id;
   legalName: string;
   logoImageFile?: FileRecord;
+  active: boolean;
 }
 
 export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'possessAllCapabilities' | 'numTeamMembers'> {
