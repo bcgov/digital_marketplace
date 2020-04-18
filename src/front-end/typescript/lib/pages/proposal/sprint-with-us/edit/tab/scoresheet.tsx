@@ -118,7 +118,7 @@ const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 bodyRows={tableBodyRows(state)}
                 state={state.table}
                 dispatch={mapComponentDispatch(dispatch, v => adt('table' as const, v))} />)
-            : 'Your proposal\'s scoresheet will be available once the opportunity is awarded.'}
+            : 'This proposal\'s scoresheet will be available once the opportunity is awarded.'}
         </div>
       </Col>
     </Row>
