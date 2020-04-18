@@ -223,9 +223,9 @@ const resource: Resource = {
           });
         }
 
-        const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, validatedSWUOpportunity.value.inceptionPhase || null);
-        const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, validatedSWUOpportunity.value.prototypePhase || null);
-        const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, validatedSWUOpportunity.value.implementationPhase);
+        const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, validatedSWUOpportunity.value.inceptionPhase || null, validatedOrganization.value.id);
+        const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, validatedSWUOpportunity.value.prototypePhase || null, validatedOrganization.value.id);
+        const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, validatedSWUOpportunity.value.implementationPhase, validatedOrganization.value.id);
         const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses, validatedSWUOpportunity.value.teamQuestions);
         const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
         // Validate that the total proposed cost does not exceed the max budget of the opportunity
@@ -450,9 +450,9 @@ const resource: Resource = {
               });
             }
 
-            const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, swuOpportunity.inceptionPhase || null);
-            const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, swuOpportunity.prototypePhase || null);
-            const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase);
+            const validatedInceptionPhase = await validateSWUProposalPhase(connection, inceptionPhase, swuOpportunity.inceptionPhase || null, validatedOrganization.value.id);
+            const validatedPrototypePhase = await validateSWUProposalPhase(connection, prototypePhase, swuOpportunity.prototypePhase || null, validatedOrganization.value.id);
+            const validatedImplementationPhase = await validateSWUProposalPhase(connection, implementationPhase, swuOpportunity.implementationPhase, validatedOrganization.value.id);
             const validatedTeamQuestionResponses = proposalValidation.validateSWUProposalTeamQuestionResponses(teamQuestionResponses, swuOpportunity.teamQuestions);
             const validatedReferences = proposalValidation.validateSWUProposalReferences(references);
             // Validate that the total proposed cost does not exceed the max budget of the opportunity
@@ -548,7 +548,7 @@ const resource: Resource = {
                   ...member,
                   member: member.member.id
                 };
-              }));
+              }), validatedSWUProposal.value.organization?.id || '');
               if (!allValid([validatedInceptionCost, validatedInceptionMembers])) {
                 return invalid({
                   proposal: adt('submit' as const, ['The inception phase is incomplete or invalid.  This proposal could not be submitted.'])
@@ -563,7 +563,7 @@ const resource: Resource = {
                   ...member,
                   member: member.member.id
                 };
-              }));
+              }), validatedSWUProposal.value.organization?.id || '');
               if (!allValid([validatedPrototypeCost, validatedPrototypeMembers])) {
                 return invalid({
                   proposal: adt('submit' as const, ['The prototype phase is incomplete or invalid.  This proposal could not be submitted.'])
@@ -578,7 +578,7 @@ const resource: Resource = {
                   ...member,
                   member: member.member.id
                 };
-              }));
+              }), validatedSWUProposal.value.organization?.id || '');
               if (!allValid([validatedImplementationCost, validatedImplementationMembers])) {
                 return invalid({
                   proposal: adt('submit' as const, ['The implementation phase is incomplete or invalid.  This proposal could not be submitted.'])
