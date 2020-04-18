@@ -7,7 +7,7 @@ import { routeDest } from 'front-end/lib/views/link';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
-import { adt, Id } from 'shared/lib/types';
+import { adt } from 'shared/lib/types';
 
 // Parent page types & functions.
 
@@ -64,21 +64,25 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
   }
 }
 
-export function makeSidebarLink(tab: TabId, proposalId: Id, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: TabId, proposal: SWUProposal, activeTab: TabId): MenuSidebar.SidebarLink {
   const { icon, title } = idToDefinition(tab);
   return {
     icon,
     text: title,
     active: activeTab === tab,
-    dest: routeDest(adt('proposalSWUEdit', { proposalId, opportunityId, tab }))
+    dest: routeDest(adt('proposalSWUEdit', {
+      proposalId: proposal.id,
+      opportunityId: proposal.opportunity.id,
+      tab
+    }))
   };
 }
 
-export async function makeSidebarState(proposalId: Id, opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
     links: [
-      makeSidebarLink('proposal', proposalId, opportunityId, activeTab),
-      makeSidebarLink('scoresheet', proposalId, opportunityId, activeTab),
+      makeSidebarLink('proposal', proposal, activeTab),
+      makeSidebarLink('scoresheet', proposal, activeTab),
       {
         icon: 'external-link',
         text: 'Read Guide',

@@ -8,7 +8,7 @@ import { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { NUM_SCORE_DECIMALS, showScoreAndRankToProponent } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -72,28 +72,25 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return [[
     {
-      children: String(state.proposal.questionsScore === undefined ? EMPTY_STRING : state.proposal.questionsScore)
+      children: String(state.proposal.questionsScore === undefined ? EMPTY_STRING : state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS))
     },
     {
-      children: String(state.proposal.challengeScore === undefined ? EMPTY_STRING : state.proposal.challengeScore)
+      children: String(state.proposal.challengeScore === undefined ? EMPTY_STRING : state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS))
     },
     {
-      children: String(state.proposal.scenarioScore === undefined ? EMPTY_STRING : state.proposal.scenarioScore)
+      children: String(state.proposal.scenarioScore === undefined ? EMPTY_STRING : state.proposal.scenarioScore.toFixed(NUM_SCORE_DECIMALS))
     },
     {
-      children: String(state.proposal.priceScore === undefined ? EMPTY_STRING : state.proposal.priceScore)
+      children: String(state.proposal.priceScore === undefined ? EMPTY_STRING : state.proposal.priceScore.toFixed(NUM_SCORE_DECIMALS))
     },
     {
-      children: String(state.proposal.totalScore === undefined ? EMPTY_STRING : state.proposal.totalScore)
+      children: String(state.proposal.totalScore === undefined ? EMPTY_STRING : state.proposal.totalScore.toFixed(NUM_SCORE_DECIMALS))
     }
   ]];
 }
 
 const Rank: ComponentView<State, Msg> = ({ state }) => {
-  const show
-     = state.proposal.status === SWUProposalStatus.Awarded
-    || state.proposal.status === SWUProposalStatus.NotAwarded;
-  if (!show || !state.proposal.rank) { return null; }
+  if (!showScoreAndRankToProponent(state.proposal) || !state.proposal.rank) { return null; }
   return (
     <Row>
       <Col>
@@ -110,20 +107,18 @@ const Rank: ComponentView<State, Msg> = ({ state }) => {
 };
 
 const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const show
-     = state.proposal.status === SWUProposalStatus.Awarded
-    || state.proposal.status === SWUProposalStatus.NotAwarded;
-  if (!show) { return null; }
   return (
     <Row>
       <Col xs='12'>
         <div className='mt-5 pt-5 border-top'>
           <h3 className='mb-4'>Scoresheet</h3>
-          <Table.view
-            headCells={tableHeadCells(state)}
-            bodyRows={tableBodyRows(state)}
-            state={state.table}
-            dispatch={mapComponentDispatch(dispatch, v => adt('table' as const, v))} />
+          {showScoreAndRankToProponent(state.proposal)
+            ? (<Table.view
+                headCells={tableHeadCells(state)}
+                bodyRows={tableBodyRows(state)}
+                state={state.table}
+                dispatch={mapComponentDispatch(dispatch, v => adt('table' as const, v))} />)
+            : 'Your proposal\'s scoresheet will be available once the opportunity is awarded.'}
         </div>
       </Col>
     </Row>

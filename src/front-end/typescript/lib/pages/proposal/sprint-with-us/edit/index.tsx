@@ -56,7 +56,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       return valid(immutable({
         proposal,
         tab: [tabId, tabState],
-        sidebar: await Tab.makeSidebarState(proposal.id, proposal.opportunity.id, tabId)
+        sidebar: await Tab.makeSidebarState(proposal, tabId)
       })) as State_<K>;
     },
 
@@ -67,8 +67,19 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
   });
 }
 
+function getProposal<K extends Tab.TabId>(state: Immutable<ValidState<K>>): SWUProposal {
+  switch (state.tab[0]) {
+    case 'proposal':
+      return (state.tab[1] as Immutable<Tab.Tabs['proposal']['state']>).value?.proposal || state.proposal;
+    case 'scoresheet':
+      return (state.tab[1] as Immutable<Tab.Tabs['scoresheet']['state']>).proposal;
+    default:
+      return state.proposal;
+  }
+}
+
 function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
-  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = () => Tab.idToDefinition;
+  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = state => Tab.idToDefinition;
   return {
     init: makeInit(),
     update: updateValid(TabbedPage.makeParentUpdate({
@@ -82,7 +93,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getContextualActions: getContextualActionsValid(TabbedPage.makeGetParentContextualActions(idToDefinition)),
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition,
-      getTitleSuffix: state => state.proposal.organization?.legalName || state.proposal.anonymousProponentName || DEFAULT_SWU_PROPOSAL_TITLE
+      getTitleSuffix: state => getProposal(state).organization?.legalName || state.proposal.anonymousProponentName || DEFAULT_SWU_PROPOSAL_TITLE
     }), makePageMetadata('Edit Sprint With Us Proposal'))
   };
 }
