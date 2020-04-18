@@ -118,6 +118,7 @@ const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <Row>
       <Col xs='12'>
         <div className='mt-5 pt-5 border-top'>
+          <h3 className='mb-4'>Scoresheet</h3>
           <Table.view
             headCells={tableHeadCells(state)}
             bodyRows={tableBodyRows(state)}
