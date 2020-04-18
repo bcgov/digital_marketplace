@@ -28,6 +28,8 @@ import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
 import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUExportAll from 'front-end/lib/pages/proposal/sprint-with-us/export/all';
+import * as PageProposalSWUExportOne from 'front-end/lib/pages/proposal/sprint-with-us/export/one';
 import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -238,7 +240,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return {tag: 'pageProposalCWUView' as const, value};
         }
       });
-
     case 'proposalCWUExportOne':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -263,7 +264,30 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
           return {tag: 'pageProposalCWUExportAll' as const, value};
         }
       });
-
+    case 'proposalSWUExportOne':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalSWUExportOne'],
+        childRouteParams: route.value,
+        childInit: PageProposalSWUExportOne.component.init,
+        childGetMetadata: PageProposalSWUExportOne.component.getMetadata,
+        childGetModal: PageProposalSWUExportOne.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalSWUExportOne' as const, value};
+        }
+      });
+    case 'proposalSWUExportAll':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'proposalSWUExportAll'],
+        childRouteParams: route.value,
+        childInit: PageProposalSWUExportAll.component.init,
+        childGetMetadata: PageProposalSWUExportAll.component.getMetadata,
+        childGetModal: PageProposalSWUExportAll.component.getModal,
+        mapChildMsg(value) {
+          return {tag: 'pageProposalSWUExportAll' as const, value};
+        }
+      });
     case 'proposalList':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -704,7 +728,26 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childGetModal: PageProposalCWUExportAll.component.getModal,
         childMsg: msg.value
       });
-
+    case 'pageProposalSWUExportOne':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalSWUExportOne' as const, value}),
+        childStatePath: ['pages', 'proposalSWUExportOne'],
+        childUpdate: PageProposalSWUExportOne.component.update,
+        childGetMetadata: PageProposalSWUExportOne.component.getMetadata,
+        childGetModal: PageProposalSWUExportOne.component.getModal,
+        childMsg: msg.value
+      });
+    case 'pageProposalSWUExportAll':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageProposalSWUExportAll' as const, value}),
+        childStatePath: ['pages', 'proposalSWUExportAll'],
+        childUpdate: PageProposalSWUExportAll.component.update,
+        childGetMetadata: PageProposalSWUExportAll.component.getMetadata,
+        childGetModal: PageProposalSWUExportAll.component.getModal,
+        childMsg: msg.value
+      });
     case 'pageProposalList':
       return updateAppChildPage({
         ...defaultPageUpdateParams,

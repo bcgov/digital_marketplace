@@ -1,30 +1,30 @@
-import { EMPTY_STRING } from 'front-end/config';
+import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
 import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalMsg, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-import * as Form from 'front-end/lib/pages/proposal/code-with-us/lib/components/form';
-import * as toasts from 'front-end/lib/pages/proposal/code-with-us/lib/toasts';
-import EditTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/edit-tab-header';
+import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
+import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/form';
+import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
+import EditTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/edit-tab-header';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { AffiliationSlim } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { isSWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { OrganizationSlim } from 'shared/lib/resources/organization';
+import { SWUProposal, swuProposalNumTeamMembers, SWUProposalStatus, swuProposalTotalProposedCost } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
 type ModalId = 'submit' | 'submitChanges' | 'saveChangesAndSubmit' | 'withdrawBeforeDeadline' | 'withdrawAfterDeadline' | 'delete';
 
 interface ValidState extends Tab.Params {
-  opportunity: CWUOpportunity;
-  affiliations: AffiliationSlim[];
+  organizations: OrganizationSlim[];
+  evaluationContent: string;
   isEditing: boolean;
   startEditingLoading: number;
   saveChangesLoading: number;
@@ -63,32 +63,18 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSlim[], proposal: CWUProposal, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
-  return immutable(await Form.init({
-    opportunity,
-    proposal,
-    affiliations,
-    activeTab,
-    canRemoveExistingAttachments: proposal.status === CWUProposalStatus.Draft
-                               || (proposal.status === CWUProposalStatus.Submitted && isCWUOpportunityAcceptingProposals(opportunity))
-  }));
-}
-
 const init: Init<Tab.Params, State> = async params => {
-  const { proposal } = params;
-  // Fetch opportunity and affiliations.
-  const opportunityResult = await api.opportunities.cwu.readOne(proposal.opportunity.id);
-  const affiliationsResult = await api.affiliations.readMany();
-  // Redirect to 404 page if there is a server error.
-  if (!api.isValid(opportunityResult) || !api.isValid(affiliationsResult)) {
-    return invalid(null);
-  }
-  const opportunity = opportunityResult.value;
-  const affiliations = affiliationsResult.value;
+  const { opportunity, proposal, viewerUser } = params;
+  const organizationsResult = await api.organizations.readMany();
+  if (!api.isValid(organizationsResult)) { return invalid(null); }
+  const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
+  if (!api.isValid(evalContentResult)) { return invalid(null); }
+  const organizations = organizationsResult.value;
+  const evaluationContent = evalContentResult.value;
   return valid(immutable({
     ...params,
-    opportunity,
-    affiliations,
+    organizations,
+    evaluationContent,
     isEditing: false,
     startEditingLoading: 0,
     saveChangesLoading: 0,
@@ -97,12 +83,18 @@ const init: Init<Tab.Params, State> = async params => {
     withdrawLoading: 0,
     deleteLoading: 0,
     showModal: null,
-    form: await initForm(opportunity, affiliations, proposal),
+    form: immutable(await Form.init({
+      viewerUser,
+      opportunity,
+      proposal,
+      organizations,
+      evaluationContent
+    })),
     submitTerms: immutable(await SubmitProposalTerms.init({
       errors: [],
       child: {
         value: false,
-        id: 'edit-cwu-proposal-submit-terms'
+        id: 'edit-swu-proposal-submit-terms'
       }
     }))
   }));
@@ -121,10 +113,17 @@ const stopWithdrawLoading = makeStopLoading<ValidState>('withdrawLoading');
 const startDeleteLoading = makeStartLoading<ValidState>('deleteLoading');
 const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
 
-async function resetProposal(state: Immutable<ValidState>, proposal: CWUProposal): Promise<Immutable<ValidState>> {
+async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal): Promise<Immutable<ValidState>> {
+  state = state.set('proposal', proposal);
   return state
-    .set('form', await initForm(state.opportunity, state.affiliations, proposal, Form.getActiveTab(state.form)))
-    .set('proposal', proposal);
+    .set('form', immutable(await Form.init({
+      viewerUser: state.viewerUser,
+      opportunity: state.opportunity,
+      proposal: state.proposal,
+      organizations: state.organizations,
+      evaluationContent: state.evaluationContent,
+      activeTab: Form.getActiveTab(state.form)
+    })));
 }
 
 function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
@@ -160,22 +159,17 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startStartEditingLoading(state),
         async state => {
           state = stopStartEditingLoading(state);
-          const proposalResult = await api.proposals.cwu.readOne(state.proposal.opportunity.id, state.proposal.id);
-          const affiliationsResult = await api.affiliations.readMany();
-          if (!api.isValid(proposalResult) || !api.isValid(affiliationsResult)) { return state; }
-          state = state
-            .set('isEditing', true)
-            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, Form.getActiveTab(state.form)))
-            .set('proposal', proposalResult.value);
+          const proposalResult = await api.proposals.swu.readOne(state.proposal.opportunity.id, state.proposal.id);
+          if (!api.isValid(proposalResult)) { return state; }
+          state = await resetProposal(state, proposalResult.value);
+          state = state.set('isEditing', true);
           return state;
         }
       ];
     case 'cancelEditing':
       return [
         state.set('isEditing', false),
-        async state => {
-          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, Form.getActiveTab(state.form)));
-        }
+        async state => await resetProposal(state, state.proposal)
       ];
     case 'saveChanges':
       state = hideModal(state);
@@ -187,7 +181,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }
-          result.value[1].status === CWUProposalStatus.Draft
+          result.value[1].status === SWUProposalStatus.Draft
             ? dispatch(toast(adt('success', toasts.changesSaved.success)))
             : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           return (await resetProposal(state, result.value[1]))
@@ -204,7 +198,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (isInvalid(saveResult)) {
             return state.set('form', saveResult.value);
           }
-          const submitResult = await api.proposals.cwu.update(state.proposal.id, adt('submit', ''));
+          const submitResult = await api.proposals.swu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(submitResult)) {
             return state;
           }
@@ -219,7 +213,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startSubmitLoading(state),
         async (state, dispatch) => {
           state = stopSubmitLoading(state);
-          const result = await api.proposals.cwu.update(state.proposal.id, adt('submit', ''));
+          const result = await api.proposals.swu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(result)) {
             return state;
           }
@@ -233,7 +227,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startWithdrawLoading(state),
         async (state, dispatch) => {
           state = stopWithdrawLoading(state);
-          const result = await api.proposals.cwu.update(state.proposal.id, adt('withdraw', ''));
+          const result = await api.proposals.swu.update(state.proposal.id, adt('withdraw', ''));
           if (!api.isValid(result)) {
             return state;
           }
@@ -246,7 +240,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return [
         startDeleteLoading(state),
         async (state, dispatch) => {
-          const result = await api.proposals.cwu.delete(state.proposal.id);
+          const result = await api.proposals.swu.delete(state.proposal.id);
           if (!api.isValid(result)) {
             return stopDeleteLoading(state);
           }
@@ -262,31 +256,24 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 
 const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   const proposal = state.proposal;
-  const showScoreAndRanking
-     = proposal.status === CWUProposalStatus.Awarded
-    || proposal.status === CWUProposalStatus.NotAwarded;
+  const numTeamMembers = swuProposalNumTeamMembers(proposal);
+  const totalProposedCost = swuProposalTotalProposedCost(proposal);
   const reportCards: Array<ReportCard | null> = [
     {
       icon: 'alarm-clock',
       name: 'Proposals Due',
       value: formatDate(proposal.opportunity.proposalDeadline)
     },
-    showScoreAndRanking
-      ? {
-          icon: 'star-full',
-          iconColor: 'yellow',
-          name: 'Total Score',
-          value: proposal.score ? `${proposal.score}%` : EMPTY_STRING
-        }
-      : null,
-    showScoreAndRanking
-      ? {
-          icon: 'trophy',
-          iconColor: 'yellow',
-          name: 'Ranking',
-          value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
-        }
-      : null
+    {
+      icon: 'users',
+      name: `Team Member${numTeamMembers === 1 ? '' : 's'}`,
+      value: String(numTeamMembers)
+    },
+    {
+      icon: 'badge-dollar',
+      name: 'Proposed Cost',
+      value: formatAmount(totalProposedCost, '$')
+    }
   ];
   return (
     <Row className='mt-5'>
@@ -321,6 +308,8 @@ export const component: Tab.Component<State, Msg> = {
   view,
 
   getModal: getModalValid<ValidState, Msg>(state => {
+    const formModal = mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
+    if (formModal !== null) { return formModal; }
     const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
@@ -328,10 +317,10 @@ export const component: Tab.Component<State, Msg> = {
           title: 'Review Terms and Conditions',
           body: dispatch => (
             <SubmitProposalTerms.view
-              opportunityType='Code With Us'
+              opportunityType='Sprint With Us'
               action='submitting'
-              termsTitle='Digital Marketplace Terms & Conditions'
-              termsRoute={adt('content', 'terms-and-conditions')}
+              termsTitle='Sprint With Us Terms & Conditions'
+              termsRoute={adt('content', 'sprint-with-us-proposal-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),
@@ -358,10 +347,10 @@ export const component: Tab.Component<State, Msg> = {
           title: 'Review Terms and Conditions',
           body: dispatch => (
             <SubmitProposalTerms.view
-              opportunityType='Code With Us'
+              opportunityType='Sprint With Us'
               action='submitting changes to'
-              termsTitle='Digital Marketplace Terms & Conditions'
-              termsRoute={adt('content', 'terms-and-conditions')}
+              termsTitle='Sprint With Us Terms & Conditions'
+              termsRoute={adt('content', 'sprint-with-us-proposal-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),
@@ -384,8 +373,8 @@ export const component: Tab.Component<State, Msg> = {
         };
       case 'withdrawBeforeDeadline':
         return {
-          title: 'Withdraw Code With Us Proposal?',
-          body: () => 'Are you sure you want to withdraw your Code With Us proposal? You will still be able to resubmit your proposal prior to the opportunity\'s proposal deadline.',
+          title: 'Withdraw Sprint With Us Proposal?',
+          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? You will still be able to resubmit your proposal prior to the opportunity\'s proposal deadline.',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -404,8 +393,8 @@ export const component: Tab.Component<State, Msg> = {
         };
       case 'withdrawAfterDeadline':
         return {
-          title: 'Withdraw Code With Us Proposal?',
-          body: () => 'Are you sure you want to withdraw your Code With Us proposal? Your proposal will no longer be considered for this opportunity.',
+          title: 'Withdraw Sprint With Us Proposal?',
+          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? Your proposal will no longer be considered for this opportunity.',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -424,8 +413,8 @@ export const component: Tab.Component<State, Msg> = {
         };
       case 'delete':
         return {
-          title: 'Delete Code With Us Proposal?',
-          body: () => 'Are you sure you want to delete your Code With Us proposal? You will not be able to recover the proposal once it has been deleted.',
+          title: 'Delete Sprint With Us Proposal?',
+          body: () => 'Are you sure you want to delete your Sprint With Us proposal? You will not be able to recover the proposal once it has been deleted.',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -457,8 +446,8 @@ export const component: Tab.Component<State, Msg> = {
     const isDeleteLoading = state.deleteLoading > 0;
     const isValid = () => Form.isValid(state.form);
     const disabled = isLoading(state);
-    const isDraft = propStatus === CWUProposalStatus.Draft;
-    const isAcceptingProposals = isCWUOpportunityAcceptingProposals(state.opportunity);
+    const isDraft = propStatus === SWUProposalStatus.Draft;
+    const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
     if (state.isEditing) {
       return adt('links', compact([
         // Submit Changes
@@ -500,7 +489,7 @@ export const component: Tab.Component<State, Msg> = {
       ])) as PageContextualActions;
     }
     switch (propStatus) {
-      case CWUProposalStatus.Draft:
+      case SWUProposalStatus.Draft:
         if (isAcceptingProposals) {
           return adt('dropdown', {
             text: 'Actions',
@@ -544,7 +533,7 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]);
         }
-      case CWUProposalStatus.Submitted:
+      case SWUProposalStatus.Submitted:
         return adt('links', [
           ...(isAcceptingProposals
             ? [{
@@ -568,9 +557,13 @@ export const component: Tab.Component<State, Msg> = {
             onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
           }
         ]) as PageContextualActions;
-      case CWUProposalStatus.UnderReview:
-      case CWUProposalStatus.Evaluated:
-      case CWUProposalStatus.Awarded:
+      case SWUProposalStatus.UnderReviewTeamQuestions:
+      case SWUProposalStatus.UnderReviewCodeChallenge:
+      case SWUProposalStatus.UnderReviewTeamScenario:
+      case SWUProposalStatus.EvaluatedTeamQuestions:
+      case SWUProposalStatus.EvaluatedCodeChallenge:
+      case SWUProposalStatus.EvaluatedTeamScenario:
+      case SWUProposalStatus.Awarded:
         return adt('links', [
           {
             children: 'Withdraw',
@@ -583,7 +576,7 @@ export const component: Tab.Component<State, Msg> = {
             onClick: () => dispatch(adt('showModal', 'withdrawAfterDeadline' as const))
           }
         ]);
-      case CWUProposalStatus.Withdrawn:
+      case SWUProposalStatus.Withdrawn:
         if (isAcceptingProposals) {
           return adt('links', [
             {

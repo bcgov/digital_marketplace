@@ -7,7 +7,7 @@ import * as SWUOpportunityEditTab from 'front-end/lib/pages/opportunity/sprint-w
 import * as OrganizationEditTab from 'front-end/lib/pages/organization/edit/tab';
 import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
 import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
-//import * as SWUProposalEditTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
+import * as SWUProposalEditTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
 //import * as SWUProposalViewTab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
@@ -91,8 +91,21 @@ const router: Router.Router<Route> = {
           tag: 'proposalSWUEdit',
           value: {
             proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || '',
+            tab: SWUProposalEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    // This route needs to be matched before `proposalSWUView`,
+    // otherwise "export" gets parsed as a `proposalId`.
+    {
+      path: '/opportunities/sprint-with-us/:opportunityId/proposals/export',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'proposalSWUExportAll',
+          value: {
             opportunityId: params.opportunityId || ''
-            //tab: SWUProposalEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -110,7 +123,18 @@ const router: Router.Router<Route> = {
         };
       }
     },
-
+    {
+      path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export',
+      makeRoute({ params, query }) {
+        return {
+          tag: 'proposalSWUExportOne',
+          value: {
+            proposalId: params.proposalId || '',
+            opportunityId: params.opportunityId || ''
+          }
+        };
+      }
+    },
     {
       path: '/opportunities/code-with-us/create',
       makeRoute() {
@@ -404,11 +428,14 @@ const router: Router.Router<Route> = {
       case 'proposalSWUCreate':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;
       case 'proposalSWUEdit':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit`;
-        //return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
       case 'proposalSWUView':
         return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`;
         //return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+      case 'proposalSWUExportOne':
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`;
+      case 'proposalSWUExportAll':
+        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/export`;
       case 'opportunitySWUCreate':
         return '/opportunities/sprint-with-us/create';
       case 'opportunitySWUEdit':

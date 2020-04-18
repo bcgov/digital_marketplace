@@ -197,10 +197,11 @@ interface ViewProps extends ComponentViewProps<State, Msg> {
   className?: string;
   style?: CSSProperties;
   borderless?: boolean;
+  hover?: boolean;
 }
 
 export const view: View<ViewProps> = props => {
-  const { state, dispatch, className, style, headCells, bodyRows, borderless } = props;
+  const { state, dispatch, className, style, headCells, bodyRows, borderless, hover = true } = props;
   const headProps: THeadProps = {
     THView: state.THView,
     cells: headCells.map((spec, index) => {
@@ -230,7 +231,7 @@ export const view: View<ViewProps> = props => {
     borderless
   };
   return (
-    <Table className={className} style={style} responsive hover>
+    <Table className={className} style={style} responsive hover={hover}>
       <THead {...headProps} />
       <TBody {...bodyProps} />
     </Table>

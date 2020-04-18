@@ -23,6 +23,8 @@ import * as PageProposalCWUView from 'front-end/lib/pages/proposal/code-with-us/
 import * as PageProposalList from 'front-end/lib/pages/proposal/list';
 import * as PageProposalSWUCreate from 'front-end/lib/pages/proposal/sprint-with-us/create';
 import * as PageProposalSWUEdit from 'front-end/lib/pages/proposal/sprint-with-us/edit';
+import * as PageProposalSWUExportAll from 'front-end/lib/pages/proposal/sprint-with-us/export/all';
+import * as PageProposalSWUExportOne from 'front-end/lib/pages/proposal/sprint-with-us/export/one';
 import * as PageProposalSWUView from 'front-end/lib/pages/proposal/sprint-with-us/view';
 import * as PageSignIn from 'front-end/lib/pages/sign-in';
 import * as PageSignOut from 'front-end/lib/pages/sign-out';
@@ -53,6 +55,8 @@ export type Route
   | ADT<'proposalSWUCreate',    PageProposalSWUCreate.RouteParams>
   | ADT<'proposalSWUEdit',      PageProposalSWUEdit.RouteParams>
   | ADT<'proposalSWUView',      PageProposalSWUView.RouteParams>
+  | ADT<'proposalSWUExportOne', PageProposalSWUExportOne.RouteParams>
+  | ADT<'proposalSWUExportAll', PageProposalSWUExportAll.RouteParams>
   | ADT<'opportunitySWUCreate', PageOpportunitySWUCreate.RouteParams>
   | ADT<'opportunitySWUEdit',   PageOpportunitySWUEdit.RouteParams>
   | ADT<'opportunitySWUView',   PageOpportunitySWUView.RouteParams>
@@ -110,6 +114,8 @@ export interface State {
     proposalSWUCreate?: Immutable<PageProposalSWUCreate.State>;
     proposalSWUEdit?: Immutable<PageProposalSWUEdit.State>;
     proposalSWUView?: Immutable<PageProposalSWUView.State>;
+    proposalSWUExportOne?: Immutable<PageProposalSWUExportOne.State>;
+    proposalSWUExportAll?: Immutable<PageProposalSWUExportAll.State>;
     opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
@@ -149,6 +155,8 @@ type InnerMsg
   | ADT<'pageProposalSWUCreate',    PageProposalSWUCreate.Msg>
   | ADT<'pageProposalSWUEdit',      PageProposalSWUEdit.Msg>
   | ADT<'pageProposalSWUView',      PageProposalSWUView.Msg>
+  | ADT<'pageProposalSWUExportOne', PageProposalSWUExportOne.Msg>
+  | ADT<'pageProposalSWUExportAll', PageProposalSWUExportAll.Msg>
   | ADT<'pageOpportunitySWUCreate', PageOpportunitySWUCreate.Msg>
   | ADT<'pageOpportunitySWUEdit',   PageOpportunitySWUEdit.Msg>
   | ADT<'pageOpportunitySWUView',   PageOpportunitySWUView.Msg>

@@ -59,7 +59,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
 }
 
 function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, SharedState, State_<K>, Msg_<K>> {
-  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = state => id => Tab.idToDefinition(id, state.tab[1].organization);
+  const idToDefinition: TabbedPage.IdToDefinitionWithState<Tab.Tabs, K, ValidState<K>> = state => id => Tab.idToDefinition(id, (state.tab[1]).organization);
   return {
     init: makeInit(),
     update: updateValid(TabbedPage.makeParentUpdate({

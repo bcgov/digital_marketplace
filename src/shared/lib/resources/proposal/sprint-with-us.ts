@@ -341,3 +341,21 @@ export function calculateTotalProposalScore(proposal: SWUProposal, opportunity: 
          ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) / 100 +
          ((proposal.priceScore || 0) * opportunity.priceWeight) / 100;
 }
+
+export function swuProposalNumTeamMembers(proposal: SWUProposal): number {
+  const compute = (members: SWUProposalTeamMember[]) => members.reduce((acc, m) => acc.add(m.member.id), new Set()).size;
+  return compute([
+    ...(proposal.inceptionPhase?.members || []),
+    ...(proposal.prototypePhase?.members || []),
+    ...(proposal.implementationPhase?.members || [])
+  ]);
+}
+
+export function swuProposalTotalProposedCost(proposal: SWUProposal): number {
+  const sum = (ns: number[]) => ns.reduce((acc, n) => acc + n, 0);
+  return sum([
+    proposal.inceptionPhase?.proposedCost || 0,
+    proposal.prototypePhase?.proposedCost || 0,
+    proposal.implementationPhase?.proposedCost || 0
+  ]);
+}

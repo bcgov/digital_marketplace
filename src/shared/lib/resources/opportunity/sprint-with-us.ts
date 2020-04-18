@@ -1,3 +1,4 @@
+import { isDateInTheFuture } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -81,6 +82,10 @@ export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | n
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Published, SWUOpportunityStatus.EvaluationTeamQuestions, SWUOpportunityStatus.EvaluationCodeChallenge, SWUOpportunityStatus.EvaluationTeamScenario, SWUOpportunityStatus.Awarded];
 
 export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
+
+export function isSWUOpportunityAcceptingProposals(o: SWUOpportunity): boolean {
+  return o.status === SWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+}
 
 export const editableOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published, SWUOpportunityStatus.Suspended];
 

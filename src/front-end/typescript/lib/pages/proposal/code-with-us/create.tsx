@@ -1,4 +1,4 @@
-import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
@@ -258,9 +258,9 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     }
   }),
 
-  getMetadata() {
-    return makePageMetadata('Create Proposal');
-  },
+  getMetadata: getMetadataValid(state => {
+    return makePageMetadata(`Create Code With Us Proposal — ${state.opportunity.title}`);
+  }, makePageMetadata('Create Code With Us Proposal')),
 
   getContextualActions: getContextualActionsValid( ({state, dispatch}) => {
     const isSubmitLoading   = state.submitLoading > 0;
