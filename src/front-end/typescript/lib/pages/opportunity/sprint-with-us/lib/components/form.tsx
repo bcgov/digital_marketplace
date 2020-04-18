@@ -991,9 +991,8 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
       <Col md='8' xs='12'>
         <NumberField.view
           extraChildProps={{}}
-          required
-          label='Minimum Team Members Required'
-          placeholder='Minimum Team Members Required'
+          label='Minimum Team Members'
+          placeholder='Minimum Team Members'
           disabled={disabled}
           state={state.minTeamMembers}
           dispatch={mapComponentDispatch(dispatch, value => adt('minTeamMembers' as const, value))} />

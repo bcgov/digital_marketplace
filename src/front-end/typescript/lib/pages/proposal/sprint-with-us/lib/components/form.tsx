@@ -23,7 +23,7 @@ import { Alert, Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { fileBlobPath } from 'shared/lib/resources/file';
-import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { doesOrganizationMeetSWUQualification, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -518,7 +518,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
             label='Organization'
             placeholder='Organization'
             hint={state.viewerUser.type === UserType.Vendor
-              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please ensure that you have saved this proposal as a draft beforehand to avoid losing any unsaved changes you might have made.</span>)
+              ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please make sure that you have saved this proposal beforehand to avoid losing any unsaved changes you might have made.</span>)
               : undefined}
             state={state.organization}
             dispatch={mapComponentDispatch(dispatch, v => adt('organization' as const, v))}
@@ -558,8 +558,8 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
               <NumberField.view
                 required
                 extraChildProps={{ prefix: '$' }}
-                label='Inception Cost'
-                placeholder='Inception Cost'
+                label={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)} Cost`}
+                placeholder={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)} Cost`}
                 hint={`Maximum phase budget is ${formatAmount(inceptionPhase.maxBudget, '$')}`}
                 disabled={disabled}
                 state={state.inceptionCost}
@@ -573,8 +573,8 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
               <NumberField.view
                 required
                 extraChildProps={{ prefix: '$' }}
-                label='Prototype Cost'
-                placeholder='Prototype Cost'
+                label={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)} Cost`}
+                placeholder={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)} Cost`}
                 hint={`Maximum phase budget is ${formatAmount(prototypePhase.maxBudget, '$')}`}
                 disabled={disabled}
                 state={state.prototypeCost}
@@ -587,8 +587,8 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
             <NumberField.view
               required
               extraChildProps={{ prefix: '$' }}
-              label='Implementation Cost'
-              placeholder='Implementation Cost'
+              label={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)} Cost`}
+              placeholder={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)} Cost`}
               hint={`Maximum phase budget is ${formatAmount(implementationPhase.maxBudget, '$')}`}
               disabled={disabled}
               state={state.implementationCost}
@@ -692,10 +692,9 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, p
         {members.length
           ? (<div className='border-top'>
               {members.map((m, i) => (
-                <div className='p-2 d-flex align-items-center border-bottom'>
+                <div className='p-2 d-flex align-items-center border-bottom' key={`swu-proposal-review-phase-member-${i}`}>
                   <Link
                     onClick={() => viewTeamMember(m)}
-                    key={`swu-proposal-review-phase-member-${i}`}
                     symbol_={leftPlacement(imageLinkSymbol(m.user.avatarImageFile ? fileBlobPath(m.user.avatarImageFile) : DEFAULT_USER_AVATAR_IMAGE_PATH))}>
                     {m.user.name}
                   </Link>
@@ -703,7 +702,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, p
                     ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
                     : null}
                   {m.membershipStatus === MembershipStatus.Pending
-                    ? (<PendingBadge className='ml-3' />)
+                    ? (<PendingBadge className={m.scrumMaster ? 'ml-2' : 'ml-3'} />)
                     : null}
                 </div>
               ) )}
@@ -787,7 +786,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
         {phaseMembers.inceptionPhase && opportunity.inceptionPhase
           ? (<ReviewPhaseView
               className='mb-4'
-              title='Inception'
+              title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)}
               icon='map'
               proposedCost={FormField.getValue(state.inceptionCost) || 0}
               opportunityPhase={opportunity.inceptionPhase}
@@ -800,8 +799,8 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
         {phaseMembers.prototypePhase && opportunity.prototypePhase
           ? (<ReviewPhaseView
               className='mb-4'
-              title='Prototype'
-              icon='map'
+              title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)}
+              icon='rocket'
               proposedCost={FormField.getValue(state.prototypeCost) || 0}
               opportunityPhase={opportunity.prototypePhase}
               members={phaseMembers.prototypePhase}
@@ -811,7 +810,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
               />)
           : null}
         <ReviewPhaseView
-          title='Implementation'
+          title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)}
           icon='cogs'
           proposedCost={FormField.getValue(state.implementationCost) || 0}
           opportunityPhase={opportunity.implementationPhase}

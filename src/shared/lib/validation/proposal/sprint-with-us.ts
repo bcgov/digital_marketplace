@@ -1,8 +1,8 @@
-import { spread, union } from 'lodash';
+import { union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
 import { MAX_TEAM_QUESTION_WORD_LIMIT, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus, UpdateTeamQuestionScoreBody, UpdateTeamQuestionScoreValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
-import { User } from 'shared/lib/resources/user';
+import { User, usersHaveCapability } from 'shared/lib/resources/user';
 import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateGenericStringWords, validateNumber, validateNumberWithPrecision, validatePhoneNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
 
@@ -132,15 +132,13 @@ export function validateSWUProposalProposedCost(inceptionCost: number, prototype
 
 // Given a SWU opportunity and set of Users, validate that the set of capabilities for those users satisfies the requirements of the opportunity
 export function validateSWUProposalTeamCapabilities(opportunity: SWUOpportunity, team: Array<Pick<User, 'capabilities'>>): Validation<string[]> {
-  const unionedUserCapabilities = spread<string[]>(union)(team.map(m => m.capabilities));
   const unionedOpportunityCapabilities = union(
     (opportunity.inceptionPhase?.requiredCapabilities.map(c => c.capability) || []),
     (opportunity.prototypePhase?.requiredCapabilities.map(c => c.capability) || []),
     opportunity.implementationPhase.requiredCapabilities.map(c => c.capability)
   );
-
-  if (unionedOpportunityCapabilities.every(v => unionedUserCapabilities.includes(v))) {
-    return valid(unionedUserCapabilities);
+  if (unionedOpportunityCapabilities.every(v => usersHaveCapability(team, v))) {
+    return valid(unionedOpportunityCapabilities);
   } else {
     return invalid(['The selected team members for each phase do not satisfy this opportunity\'s capability requirements.']);
   }

@@ -2,7 +2,7 @@ import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, m
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import React from 'react';
 import { AffiliationMember } from 'shared/lib/resources/affiliation';
-import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateValidationErrors, SWUProposal, SWUProposalPhaseType } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT, Id } from 'shared/lib/types';
 
@@ -169,7 +169,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('inceptionPhase' as const, value))}
             icon={isInceptionPhaseValid ? 'map' : 'exclamation-circle'}
             iconColor={isInceptionPhaseValid ? undefined : 'warning'}
-            title='Inception'
+            title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)}
             disabled={disabled} />)
         : null}
       {hasPhase(state, SWUProposalPhaseType.Prototype)
@@ -179,7 +179,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('prototypePhase' as const, value))}
             icon={isPrototypePhaseValid ? 'rocket' : 'exclamation-circle'}
             iconColor={isPrototypePhaseValid ? undefined : 'warning'}
-            title='Proof of Concept'
+            title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)}
             disabled={disabled} />)
         : null}
       <Phase.view
@@ -187,7 +187,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         dispatch={mapComponentDispatch(dispatch, value => adt('implementationPhase' as const, value))}
         icon={isImplementationPhaseValid ? 'cogs' : 'exclamation-circle'}
         iconColor={isImplementationPhaseValid ? undefined : 'warning'}
-        title='Implementation'
+        title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)}
         disabled={disabled} />
     </div>
   );

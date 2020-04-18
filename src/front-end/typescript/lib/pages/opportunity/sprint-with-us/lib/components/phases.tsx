@@ -2,7 +2,7 @@ import * as DateField from 'front-end/lib/components/form-field/date';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as Phase from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/phase';
 import React from 'react';
-import { CreateRequestBody, CreateValidationErrors, SWUOpportunity, SWUOpportunityPhaseType } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
 
@@ -207,7 +207,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('inceptionPhase' as const, value))}
             icon={isInceptionPhaseValid ? 'map' : 'exclamation-circle'}
             iconColor={isInceptionPhaseValid ? undefined : 'warning'}
-            title='Inception'
+            title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)}
             description='During the Inception phase, you will take your business goals and research findings and explore the potential value that a new digital product can bring. You will then determine the features of a Minimum Viable Product (MVP) and the scope for an Alpha release.'
             deliverables={[
               'Happy stakeholders with a shared vision for your digital product', 'A product backlog for the Alpha release'
@@ -221,7 +221,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             dispatch={mapComponentDispatch(dispatch, value => adt('prototypePhase' as const, value))}
             icon={isPrototypePhaseValid ? 'rocket' : 'exclamation-circle'}
             iconColor={isPrototypePhaseValid ? undefined : 'warning'}
-            title='Proof of Concept'
+            title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)}
             description='During the Proof of Concept phase, you will make your value propositions tangible so that they can be validated. You will begin developing the core features of your product that were scoped out during the Inception phase, working towards the Alpha release!'
             deliverables={[
               'Alpha release of the product',
@@ -236,7 +236,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         dispatch={mapComponentDispatch(dispatch, value => adt('implementationPhase' as const, value))}
         icon={isImplementationPhaseValid ? 'cogs' : 'exclamation-circle'}
         iconColor={isImplementationPhaseValid ? undefined : 'warning'}
-        title='Implementation'
+        title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)}
         description='As you reach the Implementation phase, you should be fully invested in your new digital product and plan for its continuous improvement. Next, you will need to carefully architect and automate the delivery pipeline for stability and continuous deployment.'
         deliverables={[
           'Delivery of the functional components in the Product Roadmap'

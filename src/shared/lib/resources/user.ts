@@ -72,6 +72,15 @@ export function isPublicSectorUserType(userType: UserType): boolean {
   return isPublicSectorEmployee({ type: userType });
 }
 
+export function usersHaveCapability(users: Array<Pick<User, 'capabilities'>>, capability: string): boolean {
+  for (const u of users) {
+    if (u.capabilities.indexOf(capability) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export interface UpdateProfileRequestBody {
   name: string;
   email: string;

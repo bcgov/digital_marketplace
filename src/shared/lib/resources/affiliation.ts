@@ -1,5 +1,5 @@
 import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { User } from 'shared/lib/resources/user';
+import { User, usersHaveCapability } from 'shared/lib/resources/user';
 import { BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
@@ -69,12 +69,7 @@ export function parseMembershipType(raw: string): MembershipType | null {
 }
 
 export function membersHaveCapability(members: AffiliationMember[], capability: string): boolean {
-  for (const m of members) {
-    if (m.user.capabilities.indexOf(capability) !== -1) {
-      return true;
-    }
-  }
-  return false;
+  return usersHaveCapability(members.map(({ user }) => user), capability);
 }
 
 export function memberIsPending(member: Pick<Affiliation, 'membershipStatus'>): boolean {

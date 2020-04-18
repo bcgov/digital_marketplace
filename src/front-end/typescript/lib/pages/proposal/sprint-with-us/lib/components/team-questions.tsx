@@ -98,10 +98,13 @@ export function setErrors(state: Immutable<State>, errors: Errors = []): Immutab
   }, state);
 }
 
+function isResponseValid(response: ResponseState): boolean {
+  return FormField.isValid(response.response);
+}
+
 export function isValid(state: Immutable<State>): boolean {
   return state.responses.reduce((acc, r) => {
-    return acc
-        && FormField.isValid(r.response);
+    return acc && isResponseValid(r);
   }, true as boolean);
 }
 
@@ -114,6 +117,7 @@ interface ResponseViewProps {
 
 const ResponseView: View<ResponseViewProps> = props => {
   const { response, dispatch, index, disabled } = props;
+  const isValid = isResponseValid(response);
   const title = `Question ${index + 1}`;
   return (
     <Accordion
@@ -122,6 +126,10 @@ const ResponseView: View<ResponseViewProps> = props => {
       color='blue-dark'
       title={title}
       titleClassName='h3 mb-0'
+      icon={isValid ? undefined : 'exclamation-circle'}
+      iconColor={isValid ? undefined : 'warning'}
+      iconWidth={2}
+      iconHeight={2}
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={response.isAccordianOpen}>

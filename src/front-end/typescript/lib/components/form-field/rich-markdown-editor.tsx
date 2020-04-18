@@ -201,7 +201,11 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
       if (!entry) { return [state]; }
       state = pushStack(state, 'redo', getStackEntry(state));
       state = setStackEntry(state, entry);
-      return [state];
+      return [state, async (state, dispatch) => {
+        dispatch(adt('@validate'));
+        dispatch(adt('focus'));
+        return null;
+      }];
     }
     case 'controlRedo': {
       let entry;
@@ -209,7 +213,11 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
       if (!entry) { return [state]; }
       state = pushStack(state, 'undo', getStackEntry(state));
       state = setStackEntry(state, entry);
-      return [state];
+      return [state, async (state, dispatch) => {
+        dispatch(adt('@validate'));
+        dispatch(adt('focus'));
+        return null;
+      }];
     }
     case 'controlH1':
       return insert(state, {
