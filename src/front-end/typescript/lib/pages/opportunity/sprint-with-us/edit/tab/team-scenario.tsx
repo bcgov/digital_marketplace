@@ -115,7 +115,7 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
 };
 
 const WaitForTeamScenario: ComponentView<State, Msg> = ({ state }) => {
-  return (<div>Proposals will be displayed here once the opportunity has reached the Team Scenario.</div>);
+  return (<div>Participants will be displayed here once the opportunity has reached the Team Scenario.</div>);
 };
 
 interface ProponentCellProps {
