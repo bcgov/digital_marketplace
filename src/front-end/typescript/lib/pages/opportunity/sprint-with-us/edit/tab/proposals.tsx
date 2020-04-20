@@ -146,7 +146,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         async (state, dispatch) => {
           state = state.set('screenToFromLoading', null);
           //TODO once back-end is ready
-          const updateResult = await api.proposals.swu.update(msg.value, adt('screenInToCodeChallenge', ''));
+          const updateResult = await api.proposals.swu.update(msg.value, adt('screenOutFromCodeChallenge', ''));
           switch (updateResult.tag) {
             case 'valid':
               dispatch(toast(adt('success', proposalToasts.screenedOut.success)));

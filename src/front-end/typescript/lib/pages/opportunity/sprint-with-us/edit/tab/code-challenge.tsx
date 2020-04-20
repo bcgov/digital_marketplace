@@ -45,7 +45,7 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: Init<Tab.Params, State> = async params => {
-  const canViewProposals = canViewSWUOpportunityProposals(params.opportunity);
+  const canViewProposals = canViewSWUOpportunityProposals(params.opportunity) && hasSWUOpportunityPassedCodeChallenge(params.opportunity);
   let proposals: SWUProposalSlim[] = [];
   if (canViewProposals) {
     const proposalResult = await api.proposals.swu.readMany(params.opportunity.id);
@@ -146,8 +146,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         state.set('screenToFromLoading', msg.value),
         async (state, dispatch) => {
           state = state.set('screenToFromLoading', null);
-          //TODO once back-end is ready
-          const updateResult = await api.proposals.swu.update(msg.value, adt('screenInToTeamScenario', ''));
+          const updateResult = await api.proposals.swu.update(msg.value, adt('screenOutFromTeamScenario', ''));
           switch (updateResult.tag) {
             case 'valid':
               dispatch(toast(adt('success', proposalToasts.screenedOut.success)));

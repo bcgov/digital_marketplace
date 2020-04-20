@@ -13,7 +13,8 @@ import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatAmount, formatDate } from 'shared/lib';
+import { formatAmount } from 'shared/lib';
+import { hasSWUOpportunityPassedCodeChallenge } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { SWUProposal, swuProposalNumTeamMembers, SWUProposalStatus, swuProposalTotalProposedCost } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
@@ -165,11 +166,6 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   const totalProposedCost = swuProposalTotalProposedCost(proposal);
   const reportCards: Array<ReportCard | null> = [
     {
-      icon: 'alarm-clock',
-      name: 'Proposals Due',
-      value: formatDate(proposal.opportunity.proposalDeadline)
-    },
-    {
       icon: 'users',
       name: `Team Member${numTeamMembers === 1 ? '' : 's'}`,
       value: String(numTeamMembers)
@@ -191,16 +187,21 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
 
 const view: ComponentView<State, Msg> = viewValid(props => {
   const { state, dispatch } = props;
+  const show = hasSWUOpportunityPassedCodeChallenge(state.opportunity);
   return (
     <div>
       <EditTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-      <Reporting {...props} />
+      {show ? (<Reporting {...props} />) : null}
       <Row className='mt-5'>
         <Col xs='12'>
-          <Form.view
-            disabled
-            state={state.form}
-            dispatch={mapComponentDispatch(dispatch, v => adt('form' as const, v))} />
+          {show
+            ? (
+                <Form.view
+                  disabled
+                  state={state.form}
+                  dispatch={mapComponentDispatch(dispatch, v => adt('form' as const, v))} />
+              )
+            : <div className='pt-5 border-top'>This proposal's details will be available once the opportunity reaches the Code Challenge.</div>}
         </Col>
       </Row>
     </div>
