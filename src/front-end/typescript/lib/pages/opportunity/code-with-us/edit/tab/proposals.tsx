@@ -150,13 +150,13 @@ const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[])
       icon: 'star-full',
       iconColor: 'yellow',
       name: 'Winning Score',
-      value: isAwarded ? `${highestScore}%` : EMPTY_STRING
+      value: isAwarded && highestScore ? `${highestScore}%` : EMPTY_STRING
     },
     {
       icon: 'star-half',
       iconColor: 'yellow',
       name: 'Avg. Score',
-      value: isAwarded ? `${averageScore}%` : EMPTY_STRING
+      value: isAwarded && averageScore ? `${averageScore}%` : EMPTY_STRING
     }
   ];
 };

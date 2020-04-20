@@ -15,14 +15,13 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareNumbers } from 'shared/lib';
-import { canSWUOpportunityBeScreenedInToCodeChallenge, canViewSWUOpportunityProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeScreenedInToCodeChallenge, canViewSWUOpportunityProposals, hasSWUOpportunityPassedTeamQuestions, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { canSWUProposalBeScreenedToFromCodeChallenge, getSWUProponentName, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
-//import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 
 type ModalId
   = ADT<'screenInToCodeChallenge', Id>
-  | ADT<'screenOutFromCodeChallenge', Id>
+  | ADT<'screenOutOfCodeChallenge', Id>
   | ADT<'startCodeChallenge'>;
 
 export interface State extends Tab.Params {
@@ -40,7 +39,7 @@ export type InnerMsg
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
   | ADT<'screenInToCodeChallenge', Id>
-  | ADT<'screenOutFromCodeChallenge', Id>
+  | ADT<'screenOutOfCodeChallenge', Id>
   | ADT<'startCodeChallenge'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -114,7 +113,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           dispatch(newRoute(adt('opportunitySWUEdit', {
             opportunityId: state.opportunity.id,
             tab: 'codeChallenge' as const
-          })));
+          })) as Msg);
           return state;
         }
       ];
@@ -140,7 +139,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
       }];
 
-    case 'screenOutFromCodeChallenge':
+    case 'screenOutOfCodeChallenge':
       state = state.set('showModal', null);
       return [
         state.set('screenToFromLoading', msg.value),
@@ -191,7 +190,7 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
       (average * i + questionsScore) / (i + 1)
     ];
   }, [0, 0]);
-  const isComplete = opportunity.status === SWUOpportunityStatus.EvaluationCodeChallenge;
+  const isComplete = hasSWUOpportunityPassedTeamQuestions(opportunity);
   return [
     {
       icon: 'comment-dollar',
@@ -202,13 +201,13 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
       icon: 'star-full',
       iconColor: 'yellow',
       name: 'Top TQ Score',
-      value: isComplete ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
+      value: isComplete && highestScore ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'star-half',
       iconColor: 'yellow',
       name: 'Avg. TQ Score',
-      value: isComplete ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
+      value: isComplete && averageScore ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     }
   ];
 };
@@ -226,7 +225,7 @@ const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWU
           symbol_={leftPlacement(iconLinkSymbol('stars'))}
           color='info'
           size='sm'
-          disabled={disabled}
+          disabled={disabled || loading}
           loading={loading}
           onClick={() => dispatch(adt('showModal', adt('screenInToCodeChallenge' as const, proposal.id))) }>
           Screen In
@@ -239,9 +238,9 @@ const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWU
           symbol_={leftPlacement(iconLinkSymbol('ban'))}
           color='danger'
           size='sm'
-          disabled={disabled}
+          disabled={disabled || loading}
           loading={loading}
-          onClick={() => dispatch(adt('showModal', adt('screenOutFromCodeChallenge' as const, proposal.id))) }>
+          onClick={() => dispatch(adt('showModal', adt('screenOutOfCodeChallenge' as const, proposal.id))) }>
           Screen Out
         </Link>
       );
@@ -278,6 +277,8 @@ const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabl
 
 function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg>): Table.BodyRows  {
   const isStartCodeChallengeLoading = state.startCodeChallengeLoading > 0;
+  const isScreenToFromLoading = !!state.screenToFromLoading;
+  const isLoading = isStartCodeChallengeLoading || isScreenToFromLoading;
   return state.proposals.map(p => {
     return [
       {
@@ -286,7 +287,7 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
           <ProponentCell
             proposal={p}
             opportunity={state.opportunity}
-            disabled={!!state.screenToFromLoading} />
+            disabled={isLoading} />
         )
       },
       { children: (<Badge text={swuProposalStatusToTitleCase(p.status, state.viewerUser.type)} color={swuProposalStatusToColor(p.status, state.viewerUser.type)} />) },
@@ -297,7 +298,7 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
       ...(state.canProposalsBeScreened
         ? [{
             className: 'text-right text-nowrap',
-            children: (<ContextMenuCell dispatch={dispatch} proposal={p} disabled={isStartCodeChallengeLoading} loading={state.screenToFromLoading === p.id} />)
+            children: (<ContextMenuCell dispatch={dispatch} proposal={p} disabled={isLoading} loading={state.screenToFromLoading === p.id} />)
           }]
         : [])
     ];
@@ -387,6 +388,8 @@ export const component: Tab.Component<State, Msg> = {
   getContextualActions: ({ state, dispatch }) => {
     if (!state.canViewProposals || !state.canProposalsBeScreened) { return null; }
     const isStartCodeChallengeLoading = state.startCodeChallengeLoading > 0;
+    const isScreenToFromLoading = !!state.screenToFromLoading;
+    const isLoading = isStartCodeChallengeLoading || isScreenToFromLoading;
     return adt('links', [{
       children: 'Begin Code Challenge',
       symbol_: leftPlacement(iconLinkSymbol('code')),
@@ -395,7 +398,7 @@ export const component: Tab.Component<State, Msg> = {
       loading: isStartCodeChallengeLoading,
       disabled: (() => {
         // At least one proposal already screened in.
-        return isStartCodeChallengeLoading
+        return isLoading
             || !(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
             && state.proposals.reduce((acc, p) => acc || p.status === SWUProposalStatus.UnderReviewCodeChallenge, false as boolean));
       })(),
@@ -426,9 +429,9 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () => 'Are you sure you want to screen this proponent into the Code Challenge?'
         };
-      case 'screenOutFromCodeChallenge':
+      case 'screenOutOfCodeChallenge':
         return {
-          title: 'Screen Proponent out from Code Challenge?',
+          title: 'Screen Proponent out of Code Challenge?',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -436,7 +439,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'ban',
               color: 'danger',
               button: true,
-              msg: adt('screenOutFromCodeChallenge', state.showModal.value)
+              msg: adt('screenOutOfCodeChallenge', state.showModal.value)
             },
             {
               text: 'Cancel',
@@ -444,7 +447,7 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt('hideModal')
             }
           ],
-          body: () => 'Are you sure you want to screen this proponent out from the Code Challenge?'
+          body: () => 'Are you sure you want to screen this proponent out of the Code Challenge?'
         };
       case 'startCodeChallenge':
         return {

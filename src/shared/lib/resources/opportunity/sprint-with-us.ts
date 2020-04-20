@@ -398,6 +398,51 @@ export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
   return !!o.publishedAt && o.status !== SWUOpportunityStatus.Published;
 }
 
+export function hasSWUOpportunityPassedTeamQuestions(o: Pick<SWUOpportunity, 'history'>): boolean {
+  if (!o.history) { return false; }
+  return o.history.reduce((acc, h) => {
+    if (acc || h.type.tag !== 'status') { return acc; }
+    switch (h.type.value) {
+      case SWUOpportunityStatus.EvaluationTeamQuestions:
+      case SWUOpportunityStatus.EvaluationCodeChallenge:
+      case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Awarded:
+        return true;
+      default:
+        return false;
+    }
+  }, false as boolean);
+}
+
+export function hasSWUOpportunityPassedCodeChallenge(o: Pick<SWUOpportunity, 'history'>): boolean {
+  if (!o.history) { return false; }
+  return o.history.reduce((acc, h) => {
+    if (acc || h.type.tag !== 'status') { return acc; }
+    switch (h.type.value) {
+      case SWUOpportunityStatus.EvaluationCodeChallenge:
+      case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Awarded:
+        return true;
+      default:
+        return false;
+    }
+  }, false as boolean);
+}
+
+export function hasSWUOpportunityPassedTeamScenario(o: Pick<SWUOpportunity, 'history'>): boolean {
+  if (!o.history) { return false; }
+  return o.history.reduce((acc, h) => {
+    if (acc || h.type.tag !== 'status') { return acc; }
+    switch (h.type.value) {
+      case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Awarded:
+        return true;
+      default:
+        return false;
+    }
+  }, false as boolean);
+}
+
 export function doesSWUOpportunityStatusAllowGovToViewProposals(s: SWUOpportunityStatus): boolean {
   switch (s) {
     case SWUOpportunityStatus.Draft:

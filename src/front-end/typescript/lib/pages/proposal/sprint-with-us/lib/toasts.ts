@@ -34,7 +34,7 @@ export const screenedIn = {
     body: 'Sprint With Us proposal has been screened into the next round.'
   },
   error: {
-    title: 'Unable to Screened in Proposal',
+    title: 'Unable to Screen in Proposal',
     body: 'Sprint With Us proposal could not be screened into the next round. Please try again later.'
   }
 };

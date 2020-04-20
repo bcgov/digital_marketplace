@@ -397,6 +397,30 @@ export function canSWUProposalBeAwarded(p: Pick<SWUProposal, 'status'>): boolean
   }
 }
 
+export function isSWUProposalInCodeChallenge(p: Pick<SWUProposal, 'status' | 'challengeScore'>): boolean {
+  switch (p.status) {
+    case SWUProposalStatus.UnderReviewCodeChallenge:
+    case SWUProposalStatus.EvaluatedCodeChallenge:
+    case SWUProposalStatus.UnderReviewTeamScenario:
+    case SWUProposalStatus.EvaluatedTeamScenario:
+    case SWUProposalStatus.Awarded:
+      return true;
+    default:
+      return p.challengeScore !== undefined;
+  }
+}
+
+export function isSWUProposalInTeamScenario(p: Pick<SWUProposal, 'status' | 'scenarioScore'>): boolean {
+  switch (p.status) {
+    case SWUProposalStatus.UnderReviewTeamScenario:
+    case SWUProposalStatus.EvaluatedTeamScenario:
+    case SWUProposalStatus.Awarded:
+      return true;
+    default:
+      return p.scenarioScore !== undefined;
+  }
+}
+
 export function getSWUProponentName(p: Pick<SWUProposal, 'organization' | 'anonymousProponentName'>): string {
   return p.organization?.legalName || p.anonymousProponentName || 'Proponent';
 }
