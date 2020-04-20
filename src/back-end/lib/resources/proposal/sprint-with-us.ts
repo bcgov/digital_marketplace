@@ -27,8 +27,10 @@ interface ValidatedUpdateRequestBody {
       | ADT<'submit', string>
       | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
       | ADT<'screenInToCodeChallenge', string>
+      | ADT<'screenOutFromCodeChallenge', string>
       | ADT<'scoreCodeChallenge', number>
       | ADT<'screenInToTeamScenario', string>
+      | ADT<'screenOutFromTeamScenario', string>
       | ADT<'scoreTeamScenario', number>
       | ADT<'award', string>
       | ADT<'disqualify', string>
@@ -319,10 +321,14 @@ const resource: Resource = {
             return adt('scoreQuestions', value as UpdateTeamQuestionScoreBody[]);
           case 'screenInToCodeChallenge':
             return adt('screenInToCodeChallenge', getString(body, 'value'));
+          case 'screenOutFromCodeChallenge':
+            return adt('screenOutFromCodeChallenge', getString(body, 'value'));
           case 'scoreCodeChallenge':
             return adt('scoreCodeChallenge', getNumber<number>(body, 'value', -1, false));
           case 'screenInToTeamScenario':
             return adt('screenInToTeamScenario', getString(body, 'value'));
+          case 'screenOutFromTeamScenario':
+            return adt('screenOutFromTeamScenario', getString(body, 'value'));
           case 'scoreTeamScenario':
             return adt('scoreTeamScenario', getNumber<number>(body, 'value', -1, false));
           case 'award':
@@ -638,6 +644,28 @@ const resource: Resource = {
               session: request.session,
               body: adt('screenInToCodeChallenge' as const, validatedScreenInCCNote.value)
             });
+          case 'screenOutFromCodeChallenge':
+            if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.EvaluatedTeamQuestions, request.session.user.type, swuOpportunity.proposalDeadline)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            // The opportunity must be in the team questions or code challenge stage
+            if (![SWUOpportunityStatus.EvaluationTeamQuestions, SWUOpportunityStatus.EvaluationCodeChallenge].includes(swuOpportunity.status)) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
+              });
+            }
+            const validatedScreenOutCCNote = proposalValidation.validateNote(request.body.value);
+            if (isInvalid(validatedScreenOutCCNote)) {
+              return invalid({
+                proposal: adt('screenOutFromCodeChallenge' as const, getInvalidValue(validatedScreenOutCCNote, []))
+              });
+            }
+            return valid({
+              session: request.session,
+              body: adt('screenOutFromCodeChallenge' as const, validatedScreenOutCCNote.value)
+            });
           case 'scoreCodeChallenge':
             if (![SWUProposalStatus.UnderReviewCodeChallenge, SWUProposalStatus.EvaluatedCodeChallenge].includes(validatedSWUProposal.value.status)) {
               return invalid({
@@ -681,6 +709,28 @@ const resource: Resource = {
             return valid({
               session: request.session,
               body: adt('screenInToTeamScenario' as const, validatedScreenInTSNote.value)
+            });
+          case 'screenOutFromTeamScenario':
+            if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.EvaluatedCodeChallenge, request.session.user.type, swuOpportunity.proposalDeadline)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            // The opportunity must be in the code challenge or team scenario stage
+            if (![SWUOpportunityStatus.EvaluationCodeChallenge, SWUOpportunityStatus.EvaluationTeamScenario].includes(swuOpportunity.status)) {
+              return invalid({
+                permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
+              });
+            }
+            const validatedScreenOutTSNote = proposalValidation.validateNote(request.body.value);
+            if (isInvalid(validatedScreenOutTSNote)) {
+              return invalid({
+                proposal: adt('screenOutFromTeamScenario' as const, getInvalidValue(validatedScreenOutTSNote, []))
+              });
+            }
+            return valid({
+              session: request.session,
+              body: adt('screenOutFromTeamScenario' as const, validatedScreenOutTSNote.value)
             });
           case 'scoreTeamScenario':
             if (![SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario].includes(validatedSWUProposal.value.status)) {
@@ -783,11 +833,17 @@ const resource: Resource = {
             case 'screenInToCodeChallenge':
               dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.UnderReviewCodeChallenge, body.value, session);
               break;
+            case 'screenOutFromCodeChallenge':
+              dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.EvaluatedTeamQuestions, body.value, session);
+              break;
             case 'scoreCodeChallenge':
               dbResult = await db.updateSWUProposalCodeChallengeScore(connection, request.params.id, body.value, session);
               break;
             case 'screenInToTeamScenario':
               dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.UnderReviewTeamScenario, body.value, session);
+              break;
+            case 'screenOutFromTeamScenario':
+              dbResult = await db.updateSWUProposalStatus(connection, request.params.id, SWUProposalStatus.EvaluatedCodeChallenge, body.value, session);
               break;
             case 'scoreTeamScenario':
               dbResult = await db.updateSWUProposalScenarioAndPriceScores(connection, request.params.id, body.value, session);

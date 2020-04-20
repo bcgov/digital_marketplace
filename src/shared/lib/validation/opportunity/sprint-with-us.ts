@@ -1,3 +1,4 @@
+import { ENV } from 'back-end/config';
 import { get, uniq } from 'lodash';
 import { getISODateString, getNumber, getString, isDateInThePast, setDateTo4PM } from 'shared/lib';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -270,7 +271,8 @@ export function validateProposalDeadline(raw: string, opportunity?: SWUOpportuni
   if (opportunity && opportunity.status !== SWUOpportunityStatus.Draft) {
     minDate = isDateInThePast(opportunity.proposalDeadline) ? opportunity.proposalDeadline : now;
   }
-  return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
+  // Don't set a min date in development mode to allow for manual test setting of proposal date
+  return validateDate(raw, ENV === 'production' ? minDate : undefined, undefined, setDateTo4PM);
 }
 
 export function validateAssignmentDate(raw: string, proposalDeadline: Date): Validation<Date> {

@@ -211,8 +211,10 @@ export type UpdateRequestBody
   | ADT<'submit', string>
   | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
   | ADT<'screenInToCodeChallenge', string>
+  | ADT<'screenOutFromCodeChallenge', string>
   | ADT<'scoreCodeChallenge', number>
   | ADT<'screenInToTeamScenario', string>
+  | ADT<'screenOutFromTeamScenario', string>
   | ADT<'scoreTeamScenario', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
@@ -225,8 +227,10 @@ type UpdateADTErrors
   | ADT<'submit', string[]>
   | ADT<'scoreQuestions', UpdateTeamQuestionScoreValidationErrors[]>
   | ADT<'screenInToCodeChallenge', string[]>
+  | ADT<'screenOutFromCodeChallenge', string[]>
   | ADT<'scoreCodeChallenge', string[]>
   | ADT<'screenInToTeamScenario', string[]>
+  | ADT<'screenOutFromTeamScenario', string[]>
   | ADT<'scoreTeamScenario', string[]>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
@@ -292,7 +296,7 @@ export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStat
              (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
 
     case SWUProposalStatus.UnderReviewCodeChallenge:
-      return (([SWUProposalStatus.EvaluatedCodeChallenge, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+      return (([SWUProposalStatus.EvaluatedCodeChallenge, SWUProposalStatus.Disqualified, SWUProposalStatus.EvaluatedTeamQuestions].includes(to) && userType !== UserType.Vendor) ||
              (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
 
     case SWUProposalStatus.EvaluatedCodeChallenge:
@@ -300,7 +304,7 @@ export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStat
              (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
 
     case SWUProposalStatus.UnderReviewTeamScenario:
-      return (([SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
+      return (([SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Disqualified, SWUProposalStatus.EvaluatedCodeChallenge].includes(to) && userType !== UserType.Vendor) ||
              (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
 
     case SWUProposalStatus.EvaluatedTeamScenario:
