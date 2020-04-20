@@ -174,7 +174,7 @@ export function validateTeamQuestionScore(raw: any, opportunityTeamQuestions: SW
       order: ['No matching opportunity question.']
     });
   }
-  const validatedScore = validateTeamQuestionScoreScore(getNumber(raw, 'score'), maxScore);
+  const validatedScore = validateTeamQuestionScoreScore(getNumber(raw, 'score', 0, false), maxScore);
   if (isInvalid(validatedScore)) {
     return invalid({
       score: getInvalidValue(validatedScore, undefined)
