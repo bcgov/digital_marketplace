@@ -23,12 +23,12 @@ export function swuProposalStatusToTitleCase(s: SWUProposalStatus, viewerUserTyp
   switch (s) {
     case SWUProposalStatus.Draft        : return 'Draft';
     case SWUProposalStatus.Submitted    : return 'Submitted';
-    case SWUProposalStatus.UnderReviewTeamQuestions: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Under Review (Team Questions)';
-    case SWUProposalStatus.UnderReviewCodeChallenge: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Under Review (Code Challenge)';
-    case SWUProposalStatus.UnderReviewTeamScenario: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Under Review (Team Scenario)';
-    case SWUProposalStatus.EvaluatedTeamQuestions: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Evaluated (Team Questions)';
-    case SWUProposalStatus.EvaluatedCodeChallenge: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Evaluated (Code Challenge)';
-    case SWUProposalStatus.EvaluatedTeamScenario: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Evaluated (Team Scenario)';
+    case SWUProposalStatus.UnderReviewTeamQuestions: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Team Questions';
+    case SWUProposalStatus.UnderReviewCodeChallenge: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Code Challenge';
+    case SWUProposalStatus.UnderReviewTeamScenario: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Team Scenario';
+    case SWUProposalStatus.EvaluatedTeamQuestions: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Team Questions';
+    case SWUProposalStatus.EvaluatedCodeChallenge: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Code Challenge';
+    case SWUProposalStatus.EvaluatedTeamScenario: return viewerUserType === UserType.Vendor ? 'Under Review' : 'Team Scenario';
     case SWUProposalStatus.Awarded      : return 'Awarded';
     case SWUProposalStatus.NotAwarded   : return 'Not Awarded';
     case SWUProposalStatus.Disqualified : return 'Disqualified';

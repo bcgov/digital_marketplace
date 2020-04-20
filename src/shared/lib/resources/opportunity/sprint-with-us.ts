@@ -79,6 +79,16 @@ export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | n
   }
 }
 
+export function isSWUOpportunityStatusInEvaluation(s: SWUOpportunityStatus): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+      return true;
+    default: return false;
+  }
+}
+
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Published, SWUOpportunityStatus.EvaluationTeamQuestions, SWUOpportunityStatus.EvaluationCodeChallenge, SWUOpportunityStatus.EvaluationTeamScenario, SWUOpportunityStatus.Awarded];
 
 export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
@@ -303,6 +313,43 @@ export function isValidStatusChange(from: SWUOpportunityStatus, to: SWUOpportuni
     default:
       return false;
   }
+}
+
+export function canSWUOpportunityBeScreenedInToCodeChallenge(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canSWUOpportunityBeScreenedInToTeamScenario(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canSWUOpportunityBeAwarded(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canViewSWUOpportunityProposals(o: SWUOpportunity): boolean {
+  // Return true if the opportunity has ever had the `Evaluation` status.
+  return !!o.history && o.history.reduce((acc, record) => {
+    return acc
+        || (record.type.tag === 'status'
+        && isSWUOpportunityStatusInEvaluation(record.type.value));
+  }, false as boolean);
 }
 
 export function canSWUOpportunityDetailsBeEdited(o: SWUOpportunity, adminsOnly: boolean): boolean {

@@ -219,7 +219,10 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
         )
       },
       { children: (<Badge text={cwuProposalStatusToTitleCase(p.status, state.viewerUser.type)} color={cwuProposalStatusToColor(p.status, state.viewerUser.type)} />) },
-      { children: (<div>{p.score ? `${p.score}%` : EMPTY_STRING}</div>) },
+      {
+        className: 'text-center',
+        children: (<div>{p.score ? `${p.score}%` : EMPTY_STRING}</div>)
+      },
       ...(state.canProposalsBeAwarded
         ? [{
             showOnHover: true,
@@ -234,24 +237,24 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Proponent',
-      className: 'text-nowrap',
-      style: { width: '50%', minWidth: '120px' }
+      className: 'text-wrap',
+      style: { width: '100%', minWidth: '240px' }
     },
     {
       children: 'Status',
       className: 'text-nowrap',
-      style: { width: '20%' }
+      style: { width: '0px' }
     },
     {
       children: 'Score',
-      className: 'text-nowrap',
-      style: { width: '15%' }
+      className: 'text-nowrap text-center',
+      style: { width: '0px' }
     },
     ...(state.canProposalsBeAwarded
       ? [{
           children: '',
           className: 'text-nowrap text-right',
-          style: { width: '15%', minWidth: '120px' }
+          style: { width: '0px' }
         }]
       : [])
   ];

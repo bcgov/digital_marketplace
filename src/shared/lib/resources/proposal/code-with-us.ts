@@ -210,7 +210,7 @@ export function isValidStatusChange(from: CWUProposalStatus, to: CWUProposalStat
   }
 }
 
-export function canCWUProposalBeAwarded(p: CWUProposal | CWUProposalSlim): boolean {
+export function canCWUProposalBeAwarded(p: Pick<CWUProposal, 'status'>): boolean {
   switch (p.status) {
     case CWUProposalStatus.NotAwarded:
     case CWUProposalStatus.Evaluated:

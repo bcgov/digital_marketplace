@@ -4,8 +4,8 @@ import { immutable, Immutable } from 'front-end/lib/framework';
 import * as CodeChallengeTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge';
 import * as HistoryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history';
 import * as OpportunityTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity';
-import * as ProponentScoresheetTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proponent-scoresheet';
 import * as ProposalsTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals';
+import * as ScoresheetTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/scoresheet';
 import * as SummaryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary';
 import * as TeamScenarioTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario';
 import { routeDest } from 'front-end/lib/views/link';
@@ -35,7 +35,7 @@ export interface Tabs {
   history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
   codeChallenge: TabbedPage.Tab<Params, CodeChallengeTab.State, CodeChallengeTab.InnerMsg>;
   teamScenario: TabbedPage.Tab<Params, TeamScenarioTab.State, TeamScenarioTab.InnerMsg>;
-  proponentScoresheet: TabbedPage.Tab<Params, ProponentScoresheetTab.State, ProponentScoresheetTab.InnerMsg>;
+  scoresheet: TabbedPage.Tab<Params, ScoresheetTab.State, ScoresheetTab.InnerMsg>;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -51,7 +51,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
     case 'proposals':
     case 'codeChallenge':
     case 'teamScenario':
-    case 'proponentScoresheet':
+    case 'scoresheet':
     case 'history':
       return raw;
     default:
@@ -85,9 +85,9 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         icon: 'users-class',
         title: 'Team Scenario'
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case 'proponentScoresheet':
+    case 'scoresheet':
       return {
-        component: ProponentScoresheetTab.component,
+        component: ScoresheetTab.component,
         icon: 'star-full',
         title: 'Scoresheet'
       } as TabbedPage.TabDefinition<Tabs, K>;
@@ -125,7 +125,7 @@ export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Pro
       makeSidebarLink('proposals',            opportunityId,  activeTab),
       makeSidebarLink('codeChallenge',        opportunityId,  activeTab),
       makeSidebarLink('teamScenario',         opportunityId,  activeTab),
-      makeSidebarLink('proponentScoresheet',  opportunityId,  activeTab),
+      makeSidebarLink('scoresheet',  opportunityId,  activeTab),
       makeSidebarLink('history',              opportunityId,  activeTab),
       {
         icon: 'external-link',
