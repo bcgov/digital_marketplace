@@ -58,7 +58,7 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Entry Type',
-      className: 'text-nowrap',
+      className: 'text-wrap',
       style: { width: '20%' }
     },
     {

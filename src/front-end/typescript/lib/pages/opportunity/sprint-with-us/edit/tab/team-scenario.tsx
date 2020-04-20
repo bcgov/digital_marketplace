@@ -28,7 +28,7 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: Init<Tab.Params, State> = async params => {
-  const canViewProposals = canViewSWUOpportunityProposals(params.opportunity);
+  const canViewProposals = canViewSWUOpportunityProposals(params.opportunity) && hasSWUOpportunityPassedTeamScenario(params.opportunity);
   let proposals: SWUProposalSlim[] = [];
   if (canViewProposals) {
     const proposalResult = await api.proposals.swu.readMany(params.opportunity.id);

@@ -3,7 +3,7 @@ import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-en
 import Badge from 'front-end/lib/views/badge';
 import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -70,14 +70,6 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
       <Row>
         <Col xs='12'>
           <DescriptionList items={items} />
-          <Link
-            newTab
-            color='info'
-            className='mt-3'
-            dest={routeDest(adt('proposalSWUExportOne', { opportunityId: proposal.opportunity.id, proposalId: proposal.id }))}
-            symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
-            Export Proposal
-          </Link>
         </Col>
       </Row>
     </div>

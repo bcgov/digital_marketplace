@@ -188,7 +188,7 @@ export function validateTeamQuestionScore(raw: any, opportunityTeamQuestions: SW
 }
 
 export function validateTeamQuestionScoreOrder(raw: number, numOpportunityQuestions: number): Validation<number> {
-  return validateNumber(raw, 1, numOpportunityQuestions, 'Order');
+  return validateNumber(raw, 0, numOpportunityQuestions, 'Order');
 }
 
 export function validateTeamQuestionScoreScore(raw: number, maxScore: number): Validation<number> {
