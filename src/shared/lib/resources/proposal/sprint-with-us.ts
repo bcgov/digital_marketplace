@@ -397,6 +397,21 @@ export function canSWUProposalBeAwarded(p: Pick<SWUProposal, 'status'>): boolean
   }
 }
 
+export function isSWUProposalInTeamQuestions(p: Pick<SWUProposal, 'status' | 'questionsScore'>): boolean {
+  switch (p.status) {
+    case SWUProposalStatus.UnderReviewTeamQuestions:
+    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.UnderReviewCodeChallenge:
+    case SWUProposalStatus.EvaluatedCodeChallenge:
+    case SWUProposalStatus.UnderReviewTeamScenario:
+    case SWUProposalStatus.EvaluatedTeamScenario:
+    case SWUProposalStatus.Awarded:
+      return true;
+    default:
+      return p.questionsScore !== undefined;
+  }
+}
+
 export function isSWUProposalInCodeChallenge(p: Pick<SWUProposal, 'status' | 'challengeScore'>): boolean {
   switch (p.status) {
     case SWUProposalStatus.UnderReviewCodeChallenge:

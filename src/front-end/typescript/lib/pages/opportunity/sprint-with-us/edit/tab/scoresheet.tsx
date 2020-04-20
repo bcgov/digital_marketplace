@@ -133,21 +133,23 @@ const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
 };
 
 const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ disabled, loading, proposal, dispatch }) => {
-  if (proposal.status === SWUProposalStatus.EvaluatedCodeChallenge) {
-    return (
-      <Link
-        button
-        symbol_={leftPlacement(iconLinkSymbol('award'))}
-        color='primary'
-        size='sm'
-        disabled={disabled || loading}
-        loading={loading}
-        onClick={() => dispatch(adt('showModal', adt('award' as const, proposal.id))) }>
-        Award
-      </Link>
-    );
-  } else {
-    return null;
+  switch (proposal.status) {
+    case SWUProposalStatus.EvaluatedTeamScenario:
+    case SWUProposalStatus.NotAwarded:
+      return (
+        <Link
+          button
+          symbol_={leftPlacement(iconLinkSymbol('award'))}
+          color='primary'
+          size='sm'
+          disabled={disabled || loading}
+          loading={loading}
+          onClick={() => dispatch(adt('showModal', adt('award' as const, proposal.id))) }>
+          Award
+        </Link>
+      );
+    default:
+      return null;
   }
 };
 
