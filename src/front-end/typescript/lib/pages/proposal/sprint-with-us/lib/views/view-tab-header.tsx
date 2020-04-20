@@ -2,7 +2,7 @@ import { View } from 'front-end/lib/framework';
 import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getSWUProponentName, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -28,7 +28,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
         ? (<span>
             <Link dest={routeDest(adt('orgEdit', { orgId: proposal.organization.id }))}>{proposal.organization.legalName}</Link>
             &nbsp;
-            {getSWUProponentName(proposal)}
+            ({proposal.anonymousProponentName})
           </span>)
         : getSWUProponentName(proposal)
     },
@@ -52,14 +52,6 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
       <Row>
         <Col xs='12'>
           <DescriptionList items={items} />
-          <Link
-            newTab
-            color='info'
-            className='mt-3'
-            dest={routeDest(adt('proposalSWUExportOne', { opportunityId: proposal.opportunity.id, proposalId: proposal.id }))}
-            symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
-            Export Proposal
-          </Link>
         </Col>
       </Row>
     </div>

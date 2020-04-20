@@ -30,7 +30,7 @@ export interface RouteParams {
 
 function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, State_<K>, Msg_<K>> {
   return isUserType({
-    userType: [UserType.Vendor],
+    userType: [UserType.Admin, UserType.Government],
 
     async success({ routePath, routeParams, shared, dispatch }) {
       const fail = () => {
