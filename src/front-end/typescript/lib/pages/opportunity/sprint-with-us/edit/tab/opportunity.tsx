@@ -212,6 +212,32 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return state;
         }
       ];
+    case 'saveChangesAndSubmit':
+      state = state.set('showModal', null);
+      return [
+        startSaveChangesAndUpdateStatusLoading(state),
+        async (state, dispatch) => {
+          state = stopSaveChangesAndUpdateStatusLoading(state);
+          return await saveChanges(
+            state,
+            state1 => updateStatus(state1, SWUOpportunityStatus.UnderReview,
+              async state2 => {
+                dispatch(toast(adt('success', toasts.statusChanged.success(SWUOpportunityStatus.UnderReview))));
+                return state2;
+              },
+              async state2 => {
+                dispatch(toast(adt('error', toasts.statusChanged.error(SWUOpportunityStatus.UnderReview))));
+                return state2;
+              }
+            ),
+            async state1 => {
+              dispatch(toast(adt('error', toasts.statusChanged.error(SWUOpportunityStatus.UnderReview))));
+              return state1;
+            }
+          );
+          return state;
+        }
+      ];
     case 'updateStatus':
       state = state.set('showModal', null);
       return [
@@ -345,6 +371,7 @@ export const component: Tab.Component<State, Msg> = {
           body: () => 'Are you sure you want to publish this opportunity? Once published, all subscribers will be notified.'
         };
       case 'submit':
+      case 'saveChangesAndSubmit':
         return {
           title: 'Submit Opportunity for Review?',
           onCloseMsg: adt('hideModal'),
@@ -354,7 +381,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'paper-plane',
               color: 'primary',
               button: true,
-              msg: adt('updateStatus', SWUOpportunityStatus.UnderReview) as Msg
+              msg: state.showModal === 'submit' ? adt('updateStatus', SWUOpportunityStatus.UnderReview) as Msg : adt('saveChangesAndSubmit')
             },
             {
               text: 'Cancel',
@@ -423,26 +450,6 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () => 'Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified.'
-        };
-      case 'saveChangesAndSubmit':
-        return {
-          title: 'Submit Changes for Review?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Submit Changes',
-              icon: 'paper-plane',
-              color: 'primary',
-              button: true,
-              msg: adt('saveChangesAndSubmit')
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to submit your changes to this Sprint With Us opportunity for review?'
         };
       case 'suspend':
         return {
@@ -541,7 +548,7 @@ export const component: Tab.Component<State, Msg> = {
           // Allow non-admin opp owners to submit changes directly to admins
           // when editing a draft opp.
           links.push({
-            children: 'Submit Changes',
+            children: 'Submit',
             symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
             button: true,
             loading: isSaveChangesAndUpdateStatusLoading,

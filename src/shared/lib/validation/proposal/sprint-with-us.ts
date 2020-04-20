@@ -148,6 +148,10 @@ export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, 'Note', 0, 5000);
 }
 
+export function validateDisqualificationReason(raw: string): Validation<string> {
+  return validateGenericString(raw, 'Disqualification Reason', 1, 5000);
+}
+
 export function validateTeamQuestionScores(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): ArrayValidation<UpdateTeamQuestionScoreBody, UpdateTeamQuestionScoreValidationErrors>  {
   if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of scores.'] }]); }
   if (raw.length !== opportunityTeamQuestions.length) {
