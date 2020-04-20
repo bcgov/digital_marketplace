@@ -112,14 +112,7 @@ export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId):
       makeSidebarLink('teamQuestions', proposal, activeTab),
       makeSidebarLink('codeChallenge', proposal, activeTab),
       makeSidebarLink('teamScenario', proposal, activeTab),
-      makeSidebarLink('history', proposal, activeTab),
-      {
-        icon: 'external-link',
-        text: 'Read Guide',
-        active: false,
-        newTab: true,
-        dest: routeDest(adt('content', 'sprint-with-us-proposal-guide'))
-      }
+      makeSidebarLink('history', proposal, activeTab)
     ]
   }));
 }
