@@ -60,7 +60,7 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
     case 'teamQuestions':
       return {
         component: TeamQuestionsTab.component,
-        icon: 'paperclip',
+        icon: 'comments',
         title: 'Team Questions'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'codeChallenge':

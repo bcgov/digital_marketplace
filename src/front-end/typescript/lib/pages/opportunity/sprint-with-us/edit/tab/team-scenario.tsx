@@ -127,7 +127,8 @@ interface ProponentCellProps {
 const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabled }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
-    opportunityId: opportunity.id
+    opportunityId: opportunity.id,
+    tab: 'teamScenario' as const
   };
   return (
     <div>
