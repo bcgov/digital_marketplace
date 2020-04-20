@@ -75,7 +75,7 @@ const init: Init<Tab.Params, State> = async params => {
     showModal: null,
     screenToFromLoading: 0,
     enterScoreLoading: 0,
-    openAccordions: new Set(),
+    openAccordions: new Set(params.proposal.teamQuestionResponses.map((p, i) => i)),
     scores: await initScores(params.opportunity, params.proposal)
   };
 };
