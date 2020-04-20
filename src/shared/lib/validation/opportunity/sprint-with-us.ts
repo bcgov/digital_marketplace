@@ -270,7 +270,7 @@ export function validateProposalDeadline(raw: string, opportunity?: SWUOpportuni
   if (opportunity && opportunity.status !== SWUOpportunityStatus.Draft) {
     minDate = isDateInThePast(opportunity.proposalDeadline) ? opportunity.proposalDeadline : now;
   }
-  return validateDate(raw, minDate, undefined, setDateTo4PM);
+  return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }
 
 export function validateAssignmentDate(raw: string, proposalDeadline: Date): Validation<Date> {
