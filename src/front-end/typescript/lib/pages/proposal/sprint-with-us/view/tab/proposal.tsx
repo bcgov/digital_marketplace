@@ -1,8 +1,9 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
 import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalMsg, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as LongText from 'front-end/lib/components/form-field/long-text';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalMsg, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/form';
 import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
@@ -10,40 +11,25 @@ import EditTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
-import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { isSWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { SWUProposal, swuProposalNumTeamMembers, SWUProposalStatus, swuProposalTotalProposedCost } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
-import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { invalid, valid, Validation } from 'shared/lib/validation';
+import { validateDisqualificationReason } from 'shared/lib/validation/proposal/sprint-with-us';
 
-type ModalId = 'submit' | 'submitChanges' | 'saveChangesAndSubmit' | 'withdrawBeforeDeadline' | 'withdrawAfterDeadline' | 'delete';
+type ModalId = 'disqualify' | 'award';
 
 interface ValidState extends Tab.Params {
   organizations: OrganizationSlim[];
   evaluationContent: string;
-  isEditing: boolean;
-  startEditingLoading: number;
-  saveChangesLoading: number;
-  saveChangesAndSubmitLoading: number;
-  submitLoading: number;
-  withdrawLoading: number;
-  deleteLoading: number;
+  disqualifyLoading: number;
+  awardLoading: number;
   showModal: ModalId | null;
   form: Immutable<Form.State>;
-  submitTerms: Immutable<SubmitProposalTerms.State>;
-}
-
-function isLoading(state: Immutable<ValidState>): boolean {
-  return state.startEditingLoading > 0    ||
-    state.saveChangesLoading > 0          ||
-    state.saveChangesAndSubmitLoading > 0 ||
-    state.submitLoading > 0               ||
-    state.withdrawLoading > 0             ||
-    state.deleteLoading > 0;
+  disqualificationReason: Immutable<LongText.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -52,14 +38,9 @@ export type InnerMsg
   = ADT<'hideModal'>
   | ADT<'showModal', ModalId>
   | ADT<'form', Form.Msg>
-  | ADT<'submitTerms', SubmitProposalTerms.Msg>
-  | ADT<'startEditing'>
-  | ADT<'cancelEditing'>
-  | ADT<'saveChanges'>
-  | ADT<'saveChangesAndSubmit'>
-  | ADT<'submit'>
-  | ADT<'withdraw'>
-  | ADT<'delete'>;
+  | ADT<'disqualificationReasonMsg', LongText.Msg>
+  | ADT<'disqualify'>
+  | ADT<'award'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -75,13 +56,8 @@ const init: Init<Tab.Params, State> = async params => {
     ...params,
     organizations,
     evaluationContent,
-    isEditing: false,
-    startEditingLoading: 0,
-    saveChangesLoading: 0,
-    saveChangesAndSubmitLoading: 0,
-    submitLoading: 0,
-    withdrawLoading: 0,
-    deleteLoading: 0,
+    disqualifyLoading: 0,
+    awardLoading: 0,
     showModal: null,
     form: immutable(await Form.init({
       viewerUser,
@@ -90,28 +66,21 @@ const init: Init<Tab.Params, State> = async params => {
       organizations,
       evaluationContent
     })),
-    submitTerms: immutable(await SubmitProposalTerms.init({
+    disqualificationReason: immutable(await LongText.init({
       errors: [],
+      validate: validateDisqualificationReason,
       child: {
-        value: false,
-        id: 'edit-swu-proposal-submit-terms'
+        value: '',
+        id: 'swu-proposal-disqualification-reason'
       }
     }))
   }));
 };
 
-const startStartEditingLoading = makeStartLoading<ValidState>('startEditingLoading');
-const stopStartEditingLoading = makeStopLoading<ValidState>('startEditingLoading');
-const startSaveChangesLoading = makeStartLoading<ValidState>('saveChangesLoading');
-const stopSaveChangesLoading = makeStopLoading<ValidState>('saveChangesLoading');
-const startSaveChangesAndSubmitLoading = makeStartLoading<ValidState>('saveChangesAndSubmitLoading');
-const stopSaveChangesAndSubmitLoading = makeStopLoading<ValidState>('saveChangesAndSubmitLoading');
-const startSubmitLoading = makeStartLoading<ValidState>('submitLoading');
-const stopSubmitLoading = makeStopLoading<ValidState>('submitLoading');
-const startWithdrawLoading = makeStartLoading<ValidState>('withdrawLoading');
-const stopWithdrawLoading = makeStopLoading<ValidState>('withdrawLoading');
-const startDeleteLoading = makeStartLoading<ValidState>('deleteLoading');
-const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
+const startDisqualifyLoading = makeStartLoading<ValidState>('disqualifyLoading');
+const stopDisqualifyLoading = makeStopLoading<ValidState>('disqualifyLoading');
+const startAwardLoading = makeStartLoading<ValidState>('awardLoading');
+const stopAwardLoading = makeStopLoading<ValidState>('awardLoading');
 
 async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal): Promise<Immutable<ValidState>> {
   state = state.set('proposal', proposal);
@@ -126,18 +95,13 @@ async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal
     })));
 }
 
-function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
-  return state
-    .set('showModal', null)
-    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
-}
-
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'showModal':
       return [state.set('showModal', msg.value)];
     case 'hideModal':
-      return [hideModal(state)];
+      if (state.disqualifyLoading > 0) { return [state]; }
+      return [state.set('showModal', null)];
     case 'form':
       return updateComponentChild({
         state,
@@ -146,107 +110,48 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('form', value)
       });
-    case 'submitTerms':
+    case 'disqualificationReasonMsg':
       return updateComponentChild({
         state,
-        childStatePath: ['submitTerms'],
-        childUpdate: SubmitProposalTerms.update,
+        childStatePath: ['disqualificationReason'],
+        childUpdate: LongText.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('submitTerms', value)
+        mapChildMsg: value => adt('disqualificationReasonMsg', value)
       });
-    case 'startEditing':
+    case 'disqualify':
       return [
-        startStartEditingLoading(state),
-        async state => {
-          state = stopStartEditingLoading(state);
-          const proposalResult = await api.proposals.swu.readOne(state.proposal.opportunity.id, state.proposal.id);
-          if (!api.isValid(proposalResult)) { return state; }
-          state = await resetProposal(state, proposalResult.value);
-          state = state.set('isEditing', true);
-          return state;
+        startDisqualifyLoading(state),
+        async (state, dispatch) => {
+          state = stopDisqualifyLoading(state);
+          const reason = FormField.getValue(state.disqualificationReason);
+          const result = await api.proposals.swu.update(state.proposal.id, adt('disqualify', reason));
+          switch (result.tag) {
+            case 'valid':
+              dispatch(toast(adt('success', toasts.disqualified.success)));
+              return (await resetProposal(state, result.value))
+                .set('showModal', null);
+            case 'invalid':
+              return state.update('disqualificationReason', s => {
+                if (result.value.proposal?.tag !== 'disqualify') { return s; }
+                return FormField.setErrors(s, result.value.proposal.value);
+              });
+            case 'unhandled':
+              return state;
+          }
         }
       ];
-    case 'cancelEditing':
+    case 'award':
       return [
-        state.set('isEditing', false),
-        async state => await resetProposal(state, state.proposal)
-      ];
-    case 'saveChanges':
-      state = hideModal(state);
-      return [
-        startSaveChangesLoading(state),
+        startAwardLoading(state).set('showModal', null),
         async (state, dispatch) => {
-          state = stopSaveChangesLoading(state);
-          const result = await Form.persist(state.form, adt('update', state.proposal.id));
-          if (isInvalid(result)) {
-            return state.set('form', result.value);
-          }
-          result.value[1].status === SWUProposalStatus.Draft
-            ? dispatch(toast(adt('success', toasts.changesSaved.success)))
-            : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
-          return (await resetProposal(state, result.value[1]))
-            .set('isEditing', false);
-        }
-      ];
-    case 'saveChangesAndSubmit':
-      state = hideModal(state);
-      return [
-        startSaveChangesAndSubmitLoading(state),
-        async (state, dispatch) => {
-          state = stopSaveChangesAndSubmitLoading(state);
-          const saveResult = await Form.persist(state.form, adt('update', state.proposal.id));
-          if (isInvalid(saveResult)) {
-            return state.set('form', saveResult.value);
-          }
-          const submitResult = await api.proposals.swu.update(state.proposal.id, adt('submit', ''));
-          if (!api.isValid(submitResult)) {
-            return state;
-          }
-          dispatch(toast(adt('success', toasts.changesSubmitted.success)));
-          state = state.set('isEditing', false);
-          return await resetProposal(state, submitResult.value);
-        }
-      ];
-    case 'submit':
-      state = hideModal(state);
-      return [
-        startSubmitLoading(state),
-        async (state, dispatch) => {
-          state = stopSubmitLoading(state);
-          const result = await api.proposals.swu.update(state.proposal.id, adt('submit', ''));
+          state = stopAwardLoading(state);
+          const result = await api.proposals.swu.update(state.proposal.id, adt('award', ''));
           if (!api.isValid(result)) {
+            //TODO propagate errors
             return state;
           }
-          dispatch(toast(adt('success', toasts.submitted.success)));
+          dispatch(toast(adt('success', toasts.awarded.success)));
           return await resetProposal(state, result.value);
-        }
-      ];
-    case 'withdraw':
-      state = hideModal(state);
-      return [
-        startWithdrawLoading(state),
-        async (state, dispatch) => {
-          state = stopWithdrawLoading(state);
-          const result = await api.proposals.swu.update(state.proposal.id, adt('withdraw', ''));
-          if (!api.isValid(result)) {
-            return state;
-          }
-          dispatch(toast(adt('success', toasts.withdrawn.success)));
-          return await resetProposal(state, result.value);
-        }
-      ];
-    case 'delete':
-      state = hideModal(state);
-      return [
-        startDeleteLoading(state),
-        async (state, dispatch) => {
-          const result = await api.proposals.swu.delete(state.proposal.id);
-          if (!api.isValid(result)) {
-            return stopDeleteLoading(state);
-          }
-          dispatch(toast(adt('success', toasts.deleted.success)));
-          dispatch(replaceRoute(adt('opportunities' as const, null)));
-          return state;
         }
       ];
     default:
@@ -293,7 +198,7 @@ const view: ComponentView<State, Msg> = viewValid(props => {
       <Row className='mt-5'>
         <Col xs='12'>
           <Form.view
-            disabled={!state.isEditing || isLoading(state)}
+            disabled
             state={state.form}
             dispatch={mapComponentDispatch(dispatch, v => adt('form' as const, v))} />
         </Col>
@@ -310,289 +215,121 @@ export const component: Tab.Component<State, Msg> = {
   getModal: getModalValid<ValidState, Msg>(state => {
     const formModal = mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
     if (formModal !== null) { return formModal; }
-    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
+    const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
-      case 'submit':
+      case 'award':
         return {
-          title: 'Review Terms and Conditions',
-          body: dispatch => (
-            <SubmitProposalTerms.view
-              opportunityType='Sprint With Us'
-              action='submitting'
-              termsTitle='Sprint With Us Terms & Conditions'
-              termsRoute={adt('content', 'sprint-with-us-proposal-terms-and-conditions')}
-              state={state.submitTerms}
-              dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
-          ),
+          title: 'Award Sprint With Us Opportunity?',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
-              text: 'Submit Proposal',
-              icon: 'paper-plane',
+              text: 'Award Opportunity',
+              icon: 'award',
               color: 'primary',
-              msg: adt('submit'),
               button: true,
-              disabled: !hasAcceptedTerms
+              msg: adt('award')
             },
             {
               text: 'Cancel',
               color: 'secondary',
               msg: adt('hideModal')
             }
-          ]
+          ],
+          body: () => 'Are you sure you want to award this opportunity to this proponent? Once awarded, all of this opportunity\'s susbscribers and proponents will be notified accordingly.'
         };
-      case 'submitChanges':
-      case 'saveChangesAndSubmit':
+      case 'disqualify':
         return {
-          title: 'Review Terms and Conditions',
+          title: 'Disqualification Reason',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Disqualify',
+              icon: 'user-slash',
+              color: 'danger',
+              button: true,
+              loading: isDisqualifyLoading,
+              disabled: isDisqualifyLoading || !FormField.isValid(state.disqualificationReason),
+              msg: adt('disqualify')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              disabled: isDisqualifyLoading,
+              msg: adt('hideModal')
+            }
+          ],
           body: dispatch => (
-            <SubmitProposalTerms.view
-              opportunityType='Sprint With Us'
-              action='submitting changes to'
-              termsTitle='Sprint With Us Terms & Conditions'
-              termsRoute={adt('content', 'sprint-with-us-proposal-terms-and-conditions')}
-              state={state.submitTerms}
-              dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
-          ),
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Submit Changes',
-              icon: 'paper-plane',
-              color: 'primary',
-              msg: state.showModal === 'submitChanges' ? adt('saveChanges') : adt('saveChangesAndSubmit'),
-              button: true,
-              disabled: !hasAcceptedTerms
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
+            <div>
+              <p>Provide the reason why this Vendor has been disqualified from the Sprint With Us opportunity.</p>
+              <LongText.view
+                extraChildProps={{}}
+                style={{ height: '180px' }}
+                disabled={isDisqualifyLoading}
+                required
+                label='Reason'
+                placeholder='Reason'
+                dispatch={mapComponentDispatch(dispatch, v => adt('disqualificationReasonMsg' as const, v))}
+                state={state.disqualificationReason} />
+            </div>
+          )
         };
-      case 'withdrawBeforeDeadline':
-        return {
-          title: 'Withdraw Sprint With Us Proposal?',
-          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? You will still be able to resubmit your proposal prior to the opportunity\'s proposal deadline.',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Withdraw Proposal',
-              icon: 'ban',
-              color: 'danger',
-              msg: adt('withdraw'),
-              button: true
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
-      case 'withdrawAfterDeadline':
-        return {
-          title: 'Withdraw Sprint With Us Proposal?',
-          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? Your proposal will no longer be considered for this opportunity.',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Withdraw Proposal',
-              icon: 'ban',
-              color: 'danger',
-              msg: adt('withdraw'),
-              button: true
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
-      case 'delete':
-        return {
-          title: 'Delete Sprint With Us Proposal?',
-          body: () => 'Are you sure you want to delete your Sprint With Us proposal? You will not be able to recover the proposal once it has been deleted.',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Delete Proposal',
-              icon: 'trash',
-              color: 'danger',
-              msg: adt('delete'),
-              button: true
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
-      case null: return null;
+      case null:
+        return null;
     }
   }),
 
   getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
     const proposal = state.proposal;
     const propStatus = proposal.status;
-    const isStartEditingLoading = state.startEditingLoading > 0;
-    const isSaveChangesLoading = state.saveChangesLoading > 0;
-    const isSaveChangesAndSubmitLoading = state.saveChangesAndSubmitLoading > 0;
-    const isSubmitLoading = state.submitLoading > 0;
-    const isWithdrawLoading = state.withdrawLoading > 0;
-    const isDeleteLoading = state.deleteLoading > 0;
-    const isValid = () => Form.isValid(state.form);
-    const disabled = isLoading(state);
-    const isDraft = propStatus === SWUProposalStatus.Draft;
-    const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
-    if (state.isEditing) {
-      return adt('links', compact([
-        // Submit Changes
-        isDraft && isAcceptingProposals
-          ? {
-              children: 'Submit Changes',
-              symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
-              button: true,
-              loading: isSaveChangesAndSubmitLoading,
-              disabled: disabled || !isValid(),
-              color: 'primary',
-              onClick: () => dispatch(adt('showModal', 'saveChangesAndSubmit' as const))
-            }
-          : null,
-        // Save Changes
-        {
-          children: isDraft ? 'Save Changes' : 'Submit Changes',
-          disabled: disabled || (() => {
-            if (isDraft) {
-              // No validation required, always possible to save a draft.
-              return false;
-            } else {
-              return !isValid();
-            }
-          })(),
-          onClick: () => dispatch(isDraft ? adt('saveChanges') : adt('showModal', 'submitChanges' as const)),
-          button: true,
-          loading: isSaveChangesLoading,
-          symbol_: leftPlacement(iconLinkSymbol(isDraft ? 'save' : 'paper-plane')),
-          color: isDraft ? 'success' : 'primary'
-        },
-        // Cancel
-        {
-          children: 'Cancel',
-          disabled,
-          onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
-        }
-      ])) as PageContextualActions;
-    }
     switch (propStatus) {
-      case SWUProposalStatus.Draft:
-        if (isAcceptingProposals) {
-          return adt('dropdown', {
-            text: 'Actions',
-            loading: isSubmitLoading || isStartEditingLoading || isDeleteLoading,
-            linkGroups: [
-              {
-                links: [
-                  {
-                    children: 'Submit',
-                    symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
-                    disabled: !isValid(),
-                    onClick: () => dispatch(adt('showModal', 'submit' as const))
-                  },
-                  {
-                    children: 'Edit',
-                    symbol_: leftPlacement(iconLinkSymbol('edit')),
-                    onClick: () => dispatch(adt('startEditing'))
-                  }
-                ]
-              },
-              {
-                links: [
-                  {
-                    children: 'Delete',
-                    symbol_: leftPlacement(iconLinkSymbol('trash')),
-                    onClick: () => dispatch(adt('showModal', 'delete' as const))
-                  }
-                ]
-              }
-            ]
-          });
-        } else {
-          return adt('links', [
-            {
-              button: true,
-              outline: true,
-              color: 'white',
-              children: 'Delete',
-              symbol_: leftPlacement(iconLinkSymbol('trash')),
-              onClick: () => dispatch(adt('showModal', 'delete' as const))
-            }
-          ]);
-        }
-      case SWUProposalStatus.Submitted:
-        return adt('links', [
-          ...(isAcceptingProposals
-            ? [{
-                children: 'Edit',
-                symbol_: leftPlacement(iconLinkSymbol('edit')),
-                button: true,
-                color: 'primary',
-                disabled,
-                loading: isStartEditingLoading,
-                onClick: () => dispatch(adt('startEditing'))
-              }]
-            : []),
-          {
-            children: 'Withdraw',
-            symbol_: leftPlacement(iconLinkSymbol('ban')),
-            button: true,
-            outline: true,
-            color: 'white',
-            disabled,
-            loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
-          }
-        ]) as PageContextualActions;
       case SWUProposalStatus.UnderReviewTeamQuestions:
       case SWUProposalStatus.UnderReviewCodeChallenge:
       case SWUProposalStatus.UnderReviewTeamScenario:
       case SWUProposalStatus.EvaluatedTeamQuestions:
       case SWUProposalStatus.EvaluatedCodeChallenge:
-      case SWUProposalStatus.EvaluatedTeamScenario:
-      case SWUProposalStatus.Awarded:
         return adt('links', [
           {
-            children: 'Withdraw',
-            symbol_: leftPlacement(iconLinkSymbol('ban')),
+            children: 'Disqualify',
+            symbol_: leftPlacement(iconLinkSymbol('user-slash')),
             button: true,
             outline: true,
             color: 'white',
-            disabled,
-            loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('showModal', 'withdrawAfterDeadline' as const))
+            onClick: () => dispatch(adt('showModal', 'disqualify' as const))
           }
         ]);
+      case SWUProposalStatus.EvaluatedTeamScenario:
+        return adt('links', [
+          {
+            children: 'Award',
+            symbol_: leftPlacement(iconLinkSymbol('award')),
+            button: true,
+            color: 'primary',
+            onClick: () => dispatch(adt('showModal', 'award' as const))
+          },
+          {
+            children: 'Disqualify',
+            symbol_: leftPlacement(iconLinkSymbol('user-slash')),
+            button: true,
+            outline: true,
+            color: 'white',
+            onClick: () => dispatch(adt('showModal', 'disqualify' as const))
+          }
+        ]);
+      case SWUProposalStatus.NotAwarded:
+        return adt('links', [
+          {
+            children: 'Award',
+            symbol_: leftPlacement(iconLinkSymbol('award')),
+            button: true,
+            color: 'primary',
+            onClick: () => dispatch(adt('showModal', 'award' as const))
+          }
+        ]);
+      case SWUProposalStatus.Draft:
+      case SWUProposalStatus.Submitted:
       case SWUProposalStatus.Withdrawn:
-        if (isAcceptingProposals) {
-          return adt('links', [
-            {
-              children: 'Resubmit',
-              symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
-              loading: isSubmitLoading,
-              disabled,
-              button: true,
-              color: 'primary',
-              onClick: () => dispatch(adt('showModal', 'submit' as const))
-            }
-          ]);
-        } else {
-          return null;
-        }
-      default:
+      case SWUProposalStatus.Awarded:
+      case SWUProposalStatus.Disqualified:
         return null;
     }
   })

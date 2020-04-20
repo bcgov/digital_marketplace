@@ -732,7 +732,7 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            const validatedDisqualifyNote = proposalValidation.validateNote(request.body.value);
+            const validatedDisqualifyNote = proposalValidation.validateDisqualificationReason(request.body.value);
             if (isInvalid(validatedDisqualifyNote)) {
               return invalid({
                 proposal: adt('disqualify' as const, getInvalidValue(validatedDisqualifyNote, []))

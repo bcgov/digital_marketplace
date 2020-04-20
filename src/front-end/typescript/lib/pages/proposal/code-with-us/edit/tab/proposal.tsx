@@ -208,7 +208,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(submitResult)) {
             return state;
           }
-          dispatch(toast(adt('success', toasts.changesSubmitted.success)));
+          dispatch(toast(adt('success', toasts.submitted.success)));
           state = state.set('isEditing', false);
           return await resetProposal(state, submitResult.value);
         }
@@ -324,6 +324,7 @@ export const component: Tab.Component<State, Msg> = {
     const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
+      case 'saveChangesAndSubmit':
         return {
           title: 'Review Terms and Conditions',
           body: dispatch => (
@@ -341,7 +342,7 @@ export const component: Tab.Component<State, Msg> = {
               text: 'Submit Proposal',
               icon: 'paper-plane',
               color: 'primary',
-              msg: adt('submit'),
+              msg: state.showModal === 'submit' ? adt('submit') : adt('saveChangesAndSubmit'),
               button: true,
               disabled: !hasAcceptedTerms
             },
@@ -353,7 +354,6 @@ export const component: Tab.Component<State, Msg> = {
           ]
         };
       case 'submitChanges':
-      case 'saveChangesAndSubmit':
         return {
           title: 'Review Terms and Conditions',
           body: dispatch => (
@@ -371,7 +371,7 @@ export const component: Tab.Component<State, Msg> = {
               text: 'Submit Changes',
               icon: 'paper-plane',
               color: 'primary',
-              msg: state.showModal === 'submitChanges' ? adt('saveChanges') : adt('saveChangesAndSubmit'),
+              msg: adt('saveChanges'),
               button: true,
               disabled: !hasAcceptedTerms
             },
@@ -464,7 +464,7 @@ export const component: Tab.Component<State, Msg> = {
         // Submit Changes
         isDraft && isAcceptingProposals
           ? {
-              children: 'Submit Changes',
+              children: 'Submit Proposal',
               symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
               button: true,
               loading: isSaveChangesAndSubmitLoading,
