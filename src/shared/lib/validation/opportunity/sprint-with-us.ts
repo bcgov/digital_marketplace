@@ -1,4 +1,3 @@
-import { ENV } from 'back-end/config';
 import { get, uniq } from 'lodash';
 import { getISODateString, getNumber, getString, isDateInThePast, setDateTo4PM } from 'shared/lib';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
