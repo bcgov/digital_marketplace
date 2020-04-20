@@ -1191,6 +1191,7 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(co
         proposal.rank = proposalScoring.rank || undefined;
         proposal.totalScore = includeTotalScore ? proposalScoring.totalScore || undefined : undefined;
       } else if (proposal.status === SWUProposalStatus.Awarded || proposal.status === SWUProposalStatus.NotAwarded) {
+        proposal.rank = proposalScoring.rank || undefined;
         proposal.totalScore = includeTotalScore ? proposalScoring.totalScore || undefined : undefined;
       }
     }
