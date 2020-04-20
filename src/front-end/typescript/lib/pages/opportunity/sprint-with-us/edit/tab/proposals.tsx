@@ -5,9 +5,10 @@ import * as Table from 'front-end/lib/components/table';
 import { ComponentView, Dispatch, GlobalComponentMsg, immutable, Immutable, Init,  mapComponentDispatch, newRoute, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
-import * as toasts from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toasts';
+import * as opportunityToasts from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
+import * as proposalToasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
 import Badge from 'front-end/lib/views/badge';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
@@ -106,10 +107,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         async (state, dispatch) => {
           const result = await api.opportunities.swu.update(state.opportunity.id, adt('startCodeChallenge', ''));
           if (!api.isValid(result)) {
-            //TODO toast
+            dispatch(toast(adt('error', opportunityToasts.statusChanged.error(SWUOpportunityStatus.EvaluationCodeChallenge))));
             return stopStartCodeChallengeLoading(state);
           }
-          //TODO toast
+          dispatch(toast(adt('success', opportunityToasts.statusChanged.success(SWUOpportunityStatus.EvaluationCodeChallenge))));
           dispatch(newRoute(adt('opportunitySWUEdit', {
             opportunityId: state.opportunity.id,
             tab: 'codeChallenge' as const
@@ -127,15 +128,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const updateResult = await api.proposals.swu.update(msg.value, adt('screenInToCodeChallenge', ''));
           switch (updateResult.tag) {
             case 'valid':
-              //TODO toast
-              dispatch(toast(adt('success', toasts.statusChanged.success(SWUOpportunityStatus.Awarded))));
+              dispatch(toast(adt('success', proposalToasts.screenedIn.success)));
               return immutable(await init({
                 opportunity: api.getValidValue(await api.opportunities.swu.readOne(state.opportunity.id), state.opportunity),
                 viewerUser: state.viewerUser
               }));
             case 'invalid':
             case 'unhandled':
-              //TODO toast
+              dispatch(toast(adt('error', proposalToasts.screenedIn.error)));
               return state;
           }
       }];
@@ -150,15 +150,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const updateResult = await api.proposals.swu.update(msg.value, adt('screenInToCodeChallenge', ''));
           switch (updateResult.tag) {
             case 'valid':
-              //TODO toast
-              dispatch(toast(adt('success', toasts.statusChanged.success(SWUOpportunityStatus.Awarded))));
+              dispatch(toast(adt('success', proposalToasts.screenedOut.success)));
               return immutable(await init({
                 opportunity: api.getValidValue(await api.opportunities.swu.readOne(state.opportunity.id), state.opportunity),
                 viewerUser: state.viewerUser
               }));
             case 'invalid':
             case 'unhandled':
-              //TODO toast
+              dispatch(toast(adt('error', proposalToasts.screenedOut.error)));
               return state;
           }
       }];

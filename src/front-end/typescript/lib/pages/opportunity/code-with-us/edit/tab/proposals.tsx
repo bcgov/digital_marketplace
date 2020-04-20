@@ -105,7 +105,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               }));
             case 'invalid':
             case 'unhandled':
-              // TODO
+              dispatch(toast(adt('error', toasts.statusChanged.error(CWUOpportunityStatus.Awarded))));
               return state;
           }
       }];

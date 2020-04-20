@@ -32,23 +32,25 @@ export function swuOpportunityStatusToTitleCase(s: SWUOpportunityStatus): string
 
 export function swuOpportunityStatusToPresentTenseVerb(s: SWUOpportunityStatus): string {
   switch (s) {
+    case SWUOpportunityStatus.Draft: return 'Save';
     case SWUOpportunityStatus.UnderReview: return 'Submit';
     case SWUOpportunityStatus.Published: return 'Publish';
     case SWUOpportunityStatus.Awarded: return 'Award';
     case SWUOpportunityStatus.Suspended: return 'Suspend';
     case SWUOpportunityStatus.Canceled: return 'Cancel';
-    default: return 'Save';
+    default: return 'Update';
   }
 }
 
 export function swuOpportunityStatusToPastTenseVerb(s: SWUOpportunityStatus): string {
   switch (s) {
+    case SWUOpportunityStatus.Draft: return 'Saved';
     case SWUOpportunityStatus.UnderReview: return 'Submitted';
     case SWUOpportunityStatus.Published: return 'Published';
     case SWUOpportunityStatus.Awarded: return 'Awarded';
     case SWUOpportunityStatus.Suspended: return 'Suspended';
     case SWUOpportunityStatus.Canceled: return 'Cancelled'; //British spelling
-    default: return 'Saved';
+    default: return 'Updated';
   }
 }
 
