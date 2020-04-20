@@ -838,7 +838,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           }))} />
       </Col>
       <Col xs='12' className='mt-5'>
-        <h2 className='mb-4'>Team Questions Responses</h2>
+        <h2 className='mb-4'>Team Questions' Responses</h2>
         {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
           <ReviewTeamQuestionResponseView
             key={`swu-proposal-review-team-question-response-${i}`}

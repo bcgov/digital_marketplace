@@ -4,7 +4,7 @@ import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/edit-tab-header';
-import { ReportCard } from 'front-end/lib/views/report-card-list';
+import ReportCardList from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
@@ -95,11 +95,13 @@ const Rank: ComponentView<State, Msg> = ({ state }) => {
     <Row>
       <Col>
         <div className='mt-5'>
-          <ReportCard
-            icon='trophy'
-            name='Ranking'
-            iconColor='yellow'
-            value={formatAmount(state.proposal.rank, undefined, true)} />
+          <ReportCardList
+            reportCards={[{
+              icon: 'trophy',
+              name: 'Ranking',
+              iconColor: 'yellow',
+              value: formatAmount(state.proposal.rank, undefined, true)
+            }]} />
         </div>
       </Col>
     </Row>

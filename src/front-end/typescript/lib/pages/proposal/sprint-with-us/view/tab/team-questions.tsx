@@ -1,75 +1,137 @@
+import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
-import * as History from 'front-end/lib/components/table/history';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-import { swuProposalEventToTitleCase, swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
+import { ComponentView, GlobalComponentMsg, Init, Update, View } from 'front-end/lib/framework';
 import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
+import Accordion from 'front-end/lib/views/accordion';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Markdown from 'front-end/lib/views/markdown';
+import Separator from 'front-end/lib/views/separator';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
-import { UserType } from 'shared/lib/resources/user';
+import { Alert, Col, Row } from 'reactstrap';
+import { countWords } from 'shared/lib';
+import { hasSWUOpportunityPassedTeamQuestions, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUProposalTeamQuestionResponse } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
-  history: Immutable<History.State>;
+  openAccordions: Set<number>;
 }
 
 export type InnerMsg
-  = ADT<'history', History.Msg>;
+  = ADT<'toggleAccordion', number>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
-
-function getHistoryItems({ history }: SWUProposal, viewerUserType: UserType): History.Item[] {
-  if (!history) { return []; }
-  return history
-    .map(s => ({
-      type: {
-        text: s.type.tag === 'status' ? swuProposalStatusToTitleCase(s.type.value, viewerUserType) : swuProposalEventToTitleCase(s.type.value),
-        color: s.type.tag === 'status' ? swuProposalStatusToColor(s.type.value, viewerUserType) : undefined
-      },
-      note: s.note,
-      createdAt: s.createdAt,
-      createdBy: s.createdBy || undefined
-    }));
-}
 
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
-    history: immutable(await History.init({
-      idNamespace: 'swu-proposal-history',
-      items: getHistoryItems(params.proposal, params.viewerUser.type),
-      viewerUser: params.viewerUser
-    }))
+    openAccordions: new Set()
   };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'history':
-      return updateComponentChild({
-        state,
-        childStatePath: ['history'],
-        childUpdate: History.update,
-        childMsg: msg.value,
-        mapChildMsg: value => ({ tag: 'history', value })
-      });
+    case 'toggleAccordion':
+      return [state.update('openAccordions', s => {
+        if (s.has(msg.value)) {
+          s.delete(msg.value);
+        } else {
+          s.add(msg.value);
+        }
+        return s;
+      })];
     default:
       return [state];
   }
 };
 
+interface TeamQuestionResponseViewProps {
+  opportunity: SWUOpportunity;
+  response: SWUProposalTeamQuestionResponse;
+  index: number;
+  isOpen: boolean;
+  className?: string;
+  toggleAccordion(): void;
+}
+
+function getQuestionByOrder(opp: SWUOpportunity, order: number): SWUTeamQuestion | null {
+  for (const q of opp.teamQuestions) {
+    if (q.order === order) {
+      return q;
+    }
+  }
+  return null;
+}
+
+const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportunity, response, index, isOpen, className, toggleAccordion }) => {
+  const question = getQuestionByOrder(opportunity, response.order);
+  if (!question) { return null; }
+  return (
+    <Accordion
+      className={className}
+      toggle={() => toggleAccordion()}
+      color='blue-dark'
+      title={`Question ${index + 1}`}
+      titleClassName='h3 mb-0'
+      chevronWidth={1.5}
+      chevronHeight={1.5}
+      open={isOpen}>
+      <p>{question.question}</p>
+      <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
+        {countWords(response.response)} / {question.wordLimit} word{question.wordLimit === 1 ? '' : 's'}
+        <Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>
+        {response.score === undefined || response.score === null ? EMPTY_STRING : response.score} / {question.score} point{question.score === 1 ? '' : 's'}
+      </div>
+      <Alert color='primary' fade={false} className='mb-4'>
+        {question.guideline}
+      </Alert>
+      <Markdown
+        box
+        source={response.response || EMPTY_STRING} />
+    </Accordion>
+  );
+};
+
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const show = hasSWUOpportunityPassedTeamQuestions(state.opportunity);
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
+      {show
+        ? (<Row>
+            <Col xs='12'>
+              <Link
+                newTab
+                color='info'
+                className='mt-3'
+                dest={routeDest(adt('proposalSWUExportOne', { opportunityId: state.proposal.opportunity.id, proposalId: state.proposal.id }))}
+                symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
+                Export Team Questions
+              </Link>
+            </Col>
+          </Row>)
+        : null}
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>
-            <h3 className='mb-4'>History</h3>
-            <History.view
-              state={state.history}
-              dispatch={mapComponentDispatch(dispatch, msg => adt('history' as const, msg))} />
+            {show
+              ? (
+                  <div>
+                    <h3 className='mb-4'>Team Questions' Responses</h3>
+                    {state.proposal.teamQuestionResponses.map((r, i, rs) => (
+                      <TeamQuestionResponseView
+                        key={`swu-proposal-team-question-response-${i}`}
+                        className={i < rs.length - 1 ? 'mb-4' : ''}
+                        opportunity={state.opportunity}
+                        isOpen={state.openAccordions.has(i)}
+                        toggleAccordion={() => dispatch(adt('toggleAccordion', i))}
+                        index={i}
+                        response={r} />
+                    ))}
+                  </div>
+                )
+              : 'This proposal\'s team questions will be available once the opportunity closes.'}
           </Col>
         </Row>
       </div>

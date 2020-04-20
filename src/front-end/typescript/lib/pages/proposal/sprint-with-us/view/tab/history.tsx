@@ -6,6 +6,7 @@ import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { hasSWUOpportunityPassedCodeChallenge } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
@@ -66,10 +67,16 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>
-            <h3 className='mb-4'>History</h3>
-            <History.view
-              state={state.history}
-              dispatch={mapComponentDispatch(dispatch, msg => adt('history' as const, msg))} />
+            {hasSWUOpportunityPassedCodeChallenge(state.opportunity) && state.proposal.history !== undefined
+              ? (
+                  <div>
+                    <h3 className='mb-4'>History</h3>
+                    <History.view
+                      state={state.history}
+                      dispatch={mapComponentDispatch(dispatch, msg => adt('history' as const, msg))} />
+                  </div>
+                )
+              : 'This proposal\'s history will be available once the opportunity reaches the Code Challenge.'}
           </Col>
         </Row>
       </div>
