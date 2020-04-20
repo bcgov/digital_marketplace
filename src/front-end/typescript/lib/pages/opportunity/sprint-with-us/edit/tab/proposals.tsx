@@ -432,7 +432,7 @@ export const component: Tab.Component<State, Msg> = {
         };
       case 'screenOutOfCodeChallenge':
         return {
-          title: 'Screen Proponent out of Code Challenge?',
+          title: 'Screen Proponent Out of Code Challenge?',
           onCloseMsg: adt('hideModal'),
           actions: [
             {

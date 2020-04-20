@@ -30,22 +30,22 @@ export const scored = {
 
 export const screenedIn = {
   success: {
-    title: 'Proposal Screened-In',
+    title: 'Proposal Screened In',
     body: 'Sprint With Us proposal has been screened into the next round.'
   },
   error: {
-    title: 'Unable to Screen in Proposal',
+    title: 'Unable to Screen In Proposal',
     body: 'Sprint With Us proposal could not be screened into the next round. Please try again later.'
   }
 };
 
 export const screenedOut = {
   success: {
-    title: 'Proposal Screened-Out',
+    title: 'Proposal Screened Out',
     body: 'Sprint With Us proposal has been screened out of the next round.'
   },
   error: {
-    title: 'Unable to Screen out Proposal',
+    title: 'Unable to Screen Out Proposal',
     body: 'Sprint With Us proposal could not be screened out of the next round. Please try again later.'
   }
 };

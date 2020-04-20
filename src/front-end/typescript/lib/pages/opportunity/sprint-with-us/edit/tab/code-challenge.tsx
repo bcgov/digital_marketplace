@@ -423,7 +423,7 @@ export const component: Tab.Component<State, Msg> = {
         };
       case 'screenOutOfTeamScenario':
         return {
-          title: 'Screen Proponent out of Team Scenario?',
+          title: 'Screen Proponent Out of Team Scenario?',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
