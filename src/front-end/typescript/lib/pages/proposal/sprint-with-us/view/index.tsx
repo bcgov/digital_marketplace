@@ -87,7 +87,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition,
       getTitleSuffix: state => getProposal(state).organization?.legalName || state.proposal.anonymousProponentName || DEFAULT_SWU_PROPOSAL_TITLE
-    }), makePageMetadata('Edit Sprint With Us Proposal'))
+    }), makePageMetadata('View Sprint With Us Proposal'))
   };
 }
 

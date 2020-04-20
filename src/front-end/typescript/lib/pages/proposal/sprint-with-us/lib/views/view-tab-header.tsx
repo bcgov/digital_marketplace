@@ -45,7 +45,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     <div>
       <Row>
         <Col xs='12'>
-          <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Proposal</div>
+          <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Sprint With Us Proposal</div>
           <h3 className='mb-5'>Vendor Proposal</h3>
         </Col>
       </Row>
