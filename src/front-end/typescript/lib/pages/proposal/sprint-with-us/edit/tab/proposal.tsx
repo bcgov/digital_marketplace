@@ -181,7 +181,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }
-          result.value[1].status === SWUProposalStatus.Draft
+          result.value[1].status === SWUProposalStatus.Draft || result.value[1].status === SWUProposalStatus.Withdrawn
             ? dispatch(toast(adt('success', toasts.changesSaved.success)))
             : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           return (await resetProposal(state, result.value[1]))
@@ -447,11 +447,13 @@ export const component: Tab.Component<State, Msg> = {
     const isValid = () => Form.isValid(state.form);
     const disabled = isLoading(state);
     const isDraft = propStatus === SWUProposalStatus.Draft;
+    const isWithdrawn = propStatus === SWUProposalStatus.Withdrawn;
     const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
     if (state.isEditing) {
+      const separateSubmitButton = (isDraft || isWithdrawn) && isAcceptingProposals;
       return adt('links', compact([
         // Submit Changes
-        isDraft && isAcceptingProposals
+        separateSubmitButton
           ? {
               children: 'Submit Proposal',
               symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
@@ -464,7 +466,7 @@ export const component: Tab.Component<State, Msg> = {
           : null,
         // Save Changes
         {
-          children: isDraft ? 'Save Changes' : 'Submit Changes',
+          children: separateSubmitButton ? 'Save Changes' : 'Submit Changes',
           disabled: disabled || (() => {
             if (isDraft) {
               // No validation required, always possible to save a draft.
@@ -473,11 +475,11 @@ export const component: Tab.Component<State, Msg> = {
               return !isValid();
             }
           })(),
-          onClick: () => dispatch(isDraft ? adt('saveChanges') : adt('showModal', 'submitChanges' as const)),
+          onClick: () => dispatch(separateSubmitButton ? adt('saveChanges') : adt('showModal', 'submitChanges' as const)),
           button: true,
           loading: isSaveChangesLoading,
-          symbol_: leftPlacement(iconLinkSymbol(isDraft ? 'save' : 'paper-plane')),
-          color: isDraft ? 'success' : 'primary'
+          symbol_: leftPlacement(iconLinkSymbol(separateSubmitButton ? 'save' : 'paper-plane')),
+          color: separateSubmitButton ? 'success' : 'primary'
         },
         // Cancel
         {
@@ -580,13 +582,22 @@ export const component: Tab.Component<State, Msg> = {
         if (isAcceptingProposals) {
           return adt('links', [
             {
-              children: 'Resubmit',
+              children: 'Submit',
               symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
               loading: isSubmitLoading,
               disabled,
               button: true,
               color: 'primary',
               onClick: () => dispatch(adt('showModal', 'submit' as const))
+            },
+            {
+              children: 'Edit',
+              symbol_: leftPlacement(iconLinkSymbol('edit')),
+              button: true,
+              color: 'info',
+              disabled,
+              loading: isStartEditingLoading,
+              onClick: () => dispatch(adt('startEditing'))
             }
           ]);
         } else {
