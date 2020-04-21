@@ -82,7 +82,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     }));
   },
 
-  async fail({ routeParams, shared }) {
+  async fail({ dispatch, routePath, shared }) {
+    dispatch(replaceRoute(adt('notFound' as const, {
+      path: routePath
+    })));
     return invalid(null);
   }
 });
