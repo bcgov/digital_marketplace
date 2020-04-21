@@ -6,12 +6,16 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import { Dispatch, Immutable, initAppChildPage, newRoute, PageModal, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as PageContent from 'front-end/lib/pages/content';
+import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
+import * as PageLearnMoreSWU from 'front-end/lib/pages/learn-more/sprint-with-us';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
+import * as PageOpportunityCreate from 'front-end/lib/pages/opportunity/create';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
@@ -366,6 +370,19 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         }
       });
 
+    case 'dashboard':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'dashboard'],
+        childRouteParams: route.value,
+        childInit: PageDashboard.component.init,
+        childGetMetadata: PageDashboard.component.getMetadata,
+        childGetModal: PageDashboard.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageDashboard' as const, value };
+        }
+      });
+
     case 'opportunities':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -376,6 +393,45 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetModal: PageOpportunities.component.getModal,
         mapChildMsg(value) {
           return { tag: 'pageOpportunities' as const, value };
+        }
+      });
+
+    case 'opportunityCreate':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'opportunityCreate'],
+        childRouteParams: route.value,
+        childInit: PageOpportunityCreate.component.init,
+        childGetMetadata: PageOpportunityCreate.component.getMetadata,
+        childGetModal: PageOpportunityCreate.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageOpportunityCreate' as const, value };
+        }
+      });
+
+    case 'learnMoreCWU':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'learnMoreCWU'],
+        childRouteParams: route.value,
+        childInit: PageLearnMoreCWU.component.init,
+        childGetMetadata: PageLearnMoreCWU.component.getMetadata,
+        childGetModal: PageLearnMoreCWU.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageLearnMoreCWU' as const, value };
+        }
+      });
+
+    case 'learnMoreSWU':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'learnMoreSWU'],
+        childRouteParams: route.value,
+        childInit: PageLearnMoreSWU.component.init,
+        childGetMetadata: PageLearnMoreSWU.component.getMetadata,
+        childGetModal: PageLearnMoreSWU.component.getModal,
+        mapChildMsg(value) {
+          return { tag: 'pageLearnMoreSWU' as const, value };
         }
       });
 
@@ -858,6 +914,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value
       });
 
+    case 'pageDashboard':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageDashboard', value }),
+        childStatePath: ['pages', 'dashboard'],
+        childUpdate: PageDashboard.component.update,
+        childGetMetadata: PageDashboard.component.getMetadata,
+        childGetModal: PageDashboard.component.getModal,
+        childMsg: msg.value
+      });
+
     case 'pageOpportunities':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
@@ -866,6 +933,39 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: PageOpportunities.component.update,
         childGetMetadata: PageOpportunities.component.getMetadata,
         childGetModal: PageOpportunities.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageOpportunityCreate':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageOpportunityCreate', value }),
+        childStatePath: ['pages', 'opportunityCreate'],
+        childUpdate: PageOpportunityCreate.component.update,
+        childGetMetadata: PageOpportunityCreate.component.getMetadata,
+        childGetModal: PageOpportunityCreate.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageLearnMoreCWU':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageLearnMoreCWU', value }),
+        childStatePath: ['pages', 'learnMoreCWU'],
+        childUpdate: PageLearnMoreCWU.component.update,
+        childGetMetadata: PageLearnMoreCWU.component.getMetadata,
+        childGetModal: PageLearnMoreCWU.component.getModal,
+        childMsg: msg.value
+      });
+
+    case 'pageLearnMoreSWU':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageLearnMoreSWU', value }),
+        childStatePath: ['pages', 'learnMoreSWU'],
+        childUpdate: PageLearnMoreSWU.component.update,
+        childGetMetadata: PageLearnMoreSWU.component.getMetadata,
+        childGetModal: PageLearnMoreSWU.component.getModal,
         childMsg: msg.value
       });
 

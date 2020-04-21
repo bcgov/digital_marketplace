@@ -41,6 +41,15 @@ const router: Router.Router<Route> = {
 
   routes: [
     {
+      path: '/opportunities/create',
+      makeRoute() {
+        return {
+          tag: 'opportunityCreate',
+          value: null
+        };
+      }
+    },
+    {
       path: '/opportunities/sprint-with-us/create',
       makeRoute() {
         return {
@@ -317,6 +326,33 @@ const router: Router.Router<Route> = {
       }
     },
     {
+      path: '/dashboard',
+      makeRoute() {
+        return {
+          tag: 'dashboard',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/learn-more/code-with-us',
+      makeRoute() {
+        return {
+          tag: 'learnMoreCWU',
+          value: null
+        };
+      }
+    },
+    {
+      path: '/learn-more/sprint-with-us',
+      makeRoute() {
+        return {
+          tag: 'learnMoreSWU',
+          value: null
+        };
+      }
+    },
+    {
       path: '/opportunities',
       makeRoute() {
         return {
@@ -390,8 +426,16 @@ const router: Router.Router<Route> = {
     switch (route.tag) {
       case 'landing':
         return '/';
+      case 'dashboard':
+        return '/dashboard';
       case 'opportunities':
         return '/opportunities';
+      case 'opportunityCreate':
+        return '/opportunities/create';
+      case 'learnMoreCWU':
+        return '/learn-more/code-with-us';
+      case 'learnMoreSWU':
+        return '/learn-more/sprint-with-us';
       case 'content':
         return `/content/${route.value}`;
       case 'signIn':
