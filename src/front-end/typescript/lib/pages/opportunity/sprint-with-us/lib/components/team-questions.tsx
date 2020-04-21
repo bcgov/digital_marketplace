@@ -301,12 +301,12 @@ interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-const AddButton: View<Props> = ({ disabled, dispatch }) => {
+const AddButton: View<Props> = ({ state, disabled, dispatch }) => {
   if (disabled) { return null; }
   return (
     <Row>
       <Col xs='12'>
-        <div className='mt-5 pt-5 border-top'>
+        <div className={state.questions.length ? 'mt-5 pt-5 border-top' : ''}>
           <Link
             button
             outline
