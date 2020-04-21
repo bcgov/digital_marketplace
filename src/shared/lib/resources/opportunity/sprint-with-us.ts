@@ -1,4 +1,4 @@
-import { isDateInTheFuture } from 'shared/lib';
+import { isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -404,7 +404,11 @@ export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
 }
 
 export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
-  return !!o.publishedAt && o.status !== SWUOpportunityStatus.Published;
+  return isDateInThePast(o.proposalDeadline)
+      && o.status !== SWUOpportunityStatus.Published
+      && o.status !== SWUOpportunityStatus.Draft
+      && o.status !== SWUOpportunityStatus.UnderReview
+      && o.status !== SWUOpportunityStatus.Suspended;
 }
 
 export function hasSWUOpportunityPassedTeamQuestions(o: Pick<SWUOpportunity, 'history'>): boolean {

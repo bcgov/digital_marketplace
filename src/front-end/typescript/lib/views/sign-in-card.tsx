@@ -1,10 +1,9 @@
-// import { Route } from 'front-end/lib/app/types';
 import { getSignInUrl } from 'front-end/lib/index';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { UserType } from 'shared/lib/resources/user';
+import { isVendor, UserType } from 'shared/lib/resources/user';
 
 export interface SignInCardProps {
   title: string;
@@ -31,9 +30,9 @@ export function SignInCard(props: SignInCardProps) {
           <h3 className='d-flex align-items-start flex-nowrap'>
             <Icon
               name={userTypeToIcon(props.userType)}
-              width={1.75}
+              width={isVendor({ type: props.userType }) ? 1.75 : 2}
               height={1.75}
-              className='mt-1'
+              className='mt-1 flex-shrink-0'
               color='info' />
             <span className='pl-2'>{props.title}</span>
           </h3>

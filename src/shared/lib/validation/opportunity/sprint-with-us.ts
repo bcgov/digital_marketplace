@@ -1,6 +1,6 @@
 import { get, uniq } from 'lodash';
-import { getISODateString, getNumber, getString, isDateInThePast, setDateTo4PM } from 'shared/lib';
-import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { getISODateString, getNumber, getString, setDateTo4PM } from 'shared/lib';
+import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, isSWUOpportunityClosed, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, optional, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
 
@@ -267,8 +267,8 @@ export function validateDescription(raw: string): Validation<string> {
 export function validateProposalDeadline(raw: string, opportunity?: SWUOpportunity): Validation<Date> {
   const now = new Date();
   let minDate = now;
-  if (opportunity && opportunity.status !== SWUOpportunityStatus.Draft) {
-    minDate = isDateInThePast(opportunity.proposalDeadline) ? opportunity.proposalDeadline : now;
+  if (opportunity && isSWUOpportunityClosed(opportunity)) {
+    minDate = opportunity.proposalDeadline;
   }
   return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }

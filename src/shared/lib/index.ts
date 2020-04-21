@@ -1,6 +1,6 @@
 import { count } from '@wordpress/wordcount';
 import { get, isArray, isBoolean, repeat } from 'lodash';
-import moment, { isDate } from 'moment-timezone';
+import moment, { isDate, Moment } from 'moment-timezone';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export function find<T>(arr: T[], pred: (_: T) => boolean): T | null {
@@ -91,7 +91,7 @@ export function formatAmount(amount: number, currency?: string, ordinal?: boolea
 
 export function parseDate(raw: string): Date | null {
   try {
-    return moment(raw).toDate();
+    return normalizeDateTimezone(raw).toDate();
   } catch (e) {
     return null;
   }
@@ -99,8 +99,12 @@ export function parseDate(raw: string): Date | null {
 
 const TIMEZONE = 'America/Vancouver';
 
+export function normalizeDateTimezone(date: Date | string): Moment {
+  return moment(date).tz(TIMEZONE);
+}
+
 export function rawFormatDate(date: Date, formatType: string, withTimeZone: boolean): string {
-  return moment(date).tz(TIMEZONE).format(`${formatType}${withTimeZone ? ' z' : ''}`);
+  return normalizeDateTimezone(date).format(`${formatType}${withTimeZone ? ' z' : ''}`);
 }
 
 export function formatDateAndTime(date: Date, withTimeZone = false): string {
@@ -126,7 +130,7 @@ export function compareNumbers(a: number, b: number): -1 | 0 | 1 {
 }
 
 export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
-  return compareNumbers(a.getTime(), b.getTime());
+  return compareNumbers(normalizeDateTimezone(a).unix(), normalizeDateTimezone(b).unix());
 }
 
 export function isDateInThePast(date: Date): boolean {
@@ -142,16 +146,15 @@ export function isDateInTheFuture(date: Date): boolean {
 }
 
 export function diffDates(a: Date, b: Date, unit: moment.unitOfTime.Diff): number {
-  return moment(a).diff(moment(b), unit, true);
+  return normalizeDateTimezone(a).diff(normalizeDateTimezone(b), unit, true);
 }
 
 export function addDays(date: Date, days: number): Date {
-  return moment(date).add(days, 'days').toDate();
+  return normalizeDateTimezone(date).add(days, 'days').toDate();
 }
 
 export function setTime(date: Date, hour = 0, minute = 0, second = 0, millisecond = 0): Date {
-  return moment(new Date(date))
-    .tz(TIMEZONE)
+  return normalizeDateTimezone(new Date(date))
     .hour(hour)
     .minute(minute)
     .second(second)
