@@ -254,6 +254,7 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
         }
       },
       {
+        showOnHover: !(isApproveLoading || isRejectLoading || isDeleteLoading),
         children: isPending
           ? (
               <div className='d-flex align-items-center flex-nowrap'>

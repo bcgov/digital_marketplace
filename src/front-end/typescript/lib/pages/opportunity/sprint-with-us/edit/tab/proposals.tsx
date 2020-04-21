@@ -281,6 +281,7 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
   const isScreenToFromLoading = !!state.screenToFromLoading;
   const isLoading = isStartCodeChallengeLoading || isScreenToFromLoading;
   return state.proposals.map(p => {
+    const isProposalLoading = state.screenToFromLoading === p.id;
     return [
       {
         className: 'text-wrap',
@@ -298,8 +299,9 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
       },
       ...(state.canProposalsBeScreened
         ? [{
+            showOnHover: !isProposalLoading,
             className: 'text-right text-nowrap',
-            children: (<ContextMenuCell dispatch={dispatch} proposal={p} disabled={isLoading} loading={state.screenToFromLoading === p.id} />)
+            children: (<ContextMenuCell dispatch={dispatch} proposal={p} disabled={isLoading} loading={isProposalLoading} />)
           }]
         : [])
     ];

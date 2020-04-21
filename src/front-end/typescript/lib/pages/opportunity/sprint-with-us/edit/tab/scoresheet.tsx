@@ -184,6 +184,7 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
   const isAwardLoading = !!state.awardLoading;
   const isLoading = isAwardLoading;
   return state.proposals.map(p => {
+    const isProposalLoading = state.awardLoading === p.id;
     return [
       {
         className: 'text-wrap',
@@ -217,8 +218,9 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
       },
       ...(state.canProposalsBeAwarded
         ? [{
+            showOnHover: !isProposalLoading,
             className: 'text-right text-nowrap',
-            children: (<ContextMenuCell dispatch={dispatch} proposal={p} disabled={isLoading} loading={state.awardLoading === p.id} />)
+            children: (<ContextMenuCell dispatch={dispatch} proposal={p} disabled={isLoading} loading={isProposalLoading} />)
           }]
         : [])
     ];

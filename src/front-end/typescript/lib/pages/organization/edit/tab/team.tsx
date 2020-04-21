@@ -255,6 +255,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
     const nameDest = isViewerAdmin
       ? routeDest(adt('userProfile', { userId: m.user.id }))
       : undefined;
+    const isMemberLoading = state.removeTeamMemberLoading === m.id;
     return [
       {
         children: (
@@ -280,13 +281,14 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
         className: 'text-center align-middle'
       },
       {
+        showOnHover: !isMemberLoading,
         children: memberIsOwner(m) || !isVendor(state.viewerUser)
           ? null
           : (
               <LoadingButton
                 button
                 disabled={isLoading}
-                loading={state.removeTeamMemberLoading === m.id}
+                loading={isMemberLoading}
                 size='sm'
                 symbol_={leftPlacement(iconLinkSymbol('user-times'))}
                 onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}

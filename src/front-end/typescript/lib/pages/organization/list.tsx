@@ -69,6 +69,7 @@ function showOwnerColumn(state: Immutable<State>): boolean {
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   const owner = {
     children: 'Owner',
+    className: 'text-nowrap',
     style: {
       width: '0px'
     }
@@ -76,6 +77,7 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Organization Name',
+      className: 'text-nowrap',
       style: {
         width: '100%',
         minWidth: '240px'
@@ -88,6 +90,7 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.organizations.map(org => {
     const owner = {
+      className: 'text-nowrap',
       children: org.owner
         ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
         : null

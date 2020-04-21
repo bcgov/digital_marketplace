@@ -4,12 +4,15 @@ import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
 import { SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { ADT } from 'shared/lib/types';
+import { NUM_SCORE_DECIMALS } from 'shared/lib/resources/proposal/sprint-with-us';
+import { isAdmin } from 'shared/lib/resources/user';
+import { adt, ADT } from 'shared/lib/types';
 
 export type State = Tab.Params;
 
@@ -27,36 +30,33 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-//TODO
-/*const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
+const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
   const { successfulProposal } = state.opportunity;
-  if (!successfulProposal || !successfulProposal.score) { return null; }
+  const submittedBy = successfulProposal?.createdBy;
+  const org = successfulProposal?.organization;
+  if (!successfulProposal || !successfulProposal.totalScore || !submittedBy || !org) { return null; }
   const isViewerAdmin = isAdmin(state.viewerUser);
-  const vendor = successfulProposal.createdBy;
   const items = [
     {
-      name: 'Awarded Vendor',
+      name: 'Awarded Proponent',
       children: (() => {
         if (isViewerAdmin) {
-          return (<Link newTab dest={routeDest(adt('userProfile', { userId: vendor.id }))}>{vendor.name}</Link>);
+          return (<Link newTab dest={routeDest(adt('orgEdit', { orgId: org.id }))}>{org.legalName}</Link>);
         } else {
-          return vendor.name;
+          return org.legalName;
         }
       })()
     },
-    ...(successfulProposal.proponent.tag === 'organization'
-      ? [{
-          name: 'Affiliated Organization',
-          children: (() => {
-            const org = successfulProposal.proponent.value;
-            if (isViewerAdmin) {
-              return (<Link newTab dest={routeDest(adt('orgEdit', { orgId: org.id }))}>{org.legalName}</Link>);
-            } else {
-              return org.legalName;
-            }
-          })()
-        }]
-      : [])
+    {
+      name: 'Submitted By',
+      children: (() => {
+        if (isViewerAdmin) {
+          return (<Link newTab dest={routeDest(adt('userProfile', { userId: submittedBy.id }))}>{submittedBy.name}</Link>);
+        } else {
+          return submittedBy.name;
+        }
+      })()
+    }
   ];
   return (
     <div className='mt-5 pt-5 border-top'>
@@ -71,7 +71,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             icon='star-full'
             iconColor='yellow'
             name='Winning Score'
-            value={`${successfulProposal.score}%`} />
+            value={`${successfulProposal.totalScore.toFixed(NUM_SCORE_DECIMALS)}%`} />
         </Col>
         <Col xs='12' md='8'>
           <DescriptionList items={items} />
@@ -79,7 +79,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       </Row>
     </div>
   );
-};*/
+};
 
 const Details: ComponentView<State, Msg> = ({ state }) => {
   const {
@@ -191,6 +191,7 @@ const view: ComponentView<State, Msg> = props => {
   return (
     <div>
       <EditTabHeader opportunity={props.state.opportunity} viewerUser={props.state.viewerUser} />
+      <SuccessfulProponent {...props} />
       <Details {...props} />
     </div>
   );
