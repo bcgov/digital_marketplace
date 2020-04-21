@@ -5,6 +5,7 @@ import { generateSWUOpportunityQuery, readManyTeamQuestions, readOneSWUOpportuni
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { isSignedIn, readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
+import { compareNumbers } from 'shared/lib';
 import { MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { doesSWUOpportunityStatusAllowGovToViewFullProposal, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -727,6 +728,8 @@ export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestion
       }
     }
 
+    scores = scores.sort((a, b) => compareNumbers(a.order, b.order));
+
     // Create a history record for the score entry
     const [result] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
       .transacting(trx)
@@ -736,7 +739,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestion
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.QuestionsScoreEntered,
-        note: `Team question scores were entered.`
+        note: `Team question scores were entered. ${scores.map((s, i) => `Q${i + 1}: ${s.score}`).join('; ')}.`
       }, '*');
 
     if (!result) {

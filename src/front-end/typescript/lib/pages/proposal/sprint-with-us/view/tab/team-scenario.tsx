@@ -110,19 +110,19 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-      {state.proposal.scenarioScore !== null && state.proposal.scenarioScore !== undefined
-        ? (<Row className='mt-5'>
-            <Col xs='12'>
-              <ReportCardList
+        <Row className='mt-5'>
+          <Col xs='12'>
+          {state.proposal.scenarioScore !== null && state.proposal.scenarioScore !== undefined
+            ? (<ReportCardList
                 reportCards={[{
                   icon: 'star-full',
                   iconColor: 'yellow',
                   name: 'Team Scenario Score',
                   value: `${String(state.proposal.scenarioScore.toFixed(NUM_SCORE_DECIMALS))}%`
-                }]} />
-            </Col>
-          </Row>)
-        : null}
+                }]} />)
+            : <div className='pt-5 border-top'>If this proposal is screened into the Team Scenario, it can be scored once the opportunity reaches the Team Scenario too.</div>}
+          </Col>
+        </Row>
     </div>
   );
 };
