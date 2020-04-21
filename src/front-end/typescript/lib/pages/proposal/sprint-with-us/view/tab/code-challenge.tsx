@@ -153,19 +153,19 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-      {state.proposal.challengeScore !== null && state.proposal.challengeScore !== undefined
-        ? (<Row className='mt-5'>
-            <Col xs='12'>
-              <ReportCardList
-                reportCards={[{
-                  icon: 'star-full',
-                  iconColor: 'yellow',
-                  name: 'Code Challenge Score',
-                  value: `${String(state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS))}%`
-                }]} />
-            </Col>
-          </Row>)
-        : null}
+        <Row className='mt-5'>
+          <Col xs='12'>
+            {state.proposal.challengeScore !== null && state.proposal.challengeScore !== undefined
+              ? (<ReportCardList
+                  reportCards={[{
+                    icon: 'star-full',
+                    iconColor: 'yellow',
+                    name: 'Code Challenge Score',
+                    value: `${String(state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS))}%`
+                  }]} />)
+              : <div className='pt-5 border-top'>If this proposal is screened into the Code Challenge, it can be scored once the opportunity reaches the Code Challenge too.</div>}
+          </Col>
+        </Row>
     </div>
   );
 };

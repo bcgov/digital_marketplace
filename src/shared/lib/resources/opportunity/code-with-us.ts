@@ -1,4 +1,4 @@
-import { isDateInTheFuture } from 'shared/lib';
+import { isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
@@ -226,5 +226,8 @@ export function doesCWUOpportunityStatusAllowGovToViewProposals(s: CWUOpportunit
 }
 
 export function isCWUOpportunityClosed(o: CWUOpportunity): boolean {
-  return !!o.publishedAt && o.status !== CWUOpportunityStatus.Published;
+  return isDateInThePast(o.proposalDeadline)
+      && o.status !== CWUOpportunityStatus.Published
+      && o.status !== CWUOpportunityStatus.Draft
+      && o.status !== CWUOpportunityStatus.Suspended;
 }

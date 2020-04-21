@@ -233,7 +233,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
 
     proposalDeadline: immutable(await DateField.init({
       errors: [],
-      validate: DateField.validateDate(opportunityValidation.validateProposalDeadline),
+      validate: DateField.validateDate(v => opportunityValidation.validateProposalDeadline(v, opportunity)),
       child: {
         value: opportunity ? DateField.dateToValue(opportunity.proposalDeadline) : null,
         id: 'swu-opportunity-proposal-deadline'
@@ -264,10 +264,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
 
     minTeamMembers: immutable(await NumberField.init({
       errors: [],
-      validate: v => {
-        if (v === null) { return invalid(['Please enter a valid minimum team size.']); }
-        return opportunityValidation.validateMinimumTeamMembers(v);
-      },
+      validate: opportunityValidation.validateMinimumTeamMembers,
       child: {
         value: opportunity?.minTeamMembers || null,
         id: 'swu-opportunity-min-team-members',

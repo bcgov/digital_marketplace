@@ -131,11 +131,13 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
       name: 'Location',
       value: location
     },
-    {
-      icon: 'users',
-      name: 'Min. Team Size',
-      value: String(minTeamMembers)
-    }
+    ...(minTeamMembers !== undefined && minTeamMembers !== null
+      ? [{
+          icon: 'users',
+          name: 'Min. Team Size',
+          value: String(minTeamMembers)
+        } as ReportCard]
+      : [])
   ];
   return (
     <div className='mt-5 pt-5 border-top'>

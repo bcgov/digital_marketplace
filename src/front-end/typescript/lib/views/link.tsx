@@ -46,7 +46,7 @@ interface LinkSymbolProps {
 
 const ICON_SIZE_LINK = 1; //rem
 const ICON_SIZE_SMALL_BUTTON = 1; //rem
-const ICON_SIZE_MEDIUM_BUTTON = 1.25; //rem
+const ICON_SIZE_MEDIUM_BUTTON = 1.2; //rem
 
 const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, iconSymbolSize = ICON_SIZE_LINK, className = '', style }) => {
   className = `${className} flex-shrink-0 flex-grow-0`;
