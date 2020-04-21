@@ -228,7 +228,7 @@ async function rawHistoryRecordToHistoryRecord(connection: Connection, session: 
   };
 }
 
-function generateSWUOpportunityQuery(connection: Connection) {
+export function generateSWUOpportunityQuery(connection: Connection) {
   return connection<RawSWUOpportunity>('swuOpportunities as opportunities')
     // Join on latest SWU status
     .join('swuOpportunityStatuses as statuses', function() {
