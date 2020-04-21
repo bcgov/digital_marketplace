@@ -334,7 +334,7 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt('hideModal')
             }
           ],
-          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all susbscribers and vendors with submitted proposals will be notified accordingly.'
+          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all subscribers and vendors with submitted proposals will be notified accordingly.'
         };
     }
   }
