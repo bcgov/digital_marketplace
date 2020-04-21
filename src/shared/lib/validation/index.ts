@@ -196,7 +196,7 @@ export function validateNumberWithPrecision(raw: string | number, min?: number, 
   }
   const parts = validatedNumber.value.toString().split('.');
   if (parts.length > 1 && parts[1].length > maxPrecision) {
-    return invalid([`Please enter ${article} ${name} with precision less than or equal to ${maxPrecision}`]);
+    return invalid([`Please enter ${article} ${name} with precision less than or equal to ${maxPrecision} decimal places.`]);
   }
   return validatedNumber;
 }
@@ -221,10 +221,10 @@ export function validateGenericDate(raw: string, name: string, preposition: stri
   } else {
     const errors: string[] = [];
     if (!validMinDate && minDate) {
-      errors.push(`Please select a ${name} ${preposition ? `${preposition} or ` : ''}after ${format(minDate)}`);
+      errors.push(`Please select a ${name} ${preposition ? `${preposition} or ` : ''}after ${format(minDate)}.`);
     }
     if (!validMaxDate && maxDate) {
-      errors.push(`Please select a ${name} ${preposition ? `${preposition} or ` : ''}earlier than ${format(maxDate)}`);
+      errors.push(`Please select a ${name} ${preposition ? `${preposition} or ` : ''}earlier than ${format(maxDate)}.`);
     }
     return invalid(errors);
   }

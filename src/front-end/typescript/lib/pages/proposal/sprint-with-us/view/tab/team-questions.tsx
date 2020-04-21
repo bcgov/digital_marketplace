@@ -11,12 +11,13 @@ import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import Accordion from 'front-end/lib/views/accordion';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
+import ReportCardList from 'front-end/lib/views/report-card-list';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { countWords } from 'shared/lib';
 import { canSWUOpportunityBeScreenedInToCodeChallenge, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamQuestions, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { SWUProposal, SWUProposalStatus, SWUProposalTeamQuestionResponse, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
+import { NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus, SWUProposalTeamQuestionResponse, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
 import { validateTeamQuestionScoreScore } from 'shared/lib/validation/proposal/sprint-with-us';
@@ -244,6 +245,19 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
                 Export Team Questions
               </Link>
+            </Col>
+          </Row>)
+        : null}
+      {state.proposal.questionsScore !== null && state.proposal.questionsScore !== undefined
+        ? (<Row className='mt-5'>
+            <Col xs='12'>
+              <ReportCardList
+                reportCards={[{
+                  icon: 'star-full',
+                  iconColor: 'yellow',
+                  name: 'Team Questions Score',
+                  value: `${String(state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS))}%`
+                }]} />
             </Col>
           </Row>)
         : null}

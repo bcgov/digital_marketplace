@@ -1,58 +1,105 @@
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import * as History from 'front-end/lib/components/table/history';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-import { swuProposalEventToTitleCase, swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as NumberField from 'front-end/lib/components/form-field/number';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
 import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import ReportCardList from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
-import { UserType } from 'shared/lib/resources/user';
+import { NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
+import { invalid } from 'shared/lib/validation';
+import { validateTeamScenarioScore } from 'shared/lib/validation/proposal/sprint-with-us';
+
+type ModalId = 'enterScore';
 
 export interface State extends Tab.Params {
-  history: Immutable<History.State>;
+  showModal: ModalId | null;
+  enterScoreLoading: number;
+  score: Immutable<NumberField.State>;
 }
 
 export type InnerMsg
-  = ADT<'history', History.Msg>;
+  = ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'submitScore'>
+  | ADT<'scoreMsg', NumberField.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-function getHistoryItems({ history }: SWUProposal, viewerUserType: UserType): History.Item[] {
-  if (!history) { return []; }
-  return history
-    .map(s => ({
-      type: {
-        text: s.type.tag === 'status' ? swuProposalStatusToTitleCase(s.type.value, viewerUserType) : swuProposalEventToTitleCase(s.type.value),
-        color: s.type.tag === 'status' ? swuProposalStatusToColor(s.type.value, viewerUserType) : undefined
-      },
-      note: s.note,
-      createdAt: s.createdAt,
-      createdBy: s.createdBy || undefined
-    }));
+async function initScore(p: SWUProposal): Promise<Immutable<NumberField.State>> {
+  return immutable(await NumberField.init({
+    errors: [],
+    validate: v => {
+      if (v === null) { return invalid(['Please enter a valid score.']); }
+      return validateTeamScenarioScore(v);
+    },
+    child: {
+      step: 0.01,
+      value: p.scenarioScore === null || p.scenarioScore === undefined ? null : p.scenarioScore,
+      id: 'swu-proposal-team-scenario-score'
+    }
+  }));
 }
 
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
-    history: immutable(await History.init({
-      idNamespace: 'swu-proposal-history',
-      items: getHistoryItems(params.proposal, params.viewerUser.type),
-      viewerUser: params.viewerUser
-    }))
+    showModal: null,
+    enterScoreLoading: 0,
+    score: await initScore(params.proposal)
   };
 };
 
+const startEnterScoreLoading = makeStartLoading<State>('enterScoreLoading');
+const stopEnterScoreLoading = makeStopLoading<State>('enterScoreLoading');
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'history':
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal':
+      if (state.enterScoreLoading > 0) { return [state]; }
+      return [state.set('showModal', null)];
+    case 'submitScore':
+      return [
+        startEnterScoreLoading(state),
+        async (state, dispatch) => {
+          state = stopEnterScoreLoading(state);
+          const score = FormField.getValue(state.score);
+          if (score === null) { return state; }
+          const result = await api.proposals.swu.update(state.proposal.id, adt('scoreTeamScenario', score));
+          switch (result.tag) {
+            case 'valid':
+              dispatch(toast(adt('success', toasts.scored.success('Team Scenario'))));
+              return state
+                .set('score', await initScore(result.value))
+                .set('showModal', null)
+                .set('proposal', result.value);
+            case 'invalid': {
+              let score = state.score;
+              if (result.value.proposal && result.value.proposal.tag === 'scoreTeamScenario') {
+                score = FormField.setErrors(score, result.value.proposal.value);
+              }
+              return state.set('score', score);
+            }
+            case 'unhandled':
+              return state;
+          }
+        }
+      ];
+    case 'scoreMsg':
       return updateComponentChild({
         state,
-        childStatePath: ['history'],
-        childUpdate: History.update,
+        childStatePath: ['score'],
+        childUpdate: NumberField.update,
         childMsg: msg.value,
-        mapChildMsg: value => ({ tag: 'history', value })
+        mapChildMsg: value => (adt('scoreMsg', value) as Msg)
       });
     default:
       return [state];
@@ -63,22 +110,102 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-      <div className='mt-5 pt-5 border-top'>
-        <Row>
-          <Col xs='12'>
-            <h3 className='mb-4'>History</h3>
-            <History.view
-              state={state.history}
-              dispatch={mapComponentDispatch(dispatch, msg => adt('history' as const, msg))} />
-          </Col>
-        </Row>
-      </div>
+      {state.proposal.scenarioScore !== null && state.proposal.scenarioScore !== undefined
+        ? (<Row className='mt-5'>
+            <Col xs='12'>
+              <ReportCardList
+                reportCards={[{
+                  icon: 'star-full',
+                  iconColor: 'yellow',
+                  name: 'Team Scenario Score',
+                  value: `${String(state.proposal.scenarioScore.toFixed(NUM_SCORE_DECIMALS))}%`
+                }]} />
+            </Col>
+          </Row>)
+        : null}
     </div>
   );
 };
 
+function isValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.score);
+}
+
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+
+  getModal: state => {
+    const isEnterScoreLoading = state.enterScoreLoading > 0;
+    const valid = isValid(state);
+    switch (state.showModal) {
+      case 'enterScore':
+        return {
+          title: 'Enter Score',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Submit Score',
+              icon: 'star-full',
+              color: 'primary',
+              button: true,
+              loading: isEnterScoreLoading,
+              disabled: isEnterScoreLoading || !valid,
+              msg: adt('submitScore')
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              disabled: isEnterScoreLoading,
+              msg: adt('hideModal')
+            }
+          ],
+          body: dispatch => (
+            <div>
+              <p>Provide a score for the proponent's Team Scenario.</p>
+              <NumberField.view
+                extraChildProps={{ suffix: '%' }}
+                required
+                disabled={isEnterScoreLoading}
+                label='Team Scenario Score'
+                placeholder='Team Scenario Score'
+                dispatch={mapComponentDispatch(dispatch, v => adt('scoreMsg' as const, v))}
+                state={state.score} />
+            </div>
+          )
+        };
+      case null:
+        return null;
+    }
+  },
+
+  getContextualActions: ({ state, dispatch }) => {
+    const proposal = state.proposal;
+    const propStatus = proposal.status;
+    switch (propStatus) {
+      case SWUProposalStatus.UnderReviewTeamScenario:
+        return adt('links', [
+          {
+            children: 'Enter Score',
+            symbol_: leftPlacement(iconLinkSymbol('star-full')),
+            button: true,
+            color: 'primary',
+            onClick: () => dispatch(adt('showModal', 'enterScore' as const))
+          }
+        ]);
+      case SWUProposalStatus.EvaluatedTeamScenario:
+        return adt('links', [
+          {
+            children: 'Edit Score',
+            symbol_: leftPlacement(iconLinkSymbol('star-full')),
+            button: true,
+            color: 'info',
+            onClick: () => dispatch(adt('showModal', 'enterScore' as const))
+          }
+        ]);
+      default:
+        return null;
+    }
+  }
 };

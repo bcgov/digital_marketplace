@@ -70,15 +70,14 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   const owner = {
     children: 'Owner',
     style: {
-      width: '40%',
-      minWidth: '200px'
+      width: '0px'
     }
   };
   return [
     {
       children: 'Organization Name',
       style: {
-        width: '60%',
+        width: '100%',
         minWidth: '240px'
       }
     },

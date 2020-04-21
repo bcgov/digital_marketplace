@@ -58,21 +58,24 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: 'Entry Type',
-      className: 'text-wrap',
-      style: { width: '20%' }
+      className: 'text-nowrap',
+      style: {
+        width: '0px',
+        minWidth: '150px'
+      }
     },
     {
       children: 'Note',
       className: 'text-nowrap',
       style: {
-        width: '55%',
+        width: '100%',
         minWidth: '200px'
       }
     },
     {
       children: 'Created',
       className: 'text-nowrap',
-      style: { width: '25%' }
+      style: { width: '0px' }
     }
   ];
 }
@@ -86,7 +89,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
               text={item.type.text}
               color={item.type.color} />)
           : item.type.text,
-        className: 'font-size-base text-nowrap'
+        className: 'text-wrap'
       },
       {
         children: item.note || EMPTY_STRING

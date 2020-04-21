@@ -16,7 +16,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUProposal, CWUProposalStatus, NUM_SCORE_DECIMALS } from 'shared/lib/resources/proposal/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import { validateDisqualificationReason, validateScore } from 'shared/lib/validation/proposal/code-with-us';
@@ -215,13 +215,12 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 
 const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   const proposal = state.proposal;
-  if (proposal.status === CWUProposalStatus.UnderReview || proposal.status === CWUProposalStatus.Disqualified || proposal.status === CWUProposalStatus.Withdrawn) { return null; }
   const reportCards: ReportCard[] = [
     {
       icon: 'star-full',
       iconColor: 'yellow',
       name: 'Total Score',
-      value: proposal.score ? `${proposal.score}%` : EMPTY_STRING
+      value: proposal.score ? `${proposal.score.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'trophy',

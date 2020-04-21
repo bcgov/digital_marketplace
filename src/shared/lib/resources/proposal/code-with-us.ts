@@ -7,6 +7,7 @@ import { ADT, adt, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_CWU_PROPOSAL_TITLE = 'Unknown';
+export const NUM_SCORE_DECIMALS = 2;
 
 export enum CWUProposalStatus {
   Draft        = 'DRAFT',

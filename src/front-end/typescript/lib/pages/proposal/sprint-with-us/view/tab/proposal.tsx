@@ -1,4 +1,4 @@
-import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
+import { EMPTY_STRING, SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
 import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -16,7 +16,7 @@ import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
 import { hasSWUOpportunityPassedCodeChallenge } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { SWUProposal, swuProposalNumTeamMembers, SWUProposalStatus, swuProposalTotalProposedCost } from 'shared/lib/resources/proposal/sprint-with-us';
+import { NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import { validateDisqualificationReason } from 'shared/lib/validation/proposal/sprint-with-us';
@@ -162,18 +162,18 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 
 const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   const proposal = state.proposal;
-  const numTeamMembers = swuProposalNumTeamMembers(proposal);
-  const totalProposedCost = swuProposalTotalProposedCost(proposal);
   const reportCards: Array<ReportCard | null> = [
     {
-      icon: 'users',
-      name: `Team Member${numTeamMembers === 1 ? '' : 's'}`,
-      value: String(numTeamMembers)
+      icon: 'star-full',
+      iconColor: 'yellow',
+      name: 'Total Score',
+      value: proposal.totalScore ? `${proposal.totalScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
-      icon: 'badge-dollar',
-      name: 'Proposed Cost',
-      value: formatAmount(totalProposedCost, '$')
+      icon: 'trophy',
+      iconColor: 'yellow',
+      name: 'Ranking',
+      value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
     }
   ];
   return (

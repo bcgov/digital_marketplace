@@ -1,5 +1,6 @@
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { compareDates } from 'shared/lib';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
@@ -12,8 +13,7 @@ import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us
 import * as SWUProposalResource from 'shared/lib/resources/proposal/sprint-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
 import * as UserResource from 'shared/lib/resources/user';
-import { adt, Id } from 'shared/lib/types';
-import { ClientHttpMethod } from 'shared/lib/types';
+import { adt, ClientHttpMethod, Id } from 'shared/lib/types';
 
 export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
@@ -153,7 +153,9 @@ function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.C
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
-    history: raw.history && raw.history.map(s => rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(s))
+    history: raw.history && raw.history
+      .map(s => rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(s))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt))
   };
 }
 
@@ -266,7 +268,9 @@ function rawSWUProposalToSWUProposal(raw: RawSWUProposal): SWUProposalResource.S
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
-    history: raw.history && raw.history.map(s => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
+    history: raw.history && raw.history
+      .map(s => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt))
   };
 }
 

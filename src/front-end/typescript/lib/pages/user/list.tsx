@@ -96,25 +96,25 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
     {
       children: 'Status',
       className: 'text-nowrap',
-      style: { width: '15%' }
+      style: { width: '0px' }
     },
     {
       children: 'Account Type',
       className: 'text-nowrap',
-      style: { width: '25%' }
+      style: { width: '0px' }
     },
     {
       children: 'Name',
       className: 'text-nowrap',
       style: {
-        width: '50%',
+        width: '100%',
         minWidth: '200px'
       }
     },
     {
       children: 'Admin?',
       className: 'text-center text-nowrap',
-      style: { width: '10%' }
+      style: { width: '0px' }
     }
   ];
 }
