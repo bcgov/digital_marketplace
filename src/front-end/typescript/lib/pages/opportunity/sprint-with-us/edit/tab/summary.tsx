@@ -34,7 +34,8 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
   const { successfulProposal } = state.opportunity;
   const submittedBy = successfulProposal?.createdBy;
   const org = successfulProposal?.organization;
-  if (!successfulProposal || !successfulProposal.totalScore || !submittedBy || !org) { return null; }
+  const totalScore = successfulProposal?.totalScore || 0;
+  if (!successfulProposal || !submittedBy || !org) { return null; }
   const isViewerAdmin = isAdmin(state.viewerUser);
   const items = [
     {
@@ -71,9 +72,9 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
             icon='star-full'
             iconColor='yellow'
             name='Winning Score'
-            value={`${successfulProposal.totalScore.toFixed(NUM_SCORE_DECIMALS)}%`} />
+            value={`${totalScore.toFixed(NUM_SCORE_DECIMALS)}%`} />
         </Col>
-        <Col xs='12' md='8'>
+        <Col xs='12' md='8' className='d-flex align-items-center flex-nowrap'>
           <DescriptionList items={items} />
         </Col>
       </Row>

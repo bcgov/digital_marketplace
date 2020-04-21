@@ -73,7 +73,7 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
             name='Winning Score'
             value={`${successfulProposal.score}%`} />
         </Col>
-        <Col xs='12' md='8'>
+        <Col xs='12' md='8' className='d-flex align-items-center flex-nowrap'>
           <DescriptionList items={items} />
         </Col>
       </Row>
