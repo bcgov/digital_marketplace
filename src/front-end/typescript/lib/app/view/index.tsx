@@ -538,9 +538,8 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
     links = links.concat([
       {
         children: 'Dashboard',
-        // TODO add dashboard route when available.
-        active: state.activeRoute.tag === 'landing',
-        dest: routeDest(adt('landing', null))
+        active: state.activeRoute.tag === 'dashboard',
+        dest: routeDest(adt('dashboard', null))
       },
       opportunitiesLink,
       organizationsLink
