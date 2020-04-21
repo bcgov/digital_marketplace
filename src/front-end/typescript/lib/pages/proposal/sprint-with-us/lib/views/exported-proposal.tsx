@@ -68,7 +68,7 @@ export const ExportedPropsal: View<Props> = ({ opportunity, proposal, showOpport
           />
         </Col>
       </Row>
-      <Row className='mt-5'>
+      <Row>
         <Col xs='12'>
           <div>
             {proposal.teamQuestionResponses.map((r, i) => {
