@@ -148,8 +148,8 @@ async function createCWUOpportunityAttachments(connection: Connection, trx: Tran
   }
 }
 
-function generateCWUOpportunityQuery(connection: Connection) {
-  return connection<RawCWUOpportunity>('cwuOpportunities as opp')
+function generateCWUOpportunityQuery(connection: Connection, full = false) {
+  const query = connection<RawCWUOpportunity>('cwuOpportunities as opp')
     // Join on latest CWU status
     .join<RawCWUOpportunity>('cwuOpportunityStatuses as stat', function() {
       this
@@ -171,9 +171,15 @@ function generateCWUOpportunityQuery(connection: Connection) {
       'opp.createdAt',
       'opp.createdBy',
       'version.id as versionId',
-      'version.createdAt as updatedAt',
-      'version.createdBy as updatedBy',
+      connection.raw('(CASE WHEN version."createdAt" > stat."createdAt" THEN version."createdAt" ELSE stat."createdAt" END) AS "updatedAt" '),
+      connection.raw('(CASE WHEN version."createdAt" > stat."createdAt" THEN version."createdBy" ELSE stat."createdBy" END) AS "updatedBy" '),
       'version.title',
+      'version.proposalDeadline',
+      'stat.status'
+    );
+
+  if (full) {
+    query.select(
       'version.teaser',
       'version.remoteOk',
       'version.remoteDesc',
@@ -181,20 +187,21 @@ function generateCWUOpportunityQuery(connection: Connection) {
       'version.reward',
       'version.skills',
       'version.description',
-      'version.proposalDeadline',
       'version.assignmentDate',
       'version.startDate',
       'version.completionDate',
       'version.submissionInfo',
       'version.acceptanceCriteria',
-      'version.evaluationCriteria',
-      'stat.status'
+      'version.evaluationCriteria'
     );
+  }
+
+  return query;
 }
 
 export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
 
-  let query = generateCWUOpportunityQuery(connection)
+  let query = generateCWUOpportunityQuery(connection, true)
     .where({ 'opp.id': id });
 
   if (!session || session.user.type === UserType.Vendor) {
@@ -326,18 +333,7 @@ export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connec
 });
 
 export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(async (connection, session) => {
-  let query = generateCWUOpportunityQuery(connection)
-    .clearSelect()
-    .select<RawCWUOpportunitySlim[]>(
-      'opp.id',
-      'version.title',
-      'opp.createdBy',
-      'opp.createdAt',
-      'version.createdAt as updatedAt',
-      'version.createdBy as updatedBy',
-      'version.proposalDeadline',
-      'stat.status'
-    );
+  let query = generateCWUOpportunityQuery(connection);
 
   if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
@@ -544,7 +540,7 @@ export const deleteCWUOpportunity = tryDb<[Id], CWUOpportunity>(async (connectio
 export const closeCWUOpportunities = tryDb<[], number>(async (connection) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
-    const lapsedOpportunities = await generateCWUOpportunityQuery(trx)
+    const lapsedOpportunities = await generateCWUOpportunityQuery(trx, true)
       .where({ status: CWUOpportunityStatus.Published })
       .andWhere('proposalDeadline', '<=', now);
 

@@ -1103,8 +1103,8 @@ function generateSWUProposalQuery(connection: Connection, full = false) {
       'proposals.id',
       'proposals.createdBy',
       'proposals.createdAt',
-      'proposals.updatedBy',
-      'proposals.updatedAt',
+      connection.raw('(CASE WHEN proposals."createdAt" > statuses."createdAt" THEN proposals."createdAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
+      connection.raw('(CASE WHEN proposals."createdAt" > statuses."createdAt" THEN proposals."createdBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'proposals.opportunity',
       'proposals.organization',
       'proposals.anonymousProponentName',
@@ -1131,7 +1131,7 @@ interface ProposalScoring {
 
 async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(connection: Connection, session: AuthenticatedSession, opportunityId: Id, proposals: T[]): Promise<T[]> {
   // Manually query opportunity and team questions
-  const opportunity = await generateSWUOpportunityQuery(connection).where({ 'opportunities.id': opportunityId }).first();
+  const opportunity = await generateSWUOpportunityQuery(connection, true).where({ 'opportunities.id': opportunityId }).first();
   const opportunityTeamQuestions = opportunity && getValidValue(await readManyTeamQuestions(connection, opportunity.versionId), null);
   if (!opportunity || !opportunityTeamQuestions) {
     return proposals;

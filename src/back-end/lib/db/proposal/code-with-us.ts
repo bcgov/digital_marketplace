@@ -246,8 +246,8 @@ function generateCWUProposalQuery(connection: Connection, full = false) {
       'proposals.id',
       'proposals.createdBy',
       'proposals.createdAt',
-      'updatedBy',
-      'updatedAt',
+      connection.raw('(CASE WHEN proposals."createdAt" > statuses."createdAt" THEN proposals."createdAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
+      connection.raw('(CASE WHEN proposals."createdAt" > statuses."createdAt" THEN proposals."createdBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'proponentIndividual',
       'proponentOrganization',
       'statuses.status'
