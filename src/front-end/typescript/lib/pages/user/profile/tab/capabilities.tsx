@@ -99,7 +99,7 @@ const Capability: View<CapabilityProps> = ({ dispatch, index, loading, disabled,
             : null}
         </Link>
         <Icon
-          color='blue-dark'
+          color='info'
           className='ml-auto'
           name={open ? 'chevron-up' : 'chevron-down'} />
       </div>

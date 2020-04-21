@@ -422,7 +422,7 @@ export const component: Tab.Component<State, Msg> = {
           button: true,
           loading: isSaveChangesLoading,
           symbol_: leftPlacement(iconLinkSymbol('user-check')),
-          color: 'primary'
+          color: 'success'
         },
         {
           children: 'Cancel',

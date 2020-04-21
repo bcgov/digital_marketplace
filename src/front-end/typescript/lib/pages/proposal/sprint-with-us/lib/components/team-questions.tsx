@@ -123,7 +123,7 @@ const ResponseView: View<ResponseViewProps> = props => {
     <Accordion
       className={''}
       toggle={() => dispatch(adt('toggleAccordion', index))}
-      color='blue-dark'
+      color='info'
       title={title}
       titleClassName='h3 mb-0'
       icon={isValid ? undefined : 'exclamation-circle'}

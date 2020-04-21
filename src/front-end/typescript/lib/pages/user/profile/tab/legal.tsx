@@ -38,16 +38,17 @@ const view: ComponentView<State, Msg> = ({ state }) => {
       <Row>
         <Col xs='12'>
           <h2>Accepted Policies, Terms & Agreements</h2>
-          <p>
-            {acceptedTerms
-              ? `You agreed to the following on ${formatDate(acceptedTerms)} at ${formatTime(acceptedTerms, true)}.`
-              : 'You have not yet agreed to the following.'}
-          </p>
+          <p className='mb-0'>In this section, you will find all of the policies, terms and agreements that you have accepted.</p>
         </Col>
       </Row>
       <Row>
         <Col xs='12'>
-          <div className='mt-4'>
+          <div className='mt-5 pt-5 border-top'>
+            <p className='mb-5'>
+              {acceptedTerms
+                ? `You agreed to the following on ${formatDate(acceptedTerms)} at ${formatTime(acceptedTerms, true)}.`
+                : 'You have not yet agreed to the following.'}
+            </p>
             <h3>Privacy Policy</h3>
             <p>Your personal information is being collected by the Ministry of Citizens’ Services under s.26(c) of the Freedom of Information and Protection of Privacy Act (FOIPPA). The collection, use and disclosure of your personal information is for the purpose of notifying, applying and awarding opportunities on the BCDevExchange. If you have any questions, please contact: Peter Watkins, Executive Director, BC Developers’ Exchange and DevOps, Ministry of Citizens’ Services, 250-514-2739.</p>
           </div>

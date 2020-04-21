@@ -46,7 +46,7 @@ export interface RouteParams {
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Vendor],
-  async success({ routePath, dispatch, routeParams }) {
+  async success({ routePath, shared, dispatch, routeParams }) {
     const { opportunityId } = routeParams;
     // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
     const proposalsResult = await api.proposals.cwu.readMany(opportunityId);
@@ -80,6 +80,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       saveDraftLoading: 0,
       opportunity,
       form: immutable(await Form.init({
+        viewerUser: shared.sessionUser,
         opportunity,
         affiliations,
         canRemoveExistingAttachments: true //moot

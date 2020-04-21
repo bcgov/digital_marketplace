@@ -8,7 +8,7 @@ import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
@@ -16,7 +16,7 @@ import { getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
-import { UserType } from 'shared/lib/resources/user';
+import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
@@ -37,6 +37,7 @@ const newAttachmentMetadata = [
 export interface State {
   opportunity: CWUOpportunity;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
+  viewerUser: User;
   // Proponent Tab
   proponentType: Immutable<RadioGroup.State<ProponentType>>;
   // Individual
@@ -84,6 +85,7 @@ export type Msg
 
 export interface Params {
   opportunity: CWUOpportunity;
+  viewerUser: User;
   canRemoveExistingAttachments: boolean;
   proposal?: CWUProposal;
   activeTab?: TabId;
@@ -103,7 +105,7 @@ function getProponent(proposal: CWUProposal | undefined, proponentType: CWUPropo
   return fallback;
 }
 
-export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, proposal, affiliations, activeTab = DEFAULT_ACTIVE_TAB }) => {
+export const init: Init<Params, State> = async ({ viewerUser, canRemoveExistingAttachments, opportunity, proposal, affiliations, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const selectedOrganizationOption: Select.Option | null = (() => {
     if (proposal?.proponent.tag !== 'organization') { return null; }
     return {
@@ -122,6 +124,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
     })),
 
     opportunity,
+    viewerUser,
     orgId: '',
     showEvaluationCriteria: true,
 
@@ -706,6 +709,9 @@ const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label='Organization'
           placeholder='Organization'
+          hint={isVendor(state.viewerUser)
+            ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link>. Also, please make sure that you have saved this proposal beforehand to avoid losing any unsaved changes you might have made.</span>)
+            : undefined}
           required
           state={state.organization}
           dispatch={mapComponentDispatch(dispatch, value => adt('organization' as const, value))} />

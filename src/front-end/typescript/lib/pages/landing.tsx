@@ -60,7 +60,7 @@ const view: ComponentView<State, Msg> = ({state, dispatch}) => {
       <Col xs='12' md='8' className='pt-7'>
         <Accordion
           toggle={() => dispatch(adt('toggleAccordion'))}
-          color='blue-dark'
+          color='info'
           title='Inception'
           titleClassName='h3'
           icon='map'

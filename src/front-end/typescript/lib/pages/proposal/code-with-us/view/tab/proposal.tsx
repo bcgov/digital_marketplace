@@ -17,6 +17,7 @@ import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus, NUM_SCORE_DECIMALS } from 'shared/lib/resources/proposal/code-with-us';
+import { User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import { validateDisqualificationReason, validateScore } from 'shared/lib/validation/proposal/code-with-us';
@@ -51,8 +52,9 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function initForm(opportunity: CWUOpportunity, proposal: CWUProposal): Promise<Immutable<Form.State>> {
+async function initForm(opportunity: CWUOpportunity, proposal: CWUProposal, viewerUser: User): Promise<Immutable<Form.State>> {
   return immutable(await Form.init({
+    viewerUser,
     opportunity,
     proposal,
     affiliations: [],
@@ -76,7 +78,7 @@ const init: Init<Tab.Params, State> = async params => {
     disqualifyLoading: 0,
     awardLoading: 0,
     opportunity,
-    form: await initForm(opportunity, proposal),
+    form: await initForm(opportunity, proposal, params.viewerUser),
     score: immutable(await NumberField.init({
       errors: [],
       validate: v => {
@@ -155,7 +157,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             case 'valid':
               dispatch(toast(adt('success', toasts.scored.success)));
               return state
-                .set('form', await initForm(state.opportunity, result.value))
+                .set('form', await initForm(state.opportunity, result.value, state.viewerUser))
                 .set('showModal', null)
                 .set('proposal', result.value);
             case 'invalid':
@@ -179,7 +181,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             case 'valid':
               dispatch(toast(adt('success', toasts.disqualified.success)));
               return state
-                .set('form', await initForm(state.opportunity, result.value))
+                .set('form', await initForm(state.opportunity, result.value, state.viewerUser))
                 .set('showModal', null)
                 .set('proposal', result.value);
             case 'invalid':
@@ -204,7 +206,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           }
           dispatch(toast(adt('success', toasts.awarded.success)));
           return state
-            .set('form', await initForm(state.opportunity, result.value))
+            .set('form', await initForm(state.opportunity, result.value, state.viewerUser))
             .set('proposal', result.value);
         }
       ];

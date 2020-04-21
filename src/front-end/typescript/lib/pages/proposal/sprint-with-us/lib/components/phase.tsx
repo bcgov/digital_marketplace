@@ -402,7 +402,7 @@ export const view: View<Props> = props => {
     <Accordion
       className={className}
       toggle={() => dispatch(adt('toggleAccordion'))}
-      color='blue-dark'
+      color='info'
       title={title}
       titleClassName='h3 mb-0'
       icon={icon}

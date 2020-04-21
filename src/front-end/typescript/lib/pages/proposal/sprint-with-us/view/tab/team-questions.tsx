@@ -196,7 +196,7 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
     <Accordion
       className={className}
       toggle={() => toggleAccordion()}
-      color='blue-dark'
+      color='info'
       title={`Question ${index + 1}`}
       titleClassName='h3 mb-0'
       chevronWidth={1.5}
