@@ -26,6 +26,13 @@
 │  ├─ email: sebmck@gmail.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@babel/runtime
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@babel/runtime/LICENSE
+├─ @babel/runtime@7.9.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/babel/babel
+│  ├─ publisher: Sebastian McKenzie
+│  ├─ email: sebmck@gmail.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@wordpress/wordcount/node_modules/@babel/runtime
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@wordpress/wordcount/node_modules/@babel/runtime/LICENSE
 ├─ @babel/types@7.7.4
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel/tree/master/packages/babel-types
@@ -86,6 +93,21 @@
 │  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/weak-memoize
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@emotion/weak-memoize
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@emotion/weak-memoize/README.md
+├─ @nodelib/fs.scandir@2.1.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.scandir
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@nodelib/fs.scandir
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@nodelib/fs.scandir/LICENSE
+├─ @nodelib/fs.stat@2.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.stat
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@nodelib/fs.stat
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@nodelib/fs.stat/LICENSE
+├─ @nodelib/fs.walk@1.2.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.walk
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@nodelib/fs.walk
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@nodelib/fs.walk/LICENSE
 ├─ @sindresorhus/is@0.14.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/is
@@ -100,6 +122,11 @@
 │  ├─ publisher: Szymon Marczak
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@szmarczak/http-timer
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@szmarczak/http-timer/LICENSE
+├─ @testim/chrome-version@1.0.7
+│  ├─ licenses: MIT
+│  ├─ publisher: Elad Katz
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@testim/chrome-version
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@testim/chrome-version/LICENSE
 ├─ @types/bcrypt@3.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
@@ -187,7 +214,7 @@
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/minimatch
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/minimatch/LICENSE
-├─ @types/mocha@5.2.7
+├─ @types/mocha@7.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/mocha
@@ -277,6 +304,22 @@
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/uuid
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/uuid/LICENSE
+├─ @types/wordpress__wordcount@2.4.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/wordpress__wordcount
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/wordpress__wordcount/LICENSE
+├─ @types/yauzl@2.9.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/yauzl
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@types/yauzl/LICENSE
+├─ @wordpress/wordcount@2.7.0
+│  ├─ licenses: GPL-2.0-or-later
+│  ├─ repository: https://github.com/WordPress/gutenberg
+│  ├─ publisher: The WordPress Contributors
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@wordpress/wordcount
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@wordpress/wordcount/LICENSE.md
 ├─ @zeit/schemas@2.6.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/zeit/schemas
@@ -323,7 +366,7 @@
 │  ├─ repository: https://github.com/acornjs/acorn
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/acorn-walk
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/acorn-walk/LICENSE
-├─ acorn@7.1.0
+├─ acorn@7.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/acornjs/acorn
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/acorn
@@ -369,6 +412,13 @@
 │  ├─ publisher: nexdrew
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ansi-align
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ansi-align/LICENSE
+├─ ansi-colors@3.2.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/doowb/ansi-colors
+│  ├─ publisher: Brian Woodward
+│  ├─ url: https://github.com/doowb
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ansi-colors
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ansi-colors/LICENSE
 ├─ ansi-red@0.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/ansi-red
@@ -430,6 +480,13 @@
 │  ├─ url: http://github.com/es128
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/anymatch
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/anymatch/LICENSE
+├─ anymatch@3.1.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/micromatch/anymatch
+│  ├─ publisher: Elan Shanker
+│  ├─ url: https://github.com/es128
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/anymatch
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/anymatch/LICENSE
 ├─ aproba@1.2.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/iarna/aproba
@@ -552,6 +609,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/array-union
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/array-union/license
+├─ array-union@2.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/array-union
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/globby/node_modules/array-union
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/globby/node_modules/array-union/license
 ├─ array-uniq@1.0.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/array-uniq
@@ -695,6 +760,12 @@
 │  ├─ publisher: Matt Zabriskie
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/axios
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/axios/LICENSE
+├─ axios@0.19.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/axios/axios
+│  ├─ publisher: Matt Zabriskie
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/chromedriver/node_modules/axios
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/chromedriver/node_modules/axios/LICENSE
 ├─ babel-plugin-emotion@10.0.23
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/babel-plugin-emotion
@@ -782,6 +853,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/binary-extensions
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/binary-extensions/license
+├─ binary-extensions@2.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/binary-extensions
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/binary-extensions
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/binary-extensions/license
 ├─ bl@1.2.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/rvagg/bl
@@ -834,13 +913,21 @@
 │  ├─ email: me@feedic.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/boolbase
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/boolbase/README.md
-├─ bootstrap@4.3.1
+├─ bootstrap@4.4.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/twbs/bootstrap
 │  ├─ publisher: The Bootstrap Authors
 │  ├─ url: https://github.com/twbs/bootstrap/graphs/contributors
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/bootstrap
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/bootstrap/LICENSE
+├─ bowser@2.9.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/lancedikson/bowser
+│  ├─ publisher: Dustin Diaz
+│  ├─ email: dustin@dustindiaz.com
+│  ├─ url: http://dustindiaz.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/bowser
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/bowser/LICENSE
 ├─ boxen@1.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/boxen
@@ -864,6 +951,13 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/braces
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/braces/LICENSE
+├─ braces@3.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/micromatch/braces
+│  ├─ publisher: Jon Schlinkert
+│  ├─ url: https://github.com/jonschlinkert
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/braces
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/braces/LICENSE
 ├─ brorand@1.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/indutny/brorand
@@ -1138,6 +1232,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/boxen/node_modules/camelcase
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/boxen/node_modules/camelcase/license
+├─ camelcase@5.3.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/camelcase
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/camelcase
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/camelcase/license
 ├─ caniuse-api@3.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/nyalab/caniuse-api
@@ -1212,6 +1314,13 @@
 │  ├─ url: https://paulmillr.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/chokidar
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/chokidar/README.md
+├─ chokidar@3.3.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/paulmillr/chokidar
+│  ├─ publisher: Paul Miller
+│  ├─ url: https://paulmillr.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/chokidar
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/chokidar/LICENSE
 ├─ chownr@1.1.3
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/chownr
@@ -1220,7 +1329,7 @@
 │  ├─ url: http://blog.izs.me/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/chownr
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/chownr/LICENSE
-├─ chromedriver@78.0.1
+├─ chromedriver@81.0.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/giggio/node-chromedriver
 │  ├─ publisher: Giovanni Bassi
@@ -1295,6 +1404,13 @@
 │  ├─ email: ben@npmjs.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/cliui
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/cliui/LICENSE.txt
+├─ cliui@5.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/cliui
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/cliui
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/cliui/LICENSE.txt
 ├─ clone-response@1.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/lukechilds/clone-response
@@ -1400,13 +1516,6 @@
 │  ├─ url: http://debuggable.com/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/combined-stream
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/combined-stream/License
-├─ commander@2.15.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/tj/commander.js
-│  ├─ publisher: TJ Holowaychuk
-│  ├─ email: tj@vision-media.ca
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/commander
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/commander/LICENSE
 ├─ commander@2.20.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/tj/commander.js
@@ -1959,7 +2068,7 @@
 │  ├─ url: http://substack.net
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/defined
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/defined/LICENSE
-├─ del@4.1.1
+├─ del@5.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/del
 │  ├─ publisher: Sindre Sorhus
@@ -2063,6 +2172,14 @@
 │  ├─ publisher: Calvin Metcalf
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/diffie-hellman
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/diffie-hellman/LICENSE
+├─ dir-glob@3.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/kevva/dir-glob
+│  ├─ publisher: Kevin Mårtensson
+│  ├─ email: kevinmartensson@gmail.com
+│  ├─ url: github.com/kevva
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/dir-glob
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/dir-glob/license
 ├─ dom-helpers@3.4.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jquense/dom-helpers
@@ -2185,6 +2302,13 @@
 │  ├─ email: fedor@indutny.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/elliptic
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/elliptic/README.md
+├─ emoji-regex@7.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/mathiasbynens/emoji-regex
+│  ├─ publisher: Mathias Bynens
+│  ├─ url: https://mathiasbynens.be/
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/emoji-regex
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/emoji-regex/LICENSE-MIT.txt
 ├─ encodeurl@1.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/pillarjs/encodeurl
@@ -2393,7 +2517,7 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/extglob
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/extglob/LICENSE
-├─ extract-zip@1.6.7
+├─ extract-zip@2.0.0
 │  ├─ licenses: BSD-2-Clause
 │  ├─ repository: https://github.com/maxogden/extract-zip
 │  ├─ publisher: max ogden
@@ -2410,6 +2534,13 @@
 │  ├─ publisher: Evgeny Poberezkin
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-deep-equal
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-deep-equal/LICENSE
+├─ fast-glob@3.2.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/mrmlnc/fast-glob
+│  ├─ publisher: Denis Malinochkin
+│  ├─ url: https://mrmlnc.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/LICENSE
 ├─ fast-json-stable-stringify@2.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/epoberezkin/fast-json-stable-stringify
@@ -2432,6 +2563,13 @@
 │  ├─ url: http://github.com/petkaantonov/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-url-parser
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-url-parser/LICENSE
+├─ fastq@1.7.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/mcollina/fastq
+│  ├─ publisher: Matteo Collina
+│  ├─ email: hello@matteocollina.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fastq
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fastq/LICENSE
 ├─ faye-websocket@0.10.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/faye/faye-websocket-node
@@ -2440,13 +2578,6 @@
 │  ├─ url: http://jcoglan.com/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/faye-websocket
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/faye-websocket/README.md
-├─ fd-slicer@1.0.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/andrewrk/node-fd-slicer
-│  ├─ publisher: Andrew Kelley
-│  ├─ email: superjoe30@gmail.com
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fd-slicer
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fd-slicer/LICENSE
 ├─ fd-slicer@1.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/andrewrk/node-fd-slicer
@@ -2476,6 +2607,13 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fill-range
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fill-range/LICENSE
+├─ fill-range@7.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jonschlinkert/fill-range
+│  ├─ publisher: Jon Schlinkert
+│  ├─ url: https://github.com/jonschlinkert
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/fill-range
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/fill-range/LICENSE
 ├─ finalhandler@1.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/pillarjs/finalhandler
@@ -2505,6 +2643,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/pkg-up/node_modules/find-up
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/pkg-up/node_modules/find-up/license
+├─ find-up@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/find-up
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/find-up
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/find-up/license
 ├─ findup-sync@0.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/cowboy/node-findup-sync
@@ -2543,6 +2689,14 @@
 │  ├─ url: http://gulpjs.com/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/flagged-respawn
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/flagged-respawn/LICENSE
+├─ flat@4.1.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/hughsk/flat
+│  ├─ publisher: Hugh Kennedy
+│  ├─ email: hughskennedy@gmail.com
+│  ├─ url: http://hughskennedy.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/flat
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/flat/LICENSE
 ├─ follow-redirects@1.5.10
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/follow-redirects/follow-redirects
@@ -2673,6 +2827,12 @@
 │  ├─ publisher: Stefan Penner
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/get-caller-file
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/get-caller-file/LICENSE.md
+├─ get-caller-file@2.0.5
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/stefanpenner/get-caller-file
+│  ├─ publisher: Stefan Penner
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/get-caller-file
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/get-caller-file/LICENSE.md
 ├─ get-stdin@4.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/get-stdin
@@ -2747,6 +2907,14 @@
 │  ├─ url: https://github.com/es128
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/glob-parent
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/glob-parent/LICENSE
+├─ glob-parent@5.1.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/gulpjs/glob-parent
+│  ├─ publisher: Gulp Team
+│  ├─ email: team@gulpjs.com
+│  ├─ url: https://gulpjs.com/
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/glob-parent
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/glob-parent/LICENSE
 ├─ glob@5.0.15
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/node-glob
@@ -2763,7 +2931,7 @@
 │  ├─ url: http://blog.izs.me/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/grunt/node_modules/glob
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/grunt/node_modules/glob/LICENSE
-├─ glob@7.1.2
+├─ glob@7.1.3
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/node-glob
 │  ├─ publisher: Isaac Z. Schlueter
@@ -2801,7 +2969,7 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/global-prefix
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/global-prefix/LICENSE
-├─ globby@6.1.0
+├─ globby@10.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/globby
 │  ├─ publisher: Sindre Sorhus
@@ -2979,7 +3147,7 @@
 │  ├─ url: http://github.com/tracker1
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/gulp-header
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/gulp-header/LICENSE
-├─ handlebars@4.5.3
+├─ handlebars@4.7.6
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/wycats/handlebars.js
 │  ├─ publisher: Yehuda Katz
@@ -3082,13 +3250,6 @@
 │  ├─ email: fedor@indutny.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/hash.js
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/hash.js/README.md
-├─ he@1.1.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/mathiasbynens/he
-│  ├─ publisher: Mathias Bynens
-│  ├─ url: https://mathiasbynens.be/
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/he
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/he/LICENSE-MIT.txt
 ├─ he@1.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/mathiasbynens/he
@@ -3267,6 +3428,12 @@
 │  ├─ url: http://blog.izs.me/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ignore-walk
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ignore-walk/LICENSE
+├─ ignore@5.1.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/kaelzhang/node-ignore
+│  ├─ publisher: kael
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ignore
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ignore/LICENSE-MIT
 ├─ iltorb@2.4.4
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/MayhemYDG/iltorb
@@ -3510,6 +3677,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/is-binary-path
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/is-binary-path/license
+├─ is-binary-path@2.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/is-binary-path
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/is-binary-path
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/is-binary-path/license
 ├─ is-buffer@1.1.6
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/feross/is-buffer
@@ -3524,8 +3699,8 @@
 │  ├─ publisher: Feross Aboukhadijeh
 │  ├─ email: feross@feross.org
 │  ├─ url: https://feross.org
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/axios/node_modules/is-buffer
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/axios/node_modules/is-buffer/LICENSE
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/flat/node_modules/is-buffer
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/flat/node_modules/is-buffer/LICENSE
 ├─ is-callable@1.1.4
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/ljharb/is-callable
@@ -3710,6 +3885,13 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/randomatic/node_modules/is-number
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/randomatic/node_modules/is-number/LICENSE
+├─ is-number@7.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jonschlinkert/is-number
+│  ├─ publisher: Jon Schlinkert
+│  ├─ url: https://github.com/jonschlinkert
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/is-number
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/is-number/LICENSE
 ├─ is-obj@1.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/is-obj
@@ -3726,14 +3908,6 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/is-path-cwd
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/is-path-cwd/license
-├─ is-path-in-cwd@2.1.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/sindresorhus/is-path-in-cwd
-│  ├─ publisher: Sindre Sorhus
-│  ├─ email: sindresorhus@gmail.com
-│  ├─ url: sindresorhus.com
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/is-path-in-cwd
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/is-path-in-cwd/license
 ├─ is-path-inside@1.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/is-path-inside
@@ -3742,7 +3916,7 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/is-installed-globally/node_modules/is-path-inside
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/is-installed-globally/node_modules/is-path-inside/license
-├─ is-path-inside@2.1.0
+├─ is-path-inside@3.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/is-path-inside
 │  ├─ publisher: Sindre Sorhus
@@ -3954,7 +4128,7 @@
 │  ├─ url: https://github.com/jquery/jquery/blob/3.4.1/AUTHORS.txt
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/jquery
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/jquery/LICENSE.txt
-├─ js-base64@2.5.1
+├─ js-base64@2.5.2
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/dankogai/js-base64
 │  ├─ publisher: Dan Kogai
@@ -4106,7 +4280,7 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/is-descriptor/node_modules/kind-of
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/is-descriptor/node_modules/kind-of/LICENSE
-├─ kind-of@6.0.2
+├─ kind-of@6.0.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/kind-of
 │  ├─ publisher: Jon Schlinkert
@@ -4223,6 +4397,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/locate-path
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/locate-path/license
+├─ locate-path@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/locate-path
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/locate-path
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/locate-path/license
 ├─ lodash._reinterpolate@3.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/lodash/lodash
@@ -4284,6 +4466,14 @@
 │  ├─ email: john.david.dalton@gmail.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/lodash
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/lodash/LICENSE
+├─ log-symbols@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/log-symbols
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/log-symbols
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/log-symbols/license
 ├─ loose-envify@1.4.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/zertosh/loose-envify
@@ -4471,6 +4661,11 @@
 │  ├─ url: http://jongleberry.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/merge-descriptors
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/merge-descriptors/LICENSE
+├─ merge2@1.3.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/teambition/merge2
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/merge2
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/merge2/LICENSE
 ├─ methods@1.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jshttp/methods
@@ -4483,6 +4678,13 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/micromatch
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/micromatch/LICENSE
+├─ micromatch@4.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/micromatch/micromatch
+│  ├─ publisher: Jon Schlinkert
+│  ├─ url: https://github.com/jonschlinkert
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/micromatch
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/micromatch/LICENSE
 ├─ miller-rabin@4.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/indutny/miller-rabin
@@ -4554,22 +4756,14 @@
 │  ├─ url: http://blog.izs.me
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/minimatch
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/minimatch/LICENSE
-├─ minimist@0.0.8
+├─ minimist@1.2.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/substack/minimist
 │  ├─ publisher: James Halliday
 │  ├─ email: mail@substack.net
 │  ├─ url: http://substack.net
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/minimist
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/minimist/LICENSE
-├─ minimist@1.2.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/substack/minimist
-│  ├─ publisher: James Halliday
-│  ├─ email: mail@substack.net
-│  ├─ url: http://substack.net
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/rc/node_modules/minimist
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/rc/node_modules/minimist/LICENSE
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mkdirp/node_modules/minimist
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mkdirp/node_modules/minimist/LICENSE
 ├─ minipass@2.9.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/minipass
@@ -4593,7 +4787,7 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mixin-deep
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mixin-deep/LICENSE
-├─ mkdirp@0.5.1
+├─ mkdirp@0.5.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/substack/node-mkdirp
 │  ├─ publisher: James Halliday
@@ -4601,7 +4795,12 @@
 │  ├─ url: http://substack.net
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mkdirp
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mkdirp/LICENSE
-├─ mocha@5.2.0
+├─ mkdirp@1.0.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/isaacs/node-mkdirp
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/chromedriver/node_modules/mkdirp
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/chromedriver/node_modules/mkdirp/LICENSE
+├─ mocha@7.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/mochajs/mocha
 │  ├─ publisher: TJ Holowaychuk
@@ -4711,6 +4910,14 @@
 │  ├─ publisher: Lukas Geiger
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/node-abi
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/node-abi/LICENSE
+├─ node-environment-flags@1.0.6
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/boneskull/node-environment-flags
+│  ├─ publisher: Christopher Hiller
+│  ├─ email: boneskull@boneskull.com
+│  ├─ url: https://boneskull.com/
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/node-environment-flags
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/node-environment-flags/LICENSE
 ├─ node-gyp@3.8.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/nodejs/node-gyp
@@ -4733,7 +4940,7 @@
 │  ├─ email: chi187@gmail.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/node-releases
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/node-releases/LICENSE
-├─ node-sass@4.13.0
+├─ node-sass@4.13.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sass/node-sass
 │  ├─ publisher: Andrew Nesbitt
@@ -5014,14 +5221,6 @@
 │  ├─ email: panva.ip@gmail.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/openid-client
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/openid-client/LICENSE.md
-├─ optimist@0.6.1
-│  ├─ licenses: MIT*
-│  ├─ repository: https://github.com/substack/node-optimist
-│  ├─ publisher: James Halliday
-│  ├─ email: mail@substack.net
-│  ├─ url: http://substack.net
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/optimist
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/optimist/LICENSE
 ├─ os-browserify@0.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/CoderPuppy/os-browserify
@@ -5107,6 +5306,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/p-limit
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/p-limit/license
+├─ p-limit@2.3.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/p-limit
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/p-limit
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/p-limit/license
 ├─ p-locate@2.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/p-locate
@@ -5115,7 +5322,15 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/p-locate
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/p-locate/license
-├─ p-map@2.1.0
+├─ p-locate@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/p-locate
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/p-locate
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/p-locate/license
+├─ p-map@3.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/p-map
 │  ├─ publisher: Sindre Sorhus
@@ -5139,6 +5354,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/p-try
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/p-try/license
+├─ p-try@2.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/p-try
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/p-try
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/p-try/license
 ├─ package-json@4.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/package-json
@@ -5433,14 +5656,21 @@
 │  ├─ email: hannes.hoerl+pgpass@snowreporter.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/pgpass
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/pgpass/README.md
+├─ picomatch@2.2.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/micromatch/picomatch
+│  ├─ publisher: Jon Schlinkert
+│  ├─ url: https://github.com/jonschlinkert
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/picomatch
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/picomatch/LICENSE
 ├─ pify@2.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/pify
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/globby/node_modules/pify
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/globby/node_modules/pify/license
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/load-json-file/node_modules/pify
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/load-json-file/node_modules/pify/license
 ├─ pify@3.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/pify
@@ -5449,14 +5679,6 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/make-dir/node_modules/pify
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/make-dir/node_modules/pify/license
-├─ pify@4.0.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/sindresorhus/pify
-│  ├─ publisher: Sindre Sorhus
-│  ├─ email: sindresorhus@gmail.com
-│  ├─ url: sindresorhus.com
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/pify
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/pify/license
 ├─ pinkie-promise@2.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/floatdrop/pinkie-promise
@@ -5891,8 +6113,8 @@
 │  ├─ repository: https://github.com/bestiejs/punycode.js
 │  ├─ publisher: Mathias Bynens
 │  ├─ url: https://mathiasbynens.be/
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/tough-cookie/node_modules/punycode
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/tough-cookie/node_modules/punycode/LICENSE-MIT.txt
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/browserify/node_modules/punycode
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/browserify/node_modules/punycode/LICENSE-MIT.txt
 ├─ punycode@2.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/bestiejs/punycode.js
@@ -6133,6 +6355,14 @@
 │  ├─ url: thlorenz.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/readdirp
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/readdirp/LICENSE
+├─ readdirp@3.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/paulmillr/readdirp
+│  ├─ publisher: Thorsten Lorenz
+│  ├─ email: thlorenz@gmx.de
+│  ├─ url: thlorenz.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/readdirp
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/readdirp/LICENSE
 ├─ rechoir@0.6.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/tkellen/node-rechoir
@@ -6155,6 +6385,13 @@
 │  ├─ email: bn@cs.stanford.edu
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/regenerator-runtime
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/regenerator-runtime/LICENSE
+├─ regenerator-runtime@0.13.5
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/facebook/regenerator/tree/master/packages/regenerator-runtime
+│  ├─ publisher: Ben Newman
+│  ├─ email: bn@cs.stanford.edu
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/@wordpress/wordcount/node_modules/regenerator-runtime
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/@wordpress/wordcount/node_modules/regenerator-runtime/LICENSE
 ├─ regex-not@1.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/regex-not
@@ -6277,6 +6514,13 @@
 │  ├─ email: ben@npmjs.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/require-main-filename
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/require-main-filename/LICENSE.txt
+├─ require-main-filename@2.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/require-main-filename
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/require-main-filename
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/require-main-filename/LICENSE.txt
 ├─ resolve-dir@1.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/resolve-dir
@@ -6351,6 +6595,13 @@
 │  ├─ url: https://github.com/fent
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ret
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ret/LICENSE
+├─ reusify@1.0.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/mcollina/reusify
+│  ├─ publisher: Matteo Collina
+│  ├─ email: hello@matteocollina.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/reusify
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/reusify/LICENSE
 ├─ rgb-regex@1.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/regexps/rgb-regex
@@ -6379,11 +6630,27 @@
 │  ├─ url: http://blog.izs.me/
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/rimraf
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/rimraf/LICENSE
+├─ rimraf@3.0.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/rimraf
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/del/node_modules/rimraf
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/del/node_modules/rimraf/LICENSE
 ├─ ripemd160@2.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/crypto-browserify/ripemd160
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ripemd160
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ripemd160/LICENSE
+├─ run-parallel@1.1.9
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/feross/run-parallel
+│  ├─ publisher: Feross Aboukhadijeh
+│  ├─ email: feross@feross.org
+│  ├─ url: http://feross.org/
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/run-parallel
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/run-parallel/LICENSE
 ├─ safe-buffer@5.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/feross/safe-buffer
@@ -6611,6 +6878,14 @@
 │  ├─ url: http://sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/slash
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/slash/readme.md
+├─ slash@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/slash
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/globby/node_modules/slash
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/globby/node_modules/slash/license
 ├─ slide@1.1.6
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/slide-flow-control
@@ -6850,6 +7125,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/ansi-align/node_modules/string-width
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/ansi-align/node_modules/string-width/license
+├─ string-width@3.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/string-width
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/string-width
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/string-width/license
 ├─ string.prototype.trimleft@2.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/es-shims/String.prototype.trimLeft
@@ -6979,14 +7262,6 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/grunt-contrib-compress/node_modules/supports-color
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/grunt-contrib-compress/node_modules/supports-color/license
-├─ supports-color@5.4.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/chalk/supports-color
-│  ├─ publisher: Sindre Sorhus
-│  ├─ email: sindresorhus@gmail.com
-│  ├─ url: sindresorhus.com
-│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/supports-color
-│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/supports-color/license
 ├─ supports-color@5.5.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/supports-color
@@ -6995,6 +7270,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/supports-color
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/supports-color/license
+├─ supports-color@6.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/supports-color
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/supports-color
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/mocha/node_modules/supports-color/license
 ├─ supports-color@6.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/supports-color
@@ -7174,6 +7457,13 @@
 │  ├─ url: https://github.com/jonschlinkert
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/to-regex-range
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/to-regex-range/LICENSE
+├─ to-regex-range@5.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/micromatch/to-regex-range
+│  ├─ publisher: Jon Schlinkert
+│  ├─ url: https://github.com/jonschlinkert
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/to-regex-range
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/fast-glob/node_modules/to-regex-range/LICENSE
 ├─ to-regex@3.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/to-regex
@@ -7759,6 +8049,12 @@
 │  ├─ publisher: nexdrew
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/which-module
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/which-module/LICENSE
+├─ which-module@2.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/nexdrew/which-module
+│  ├─ publisher: nexdrew
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/which-module
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/which-module/LICENSE
 ├─ which-pm-runs@1.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/zkochan/which-pm-runs
@@ -7789,7 +8085,7 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/widest-line
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/widest-line/license
-├─ wordwrap@0.0.3
+├─ wordwrap@1.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/substack/node-wordwrap
 │  ├─ publisher: James Halliday
@@ -7805,6 +8101,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/wrap-ansi
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/wrap-ansi/license
+├─ wrap-ansi@5.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/wrap-ansi
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/wrap-ansi
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/wrap-ansi/license
 ├─ wrappy@1.0.2
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/npm/wrappy
@@ -7850,6 +8154,13 @@
 │  ├─ email: ben@npmjs.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/y18n
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/y18n/LICENSE
+├─ y18n@4.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/y18n
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/y18n
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/y18n/LICENSE
 ├─ yallist@2.1.2
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/yallist
@@ -7873,6 +8184,13 @@
 │  ├─ email: eemeli@gmail.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yaml
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yaml/LICENSE
+├─ yargs-parser@13.1.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/yargs-parser
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/yargs-parser
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/yargs-parser/LICENSE.txt
 ├─ yargs-parser@5.0.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/yargs/yargs-parser
@@ -7880,12 +8198,24 @@
 │  ├─ email: ben@npmjs.com
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-parser
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-parser/LICENSE.txt
+├─ yargs-unparser@1.6.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/yargs/yargs-unparser
+│  ├─ publisher: André Cruz
+│  ├─ email: andre@moxy.studio
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/LICENSE
+├─ yargs@13.3.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/yargs/yargs
+│  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/yargs
+│  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs-unparser/node_modules/yargs/LICENSE
 ├─ yargs@7.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/yargs/yargs
 │  ├─ path: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs
 │  └─ licenseFile: /home/dd/src/bcgov/digital_marketplace/node_modules/yargs/LICENSE
-├─ yauzl@2.4.1
+├─ yauzl@2.10.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/thejoshwolfe/yauzl
 │  ├─ publisher: Josh Wolfe
