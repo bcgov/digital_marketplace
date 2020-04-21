@@ -193,13 +193,14 @@ function ownedTableHeadCells(state: Immutable<State>): Table.HeadCells {
 function ownedTableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.ownedRecords.map(affiliation => {
     const swuQualified = doesOrganizationMeetSWUQualification(affiliation.organization);
+    const orgId = affiliation.organization.id;
     return [
       {
-        children: (<Link dest={routeDest(adt('orgEdit', { orgId: affiliation.organization.id})) }>{affiliation.organization.legalName}</Link>)
+        children: (<Link dest={routeDest(adt('orgEdit', { orgId })) }>{affiliation.organization.legalName}</Link>)
       },
       {
         className: 'text-center',
-        children: String(affiliation.organization.numTeamMembers || EMPTY_STRING)
+        children: (<Link dest={routeDest(adt('orgEdit', { orgId, tab: 'team' as const }))}>{String(affiliation.organization.numTeamMembers) || EMPTY_STRING}</Link>)
       },
       {
         className: 'text-center',

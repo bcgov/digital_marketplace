@@ -41,19 +41,22 @@ interface LinkSymbolProps {
   symbol_: LinkSymbol;
   iconSymbolSize?: number;
   className?: string;
+  style?: CSSProperties;
 }
 
-const ICON_SIZE = 1; //rem
+const ICON_SIZE_LINK = 1; //rem
+const ICON_SIZE_SMALL_BUTTON = 1; //rem
+const ICON_SIZE_MEDIUM_BUTTON = 1.25; //rem
 
-const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, iconSymbolSize = ICON_SIZE, className = '' }) => {
+const LinkSymbol: View<LinkSymbolProps> = ({ symbol_, iconSymbolSize = ICON_SIZE_LINK, className = '', style }) => {
   className = `${className} flex-shrink-0 flex-grow-0`;
   switch (symbol_.tag) {
     case 'icon':
-      return (<Icon name={symbol_.value} className={className} width={iconSymbolSize} height={iconSymbolSize} />);
+      return (<Icon name={symbol_.value} className={className} width={iconSymbolSize} height={iconSymbolSize} style={style} />);
     case 'image':
-      return (<img src={symbol_.value} className={className} style={{ width: '1.75rem', height: '1.75rem', objectFit: 'cover', borderRadius: '50%' }} />);
+      return (<img src={symbol_.value} className={className} style={{ width: '1.75rem', height: '1.75rem', objectFit: 'cover', borderRadius: '50%', ...style }} />);
     case 'emptyIcon':
-      return (<div style={{ width: `${iconSymbolSize}rem`, height: `${iconSymbolSize}rem` }} className={className}></div>);
+      return (<div style={{ width: `${iconSymbolSize}rem`, height: `${iconSymbolSize}rem`, ...style }} className={className}></div>);
   }
 };
 
@@ -77,6 +80,7 @@ interface BaseProps {
   dest?: Dest;
   symbol_?: Placement<LinkSymbol>;
   symbolClassName?: string;
+  symbolStyle?: CSSProperties;
   iconSymbolSize?: number; //rem
   children?: ViewElementChildren;
   className?: string;
@@ -125,6 +129,7 @@ function AnchorLink(props: AnchorProps) {
     download = false,
     symbol_,
     symbolClassName = '',
+    symbolStyle,
     iconSymbolSize,
     focusable = true
   } = props;
@@ -183,11 +188,11 @@ function AnchorLink(props: AnchorProps) {
   return (
     <a {...finalProps}>
       {symbol_ && symbol_.tag === 'left'
-        ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`mr-2 ${symbolClassName}`} />)
+        ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`mr-2 ${symbolClassName}`} style={symbolStyle} />)
         : null}
       {children}
       {symbol_ && symbol_.tag === 'right'
-        ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`ml-2 ${symbolClassName}`} />)
+        ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`ml-2 ${symbolClassName}`} style={symbolStyle} />)
         : null}
     </a>
   );
@@ -211,7 +216,14 @@ export function ButtonLink(props: ButtonProps) {
     children: undefined,
     button: false,
     color: undefined,
-    className: `${className} position-relative btn btn-${size} ${color ? `btn-${!disabled && outline ? 'outline-' : ''}${color}` : ''}`
+    className: `${className} position-relative btn btn-${size} ${color ? `btn-${!disabled && outline ? 'outline-' : ''}${color}` : ''}`,
+    iconSymbolSize: props.iconSymbolSize || (() => {
+      switch (size) {
+        case 'sm': return ICON_SIZE_SMALL_BUTTON;
+        case 'md': return ICON_SIZE_MEDIUM_BUTTON;
+        case 'lg': return ICON_SIZE_MEDIUM_BUTTON;
+      }
+    })()
   };
   return (
     <AnchorLink {...anchorProps}>

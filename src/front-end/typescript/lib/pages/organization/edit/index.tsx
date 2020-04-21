@@ -7,7 +7,7 @@ import { Immutable, immutable, mergePageAlerts, PageAlerts, PageComponent, PageI
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
-import { isVendor, UserType } from 'shared/lib/resources/user';
+import { isAdmin, isVendor, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -71,15 +71,20 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getAlerts: getAlertsValid(state => {
       return mergePageAlerts(
         {
-          info: !state.tab[1].swuQualified && isVendor(state.tab[1].viewerUser) && state.tab[0] !== 'qualification'
-          ? [{
-              text: (
-                <div>
-                  This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.tab[1].organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.
-                </div>
-              )
-            }]
-          : []
+          info: (() => {
+            if (!state.tab[1].swuQualified && state.tab[0] !== 'qualification') {
+              if (isVendor(state.tab[1].viewerUser)) {
+                return [{
+                  text: (<div>This organization is not qualified to apply for <em>Sprint With Us</em> opportunities. You must <Link dest={routeDest(adt('orgEdit', { orgId: state.tab[1].organization.id, tab: 'qualification' as const }))}>apply to become a Qualified Supplier</Link>.</div>)
+                }];
+              } else if (isAdmin(state.tab[1].viewerUser)) {
+                return [{
+                  text: (<div>This organization is not qualified to apply for <em>Sprint With Us</em> opportunities.</div>)
+                }];
+              }
+            }
+            return [];
+          })()
         },
         TabbedPage.makeGetParentAlerts(idToDefinition) as PageAlerts<Msg>
       );

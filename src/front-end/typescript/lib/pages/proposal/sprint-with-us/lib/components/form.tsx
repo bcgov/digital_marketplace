@@ -667,7 +667,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, p
     <Accordion
       className={className}
       toggle={() => toggleAccordion()}
-      color='blue-dark'
+      color='info'
       title={title}
       titleClassName='h3 mb-0'
       icon={icon}

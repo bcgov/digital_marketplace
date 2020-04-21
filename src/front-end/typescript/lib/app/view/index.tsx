@@ -5,12 +5,16 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
 import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, Toast as FrameworkToast, View } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
+import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
+import * as PageLearnMoreSWU from 'front-end/lib/pages/learn-more/sprint-with-us';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
+import * as PageOpportunityCreate from 'front-end/lib/pages/opportunity/create';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
@@ -74,12 +78,44 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         value => ({ tag: 'pageLanding', value })
       );
 
+    case 'dashboard':
+      return makeViewPageProps(
+        props,
+        PageDashboard.component,
+        state => state.pages.dashboard,
+        value => ({ tag: 'pageDashboard', value })
+      );
+
     case 'opportunities':
       return makeViewPageProps(
         props,
         PageOpportunities.component,
         state => state.pages.opportunities,
         value => ({ tag: 'pageOpportunities', value })
+      );
+
+    case 'opportunityCreate':
+      return makeViewPageProps(
+        props,
+        PageOpportunityCreate.component,
+        state => state.pages.opportunityCreate,
+        value => ({ tag: 'pageOpportunityCreate', value })
+      );
+
+    case 'learnMoreCWU':
+      return makeViewPageProps(
+        props,
+        PageLearnMoreCWU.component,
+        state => state.pages.learnMoreCWU,
+        value => ({ tag: 'pageLearnMoreCWU', value })
+      );
+
+    case 'learnMoreSWU':
+      return makeViewPageProps(
+        props,
+        PageLearnMoreSWU.component,
+        state => state.pages.learnMoreSWU,
+        value => ({ tag: 'pageLearnMoreSWU', value })
       );
 
     case 'content':
@@ -502,9 +538,8 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
     links = links.concat([
       {
         children: 'Dashboard',
-        // TODO add dashboard route when available.
-        active: state.activeRoute.tag === 'landing',
-        dest: routeDest(adt('landing', null))
+        active: state.activeRoute.tag === 'dashboard',
+        dest: routeDest(adt('dashboard', null))
       },
       opportunitiesLink,
       organizationsLink

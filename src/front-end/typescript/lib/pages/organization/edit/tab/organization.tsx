@@ -230,7 +230,7 @@ export const component: Tab.Component<State, Msg> = {
           {
             text: 'Save Changes',
             icon: 'check',
-            color: 'primary',
+            color: 'success',
             msg: adt('saveChanges'),
             button: true
           },
@@ -269,7 +269,7 @@ export const component: Tab.Component<State, Msg> = {
           button: true,
           loading: isSaveChangesLoading,
           symbol_: leftPlacement(iconLinkSymbol('check')),
-          color: 'primary'
+          color: 'success'
         },
         {
           children: 'Cancel',

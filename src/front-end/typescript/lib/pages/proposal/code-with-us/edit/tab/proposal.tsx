@@ -17,6 +17,7 @@ import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
@@ -63,8 +64,9 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSlim[], proposal: CWUProposal, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
+async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSlim[], proposal: CWUProposal, viewerUser: User, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
   return immutable(await Form.init({
+    viewerUser,
     opportunity,
     proposal,
     affiliations,
@@ -97,7 +99,7 @@ const init: Init<Tab.Params, State> = async params => {
     withdrawLoading: 0,
     deleteLoading: 0,
     showModal: null,
-    form: await initForm(opportunity, affiliations, proposal),
+    form: await initForm(opportunity, affiliations, proposal, params.viewerUser),
     submitTerms: immutable(await SubmitProposalTerms.init({
       errors: [],
       child: {
@@ -123,7 +125,7 @@ const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
 
 async function resetProposal(state: Immutable<ValidState>, proposal: CWUProposal): Promise<Immutable<ValidState>> {
   return state
-    .set('form', await initForm(state.opportunity, state.affiliations, proposal, Form.getActiveTab(state.form)))
+    .set('form', await initForm(state.opportunity, state.affiliations, proposal, state.viewerUser, Form.getActiveTab(state.form)))
     .set('proposal', proposal);
 }
 
@@ -165,7 +167,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(proposalResult) || !api.isValid(affiliationsResult)) { return state; }
           state = state
             .set('isEditing', true)
-            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, Form.getActiveTab(state.form)))
+            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, state.viewerUser, Form.getActiveTab(state.form)))
             .set('proposal', proposalResult.value);
           return state;
         }
@@ -174,7 +176,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return [
         state.set('isEditing', false),
         async state => {
-          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, Form.getActiveTab(state.form)));
+          return state.set('form', await initForm(state.opportunity, state.affiliations, state.proposal, state.viewerUser, Form.getActiveTab(state.form)));
         }
       ];
     case 'saveChanges':
@@ -187,7 +189,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (isInvalid(result)) {
             return state.set('form', result.value);
           }
-          result.value[1].status === CWUProposalStatus.Draft
+          result.value[1].status === CWUProposalStatus.Draft || result.value[1].status === CWUProposalStatus.Withdrawn
             ? dispatch(toast(adt('success', toasts.changesSaved.success)))
             : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
           return (await resetProposal(state, result.value[1]))
@@ -458,11 +460,13 @@ export const component: Tab.Component<State, Msg> = {
     const isValid = () => Form.isValid(state.form);
     const disabled = isLoading(state);
     const isDraft = propStatus === CWUProposalStatus.Draft;
+    const isWithdrawn = propStatus === CWUProposalStatus.Withdrawn;
     const isAcceptingProposals = isCWUOpportunityAcceptingProposals(state.opportunity);
     if (state.isEditing) {
+      const separateSubmitButton = (isDraft || isWithdrawn) && isAcceptingProposals;
       return adt('links', compact([
         // Submit Changes
-        isDraft && isAcceptingProposals
+        separateSubmitButton
           ? {
               children: 'Submit Proposal',
               symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
@@ -475,7 +479,7 @@ export const component: Tab.Component<State, Msg> = {
           : null,
         // Save Changes
         {
-          children: isDraft ? 'Save Changes' : 'Submit Changes',
+          children: separateSubmitButton ? 'Save Changes' : 'Submit Changes',
           disabled: disabled || (() => {
             if (isDraft) {
               // No validation required, always possible to save a draft.
@@ -484,11 +488,11 @@ export const component: Tab.Component<State, Msg> = {
               return !isValid();
             }
           })(),
-          onClick: () => dispatch(isDraft ? adt('saveChanges') : adt('showModal', 'submitChanges' as const)),
+          onClick: () => dispatch(separateSubmitButton ? adt('saveChanges') : adt('showModal', 'submitChanges' as const)),
           button: true,
           loading: isSaveChangesLoading,
-          symbol_: leftPlacement(iconLinkSymbol(isDraft ? 'save' : 'paper-plane')),
-          color: isDraft ? 'success' : 'primary'
+          symbol_: leftPlacement(iconLinkSymbol(separateSubmitButton ? 'save' : 'paper-plane')),
+          color: separateSubmitButton ? 'success' : 'primary'
         },
         // Cancel
         {
@@ -587,13 +591,22 @@ export const component: Tab.Component<State, Msg> = {
         if (isAcceptingProposals) {
           return adt('links', [
             {
-              children: 'Resubmit',
+              children: 'Submit',
               symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
               loading: isSubmitLoading,
               disabled,
               button: true,
               color: 'primary',
               onClick: () => dispatch(adt('showModal', 'submit' as const))
+            },
+            {
+              children: 'Edit',
+              symbol_: leftPlacement(iconLinkSymbol('edit')),
+              button: true,
+              color: 'info',
+              disabled,
+              loading: isStartEditingLoading,
+              onClick: () => dispatch(adt('startEditing'))
             }
           ]);
         } else {

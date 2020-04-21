@@ -1,12 +1,16 @@
 import * as Nav from 'front-end/lib/app/view/nav';
 import { AppMsg, Immutable, PageModal, Toast } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
+import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
+import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
+import * as PageLearnMoreSWU from 'front-end/lib/pages/learn-more/sprint-with-us';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
 import * as PageOpportunityCWUEdit from 'front-end/lib/pages/opportunity/code-with-us/edit';
 import * as PageOpportunityCWUView from 'front-end/lib/pages/opportunity/code-with-us/view';
+import * as PageOpportunityCreate from 'front-end/lib/pages/opportunity/create';
 import * as PageOpportunities from 'front-end/lib/pages/opportunity/list';
 import * as PageOpportunitySWUCreate from 'front-end/lib/pages/opportunity/sprint-with-us/create';
 import * as PageOpportunitySWUEdit from 'front-end/lib/pages/opportunity/sprint-with-us/edit';
@@ -38,7 +42,11 @@ import { ADT } from 'shared/lib/types';
 
 export type Route
   = ADT<'landing',              PageLanding.RouteParams>
+  | ADT<'dashboard',            PageDashboard.RouteParams>
   | ADT<'opportunities',        PageOpportunities.RouteParams>
+  | ADT<'opportunityCreate',    PageOpportunityCreate.RouteParams>
+  | ADT<'learnMoreCWU',         PageLearnMoreCWU.RouteParams>
+  | ADT<'learnMoreSWU',         PageLearnMoreSWU.RouteParams>
   | ADT<'content',              PageContent.RouteParams>
   | ADT<'signOut',              PageSignOut.RouteParams>
   | ADT<'signIn',               PageSignIn.RouteParams>
@@ -73,6 +81,8 @@ export type Route
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
   'signUpStepTwo',
   'content',
+  'learnMoreCWU',
+  'learnMoreSWU',
   'signOut'
 ];
 
@@ -97,7 +107,11 @@ export interface State {
   nav: Immutable<Nav.State>;
   pages: {
     landing?: Immutable<PageLanding.State>;
+    dashboard?: Immutable<PageDashboard.State>;
     opportunities?: Immutable<PageOpportunities.State>;
+    opportunityCreate?: Immutable<PageOpportunityCreate.State>;
+    learnMoreCWU?: Immutable<PageLearnMoreCWU.State>;
+    learnMoreSWU?: Immutable<PageLearnMoreSWU.State>;
     content?: Immutable<PageContent.State>;
     signOut?: Immutable<PageSignOut.State>;
     signUpStepOne?: Immutable<PageSignUpStepOne.State>;
@@ -138,7 +152,11 @@ type InnerMsg
   | ADT<'closeModal'>
   | ADT<'nav',                      Nav.Msg>
   | ADT<'pageLanding',              PageLanding.Msg>
+  | ADT<'pageDashboard',            PageDashboard.Msg>
   | ADT<'pageOpportunities',        PageOpportunities.Msg>
+  | ADT<'pageOpportunityCreate',    PageOpportunityCreate.Msg>
+  | ADT<'pageLearnMoreCWU',         PageLearnMoreCWU.Msg>
+  | ADT<'pageLearnMoreSWU',         PageLearnMoreSWU.Msg>
   | ADT<'pageContent',              PageContent.Msg>
   | ADT<'pageSignIn',               PageSignIn.Msg>
   | ADT<'pageSignOut',              PageSignOut.Msg>

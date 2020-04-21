@@ -91,27 +91,31 @@ $table-hover-bg: $blue-light-alt;
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
 // so we don't need to update the map at all.
-$primary:   $blue;
-$secondary: $gray-600;
-$info:      $blue-dark;
-$warning:   $orange;
-$danger:    $red;
-$success:   $green;
-$body:      $body-color;
-$light:     $gray-100;
-$dark:      $gray-800;
+$primary:      $blue;
+$secondary:    $gray-600;
+$info:         $blue-dark-alt-2;
+$warning:      $orange;
+$danger:       $red;
+$success:      $green;
+$body:         $body-color;
+$light:        $gray-100;
+$dark:         $gray-800;
+$bcgov-blue:   $blue-dark;
+$bcgov-yellow: $yellow;
 
 $theme-colors:   map-merge(
   (
-    'primary':   $primary,
-    'secondary': $secondary,
-    'info':      $info,
-    'warning':   $warning,
-    'danger':    $danger,
-    'success':   $success,
-    'body':      $body,
-    'light':     $light,
-    'dark':      $dark
+    'primary':      $primary,
+    'secondary':    $secondary,
+    'info':         $info,
+    'warning':      $warning,
+    'danger':       $danger,
+    'success':      $success,
+    'body':         $body,
+    'light':        $light,
+    'dark':         $dark,
+    'bcgov-blue':   $bcgov-blue,
+    'bcgov-yellow': $bcgov-yellow
   ),
   $colors
 );
@@ -124,9 +128,9 @@ $font-weight-bold:       500;
 $font-weight-bolder:     700;
 
 $font-size-base: 1rem;
-$h1-font-size:   $font-size-base * 2.25;
+$h1-font-size:   $font-size-base * 2.5;
 
-$input-btn-padding-x:    1rem;
+$input-btn-padding-x:    0.75rem;
 $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
 
@@ -166,7 +170,7 @@ $transition-duration: 240ms;
 }
 
 html {
-  background: $info;
+  background: $bcgov-blue;
 
   @media print {
     background: none;
@@ -249,7 +253,7 @@ nav {
     }
 
     .main-nav-top-navbar {
-      @extend .bg-info;
+      @extend .bg-bcgov-blue;
       @extend .border-bottom-gov;
       width: 100%;
       height: $main-nav-top-height;
@@ -512,11 +516,11 @@ nav.navbar .nav-link:hover {
 }
 
 .border-bottom-gov {
-  border-bottom: 2px solid $yellow;
+  border-bottom: 2px solid $bcgov-yellow;
 }
 
 .border-top-gov {
-  border-top: 2px solid $yellow;
+  border-top: 2px solid $bcgov-yellow;
 }
 
 @each $breakpoint in map-keys($grid-breakpoints) {
