@@ -16,7 +16,7 @@ import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { countWords } from 'shared/lib';
-import { canSWUOpportunityBeScreenedInToCodeChallenge, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamQuestions, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeScreenedInToCodeChallenge, getQuestionByOrder, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamQuestions, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus, SWUProposalTeamQuestionResponse, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
@@ -42,15 +42,6 @@ export type InnerMsg
   | ADT<'scoreMsg', [number, NumberField.Msg]>; //[index, msg]
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
-
-function getQuestionByOrder(opp: SWUOpportunity, order: number): SWUTeamQuestion | null {
-  for (const q of opp.teamQuestions) {
-    if (q.order === order) {
-      return q;
-    }
-  }
-  return null;
-}
 
 async function initScores(opp: SWUOpportunity, prop: SWUProposal): Promise<Array<Immutable<NumberField.State>>> {
   return await Promise.all((prop.teamQuestionResponses || []).map(async (r, i) => {
@@ -243,7 +234,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 className='mt-3'
                 dest={routeDest(adt('proposalSWUExportOne', { opportunityId: state.proposal.opportunity.id, proposalId: state.proposal.id }))}
                 symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
-                Export Team Questions
+                Export Anonymized Team Questions
               </Link>
             </Col>
           </Row>)

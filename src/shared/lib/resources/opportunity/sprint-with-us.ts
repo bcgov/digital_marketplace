@@ -169,6 +169,15 @@ export interface SWUTeamQuestion {
   createdBy?: UserSlim;
 }
 
+export function getQuestionByOrder(opp: SWUOpportunity, order: number): SWUTeamQuestion | null {
+  for (const q of opp.teamQuestions) {
+    if (q.order === order) {
+      return q;
+    }
+  }
+  return null;
+}
+
 export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
 
 export interface SWUOpportunityHistoryRecord {

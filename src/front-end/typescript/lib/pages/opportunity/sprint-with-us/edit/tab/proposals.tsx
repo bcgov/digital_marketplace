@@ -368,7 +368,7 @@ const view: ComponentView<State, Msg> = (props) => {
                   className='mt-3 mt-md-0'
                   symbol_={rightPlacement(iconLinkSymbol('file-export'))}
                   dest={routeDest(adt('proposalSWUExportAll', { opportunityId: opportunity.id }))}>
-                  Export All Team Questions
+                  Export All Anonymized Team Questions
                 </Link>)
               : null}
           </Col>

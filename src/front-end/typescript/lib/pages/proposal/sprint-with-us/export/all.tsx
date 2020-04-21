@@ -3,23 +3,23 @@ import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/code-with-us/lib';
-import ExportedProposal from 'front-end/lib/pages/proposal/code-with-us/lib/views/exported-proposal';
+import { swuOpportunityStatusToColor, swuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
+import ExportedProposal from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/exported-proposal';
 import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
+import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState {
-  opportunity: CWUOpportunity;
-  proposals: CWUProposal[];
+  opportunity: SWUOpportunity;
+  proposals: SWUProposal[];
   viewerUser: User;
   exportedAt: Date;
 }
@@ -36,14 +36,14 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Admin, UserType.Government],
   async success({ routePath, routeParams, shared, dispatch }) {
     const { opportunityId } = routeParams;
-    const oppResult = await api.opportunities.cwu.readOne(opportunityId);
-    const propSlimResult = await api.proposals.cwu.readMany(opportunityId);
+    const oppResult = await api.opportunities.swu.readOne(opportunityId);
+    const propSlimResult = await api.proposals.swu.readMany(opportunityId);
     if (!api.isValid(oppResult) || !api.isValid(propSlimResult)) {
       dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
       return invalid(null);
     }
-    const propResults = await Promise.all(propSlimResult.value.map(({ id }) => api.proposals.cwu.readOne(opportunityId, id)));
-    const proposals: CWUProposal[] = [];
+    const propResults = await Promise.all(propSlimResult.value.map(({ id }) => api.proposals.swu.readOne(opportunityId, id)));
+    const proposals: SWUProposal[] = [];
     for (const proposal of propResults) {
       if (!api.isValid(proposal)) {
         dispatch(replaceRoute(adt('notFound' as const, { path: routePath })));
@@ -79,10 +79,10 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
           <DescriptionList
             items={[
               { name: 'ID', children: opportunity.id },
-              { name: 'Type', children: 'Code With Us' },
+              { name: 'Type', children: 'Sprint With Us' },
               {
                 name: 'Status',
-                children: (<Badge text={cwuOpportunityStatusToTitleCase(opportunity.status)} color={cwuOpportunityStatusToColor(opportunity.status)} />)
+                children: (<Badge text={swuOpportunityStatusToTitleCase(opportunity.status)} color={swuOpportunityStatusToColor(opportunity.status)} />)
               },
               { name: 'Exported By', children: state.viewerUser.name },
               { name: 'Exported On', children: formatDateAndTime(state.exportedAt) }
@@ -92,8 +92,9 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
       </Row>
       {proposals.map((p, i) => (
         <ExportedProposal
-          key={`cwu-proposal-export-${i}`}
+          key={`swu-proposal-export-${i}`}
           className='mt-5 pt-5 border-top'
+          opportunity={opportunity}
           proposal={p} />
       ))}
     </div>
@@ -105,8 +106,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata: getMetadataValid(state => {
-    return makePageMetadata(`${state.opportunity.title} ${TITLE_SEPARATOR} Exported Code With Us Proposals`);
-  }, makePageMetadata('Exported Code With Us Proposals')),
+    return makePageMetadata(`${state.opportunity.title} ${TITLE_SEPARATOR} Exported Sprint With Us Proposals`);
+  }, makePageMetadata('Exported Sprint With Us Proposals')),
   getContextualActions({ state, dispatch }) {
     return adt('links', [
       {
