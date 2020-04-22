@@ -492,6 +492,52 @@ const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs='12'>
         <Markdown openLinksInNewTabs source={state.evaluationContent} />
       </Col>
+      <Col xs='12'>
+        <h4 className='mt-5 mb-3'>Scoring Table</h4>
+        <div className='table-responsive'>
+          <table className='table-hover'>
+            <thead>
+              <tr>
+                <th>Evaluation Criteria</th>
+                <th>Weightings</th>
+                <th>Minimum Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Step 1: Team Questions</td>
+                <td>{state.opportunity.questionsWeight}%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>Step 2: Shortlisting</td>
+                <td>{EMPTY_STRING}</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>Step 3: Code Challenge</td>
+                <td>{state.opportunity.codeChallengeWeight}%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>Step 4: Team Scenario</td>
+                <td>{state.opportunity.scenarioWeight}%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>Step 5: Price</td>
+                <td>{state.opportunity.priceWeight}%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td><strong>TOTAL</strong></td>
+                <td>100%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Col>
     </Row>
   );
 };
