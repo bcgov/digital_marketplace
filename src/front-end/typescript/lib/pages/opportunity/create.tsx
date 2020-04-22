@@ -55,10 +55,10 @@ interface CardProps {
 const Card: View<CardProps> = ({ img, title, description, guide, getStarted, className }) => {
   return (
     <Col xs='12' md='6' className={className}>
-      <div className='d-flex flex-column align-items-center bg-white rounded-lg border p-4 p-md-5 text-center h-100'>
+      <div className='d-flex flex-column align-items-center bg-white rounded-lg border p-4 p-sm-5 text-center h-100'>
         <img src={img} className='w-100' style={{ maxHeight: '200px' }} alt={`${title} Image`} />
         <h1 className='my-4'>{title}</h1>
-        <p className='mb-4 mb-md-5'>{description}</p>
+        <p className='mb-4 mb-sm-5'>{description}</p>
         <Link
           button
           outline
