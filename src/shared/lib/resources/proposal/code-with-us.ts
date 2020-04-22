@@ -50,7 +50,7 @@ export interface CWUProposal {
   id: Id;
   createdBy: UserSlim;
   createdAt: Date;
-  updatedBy: UserSlim;
+  updatedBy?: UserSlim;
   updatedAt: Date;
   submittedAt?: Date;
   opportunity: CWUOpportunitySlim;

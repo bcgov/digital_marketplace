@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { readOneCWUOpportunitySlim, updateCWUOpportunityStatus } from 'back-end/lib/db/opportunity/code-with-us';
+import { generateCWUOpportunityQuery, readOneCWUOpportunitySlim, updateCWUOpportunityStatus } from 'back-end/lib/db/opportunity/code-with-us';
 import { readOneOrganization } from 'back-end/lib/db/organization';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { readCWUProposalHistory, readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
@@ -91,11 +91,11 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
         } = raw;
 
   const createdBy = getValidValue(await readOneUserSlim(connection, createdById), undefined);
-  const updatedBy = getValidValue(await readOneUserSlim(connection, updatedById), undefined);
+  const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
   const proponentIndividual = proponentIndividualId ? getValidValue(await readOneCWUProponent(connection, proponentIndividualId), undefined) : null;
   const proponentOrganization = proponentOrganizationId ? getValidValue(await readOneOrganization(connection, proponentOrganizationId), undefined) : null;
 
-  if (!createdBy || !updatedBy) {
+  if (!createdBy) {
     throw new Error('unable to process proposal');
   }
 
@@ -111,7 +111,7 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
   return {
     ...restOfRaw,
     createdBy,
-    updatedBy,
+    updatedBy: updatedBy || undefined,
     proponent
   };
 }
@@ -158,11 +158,11 @@ async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection:
 
 export async function hasAttachmentPermission(connection: Connection, session: Session, id: string): Promise<boolean> {
   // If file is an attachment on a publicly viewable opportunity, allow
-  const results = await connection('cwuOpportunityAttachments as attachments')
-    .innerJoin('cwuOpportunityVersions as versions', 'versions.id', '=', 'attachments.opportunityVersion')
-    .innerJoin('cwuOpportunityStatuses as statuses', 'statuses.opportunity', '=' , 'versions.opportunity')
-    .whereIn('statuses.status', publicOpportunityStatuses as CWUOpportunityStatus[])
+  const results = await generateCWUOpportunityQuery(connection)
+    .join('cwuOpportunityAttachments as attachments', 'versions.id', '=', 'attachments.opportunityVersion')
+    .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
     .andWhere({ 'attachments.file': id })
+    .clearSelect()
     .select('attachments.*');
 
   if (results.length > 0) {
@@ -218,11 +218,9 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
 
       // Add rank to proposal (if rankable)
       if (isRankableCWUProposalStatus(result.status)) {
-        const ranks = await connection
-          .from('cwuProposals as proposals')
-          .join('cwuProposalStatuses as statuses', 'proposals.id', '=', 'statuses.proposal')
+        const ranks = await generateCWUProposalQuery(connection)
           .whereIn('statuses.status', [CWUProposalStatus.Evaluated, CWUProposalStatus.Awarded, CWUProposalStatus.NotAwarded])
-          .andWhere({ opportunity: result.opportunity })
+          .andWhere({ 'proposals.opportunity': result.opportunity })
           .select<Array<{ id: Id, rank: number }>>(connection.raw('proposals.id, RANK () OVER (ORDER BY score DESC) rank'));
         result.rank = ranks.find(r => r.id === result.id)?.rank;
       }
@@ -246,8 +244,8 @@ function generateCWUProposalQuery(connection: Connection, full = false) {
       'proposals.id',
       'proposals.createdBy',
       'proposals.createdAt',
-      'updatedBy',
-      'updatedAt',
+      connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
+      connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'proponentIndividual',
       'proponentOrganization',
       'statuses.status'
