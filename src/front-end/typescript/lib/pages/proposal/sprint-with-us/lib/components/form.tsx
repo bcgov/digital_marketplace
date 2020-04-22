@@ -531,7 +531,7 @@ const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
               </tr>
               <tr>
                 <td><strong>TOTAL</strong></td>
-                <td>100%</td>
+                <td><strong>100%</strong></td>
                 <td>{EMPTY_STRING}</td>
               </tr>
             </tbody>
