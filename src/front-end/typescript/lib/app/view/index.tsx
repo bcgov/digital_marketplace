@@ -1,4 +1,5 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
+import { prefixPath } from 'front-end/lib';
 import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
@@ -585,7 +586,7 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     state: state.nav,
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
-    logoImageUrl: '/images/bcgov_logo.svg',
+    logoImageUrl: prefixPath('/images/bcgov_logo.svg'),
     title: 'Digital Marketplace',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
