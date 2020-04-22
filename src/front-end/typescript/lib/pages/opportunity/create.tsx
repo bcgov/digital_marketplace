@@ -83,7 +83,7 @@ const view: ComponentView<State, Msg> = () => {
   return (
     <Row>
       <Card
-        className='mb-4'
+        className='mb-4 mb-md-0'
         img={prefixPath('/images/illustrations/code_with_us.svg')}
         title='Code With Us'
         description={(<span>Use a <em>Code With Us</em> opportunity to pay a fixed price of up to $70,000 for the delivery of code that meets your acceptance criteria.</span>)}
@@ -100,7 +100,7 @@ const view: ComponentView<State, Msg> = () => {
 };
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
-  backgroundColor: 'blue-light',
+  backgroundColor: 'blue-light-alt-2',
   verticallyCentered: true,
   init,
   update,

@@ -42,37 +42,39 @@ $gray-800: #343a40;
 $gray-900: #25292F;
 
 // Colors.
-$white:           #ffffff;
-$black:           #000000;
-$blue:            #0C99D6;
-$blue-alt:        #17A2B8;
-$blue-dark:       #003366;
-$blue-dark-alt:   #38598A;
-$blue-dark-alt-2: #0F4C8B;
-$blue-light:      #E7EDF3;
-$blue-light-alt:  #E9F5FB;
-$purple:          #52489C;
-$purple-light:    lighten($purple, 20);
-$yellow:          #FCBA19;
-$red:             #DC3545;
-$green:           #2E8540;
-$orange:          #FD7E14;
+$white:            #ffffff;
+$black:            #000000;
+$blue:             #0C99D6;
+$blue-alt:         #17A2B8;
+$blue-dark:        #003366;
+$blue-dark-alt:    #38598A;
+$blue-dark-alt-2:  #0F4C8B;
+$blue-light:       #E7EDF3;
+$blue-light-alt:   #E9F5FB;
+$blue-light-alt-2: #F4FAFD;
+$purple:           #52489C;
+$purple-light:     lighten($purple, 20);
+$yellow:           #FCBA19;
+$red:              #DC3545;
+$green:            #2E8540;
+$orange:           #FD7E14;
 
-$colors:             (
-  'white':           $white,
-  'black':           $black,
-  'blue':            $blue,
-  'blue-alt':        $blue-alt,
-  'blue-dark':       $blue-dark,
-  'blue-dark-alt':   $blue-dark-alt,
-  'blue-dark-alt-2': $blue-dark-alt-2,
-  'blue-light':      $blue-light,
-  'blue-light-alt':  $blue-light-alt,
-  'purple':          $purple,
-  'purple-light':    $purple-light,
-  'yellow':          $yellow,
-  'red':             $red,
-  'green':           $green
+$colors: (
+  'white':            $white,
+  'black':            $black,
+  'blue':             $blue,
+  'blue-alt':         $blue-alt,
+  'blue-dark':        $blue-dark,
+  'blue-dark-alt':    $blue-dark-alt,
+  'blue-dark-alt-2':  $blue-dark-alt-2,
+  'blue-light':       $blue-light,
+  'blue-light-alt':   $blue-light-alt,
+  'blue-light-alt-2': $blue-light-alt-2,
+  'purple':           $purple,
+  'purple-light':     $purple-light,
+  'yellow':           $yellow,
+  'red':              $red,
+  'green':            $green
 );
 
 // Utility colors.

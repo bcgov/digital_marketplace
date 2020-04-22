@@ -18,6 +18,8 @@ export type Color
   | 'blue-dark-alt'
   | 'blue-dark-alt-2'
   | 'blue-light'
+  | 'blue-light-alt'
+  | 'blue-light-alt-2'
   | 'white'
   | 'purple'
   | 'purple-light'
