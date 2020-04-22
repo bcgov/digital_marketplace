@@ -55,7 +55,7 @@ interface SWUOpportunityStatusRecord {
   note: string;
 }
 
-interface RawSWUOpportunity extends Omit<SWUOpportunity, 'createdBy' | 'updatedBy' | 'attachments' | 'addenda' | 'teamQuestions' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'> {
+export interface RawSWUOpportunity extends Omit<SWUOpportunity, 'createdBy' | 'updatedBy' | 'attachments' | 'addenda' | 'teamQuestions' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'> {
   createdBy?: Id;
   updatedBy?: Id;
   attachments: Id[];
@@ -147,6 +147,7 @@ async function rawSWUOpportunitySlimToSWUOpportunitySlim(connection: Connection,
   const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
   const createdBy = createdById && getValidValue(await readOneUserSlim(connection, createdById), undefined) || undefined;
   const updatedBy = updatedById && getValidValue(await readOneUserSlim(connection, updatedById), undefined) || undefined;
+
   return {
     ...restOfRaw,
     createdBy,
@@ -228,8 +229,8 @@ async function rawHistoryRecordToHistoryRecord(connection: Connection, session: 
   };
 }
 
-export function generateSWUOpportunityQuery(connection: Connection) {
-  return connection<RawSWUOpportunity>('swuOpportunities as opportunities')
+export function generateSWUOpportunityQuery(connection: Connection, full = false) {
+  const query = connection<RawSWUOpportunity>('swuOpportunities as opportunities')
     // Join on latest SWU status
     .join('swuOpportunityStatuses as statuses', function() {
       this
@@ -246,14 +247,20 @@ export function generateSWUOpportunityQuery(connection: Connection) {
           connection.raw('(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
             versions2.opportunity = opportunities.id)'));
     })
-    .select<RawSWUOpportunity[]>(
+    .select<RawSWUOpportunitySlim[]>(
       'opportunities.id',
       'opportunities.createdAt',
       'opportunities.createdBy',
       'versions.id as versionId',
-      'versions.createdAt as updatedAt',
-      'versions.createdBy as updatedBy',
+      connection.raw('(CASE WHEN versions."createdAt" > statuses."createdAt" THEN versions."createdAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
+      connection.raw('(CASE WHEN versions."createdAt" > statuses."createdAt" THEN versions."createdBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'versions.title',
+      'versions.proposalDeadline',
+      'statuses.status'
+    );
+
+  if (full) {
+    query.select<RawSWUOpportunity[]>(
       'versions.teaser',
       'versions.remoteOk',
       'versions.remoteDesc',
@@ -263,14 +270,15 @@ export function generateSWUOpportunityQuery(connection: Connection) {
       'versions.mandatorySkills',
       'versions.optionalSkills',
       'versions.description',
-      'versions.proposalDeadline',
       'versions.assignmentDate',
       'versions.questionsWeight',
       'versions.codeChallengeWeight',
       'versions.scenarioWeight',
-      'versions.priceWeight',
-      'statuses.status'
+      'versions.priceWeight'
     );
+  }
+
+  return query;
 }
 
 export async function isSWUOpportunityAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
@@ -319,18 +327,7 @@ export const readManyTeamQuestions = tryDb<[Id], SWUTeamQuestion[]>(async (conne
 });
 
 export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(async (connection, session) => {
-  let query = generateSWUOpportunityQuery(connection)
-    .clearSelect()
-    .select(
-      'opportunities.id',
-      'versions.title',
-      'opportunities.createdBy',
-      'opportunities.createdAt',
-      'versions.createdAt as updatedAt',
-      'versions.createdBy as updatedBy',
-      'versions.proposalDeadline',
-      'statuses.status'
-    );
+  let query = generateSWUOpportunityQuery(connection);
 
   if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
@@ -349,6 +346,7 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(a
   // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
   // Process results to eliminate fields not viewable by the current role
   const results = (await query).map(result => processForRole(result, session));
+
   return valid(await Promise.all(results.map(async raw => await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw))));
 });
 
@@ -378,7 +376,7 @@ async function createSWUOpportunityAttachments(connection: Connection, trx: Tran
   }
 }
 
-function processForRole<T extends RawSWUOpportunity>(result: T, session: Session) {
+function processForRole<T extends RawSWUOpportunity | RawSWUOpportunitySlim>(result: T, session: Session) {
   // Remove createdBy/updatedBy for non-admin or non-author
   if (!session || (session.user.type !== UserType.Admin &&
     session.user.id !== result.createdBy &&
@@ -390,41 +388,15 @@ function processForRole<T extends RawSWUOpportunity>(result: T, session: Session
 }
 
 export const readOneSWUOpportunitySlim = tryDb<[Id, Session], SWUOpportunitySlim | null>(async (connection, id, session) => {
-  const result = await connection<RawSWUOpportunitySlim>('swuOpportunities as opp')
-    .where({ 'opp.id': id })
-    // Join on latest SWU status
-    .join<RawSWUOpportunitySlim>('swuOpportunityStatuses as stat', function() {
-      this
-        .on('opp.id', '=', 'stat.opportunity')
-        .andOn('stat.createdAt', '=',
-          connection.raw('(select max("createdAt") from "swuOpportunityStatuses" as stat2 where \
-            stat2.opportunity = opp.id and stat2.status is not null)'));
-    })
-    // Join on latest SWU version
-    .join<RawSWUOpportunitySlim>('swuOpportunityVersions as version', function() {
-      this
-        .on('opp.id', '=', 'version.opportunity')
-        .andOn('version.createdAt', '=',
-          connection.raw('(select max("createdAt") from "swuOpportunityVersions" as version2 where \
-            version2.opportunity = opp.id)'));
-    })
-    .select(
-      'opp.id',
-      'opp.createdAt',
-      'opp.createdBy',
-      'version.createdAt as updatedAt',
-      'version.createdBy as updatedBy',
-      'version.title',
-      'version.proposalDeadline',
-      'stat.status'
-    )
+  const result = await generateSWUOpportunityQuery(connection)
+    .where({ 'opportunities.id': id })
     .first();
 
   return result ? valid(await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, result)) : valid(null);
 });
 
 export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>(async (connection, id, session) => {
-  let query = generateSWUOpportunityQuery(connection)
+  let query = generateSWUOpportunityQuery(connection, true)
     .where({ 'opportunities.id': id });
 
   if (!session || session.user.type === UserType.Vendor) {
@@ -802,9 +774,9 @@ export const deleteSWUOpportunity = tryDb<[Id, Session], SWUOpportunity>(async (
 export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
-    const lapsedOpportunities = await generateSWUOpportunityQuery(trx)
+    const lapsedOpportunities = await generateSWUOpportunityQuery(trx, true)
       .where({ status: SWUOpportunityStatus.Published })
-      .andWhere('versions.proposalDeadline', '<=', now);
+      .andWhere('versions.proposalDeadline', '<=', now) as RawSWUOpportunity[];
 
     for (const lapsedOpportunity of lapsedOpportunities) {
       // Set the opportunity to EVAL_TEAM_QUESTIONS status
