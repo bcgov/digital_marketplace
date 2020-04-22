@@ -7,7 +7,7 @@ import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapCompo
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/form';
 import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
-import EditTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/edit-tab-header';
+import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
@@ -190,7 +190,7 @@ const view: ComponentView<State, Msg> = viewValid(props => {
   const show = hasSWUOpportunityPassedCodeChallenge(state.opportunity);
   return (
     <div>
-      <EditTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
+      <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
       {show ? (<Reporting {...props} />) : null}
       <Row className='mt-5'>
         <Col xs='12'>
