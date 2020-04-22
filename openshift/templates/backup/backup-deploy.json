@@ -192,7 +192,7 @@
                   },
                   {
                     "name": "DATABASE_USER",
-                    "value": "digmkt"
+                    "value": "digmktuser"
                   },
                   {
                     "name": "DATABASE_PASSWORD",
