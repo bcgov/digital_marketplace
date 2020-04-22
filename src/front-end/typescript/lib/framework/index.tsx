@@ -171,22 +171,30 @@ export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: Update
   state = state.setIn(childStatePath, newChildState);
   let newAsyncUpdateAfterState: UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>>[1];
   if (updateAfter) {
-    [state, newAsyncUpdateAfterState] = updateAfter(state);
+    const result = updateAfter(state);
+    state = result[0];
+    newAsyncUpdateAfterState = result[1];
   }
   let asyncStateUpdate: UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>>[1];
   if (newAsyncChildState) {
     asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<GlobalComponentMsg<PM, Route>>) => {
       const mappedDispatch = mapGlobalComponentDispatch(dispatch, mapChildMsg);
-      const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
-      if (!newChildState) { return null; }
-      state = state.setIn(childStatePath, newChildState);
-      if (newAsyncUpdateAfterState) {
-        const result = await newAsyncUpdateAfterState(state, dispatch);
-        if (result !== null) {
-          state = result;
+      let updated = false;
+      if (newAsyncChildState) {
+        const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
+        if (newChildState) {
+          state = state.setIn(childStatePath, newChildState);
+          updated = true;
         }
       }
-      return state;
+      if (newAsyncUpdateAfterState) {
+        const newState = await newAsyncUpdateAfterState(state, dispatch);
+        if (newState !== null) {
+          state = newState;
+          updated = true;
+        }
+      }
+      return updated ? state : null;
     };
   }
   return [
@@ -398,7 +406,7 @@ export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams,
   const childModal = params.childGetModal
     ? params.childGetModal(childState)
     : null;
-  const parentModal = mapPageModalMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<ParentMsg, Route>);
+  const parentModal = mapPageModalGlobalComponentMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<ParentMsg, Route>);
   const parentState = params.state.setIn(params.childStatePath, childState);
   return params.setModal(parentState, parentModal);
 }
@@ -420,22 +428,30 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
   state = state.setIn(childStatePath, newChildState);
   let newAsyncUpdateAfterState: UpdateReturnValue<PS, AppMsg<PM, Route>>[1];
   if (updateAfter) {
-    [state, newAsyncUpdateAfterState] = updateAfter(state);
+    const result = updateAfter(state);
+    state = result[0];
+    newAsyncUpdateAfterState = result[1];
   }
   let asyncStateUpdate: UpdateReturnValue<PS, AppMsg<PM, Route>>[1];
   if (newAsyncChildState) {
     asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
       const mappedDispatch = mapAppDispatch(dispatch, mapChildMsg);
-      const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
-      if (!newChildState) { return null; }
-      state = state.setIn(childStatePath, newChildState);
-      if (newAsyncUpdateAfterState) {
-        const result = await newAsyncUpdateAfterState(state, dispatch);
-        if (result !== null) {
-          state = result;
+      let updated = false;
+      if (newAsyncChildState) {
+        const newChildState = await newAsyncChildState(state.getIn(childStatePath), mappedDispatch);
+        if (newChildState) {
+          state = state.setIn(childStatePath, newChildState);
+          updated = true;
         }
       }
-      return state;
+      if (newAsyncUpdateAfterState) {
+        const newState = await newAsyncUpdateAfterState(state, dispatch);
+        if (newState !== null) {
+          state = newState;
+          updated = true;
+        }
+      }
+      return updated ? state : null;
     };
   }
   return [
@@ -467,7 +483,7 @@ export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPag
     const childModal = params.childGetModal
       ? params.childGetModal(pageState)
       : null;
-    const parentModal = mapPageModalMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<PM, Route>);
+    const parentModal = mapPageModalGlobalComponentMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<PM, Route>);
     return params.setModal(parentState, parentModal);
   };
   setMetadata(newState);

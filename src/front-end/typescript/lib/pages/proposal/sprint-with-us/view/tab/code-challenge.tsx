@@ -11,7 +11,7 @@ import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { canSWUOpportunityBeScreenedInToTeamScenario, hasSWUOpportunityPassedTeamScenario } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeScreenedInToTeamScenario, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamScenario } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
@@ -264,6 +264,7 @@ export const component: Tab.Component<State, Msg> = {
   },
 
   getContextualActions: ({ state, dispatch }) => {
+    if (!hasSWUOpportunityPassedCodeChallenge(state.opportunity)) { return null; }
     const proposal = state.proposal;
     const propStatus = proposal.status;
     const isScreenToFromLoading = state.screenToFromLoading > 0;

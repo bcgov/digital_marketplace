@@ -755,8 +755,8 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
       <Col md='8' xs='12'>
         <NumberField.view
           extraChildProps={{ prefix: '$' }}
-          label='Fixed-Price Reward'
-          placeholder='Fixed-Price Reward'
+          label='Fixed-Price Award'
+          placeholder='Fixed-Price Award'
           required
           disabled={disabled}
           state={state.reward}
