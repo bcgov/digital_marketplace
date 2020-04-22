@@ -12,6 +12,7 @@ global.gruntConfig = {
   },
   src: {
     "static": `${src}/static`,
+    "html": `${src}/html`,
     sass: `${src}/sass`,
     ts: `${src}/typescript`,
     tsShared: `src/shared`
@@ -23,8 +24,7 @@ global.gruntConfig = {
   },
   out: {
     css: `${build}/app.css`,
-    js: `${build}/app.js`,
-    html: `${build}/`
+    js: `${build}/app.js`
   }
 };
 
@@ -45,6 +45,7 @@ module.exports = function (grunt) {
   grunt.registerTask("common", [
     "clean",
     "copy",
+    "ejs",
     "sass",
     "postcss:prefix",
     "shell:typescript",
