@@ -19,7 +19,7 @@
                 "NODE_ENV": "development",
                 "SERVER_HOST": "0.0.0.0",
                 "SERVER_PORT": "3000",
-                "DATABASE_SERVICE_NAME": "postgresql-dig-mkt-dev",
+                "DATABASE_SERVICE_NAME": "patroni-digmkt-master",
                 "COOKIE_SECRET": "changeme",
                 "ORIGIN": "${NAME}-${TAG_NAME}.pathfinder.gov.bc.ca",
                 "KEYCLOAK_CLIENT_ID": "dm-auth-web",
@@ -29,7 +29,9 @@
                 "CONTACT_EMAIL": "UNKNOWN",
                 "SCHEDULED_DOWNTIME": "0",
                 "BASIC_AUTH_PASSWORD_HASH": "",
-                "BASIC_AUTH_USERNAME": ""
+                "BASIC_AUTH_USERNAME": "",
+                "MAILER_HOST": "apps.smtp.gov.bc.ca",
+                "MAILER_PORT": 25
             }
         },
         {
@@ -101,174 +103,24 @@
                                 ],
                                 "env": [
                                     {
-                                        "name": "DATABASE_USERNAME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_USER"
-                                            }
-                                        }
-                                    },
-                                    {
                                         "name": "DATABASE_PASSWORD",
                                         "valueFrom": {
                                             "secretKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-secret",
-                                                "key": "DATABASE_PASSWORD"
+                                                "key": "digmkt-user-password",
+                                                "name": "patroni-digmkt"
                                             }
+                                        }
+                                    }
+                                ],
+                                "envFrom": [
+                                    {
+                                        "configMapRef": {
+                                            "name": "${NAME}-${TAG_NAME}-config"
                                         }
                                     },
                                     {
-                                        "name": "DATABASE_NAME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_NAME"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_HOST",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_HOST"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_PORT",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${DATABASE_NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_PORT"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "KEYCLOAK_URL",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "KEYCLOAK_URL"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "KEYCLOAK_REALM",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "KEYCLOAK_REALM"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "KEYCLOAK_CLIENT_ID",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "KEYCLOAK_CLIENT_ID"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "KEYCLOAK_CLIENT_SECRET",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "KEYCLOAK_CLIENT_SECRET"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "NODE_ENV",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "NODE_ENV"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "ORIGIN",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "ORIGIN"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "SERVER_HOST",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "SERVER_HOST"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "SERVER_PORT",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "SERVER_PORT"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "DATABASE_SERVICE_NAME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "DATABASE_SERVICE_NAME"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "COOKIE_SECRET",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "COOKIE_SECRET"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "CONTACT_EMAIL",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "CONTACT_EMAIL"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "SCHEDULED_DOWNTIME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "SCHEDULED_DOWNTIME"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "BASIC_AUTH_PASSWORD_HASH",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "BASIC_AUTH_PASSWORD_HASH"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "BASIC_AUTH_USERNAME",
-                                        "valueFrom": {
-                                            "configMapKeyRef": {
-                                                "name": "${NAME}-${TAG_NAME}-config",
-                                                "key": "BASIC_AUTH_USERNAME"
-                                            }
+                                        "configMapRef": {
+                                            "name": "patroni-digmkt-postgres-config"
                                         }
                                     }
                                 ],
@@ -426,28 +278,28 @@
             "displayName": "Database App Name",
             "description": "A valid database app name used by the service.",
             "required": true,
-            "value": "postgresql-dig-mkt"
+            "value": "patroni-digmkt-master"
         },
         {
             "name": "CPU_REQUEST",
             "displayName": "Resources CPU Request",
             "description": "The resources CPU request (in cores) for this build.",
             "required": true,
-            "value": "100m"
+            "value": "500m"
         },
         {
             "name": "CPU_LIMIT",
             "displayName": "Resources CPU Limit",
             "description": "The resources CPU limit (in cores) for this build.",
             "required": true,
-            "value": "750m"
+            "value": "1500m"
         },
         {
             "name": "MEMORY_REQUEST",
             "displayName": "Resources Memory Request",
             "description": "The resources Memory request (in Mi, Gi, etc) for this build.",
             "required": true,
-            "value": "100Mi"
+            "value": "512Mi"
         },
         {
             "name": "MEMORY_LIMIT",

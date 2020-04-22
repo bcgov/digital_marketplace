@@ -129,7 +129,9 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     sidebar,
     getBreadcrumbs = emptyPageBreadcrumbs,
     getAlerts = emptyPageAlerts,
-    fullWidth = false
+    fullWidth = false,
+    backgroundColor = 'white',
+    verticallyCentered = false
   } = component;
   const dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>> = mapAppDispatch(dispatch, mapPageMsg);
   const viewProps = {
@@ -141,12 +143,13 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     alerts: getAlerts(pageState),
     breadcrumbs: getBreadcrumbs(pageState)
   };
+  const backgroundClassName = `bg-${backgroundColor}`;
   // Handle full width pages.
   if (fullWidth) {
     // Do not show sidebar on fullWidth pages.
     // No sidebar.
     return (
-      <div className='d-flex flex-column flex-grow-1 page-container'>
+      <div className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
         <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container className='pt-6' />
         <component.view {...viewProps} />
       </div>
@@ -164,7 +167,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
       return (
         <div className='d-flex flex-column flex-grow-1 page-container'>
           <div className='d-flex flex-column flex-grow-1'>
-            <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
+            <Container className={`position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch ${backgroundClassName}`}>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1'>
                 <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-4 pr-lg-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 ${isEmptyOnMobile ? 'pb-md-6' : 'pb-5'}`}>
@@ -183,8 +186,8 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     } else {
       // No sidebar.
       return (
-        <div className='d-flex flex-column flex-grow-1 page-container'>
-          <Container className='pt-4 pt-md-6 pb-6'>
+        <div className={`d-flex flex-column flex-grow-1 page-container ${verticallyCentered ? 'justify-content-center' : ''} ${backgroundClassName}`}>
+          <Container className={`pt-4 pt-md-6 pb-6 ${verticallyCentered ? '' : 'flex-grow-1'}`}>
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>

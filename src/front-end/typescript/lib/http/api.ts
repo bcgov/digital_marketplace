@@ -1,6 +1,7 @@
+import { prefixPath } from 'front-end/lib';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
-import { compareDates } from 'shared/lib';
+import { compareDates, prefix } from 'shared/lib';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
@@ -17,9 +18,7 @@ import { adt, ClientHttpMethod, Id } from 'shared/lib/types';
 
 export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
-const deslash = (s: string) => s.replace(/^\/*/, '').replace(/\/*$/, '');
-const prefix = (a: string) => (b: string) => `/${deslash(a)}/${deslash(b)}`;
-const apiNamespace = prefix('api');
+const apiNamespace = prefix(prefixPath('api'));
 
 // Markdown files.
 
@@ -32,7 +31,7 @@ interface GetMarkdownFileActionTypes {
 
 export const getMarkdownFile = (id: string) => makeRequest<GetMarkdownFileActionTypes>({
   method: ClientHttpMethod.Get,
-  url: `/markdown/${id}.md`,
+  url: prefixPath(`/markdown/${id}.md`),
   body: undefined
 });
 

@@ -22,11 +22,11 @@ import { ADT, adt, Id } from 'shared/lib/types';
 type ModalId
   = ADT<'screenInToCodeChallenge', Id>
   | ADT<'screenOutOfCodeChallenge', Id>
-  | ADT<'startCodeChallenge'>;
+  | ADT<'completeTeamQuestions'>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
-  startCodeChallengeLoading: number;
+  completeTeamQuestionsLoading: number;
   screenToFromLoading: Id | null;
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
@@ -40,7 +40,7 @@ export type InnerMsg
   | ADT<'hideModal'>
   | ADT<'screenInToCodeChallenge', Id>
   | ADT<'screenOutOfCodeChallenge', Id>
-  | ADT<'startCodeChallenge'>;
+  | ADT<'completeTeamQuestions'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -81,7 +81,7 @@ const init: Init<Tab.Params, State> = async params => {
     false as boolean
   );
   return {
-    startCodeChallengeLoading: 0,
+    completeTeamQuestionsLoading: 0,
     screenToFromLoading: null,
     showModal: null,
     canViewProposals,
@@ -94,20 +94,20 @@ const init: Init<Tab.Params, State> = async params => {
   };
 };
 
-const startStartCodeChallengeLoading = makeStartLoading<State>('startCodeChallengeLoading');
-const stopStartCodeChallengeLoading = makeStopLoading<State>('startCodeChallengeLoading');
+const startCompleteTeamQuestionsLoading = makeStartLoading<State>('completeTeamQuestionsLoading');
+const stopCompleteTeamQuestionsLoading = makeStopLoading<State>('completeTeamQuestionsLoading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'startCodeChallenge':
+    case 'completeTeamQuestions':
       state = state.set('showModal', null);
       return [
-        startStartCodeChallengeLoading(state),
+        startCompleteTeamQuestionsLoading(state),
         async (state, dispatch) => {
           const result = await api.opportunities.swu.update(state.opportunity.id, adt('startCodeChallenge', ''));
           if (!api.isValid(result)) {
             dispatch(toast(adt('error', opportunityToasts.statusChanged.error(SWUOpportunityStatus.EvaluationCodeChallenge))));
-            return stopStartCodeChallengeLoading(state);
+            return stopCompleteTeamQuestionsLoading(state);
           }
           dispatch(toast(adt('success', opportunityToasts.statusChanged.success(SWUOpportunityStatus.EvaluationCodeChallenge))));
           dispatch(newRoute(adt('opportunitySWUEdit', {
@@ -277,9 +277,9 @@ const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabl
 };
 
 function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg>): Table.BodyRows  {
-  const isStartCodeChallengeLoading = state.startCodeChallengeLoading > 0;
+  const isCompleteTeamQuestionsLoading = state.completeTeamQuestionsLoading > 0;
   const isScreenToFromLoading = !!state.screenToFromLoading;
-  const isLoading = isStartCodeChallengeLoading || isScreenToFromLoading;
+  const isLoading = isCompleteTeamQuestionsLoading || isScreenToFromLoading;
   return state.proposals.map(p => {
     const isProposalLoading = state.screenToFromLoading === p.id;
     return [
@@ -390,22 +390,22 @@ export const component: Tab.Component<State, Msg> = {
 
   getContextualActions: ({ state, dispatch }) => {
     if (!state.canViewProposals || !state.canProposalsBeScreened) { return null; }
-    const isStartCodeChallengeLoading = state.startCodeChallengeLoading > 0;
+    const isCompleteTeamQuestionsLoading = state.completeTeamQuestionsLoading > 0;
     const isScreenToFromLoading = !!state.screenToFromLoading;
-    const isLoading = isStartCodeChallengeLoading || isScreenToFromLoading;
+    const isLoading = isCompleteTeamQuestionsLoading || isScreenToFromLoading;
     return adt('links', [{
-      children: 'Begin Code Challenge',
-      symbol_: leftPlacement(iconLinkSymbol('code')),
+      children: 'Complete Team Questions',
+      symbol_: leftPlacement(iconLinkSymbol('comments')),
       color: 'primary',
       button: true,
-      loading: isStartCodeChallengeLoading,
+      loading: isCompleteTeamQuestionsLoading,
       disabled: (() => {
         // At least one proposal already screened in.
         return isLoading
             || !(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
             && state.proposals.reduce((acc, p) => acc || p.status === SWUProposalStatus.UnderReviewCodeChallenge, false as boolean));
       })(),
-      onClick: () => dispatch(adt('showModal', adt('startCodeChallenge')) as Msg)
+      onClick: () => dispatch(adt('showModal', adt('completeTeamQuestions')) as Msg)
     }]);
   },
 
@@ -452,17 +452,17 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () => 'Are you sure you want to screen this proponent out of the Code Challenge?'
         };
-      case 'startCodeChallenge':
+      case 'completeTeamQuestions':
         return {
-          title: 'Begin Code Challenge?',
+          title: 'Complete Team Questions?',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
-              text: 'Begin Code Challenge',
-              icon: 'code',
+              text: 'Complete Team Questions',
+              icon: 'comments',
               color: 'primary',
               button: true,
-              msg: adt('startCodeChallenge')
+              msg: adt('completeTeamQuestions')
             },
             {
               text: 'Cancel',
@@ -470,7 +470,7 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt('hideModal')
             }
           ],
-          body: () => 'Are you sure you want to begin the Code Challenge? You will no longer be able to screen proponents in or out of the Code Challenge.'
+          body: () => 'Are you sure you want to complete the evaluation of this opportunity\'s Team Questions? You will no longer be able to screen proponents in or out of the Code Challenge.'
         };
     }
   }

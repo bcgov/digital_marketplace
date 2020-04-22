@@ -7,7 +7,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUOpportunitySlim, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
 import { SWUOpportunitySlim } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { isAdmin, User } from 'shared/lib/resources/user';
+import { isAdmin, isVendor, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -86,27 +86,16 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getMetadata() {
     return makePageMetadata('Opportunities');
   },
-  getContextualActions() {
-    return adt('dropdown', {
-      text: 'Actions',
-      linkGroups: [{
-        links: [
-          {
-            children: 'Create Code With Us Opportunity',
-            button: true,
-            color: 'primary' as const,
-            symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
-            dest: routeDest(adt('opportunityCWUCreate', null))
-          },
-          {
-            children: 'Create Sprint With Us Opportunity',
-            button: true,
-            color: 'primary' as const,
-            symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
-            dest: routeDest(adt('opportunitySWUCreate', null))
-          }
-        ]
-      }]
-    });
+  getContextualActions({ state }) {
+    if (!state.viewerUser || isVendor(state.viewerUser)) { return null; }
+    return adt('links', [
+      {
+        children: 'Create Opportunity',
+        button: true,
+        color: 'primary' as const,
+        symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+        dest: routeDest(adt('opportunityCreate', null))
+      }
+    ]);
   }
 };
