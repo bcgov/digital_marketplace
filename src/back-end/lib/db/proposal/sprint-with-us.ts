@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { generateSWUOpportunityQuery, readManyTeamQuestions, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
+import { generateSWUOpportunityQuery, RawSWUOpportunity, readManyTeamQuestions, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { isSignedIn, readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
@@ -1106,8 +1106,8 @@ function generateSWUProposalQuery(connection: Connection, full = false) {
       'proposals.id',
       'proposals.createdBy',
       'proposals.createdAt',
-      connection.raw('(CASE WHEN proposals."createdAt" > statuses."createdAt" THEN proposals."createdAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
-      connection.raw('(CASE WHEN proposals."createdAt" > statuses."createdAt" THEN proposals."createdBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
+      connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
+      connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'proposals.opportunity',
       'proposals.organization',
       'proposals.anonymousProponentName',
@@ -1134,7 +1134,7 @@ interface ProposalScoring {
 
 async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(connection: Connection, session: AuthenticatedSession, opportunityId: Id, proposals: T[]): Promise<T[]> {
   // Manually query opportunity and team questions
-  const opportunity = await generateSWUOpportunityQuery(connection, true).where({ 'opportunities.id': opportunityId }).first();
+  const opportunity = await generateSWUOpportunityQuery(connection, true).where({ 'opportunities.id': opportunityId }).first<RawSWUOpportunity>();
   const opportunityTeamQuestions = opportunity && getValidValue(await readManyTeamQuestions(connection, opportunity.versionId), null);
   if (!opportunity || !opportunityTeamQuestions) {
     return proposals;

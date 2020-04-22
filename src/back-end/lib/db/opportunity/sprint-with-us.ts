@@ -55,7 +55,7 @@ interface SWUOpportunityStatusRecord {
   note: string;
 }
 
-interface RawSWUOpportunity extends Omit<SWUOpportunity, 'createdBy' | 'updatedBy' | 'attachments' | 'addenda' | 'teamQuestions' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'> {
+export interface RawSWUOpportunity extends Omit<SWUOpportunity, 'createdBy' | 'updatedBy' | 'attachments' | 'addenda' | 'teamQuestions' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'> {
   createdBy?: Id;
   updatedBy?: Id;
   attachments: Id[];

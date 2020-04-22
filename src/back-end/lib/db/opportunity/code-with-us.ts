@@ -148,7 +148,7 @@ async function createCWUOpportunityAttachments(connection: Connection, trx: Tran
   }
 }
 
-function generateCWUOpportunityQuery(connection: Connection, full = false) {
+export function generateCWUOpportunityQuery(connection: Connection, full = false) {
   const query = connection<RawCWUOpportunity>('cwuOpportunities as opp')
     // Join on latest CWU status
     .join<RawCWUOpportunity>('cwuOpportunityStatuses as stat', function() {
