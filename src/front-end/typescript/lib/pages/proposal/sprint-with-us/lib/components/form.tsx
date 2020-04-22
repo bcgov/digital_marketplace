@@ -500,32 +500,39 @@ const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
               <tr>
                 <th style={{ width: '100%' }}>Evaluation Criteria</th>
                 <th style={{ width: '0px' }}>Weightings</th>
+                <th style={{ width: '0px' }}>Minimum Score</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Step 1: Team Questions</td>
                 <td>{state.opportunity.questionsWeight}%</td>
+                <td>{EMPTY_STRING}</td>
               </tr>
               <tr>
                 <td>Step 2: Shortlisting</td>
+                <td>{EMPTY_STRING}</td>
                 <td>{EMPTY_STRING}</td>
               </tr>
               <tr>
                 <td>Step 3: Code Challenge</td>
                 <td>{state.opportunity.codeChallengeWeight}%</td>
+                <td>80%</td>
               </tr>
               <tr>
                 <td>Step 4: Team Scenario</td>
                 <td>{state.opportunity.scenarioWeight}%</td>
+                <td>{EMPTY_STRING}</td>
               </tr>
               <tr>
                 <td>Step 5: Price</td>
                 <td>{state.opportunity.priceWeight}%</td>
+                <td>{EMPTY_STRING}</td>
               </tr>
               <tr>
                 <td><strong>TOTAL</strong></td>
                 <td><strong>100%</strong></td>
+                <td>{EMPTY_STRING}</td>
               </tr>
             </tbody>
           </table>
