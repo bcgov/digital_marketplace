@@ -1,3 +1,4 @@
+import { prefixPath } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as Router from 'front-end/lib/framework/router';
 import * as PageContent from 'front-end/lib/pages/content';
@@ -41,7 +42,7 @@ const router: Router.Router<Route> = {
 
   routes: [
     {
-      path: '/opportunities/create',
+      path: prefixPath('/opportunities/create'),
       makeRoute() {
         return {
           tag: 'opportunityCreate',
@@ -50,7 +51,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/sprint-with-us/create',
+      path: prefixPath('/opportunities/sprint-with-us/create'),
       makeRoute() {
         return {
           tag: 'opportunitySWUCreate',
@@ -59,7 +60,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/sprint-with-us/:opportunityId',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId'),
       makeRoute({params}) {
         return {
           tag: 'opportunitySWUView',
@@ -70,7 +71,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/sprint-with-us/:opportunityId/edit',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/edit'),
       makeRoute({ params, query }) {
         return {
           tag: 'opportunitySWUEdit',
@@ -83,7 +84,7 @@ const router: Router.Router<Route> = {
     },
 
     {
-      path: '/opportunities/sprint-with-us/:opportunityId/proposals/create',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/create'),
       makeRoute({ params }) {
         return {
           tag: 'proposalSWUCreate',
@@ -94,7 +95,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/edit',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/edit'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalSWUEdit',
@@ -109,7 +110,7 @@ const router: Router.Router<Route> = {
     // This route needs to be matched before `proposalSWUView`,
     // otherwise "export" gets parsed as a `proposalId`.
     {
-      path: '/opportunities/sprint-with-us/:opportunityId/proposals/export',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/export'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalSWUExportAll',
@@ -120,7 +121,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalSWUView',
@@ -133,7 +134,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export',
+      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalSWUExportOne',
@@ -145,7 +146,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/create',
+      path: prefixPath('/opportunities/code-with-us/create'),
       makeRoute() {
         return {
           tag: 'opportunityCWUCreate',
@@ -154,7 +155,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/:opportunityId/edit',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId/edit'),
       makeRoute({ params, query }) {
         return {
           tag: 'opportunityCWUEdit',
@@ -166,7 +167,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/:opportunityId',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId'),
       makeRoute({params}) {
         return {
           tag: 'opportunityCWUView',
@@ -178,7 +179,7 @@ const router: Router.Router<Route> = {
     },
 
     {
-      path: '/opportunities/code-with-us/:opportunityId/proposals/create',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/create'),
       makeRoute({ params }) {
         return {
           tag: 'proposalCWUCreate',
@@ -189,7 +190,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalCWUEdit',
@@ -204,7 +205,7 @@ const router: Router.Router<Route> = {
     // This route needs to be matched before `proposalCWUView`,
     // otherwise "export" gets parsed as a `proposalId`.
     {
-      path: '/opportunities/code-with-us/:opportunityId/proposals/export',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/export'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalCWUExportAll',
@@ -215,7 +216,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/:proposalId'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalCWUView',
@@ -228,7 +229,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export',
+      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export'),
       makeRoute({ params, query }) {
         return {
           tag: 'proposalCWUExportOne',
@@ -241,7 +242,7 @@ const router: Router.Router<Route> = {
     },
 
     {
-      path: '/proposals',
+      path: prefixPath('/proposals'),
       makeRoute() {
         return {
           tag: 'proposalList',
@@ -250,7 +251,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/organizations',
+      path: prefixPath('/organizations'),
       makeRoute() {
         return {
           tag: 'orgList',
@@ -259,7 +260,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/organizations/create',
+      path: prefixPath('/organizations/create'),
       makeRoute() {
         return {
           tag: 'orgCreate',
@@ -268,7 +269,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/organizations/:id/edit',
+      path: prefixPath('/organizations/:id/edit'),
       makeRoute({ params, query }) {
         return {
           tag: 'orgEdit',
@@ -280,7 +281,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/organizations/:id/sprint-with-us-terms-and-conditions',
+      path: prefixPath('/organizations/:id/sprint-with-us-terms-and-conditions'),
       makeRoute({ params, query }) {
         return {
           tag: 'orgSWUTerms',
@@ -291,7 +292,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/users/:id',
+      path: prefixPath('/users/:id'),
       makeRoute({ params, query }) {
         const affiliationId = getString(query, 'invitationAffiliationId') || undefined;
         const response = UserProfileTab.parseInvitationResponseParam(getString(query, 'invitationResponse')) || undefined;
@@ -308,7 +309,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/users',
+      path: prefixPath('/users'),
       makeRoute() {
         return {
           tag: 'userList',
@@ -317,7 +318,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/',
+      path: prefixPath('/'),
       makeRoute() {
         return {
           tag: 'landing',
@@ -326,7 +327,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/dashboard',
+      path: prefixPath('/dashboard'),
       makeRoute() {
         return {
           tag: 'dashboard',
@@ -335,7 +336,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/learn-more/code-with-us',
+      path: prefixPath('/learn-more/code-with-us'),
       makeRoute() {
         return {
           tag: 'learnMoreCWU',
@@ -344,7 +345,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/learn-more/sprint-with-us',
+      path: prefixPath('/learn-more/sprint-with-us'),
       makeRoute() {
         return {
           tag: 'learnMoreSWU',
@@ -353,7 +354,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/opportunities',
+      path: prefixPath('/opportunities'),
       makeRoute() {
         return {
           tag: 'opportunities',
@@ -362,7 +363,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/content/:contentId',
+      path: prefixPath('/content/:contentId'),
       makeRoute({ params }) {
         return {
           tag: 'content',
@@ -371,7 +372,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/sign-in',
+      path: prefixPath('/sign-in'),
       makeRoute({query}) {
         return {
           tag: 'signIn',
@@ -380,7 +381,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/sign-out',
+      path: prefixPath('/sign-out'),
       makeRoute() {
         return {
           tag: 'signOut',
@@ -389,7 +390,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/sign-up',
+      path: prefixPath('/sign-up'),
       makeRoute() {
         return {
           tag: 'signUpStepOne',
@@ -398,7 +399,7 @@ const router: Router.Router<Route> = {
       }
     },
     {
-      path: '/sign-up/complete',
+      path: prefixPath('/sign-up/complete'),
       makeRoute() {
         return {
           tag: 'signUpStepTwo',
@@ -408,7 +409,7 @@ const router: Router.Router<Route> = {
     },
 
     {
-      path: '/notice/:noticeId',
+      path: prefixPath('/notice/:noticeId'),
       makeRoute({ path, params, query }) {
         const noticeId = PageNotice.parseNoticeId(params.noticeId, query);
         return noticeId ? adt('notice', noticeId) : adt('notFound', { path });
@@ -425,27 +426,27 @@ const router: Router.Router<Route> = {
   routeToUrl(route) {
     switch (route.tag) {
       case 'landing':
-        return '/';
+        return prefixPath('/');
       case 'dashboard':
-        return '/dashboard';
+        return prefixPath('/dashboard');
       case 'opportunities':
-        return '/opportunities';
+        return prefixPath('/opportunities');
       case 'opportunityCreate':
-        return '/opportunities/create';
+        return prefixPath('/opportunities/create');
       case 'learnMoreCWU':
-        return '/learn-more/code-with-us';
+        return prefixPath('/learn-more/code-with-us');
       case 'learnMoreSWU':
-        return '/learn-more/sprint-with-us';
+        return prefixPath('/learn-more/sprint-with-us');
       case 'content':
-        return `/content/${route.value}`;
+        return prefixPath(`/content/${route.value}`);
       case 'signIn':
-        return `/sign-in${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`;
+        return prefixPath(`/sign-in${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`);
       case 'signOut':
-        return '/sign-out';
+        return prefixPath('/sign-out');
       case 'signUpStepOne':
-        return `/sign-up`;
+        return prefixPath(`/sign-up`);
       case 'signUpStepTwo':
-        return `/sign-up/complete`;
+        return prefixPath(`/sign-up/complete`);
       case 'userProfile': {
         const query: string[] = [];
         if (route.value.tab) { query.push(`tab=${route.value.tab}`); }
@@ -457,62 +458,62 @@ const router: Router.Router<Route> = {
         if (query.length) {
           qs = `?${query.join('&')}`;
         }
-        return `/users/${route.value.userId}${qs}`;
+        return prefixPath(`/users/${route.value.userId}${qs}`);
       }
       case 'userList':
-        return '/users';
+        return prefixPath('/users');
       case 'orgList':
-        return '/organizations';
+        return prefixPath('/organizations');
       case 'orgEdit':
-        return `/organizations/${route.value.orgId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/organizations/${route.value.orgId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'orgSWUTerms':
-        return `/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`;
+        return prefixPath(`/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`);
       case 'orgCreate':
-        return '/organizations/create';
+        return prefixPath('/organizations/create');
       case 'proposalSWUCreate':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`);
       case 'proposalSWUEdit':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'proposalSWUView':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'proposalSWUExportOne':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`);
       case 'proposalSWUExportAll':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/export`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/export`);
       case 'opportunitySWUCreate':
-        return '/opportunities/sprint-with-us/create';
+        return prefixPath('/opportunities/sprint-with-us/create');
       case 'opportunitySWUEdit':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'opportunitySWUView':
-        return `/opportunities/sprint-with-us/${route.value.opportunityId}`;
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}`);
       case 'opportunityCWUCreate':
-        return '/opportunities/code-with-us/create';
+        return prefixPath('/opportunities/code-with-us/create');
       case 'opportunityCWUEdit':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'opportunityCWUView':
-        return `/opportunities/code-with-us/${route.value.opportunityId}`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}`);
       case 'proposalCWUCreate':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`);
       case 'proposalCWUEdit':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'proposalCWUView':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'proposalCWUExportOne':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`);
       case 'proposalCWUExportAll':
-        return `/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`;
+        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`);
       case 'proposalList':
-        return '/proposals';
+        return prefixPath('/proposals');
       case 'notice':
         return (() => {
           switch (route.value.tag) {
             case 'deactivatedOwnAccount':
             case 'authFailure':
-              return `/notice/${route.value.tag}`;
+              return prefixPath(`/notice/${route.value.tag}`);
           }
         })();
       case 'notFound':
-        return route.value.path || '/not-found';
+        return route.value.path || prefixPath('/not-found');
     }
   }
 

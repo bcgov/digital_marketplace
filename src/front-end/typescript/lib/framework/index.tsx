@@ -345,6 +345,8 @@ export type PageGetContextualActions<State, Msg> = (props: ComponentViewProps<St
 export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   fullWidth?: boolean;
   simpleNav?: boolean;
+  backgroundColor?: ThemeColor;
+  verticallyCentered?: boolean;
   init: PageInit<RouteParams, SharedState, State, Msg>;
   update: Update<State, Msg>;
   view: View<Props>;
