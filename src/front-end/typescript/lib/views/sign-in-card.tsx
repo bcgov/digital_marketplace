@@ -1,11 +1,12 @@
-import { getSignInUrl } from 'front-end/lib/index';
+import { getSignInUrl } from 'front-end/lib';
+import { View } from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { isVendor, UserType } from 'shared/lib/resources/user';
 
-export interface SignInCardProps {
+export interface Props {
   title: string;
   description: string;
   buttonText: string;
@@ -13,7 +14,7 @@ export interface SignInCardProps {
   redirectOnSuccess?: string;
 }
 
-function userTypeToIcon(userType: SignInCardProps['userType']): AvailableIcons {
+function userTypeToIcon(userType: Props['userType']): AvailableIcons {
   switch (userType) {
     case UserType.Vendor:
       return 'vendor';
@@ -22,7 +23,7 @@ function userTypeToIcon(userType: SignInCardProps['userType']): AvailableIcons {
   }
 }
 
-export function SignInCard(props: SignInCardProps) {
+export const SignInCard: View<Props> = props => {
   return (
     <Row>
       <Col xs='12'>
@@ -47,4 +48,6 @@ export function SignInCard(props: SignInCardProps) {
       </Col>
     </Row>
   );
-}
+};
+
+export default SignInCard;
