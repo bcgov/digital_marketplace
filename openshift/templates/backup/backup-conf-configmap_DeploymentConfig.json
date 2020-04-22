@@ -1,0 +1,11 @@
+{
+    "kind": "ConfigMap",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "backup-conf",
+        "creationTimestamp": null
+    },
+    "data": {
+        "backup.conf": "postgres=patroni-digmkt-replica:5432/digmkt\n\n0 */6 * * * default ./backup.sh -s"
+    }
+}
