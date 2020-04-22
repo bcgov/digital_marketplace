@@ -27,7 +27,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const view: ComponentView<State, Msg> = ({state, dispatch}) => {
+const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
       <Col xs='12'>
