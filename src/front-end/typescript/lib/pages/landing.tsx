@@ -1,7 +1,7 @@
 import { formatAmount } from 'front-end/../../shared/lib';
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, toast, Update } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, toast, Update } from 'front-end/lib/framework';
 import Icon from 'front-end/lib/views/icon';
 // import Accordion from 'front-end/lib/views/accordion';
 import React from 'react';
@@ -52,18 +52,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
-    <Container xs='12'>
-      <Row>
-        <Col xs={{ size: 6, offset: 3 }} className='text-center mt-3'>
-          <h1 style={{
-            lineHeight: '60px'
-          }}>
+    <Container>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='6' className='mt-3'>
+          <h1 style={{lineHeight: '3.75rem'}}>
             Discover Unique Opportunities to Collaborate with the BC Public Sector.
           </h1>
         </Col>
       </Row>
-      <Row>
-        <Col xs={{ size: 6, offset: 3 }} className='text-center'>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='6' className='mt-3'>
           The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and BC's public sector.
         </Col>
       </Row>
@@ -71,13 +69,13 @@ const view: ComponentView<State, Msg> = ({state, dispatch}) => {
         <Button className='mx-auto mt-6 mb-6' color='primary'><Icon hover name='search' /><span className='ml-2'>Browse Opportunities</span></Button>
       </Row>
       <Row>
-        <Col className='text-center'>
-          <span style={{fontSize: '24px', fontWeight: 'bolder', verticalAlign: 'middle'}}>{formatAmount(1346)}</span>
-          <span className='ml-2' style={{fontSize: '14px', color: '#6C757D', verticalAlign: 'middle'}}>Total Opportunities Awarded</span>
+        <Col className='d-inline-flex justify-content-center align-items-center'>
+          <div className='font-size-large font-weight-bold'>{formatAmount(1346)}</div>
+          <div className='ml-2 font-size-small text-secondary'>Total Opportunities Awarded</div>
         </Col>
-        <Col className='text-center'>
-          <span style={{fontSize: '24px', fontWeight: 'bolder', verticalAlign: 'middle'}}>{formatAmount(13782000, '$')}</span>
-          <span className='ml-2' style={{fontSize: '14px', lineHeight: '21px', color: '#6C757D', verticalAlign: 'middle'}}>Total Value of All Opportunities</span>
+        <Col className='d-inline-flex justify-content-center align-items-center'>
+          <div className='font-size-large font-weight-bold'>{formatAmount(13782000, '$')}</div>
+          <div className='ml-2 font-size-small text-secondary'>Total Value of All Opportunities</div>
         </Col>
       </Row>
     </Container>
@@ -90,10 +88,5 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata() {
     return makePageMetadata('Welcome');
-  },
-  getAlerts() {
-    return {
-      ...emptyPageAlerts()
-    };
   }
 };
