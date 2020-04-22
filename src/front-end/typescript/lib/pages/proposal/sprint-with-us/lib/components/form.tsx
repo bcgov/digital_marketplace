@@ -500,7 +500,7 @@ const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
               <tr>
                 <th style={{ width: '100%' }}>Evaluation Criteria</th>
                 <th style={{ width: '0px' }}>Weightings</th>
-                <th style={{ width: '0px' }}>Minimum Score</th>
+                <th className='text-nowrap' style={{ width: '0px' }}>Minimum Score</th>
               </tr>
             </thead>
             <tbody>
