@@ -280,7 +280,7 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
   // If user is vendor, scope results to those proposals they have authored
   // If user is admin/gov, we don't scope, and include scores
   if (session.user.type === UserType.Vendor) {
-    query.andWhere({ createdBy: session.user.id });
+    query.andWhere({ 'proposals.createdBy': session.user.id });
   } else {
     query.select('score');
   }
