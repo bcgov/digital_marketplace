@@ -807,94 +807,102 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
       <Col xs='12'>
         <p className='mb-0'>This is a summary of your proposal for this Sprint With Us opportunity. Be sure to review all information for accuracy prior to submitting your proposal.</p>
       </Col>
-      <Col xs='12' className='mt-5'>
-        <h2>Organization Info</h2>
-        {organization
-          ? (<div>
-              <p className='mb-4'>Please review your organization's information to ensure it is up-to-date by clicking on the link below.</p>
-              <Link
-                newTab
-                symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
-                symbolClassName='border'
-                dest={routeDest(adt('orgEdit', { orgId: organization.id }))}>
-                Review Organization: {organization.legalName}
-              </Link>
-            </div>)
-          : 'You have not yet selected an organization for this proposal.'}
-      </Col>
-      <Col xs='12' className='mt-5'>
-        <h2 className='mb-4'>Phases</h2>
-        <div className='d-flex flex-nowrap align-items-center mb-4'>
-          <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
-          <span className='font-weight-bold mr-2'>Total Proposed Cost</span>
-          <span>{formatAmount(FormField.getValue(state.totalCost) || 0, '$')}</span>
+      <Col xs='12'>
+        <div  className='mt-5 pt-5 border-top'>
+          <h2>Organization Info</h2>
+          {organization
+            ? (<div>
+                <p className='mb-4'>Please review your organization's information to ensure it is up-to-date by clicking on the link below.</p>
+                <Link
+                  newTab
+                  symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
+                  symbolClassName='border'
+                  dest={routeDest(adt('orgEdit', { orgId: organization.id }))}>
+                  Review Organization: {organization.legalName}
+                </Link>
+              </div>)
+            : 'You have not yet selected an organization for this proposal.'}
         </div>
-        {phaseMembers.inceptionPhase && opportunity.inceptionPhase
-          ? (<ReviewPhaseView
-              className='mb-4'
-              title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)}
-              icon='map'
-              proposedCost={FormField.getValue(state.inceptionCost) || 0}
-              opportunityPhase={opportunity.inceptionPhase}
-              members={phaseMembers.inceptionPhase}
-              isOpen={state.isReviewInceptionPhaseAccordionOpen}
-              toggleAccordion={() => dispatch(adt('toggleReviewInceptionPhaseAccordion'))}
-              viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
-              />)
-          : null}
-        {phaseMembers.prototypePhase && opportunity.prototypePhase
-          ? (<ReviewPhaseView
-              className='mb-4'
-              title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)}
-              icon='rocket'
-              proposedCost={FormField.getValue(state.prototypeCost) || 0}
-              opportunityPhase={opportunity.prototypePhase}
-              members={phaseMembers.prototypePhase}
-              isOpen={state.isReviewPrototypePhaseAccordionOpen}
-              toggleAccordion={() => dispatch(adt('toggleReviewPrototypePhaseAccordion'))}
-              viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
-              />)
-          : null}
-        <ReviewPhaseView
-          title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)}
-          icon='cogs'
-          proposedCost={FormField.getValue(state.implementationCost) || 0}
-          opportunityPhase={opportunity.implementationPhase}
-          members={phaseMembers.implementationPhase}
-          isOpen={state.isReviewImplementationPhaseAccordionOpen}
-          toggleAccordion={() => dispatch(adt('toggleReviewImplementationPhaseAccordion'))}
-          viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
-          />
       </Col>
-      <Col xs='12' className='mt-5'>
-        <h2 className='mb-4'>References</h2>
-        <DescriptionList
-          items={References.getValues(state.references).map((r, i) => ({
-            name: `Reference ${i + 1}`,
-            children: r.name || r.company || r.phone || r.email
-              ? (
-                  <div>
-                    {r.name ? (<div>{r.name}</div>) : null}
-                    {r.company ? (<div>{r.company}</div>) : null}
-                    {r.phone ? (<div>{r.phone}</div>) : null}
-                    {r.email ? (<div>{r.email}</div>) : null}
-                  </div>
-                )
-              : EMPTY_STRING
-          }))} />
+      <Col xs='12'>
+        <div  className='mt-5 pt-5 border-top'>
+          <h2 className='mb-4'>Phases</h2>
+          <div className='d-flex flex-nowrap align-items-center mb-4'>
+            <Icon name='comment-dollar' width={0.9} height={0.9} className='mr-1' />
+            <span className='font-weight-bold mr-2'>Total Proposed Cost</span>
+            <span>{formatAmount(FormField.getValue(state.totalCost) || 0, '$')}</span>
+          </div>
+          {phaseMembers.inceptionPhase && opportunity.inceptionPhase
+            ? (<ReviewPhaseView
+                className='mb-4'
+                title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)}
+                icon='map'
+                proposedCost={FormField.getValue(state.inceptionCost) || 0}
+                opportunityPhase={opportunity.inceptionPhase}
+                members={phaseMembers.inceptionPhase}
+                isOpen={state.isReviewInceptionPhaseAccordionOpen}
+                toggleAccordion={() => dispatch(adt('toggleReviewInceptionPhaseAccordion'))}
+                viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
+                />)
+            : null}
+          {phaseMembers.prototypePhase && opportunity.prototypePhase
+            ? (<ReviewPhaseView
+                className='mb-4'
+                title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)}
+                icon='rocket'
+                proposedCost={FormField.getValue(state.prototypeCost) || 0}
+                opportunityPhase={opportunity.prototypePhase}
+                members={phaseMembers.prototypePhase}
+                isOpen={state.isReviewPrototypePhaseAccordionOpen}
+                toggleAccordion={() => dispatch(adt('toggleReviewPrototypePhaseAccordion'))}
+                viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
+                />)
+            : null}
+          <ReviewPhaseView
+            title={swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)}
+            icon='cogs'
+            proposedCost={FormField.getValue(state.implementationCost) || 0}
+            opportunityPhase={opportunity.implementationPhase}
+            members={phaseMembers.implementationPhase}
+            isOpen={state.isReviewImplementationPhaseAccordionOpen}
+            toggleAccordion={() => dispatch(adt('toggleReviewImplementationPhaseAccordion'))}
+            viewTeamMember={m => dispatch(adt('showModal', adt('viewTeamMember', m)) as Msg)}
+            />
+        </div>
       </Col>
-      <Col xs='12' className='mt-5'>
-        <h2 className='mb-4'>Team Questions' Responses</h2>
-        {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
-          <ReviewTeamQuestionResponseView
-            key={`swu-proposal-review-team-question-response-${i}`}
-            className={i < rs.length - 1 ? 'mb-4' : ''}
-            opportunity={state.opportunity}
-            isOpen={state.openReviewTeamQuestionResponseAccordions.has(i)}
-            toggleAccordion={() => dispatch(adt('toggleReviewTeamQuestionResponseAccordion', i))}
-            index={i}
-            response={r} />
-        ))}
+      <Col xs='12'>
+        <div  className='mt-5 pt-5 border-top'>
+          <h2 className='mb-4'>References</h2>
+          <DescriptionList
+            items={References.getValues(state.references).map((r, i) => ({
+              name: `Reference ${i + 1}`,
+              children: r.name || r.company || r.phone || r.email
+                ? (
+                    <div>
+                      {r.name ? (<div>{r.name}</div>) : null}
+                      {r.company ? (<div>{r.company}</div>) : null}
+                      {r.phone ? (<div>{r.phone}</div>) : null}
+                      {r.email ? (<div>{r.email}</div>) : null}
+                    </div>
+                  )
+                : EMPTY_STRING
+            }))} />
+        </div>
+      </Col>
+      <Col xs='12'>
+        <div  className='mt-5 pt-5 border-top'>
+          <h2 className='mb-4'>Team Questions' Responses</h2>
+          {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
+            <ReviewTeamQuestionResponseView
+              key={`swu-proposal-review-team-question-response-${i}`}
+              className={i < rs.length - 1 ? 'mb-4' : ''}
+              opportunity={state.opportunity}
+              isOpen={state.openReviewTeamQuestionResponseAccordions.has(i)}
+              toggleAccordion={() => dispatch(adt('toggleReviewTeamQuestionResponseAccordion', i))}
+              index={i}
+              response={r} />
+          ))}
+        </div>
       </Col>
     </Row>
   );
