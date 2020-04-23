@@ -2,8 +2,9 @@ import { getContextualActionsValid, makePageMetadata, makeStartLoading, makeStop
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, mapGlobalComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
+import * as toasts from 'front-end/lib/pages/organization/lib/toasts';
 import { makeSidebarState } from 'front-end/lib/pages/user/profile/tab';
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
@@ -84,11 +85,13 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         const result = await OrgForm.persist(adt('create', state.orgForm));
         switch (result.tag) {
           case 'valid':
+            dispatch(toast(adt('success', toasts.created.success)));
             dispatch(newRoute(adt('orgEdit' as const, {
               orgId: result.value[1].id
             })));
             return state.set('orgForm', result.value[0]);
           case 'invalid':
+            dispatch(toast(adt('error', toasts.created.error)));
             return stopSubmitLoading(state)
               .set('orgForm', result.value);
         }

@@ -3,6 +3,39 @@ import React from 'react';
 import { AffiliationMember, AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { Organization } from 'shared/lib/resources/organization';
 
+export const created = {
+  success: {
+    title: 'Organization Created',
+    body: 'Your organization has been successfully created.'
+  },
+  error: {
+    title: 'Unable to Create Organization',
+    body: 'Your organization could not be created. Please try again later.'
+  }
+};
+
+export const updated = {
+  success: {
+    title: 'Organization Updated',
+    body: 'Your organization has been successfully updated.'
+  },
+  error: {
+    title: 'Unable to Update Organization',
+    body: 'Your organization could not be updated. Please try again later.'
+  }
+};
+
+export const archived = {
+  success: {
+    title: 'Organization Archived',
+    body: 'Organization archived successfully.'
+  },
+  error: {
+    title: 'Unable to Archive Organization',
+    body: 'Unable to archive organization. Please try again later.'
+  }
+};
+
 export const addedTeamMembers = {
   success: (emails: string[]) => ({
     title: 'Added Team Members',

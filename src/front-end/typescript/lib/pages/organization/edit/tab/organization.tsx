@@ -1,9 +1,10 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, replaceRoute, toast, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/organization/edit/tab';
 import * as OrgForm from 'front-end/lib/pages/organization/lib/components/form';
+import * as toasts from 'front-end/lib/pages/organization/lib/toasts';
 import EditTabHeader from 'front-end/lib/pages/organization/lib/views/edit-tab-header';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
@@ -75,13 +76,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         async (state, dispatch) => {
           const result = await api.organizations.delete(state.organization.id);
           if (api.isValid(result)) {
-            // TODO show confirmation alert on page redirected to.
+            dispatch(toast(adt('success', toasts.archived.success)));
             if (isOwner(state.viewerUser, state.organization)) {
               dispatch(replaceRoute(adt('userProfile' as const, { userId: state.viewerUser.id, tab: 'organizations' as const })));
             } else {
               dispatch(replaceRoute(adt('orgList' as const, null)));
             }
           } else {
+            dispatch(toast(adt('error', toasts.archived.error)));
             state = stopArchiveLoading(state);
           }
           return state;
@@ -96,7 +98,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
       return [
         state,
-        async state => {
+        async (state, dispatch) => {
           state = stopSaveChangesLoading(state);
           const result = await OrgForm.persist(adt('update', {
             state: state.orgForm,
@@ -107,11 +109,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }));
           switch (result.tag) {
             case 'valid':
+              dispatch(toast(adt('success', toasts.updated.success)));
               return state = state
                 .set('isEditing', false)
                 .set('organization', result.value[1])
                 .set('orgForm', result.value[0]);
             case 'invalid':
+              dispatch(toast(adt('error', toasts.updated.error)));
               return state.set('orgForm', result.value);
           }
         }

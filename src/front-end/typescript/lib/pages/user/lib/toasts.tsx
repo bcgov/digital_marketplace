@@ -1,7 +1,7 @@
 export const updated = {
   success: {
     title: 'Profile Updated',
-    body: 'Your profile has been updated successfully.'
+    body: 'Your profile has been successfully updated.'
   },
   error: {
     title: 'Unable to Update Profile',
