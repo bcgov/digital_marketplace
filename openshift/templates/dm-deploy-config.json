@@ -33,7 +33,6 @@
                 "BASIC_AUTH_USERNAME": "",
                 "MAILER_HOST": "apps.smtp.gov.bc.ca",
                 "MAILER_PORT": "25",
-                "PATH_PREFIX": "",
                 "TZ": "America/Vancouver"
             }
         },
