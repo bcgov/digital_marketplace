@@ -2,10 +2,11 @@ import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
+import * as toasts from 'front-end/lib/pages/user/lib/toasts';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Badge from 'front-end/lib/views/badge';
 import { DescriptionItem } from 'front-end/lib/views/description-list';
@@ -109,7 +110,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'saveChanges':
       return [
         startSaveChangesLoading(state),
-        async state => {
+        async (state, dispatch) => {
           state = stopSaveChangesLoading(state);
           const result = await ProfileForm.persist({
             state: state.profileForm,
@@ -117,11 +118,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           });
           switch (result.tag) {
             case 'valid':
+              dispatch(toast(adt('success', toasts.updated.success)));
               return state = state
                 .set('isEditingForm', false)
                 .set('profileUser', result.value[1])
                 .set('profileForm', result.value[0]);
             case 'invalid':
+              dispatch(toast(adt('error', toasts.updated.error)));
               return state.set('profileForm', result.value);
           }
         }
@@ -144,6 +147,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             : await api.users.update(state.profileUser.id, adt('reactivateUser'));
           switch (result.tag) {
             case 'valid':
+              dispatch(toast(adt('success', isActive ? toasts.deactivated.success : toasts.reactivated.success)));
               state = state.set('profileUser', result.value);
               if (isOwner && result.value.status !== UserStatus.Active) {
                 dispatch(newRoute(adt('notice' as const, adt('deactivatedOwnAccount' as const))));
@@ -151,6 +155,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               return state;
             case 'invalid':
             case 'unhandled':
+              dispatch(toast(adt('error', isActive ? toasts.deactivated.error : toasts.reactivated.error)));
               return state;
           }
         }
