@@ -189,7 +189,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
         children: 'Cancel',
         color: 'white',
         disabled: isLoading,
-        dest: routeDest(adt('opportunities', null))
+        onClick: () => dispatch(adt('showModal', adt('cancel')) as Msg)
       }
     ]);
   }),
