@@ -16,7 +16,9 @@ type SWUCreateSubmitStatus
   = SWUOpportunityStatus.Published
   | SWUOpportunityStatus.UnderReview;
 
-type ModalId = ADT<'publish', SWUCreateSubmitStatus>;
+type ModalId
+  = ADT<'publish', SWUCreateSubmitStatus>
+  | ADT<'cancel'>;
 
 interface ValidState {
   showModal: ModalId | null;
@@ -222,6 +224,25 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
           ]
         };
       }
+      case 'cancel':
+        return {
+          title: 'Cancel New Sprint With Us Opportunity?',
+          body: () => 'Are you sure you want to cancel? Any information you may have entered will be lost if you do so.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Yes, I want to cancel',
+              color: 'danger',
+              msg: newRoute(adt('opportunities' as const, null)),
+              button: true
+            },
+            {
+              text: 'Go Back',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
     }
   }),
   getMetadata() {
