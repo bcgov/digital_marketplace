@@ -180,14 +180,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await Form.persist(state.form, adt('update', state.proposal.id));
           const isSave = state.proposal.status === SWUProposalStatus.Draft || state.proposal.status === SWUProposalStatus.Withdrawn;
           if (isInvalid(result)) {
-            isSave
-              ? dispatch(toast(adt('success', toasts.changesSaved.success)))
-              : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
+            dispatch(toast(adt('error', isSave ? toasts.changesSaved.error : toasts.changesSubmitted.error)));
             return state.set('form', result.value);
           }
-          isSave
-            ? dispatch(toast(adt('error', toasts.changesSaved.error)))
-            : dispatch(toast(adt('error', toasts.changesSubmitted.error)));
+          dispatch(toast(adt('success', isSave ? toasts.changesSaved.success : toasts.changesSubmitted.success)));
           return (await resetProposal(state, result.value[1]))
             .set('isEditing', false);
         }

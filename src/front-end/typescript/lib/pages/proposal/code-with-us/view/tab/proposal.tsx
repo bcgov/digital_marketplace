@@ -155,17 +155,19 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.proposals.cwu.update(state.proposal.id, adt('score', score));
           switch (result.tag) {
             case 'valid':
-              dispatch(toast(adt('success', toasts.scored.success)));
+              dispatch(toast(adt('success', toasts.statusChanged.success(CWUProposalStatus.Evaluated))));
               return state
                 .set('form', await initForm(state.opportunity, result.value, state.viewerUser))
                 .set('showModal', null)
                 .set('proposal', result.value);
             case 'invalid':
+              dispatch(toast(adt('error', toasts.statusChanged.error(CWUProposalStatus.Evaluated))));
               return state.update('score', s => {
                 if (result.value.proposal?.tag !== 'score') { return s; }
                 return FormField.setErrors(s, result.value.proposal.value);
               });
             case 'unhandled':
+              dispatch(toast(adt('error', toasts.statusChanged.error(CWUProposalStatus.Evaluated))));
               return state;
           }
         }
@@ -179,17 +181,19 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.proposals.cwu.update(state.proposal.id, adt('disqualify', reason));
           switch (result.tag) {
             case 'valid':
-              dispatch(toast(adt('success', toasts.disqualified.success)));
+              dispatch(toast(adt('success', toasts.statusChanged.success(CWUProposalStatus.Disqualified))));
               return state
                 .set('form', await initForm(state.opportunity, result.value, state.viewerUser))
                 .set('showModal', null)
                 .set('proposal', result.value);
             case 'invalid':
+              dispatch(toast(adt('error', toasts.statusChanged.error(CWUProposalStatus.Disqualified))));
               return state.update('disqualificationReason', s => {
                 if (result.value.proposal?.tag !== 'disqualify') { return s; }
                 return FormField.setErrors(s, result.value.proposal.value);
               });
             case 'unhandled':
+              dispatch(toast(adt('error', toasts.statusChanged.error(CWUProposalStatus.Disqualified))));
               return state;
           }
         }
@@ -201,7 +205,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = stopAwardLoading(state);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('award', ''));
           if (!api.isValid(result)) {
-            //TODO propagate errors
+            dispatch(toast(adt('error', toasts.awarded.error)));
             return state;
           }
           dispatch(toast(adt('success', toasts.awarded.success)));

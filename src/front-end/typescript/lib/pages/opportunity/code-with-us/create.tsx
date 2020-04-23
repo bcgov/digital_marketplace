@@ -85,6 +85,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               dispatch(toast(adt('success', isPublish ? toasts.statusChanged.success(CWUOpportunityStatus.Published) : toasts.draftCreated.success)));
               return state.set('form', result.value[0]);
             case 'invalid':
+              dispatch(toast(adt('error', isPublish ? toasts.statusChanged.error(CWUOpportunityStatus.Published) : toasts.draftCreated.error)));
               state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
               return state
                 .set('showErrorAlert', isPublish ? 'publish' : 'save')

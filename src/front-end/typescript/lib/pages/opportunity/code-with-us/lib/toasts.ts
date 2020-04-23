@@ -21,6 +21,10 @@ export const draftCreated = {
   success: {
     title: 'Draft Opportunity Saved',
     body: 'Draft Code With Us opportunity has been saved. You can return to this page to complete and publish this opportunity at a later date.'
+  },
+  error: {
+    title: 'Unable to Save Draft Opportunity',
+    body: 'Draft Code With Us opportunity could not be saved. Please try again later.'
   }
 };
 
