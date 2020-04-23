@@ -1,11 +1,11 @@
 import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, newRoute, PageComponent, PageInit, Update, View, ViewElement } from 'front-end/lib/framework';
-import { ContentId } from 'front-end/lib/pages/content';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import { ComponentView, GlobalComponentMsg, newRoute, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { routeDest } from 'front-end/lib/views/link';
+import { ProgramCard } from 'front-end/lib/views/program-card';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
+import { Row } from 'reactstrap';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -43,58 +43,47 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
 
-interface CardProps {
-  img: string;
-  title: string;
-  description: ViewElement;
-  guide: ContentId;
-  getStarted: Route;
-  className?: string;
-}
-
-const Card: View<CardProps> = ({ img, title, description, guide, getStarted, className }) => {
-  return (
-    <Col xs='12' md='6' className={className}>
-      <div className='d-flex flex-column align-items-center bg-white rounded-lg border p-4 p-sm-5 text-center h-100'>
-        <img src={img} className='w-100' style={{ maxHeight: '200px' }} alt={`${title} Image`} />
-        <h1 className='my-4'>{title}</h1>
-        <p className='mb-4 mb-sm-5'>{description}</p>
-        <Link
-          button
-          outline
-          color='info'
-          className='mt-auto mb-3 align-self-stretch justify-content-center'
-          dest={routeDest(adt('content', guide))}>
-          Read Guide
-        </Link>
-        <Link
-          button
-          color='primary'
-          className='align-self-stretch justify-content-center'
-          dest={routeDest(getStarted)}>
-          Get Started
-        </Link>
-      </div>
-    </Col>
-  );
-};
-
 const view: ComponentView<State, Msg> = () => {
   return (
     <Row>
-      <Card
-        className='mb-4 mb-md-0'
+      <ProgramCard
         img={prefixPath('/images/illustrations/code_with_us.svg')}
         title='Code With Us'
         description={(<span>Use a <em>Code With Us</em> opportunity to pay a fixed price of up to $70,000 for the delivery of code that meets your acceptance criteria.</span>)}
-        guide='code-with-us-opportunity-guide'
-        getStarted={adt('opportunityCWUCreate', null)} />
-      <Card
+        wideLinks
+        links={[
+          {
+            dest: routeDest(adt('content', 'code-with-us-opportunity-guide')),
+            children: ['Read Guide'],
+            color: 'info',
+            outline: true
+          },
+          {
+            dest: routeDest(adt('opportunityCWUCreate', null)),
+            children: ['Get Started'],
+            color: 'primary'
+          }
+        ]}
+      />
+      <ProgramCard
         img={prefixPath('/images/illustrations/sprint_with_us.svg')}
         title='Sprint With Us'
         description={(<span>Use a <em>Sprint With Us</em> opportunity to procure an Agile product development team for your digital service at a variable cost of up to $2,000,000.</span>)}
-        guide='sprint-with-us-opportunity-guide'
-        getStarted={adt('opportunitySWUCreate', null)} />
+        wideLinks
+        links={[
+          {
+            dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide')),
+            children: ['Read Guide'],
+            color: 'info',
+            outline: true
+          },
+          {
+            dest: routeDest(adt('opportunitySWUCreate', null)),
+            children: ['Get Started'],
+            color: 'primary'
+          }
+        ]}
+      />
     </Row>
   );
 };

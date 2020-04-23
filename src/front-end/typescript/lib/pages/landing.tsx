@@ -1,9 +1,10 @@
 import { formatAmount } from 'front-end/../../shared/lib';
-import { makePageMetadata } from 'front-end/lib';
+import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, toast, Update, View } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-// import Accordion from 'front-end/lib/views/accordion';
+import { ProgramCard } from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
@@ -99,15 +100,60 @@ const Programs: View<{}> = () => {
     <div className='bg-blue-light-alt-2 py-5'>
       <Container>
         <Row>
-          <Col xs='12' md='6'>
-            CWU
-          </Col>
-          <Col xs='12' md='6'>
-            SWU
-          </Col>
+          <ProgramCard
+            img={prefixPath('/images/illustrations/code_with_us.svg')}
+            title='Code With Us'
+            description={
+              (<div>
+                <div>Commit Code.</div>
+                <div>Get Paid.</div>
+                <div className='mt-3'>Opportunities up to $70,000.</div>
+              </div>)
+            }
+            links={[
+              {
+                dest: routeDest(adt('learnMoreCWU', null)),
+                children: [(<div><Icon name='arrow-right' className='mr-2' /><span>Learn More</span></div>)],
+                color: 'blue',
+                outline: true
+              }
+            ]}
+          />
+          <ProgramCard
+            img={prefixPath('/images/illustrations/sprint_with_us.svg')}
+            title='Sprint With Us'
+            description={
+              (<div>
+                <div>Supply an Agile Team to work with a government product manager in a modern DevOps environment.</div>
+                <div className='mt-3'>Opportunities up to $2,000,000.</div>
+              </div>)
+            }
+            links={[
+              {
+                dest: routeDest(adt('learnMoreSWU', null)),
+                children: [(<div><Icon name='arrow-right' className='mr-2' /><span>Learn More</span></div>)],
+                color: 'blue',
+                outline: true
+              }
+            ]}
+          />
         </Row>
       </Container>
     </div>
+  );
+};
+
+const AppInfo: View<{}> = () => {
+  return (
+    <Container className='py-8'>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='8'>
+          <h2>
+            Join a community of developers, entrepreneurs and public service innovators who are making public services better.
+          </h2>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
@@ -116,6 +162,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <div>
       <Hero />
       <Programs />
+      <AppInfo />
     </div>
   );
 };
