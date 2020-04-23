@@ -1,15 +1,10 @@
 const path = require("path");
 
-const deslash = s => s.replace(/^\/*/, '').replace(/\/*$/, '');
-const prefix = a => b => `/${a ? deslash(a) + '/' : ''}${deslash(b)}`;
-
-const options = {
-  prefixPath: prefix(process.env.PATH_PREFIX || "")
-};
-
 module.exports = {
   html: {
-    options,
+    options: {
+      prefixPath: gruntConfig.helpers.prefixPath
+    },
     files: [{
       src: [ `${gruntConfig.src.html}/**/*.ejs` ],
       filter: "isFile",
