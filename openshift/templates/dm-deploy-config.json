@@ -16,22 +16,25 @@
                 "name": "${NAME}-${TAG_NAME}-config"
             },
             "data": {
-                "NODE_ENV": "development",
+                "NODE_ENV": "production",
                 "SERVER_HOST": "0.0.0.0",
                 "SERVER_PORT": "3000",
                 "DATABASE_SERVICE_NAME": "patroni-digmkt-master",
+                "FILE_STORAGE_DIR": "/usr/app",
                 "COOKIE_SECRET": "changeme",
-                "ORIGIN": "${NAME}-${TAG_NAME}.pathfinder.gov.bc.ca",
+                "ORIGIN": "https://${NAME}-${TAG_NAME}.pathfinder.gov.bc.ca",
                 "KEYCLOAK_CLIENT_ID": "dm-auth-web",
                 "KEYCLOAK_CLIENT_SECRET": "changeme",
-                "KEYCLOAK_URL": "https://sso-dev.pathfinder.gov.bc.ca",
+                "KEYCLOAK_URL": "https://sso.pathfinder.gov.bc.ca",
                 "KEYCLOAK_REALM": "p2zhow64",
                 "CONTACT_EMAIL": "UNKNOWN",
                 "SCHEDULED_DOWNTIME": "0",
                 "BASIC_AUTH_PASSWORD_HASH": "",
                 "BASIC_AUTH_USERNAME": "",
                 "MAILER_HOST": "apps.smtp.gov.bc.ca",
-                "MAILER_PORT": 25
+                "MAILER_PORT": "25",
+                "PATH_PREFIX": "",
+                "TZ": "America/Vancouver"
             }
         },
         {
@@ -271,7 +274,7 @@
             "displayName": "Environment TAG name",
             "description": "The TAG name for this environment, e.g., dev, test, prod",
             "required": true,
-            "value": "dev"
+            "value": "prod"
         },
         {
             "name": "DATABASE_NAME",
