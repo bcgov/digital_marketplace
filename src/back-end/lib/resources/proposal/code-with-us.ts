@@ -67,9 +67,9 @@ async function parseProponentRequestBody(raw: any, connection: db.Connection, se
       return adt('individual', {
         legalName: getString(value, 'legalName'),
         email: getString(value, 'email'),
-        phone: getString(value, 'phone'),
+        phone: getString(value, 'phone') || null,
         street1: getString(value, 'street1'),
-        street2: getString(value, 'street2'),
+        street2: getString(value, 'street2') || null,
         city: getString(value, 'city'),
         region: getString(value, 'region'),
         mailCode: getString(value, 'mailCode'),
@@ -193,7 +193,9 @@ const resource: Resource = {
         // Only validate other fields if not in draft
         if (validatedStatus.value === CWUProposalStatus.Draft) {
           return valid({
-            ...request.body,
+            proponent,
+            proposalText,
+            additionalComments,
             session: request.session,
             opportunity: validatedCWUOpportunity.value.id,
             status: validatedStatus.value,
@@ -306,7 +308,9 @@ const resource: Resource = {
               return valid({
                 session: request.session,
                 body: adt('edit' as const, {
-                  ...request.body.value,
+                  proposalText,
+                  additionalComments,
+                  proponent,
                   attachments: validatedAttachments.value
                 })
               });
