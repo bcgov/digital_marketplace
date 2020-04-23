@@ -1,8 +1,11 @@
-import { statusChanged } from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toasts';
+import * as opportunityToasts from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toasts';
+import { swuProposalStatusToPastTenseVerb, swuProposalStatusToPresentTenseVerb } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 
 export const awarded = {
-  success: statusChanged.success(SWUOpportunityStatus.Awarded)
+  success: opportunityToasts.statusChanged.success(SWUOpportunityStatus.Awarded),
+  error: opportunityToasts.statusChanged.error(SWUOpportunityStatus.Awarded)
 };
 
 export const submitted = {
@@ -16,6 +19,22 @@ export const submitted = {
   }
 };
 
+export const statusChanged = {
+  success: (s: SWUProposalStatus) => {
+    const verb = swuProposalStatusToPastTenseVerb(s);
+    return {
+      title: `Proposal ${verb}`,
+      body: `Sprint With Us proposal has been ${verb.toLowerCase()}.`
+    };
+  },
+  error: (s: SWUProposalStatus) => {
+    return {
+      title: `Unable to ${swuProposalStatusToPresentTenseVerb(s)} Proposal`,
+      body: `Sprint With Us proposal could not be ${swuProposalStatusToPastTenseVerb(s).toLowerCase()}. Please try again later.`
+    };
+  }
+};
+
 type ScoreTest
   = 'Team Questions'
   | 'Code Challenge'
@@ -25,6 +44,10 @@ export const scored = {
   success: (test: ScoreTest) => ({
     title: `${test} Scored`,
     body: `Sprint With Us proposal's ${test} ha${test === 'Team Questions' ? 've' : 's'} been scored.`
+  }),
+  error: (test: ScoreTest) => ({
+    title: `Unable to Score ${test}`,
+    body: `Sprint With Us proposal's ${test} could not be scored. Please try again later.`
   })
 };
 
@@ -50,13 +73,6 @@ export const screenedOut = {
   }
 };
 
-export const disqualified = {
-  success: {
-    title: 'Proposal Disqualified',
-    body: 'Sprint With Us proposal has been disqualified.'
-  }
-};
-
 export const draftCreated = {
   success: {
     title: 'Draft Proposal Saved',
@@ -68,17 +84,14 @@ export const draftCreated = {
   }
 };
 
-export const withdrawn = {
-  success: {
-    title: 'Proposal Withdrawn',
-    body: 'Your Sprint With Us proposal has been withdrawn.'
-  }
-};
-
 export const deleted = {
   success: {
     title: 'Proposal Deleted',
     body: 'Your Sprint With Us proposal has been deleted.'
+  },
+  error: {
+    title: 'Unable to Delete Proposal',
+    body: 'Your Sprint With Us proposal could not be deleted. Please try again later.'
   }
 };
 
@@ -86,6 +99,10 @@ export const changesSaved = {
   success: {
     title: 'Proposal Changes Saved',
     body: 'Your changes to your Sprint With Us proposal have been saved.'
+  },
+  error: {
+    title: 'Unable to Save Proposal',
+    body: 'Your changes to your Sprint With Us proposal could not be saved. Please try again later.'
   }
 };
 
@@ -93,5 +110,9 @@ export const changesSubmitted = {
   success: {
     title: 'Proposal Changes Submitted',
     body: 'Your changes to your Sprint With Us proposal have been submitted.'
+  },
+  error: {
+    title: 'Unable to Submit Proposal Changes',
+    body: 'Your changes to your Sprint With Us proposal could not be submitted. Please try again later.'
   }
 };

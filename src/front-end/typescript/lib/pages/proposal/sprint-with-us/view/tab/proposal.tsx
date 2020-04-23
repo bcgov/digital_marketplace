@@ -128,15 +128,17 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.proposals.swu.update(state.proposal.id, adt('disqualify', reason));
           switch (result.tag) {
             case 'valid':
-              dispatch(toast(adt('success', toasts.disqualified.success)));
+              dispatch(toast(adt('success', toasts.statusChanged.success(SWUProposalStatus.Disqualified))));
               return (await resetProposal(state, result.value))
                 .set('showModal', null);
             case 'invalid':
+              dispatch(toast(adt('error', toasts.statusChanged.error(SWUProposalStatus.Disqualified))));
               return state.update('disqualificationReason', s => {
                 if (result.value.proposal?.tag !== 'disqualify') { return s; }
                 return FormField.setErrors(s, result.value.proposal.value);
               });
             case 'unhandled':
+              dispatch(toast(adt('error', toasts.statusChanged.error(SWUProposalStatus.Disqualified))));
               return state;
           }
         }
@@ -148,7 +150,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = stopAwardLoading(state);
           const result = await api.proposals.swu.update(state.proposal.id, adt('award', ''));
           if (!api.isValid(result)) {
-            //TODO propagate errors
+            dispatch(toast(adt('error', toasts.awarded.error)));
             return state;
           }
           dispatch(toast(adt('success', toasts.awarded.success)));

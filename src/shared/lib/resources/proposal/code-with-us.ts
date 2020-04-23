@@ -84,9 +84,9 @@ export interface CWUIndividualProponent {
   id: Id;
   legalName: string;
   email: string;
-  phone: string;
+  phone?: string;
   street1: string;
-  street2: string;
+  street2?: string;
   city: string;
   region: string;
   mailCode: string;
@@ -101,9 +101,9 @@ export function createBlankIndividualProponent(): CreateProponentRequestBody  {
   return adt('individual', {
     legalName: '',
     email: '',
-    phone: '',
+    phone: null,
     street1: '',
-    street2: '',
+    street2: null,
     city: '',
     region: '',
     mailCode: '',
@@ -126,7 +126,10 @@ export interface CreateRequestBody {
   status: CreateCWUProposalStatus;
 }
 
-export type CreateIndividualProponentRequestBody = Omit<CWUIndividualProponent, 'id'>;
+export interface CreateIndividualProponentRequestBody extends Omit<CWUIndividualProponent, 'id' | 'phone' | 'street2'> {
+  phone: string | null;
+  street2: string | null;
+}
 
 export type CreateIndividualProponentValidationErrors = ErrorTypeFrom<CreateIndividualProponentRequestBody>;
 

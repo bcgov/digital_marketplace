@@ -5,11 +5,11 @@
     <meta name="viewport" content="user-scalable=no, width=device-width">
     <title>Digital Marketplace</title>
     <meta name="description" value="Digital Marketplace" />
-    <link rel="icon" href="/images/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/app.css" />
+    <link rel="icon" href="<%= prefixPath("/images/favicon.ico") %>">
+    <link rel="stylesheet" type="text/css" href="<%= prefixPath("/app.css") %>" />
   </head>
-  <body class="d-flex flex-column align-items-center justify-content-center text-white text-center bg-info py-5 px-4" style="min-width: 100vw; min-height: 100vh;">
-    <img src="/images/bcgov_logo.svg" style="height: 48px;" />
+  <body class="d-flex flex-column align-items-center justify-content-center text-white text-center bg-bcgov-blue py-5 px-4" style="min-width: 100vw; min-height: 100vh;">
+    <img src="<%= prefixPath("/images/bcgov_logo.svg") %>" style="height: 48px;" />
     <div style="max-width: 500px;">
       <div class="mt-5">
         <h5 class="mb-4">
@@ -21,11 +21,11 @@
       </div>
       <div class="d-flex flex-nowrap justify-content-center align-items-center">
         <a class="text-white mr-5 d-flex flex-column align-items-center align-items-start" href="https://www.mozilla.org/en-CA/firefox/new/" target="_blank">
-          <img src="/images/firefox_logo.svg" style="height: 64px; width: auto;" />
+          <img src="<%= prefixPath("/images/firefox_logo.svg") %>" style="height: 64px; width: auto;" />
           <div class="font-weight-bold mt-3 text-center">Mozilla Firefox</div>
         </a>
         <a class="text-white d-flex flex-column align-items-center align-items-start" href="https://www.google.com/intl/en/chrome/" target="_blank">
-          <img src="/images/chrome_logo.svg" style="height: 64px; width: auto;" />
+          <img src="<%= prefixPath("/images/chrome_logo.svg") %>" style="height: 64px; width: auto;" />
           <div class="font-weight-bold mt-3 text-center">Google Chrome</div>
         </a>
       </div>

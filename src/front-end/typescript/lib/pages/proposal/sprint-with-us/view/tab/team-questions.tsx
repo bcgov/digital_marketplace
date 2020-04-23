@@ -120,6 +120,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
                 .set('showModal', null)
                 .set('proposal', result.value);
             case 'invalid': {
+              dispatch(toast(adt('error', toasts.scored.error('Team Questions'))));
               let scores = state.scores;
               if (result.value.proposal && result.value.proposal.tag === 'scoreQuestions') {
                 scores = result.value.proposal.value.map((e, i) => FormField.setErrors(scores[i], e.score || []));
@@ -127,6 +128,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               return state.set('scores', scores);
             }
             case 'unhandled':
+              dispatch(toast(adt('error', toasts.scored.error('Team Questions'))));
               return state;
           }
         }

@@ -44,3 +44,23 @@ export function swuProposalEventToTitleCase(e: SWUProposalEvent): string {
     case SWUProposalEvent.PriceScoreEntered:     return 'Price Score Entered';
   }
 }
+
+export function swuProposalStatusToPresentTenseVerb(s: SWUProposalStatus): string {
+  switch (s) {
+    case SWUProposalStatus.Draft: return 'Save';
+    case SWUProposalStatus.Submitted: return 'Submit';
+    case SWUProposalStatus.Awarded: return 'Award';
+    case SWUProposalStatus.Withdrawn: return 'Withdraw';
+    default: return 'Update';
+  }
+}
+
+export function swuProposalStatusToPastTenseVerb(s: SWUProposalStatus): string {
+  switch (s) {
+    case SWUProposalStatus.Draft: return 'Saved';
+    case SWUProposalStatus.Submitted: return 'Submitted';
+    case SWUProposalStatus.Awarded: return 'Awarded';
+    case SWUProposalStatus.Withdrawn: return 'Withdrawn';
+    default: return 'Update';
+  }
+}

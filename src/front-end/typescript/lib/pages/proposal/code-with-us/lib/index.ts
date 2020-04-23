@@ -33,3 +33,25 @@ export function cwuProposalEventToTitleCase(e: CWUProposalEvent): string {
     case CWUProposalEvent.ScoreEntered  : return 'Score Entered';
   }
 }
+
+export function cwuProposalStatusToPresentTenseVerb(s: CWUProposalStatus): string {
+  switch (s) {
+    case CWUProposalStatus.Draft: return 'Save';
+    case CWUProposalStatus.Submitted: return 'Submit';
+    case CWUProposalStatus.Awarded: return 'Award';
+    case CWUProposalStatus.Withdrawn: return 'Withdraw';
+    case CWUProposalStatus.Evaluated: return 'Score';
+    default: return 'Update';
+  }
+}
+
+export function cwuProposalStatusToPastTenseVerb(s: CWUProposalStatus): string {
+  switch (s) {
+    case CWUProposalStatus.Draft: return 'Saved';
+    case CWUProposalStatus.Submitted: return 'Submitted';
+    case CWUProposalStatus.Awarded: return 'Awarded';
+    case CWUProposalStatus.Withdrawn: return 'Withdrawn';
+    case CWUProposalStatus.Evaluated: return 'Scored';
+    default: return 'Update';
+  }
+}

@@ -1,10 +1,15 @@
 const path = require("path");
-//set up global constants for all grunt tasks
+//set up global constants and helpers for all grunt tasks
+const deslash = s => s.replace(/^\/*/, '').replace(/\/*$/, '');
+const prefix = a => b => `/${a ? deslash(a) + '/' : ''}${deslash(b)}`;
 const env = process.env.NODE_ENV || "development";
 const src = path.resolve(__dirname, "./src/front-end");
 const tmp = path.resolve(__dirname, "./tmp/grunt");
 const build = path.resolve(__dirname, "./build/front-end");
 global.gruntConfig = {
+  helpers: {
+    prefixPath: prefix(process.env.PATH_PREFIX || "")
+  },
   dir: {
     src,
     tmp,
@@ -12,6 +17,7 @@ global.gruntConfig = {
   },
   src: {
     "static": `${src}/static`,
+    "html": `${src}/html`,
     sass: `${src}/sass`,
     ts: `${src}/typescript`,
     tsShared: `src/shared`
@@ -23,8 +29,7 @@ global.gruntConfig = {
   },
   out: {
     css: `${build}/app.css`,
-    js: `${build}/app.js`,
-    html: `${build}/`
+    js: `${build}/app.js`
   }
 };
 
@@ -45,6 +50,7 @@ module.exports = function (grunt) {
   grunt.registerTask("common", [
     "clean",
     "copy",
+    "ejs",
     "sass",
     "postcss:prefix",
     "shell:typescript",
