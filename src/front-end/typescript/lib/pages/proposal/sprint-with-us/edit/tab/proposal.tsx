@@ -178,12 +178,16 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         async (state, dispatch) => {
           state = stopSaveChangesLoading(state);
           const result = await Form.persist(state.form, adt('update', state.proposal.id));
+          const isSave = state.proposal.status === SWUProposalStatus.Draft || state.proposal.status === SWUProposalStatus.Withdrawn;
           if (isInvalid(result)) {
+            isSave
+              ? dispatch(toast(adt('success', toasts.changesSaved.success)))
+              : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
             return state.set('form', result.value);
           }
-          result.value[1].status === SWUProposalStatus.Draft || result.value[1].status === SWUProposalStatus.Withdrawn
-            ? dispatch(toast(adt('success', toasts.changesSaved.success)))
-            : dispatch(toast(adt('success', toasts.changesSubmitted.success)));
+          isSave
+            ? dispatch(toast(adt('error', toasts.changesSaved.error)))
+            : dispatch(toast(adt('error', toasts.changesSubmitted.error)));
           return (await resetProposal(state, result.value[1]))
             .set('isEditing', false);
         }
@@ -200,6 +204,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           }
           const submitResult = await api.proposals.swu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(submitResult)) {
+            dispatch(toast(adt('error', toasts.submitted.error)));
             return state;
           }
           dispatch(toast(adt('success', toasts.submitted.success)));
@@ -215,6 +220,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = stopSubmitLoading(state);
           const result = await api.proposals.swu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.submitted.error)));
             return state;
           }
           dispatch(toast(adt('success', toasts.submitted.success)));
@@ -229,9 +235,10 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = stopWithdrawLoading(state);
           const result = await api.proposals.swu.update(state.proposal.id, adt('withdraw', ''));
           if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.statusChanged.error(SWUProposalStatus.Withdrawn))));
             return state;
           }
-          dispatch(toast(adt('success', toasts.withdrawn.success)));
+          dispatch(toast(adt('success', toasts.statusChanged.success(SWUProposalStatus.Withdrawn))));
           return await resetProposal(state, result.value);
         }
       ];
@@ -242,6 +249,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         async (state, dispatch) => {
           const result = await api.proposals.swu.delete(state.proposal.id);
           if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.deleted.error)));
             return stopDeleteLoading(state);
           }
           dispatch(toast(adt('success', toasts.deleted.success)));
