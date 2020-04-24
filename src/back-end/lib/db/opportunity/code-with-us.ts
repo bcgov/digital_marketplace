@@ -174,17 +174,17 @@ export function generateCWUOpportunityQuery(connection: Connection, full = false
       connection.raw('(CASE WHEN version."createdAt" > stat."createdAt" THEN version."createdAt" ELSE stat."createdAt" END) AS "updatedAt" '),
       connection.raw('(CASE WHEN version."createdAt" > stat."createdAt" THEN version."createdBy" ELSE stat."createdBy" END) AS "updatedBy" '),
       'version.title',
+      'version.teaser',
+      'version.remoteOk',
+      'version.location',
+      'version.reward',
       'version.proposalDeadline',
       'stat.status'
     );
 
   if (full) {
     query.select(
-      'version.teaser',
-      'version.remoteOk',
       'version.remoteDesc',
-      'version.location',
-      'version.reward',
       'version.skills',
       'version.description',
       'version.assignmentDate',
@@ -197,6 +197,12 @@ export function generateCWUOpportunityQuery(connection: Connection, full = false
   }
 
   return query;
+}
+
+async function isSubscribed(connection: Connection, oppId: Id, userId: Id): Promise<boolean> {
+  return !!(await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
+    .where({ opportunity: oppId, user: userId })
+    .first());
 }
 
 export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>(async (connection, id, session) => {
@@ -258,10 +264,7 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
 
     // Add on subscription flag, if authenticated user
     if (session) {
-      const subscription = await connection<RawCWUOpportunitySubscriber>('cwuOpportunitySubscribers')
-        .where({ opportunity: result.id, user: session.user.id })
-        .first();
-      result.subscribed = !!subscription;
+      result.subscribed = await isSubscribed(connection, result.id, session.user.id);
     }
 
     // If admin/owner, add on list of change records and reporting metrics if public
@@ -307,7 +310,7 @@ export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim
   }
 
   const fullOpportunity = dbResult.value;
-  const { id, createdAt, createdBy, updatedAt, updatedBy, title, proposalDeadline, status } = fullOpportunity;
+  const { id, createdAt, createdBy, updatedAt, updatedBy, title, teaser, proposalDeadline, status, remoteOk, reward, location, subscribed } = fullOpportunity;
   return valid({
     id,
     createdAt,
@@ -315,8 +318,13 @@ export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim
     updatedAt,
     updatedBy,
     title,
+    teaser,
+    remoteOk,
+    reward,
+    location,
     proposalDeadline,
-    status
+    status,
+    subscribed
   });
 });
 
@@ -351,7 +359,12 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(a
   }
   // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
   // Process results to eliminate fields not viewable by the current role
-  const results = (await query).map(result => processForRole(result, session));
+  const results = await Promise.all((await query).map(async result => {
+    if (session) {
+      result.subscribed = await isSubscribed(connection, result.id, session.user.id);
+    }
+    return processForRole(result, session);
+  }));
   return valid(await Promise.all(results.map(async raw => await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, raw))));
 });
 

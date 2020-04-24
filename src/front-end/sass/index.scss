@@ -39,7 +39,7 @@ $gray-500: #adb5bd;
 $gray-600: #6C757D;
 $gray-700: #495057;
 $gray-800: #343a40;
-$gray-900: #25292F;
+$gray-900: #212529;
 
 // Colors.
 $white:            #ffffff;
@@ -451,6 +451,25 @@ nav.navbar .nav-link:hover {
 }
 
 // Custom utilities.
+
+.shadow-hover {
+  transition: box-shadow $transition-duration;
+  &:hover {
+    @extend .shadow;
+  }
+}
+
+.h-input {
+  min-height: $input-height !important;
+}
+
+.h-input-sm {
+  min-height: $input-height-sm !important;
+}
+
+.h-input-lg {
+  min-height: $input-height-lg !important;
+}
 
 .o-0 {
   opacity: 0 !important;

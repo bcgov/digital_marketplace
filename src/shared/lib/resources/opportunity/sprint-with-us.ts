@@ -93,8 +93,22 @@ export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOp
 
 export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Canceled, SWUOpportunityStatus.Suspended];
 
-export function isSWUOpportunityAcceptingProposals(o: SWUOpportunity): boolean {
+export function isSWUOpportunityAcceptingProposals(o: Pick<SWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
   return o.status === SWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+}
+
+export function isUnpublished(o: Pick<SWUOpportunity, 'status'>): boolean {
+  return o.status === SWUOpportunityStatus.Draft
+      || o.status === SWUOpportunityStatus.UnderReview
+      || o.status === SWUOpportunityStatus.Suspended;
+}
+
+export function isOpen(o: Pick<SWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
+  return isSWUOpportunityAcceptingProposals(o);
+}
+
+export function isClosed(o: Pick<SWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
+  return !isOpen(o) && !isUnpublished(o);
 }
 
 export const editableOpportunityStatuses: readonly SWUOpportunityStatus[] = [SWUOpportunityStatus.Draft, SWUOpportunityStatus.UnderReview, SWUOpportunityStatus.Published, SWUOpportunityStatus.Suspended];
@@ -178,7 +192,7 @@ export function getQuestionByOrder(opp: SWUOpportunity, order: number): SWUTeamQ
   return null;
 }
 
-export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'teaser' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline' | 'totalMaxBudget' | 'location' | 'remoteOk' | 'subscribed'>;
 
 export interface SWUOpportunityHistoryRecord {
   id: Id;

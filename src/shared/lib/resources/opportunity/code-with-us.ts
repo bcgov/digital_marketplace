@@ -112,7 +112,7 @@ export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
   return !!o.history && o.history.reduce((acc, record) => acc || record.type.tag === 'status' && record.type.value === CWUOpportunityStatus.Evaluation, false as boolean);
 }
 
-export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline'>;
+export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'teaser' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline' | 'remoteOk' | 'reward' | 'location' | 'subscribed'>;
 
 export type CreateCWUOpportunityStatus
   = CWUOpportunityStatus.Published
@@ -211,8 +211,21 @@ export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOp
 
 export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
 
-export function isCWUOpportunityAcceptingProposals(o: CWUOpportunity): boolean {
+export function isCWUOpportunityAcceptingProposals(o: Pick<CWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
   return o.status === CWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+}
+
+export function isUnpublished(o: Pick<CWUOpportunity, 'status'>): boolean {
+  return o.status === CWUOpportunityStatus.Draft
+      || o.status === CWUOpportunityStatus.Suspended;
+}
+
+export function isOpen(o: Pick<CWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
+  return isCWUOpportunityAcceptingProposals(o);
+}
+
+export function isClosed(o: Pick<CWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
+  return !isOpen(o) && !isUnpublished(o);
 }
 
 export function doesCWUOpportunityStatusAllowGovToViewProposals(s: CWUOpportunityStatus): boolean {

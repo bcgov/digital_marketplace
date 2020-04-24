@@ -222,7 +222,8 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({ state, dispatch }) 
       <Checkbox.view
         extraChildProps={{
           inlineLabel: 'Admin',
-            loading: isSavePermissionsLoading
+          loading: isSavePermissionsLoading,
+          slimHeight: true
         }}
         className='mb-0 mr-3'
         disabled={isLoading}

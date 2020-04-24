@@ -85,7 +85,7 @@ export function formatAmount(amount: number, currency?: string, ordinal?: boolea
     }
   }
   if (currency) {
-    formatted = `${currency} ${formatted}`;
+    formatted = `${currency}${formatted}`;
   }
   if (ordinal) {
     formatted = `${formatted}${getOrdinalSuffix(amount)}`;

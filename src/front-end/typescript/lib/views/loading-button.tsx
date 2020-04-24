@@ -1,11 +1,11 @@
 import { View } from 'front-end/lib/framework';
 import Link, { ButtonProps, emptyIconLinkSymbol, LinkSymbol, Placement } from 'front-end/lib/views/link';
-import React from 'react';
+import React, { MouseEvent } from 'react';
 import { Spinner } from 'reactstrap';
 
 export interface Props extends Omit<ButtonProps, 'button' | 'dest' | 'onClick'> {
   loading: boolean;
-  onClick(): void;
+  onClick(e?: MouseEvent): void;
 }
 
 const Children: View<Props> = ({ loading, children = '' }) => {

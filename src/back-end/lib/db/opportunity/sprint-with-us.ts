@@ -255,17 +255,17 @@ export function generateSWUOpportunityQuery(connection: Connection, full = false
       connection.raw('(CASE WHEN versions."createdAt" > statuses."createdAt" THEN versions."createdAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
       connection.raw('(CASE WHEN versions."createdAt" > statuses."createdAt" THEN versions."createdBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'versions.title',
+      'versions.teaser',
+      'versions.remoteOk',
+      'versions.location',
+      'versions.totalMaxBudget',
       'versions.proposalDeadline',
       'statuses.status'
     );
 
   if (full) {
     query.select<RawSWUOpportunity[]>(
-      'versions.teaser',
-      'versions.remoteOk',
       'versions.remoteDesc',
-      'versions.location',
-      'versions.totalMaxBudget',
       'versions.minTeamMembers',
       'versions.mandatorySkills',
       'versions.optionalSkills',
@@ -345,7 +345,12 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(a
   }
   // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
   // Process results to eliminate fields not viewable by the current role
-  const results = (await query).map(result => processForRole(result, session));
+  const results = await Promise.all((await query).map(async result => {
+    if (session) {
+      result.subscribed = await isSubscribed(connection, result.id, session.user.id);
+    }
+    return processForRole(result, session);
+  }));
 
   return valid(await Promise.all(results.map(async raw => await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw))));
 });
@@ -394,6 +399,12 @@ export const readOneSWUOpportunitySlim = tryDb<[Id, Session], SWUOpportunitySlim
 
   return result ? valid(await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, result)) : valid(null);
 });
+
+async function isSubscribed(connection: Connection, oppId: Id, userId: Id): Promise<boolean> {
+  return !!(await connection<RawSWUOpportunitySubscriber>('swuOpportunitySubscribers')
+    .where({ opportunity: oppId, user: userId })
+    .first());
+}
 
 export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>(async (connection, id, session) => {
   let query = generateSWUOpportunityQuery(connection, true)
@@ -450,9 +461,7 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
 
     // If authenticated, add on subscription status flag
     if (session) {
-      result.subscribed = !!(await connection<RawSWUOpportunitySubscriber>('swuOpportunitySubscribers')
-        .where({ opportunity: result.id, user: session.user.id })
-        .first());
+      result.subscribed = await isSubscribed(connection, result.id, session.user.id);
     }
 
     // If admin/owner, add on history, reporting metrics, and successful proponent if applicable

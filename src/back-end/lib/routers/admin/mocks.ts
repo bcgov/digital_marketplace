@@ -94,6 +94,10 @@ export const cwuOpportunity: CWUOpportunity = {
 export const cwuOpportunitySlim: CWUOpportunitySlim = {
   id: cwuOpportunity.id,
   title: cwuOpportunity.title,
+  teaser: cwuOpportunity.teaser,
+  remoteOk: cwuOpportunity.remoteOk,
+  location: cwuOpportunity.location,
+  reward: cwuOpportunity.reward,
   createdAt: cwuOpportunity.createdAt,
   updatedAt: cwuOpportunity.updatedAt,
   status: cwuOpportunity.status,
@@ -182,6 +186,10 @@ export const swuOpportunity: SWUOpportunity = {
 export const swuOpportunitySlim: SWUOpportunitySlim = {
   id: swuOpportunity.id,
   title: swuOpportunity.title,
+  teaser: swuOpportunity.teaser,
+  remoteOk: swuOpportunity.remoteOk,
+  location: swuOpportunity.location,
+  totalMaxBudget: swuOpportunity.totalMaxBudget,
   createdAt: swuOpportunity.createdAt,
   updatedAt: swuOpportunity.updatedAt,
   status: swuOpportunity.status,
