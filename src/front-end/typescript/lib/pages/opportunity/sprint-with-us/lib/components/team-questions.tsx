@@ -268,7 +268,7 @@ const QuestionView: View<QuestionViewProps> = props => {
             extraChildProps={{
               suffix: 'words'
             }}
-            label='Word Limit'
+            label='Response Word Limit'
             placeholder='Word Limit'
             required
             disabled={disabled}
