@@ -1,16 +1,18 @@
+import { SEARCH_DEBOUNCE_DURATION } from 'front-end/config';
 import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-//import * as FormField from 'front-end/lib/components/form-field';
+import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { cwuOpportunityToPublicColor, cwuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import { debounce } from 'lodash';
 import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
 import { compareDates, find, formatAmount, formatDateAndTime } from 'shared/lib';
@@ -19,25 +21,29 @@ import * as SWU from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isVendor, User } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 
+const CARD_MARGIN_BOTTOM = '2rem';
+
 type Opportunity
   = ADT<'cwu', CWU.CWUOpportunitySlim>
   | ADT<'swu', SWU.SWUOpportunitySlim>;
 
-type OpportunityCategory
-  = 'unpublished'
-  | 'open'
-  | 'closed';
+interface CategorizedOpportunities {
+  unpublished: Opportunity[];
+  open: Opportunity[];
+  closed: Opportunity[];
+}
+
+type OpportunityCategory = keyof CategorizedOpportunities;
 
 export interface State {
   viewerUser?: User;
   toggleWatchLoading: [OpportunityCategory, Id] | null;
   toggleNotificationsLoading: number;
-  unpublished: Opportunity[];
-  open: Opportunity[];
-  closed: Opportunity[];
   typeFilter: Immutable<Select.State>;
   remoteOkFilter: Immutable<Checkbox.State>;
   searchFilter: Immutable<ShortText.State>;
+  opportunities: CategorizedOpportunities;
+  visibleOpportunities: CategorizedOpportunities;
 }
 
 function isLoading(state: Immutable<State>): boolean {
@@ -49,23 +55,30 @@ type InnerMsg
   | ADT<'remoteOkFilter', Checkbox.Msg>
   | ADT<'searchFilter', ShortText.Msg>
   | ADT<'toggleNotifications'>
-  | ADT<'toggleWatch', [OpportunityCategory, Id]>;
+  | ADT<'toggleWatch', [OpportunityCategory, Id]>
+  | ADT<'search'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-function categorizeOpportunities(cwu: CWU.CWUOpportunitySlim[], swu: SWU.SWUOpportunitySlim[], viewerUser?: User): Pick<State, 'unpublished' | 'open' | 'closed'> {
+function categorizeOpportunities(cwu: CWU.CWUOpportunitySlim[], swu: SWU.SWUOpportunitySlim[], viewerUser?: User): CategorizedOpportunities {
   const opportunities: Opportunity[] = [
-    ...(cwu.map(o => adt('cwu' as const, o))),
-    ...(swu.map(o => adt('swu' as const, o)))
+    ...(cwu.map(o => adt('cwu' as const, {
+      ...o,
+      title: o.title || CWU.DEFAULT_OPPORTUNITY_TITLE
+    }))),
+    ...(swu.map(o => adt('swu' as const, {
+      ...o,
+      title: o.title || SWU.DEFAULT_OPPORTUNITY_TITLE
+    })))
   ];
-  const empty: Pick<State, 'unpublished' | 'open' | 'closed'> = {
+  const empty: CategorizedOpportunities = {
     unpublished: [],
     open: [],
     closed: []
   };
-  const result: Pick<State, 'unpublished' | 'open' | 'closed'> = opportunities.reduce((acc, o) => {
+  const result: CategorizedOpportunities = opportunities.reduce((acc, o) => {
     switch (o.tag) {
       case 'cwu':
         if (CWU.isUnpublished(o.value)) {
@@ -110,8 +123,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
     swu = swuR.value;
   }
   const viewerUser = shared.session?.user;
+  const opportunities = categorizeOpportunities(cwu, swu, viewerUser);
   return {
-    ...categorizeOpportunities(cwu, swu, viewerUser),
+    opportunities,
+    visibleOpportunities: opportunities,
     viewerUser,
     toggleWatchLoading: null,
     toggleNotificationsLoading: 0,
@@ -144,6 +159,34 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
   };
 };
 
+const dispatchSearch = debounce((dispatch: Dispatch<Msg>) => dispatch(adt('search')), SEARCH_DEBOUNCE_DURATION);
+
+function makeQueryRegExp(query: string): RegExp | null {
+  if (!query) { return null; }
+  return new RegExp(query.split(/\s+/).join('.*'), 'i');
+}
+
+function filter(opps: Opportunity[], oppType: string | undefined, remoteOk: boolean, query: string): Opportunity[] {
+  const regExp = makeQueryRegExp(query);
+  return opps.filter(o => {
+    if (oppType && o.tag !== oppType) { return false; }
+    if (remoteOk && !o.value.remoteOk) { return false; }
+    if (regExp && !o.value.title.match(regExp) && !o.value.location.match(regExp)) { return false; }
+    return true;
+  });
+}
+
+function runSearch(state: Immutable<State>): Immutable<State> {
+  const oppType = FormField.getValue(state.typeFilter)?.value;
+  const remoteOk = FormField.getValue(state.remoteOkFilter);
+  const query = FormField.getValue(state.searchFilter);
+  return state.set('visibleOpportunities', {
+    unpublished: filter(state.opportunities.unpublished, oppType, remoteOk, query),
+    open: filter(state.opportunities.open, oppType, remoteOk, query),
+    closed: filter(state.opportunities.closed, oppType, remoteOk, query)
+  });
+}
+
 const startToggleNotificationsLoading = makeStartLoading<State>('toggleNotificationsLoading');
 const stopToggleNotificationsLoading = makeStopLoading<State>('toggleNotificationsLoading');
 
@@ -155,7 +198,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['typeFilter'],
         childUpdate: Select.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('typeFilter' as const, value)
+        mapChildMsg: value => adt('typeFilter' as const, value),
+        updateAfter: state => [
+          state,
+          async (state, dispatch) => {
+            dispatchSearch(dispatch);
+            return null;
+          }
+        ]
       });
     case 'remoteOkFilter':
       return updateComponentChild({
@@ -163,7 +213,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['remoteOkFilter'],
         childUpdate: Checkbox.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('remoteOkFilter' as const, value)
+        mapChildMsg: value => adt('remoteOkFilter' as const, value),
+        updateAfter: state => [
+          state,
+          async (state, dispatch) => {
+            dispatchSearch(dispatch);
+            return null;
+          }
+        ]
       });
     case 'searchFilter':
       return updateComponentChild({
@@ -171,7 +228,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['searchFilter'],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('searchFilter' as const, value)
+        mapChildMsg: value => adt('searchFilter' as const, value),
+        updateAfter: state => [
+          state,
+          async (state, dispatch) => {
+            dispatchSearch(dispatch);
+            return null;
+          }
+        ]
       });
     case 'toggleNotifications':
       return [
@@ -193,23 +257,29 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           state = state.set('toggleWatchLoading', null);
           const category = msg.value[0];
           const id = msg.value[1];
-          const opportunity: Opportunity | null = find(state[category], o => o.value.id === id);
+          const opportunity: Opportunity | null = find(state.opportunities[category], o => o.value.id === id);
           if (!opportunity) { return state; }
           const program = opportunity.tag;
           const result = opportunity.value.subscribed
             ? await api.subscribers[program].delete(id)
             : await api.subscribers[program].create({ opportunity: id });
           if (result.tag === 'valid') {
-            return state.update(category, os => os.map(o => {
-              if (o.value.id === id) {
-                o.value.subscribed = !o.value.subscribed;
-              }
-              return o;
+            state = state.update('opportunities', os => ({
+              ...os,
+              [category]: os[category].map(o => {
+                if (o.value.id === id) {
+                  o.value.subscribed = !o.value.subscribed;
+                }
+                return o;
+              })
             }));
+            return runSearch(state);
           }
           return state;
         }
       ];
+    case 'search':
+      return [runSearch(state)];
     default:
       return [state];
   }
@@ -332,11 +402,11 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
   const isCWU = opportunity.tag === 'cwu' ;
   const subscribed = opportunity.value.subscribed;
   return (
-    <Col xs='12' md='6' style={{ marginBottom: '2rem', minHeight: '320px' }}>
+    <Col xs='12' md='6' style={{ marginBottom: CARD_MARGIN_BOTTOM, minHeight: '320px' }}>
       <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
         <Link disabled={disabled} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
           <h5 className='mb-2'>
-            {opportunity.value.title || (isCWU ? CWU.DEFAULT_OPPORTUNITY_TITLE : SWU.DEFAULT_OPPORTUNITY_TITLE)}
+            {opportunity.value.title}
           </h5>
           <OpportunityType type_={opportunity.tag} />
           <div className='mt-3 font-size-small d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-sm-center text-body'>
@@ -431,15 +501,19 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
             : null}
         </Col>
         {opportunities.length
-          ? opportunities.map((o, i) => (
-              <OpportunityCard
-                key={`opportunity-list-${i}`}
-                opportunity={o}
-                viewerUser={viewerUser}
-                isWatchLoading={toggleWatchLoading === o.value.id}
-                disabled={disabled}
-                toggleWatch={() => toggleWatch(o.value.id)} />
-              ))
+          ? (<Col xs='12' style={{ marginBottom: `-${CARD_MARGIN_BOTTOM}` }}>
+              <Row>
+                {opportunities.map((o, i) => (
+                  <OpportunityCard
+                    key={`opportunity-list-${i}`}
+                    opportunity={o}
+                    viewerUser={viewerUser}
+                    isWatchLoading={toggleWatchLoading === o.value.id}
+                    disabled={disabled}
+                    toggleWatch={() => toggleWatch(o.value.id)} />
+                ))}
+              </Row>
+            </Col>)
           : (<Col xs='12'>{noneText}</Col>)}
       </Row>
     </div>
@@ -449,7 +523,8 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
 const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const toggleWatch = (category: OpportunityCategory) => (id: Id) => dispatch(adt('toggleWatch', [category, id]) as Msg);
   const toggleNotifications = () => dispatch(adt('toggleNotifications'));
-  const hasUnpublished = !!state.unpublished.length;
+  const opps = state.visibleOpportunities;
+  const hasUnpublished = !!opps.unpublished.length;
   const isToggleNotificationsLoading = state.toggleNotificationsLoading > 0;
   const isDisabled = isLoading(state);
   const getToggleWatchLoadingId = (c: OpportunityCategory) => {
@@ -463,9 +538,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
         ? (<OpportunityList
             title='Unpublished Opportunities'
             noneText='There are currently no unpublished opportunities.'
-            opportunities={state.unpublished}
+            opportunities={opps.unpublished}
             viewerUser={state.viewerUser}
-            className='mb-4'
+            className='mb-5'
             disabled={isDisabled}
             toggleWatchLoading={getToggleWatchLoadingId('unpublished')}
             toggleNotificationsLoading={isToggleNotificationsLoading}
@@ -476,9 +551,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <OpportunityList
         title='Open Opportunities'
         noneText='There are currently no open opportunities. Check back soon!'
-        opportunities={state.open}
+        opportunities={opps.open}
         viewerUser={state.viewerUser}
-        className='mb-4'
+        className='mb-5'
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('open')}
         toggleNotificationsLoading={isToggleNotificationsLoading}
@@ -488,7 +563,7 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <OpportunityList
         title='Closed Opportunities'
         noneText='There are currently no closed opportunities.'
-        opportunities={state.closed}
+        opportunities={opps.closed}
         viewerUser={state.viewerUser}
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('closed')}
