@@ -204,7 +204,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
             : 'Submit Opportunity for Review?',
           body: () => publishStatus === SWUOpportunityStatus.Published
             ? 'Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.'
-            : 'Are you sure you want to submit this Sprint With Us opportunity for review?',
+            : 'Are you sure you want to submit this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it.',
           onCloseMsg: adt('hideModal'),
           actions: [
             {

@@ -264,7 +264,10 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
 
     minTeamMembers: immutable(await NumberField.init({
       errors: [],
-      validate: opportunityValidation.validateMinimumTeamMembers,
+      validate: v => {
+        if (v === null) { return valid(null); }
+        return mapValid(opportunityValidation.validateMinimumTeamMembers(v), w => w || null);
+      },
       child: {
         value: opportunity?.minTeamMembers || null,
         id: 'swu-opportunity-min-team-members',
@@ -498,7 +501,7 @@ export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
 
 export function getValues(state: Immutable<State>): Values {
   const totalMaxBudget = FormField.getValue(state.totalMaxBudget) || 0;
-  const minTeamMembers = FormField.getValue(state.minTeamMembers) || 1;
+  const minTeamMembers = FormField.getValue(state.minTeamMembers) || undefined;
   const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
   const codeChallengeWeight = FormField.getValue(state.codeChallengeWeight) || 0;
   const scenarioWeight = FormField.getValue(state.scenarioWeight) || 0;
@@ -1124,6 +1127,12 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
   const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
   return (
     <div>
+      <Row>
+        <Col xs='12'>
+          <p>Each submitted proposal will be scored for each stage of the evaluation process. Assign a weight to each evaluation stage using the fields available below.</p>
+          <p className='mb-4 font-size-small font-italic'>Note: Weights are specified as percentages and the sum of all weights must total 100%.</p>
+        </Col>
+      </Row>
       <Row>
         <Col xs='12' md='4'>
           <NumberField.view

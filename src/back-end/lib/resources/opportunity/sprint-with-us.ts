@@ -19,14 +19,13 @@ interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportuni
   completionDate: Date;
 }
 
-interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'history' | 'publishedAt' | 'subscribed' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'codeChallengeEndDate' | 'teamScenarioEndDate' | 'minTeamMembers'> {
+interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'history' | 'publishedAt' | 'subscribed' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'codeChallengeEndDate' | 'teamScenarioEndDate'> {
   status: CreateSWUOpportunityStatus;
   session: AuthenticatedSession;
   inceptionPhase?: ValidatedCreateSWUOpportunityPhaseBody;
   prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
   implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
-  minTeamMembers: number | null;
 }
 
 interface ValidatedUpdateRequestBody {
@@ -106,7 +105,7 @@ const resource: Resource = {
           remoteDesc: getString(body, 'remoteDesc'),
           location: getString(body, 'location'),
           totalMaxBudget: getNumber(body, 'totalMaxBudget'),
-          minTeamMembers: getNumber<number | null>(body, 'minTeamMembers', null),
+          minTeamMembers: getNumber<number | undefined>(body, 'minTeamMembers', undefined),
           mandatorySkills: getStringArray(body, 'mandatorySkills'),
           optionalSkills: getStringArray(body, 'optionalSkills'),
           description: getString(body, 'description'),
@@ -265,7 +264,7 @@ const resource: Resource = {
         const validatedCodeChallengeWeight = opportunityValidation.validateCodeChallengeWeight(codeChallengeWeight);
         const validatedTeamScenarioWeight = opportunityValidation.validateTeamScenarioWeight(scenarioWeight);
         const validatedPriceWeight = opportunityValidation.validatePriceWeight(priceWeight);
-        const validatedInceptionPhase = optional(inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, getValidValue(validatedAssignmentDate, new Date())));
+        const validatedInceptionPhase = opportunityValidation.validateSWUOpportunityInceptionPhase(inceptionPhase, getValidValue(validatedAssignmentDate, new Date()));
         const validatedPrototypePhase = optional(prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, new Date()))));
         const validatedImplementationPhase = opportunityValidation.validateSWUOpportunityImplementationPhase(implementationPhase, getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, new Date())));
         const validatedTeamQuestions = opportunityValidation.validateTeamQuestions(teamQuestions);
@@ -399,7 +398,7 @@ const resource: Resource = {
               remoteDesc: getString(value, 'remoteDesc'),
               location: getString(value, 'location'),
               totalMaxBudget: getNumber<number>(value, 'totalMaxBudget'),
-              minTeamMembers: getNumber<number | null>(value, 'minTeamMembers', null),
+              minTeamMembers: getNumber<number | undefined>(value, 'minTeamMembers', undefined),
               mandatorySkills: getStringArray(value, 'mandatorySkills'),
               optionalSkills: getStringArray(value, 'optionalSkills'),
               description: getString(value, 'description'),
@@ -580,7 +579,7 @@ const resource: Resource = {
             const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc);
             const validatedLocation = opportunityValidation.validateLocation(location);
             const validatedTotalMaxBudget = opportunityValidation.validateTotalMaxBudget(totalMaxBudget);
-            const validatedMinTeamMembers = optional(minTeamMembers, v => opportunityValidation.validateMinimumTeamMembers(v));
+            const validatedMinTeamMembers = opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
             const validatedMandatorySkills = opportunityValidation.validateMandatorySkills(mandatorySkills);
             const validatedOptionalSkills = opportunityValidation.validateOptionalSkills(optionalSkills);
             const validatedDescription = opportunityValidation.validateDescription(description);
@@ -588,8 +587,8 @@ const resource: Resource = {
             const validatedCodeChallengeWeight = opportunityValidation.validateCodeChallengeWeight(codeChallengeWeight);
             const validatedTeamScenarioWeight = opportunityValidation.validateTeamScenarioWeight(scenarioWeight);
             const validatedPriceWeight = opportunityValidation.validatePriceWeight(priceWeight);
-            const validatedInceptionPhase = optional(inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, getValidValue(validatedAssignmentDate, now)));
-            const validatedPrototypePhase = optional(prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, now))));
+            const validatedInceptionPhase = opportunityValidation.validateSWUOpportunityInceptionPhase(inceptionPhase, getValidValue(validatedAssignmentDate, now));
+            const validatedPrototypePhase = opportunityValidation.validateSWUOpportunityPrototypePhase(prototypePhase, getValidValue(validatedInceptionPhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
             const validatedImplementationPhase = opportunityValidation.validateSWUOpportunityImplementationPhase(implementationPhase, getValidValue(validatedPrototypePhaseCompletionDate, getValidValue(validatedAssignmentDate, now)));
             const validatedTeamQuestions = opportunityValidation.validateTeamQuestions(teamQuestions);
 
@@ -687,7 +686,7 @@ const resource: Resource = {
               });
             }
           case 'submitForReview':
-            if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.UnderReview)) {
+            if (!isValidStatusChange(swuOpportunity.status, SWUOpportunityStatus.UnderReview)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             // Perform validation on draft to ensure it's ready for publishing
@@ -698,7 +697,7 @@ const resource: Resource = {
               opportunityValidation.validateRemoteDesc(validatedSWUOpportunity.value.remoteDesc),
               opportunityValidation.validateLocation(validatedSWUOpportunity.value.location),
               opportunityValidation.validateTotalMaxBudget(validatedSWUOpportunity.value.totalMaxBudget),
-              optional(validatedSWUOpportunity.value.minTeamMembers, v => opportunityValidation.validateMinimumTeamMembers(v)),
+              opportunityValidation.validateMinimumTeamMembers(validatedSWUOpportunity.value.minTeamMembers),
               opportunityValidation.validateMandatorySkills(validatedSWUOpportunity.value.mandatorySkills),
               opportunityValidation.validateOptionalSkills(validatedSWUOpportunity.value.optionalSkills),
               opportunityValidation.validateDescription(validatedSWUOpportunity.value.description),
@@ -707,8 +706,8 @@ const resource: Resource = {
               opportunityValidation.validateTeamScenarioWeight(validatedSWUOpportunity.value.scenarioWeight),
               opportunityValidation.validatePriceWeight(validatedSWUOpportunity.value.priceWeight),
               opportunityValidation.validatePriceWeight(validatedSWUOpportunity.value.priceWeight),
-              optional(validatedSWUOpportunity.value.inceptionPhase, v => opportunityValidation.validateSWUOpportunityInceptionPhase(v, validatedSWUOpportunity.value.assignmentDate)),
-              optional(validatedSWUOpportunity.value.prototypePhase, v => opportunityValidation.validateSWUOpportunityPrototypePhase(v, validatedSWUOpportunity.value.inceptionPhase?.completionDate || validatedSWUOpportunity.value.assignmentDate)),
+              opportunityValidation.validateSWUOpportunityInceptionPhase(validatedSWUOpportunity.value.inceptionPhase, validatedSWUOpportunity.value.assignmentDate),
+              opportunityValidation.validateSWUOpportunityPrototypePhase(validatedSWUOpportunity.value.prototypePhase, validatedSWUOpportunity.value.inceptionPhase?.completionDate || validatedSWUOpportunity.value.assignmentDate),
               opportunityValidation.validateSWUOpportunityImplementationPhase(validatedSWUOpportunity.value.implementationPhase, validatedSWUOpportunity.value.prototypePhase?.completionDate || validatedSWUOpportunity.value.assignmentDate)
             ])) {
               return invalid({

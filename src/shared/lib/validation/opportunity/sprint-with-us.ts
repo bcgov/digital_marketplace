@@ -76,66 +76,71 @@ export function validatePhaseRequiredCapability(raw: any): Validation<CreateSWUO
   }
 }
 
-export function validateSWUOpportunityInceptionPhase(raw: any, opportunityAssignmentDate: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
-  const validatedStartDate = validateSWUOpportunityInceptionPhaseStartDate(getISODateString(raw, 'startDate'), opportunityAssignmentDate);
-  const validatedCompletionDate = optional(getISODateString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(getISODateString(v, 'completionDate'), getValidValue(validatedStartDate, new Date())));
-  const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
-  const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
-  if (allValid([
-    validatedStartDate,
-    validatedCompletionDate,
-    validatedMaxBudget,
-    validatedRequiredCapabilities
-  ])) {
-    return valid({
-      startDate: validatedStartDate.value,
-      completionDate: validatedCompletionDate.value,
-      maxBudget: validatedMaxBudget.value,
-      requiredCapabilities: validatedRequiredCapabilities.value
-    } as ValidatedCreateSWUOpportunityPhaseBody);
-  } else {
-    return invalid({
-      startDate: getInvalidValue(validatedStartDate, undefined),
-      completionDate: getInvalidValue(validatedCompletionDate, undefined),
-      maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-      requiredCapabilities: getInvalidValue(validatedRequiredCapabilities, undefined)
-    });
-  }
+export function validateSWUOpportunityInceptionPhase(value: any, opportunityAssignmentDate: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody | undefined, CreateSWUOpportunityPhaseValidationErrors> {
+  return optional(value, (raw): Validation<ValidatedCreateSWUOpportunityPhaseBody | undefined, CreateSWUOpportunityPhaseValidationErrors> => {
+    const validatedStartDate = validateSWUOpportunityInceptionPhaseStartDate(getISODateString(raw, 'startDate'), opportunityAssignmentDate);
+    const rawCompletionDate = getISODateString(raw, 'completionDate');
+    const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(rawCompletionDate, getValidValue(validatedStartDate, new Date()));
+    const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
+    const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
+    if (allValid([
+      validatedStartDate,
+      validatedCompletionDate,
+      validatedMaxBudget,
+      validatedRequiredCapabilities
+    ])) {
+      return valid({
+        startDate: validatedStartDate.value,
+        completionDate: validatedCompletionDate.value,
+        maxBudget: validatedMaxBudget.value,
+        requiredCapabilities: validatedRequiredCapabilities.value
+      } as ValidatedCreateSWUOpportunityPhaseBody);
+    } else {
+      return invalid({
+        startDate: getInvalidValue(validatedStartDate, undefined),
+        completionDate: getInvalidValue(validatedCompletionDate, undefined),
+        maxBudget: getInvalidValue(validatedMaxBudget, undefined),
+        requiredCapabilities: getInvalidValue(validatedRequiredCapabilities, undefined)
+      });
+    }
+  });
 }
 
-export function validateSWUOpportunityPrototypePhase(raw: any, inceptionPhaseCompletionDate?: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
-  const validatedStartDate  = validateSWUOpportunityPrototypePhaseStartDate(getISODateString(raw, 'startDate'), inceptionPhaseCompletionDate);
-  const validatedCompletionDate = optional(getISODateString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(v, getValidValue(validatedStartDate, new Date())));
-  const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
-  const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
+export function validateSWUOpportunityPrototypePhase(value: any, inceptionPhaseCompletionDate?: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody | undefined, CreateSWUOpportunityPhaseValidationErrors> {
+  return optional(value, (raw): Validation<ValidatedCreateSWUOpportunityPhaseBody | undefined, CreateSWUOpportunityPhaseValidationErrors> => {
+    const validatedStartDate  = validateSWUOpportunityPrototypePhaseStartDate(getISODateString(raw, 'startDate'), inceptionPhaseCompletionDate);
+    const rawCompletionDate = getISODateString(raw, 'completionDate');
+    const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(rawCompletionDate, getValidValue(validatedStartDate, new Date()));
+    const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
+    const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
 
-  if (allValid([
-    validatedStartDate,
-    validatedCompletionDate,
-    validatedMaxBudget,
-    validatedRequiredCapabilities
-  ])) {
-    return valid({
-      startDate: validatedStartDate.value,
-      completionDate: validatedCompletionDate.value,
-      maxBudget: validatedMaxBudget.value,
-      requiredCapabilities: validatedRequiredCapabilities.value
-    } as ValidatedCreateSWUOpportunityPhaseBody);
-  } else {
-    return invalid({
-      startDate: getInvalidValue(validatedStartDate, undefined),
-      completionDate: getInvalidValue(validatedCompletionDate, undefined),
-      maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-      requiredCapabilities: getInvalidValue(validatedRequiredCapabilities, undefined)
-    });
-  }
+    if (allValid([
+      validatedStartDate,
+      validatedCompletionDate,
+      validatedMaxBudget,
+      validatedRequiredCapabilities
+    ])) {
+      return valid({
+        startDate: validatedStartDate.value,
+        completionDate: validatedCompletionDate.value,
+        maxBudget: validatedMaxBudget.value,
+        requiredCapabilities: validatedRequiredCapabilities.value
+      } as ValidatedCreateSWUOpportunityPhaseBody);
+    } else {
+      return invalid({
+        startDate: getInvalidValue(validatedStartDate, undefined),
+        completionDate: getInvalidValue(validatedCompletionDate, undefined),
+        maxBudget: getInvalidValue(validatedMaxBudget, undefined),
+        requiredCapabilities: getInvalidValue(validatedRequiredCapabilities, undefined)
+      });
+    }
+  });
 }
 
 export function validateSWUOpportunityImplementationPhase(raw: any, prototypeCompletionDate?: Date): Validation<ValidatedCreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseValidationErrors> {
-  // const rawStartDate = get(raw, 'startDate'); // Can be either a string or a date - moment pollutes the console when casting dates directly to string, so we check and do it gracefully
-  // const startDate = isDate(rawStartDate) ? rawStartDate.toISOString() : rawStartDate;
   const validatedStartDate  = validateSWUOpportunityImplementationPhaseStartDate(getISODateString(raw, 'startDate'), prototypeCompletionDate);
-  const validatedCompletionDate = optional(getISODateString(raw, 'completionDate'), v => validateSWUOpportunityPhaseCompletionDate(v, getValidValue(validatedStartDate, new Date())));
+  const rawCompletionDate = getISODateString(raw, 'completionDate');
+  const validatedCompletionDate = validateSWUOpportunityPhaseCompletionDate(rawCompletionDate, getValidValue(validatedStartDate, new Date()));
   const validatedMaxBudget = validateSWUOpportunityPhaseMaxBudget(getNumber(raw, 'maxBudget'));
   const validatedRequiredCapabilities = validatePhaseRequiredCapabilities(get(raw, 'requiredCapabilities'));
 
@@ -242,11 +247,11 @@ export function validateTotalMaxBudget(raw: string | number): Validation<number>
   return validateNumber(raw, 1, 2000000, 'Total Maximum Budget', 'a');
 }
 
-export function validateMinimumTeamMembers(raw: string | number | null): Validation<number | null> {
-  if (raw === null || raw === '') {
-    return valid(null);
-  }
-  return validateNumber(raw, 1, 5, 'minimum team size', 'a');
+export function validateMinimumTeamMembers(raw?: number): Validation<number | null> {
+  return mapValid(
+    optional(raw, v => validateNumber(v, 1, 5, 'minimum team size', 'a')),
+    v => v || null
+  );
 }
 
 export function validateMandatorySkills(raw: string[]): ArrayValidation<string> {
