@@ -15,6 +15,8 @@ export const DEFAULT_SCENARIO_WEIGHT = 25;
 export const DEFAULT_PRICE_WEIGHT = 10;
 export const MAX_TEAM_QUESTIONS = 100;
 export const MAX_TEAM_QUESTION_WORD_LIMIT = 3000;
+export const DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT = 300;
+export const DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE = 5;
 
 export enum SWUOpportunityPhaseType {
   Inception = 'INCEPTION',

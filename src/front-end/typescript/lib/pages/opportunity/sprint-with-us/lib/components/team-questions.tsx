@@ -5,7 +5,7 @@ import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentD
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE, DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/sprint-with-us';
@@ -76,7 +76,7 @@ async function createQuestion(question?: SWUTeamQuestion): Promise<Question> {
         return opportunityValidation.validateTeamQuestionWordLimit(v);
       },
       child: {
-        value: question ? question.wordLimit : null,
+        value: question ? question.wordLimit : DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT,
         id: `${idNamespace}-team-questions-word-limit`,
         min: 1
       }
@@ -89,7 +89,7 @@ async function createQuestion(question?: SWUTeamQuestion): Promise<Question> {
         return opportunityValidation.validateTeamQuestionScore(v);
       },
       child: {
-        value: question ? question.score : null,
+        value: question ? question.score : DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE,
         id: `${idNamespace}-team-questions-score`,
         min: 1
       }
