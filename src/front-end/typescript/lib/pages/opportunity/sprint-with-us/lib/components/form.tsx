@@ -1125,6 +1125,12 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
   return (
     <div>
       <Row>
+        <Col xs='12'>
+          <p>Each submitted proposal will be scored for each stage of the evaluation process. Assign a weight to each evaluation stage using the fields available below.</p>
+          <p className='mb-4 font-size-small font-italic'>Note: Weights are specified as percentages and the sum of all weights must total 100%.</p>
+        </Col>
+      </Row>
+      <Row>
         <Col xs='12' md='4'>
           <NumberField.view
             extraChildProps={{ suffix: '%' }}
