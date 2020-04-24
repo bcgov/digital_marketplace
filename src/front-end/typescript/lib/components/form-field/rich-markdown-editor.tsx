@@ -317,7 +317,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
     dispatch(adt('controlImage', file));
   };
   return (
-    <div className='bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 form-control border-0'>
+    <div className='bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 rounded-top border-top border-right border-left'>
       <ControlIcon
         name='undo'
         width={0.9}
@@ -417,14 +417,14 @@ const ChildView: ChildComponent['view'] = props => {
   };
   return (
     <div className='d-flex flex-column flex-grow-1'>
-      <div className={`form-control ${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch overflow-hidden`}>
+      <div className={`${className} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
         <Controls {...props} />
         <textarea
           id={state.id}
           value={state.value}
           placeholder={placeholder}
           disabled={isDisabled}
-          className={`${validityClassName} form-control flex-grow-1 border-left-0 border-right-0 border-bottom-0`}
+          className={`${validityClassName} form-control flex-grow-1`}
           style={{
             borderTopLeftRadius: 0,
             borderTopRightRadius: 0
