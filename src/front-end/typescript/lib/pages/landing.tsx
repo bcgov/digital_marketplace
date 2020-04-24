@@ -1,4 +1,4 @@
-import { formatAmount } from 'front-end/../../shared/lib';
+import { TOTAL_AWARDED_COUNT_OFFSET, TOTAL_AWARDED_VALUE_OFFSET } from 'front-end/config';
 import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, toast, Update, View } from 'front-end/lib/framework';
@@ -9,6 +9,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { formatAmount } from 'shared/lib';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -83,11 +84,11 @@ const Hero: View<{}> = () => {
         <Col xs='12'>
           <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
             <div className='d-flex flex-column flex-md-row justify-content-center align-items-center mr-md-6 mb-4 mb-md-0'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(1346)}</div>
+              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(TOTAL_AWARDED_COUNT_OFFSET)}</div>
               <div className='ml-md-3 font-size-small text-secondary'>Total Opportunities Awarded</div>
             </div>
             <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(13782000, '$')}</div>
+              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(TOTAL_AWARDED_VALUE_OFFSET, '$')}</div>
               <div className='ml-md-3 font-size-small text-secondary'>Total Value of All Opportunities</div>
             </div>
           </div>
