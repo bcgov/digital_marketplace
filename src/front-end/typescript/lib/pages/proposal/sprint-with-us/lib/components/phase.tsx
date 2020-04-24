@@ -438,7 +438,7 @@ export const getModal: PageGetModal<State, Msg> = state => {
           if (!state.orgId) { return null; }
           return (
             <div>
-              <p>Select the team member(s) that you want to propose to be part of your team for this opportunity. If you do no see the team member that you want to add, you must send them a <Link newTab dest={routeDest(adt('orgEdit', { orgId: state.orgId, tab: 'team' }) as Route)}>request to join your organization</Link>.</p>
+              <p>Select the team member(s) that you want to propose to be part of your team for this opportunity. If you do not see the team member that you want to add, you must send them a <Link newTab dest={routeDest(adt('orgEdit', { orgId: state.orgId, tab: 'team' }) as Route)}>request to join your organization</Link>.</p>
               {nonAddedMembers.length
                 ? (<div className='border-top border-left'>
                     {nonAddedMembers.map((m, i) => {
