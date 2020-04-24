@@ -383,6 +383,8 @@ const IconInfo: View<IconInfoProps> = ({ name, value, className }) => {
       <div className='d-flex flex-nowrap align-items-center text-nowrap'>
         <Icon
           name={name}
+          width={0.9}
+          height={0.9}
           className='mr-2 flex-shrink-0' />
         {value}
       </div>
