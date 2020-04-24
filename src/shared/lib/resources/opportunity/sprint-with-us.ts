@@ -230,7 +230,7 @@ export interface CreateRequestBody {
   proposalDeadline: string;
   assignmentDate: string;
   totalMaxBudget: number;
-  minTeamMembers: number | null;
+  minTeamMembers?: number;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;

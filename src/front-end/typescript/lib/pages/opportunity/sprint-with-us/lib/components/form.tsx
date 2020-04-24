@@ -264,7 +264,10 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
 
     minTeamMembers: immutable(await NumberField.init({
       errors: [],
-      validate: opportunityValidation.validateMinimumTeamMembers,
+      validate: v => {
+        if (v === null) { return invalid(['Please enter a valid Minimum Team Size.']); }
+        return mapValid(opportunityValidation.validateMinimumTeamMembers(v), w => w || null);
+      },
       child: {
         value: opportunity?.minTeamMembers || null,
         id: 'swu-opportunity-min-team-members',

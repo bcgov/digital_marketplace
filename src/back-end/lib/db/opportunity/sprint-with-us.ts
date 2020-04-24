@@ -16,13 +16,12 @@ import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { getValidValue, isInvalid } from 'shared/lib/validation';
 
-interface CreateSWUOpportunityParams extends Omit<SWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'minTeamMembers'> {
+interface CreateSWUOpportunityParams extends Omit<SWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions'> {
   status: CreateSWUOpportunityStatus;
   inceptionPhase?: CreateSWUOpportunityPhaseParams;
   prototypePhase?: CreateSWUOpportunityPhaseParams;
   implementationPhase: CreateSWUOpportunityPhaseParams;
   teamQuestions: CreateSWUTeamQuestionBody[];
-  minTeamMembers: number | null;
 }
 
 interface UpdateSWUOpportunityParams extends Omit<CreateSWUOpportunityParams, 'status'> {
