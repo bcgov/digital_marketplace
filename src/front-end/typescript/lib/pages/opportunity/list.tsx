@@ -406,7 +406,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
   return (
     <Col xs='12' md='6' style={{ marginBottom: CARD_MARGIN_BOTTOM, minHeight: '320px' }}>
       <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
-        <Link disabled={disabled} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
+        <Link disabled={disabled} style={{ outline: 'none' }} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
           <h5 className='mb-2'>
             {opportunity.value.title}
           </h5>
