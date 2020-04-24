@@ -3,6 +3,8 @@ import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, toast, Update, View } from 'front-end/lib/framework';
 import { TextColor } from 'front-end/lib/types';
+import { BulletPoint } from 'front-end/lib/views/bullet-point';
+import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
@@ -149,12 +151,143 @@ const Programs: View<{}> = () => {
 
 const AppInfo: View<{}> = () => {
   return (
-    <Container className='py-8'>
+    <Container className='py-5'>
       <Row className='justify-content-center text-center'>
         <Col xs='12' md='8'>
           <h2>
             Join a community of developers, entrepreneurs and public service innovators who are making public services better.
           </h2>
+        </Col>
+      </Row>
+      <Row className='justify-content-center'>
+        <Col xs='1'>
+          <div className='px-1 pt-1 my-3 bg-bcgov-yellow' />
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const VendorRoleInfo: View<{}> = () => {
+  return (
+    <Container className='py-5'>
+      <Row>
+        <Col xs='12'>
+          <h6 className='text-bcgov-blue'><Icon name='store' className='mr-2 pb-1' />Vendors</h6>
+        </Col>
+        <Col xs='12' md='6'>
+          <h4 className='mb-3'>Collaborate with the BC Public Sector to Build Innovative Digital Products.</h4>
+          <BulletPoint
+            className='ml-3 my-4'
+            icon='star-exclamation'
+            iconColor='bcgov-yellow'
+            header='Submit proposals to open opportunities'
+            subText='Save a draft version of your proposal until you are ready to submit it.' />
+          <BulletPoint
+            className='ml-3 my-4'
+            icon='star-exclamation'
+            iconColor='bcgov-yellow'
+            header='View and export your submitted proposals'
+            subText='View all outstanding and past submissions, where you can see your scores and rankings once submitted.' />
+          <BulletPoint
+            className='ml-3 my-4'
+            icon='star-exclamation'
+            iconColor='bcgov-yellow'
+            header='Build your team'
+            subText='Add team members to your organization.' />
+        </Col>
+        <Col xs='12' md='6'>
+          <img className='mx-auto d-block' src={prefixPath('/images/illustrations/collaboration_work.svg')} />
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const GovRoleInfo: View<{}> = () => {
+  return (
+    <Container className='py-8'>
+      <Row>
+        <Col xs='12' md='6' className='pb-5 pb-md-0'>
+          <img className='mx-auto d-block' src={prefixPath('/images/illustrations/consultation.svg')} />
+        </Col>
+        <Col cs='12' md='6'>
+          <Row>
+            <Col xs='12'>
+              <h6 className='text-bcgov-blue'><Icon name='government' className='mr-2 pb-1' />Public Service Employees</h6>
+            </Col>
+            <Col xs='12'>
+              <h4 className='mb-3'>Connect with Talented Developers to Build Your Digital Products.</h4>
+              <BulletPoint
+                className='ml-3 my-4'
+                icon='star-exclamation'
+                iconColor='bcgov-yellow'
+                header='Post a new opportunity'
+                subText='Select the program that suits your unique needs, post your opportunity and wait for the proposals to come in.' />
+              <BulletPoint
+                className='ml-3 my-4'
+                icon='star-exclamation'
+                iconColor='bcgov-yellow'
+                header='View and manage your posted opportunities'
+                subText='View a complete history of your posted opportunities, where you can review and evaluate all received proposals, award the opportunity to the successful proponent, and more.' />
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const TestimonialsView: View<{}> = () => {
+  return (
+    <div className='bg-blue-dark-alt-2 py-5'>
+      <Container>
+        <Row>
+          <Col xs='12' md='6' className='pb-5 pb-md-0'>
+            <Row>
+              <Col xs='12' className='d-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
+              <Col xs='8' className='d-flex mx-auto pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“We quickly found a qualified developer, worked collaboratively in the open, and got a great final product.”</h6></Col>
+              <Col xs='12' className='d-flex flex-column justify-content-center'>
+                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/andy.jpg')} width='40px' height='40px' />
+                <div className='text-bcgov-yellow font-size-small text-center'>Andy, Environmental Analyst</div>
+                <div className='text-white small text-center'>Province of B.C.</div>
+              </Col>
+            </Row>
+          </Col>
+          <Col xs='12' md='6'>
+            <Row>
+              <Col xs='12' className='d-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
+              <Col xs='8' className='d-flex mx-auto pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“I think this platform could be a game changer for matching government agencies with the best talent in this province.”</h6></Col>
+              <Col xs='12' className='d-flex flex-column justify-content-center'>
+                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/wayne.jpg')} width='40px' height='40px' />
+                <div className='text-bcgov-yellow font-size-small text-center'>Wayne, Developer</div>
+                <div className='text-white small text-center'>Vancouver</div>
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+const BottomView: View<{}> = () => {
+  return (
+    <Container className='py-6'>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='8'>
+          <h2>Check out the latest opportunities on the Digital Marketplace</h2>
+        </Col>
+      </Row>
+      <Row className='mt-5'>
+        <Col xs='12' className='d-flex justify-content-center'>
+          <Link
+            button
+            symbol_={leftPlacement(iconLinkSymbol('search'))}
+            dest={routeDest(adt('opportunities', null))}
+            color='primary'>
+            Browse Opportunities
+          </Link>
         </Col>
       </Row>
     </Container>
@@ -167,6 +300,10 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Hero />
       <Programs />
       <AppInfo />
+      <VendorRoleInfo />
+      <GovRoleInfo />
+      <TestimonialsView />
+      <BottomView />
     </div>
   );
 };
