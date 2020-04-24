@@ -291,7 +291,7 @@ const Header: ComponentView<State, Msg> = () => {
       <Col xs='12'>
         <h1 className='mb-4'>Welcome to the Digital Marketplace</h1>
       </Col>
-      <Col xs='12' md='6'>
+      <Col xs='12' md='6' className='mb-4 mb-md-0'>
         <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-stretch flex-nowrap'>
           <OpportunityType type_='cwu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
