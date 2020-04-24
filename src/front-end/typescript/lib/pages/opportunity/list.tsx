@@ -293,7 +293,7 @@ const Header: ComponentView<State, Msg> = () => {
           <div className='py-5 px-4 px-sm-5 pl-md-7'>
             <div className='font-weight-bold'>Welcome to the</div>
             <h1 className='mb-3'>Digital Marketplace</h1>
-            <p className='mb-0'>Browse through the latest opportunities to find interesting government projects that match your skills and interests.</p>
+            <p className='mb-0'>Browse through the latest opportunities to find government projects that match your skills and interests.</p>
           </div>
         </Col>
       </Row>
