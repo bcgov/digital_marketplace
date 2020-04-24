@@ -294,22 +294,24 @@ const Header: ComponentView<State, Msg> = () => {
       <Col xs='12' md='6'>
         <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
           <OpportunityType type_='cwu' className='mb-2' />
-          <p className='mb-3'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
+          <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
           <Link
+            className='font-size-small'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('learnMoreCWU', null))}>
-            Learn more
+            Learn More
           </Link>
         </div>
       </Col>
       <Col xs='12' md='6'>
         <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
           <OpportunityType type_='swu' className='mb-2' />
-          <p className='mb-3'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
+          <p className='mb-3 font-size-small'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
           <Link
+            className='font-size-small'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('learnMoreSWU', null))}>
-            Learn more
+            Learn More
           </Link>
         </div>
       </Col>
@@ -358,7 +360,7 @@ interface OpportunityTypeProps {
 
 const OpportunityType: View<OpportunityTypeProps> = ({ type_, className = '' }) => {
   return (
-    <div className={`d-flex flex-nowrap align-items-center font-weight-bold text-info ${className}`}>
+    <div className={`d-flex flex-nowrap align-items-center font-size-small font-weight-bold text-info ${className}`}>
       <Icon
         className='mr-2 flex-shrink-0 flex-grow-0'
         name={type_ === 'cwu' ? 'code' : 'users-class'} />
@@ -450,7 +452,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
               value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
               className='ml-sm-3 flex-shrink-0' />
           </div>
-          <p className='mt-3 mb-0 text-secondary'>
+          <p className='mt-3 mb-0 text-secondary font-size-small'>
             {opportunity.value.teaser}
           </p>
         </Link>
