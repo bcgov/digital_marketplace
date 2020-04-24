@@ -2,9 +2,9 @@ import { formatAmount } from 'front-end/../../shared/lib';
 import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, toast, Update, View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
+import { TextColor } from 'front-end/lib/types';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import { ProgramCard } from 'front-end/lib/views/program-card';
+import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
@@ -112,10 +112,12 @@ const Programs: View<{}> = () => {
             }
             links={[
               {
+                button: true,
                 dest: routeDest(adt('learnMoreCWU', null)),
-                children: [(<div><Icon name='arrow-right' className='mr-2' /><span>Learn More</span></div>)],
-                color: 'blue',
-                outline: true
+                children: ['Learn More'],
+                color: 'blue' as TextColor,
+                outline: true,
+                symbol_: leftPlacement(iconLinkSymbol('arrow-right'))
               }
             ]}
           />
@@ -130,10 +132,12 @@ const Programs: View<{}> = () => {
             }
             links={[
               {
+                button: true,
                 dest: routeDest(adt('learnMoreSWU', null)),
-                children: [(<div><Icon name='arrow-right' className='mr-2' /><span>Learn More</span></div>)],
-                color: 'blue',
-                outline: true
+                children: [('Learn More')],
+                color: 'blue' as TextColor,
+                outline: true,
+                symbol_: leftPlacement(iconLinkSymbol('arrow-right'))
               }
             ]}
           />

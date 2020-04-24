@@ -2,8 +2,9 @@ import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, newRoute, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { TextColor } from 'front-end/lib/types';
 import { routeDest } from 'front-end/lib/views/link';
-import { ProgramCard } from 'front-end/lib/views/program-card';
+import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Row } from 'reactstrap';
 import { UserType } from 'shared/lib/resources/user';
@@ -53,15 +54,17 @@ const view: ComponentView<State, Msg> = () => {
         wideLinks
         links={[
           {
+            button: true,
             dest: routeDest(adt('content', 'code-with-us-opportunity-guide')),
             children: ['Read Guide'],
-            color: 'info',
+            color: 'info' as TextColor,
             outline: true
           },
           {
+            button: true,
             dest: routeDest(adt('opportunityCWUCreate', null)),
             children: ['Get Started'],
-            color: 'primary'
+            color: 'primary' as TextColor
           }
         ]}
       />
@@ -72,15 +75,17 @@ const view: ComponentView<State, Msg> = () => {
         wideLinks
         links={[
           {
+            button: true,
             dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide')),
             children: ['Read Guide'],
-            color: 'info',
+            color: 'info' as TextColor,
             outline: true
           },
           {
+            button: true,
             dest: routeDest(adt('opportunitySWUCreate', null)),
             children: ['Get Started'],
-            color: 'primary'
+            color: 'primary' as TextColor
           }
         ]}
       />
