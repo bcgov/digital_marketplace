@@ -378,6 +378,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
       <ControlSeparator desktopOnly />
       <div className='d-none d-sm-flex'>
         <FileLink
+          focusable={false}
           className='p-0'
           disabled={isDisabled}
           style={{
