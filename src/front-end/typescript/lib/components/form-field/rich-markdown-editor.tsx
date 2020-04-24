@@ -290,20 +290,23 @@ interface ControlIconProps {
   width?: number;
   height?: number;
   className?: string;
+  desktopOnly?: boolean;
   onClick?(): void;
 }
 
-const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '' }) => {
+const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '', desktopOnly }) => {
   return (
-    <Link color={disabled ? 'secondary' : 'dark'} className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
-      <Icon name={name} width={width} height={height} />
-      {children ? children : ''}
-    </Link>
+    <div className= {desktopOnly ? 'd-none d-sm-flex' : 'd-flex'}>
+      <Link focusable={false} color={disabled ? 'secondary' : 'dark'} className={`${className} justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
+        <Icon name={name} width={width} height={height} />
+        {children ? children : ''}
+      </Link>
+    </div>
   );
 };
 
-const ControlSeparator: View<{}> = () => {
-  return (<div className='mr-3 border-left h-100'></div>);
+const ControlSeparator: View<{ desktopOnly?: boolean }> = ({ desktopOnly }) => {
+  return (<div className={`mr-3 border-left h-100 ${desktopOnly ? 'd-none d-sm-block' : ''}`}></div>);
 };
 
 const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false }) => {
@@ -338,13 +341,8 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
       <ControlIcon
         name='h2'
         disabled={isDisabled}
-        className='mr-2'
-        onClick={() => dispatch(adt('controlH2'))} />
-      <ControlIcon
-        name='h3'
-        disabled={isDisabled}
         className='mr-3'
-        onClick={() => dispatch(adt('controlH3'))} />
+        onClick={() => dispatch(adt('controlH2'))} />
       <ControlSeparator />
       <ControlIcon
         name='bold'
@@ -360,8 +358,9 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         disabled={isDisabled}
         className='mr-3'
         onClick={() => dispatch(adt('controlItalics'))} />
-      <ControlSeparator />
+      <ControlSeparator desktopOnly />
       <ControlIcon
+        desktopOnly
         name='unordered-list'
         width={1}
         height={1}
@@ -369,24 +368,27 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         className='mr-2'
         onClick={() => dispatch(adt('controlUnorderedList'))} />
       <ControlIcon
+        desktopOnly
         name='ordered-list'
         width={1}
         height={1}
         disabled={isDisabled}
         className='mr-3'
         onClick={() => dispatch(adt('controlOrderedList'))} />
-      <ControlSeparator />
-      <FileLink
-        className='p-0'
-        disabled={isDisabled}
-        style={{
-          pointerEvents: isDisabled ? 'none' : undefined
-        }}
-        onChange={onSelectFile}
-        accept={SUPPORTED_IMAGE_EXTENSIONS}
-        color='secondary'>
-        <Icon name='image' width={1.1} height={1.1} />
-      </FileLink>
+      <ControlSeparator desktopOnly />
+      <div className='d-none d-sm-flex'>
+        <FileLink
+          className='p-0'
+          disabled={isDisabled}
+          style={{
+            pointerEvents: isDisabled ? 'none' : undefined
+          }}
+          onChange={onSelectFile}
+          accept={SUPPORTED_IMAGE_EXTENSIONS}
+          color='secondary'>
+          <Icon name='image' width={1.1} height={1.1} />
+        </FileLink>
+      </div>
       <div className='ml-auto d-flex align-items-center'>
         <Spinner
           size='sm'
