@@ -417,7 +417,7 @@ const ChildView: ChildComponent['view'] = props => {
   };
   return (
     <div className='d-flex flex-column flex-grow-1'>
-      <div className={`form-control ${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
+      <div className={`form-control ${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch overflow-hidden`}>
         <Controls {...props} />
         <textarea
           id={state.id}
