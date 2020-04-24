@@ -1,4 +1,4 @@
-import { makePageMetadata } from 'front-end/lib';
+import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 //import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
@@ -11,10 +11,9 @@ import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front
 import Badge from 'front-end/lib/views/badge';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { compareDates, formatAmount, formatDateAndTime } from 'shared/lib';
+import { Col, Row, Spinner } from 'reactstrap';
+import { compareDates, find, formatAmount, formatDateAndTime } from 'shared/lib';
 import * as CWU from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWU from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isVendor, User } from 'shared/lib/resources/user';
@@ -32,7 +31,7 @@ type OpportunityCategory
 export interface State {
   viewerUser?: User;
   toggleWatchLoading: [OpportunityCategory, Id] | null;
-  notifyLoading: number;
+  toggleNotificationsLoading: number;
   unpublished: Opportunity[];
   open: Opportunity[];
   closed: Opportunity[];
@@ -42,7 +41,7 @@ export interface State {
 }
 
 function isLoading(state: Immutable<State>): boolean {
-  return state.notifyLoading > 0 || !!state.toggleWatchLoading;
+  return state.toggleNotificationsLoading > 0 || !!state.toggleWatchLoading;
 }
 
 type InnerMsg
@@ -92,8 +91,10 @@ function categorizeOpportunities(cwu: CWU.CWUOpportunitySlim[], swu: SWU.SWUOppo
   return {
     unpublished: result.unpublished
       .sort((a, b) => compareDates(a.value.updatedAt, b.value.updatedAt) * -1),
+    // Show open opportunities with closest proposal deadline first.
     open: result.open
-      .sort((a, b) => compareDates(a.value.updatedAt, b.value.updatedAt) * -1),
+      .sort((a, b) => compareDates(a.value.proposalDeadline, b.value.proposalDeadline)),
+    // Show most recently closed opportunities first.
     closed: result.closed
       .sort((a, b) => compareDates(a.value.proposalDeadline, b.value.proposalDeadline) * -1)
   };
@@ -113,7 +114,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
     ...categorizeOpportunities(cwu, swu, viewerUser),
     viewerUser,
     toggleWatchLoading: null,
-    notifyLoading: 0,
+    toggleNotificationsLoading: 0,
     typeFilter: immutable(await Select.init({
       errors: [],
       child: {
@@ -143,6 +144,9 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
   };
 };
 
+const startToggleNotificationsLoading = makeStartLoading<State>('toggleNotificationsLoading');
+const stopToggleNotificationsLoading = makeStopLoading<State>('toggleNotificationsLoading');
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'typeFilter':
@@ -170,7 +174,42 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => adt('searchFilter' as const, value)
       });
     case 'toggleNotifications':
+      return [
+        startToggleNotificationsLoading(state),
+        async (state, dispatch) => {
+          state = stopToggleNotificationsLoading(state);
+          if (!state.viewerUser) { return state; }
+          const result = await api.users.update(state.viewerUser.id, adt('updateNotifications', !state.viewerUser.notificationsOn));
+          if (api.isValid(result)) {
+            return state.set('viewerUser', result.value);
+          }
+          return state;
+        }
+      ];
     case 'toggleWatch':
+      return [
+        state.set('toggleWatchLoading', msg.value),
+        async (state, dispatch) => {
+          state = state.set('toggleWatchLoading', null);
+          const category = msg.value[0];
+          const id = msg.value[1];
+          const opportunity: Opportunity | null = find(state[category], o => o.value.id === id);
+          if (!opportunity) { return state; }
+          const program = opportunity.tag;
+          const result = opportunity.value.subscribed
+            ? await api.subscribers[program].delete(id)
+            : await api.subscribers[program].create({ opportunity: id });
+          if (result.tag === 'valid') {
+            return state.update(category, os => os.map(o => {
+              if (o.value.id === id) {
+                o.value.subscribed = !o.value.subscribed;
+              }
+              return o;
+            }));
+          }
+          return state;
+        }
+      ];
     default:
       return [state];
   }
@@ -294,63 +333,56 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
   const subscribed = opportunity.value.subscribed;
   return (
     <Col xs='12' md='6' style={{ marginBottom: '2rem', minHeight: '320px' }}>
-      <Link className='shadow-hover w-100 h-100 text-decoration-none rounded-lg border align-items-stretch' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
-        <div className='d-flex flex-column align-items-stretch flex-grow-1'>
-          <div className='p-4 flex-grow-1'>
-            <h5 className='mb-2'>
-              {opportunity.value.title || (isCWU ? CWU.DEFAULT_OPPORTUNITY_TITLE : SWU.DEFAULT_OPPORTUNITY_TITLE)}
-            </h5>
-            <OpportunityType type_={opportunity.tag} />
-            <div className='mt-3 font-size-small d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-sm-center text-body'>
-              <OpportunityBadge opportunity={opportunity} viewerUser={viewerUser} className='mb-2 mb-sm-0' />
-              <IconInfo
-                name='alarm-clock-outline'
-                value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
-                className='ml-sm-3 flex-shrink-0' />
-            </div>
-            <p className='mt-3 mb-0 text-secondary font-size-small'>
-              {opportunity.value.teaser}
-            </p>
+      <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
+        <Link disabled={disabled} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
+          <h5 className='mb-2'>
+            {opportunity.value.title || (isCWU ? CWU.DEFAULT_OPPORTUNITY_TITLE : SWU.DEFAULT_OPPORTUNITY_TITLE)}
+          </h5>
+          <OpportunityType type_={opportunity.tag} />
+          <div className='mt-3 font-size-small d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-sm-center text-body'>
+            <OpportunityBadge opportunity={opportunity} viewerUser={viewerUser} className='mb-2 mb-sm-0' />
+            <IconInfo
+              name='alarm-clock-outline'
+              value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
+              className='ml-sm-3 flex-shrink-0' />
           </div>
-          <div className='px-4 pt-3 border-top d-flex flex-wrap mt-auto flex-shrink-0 flex-grow-0 font-size-small align-items-center'>
-            <IconInfo
-              className='mr-3 mb-3'
-              value={formatAmount(opportunity.tag === 'cwu' ? opportunity.value.reward : opportunity.value.totalMaxBudget, '$')}
-              name='badge-dollar-outline' />
-            <IconInfo
-              className='mr-3 mb-3 d-none d-sm-flex'
-              value={opportunity.value.location}
-              name='map-marker-outline' />
-            <div className='mr-auto'>
-              {opportunity.value.remoteOk
-                ? (<IconInfo
-                    className='mr-3 mb-3'
-                    value='Remote OK'
-                    name='laptop-outline' />)
-                : null}
-            </div>
-            {subscribed !== undefined
-              ? (<LoadingButton
-                  loading={isWatchLoading}
-                  disabled={disabled}
-                  outline={!subscribed}
-                  size='sm'
-                  color={subscribed ? 'info' : 'primary'}
-                  symbol_={leftPlacement(iconLinkSymbol(subscribed ? 'check' : 'eye'))}
-                  className='mb-3'
-                  onClick={e => {
-                    if (e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }
-                    toggleWatch();
-                  }}>
-                  {subscribed ? 'Watching' : 'Watch'}
-                </LoadingButton>)
+          <p className='mt-3 mb-0 text-secondary font-size-small'>
+            {opportunity.value.teaser}
+          </p>
+        </Link>
+        <div className='px-4 pt-3 border-top d-flex flex-wrap mt-auto flex-shrink-0 flex-grow-0 font-size-small align-items-center'>
+          <IconInfo
+            className='mr-3 mb-3'
+            value={formatAmount(opportunity.tag === 'cwu' ? opportunity.value.reward : opportunity.value.totalMaxBudget, '$')}
+            name='badge-dollar-outline' />
+          <IconInfo
+            className='mr-3 mb-3 d-none d-sm-flex'
+            value={opportunity.value.location}
+            name='map-marker-outline' />
+          <div className='mr-auto'>
+            {opportunity.value.remoteOk
+              ? (<IconInfo
+                  className='mr-3 mb-3'
+                  value='Remote OK'
+                  name='laptop-outline' />)
               : null}
           </div>
+          {subscribed !== undefined
+            ? (<Link
+                button
+                loading={isWatchLoading}
+                disabled={disabled}
+                outline={!subscribed}
+                size='sm'
+                color={subscribed ? 'info' : 'primary'}
+                symbol_={leftPlacement(iconLinkSymbol(subscribed ? 'check' : 'eye'))}
+                className='mb-3'
+                onClick={toggleWatch}>
+                {subscribed ? 'Watching' : 'Watch'}
+              </Link>)
+            : null}
         </div>
-      </Link>
+      </div>
     </Col>
   );
 };
@@ -363,12 +395,13 @@ interface OpportunityListProps {
   showCount?: boolean;
   viewerUser?: User;
   disabled: boolean;
+  toggleNotificationsLoading?: boolean;
   toggleWatchLoading?: Id;
   toggleWatch(id: Id): void;
   toggleNotifications?(): void;
 }
 
-const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser }) => {
+const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading }) => {
   return (
     <div className={className}>
       <Row>
@@ -380,21 +413,27 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
               : null}
           </h4>
           {viewerUser && toggleNotifications
-            ? (<Link
-                className='ml-md-auto mb-4'
-                disabled={disabled}
-                onClick={toggleNotifications}
-                color={viewerUser.notificationsOn ? 'secondary' : 'primary'}
-                symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
-                {viewerUser.notificationsOn
-                  ? 'Stop notifying me about new opportunities'
-                  : 'Notify me about new opportunities'}
-              </Link>)
+            ? (<div className='mb-4 ml-md-auto d-flex align-items-center flex-nowrap'>
+                {toggleNotificationsLoading
+                  ? (<Spinner size='sm' color='secondary' className='mx-2 order-2 order-md-1' />)
+                  : null}
+                <Link
+                  className='order-1 order-md-2'
+                  disabled={disabled}
+                  onClick={toggleNotifications}
+                  color={viewerUser.notificationsOn ? 'secondary' : 'primary'}
+                  symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
+                  {viewerUser.notificationsOn
+                    ? 'Stop notifying me about new opportunities'
+                    : 'Notify me about new opportunities'}
+                </Link>
+              </div>)
             : null}
         </Col>
         {opportunities.length
           ? opportunities.map((o, i) => (
               <OpportunityCard
+                key={`opportunity-list-${i}`}
                 opportunity={o}
                 viewerUser={viewerUser}
                 isWatchLoading={toggleWatchLoading === o.value.id}
@@ -411,6 +450,7 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const toggleWatch = (category: OpportunityCategory) => (id: Id) => dispatch(adt('toggleWatch', [category, id]) as Msg);
   const toggleNotifications = () => dispatch(adt('toggleNotifications'));
   const hasUnpublished = !!state.unpublished.length;
+  const isToggleNotificationsLoading = state.toggleNotificationsLoading > 0;
   const isDisabled = isLoading(state);
   const getToggleWatchLoadingId = (c: OpportunityCategory) => {
     return state.toggleWatchLoading && state.toggleWatchLoading[0] === c
@@ -425,11 +465,12 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
             noneText='There are currently no unpublished opportunities.'
             opportunities={state.unpublished}
             viewerUser={state.viewerUser}
-            className='mb-5'
+            className='mb-4'
             disabled={isDisabled}
             toggleWatchLoading={getToggleWatchLoadingId('unpublished')}
+            toggleNotificationsLoading={isToggleNotificationsLoading}
             showCount
-            toggleWatch={toggleWatch('open')}
+            toggleWatch={toggleWatch('unpublished')}
             toggleNotifications={toggleNotifications} />)
         : null}
       <OpportunityList
@@ -437,9 +478,10 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
         noneText='There are currently no open opportunities. Check back soon!'
         opportunities={state.open}
         viewerUser={state.viewerUser}
-        className='mb-5'
+        className='mb-4'
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('open')}
+        toggleNotificationsLoading={isToggleNotificationsLoading}
         showCount
         toggleWatch={toggleWatch('open')}
         toggleNotifications={hasUnpublished ? undefined : toggleNotifications} />

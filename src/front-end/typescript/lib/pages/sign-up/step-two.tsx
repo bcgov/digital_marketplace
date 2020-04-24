@@ -7,7 +7,6 @@ import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDi
 import { userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -161,14 +160,15 @@ const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({ state, dispatc
   return (
     <Row className='mt-4'>
       <Col xs='12' className='d-flex flex-nowrap justify-content-md-end'>
-          <LoadingButton
+          <Link
+            button
             disabled={isDisabled}
             onClick={() => dispatch(adt('completeProfile'))}
             loading={isCompleteProfileLoading}
             symbol_={leftPlacement(iconLinkSymbol('user-check'))}
             color='primary'>
             Complete Profile
-          </LoadingButton>
+          </Link>
       </Col>
     </Row>
   );

@@ -27,7 +27,7 @@ export const imageLinkSymbol = adtCurried<ImageLinkSymbol>('image');
 type EmptyIconLinkSymbol = ADT<'emptyIcon'>;
 export const emptyIconLinkSymbol = () => adt('emptyIcon' as const);
 
-function makeEmptyLinkSymbol(s?: Placement<LinkSymbol>): Placement<LinkSymbol> | undefined {
+export function makeEmptyLinkSymbol(s?: Placement<LinkSymbol>): Placement<LinkSymbol> | undefined {
   if (s && s.value.tag === 'icon') {
     return adt(s.tag, emptyIconLinkSymbol());
   } else {
@@ -77,6 +77,7 @@ export type Placement<Value>
   | RightPlacement<Value>;
 
 interface BaseProps {
+  tag?: 'a' | 'div';
   dest?: Dest;
   symbol_?: Placement<LinkSymbol>;
   symbolClassName?: string;
@@ -131,7 +132,8 @@ function AnchorLink(props: AnchorProps) {
     symbolClassName = '',
     symbolStyle,
     iconSymbolSize,
-    focusable = true
+    focusable = true,
+    tag = 'a'
   } = props;
   const href: string | undefined = (() => {
     if (disabled) { return undefined; }
@@ -185,8 +187,9 @@ function AnchorLink(props: AnchorProps) {
     download,
     rel: dest && dest.tag === 'external' ? 'external' : undefined
   };
+  const Tag = tag;
   return (
-    <a {...finalProps}>
+    <Tag {...finalProps}>
       {symbol_ && symbol_.tag === 'left'
         ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`mr-2 ${symbolClassName}`} style={symbolStyle} />)
         : null}
@@ -194,7 +197,7 @@ function AnchorLink(props: AnchorProps) {
       {symbol_ && symbol_.tag === 'right'
         ? (<LinkSymbol symbol_={symbol_.value} iconSymbolSize={iconSymbolSize} className={`ml-2 ${symbolClassName}`} style={symbolStyle} />)
         : null}
-    </a>
+    </Tag>
   );
 }
 

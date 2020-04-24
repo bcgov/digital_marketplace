@@ -13,6 +13,8 @@ import * as OrgResource from 'shared/lib/resources/organization';
 import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
 import * as SWUProposalResource from 'shared/lib/resources/proposal/sprint-with-us';
 import * as SessionResource from 'shared/lib/resources/session';
+import * as CWUSubscriberResource from 'shared/lib/resources/subscribers/code-with-us';
+import * as SWUSubscriberResource from 'shared/lib/resources/subscribers/sprint-with-us';
 import * as UserResource from 'shared/lib/resources/user';
 import { adt, ClientHttpMethod, Id } from 'shared/lib/types';
 
@@ -581,6 +583,63 @@ export const swuOpportunities: CrudApi<SWUOpportunityResourceTypes> = makeCrudAp
 export const opportunities = {
   cwu: cwuOpportunities,
   swu: swuOpportunities
+};
+
+// CWU Subscribers
+
+interface CWUSubscriberSimpleResourceTypesParams {
+  record: CWUSubscriberResource.CWUOpportunitySubscriber;
+  create: {
+    request: CWUSubscriberResource.CreateRequestBody;
+    invalidResponse: CWUSubscriberResource.CreateValidationErrors;
+  };
+  update: {
+    request: null;
+    invalidResponse: null;
+  };
+}
+
+type CWUSubscriberSimpleResourceTypes = SimpleResourceTypes<CWUSubscriberSimpleResourceTypesParams>;
+
+type CWUSubscriberResourceTypes = PickCrudApi<CWUSubscriberSimpleResourceTypes, 'create' | 'delete'>;
+
+const cwuSubscribers: CrudApi<CWUSubscriberResourceTypes> = {
+  ...makeSimpleCrudApi<CWUSubscriberSimpleResourceTypesParams>(apiNamespace('subscribers/code-with-us')),
+  readOne: undefined,
+  readMany: undefined,
+  update: undefined
+};
+
+// SWU Subscribers
+
+interface SWUSubscriberSimpleResourceTypesParams {
+  record: SWUSubscriberResource.SWUOpportunitySubscriber;
+  create: {
+    request: SWUSubscriberResource.CreateRequestBody;
+    invalidResponse: SWUSubscriberResource.CreateValidationErrors;
+  };
+  update: {
+    request: null;
+    invalidResponse: null;
+  };
+}
+
+type SWUSubscriberSimpleResourceTypes = SimpleResourceTypes<SWUSubscriberSimpleResourceTypesParams>;
+
+type SWUSubscriberResourceTypes = PickCrudApi<SWUSubscriberSimpleResourceTypes, 'create' | 'delete'>;
+
+const swuSubscribers: CrudApi<SWUSubscriberResourceTypes> = {
+  ...makeSimpleCrudApi<SWUSubscriberSimpleResourceTypesParams>(apiNamespace('subscribers/sprint-with-us')),
+  readOne: undefined,
+  readMany: undefined,
+  update: undefined
+};
+
+// Subscribers
+
+export const subscribers = {
+  cwu: cwuSubscribers,
+  swu: swuSubscribers
 };
 
 // Organizations

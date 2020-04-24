@@ -34,7 +34,9 @@ export default function clickHandler(dispatchUrl: (url: Url) => void): (e: Mouse
 
     // continue ensure link
     // el.nodeName for svg links are 'a' instead of 'A'
-    while (el && 'A' !== el.nodeName.toUpperCase()) { el = el.parentNode; }
+    while (el && 'A' !== el.nodeName.toUpperCase()) {
+      el = el.parentNode;
+    }
     if (!el || 'A' !== el.nodeName.toUpperCase()) { return; }
 
     // Ignore if tag has
