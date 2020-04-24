@@ -292,11 +292,11 @@ const Header: ComponentView<State, Msg> = () => {
         <h1 className='mb-4'>Welcome to the Digital Marketplace</h1>
       </Col>
       <Col xs='12' md='6'>
-        <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
+        <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-stretch flex-nowrap'>
           <OpportunityType type_='cwu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
           <Link
-            className='font-size-small'
+            className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('learnMoreCWU', null))}>
             Learn More
@@ -304,11 +304,11 @@ const Header: ComponentView<State, Msg> = () => {
         </div>
       </Col>
       <Col xs='12' md='6'>
-        <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
+        <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-stretch flex-nowrap'>
           <OpportunityType type_='swu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
           <Link
-            className='font-size-small'
+            className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('learnMoreSWU', null))}>
             Learn More
@@ -360,10 +360,10 @@ interface OpportunityTypeProps {
 
 const OpportunityType: View<OpportunityTypeProps> = ({ type_, className = '' }) => {
   return (
-    <div className={`d-flex flex-nowrap align-items-center font-size-small font-weight-bold text-info ${className}`}>
+    <div className={`d-flex flex-nowrap align-items-center font-weight-bold text-info ${className}`}>
       <Icon
         className='mr-2 flex-shrink-0 flex-grow-0'
-        name={type_ === 'cwu' ? 'code' : 'users-class'} />
+        name={type_ === 'cwu' ? 'code-solid' : 'users-class'} />
       {type_ === 'cwu' ? 'Code With Us' : 'Sprint With Us'}
     </div>
   );
