@@ -394,7 +394,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
           size='sm'
           color='secondary'
           className={`o-50 ${isLoading ? '' : 'd-none'}`} />
-        <Link newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
+        <Link focusable={false} newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
           <Icon name='markdown' width={1.25} height={1.25} />
         </Link>
       </div>
