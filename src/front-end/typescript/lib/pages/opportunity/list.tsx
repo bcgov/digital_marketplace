@@ -11,7 +11,7 @@ import { cwuOpportunityToPublicColor, cwuOpportunityToPublicStatus } from 'front
 import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { debounce } from 'lodash';
 import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
@@ -287,17 +287,33 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const Header: ComponentView<State, Msg> = () => {
   return (
-    <div className='rounded-lg bg-bcgov-blue text-white'>
-      <Row>
-        <Col xs='12' md='7' lg='6'>
-          <div className='py-5 px-4 px-sm-5 pl-md-7'>
-            <div className='font-weight-bold'>Welcome to the</div>
-            <h1 className='mb-3'>Digital Marketplace</h1>
-            <p className='mb-0'>Browse through the latest opportunities to find government projects that match your skills and interests.</p>
-          </div>
-        </Col>
-      </Row>
-    </div>
+    <Row>
+      <Col xs='12'>
+        <h1 className='mb-4'>Welcome to the Digital Marketplace</h1>
+      </Col>
+      <Col xs='12' md='6'>
+        <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
+          <OpportunityType type_='cwu' className='mb-2' />
+          <p className='mb-3'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
+          <Link
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            dest={routeDest(adt('learnMoreCWU', null))}>
+            Learn more
+          </Link>
+        </div>
+      </Col>
+      <Col xs='12' md='6'>
+        <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
+          <OpportunityType type_='swu' className='mb-2' />
+          <p className='mb-3'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
+          <Link
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            dest={routeDest(adt('learnMoreSWU', null))}>
+            Learn more
+          </Link>
+        </div>
+      </Col>
+    </Row>
   );
 };
 
@@ -337,11 +353,12 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
 interface OpportunityTypeProps {
   type_: Opportunity['tag'];
+  className?: string;
 }
 
-const OpportunityType: View<OpportunityTypeProps> = ({ type_ }) => {
+const OpportunityType: View<OpportunityTypeProps> = ({ type_, className = '' }) => {
   return (
-    <div className='d-flex flex-nowrap align-items-center font-size-small font-weight-bold text-info'>
+    <div className={`d-flex flex-nowrap align-items-center font-weight-bold text-info ${className}`}>
       <Icon
         className='mr-2 flex-shrink-0 flex-grow-0'
         name={type_ === 'cwu' ? 'code' : 'users-class'} />
@@ -418,7 +435,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
               value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
               className='ml-sm-3 flex-shrink-0' />
           </div>
-          <p className='mt-3 mb-0 text-secondary font-size-small'>
+          <p className='mt-3 mb-0 text-secondary'>
             {opportunity.value.teaser}
           </p>
         </Link>
