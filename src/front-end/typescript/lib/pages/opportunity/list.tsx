@@ -478,7 +478,7 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
     <div className={className}>
       <Row>
         <Col xs='12' className='d-flex flex-column flex-md-row align-items-start align-items-md-center flex-nowrap'>
-          <h4 className='mb-3 mb-md-4 d-flex align-items-center'>
+          <h4 className='mb-4 d-flex align-items-center'>
             {title}
             {showCount && opportunities.length
               ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />)
