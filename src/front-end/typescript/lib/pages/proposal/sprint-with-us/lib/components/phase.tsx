@@ -346,7 +346,7 @@ function membersTableBodyRows(params: MemberTableBodyRowsParams): Table.BodyRows
 const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
   const addedMembers = getAddedMembers(state);
   return (
-    <Row className='mb-4'>
+    <Row className='mb-5'>
       <Col xs='12'>
         <h4>Team Members</h4>
         <p className='mb-0'>To satisfy this phase's requirements, your team must only consist of confirmed (non-pending) members of the selected organization.</p>
