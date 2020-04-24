@@ -13,7 +13,6 @@ import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import Capabilities, { Capability } from 'front-end/lib/views/capabilities';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
@@ -277,7 +276,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
         children: memberIsOwner(m) || !isVendor(state.viewerUser)
           ? null
           : (
-              <LoadingButton
+              <Link
                 button
                 disabled={isLoading}
                 loading={isMemberLoading}
@@ -286,7 +285,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
                 onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}
                 color='danger'>
                 Remove
-              </LoadingButton>
+              </Link>
             ),
         className: 'text-right align-middle'
       }

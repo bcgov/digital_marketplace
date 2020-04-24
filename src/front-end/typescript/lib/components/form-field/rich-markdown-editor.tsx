@@ -290,20 +290,23 @@ interface ControlIconProps {
   width?: number;
   height?: number;
   className?: string;
+  desktopOnly?: boolean;
   onClick?(): void;
 }
 
-const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '' }) => {
+const ControlIcon: View<ControlIconProps> = ({ name, disabled, onClick, children, width = 1.25, height = 1.25, className = '', desktopOnly }) => {
   return (
-    <Link color={disabled ? 'secondary' : 'dark'} className={`${className} d-flex justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
-      <Icon name={name} width={width} height={height} />
-      {children ? children : ''}
-    </Link>
+    <div className= {desktopOnly ? 'd-none d-sm-flex' : 'd-flex'}>
+      <Link focusable={false} color={disabled ? 'secondary' : 'dark'} className={`${className} justify-content-center align-items-center position-relative`} disabled={disabled} onClick={onClick} style={{ lineHeight: 0, pointerEvents: disabled ? 'none' : undefined }}>
+        <Icon name={name} width={width} height={height} />
+        {children ? children : ''}
+      </Link>
+    </div>
   );
 };
 
-const ControlSeparator: View<{}> = () => {
-  return (<div className='mr-3 border-left h-100'></div>);
+const ControlSeparator: View<{ desktopOnly?: boolean }> = ({ desktopOnly }) => {
+  return (<div className={`mr-3 border-left h-100 ${desktopOnly ? 'd-none d-sm-block' : ''}`}></div>);
 };
 
 const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false }) => {
@@ -314,7 +317,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
     dispatch(adt('controlImage', file));
   };
   return (
-    <div className='bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 form-control border-0'>
+    <div className='bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 rounded-top border-top border-right border-left'>
       <ControlIcon
         name='undo'
         width={0.9}
@@ -338,13 +341,8 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
       <ControlIcon
         name='h2'
         disabled={isDisabled}
-        className='mr-2'
-        onClick={() => dispatch(adt('controlH2'))} />
-      <ControlIcon
-        name='h3'
-        disabled={isDisabled}
         className='mr-3'
-        onClick={() => dispatch(adt('controlH3'))} />
+        onClick={() => dispatch(adt('controlH2'))} />
       <ControlSeparator />
       <ControlIcon
         name='bold'
@@ -360,8 +358,9 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         disabled={isDisabled}
         className='mr-3'
         onClick={() => dispatch(adt('controlItalics'))} />
-      <ControlSeparator />
+      <ControlSeparator desktopOnly />
       <ControlIcon
+        desktopOnly
         name='unordered-list'
         width={1}
         height={1}
@@ -369,30 +368,34 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         className='mr-2'
         onClick={() => dispatch(adt('controlUnorderedList'))} />
       <ControlIcon
+        desktopOnly
         name='ordered-list'
         width={1}
         height={1}
         disabled={isDisabled}
         className='mr-3'
         onClick={() => dispatch(adt('controlOrderedList'))} />
-      <ControlSeparator />
-      <FileLink
-        className='p-0'
-        disabled={isDisabled}
-        style={{
-          pointerEvents: isDisabled ? 'none' : undefined
-        }}
-        onChange={onSelectFile}
-        accept={SUPPORTED_IMAGE_EXTENSIONS}
-        color='secondary'>
-        <Icon name='image' width={1.1} height={1.1} />
-      </FileLink>
+      <ControlSeparator desktopOnly />
+      <div className='d-none d-sm-flex'>
+        <FileLink
+          focusable={false}
+          className='p-0'
+          disabled={isDisabled}
+          style={{
+            pointerEvents: isDisabled ? 'none' : undefined
+          }}
+          onChange={onSelectFile}
+          accept={SUPPORTED_IMAGE_EXTENSIONS}
+          color='secondary'>
+          <Icon name='image' width={1.1} height={1.1} />
+        </FileLink>
+      </div>
       <div className='ml-auto d-flex align-items-center'>
         <Spinner
           size='sm'
           color='secondary'
           className={`o-50 ${isLoading ? '' : 'd-none'}`} />
-        <Link newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
+        <Link focusable={false} newTab dest={externalDest(MARKDOWN_HELP_URL)} color='primary' className='d-flex justify-content-center align-items-center ml-2' style={{ lineHeight: 0 }}>
           <Icon name='markdown' width={1.25} height={1.25} />
         </Link>
       </div>
@@ -414,14 +417,14 @@ const ChildView: ChildComponent['view'] = props => {
   };
   return (
     <div className='d-flex flex-column flex-grow-1'>
-      <div className={`form-control ${className} ${validityClassName} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
+      <div className={`${className} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
         <Controls {...props} />
         <textarea
           id={state.id}
           value={state.value}
           placeholder={placeholder}
           disabled={isDisabled}
-          className={`${validityClassName} form-control flex-grow-1 border-left-0 border-right-0 border-bottom-0`}
+          className={`${validityClassName} form-control flex-grow-1`}
           style={{
             borderTopLeftRadius: 0,
             borderTopRightRadius: 0

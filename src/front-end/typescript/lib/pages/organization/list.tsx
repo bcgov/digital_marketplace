@@ -1,3 +1,4 @@
+import { EMPTY_STRING } from 'front-end/config';
 import { makePageMetadata } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
@@ -93,7 +94,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
       className: 'text-nowrap',
       children: org.owner
         ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
-        : null
+        : EMPTY_STRING
     };
     return [
       {

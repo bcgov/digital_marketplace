@@ -178,7 +178,7 @@ export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispa
 
 export function start<Route>(routeManager: RouteManager<Route>): void {
   // Intercept link clicks.
-  window.document.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, false)));
+  window.document.body.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, false)), false);
   // Handle popstate events.
   window.addEventListener('popstate', e => {
     if (e.state && e.state.url) {

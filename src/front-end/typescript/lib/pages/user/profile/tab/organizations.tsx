@@ -8,7 +8,6 @@ import { PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-me
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { find } from 'shared/lib';
@@ -259,7 +258,8 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
         children: isPending
           ? (
               <div className='d-flex align-items-center flex-nowrap'>
-                <LoadingButton
+                <Link
+                  button
                   disabled={isDisabled}
                   loading={isApproveLoading}
                   size='sm'
@@ -268,8 +268,9 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
                   symbol_={leftPlacement(iconLinkSymbol('user-check'))}
                   onClick={() => dispatch(adt('showModal', adt('approveAffiliation', affiliation)) as Msg)}>
                   Approve
-                </LoadingButton>
-                <LoadingButton
+                </Link>
+                <Link
+                  button
                   disabled={isDisabled}
                   loading={isRejectLoading}
                   size='sm'
@@ -277,10 +278,11 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
                   symbol_={leftPlacement(iconLinkSymbol('user-times'))}
                   onClick={() => dispatch(adt('showModal', adt('rejectAffiliation', affiliation)) as Msg)}>
                   Reject
-                </LoadingButton>
+                </Link>
               </div>
             )
-          : (<LoadingButton
+          : (<Link
+              button
               disabled={isDisabled}
               loading={isDeleteLoading}
               size='sm'
@@ -288,7 +290,7 @@ function affiliatedTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
               symbol_={leftPlacement(iconLinkSymbol('user-times'))}
               onClick={() => dispatch(adt('showModal', adt('deleteAffiliation', affiliation)) as Msg)}>
               Leave
-            </LoadingButton>),
+            </Link>),
         className: 'py-2'
       }
     ];

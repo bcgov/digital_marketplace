@@ -17,6 +17,7 @@ type InnerChildMsg
 interface ExtraChildProps {
   inlineLabel: string | ViewElement;
   loading?: boolean;
+  slimHeight?: boolean;
 }
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
@@ -39,7 +40,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, className = '', validityClassName, disabled = false, inlineLabel, loading = false } = props;
+  const { state, dispatch, className = '', slimHeight, validityClassName, disabled = false, inlineLabel, loading = false } = props;
   return (
     <CustomInput
       id={state.id}
@@ -48,7 +49,7 @@ const ChildView: ChildComponent['view'] = props => {
       disabled={disabled}
       type='checkbox'
       label={inlineLabel}
-      className={`d-flex align-items-center ${className} ${validityClassName}`}
+      className={`d-flex align-items-center ${className} ${validityClassName} ${slimHeight ? '' : 'h-input'}`}
       onChange={e => {
         const value = e.currentTarget.checked;
         dispatch({ tag: 'onChange', value });

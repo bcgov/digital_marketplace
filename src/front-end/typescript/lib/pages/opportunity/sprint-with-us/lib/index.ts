@@ -1,6 +1,7 @@
 import * as History from 'front-end/lib/components/table/history';
 import { ThemeColor } from 'front-end/lib/types';
-import { SWUOpportunity, SWUOpportunityEvent, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { isOpen, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { isAdmin, User } from 'shared/lib/resources/user';
 
 export function swuOpportunityStatusToColor(s: SWUOpportunityStatus): ThemeColor {
   switch (s) {
@@ -51,6 +52,34 @@ export function swuOpportunityStatusToPastTenseVerb(s: SWUOpportunityStatus): st
     case SWUOpportunityStatus.Suspended: return 'Suspended';
     case SWUOpportunityStatus.Canceled: return 'Cancelled'; //British spelling
     default: return 'Updated';
+  }
+}
+
+export function swuOpportunityToPublicStatus(o: Pick<SWUOpportunity, 'status' | 'createdBy' | 'proposalDeadline'>, viewerUser?: User): string {
+  const admin = !!viewerUser && (isAdmin(viewerUser) || o.createdBy?.id === viewerUser.id);
+  if (admin) {
+    return swuOpportunityStatusToTitleCase(o.status);
+  } else {
+    if (isOpen(o)) {
+      return 'Open';
+    } else if (o.status === SWUOpportunityStatus.Canceled) {
+      return 'Canceled';
+    } else {
+      return 'Closed';
+    }
+  }
+}
+
+export function swuOpportunityToPublicColor(o: Pick<SWUOpportunity, 'status' | 'createdBy' | 'proposalDeadline'>, viewerUser?: User): ThemeColor {
+  const admin = !!viewerUser && (isAdmin(viewerUser) || o.createdBy?.id === viewerUser.id);
+  if (admin) {
+    return swuOpportunityStatusToColor(o.status);
+  } else {
+    if (isOpen(o)) {
+      return 'success';
+    } else {
+      return 'danger';
+    }
   }
 }
 

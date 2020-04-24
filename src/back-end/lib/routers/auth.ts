@@ -173,7 +173,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           }
           const session = result.value;
 
-          const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? '/' : '/sign-up/complete');
+          const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? '/dashboard' : '/sign-up/complete');
 
           return {
             code: 302,

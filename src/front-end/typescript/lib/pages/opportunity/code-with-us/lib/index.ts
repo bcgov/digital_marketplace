@@ -1,6 +1,7 @@
 import * as History from 'front-end/lib/components/table/history';
 import { ThemeColor } from 'front-end/lib/types';
-import { CWUOpportunity, CWUOpportunityEvent, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, CWUOpportunityEvent, CWUOpportunityStatus, isOpen } from 'shared/lib/resources/opportunity/code-with-us';
+import { isAdmin, User } from 'shared/lib/resources/user';
 
 export function cwuOpportunityStatusToColor(s: CWUOpportunityStatus): ThemeColor {
   switch (s) {
@@ -21,6 +22,34 @@ export function cwuOpportunityStatusToTitleCase(s: CWUOpportunityStatus): string
     case CWUOpportunityStatus.Awarded: return 'Awarded';
     case CWUOpportunityStatus.Suspended: return 'Suspended';
     case CWUOpportunityStatus.Canceled: return 'Cancelled'; // Use British spelling for copy.
+  }
+}
+
+export function cwuOpportunityToPublicStatus(o: Pick<CWUOpportunity, 'status' | 'createdBy' | 'proposalDeadline'>, viewerUser?: User): string {
+  const admin = !!viewerUser && (isAdmin(viewerUser) || o.createdBy?.id === viewerUser.id);
+  if (admin) {
+    return cwuOpportunityStatusToTitleCase(o.status);
+  } else {
+    if (isOpen(o)) {
+      return 'Open';
+    } else if (o.status === CWUOpportunityStatus.Canceled) {
+      return 'Canceled';
+    } else {
+      return 'Closed';
+    }
+  }
+}
+
+export function cwuOpportunityToPublicColor(o: Pick<CWUOpportunity, 'status' | 'createdBy' | 'proposalDeadline'>, viewerUser?: User): ThemeColor {
+  const admin = !!viewerUser && (isAdmin(viewerUser) || o.createdBy?.id === viewerUser.id);
+  if (admin) {
+    return cwuOpportunityStatusToColor(o.status);
+  } else {
+    if (isOpen(o)) {
+      return 'success';
+    } else {
+      return 'danger';
+    }
   }
 }
 
