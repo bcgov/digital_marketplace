@@ -539,7 +539,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
       {hasUnpublished
         ? (<OpportunityList
             title='Unpublished Opportunities'
-            noneText='There are currently no unpublished opportunities.'
+            noneText={opps.unpublished.length !== state.opportunities.unpublished.length
+              ? 'There are no unpublished opportunities that match your search criteria.'
+              : 'There are currently no unpublished opportunities.'}
             opportunities={opps.unpublished}
             viewerUser={state.viewerUser}
             className='mb-5'
@@ -552,7 +554,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
         : null}
       <OpportunityList
         title='Open Opportunities'
-        noneText='There are currently no open opportunities. Check back soon!'
+        noneText={opps.open.length !== state.opportunities.open.length
+          ? 'There are no open opportunities that match your search criteria.'
+          : 'There are currently no open opportunities. Check back soon!'}
         opportunities={opps.open}
         viewerUser={state.viewerUser}
         className='mb-5'
@@ -564,7 +568,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
         toggleNotifications={hasUnpublished ? undefined : toggleNotifications} />
       <OpportunityList
         title='Closed Opportunities'
-        noneText='There are currently no closed opportunities.'
+        noneText={opps.closed.length !== state.opportunities.closed.length
+          ? 'There are no closed opportunities that match your search criteria.'
+          : 'There are currently no closed opportunities.'}
         opportunities={opps.closed}
         viewerUser={state.viewerUser}
         disabled={isDisabled}
