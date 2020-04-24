@@ -265,7 +265,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
     minTeamMembers: immutable(await NumberField.init({
       errors: [],
       validate: v => {
-        if (v === null) { return invalid(['Please enter a valid Minimum Team Size.']); }
+        if (v === null) { return valid(null); }
         return mapValid(opportunityValidation.validateMinimumTeamMembers(v), w => w || null);
       },
       child: {
@@ -501,7 +501,7 @@ export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
 
 export function getValues(state: Immutable<State>): Values {
   const totalMaxBudget = FormField.getValue(state.totalMaxBudget) || 0;
-  const minTeamMembers = FormField.getValue(state.minTeamMembers) || 1;
+  const minTeamMembers = FormField.getValue(state.minTeamMembers) || undefined;
   const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
   const codeChallengeWeight = FormField.getValue(state.codeChallengeWeight) || 0;
   const scenarioWeight = FormField.getValue(state.scenarioWeight) || 0;
