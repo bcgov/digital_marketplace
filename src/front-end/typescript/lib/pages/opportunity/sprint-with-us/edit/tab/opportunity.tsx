@@ -548,7 +548,7 @@ export const component: Tab.Component<State, Msg> = {
           // Allow non-admin opp owners to submit changes directly to admins
           // when editing a draft opp.
           links.push({
-            children: 'Submit',
+            children: 'Submit for Review',
             symbol_: leftPlacement(iconLinkSymbol('paper-plane')),
             button: true,
             loading: isSaveChangesAndUpdateStatusLoading,
@@ -614,7 +614,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               links: [
                 {
-                  children: viewerIsAdmin ? 'Publish' : 'Submit',
+                  children: viewerIsAdmin ? 'Publish' : 'Submit for Review',
                   disabled: !isValid(),
                   symbol_: leftPlacement(iconLinkSymbol(viewerIsAdmin ? 'bullhorn' : 'paper-plane')),
                   onClick: () => dispatch(adt('showModal', viewerIsAdmin ? 'publish' : 'submit') as Msg)
@@ -675,7 +675,9 @@ export const component: Tab.Component<State, Msg> = {
             {
               children: 'Edit',
               symbol_: leftPlacement(iconLinkSymbol('edit')),
-              onClick: () => dispatch(adt('startEditing'))
+              onClick: () => dispatch(adt('startEditing')),
+              button: true,
+              color: 'primary'
             }
           ]);
         }
