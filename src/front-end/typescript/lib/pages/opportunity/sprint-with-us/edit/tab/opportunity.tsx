@@ -389,7 +389,7 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt('hideModal')
             }
           ],
-          body: () => 'Are you sure you want to submit this Sprint With Us opportunity for review?'
+          body: () => 'Are you sure you want to submit this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it.'
         };
       case 'publishChanges':
         return {
@@ -429,7 +429,7 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt('hideModal')
             }
           ],
-          body: () => 'Are you sure you want to submit your changes to this Sprint With Us opportunity for review?'
+          body: () => 'Are you sure you want to submit your changes to this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it.'
         };
       case 'saveChangesAndPublish':
         return {
