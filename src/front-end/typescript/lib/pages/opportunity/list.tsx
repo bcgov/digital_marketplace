@@ -14,7 +14,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import LoadingButton from 'front-end/lib/views/loading-button';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatAmount, formatDateAndTime } from 'shared/lib';
+import { compareDates, formatAmount, formatDateAndTime } from 'shared/lib';
 import * as CWU from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWU from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isVendor, User } from 'shared/lib/resources/user';
@@ -57,21 +57,46 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 export type RouteParams = null;
 
 function categorizeOpportunities(cwu: CWU.CWUOpportunitySlim[], swu: SWU.SWUOpportunitySlim[], viewerUser?: User): Pick<State, 'unpublished' | 'open' | 'closed'> {
+  const opportunities: Opportunity[] = [
+    ...(cwu.map(o => adt('cwu' as const, o))),
+    ...(swu.map(o => adt('swu' as const, o)))
+  ];
   const empty: Pick<State, 'unpublished' | 'open' | 'closed'> = {
     unpublished: [],
     open: [],
     closed: []
   };
-  return cwu.reduce((acc, o) => {
-    if (CWU.isUnpublished(o)) {
-      acc.unpublished.push(adt('cwu', o));
-    } else if (CWU.isOpen(o)) {
-      acc.open.push(adt('cwu', o));
-    } else if (CWU.isClosed(o)) {
-      acc.closed.push(adt('cwu', o));
+  const result: Pick<State, 'unpublished' | 'open' | 'closed'> = opportunities.reduce((acc, o) => {
+    switch (o.tag) {
+      case 'cwu':
+        if (CWU.isUnpublished(o.value)) {
+          acc.unpublished.push(o);
+        } else if (CWU.isOpen(o.value)) {
+          acc.open.push(o);
+        } else if (CWU.isClosed(o.value)) {
+          acc.closed.push(o);
+        }
+        break;
+      case 'swu':
+        if (SWU.isUnpublished(o.value)) {
+          acc.unpublished.push(o);
+        } else if (SWU.isOpen(o.value)) {
+          acc.open.push(o);
+        } else if (SWU.isClosed(o.value)) {
+          acc.closed.push(o);
+        }
+        break;
     }
     return acc;
   }, empty);
+  return {
+    unpublished: result.unpublished
+      .sort((a, b) => compareDates(a.value.updatedAt, b.value.updatedAt) * -1),
+    open: result.open
+      .sort((a, b) => compareDates(a.value.updatedAt, b.value.updatedAt) * -1),
+    closed: result.closed
+      .sort((a, b) => compareDates(a.value.proposalDeadline, b.value.proposalDeadline) * -1)
+  };
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
@@ -191,7 +216,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Col xs='12' md='5' className='d-flex align-items-end order-2 order-md-3'>
         <ShortText.view
           extraChildProps={{}}
-          placeholder='Search by Title, Status or Location'
+          placeholder='Search by Title or Location'
           disabled={isLoading(state)}
           state={state.searchFilter}
           className='flex-grow-1'
@@ -268,7 +293,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
   const isCWU = opportunity.tag === 'cwu' ;
   const subscribed = opportunity.value.subscribed;
   return (
-    <Col xs='12' md='6' className='mb-4' style={{ minHeight: '320px' }}>
+    <Col xs='12' md='6' style={{ marginBottom: '2rem', minHeight: '320px' }}>
       <Link className='shadow-hover w-100 h-100 text-decoration-none rounded-lg border align-items-stretch' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
         <div className='d-flex flex-column align-items-stretch flex-grow-1'>
           <div className='p-4 flex-grow-1'>
@@ -347,13 +372,25 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
   return (
     <div className={className}>
       <Row>
-        <Col xs='12'>
-          <h4 className='mb-4 d-flex align-items-center'>
+        <Col xs='12' className='d-flex flex-column flex-md-row align-items-start align-items-md-center flex-nowrap'>
+          <h4 className='mb-3 mb-md-4 d-flex align-items-center'>
             {title}
             {showCount && opportunities.length
-              ? (<Badge pill color='success' text='5' className='font-size-small ml-2' />)
+              ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />)
               : null}
           </h4>
+          {viewerUser && toggleNotifications
+            ? (<Link
+                className='ml-md-auto mb-4'
+                disabled={disabled}
+                onClick={toggleNotifications}
+                color={viewerUser.notificationsOn ? 'secondary' : 'primary'}
+                symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
+                {viewerUser.notificationsOn
+                  ? 'Stop notifying me about new opportunities'
+                  : 'Notify me about new opportunities'}
+              </Link>)
+            : null}
         </Col>
         {opportunities.length
           ? opportunities.map((o, i) => (
