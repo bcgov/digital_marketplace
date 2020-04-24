@@ -15,7 +15,7 @@ const FileLink: View<Props> = props => {
       {...props}
       className={`${props.className || ''} position-relative overflow-hidden`}>
       <input
-        tabIndex={-1}
+        tabIndex={!props.disabled && props.focusable ? 0 : -1}
         accept={props.accept && props.accept.join(',')}
         type='file'
         className='position-absolute w-100 h-100 o-0'
