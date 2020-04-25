@@ -295,7 +295,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 
   // If user is vendor, scope results to those proposals they have authored
   if (session.user.type === UserType.Vendor) {
-    query.andWhere({ createdBy: session.user.id });
+    query.andWhere({ 'proposals.createdBy': session.user.id });
   }
 
   let results = await query;
