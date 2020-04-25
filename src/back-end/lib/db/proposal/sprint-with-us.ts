@@ -38,7 +38,7 @@ interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | '
   createdBy?: Id;
   updatedBy?: Id;
   opportunity: Id;
-  organization: Id;
+  organization: Id | null;
   inceptionPhase?: Id;
   prototypePhase?: Id;
   implementationPhase: Id;
@@ -549,7 +549,7 @@ export const updateSWUProposal = tryDb<[UpdateSWUProposalParams, AuthenticatedSe
       .transacting(trx)
       .where({ id })
       .update({
-        organization,
+        organization: organization || null,
         updatedAt: now,
         updatedBy: session.user.id
       }, '*');
