@@ -11,7 +11,7 @@ import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, Cre
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
 import { validateIndividualProponent } from 'shared/lib/validation/proposal/code-with-us';
 import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
 import { isArray } from 'util';
@@ -288,4 +288,8 @@ export async function validateSWUProposalTeam(connection: db.Connection, opportu
   const dbResults = (await Promise.all(teamMemberIds.map(async id => await db.readOneUser(connection, id), undefined)));
   const teamMembers = dbResults.map(v => getValidValue(v, null)).filter(v => !!v) as User[];
   return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
+}
+
+export async function validateSWUProposalOrganization(connection: db.Connection, organization: Id | undefined, session: Session): Promise<Validation<Organization | undefined>> {
+  return await optionalAsync(organization, v => validateOrganizationId(connection, v, session, false));
 }
