@@ -6,7 +6,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
+import { doesOrganizationHaveAdminInfo, doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import { getSWUProponentName, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
@@ -26,7 +26,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     },
     {
       name: 'Proponent',
-      children: proposal.organization && isAdmin(viewerUser)
+      children: proposal.organization && proposal.organization.active && isAdmin(viewerUser)
         ? (<span>
             <Link dest={routeDest(adt('orgEdit', { orgId: proposal.organization.id }))}>{proposal.organization.legalName}</Link>
             &nbsp;
@@ -34,7 +34,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
           </span>)
         : getSWUProponentName(proposal)
     },
-    proposal.organization
+    proposal.organization && doesOrganizationHaveAdminInfo(proposal.organization)
       ? {
           name: 'Qualified Supplier',
           children: doesOrganizationMeetSWUQualification(proposal.organization)

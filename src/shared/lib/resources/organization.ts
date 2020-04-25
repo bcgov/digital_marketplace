@@ -66,6 +66,10 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 
 export type DeleteValidationErrors = BodyWithErrors;
 
+export function doesOrganizationHaveAdminInfo(organization: Organization | OrganizationSlim): boolean {
+  return organization.owner !== undefined;
+}
+
 export function doesOrganizationMeetSWUQualificationNumTeamMembers(organization: Organization | OrganizationSlim): boolean {
   return (organization.numTeamMembers || 0) >= 2;
 }
