@@ -1,5 +1,5 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
-import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalMsg, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -310,6 +310,10 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
+  getAlerts: getAlertsValid<ValidState, Msg>(state => {
+    return Form.getAlerts(state.form);
+  }),
 
   getModal: getModalValid<ValidState, Msg>(state => {
     const formModal = mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);

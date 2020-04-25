@@ -2,9 +2,11 @@ import { View } from 'front-end/lib/framework';
 import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
+import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import { getSWUProponentName, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
@@ -32,6 +34,14 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
           </span>)
         : getSWUProponentName(proposal)
     },
+    proposal.organization
+      ? {
+          name: 'Qualified Supplier',
+          children: doesOrganizationMeetSWUQualification(proposal.organization)
+            ? (<Icon name='check' color='success' />)
+            : (<Icon name='times' color='danger' />)
+        }
+      : null,
     createdBy
       ? {
           name: 'Submitted By',

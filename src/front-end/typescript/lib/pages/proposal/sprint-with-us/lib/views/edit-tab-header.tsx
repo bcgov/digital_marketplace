@@ -7,7 +7,7 @@ import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
-import { isAdmin, User } from 'shared/lib/resources/user';
+import { User } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
 export interface Props {
@@ -40,7 +40,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
       name: 'Organization',
       children: (() => {
         if (proposal.organization) {
-          if (proposal.organization.active && (proposal.organization.owner || isAdmin(viewerUser))) {
+          if (proposal.organization.active) {
             return (
               <Link
                 dest={routeDest(adt('orgEdit', { orgId: proposal.organization.id }))}>
