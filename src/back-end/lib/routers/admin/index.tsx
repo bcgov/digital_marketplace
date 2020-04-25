@@ -1,6 +1,6 @@
 import * as mailer from 'back-end/lib/mailer';
 import { addedToTeamT, approvedRequestToJoinT, memberLeavesT, membershipCompleteT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
-import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
+import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, cwuProposalDeadlinePassedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
 import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, swuProposalDeadlinePassedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import { organizationArchivedT } from 'back-end/lib/mailer/notifications/organization';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
@@ -119,7 +119,10 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     },
     {
       title: 'CWU Opportunity Ready for Evaluation',
-      emails: await readyForEvalCWUOpportunityT(mocks.govUser, mocks.cwuOpportunity)
+      emails: [
+        ...await readyForEvalCWUOpportunityT(mocks.govUser, mocks.cwuOpportunity),
+        ...await cwuProposalDeadlinePassedT(mocks.vendorUser, mocks.cwuOpportunity)
+      ]
     },
     {
       title: 'CWU Proposal Submitted',
