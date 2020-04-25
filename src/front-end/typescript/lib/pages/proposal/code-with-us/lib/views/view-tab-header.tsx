@@ -6,7 +6,7 @@ import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/v
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUProposal, getCWUProponentName, getCWUProponentTypeTitleCase } from 'shared/lib/resources/proposal/code-with-us';
-import { User, UserType } from 'shared/lib/resources/user';
+import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
 export interface Props {
@@ -22,12 +22,21 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
       name: 'Status',
       children: (<Badge text={cwuProposalStatusToTitleCase(propStatus, viewerUser.type)} color={cwuProposalStatusToColor(propStatus, viewerUser.type)} />)
     },
-    { name: 'Proponent', children: getCWUProponentName(proposal) },
+    {
+      name: 'Proponent',
+      children: (() => {
+        const name = getCWUProponentName(proposal);
+        if (proposal.proponent.tag === 'organization' && proposal.proponent.value.active && isAdmin(viewerUser)) {
+          return (<Link dest={routeDest(adt('orgEdit', { orgId: proposal.proponent.value.id }))}>{name}</Link>);
+        }
+        return name;
+      })()
+    },
     { name: 'Proponent Type', children: getCWUProponentTypeTitleCase(proposal) },
     createdBy
       ? {
           name: 'Submitted By',
-          children: viewerUser.type === UserType.Admin
+          children: isAdmin(viewerUser)
             ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
             : createdBy.name
         }

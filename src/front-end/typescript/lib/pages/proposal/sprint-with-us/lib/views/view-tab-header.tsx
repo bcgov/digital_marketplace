@@ -26,7 +26,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     },
     {
       name: 'Proponent',
-      children: proposal.organization && isAdmin(viewerUser)
+      children: proposal.organization && proposal.organization.active && isAdmin(viewerUser)
         ? (<span>
             <Link dest={routeDest(adt('orgEdit', { orgId: proposal.organization.id }))}>{proposal.organization.legalName}</Link>
             &nbsp;
