@@ -109,9 +109,8 @@ async function updateStatus(state: Immutable<State>, newStatus: UpdateStatus, on
         .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
       return onValid ? await onValid(state, result.value) : state;
     case 'invalid':
-      return onInvalid ? await onInvalid(state, result.value) : state;
     case 'unhandled':
-      return onInvalid ? await onInvalid(state) : state;
+      return onInvalid ? await onInvalid(state, result.value) : state;
   }
 }
 
@@ -183,16 +182,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             state,
             state1 => updateStatus(state1, CWUOpportunityStatus.Published,
               async state2 => {
-                dispatch(toast(adt('success', toasts.changesPublished.success)));
+                dispatch(toast(adt('success', toasts.statusChanged.success(CWUOpportunityStatus.Published))));
                 return state2;
               },
               async state2 => {
-                dispatch(toast(adt('error', toasts.changesPublished.error)));
+                dispatch(toast(adt('error', toasts.statusChanged.error(CWUOpportunityStatus.Published))));
                 return state2;
               }
             ),
             async state1 => {
-              dispatch(toast(adt('error', toasts.changesPublished.error)));
+              dispatch(toast(adt('error', toasts.statusChanged.error(CWUOpportunityStatus.Published))));
               return state1;
             }
           );
@@ -311,6 +310,7 @@ export const component: Tab.Component<State, Msg> = {
 
   getModal: state => {
     switch (state.showModal) {
+      case 'saveChangesAndPublish':
       case 'publish':
         return {
           title: 'Publish Code With Us Opportunity?',
@@ -321,7 +321,9 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'bullhorn',
               color: 'primary',
               button: true,
-              msg: adt('updateStatus', CWUOpportunityStatus.Published) as Msg
+              msg: state.showModal === 'publish'
+                ? adt('updateStatus', CWUOpportunityStatus.Published) as Msg
+                : adt('saveChangesAndPublish')
             },
             {
               text: 'Cancel',
@@ -342,26 +344,6 @@ export const component: Tab.Component<State, Msg> = {
               color: 'primary',
               button: true,
               msg: adt('saveChanges') // This is the reason this is a different modal from 'saveChangesAndPublish'
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified.'
-        };
-      case 'saveChangesAndPublish':
-        return {
-          title: 'Publish Changes to Code With Us Opportunity?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Publish Changes',
-              icon: 'bullhorn',
-              color: 'primary',
-              button: true,
-              msg: adt('saveChangesAndPublish')
             },
             {
               text: 'Cancel',
@@ -451,7 +433,7 @@ export const component: Tab.Component<State, Msg> = {
         // Publish button
         !isCWUOpportunityPublic(opp)
           ? {
-              children: 'Publish Changes',
+              children: 'Publish',
               symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
               button: true,
               loading: isSaveChangesAndUpdateStatusLoading,

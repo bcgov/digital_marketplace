@@ -443,9 +443,15 @@ function proponentFor(proponentType: ProponentType, state: State): CreatePropone
         mailCode:   FormField.getValue(state.mailCode),
         country:    FormField.getValue(state.country)
       });
-    case 'organization':
+    case 'organization': {
       const fieldValue = FormField.getValue(state.organization);
-      return adt('organization', fieldValue ? fieldValue.value : '' );
+      const orgId = fieldValue ? fieldValue.value : '' ;
+      if (orgId) {
+        return adt('organization', orgId);
+      } else {
+        return createBlankIndividualProponent();
+      }
+    }
   }
 }
 

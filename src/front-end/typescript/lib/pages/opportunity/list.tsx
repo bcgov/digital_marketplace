@@ -18,7 +18,7 @@ import { Col, Row, Spinner } from 'reactstrap';
 import { compareDates, find, formatAmount, formatDateAndTime } from 'shared/lib';
 import * as CWU from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWU from 'shared/lib/resources/opportunity/sprint-with-us';
-import { isVendor, User } from 'shared/lib/resources/user';
+import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 
 const CARD_MARGIN_BOTTOM = '2rem';
@@ -291,25 +291,27 @@ const Header: ComponentView<State, Msg> = () => {
       <Col xs='12'>
         <h1 className='mb-4'>Welcome to the Digital Marketplace</h1>
       </Col>
-      <Col xs='12' md='6'>
-        <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
+      <Col xs='12' md='6' className='mb-4 mb-md-0'>
+        <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <OpportunityType type_='cwu' className='mb-2' />
-          <p className='mb-3'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
+          <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
           <Link
+            className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('learnMoreCWU', null))}>
-            Learn more
+            Learn More
           </Link>
         </div>
       </Col>
       <Col xs='12' md='6'>
-        <div className='rounded bg-blue-light-alt-2 p-4 h-100'>
+        <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <OpportunityType type_='swu' className='mb-2' />
-          <p className='mb-3'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
+          <p className='mb-3 font-size-small'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
           <Link
+            className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('learnMoreSWU', null))}>
-            Learn more
+            Learn More
           </Link>
         </div>
       </Col>
@@ -361,7 +363,7 @@ const OpportunityType: View<OpportunityTypeProps> = ({ type_, className = '' }) 
     <div className={`d-flex flex-nowrap align-items-center font-weight-bold text-info ${className}`}>
       <Icon
         className='mr-2 flex-shrink-0 flex-grow-0'
-        name={type_ === 'cwu' ? 'code' : 'users-class'} />
+        name={type_ === 'cwu' ? 'code-solid' : 'users-class'} />
       {type_ === 'cwu' ? 'Code With Us' : 'Sprint With Us'}
     </div>
   );
@@ -420,10 +422,25 @@ interface OpportunityCardProps {
 const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, toggleWatch, isWatchLoading, disabled }) => {
   const isCWU = opportunity.tag === 'cwu' ;
   const subscribed = opportunity.value.subscribed;
+  const dest: Route = (() => {
+    const view: Route = adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id });
+    const edit: Route = adt(isCWU ? 'opportunityCWUEdit' : 'opportunitySWUEdit', { opportunityId: opportunity.value.id });
+    if (!viewerUser) { return view; }
+    switch (viewerUser.type) {
+      case UserType.Admin: return edit;
+      case UserType.Vendor: return view;
+      case UserType.Government:
+        if (opportunity.value.createdBy?.id === viewerUser.id) {
+          return edit;
+        } else {
+          return view;
+        }
+    }
+  })();
   return (
     <Col xs='12' md='6' style={{ marginBottom: CARD_MARGIN_BOTTOM, minHeight: '320px' }}>
       <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
-        <Link disabled={disabled} style={{ outline: 'none' }} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(adt(isCWU ? 'opportunityCWUView' : 'opportunitySWUView', { opportunityId: opportunity.value.id }))}>
+        <Link disabled={disabled} style={{ outline: 'none' }} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(dest)}>
           <h5 className='mb-2'>
             {opportunity.value.title}
           </h5>
@@ -435,7 +452,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
               value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
               className='ml-sm-3 flex-shrink-0' />
           </div>
-          <p className='mt-3 mb-0 text-secondary'>
+          <p className='mt-3 mb-0 text-secondary font-size-small'>
             {opportunity.value.teaser}
           </p>
         </Link>

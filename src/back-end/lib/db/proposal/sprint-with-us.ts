@@ -38,7 +38,7 @@ interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | '
   createdBy?: Id;
   updatedBy?: Id;
   opportunity: Id;
-  organization: Id;
+  organization: Id | null;
   inceptionPhase?: Id;
   prototypePhase?: Id;
   implementationPhase: Id;
@@ -295,7 +295,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 
   // If user is vendor, scope results to those proposals they have authored
   if (session.user.type === UserType.Vendor) {
-    query.andWhere({ createdBy: session.user.id });
+    query.andWhere({ 'proposals.createdBy': session.user.id });
   }
 
   let results = await query;
@@ -549,7 +549,7 @@ export const updateSWUProposal = tryDb<[UpdateSWUProposalParams, AuthenticatedSe
       .transacting(trx)
       .where({ id })
       .update({
-        organization,
+        organization: organization || null,
         updatedAt: now,
         updatedBy: session.user.id
       }, '*');

@@ -122,9 +122,8 @@ async function updateStatus(state: Immutable<State>, newStatus: UpdateStatus, on
         .set('form', await initForm(result.value, state.viewerUser, Form.getActiveTab(state.form)));
       return onValid ? await onValid(state, result.value) : state;
     case 'invalid':
-      return onInvalid ? await onInvalid(state, result.value) : state;
     case 'unhandled':
-      return onInvalid ? await onInvalid(state) : state;
+      return onInvalid ? await onInvalid(state, result.value) : state;
   }
 }
 
@@ -196,16 +195,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             state,
             state1 => updateStatus(state1, SWUOpportunityStatus.Published,
               async state2 => {
-                dispatch(toast(adt('success', toasts.changesPublished.success)));
+                dispatch(toast(adt('success', toasts.statusChanged.success(SWUOpportunityStatus.Published))));
                 return state2;
               },
               async state2 => {
-                dispatch(toast(adt('error', toasts.changesPublished.error)));
+                dispatch(toast(adt('error', toasts.statusChanged.error(SWUOpportunityStatus.Published))));
                 return state2;
               }
             ),
             async state1 => {
-              dispatch(toast(adt('error', toasts.changesPublished.error)));
+              dispatch(toast(adt('error', toasts.statusChanged.error(SWUOpportunityStatus.Published))));
               return state1;
             }
           );
@@ -351,6 +350,7 @@ export const component: Tab.Component<State, Msg> = {
   getModal: state => {
     switch (state.showModal) {
       case 'publish':
+      case 'saveChangesAndPublish':
         return {
           title: 'Publish Sprint With Us Opportunity?',
           onCloseMsg: adt('hideModal'),
@@ -360,7 +360,9 @@ export const component: Tab.Component<State, Msg> = {
               icon: 'bullhorn',
               color: 'primary',
               button: true,
-              msg: adt('updateStatus', SWUOpportunityStatus.Published) as Msg
+              msg: state.showModal === 'publish'
+                ? adt('updateStatus', SWUOpportunityStatus.Published) as Msg
+                : adt('saveChangesAndPublish')
             },
             {
               text: 'Cancel',
@@ -430,26 +432,6 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () => 'Are you sure you want to submit your changes to this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it.'
-        };
-      case 'saveChangesAndPublish':
-        return {
-          title: 'Publish Changes to Sprint With Us Opportunity?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Publish Changes',
-              icon: 'bullhorn',
-              color: 'primary',
-              button: true,
-              msg: adt('saveChangesAndPublish')
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified.'
         };
       case 'suspend':
         return {
@@ -536,7 +518,7 @@ export const component: Tab.Component<State, Msg> = {
         if (!isPublic && viewerIsAdmin) {
           // Allow admins to publish changes directly after editing a non-public opp.
           links.push({
-            children: 'Publish Changes',
+            children: 'Publish',
             symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
             button: true,
             loading: isSaveChangesAndUpdateStatusLoading,

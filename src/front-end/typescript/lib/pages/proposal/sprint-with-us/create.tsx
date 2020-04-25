@@ -1,5 +1,5 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
-import { getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
@@ -49,13 +49,24 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
   userType: [UserType.Vendor],
 
   async success({ routeParams, shared, dispatch, routePath }) {
+    const { opportunityId } = routeParams;
+    // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
+    const proposalsResult = await api.proposals.swu.readMany(opportunityId);
+    if (api.isValid(proposalsResult) && proposalsResult.value.length) {
+      const existingProposal = proposalsResult.value[0];
+      dispatch(replaceRoute(adt('proposalSWUEdit' as const, {
+        opportunityId,
+        proposalId: existingProposal.id
+      })));
+      return invalid(null);
+    }
     const fail = () => {
       dispatch(replaceRoute(adt('notFound' as const, {
         path: routePath
       })));
       return invalid(null);
     };
-    const opportunityResult = await api.opportunities.swu.readOne(routeParams.opportunityId);
+    const opportunityResult = await api.opportunities.swu.readOne(opportunityId);
     if (!api.isValid(opportunityResult)) { return fail(); }
     const organizationsResult = await api.organizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }
@@ -184,6 +195,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         </span>
       )
     })
+  }),
+
+  getAlerts: getAlertsValid<ValidState, Msg>(state => {
+    return Form.getAlerts(state.form);
   }),
 
   getContextualActions: getContextualActionsValid( ({state, dispatch}) => {

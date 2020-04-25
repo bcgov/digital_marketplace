@@ -4,7 +4,7 @@ import * as swuProposalNotifications from 'back-end/lib/mailer/notifications/pro
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, validateSWUProposalId, validateSWUProposalPhase, validateSWUProposalTeam, validateSWUProposalTeamMembers } from 'back-end/lib/validation';
+import { validateAttachments, validateOrganizationId, validateSWUOpportunityId, validateSWUProposalId, validateSWUProposalOrganization, validateSWUProposalPhase, validateSWUProposalTeam, validateSWUProposalTeamMembers } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -377,7 +377,7 @@ const resource: Resource = {
                     teamQuestionResponses,
                     attachments } = request.body.value;
 
-            const validatedOrganization = await optionalAsync(organization, v => validateOrganizationId(connection, v, request.session, false));
+            const validatedOrganization = await validateSWUProposalOrganization(connection, organization, request.session);
             if (isInvalid(validatedOrganization)) {
               return invalid({
                 proposal: adt('edit' as const, {
@@ -446,13 +446,6 @@ const resource: Resource = {
                 proposal: adt('edit' as const, {
                   organization: ['An organization must be specified prior to submitting.']
                 })
-              });
-            }
-
-            // Prior to submitting, re-check permissions
-            if (!await permissions.submitSWUProposal(connection, request.session, validatedOrganization.value)) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
               });
             }
 
@@ -535,6 +528,14 @@ const resource: Resource = {
             ])) {
               return invalid({
                 proposal: adt('submit' as const, ['This proposal could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to submit it again.'])
+              });
+            }
+
+            // Prior to submitting, re-check permissions and ensure organization is still SWU qualified
+            const proposalOrganization = validatedSWUProposal.value.organization && getValidValue(await db.readOneOrganization(connection, validatedSWUProposal.value.organization.id, false, request.session), null);
+            if (!proposalOrganization || !await permissions.submitSWUProposal(connection, request.session, proposalOrganization)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
               });
             }
 
