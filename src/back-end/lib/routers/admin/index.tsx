@@ -1,7 +1,7 @@
 import * as mailer from 'back-end/lib/mailer';
 import { addedToTeamT, approvedRequestToJoinT, memberLeavesT, membershipCompleteT, rejectRequestToJoinT } from 'back-end/lib/mailer/notifications/affiliation';
 import { cancelledCWUOpportunityActionedT, cancelledCWUOpportunitySubscribedT, newCWUOpportunityPublishedT, readyForEvalCWUOpportunityT, successfulCWUPublicationT, suspendedCWUOpportunityActionedT, suspendedCWUOpportunitySubscribedT, updatedCWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
-import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
+import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, newSWUOpportunityPublishedT, newSWUOpportunitySubmittedForReviewAuthorT, newSWUOpportunitySubmittedForReviewT, readyForEvalSWUOpportunityT, successfulSWUPublicationT, suspendedSWUOpportunityActionedT, suspendedSWUOpportunitySubscribedT, swuProposalDeadlinePassedT, updatedSWUOpportunityT } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import { organizationArchivedT } from 'back-end/lib/mailer/notifications/organization';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import { awardedSWUProposalSubmissionT, disqualifiedSWUProposalSubmissionT, successfulSWUProposalSubmissionT, unsuccessfulSWUProposalSubmissionT, withdrawnSWUProposalSubmissionProposalAuthorT, withdrawnSWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/sprint-with-us';
@@ -88,8 +88,15 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     {
       title: 'CWU Opportunity Published',
       emails: [
-        ...await newCWUOpportunityPublishedT(mocks.vendorUser, mocks.cwuOpportunity),
-        ...await successfulCWUPublicationT(mocks.govUser, mocks.cwuOpportunity)
+        ...await newCWUOpportunityPublishedT(mocks.vendorUser, mocks.cwuOpportunity, false),
+        ...await successfulCWUPublicationT(mocks.govUser, mocks.cwuOpportunity, false)
+      ]
+    },
+    {
+      title: 'CWU Opportunity Re-published after being suspended',
+      emails: [
+        ...await newCWUOpportunityPublishedT(mocks.vendorUser, mocks.publishedCWUOpportunity, true),
+        ...await successfulCWUPublicationT(mocks.govUser, mocks.publishedCWUOpportunity, true)
       ]
     },
     {
@@ -139,8 +146,15 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     {
       title: 'SWU Opportunity Published',
       emails: [
-        ...await newSWUOpportunityPublishedT(mocks.vendorUser, mocks.swuOpportunity),
-        ...await successfulSWUPublicationT(mocks.govUser, mocks.swuOpportunity)
+        ...await newSWUOpportunityPublishedT(mocks.vendorUser, mocks.swuOpportunity, false),
+        ...await successfulSWUPublicationT(mocks.govUser, mocks.swuOpportunity, false)
+      ]
+    },
+    {
+      title: 'SWU Opportunity Re-published after being suspended',
+      emails: [
+        ...await newSWUOpportunityPublishedT(mocks.vendorUser, mocks.publishedSWUOpportunity, true),
+        ...await successfulSWUPublicationT(mocks.govUser, mocks.publishedSWUOpportunity, true)
       ]
     },
     {
@@ -169,8 +183,11 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
       ]
     },
     {
-      title: 'SWU Opportunity Ready For Evaluation',
-      emails: await readyForEvalSWUOpportunityT(mocks.govUser, mocks.swuOpportunity)
+      title: 'SWU Opportunity Proposal Deadline Passed',
+      emails: [
+        ...await readyForEvalSWUOpportunityT(mocks.govUser, mocks.swuOpportunity),
+        ...await swuProposalDeadlinePassedT(mocks.vendorUser, mocks.swuOpportunity)
+      ]
     },
     {
       title: 'SWU Proposal Submitted',

@@ -91,6 +91,11 @@ export const cwuOpportunity: CWUOpportunity = {
   addenda: []
 };
 
+export const publishedCWUOpportunity: CWUOpportunity = {
+  ...cwuOpportunity,
+  publishedAt: date
+};
+
 export const cwuOpportunitySlim: CWUOpportunitySlim = {
   id: cwuOpportunity.id,
   title: cwuOpportunity.title,
@@ -181,6 +186,11 @@ export const swuOpportunity: SWUOpportunity = {
   successfulProponentName: 'Successful Proponent',
   attachments: [],
   addenda: []
+};
+
+export const publishedSWUOpportunity: SWUOpportunity = {
+  ...swuOpportunity,
+  publishedAt: date
 };
 
 export const swuOpportunitySlim: SWUOpportunitySlim = {
