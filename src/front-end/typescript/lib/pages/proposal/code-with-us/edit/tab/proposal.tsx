@@ -573,7 +573,7 @@ export const component: Tab.Component<State, Msg> = {
             color: 'white',
             disabled,
             loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
+            onClick: () => dispatch(adt('showModal', isAcceptingProposals ? 'withdrawBeforeDeadline' as const : 'withdrawAfterDeadline' as const))
           }
         ]) as PageContextualActions;
       case CWUProposalStatus.UnderReview:
