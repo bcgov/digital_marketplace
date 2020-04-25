@@ -72,7 +72,7 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
     children: 'Owner',
     className: 'text-nowrap',
     style: {
-      width: '0px'
+      minWidth: '200px'
     }
   };
   return [
