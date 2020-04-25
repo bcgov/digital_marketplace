@@ -49,13 +49,24 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
   userType: [UserType.Vendor],
 
   async success({ routeParams, shared, dispatch, routePath }) {
+    const { opportunityId } = routeParams;
+    // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
+    const proposalsResult = await api.proposals.swu.readMany(opportunityId);
+    if (api.isValid(proposalsResult) && proposalsResult.value.length) {
+      const existingProposal = proposalsResult.value[0];
+      dispatch(replaceRoute(adt('proposalCWUEdit' as const, {
+        opportunityId,
+        proposalId: existingProposal.id
+      })));
+      return invalid(null);
+    }
     const fail = () => {
       dispatch(replaceRoute(adt('notFound' as const, {
         path: routePath
       })));
       return invalid(null);
     };
-    const opportunityResult = await api.opportunities.swu.readOne(routeParams.opportunityId);
+    const opportunityResult = await api.opportunities.swu.readOne(opportunityId);
     if (!api.isValid(opportunityResult)) { return fail(); }
     const organizationsResult = await api.organizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }

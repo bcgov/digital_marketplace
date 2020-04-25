@@ -70,6 +70,6 @@ export function doesOrganizationMeetSWUQualificationNumTeamMembers(organization:
   return (organization.numTeamMembers || 0) >= 2;
 }
 
-export function doesOrganizationMeetSWUQualification(organization: Organization): boolean {
+export function doesOrganizationMeetSWUQualification(organization: Organization | OrganizationSlim): boolean {
   return doesOrganizationMeetSWUQualificationNumTeamMembers(organization) && !!organization.acceptedSWUTerms && !!organization.possessAllCapabilities;
 }
