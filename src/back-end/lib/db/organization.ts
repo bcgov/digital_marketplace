@@ -3,7 +3,7 @@ import { Connection, tryDb } from 'back-end/lib/db';
 import { createAffiliation, readManyAffiliationsForOrganization } from 'back-end/lib/db/affiliation';
 import { readOneFileById } from 'back-end/lib/db/file';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
-import { isAdmin } from 'back-end/lib/permissions';
+import { isAdmin, isVendor } from 'back-end/lib/permissions';
 import { spread, union } from 'lodash';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { valid } from 'shared/lib/http';
@@ -112,7 +112,7 @@ function generateOrganizationQuery(connection: Connection) {
 
 /**
  * Return a single slimmed-down organization.
- * Only return ownership/RFQ data if admin/owner.
+ * Only return ownership/RFQ data if admin/gov user, or if an owner of the organization.
  */
 export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], OrganizationSlim | null>(async (connection, orgId, allowInactive = false, session) => {
   let query = generateOrganizationQuery(connection).where({ 'organizations.id': orgId });
@@ -123,8 +123,8 @@ export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], Organizat
 
   const result = await query.first<RawOrganization>();
   const { id, legalName, logoImageFile, owner, acceptedSWUTerms, numTeamMembers, active } = result;
-  // If no session, or user is not an admin or owner, do not include ownership/RFQ data.
-  if (!session || (!isAdmin(session) && owner !== session.user?.id)) {
+  // If no session, or user is not an admin/government or owning vendor, do not include RFQ data
+  if (!session || (isVendor(session) && owner !== session.user?.id)) {
     return valid(await rawOrganizationSlimToOrganizationSlim(connection, {
       id,
       legalName,
@@ -158,7 +158,7 @@ export const readOneOrganization = tryDb<[Id, boolean?, Session?], Organization 
 
   const result = await query.first<RawOrganization>();
   if (result) {
-    if (!session || (!isAdmin(session) && result.owner !== session.user?.id)) {
+    if (!session || (isVendor(session) && result.owner !== session.user?.id)) {
       delete result.owner;
       delete result.numTeamMembers;
       delete result.acceptedSWUTerms;
