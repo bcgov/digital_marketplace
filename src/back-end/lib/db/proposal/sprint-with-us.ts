@@ -225,7 +225,7 @@ async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: 
 
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
-  const organization = organizationId ? getValidValue(await readOneOrganizationSlim(connection, organizationId, false), undefined) : undefined;
+  const organization = organizationId ? getValidValue(await readOneOrganizationSlim(connection, organizationId, true, session), undefined) : undefined;
 
   return {
     ...restOfRaw,
