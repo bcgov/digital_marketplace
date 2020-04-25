@@ -58,7 +58,7 @@ const TitleView: View<{}> = () => {
 
 const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <div className='pb-5'>
+    <div className='pb-5 bg-white'>
       <Container>
         <Row>
           <Col xs='12' md='8'>
@@ -157,7 +157,7 @@ const VendorHIW: View<{}> = () => {
 
 const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <div className='pb-5'>
+    <div className='pb-5 bg-white'>
       <Container>
         <Row>
           <Col xs='12' md='8'>
@@ -196,14 +196,17 @@ const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
+const Spacer: View<{}> = () => {
+  return (<div className='bg-white d-flex flex-grow-1' />);
+};
+
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <div>
+    <div className='d-flex flex-column flex-grow-1'>
       <TitleView />
-      <div className='vh-100 bg-white'>
-        <VendorView state={state} dispatch={dispatch} />
-        <PublicSectorView state={state} dispatch={dispatch} />
-      </div>
+      <VendorView state={state} dispatch={dispatch} />
+      <PublicSectorView state={state} dispatch={dispatch} />
+      <Spacer />
     </div>
   );
 };
