@@ -1,17 +1,22 @@
+import { CONTACT_EMAIL, EMPTY_STRING } from 'front-end/config';
 import { getContextualActionsValid, getMetadataValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
 import { AttachmentList } from 'front-end/lib/components/attachments';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, PageComponent, PageInit, replaceRoute, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import { OpportunityBadge } from 'front-end/lib/views/badge';
 import GotQuestions from 'front-end/lib/views/got-questions';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Icon, { AvailableIcons, IconInfo } from 'front-end/lib/views/icon';
+import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
+import OpportunityInfo from 'front-end/lib/views/opportunity-info';
+import ProgramType from 'front-end/lib/views/program-type';
 import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { formatAmount, formatDate, formatDateAndTime } from 'shared/lib';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
@@ -76,12 +81,91 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   }
 });
 
-const Header: ComponentView<ValidState, Msg> = props => {
+const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
+  const opp = state.opportunity;
   return (
     <div>
       <Container>
-        <Row>
-          <Col xs='12'>
+        <Row className='align-items-center'>
+          <Col xs='12' md='6' lg='6'>
+            <h1 className='mb-2'>{opp.title || EMPTY_STRING}</h1>
+            <ProgramType type_='cwu' className='font-size-large mb-4' />
+            <div className='d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4'>
+              <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
+              <IconInfo
+                small
+                name='alarm-clock-outline'
+                value={formatDateAndTime(opp.proposalDeadline, true)}
+                className='ml-sm-3 flex-shrink-0' />
+            </div>
+            <p className='text-secondary mb-4'>
+              {opp.teaser || EMPTY_STRING}
+            </p>
+            <div className='d-flex flex-nowrap align-items-center'>
+              <Link
+                className='mr-3'
+                dest={emailDest(CONTACT_EMAIL)}
+                symbol_={leftPlacement(iconLinkSymbol('envelope'))}
+                color='info'
+                size='sm'
+                outline
+                button>
+                Contact
+              </Link>
+              <Link
+                onClick={() => dispatch(adt('toggleWatch'))}
+                symbol_={leftPlacement(iconLinkSymbol(opp.subscribed ? 'check' : 'eye'))}
+                color={opp.subscribed ? 'info' : 'primary'}
+                size='sm'
+                outline={!opp.subscribed}
+                button>
+                {opp.subscribed ? 'Watching' : 'Watch'}
+              </Link>
+            </div>
+          </Col>
+          <Col xs='12' md='6' lg={{ offset: 1, size: 5 }} className='mt-5 mt-md-0 pl-md-4'>
+            <Row className='mb-4'>
+              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+                <OpportunityInfo
+                  icon='comment-dollar-outline'
+                  name='Proposal Deadline'
+                  value={formatDate(opp.proposalDeadline, true)} />
+              </Col>
+              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+                <OpportunityInfo
+                  icon='badge-dollar-outline'
+                  name='Value'
+                  value={opp.reward ? formatAmount(opp.reward, '$') : EMPTY_STRING} />
+              </Col>
+            </Row>
+            <Row className='mb-4'>
+              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+                <OpportunityInfo
+                  icon='map-marker-outline'
+                  name='Location'
+                  value={opp.location || EMPTY_STRING} />
+              </Col>
+              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+                <OpportunityInfo
+                  icon='laptop-outline'
+                  name='Remote OK?'
+                  value={opp.remoteOk ? 'Yes' : 'No'} />
+              </Col>
+            </Row>
+            <Row>
+              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+                <OpportunityInfo
+                  icon='award-outline'
+                  name='Assignment Date'
+                  value={formatDate(opp.assignmentDate, true)} />
+              </Col>
+              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+                <OpportunityInfo
+                  icon='user-hard-hat-outline'
+                  name='Work Start Date'
+                  value={formatDate(opp.startDate, true)} />
+              </Col>
+            </Row>
           </Col>
         </Row>
       </Container>
@@ -112,7 +196,7 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       </Col>
       <Col xs='12' className='mt-4'>
         <InfoDetailsHeading icon='info-circle-outline' text='Description' />
-        <Markdown source={opp.description} smallerHeadings openLinksInNewTabs />
+        <Markdown source={opp.description || EMPTY_STRING} smallerHeadings openLinksInNewTabs />
       </Col>
       {opp.submissionInfo
         ? (<Col xs='12' className='mt-4'>
@@ -203,7 +287,7 @@ const Info: ComponentView<ValidState, Msg> = props => {
     }
   })();
   return (
-    <div>
+    <div className='mt-6'>
       <Container>
         <InfoTabs {...props} />
         <Row>
@@ -260,10 +344,23 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
         <Row>
           <Col xs='12' md='8'>
             <h2 className='mb-4'>How To Apply</h2>
-            <p>To submit a proposal for this Code With Us opportunity, you must have <Link dest={routeDest(adt('signUpStepOne', null))}>signed up</Link> for a Digital Marketplace account as a vendor and be <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>signed in</Link>.</p>
+            <p>
+              To submit a proposal for this Code With Us opportunity, you must have &nbsp;
+              {!state.viewerUser
+                ? (<span><Link dest={routeDest(adt('signUpStepOne', null))}>signed up</Link> &nbsp;</span>)
+                : null}
+              for a Digital Marketplace account. &nbsp;
+              {!state.viewerUser
+                ? (<span>If you already have a vendor account, please <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>sign in</Link>.</span>)
+                : null}
+            </p>
             <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
           </Col>
-          <Col xs='12' md='4' lg={{ offset: 1, size: 3 }}>
+          <Col md='4' lg={{ offset: 1, size: 3 }} className='align-items-center justify-content-center d-none d-md-flex'>
+            <OpportunityInfo
+              icon='comment-dollar-outline'
+              name='Proposal Deadline'
+              value={formatDate(state.opportunity.proposalDeadline, true)} />
           </Col>
         </Row>
       </Container>
