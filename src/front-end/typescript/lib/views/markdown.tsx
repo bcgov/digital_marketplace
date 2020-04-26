@@ -2,6 +2,7 @@ import { View } from 'front-end/lib/framework';
 import isRelativeUrl from 'is-relative-url';
 import React from 'react';
 import ReactMarkdown, { Renderers } from 'react-markdown';
+import { decodeMarkdownImageUrlToFileId, fileBlobPath } from 'shared/lib/resources/file';
 
 interface Props {
   source: string;
@@ -32,6 +33,11 @@ function headingLevelToClassName(level: number): string {
   }
 }
 
+function decodeImgSrc(src: string): string {
+  const decoded = decodeMarkdownImageUrlToFileId(src);
+  return decoded ? fileBlobPath({ id: decoded }) : src;
+}
+
 const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true, openLinksInNewTabs = false, smallerHeadings = false, noImages = false, noLinks = false }) => {
   const renderers: Renderers = smallerHeadings || noImages
     ? {
@@ -44,7 +50,9 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
           ? () => { //React-Markdown types are not helpful here.
               return (<p className='text-secondary font-weight-bold'>[Image Redacted]</p>);
             }
-          : ReactMarkdown.renderers.image,
+          : (props: any) => {
+              return (<img {...props} src={decodeImgSrc(props.src || '')} />);
+            },
         heading: smallerHeadings
           ? ({ level, children }: any) => { //React-Markdown types are not helpful here.
               return (<div className={`${headingLevelToClassName(level)} text-secondary`} children={children} />);

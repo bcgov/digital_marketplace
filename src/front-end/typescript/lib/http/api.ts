@@ -908,7 +908,7 @@ export function makeUploadMarkdownImage(metadata: FileResource.FileUploadMetadat
     if (isValid(result)) {
       return valid({
         name: result.value.name,
-        url: FileResource.fileBlobPath(result.value)
+        url: FileResource.encodeFileIdToMarkdownImageUrl(result.value.id)
       });
     } else {
       return invalid([
