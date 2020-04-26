@@ -134,7 +134,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         </Row>
         <Row className='align-items-center'>
           <Col xs='12' md='6' lg='6'>
-            <h1 className='mb-2'>{opp.title || EMPTY_STRING}</h1>
+            <h1 className='mb-2'>{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h1>
             <ProgramType size='lg' type_='cwu' className='mb-4' />
             <div className='d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4'>
               <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
@@ -143,9 +143,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 value={formatDateAndTime(opp.proposalDeadline, true)}
                 className='ml-sm-3 flex-shrink-0' />
             </div>
-            <p className='text-secondary mb-4'>
-              {opp.teaser || EMPTY_STRING}
-            </p>
+            {opp.teaser ? (<p className='text-secondary mb-4'>{opp.teaser}</p>) : null}
             <div className='d-flex flex-nowrap align-items-center'>
               <Link
                 disabled={isToggleWatchLoading}
@@ -293,7 +291,7 @@ const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const opp = state.opportunity;
   const hasAttachments = opp.attachments.length;
   const hasAddenda = opp.addenda.length;
-  if (!hasAttachments && !hasAddenda) { return null; }
+  if (!hasAttachments && !hasAddenda) { return (<div className='border-top mb-5' style={{ height: '2px' }}></div>); }
   const getTabInfo = (tab: InfoTab) => ({
     active: activeTab === tab,
     onClick: () => dispatch(adt('setActiveInfoTab', tab))
