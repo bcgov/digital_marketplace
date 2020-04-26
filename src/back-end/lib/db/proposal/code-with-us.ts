@@ -156,10 +156,16 @@ async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection:
   };
 }
 
-export async function hasAttachmentPermission(connection: Connection, session: Session, id: string): Promise<boolean> {
+/**
+ * This function checks whether the user can read the file
+ * via its association to BOTH the CWU opportunity or proposal.
+ */
+
+//TODO gov opp owner can not download private opp's attachment if uploaded by admin.
+export async function hasCWUAttachmentPermission(connection: Connection, session: Session, id: string): Promise<boolean> {
   // If file is an attachment on a publicly viewable opportunity, allow
   const results = await generateCWUOpportunityQuery(connection)
-    .join('cwuOpportunityAttachments as attachments', 'versions.id', '=', 'attachments.opportunityVersion')
+    .join('cwuOpportunityAttachments as attachments', 'version.id', '=', 'attachments.opportunityVersion')
     .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
     .andWhere({ 'attachments.file': id })
     .clearSelect()

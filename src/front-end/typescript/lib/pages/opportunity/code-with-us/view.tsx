@@ -1,5 +1,5 @@
 import { CONTACT_EMAIL, EMPTY_STRING } from 'front-end/config';
-import { getContextualActionsValid, getMetadataValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
 import { AttachmentList } from 'front-end/lib/components/attachments';
@@ -19,7 +19,7 @@ import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { formatAmount, formatDate, formatDateAndTime } from 'shared/lib';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
-import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -31,6 +31,7 @@ type InfoTab
   | 'addenda';
 
 interface ValidState {
+  toggleWatchLoading: number;
   opportunity: CWUOpportunity;
   existingProposalId?: Id;
   viewerUser?: User;
@@ -64,6 +65,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
     existingProposal = await api.proposals.cwu.getExistingProposalForOpportunity(opportunityId);
   }
   return valid(immutable({
+    toggleWatchLoading: 0,
     viewerUser,
     opportunity: oppR.value,
     existingProposalId: existingProposal?.id,
@@ -72,11 +74,31 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
   }));
 };
 
+const startToggleWatchLoading = makeStartLoading<ValidState>('toggleWatchLoading');
+const stopToggleWatchLoading = makeStopLoading<ValidState>('toggleWatchLoading');
+
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'setActiveInfoTab':
       return [state.set('activeInfoTab', msg.value)];
     case 'toggleWatch':
+      return [
+        startToggleWatchLoading(state),
+        async state => {
+          state = stopToggleWatchLoading(state);
+          const id = state.opportunity.id;
+          const result = state.opportunity.subscribed
+            ? await api.subscribers.cwu.delete(id)
+            : await api.subscribers.cwu.create({ opportunity: id });
+          if (result.tag === 'valid') {
+            state = state.update('opportunity', o => ({
+              ...o,
+              subscribed: !o.subscribed
+            }));
+          }
+          return state;
+        }
+      ];
     default:
       return [state];
   }
@@ -84,6 +106,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 
 const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const opp = state.opportunity;
+  const isToggleWatchLoading = state.toggleWatchLoading > 0;
   return (
     <div>
       <Container>
@@ -125,8 +148,9 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
             </p>
             <div className='d-flex flex-nowrap align-items-center'>
               <Link
+                disabled={isToggleWatchLoading}
                 className='mr-3'
-                dest={emailDest(CONTACT_EMAIL)}
+                dest={emailDest([CONTACT_EMAIL, opp.title])}
                 symbol_={leftPlacement(iconLinkSymbol('envelope'))}
                 color='info'
                 size='sm'
@@ -135,6 +159,8 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 Contact
               </Link>
               <Link
+                disabled={isToggleWatchLoading}
+                loading={isToggleWatchLoading}
                 onClick={() => dispatch(adt('toggleWatch'))}
                 symbol_={leftPlacement(iconLinkSymbol(opp.subscribed ? 'check' : 'eye'))}
                 color={opp.subscribed ? 'info' : 'primary'}
@@ -317,7 +343,7 @@ const Info: ComponentView<ValidState, Msg> = props => {
             {activeTab}
           </Col>
           <Col xs='12' md='4' lg={{ offset: 1, size: 3 }} className='mt-5 mt-md-0'>
-            <GotQuestions />
+            <GotQuestions disabled={state.toggleWatchLoading > 0} title={state.opportunity.title} />
           </Col>
         </Row>
       </Container>
@@ -377,6 +403,17 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
                 : null}
             </p>
             <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
+            {state.viewerUser && isVendor(state.viewerUser) && !state.existingProposalId && isCWUOpportunityAcceptingProposals(state.opportunity)
+              ? (<Link
+                  disabled={state.toggleWatchLoading > 0}
+                  className='mt-4'
+                  button
+                  color='primary'
+                  dest={routeDest(adt('proposalCWUCreate', { opportunityId: state.opportunity.id }))}
+                  symbol_={leftPlacement(iconLinkSymbol('comment-dollar'))}>
+                  Start Proposal
+                </Link>)
+              : null}
           </Col>
           <Col md='4' lg={{ offset: 1, size: 3 }} className='align-items-center justify-content-center d-none d-md-flex'>
             <OpportunityInfo
@@ -416,10 +453,12 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getContextualActions: getContextualActionsValid(({ state }) => {
     const viewerUser = state.viewerUser;
     if (!viewerUser) { return null; }
+    const isToggleWatchLoading = state.toggleWatchLoading > 0;
     switch (viewerUser.type) {
       case UserType.Admin:
         return adt('links', [
           {
+            disabled: isToggleWatchLoading,
             children: 'Edit Opportunity',
             symbol_: leftPlacement(iconLinkSymbol('edit')),
             button: true,
@@ -433,6 +472,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         if (state.opportunity.createdBy?.id === viewerUser.id) {
           return adt('links', [
             {
+              disabled: isToggleWatchLoading,
               children: 'Edit Opportunity',
               symbol_: leftPlacement(iconLinkSymbol('edit')),
               button: true,
@@ -449,6 +489,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         if (state.existingProposalId) {
           return adt('links', [
             {
+              disabled: isToggleWatchLoading,
               children: 'View Proposal',
               symbol_: leftPlacement(iconLinkSymbol('comment-dollar')),
               button: true,
@@ -462,6 +503,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         } else {
           return adt('links', [
             {
+              disabled: isToggleWatchLoading,
               children: 'Start Proposal',
               symbol_: leftPlacement(iconLinkSymbol('comment-dollar')),
               button: true,

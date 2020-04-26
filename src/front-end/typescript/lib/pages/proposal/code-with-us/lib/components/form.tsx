@@ -14,6 +14,7 @@ import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
+import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
@@ -29,10 +30,7 @@ export type TabId = 'Proponent' | 'Proposal' | 'Attachments';
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
-const newAttachmentMetadata = [
-  adt('userType' as const, UserType.Admin),
-  adt('userType' as const, UserType.Government)
-];
+const newAttachmentMetadata: FileUploadMetadata = [];
 
 export interface State {
   opportunity: CWUOpportunity;

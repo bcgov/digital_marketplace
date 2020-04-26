@@ -26,11 +26,11 @@ import frontEndRouter from 'back-end/lib/routers/front-end';
 import statusRouter from 'back-end/lib/routers/status';
 import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, RouteHook, Router } from 'back-end/lib/server';
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
-import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import Knex from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
-import { FileUploadMetadata, MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
+import { MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { isValid } from 'shared/lib/validation';
 
@@ -147,7 +147,7 @@ async function start() {
   router = [...statusRouter as AppRouter, ...router];
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
-  const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata> = express();
+  const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata | null> = express();
   adapter({
     router,
     sessionIdToSession: async id => {

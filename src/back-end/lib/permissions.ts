@@ -1,4 +1,4 @@
-import { Connection, hasAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isSWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Connection, hasCWUAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isSWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
 import { isSWUProposalAuthor } from 'back-end/lib/db/proposal/sprint-with-us';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
@@ -147,7 +147,7 @@ export function createFile(session: Session): boolean {
 export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {
   return isAdmin(session) ||
          await hasFilePermission(connection, session, fileId) ||
-         await hasAttachmentPermission(connection, session, fileId);
+         await hasCWUAttachmentPermission(connection, session, fileId);
 }
 
 // CWU Opportunities.

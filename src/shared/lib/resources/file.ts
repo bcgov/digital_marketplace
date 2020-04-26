@@ -20,8 +20,6 @@ export interface FileBlob {
   blob: any;
 }
 
-export type FileUploadMetadata = Array<FilePermissions<Id, UserType>> | null;
-
 export interface CreateValidationErrors extends BodyWithErrors {
   name?: string[];
   metadata?: string[];
@@ -33,11 +31,13 @@ export type FilePermissions<Id, UserType>
   | ADT<'user', Id>               // Id of the user who has permission
   | ADT<'userType', UserType>;    // User type that has permission
 
+export type FileUploadMetadata = Array<FilePermissions<Id, UserType>>;
+
 /**
  * Parses a `FilePermissions` from a plain object.
  * Returns `null` if the parse fails or no permissions are supplied in the metadata.
  */
-export function parseFilePermissions(raw: any): FileUploadMetadata {
+export function parseFilePermissions(raw: any): FileUploadMetadata | null {
   const validatedFilePermissions = validateFilePermissions(raw);
   if (isValid(validatedFilePermissions)) {
     return validatedFilePermissions.value;

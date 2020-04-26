@@ -19,6 +19,7 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
+import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { canSWUOpportunityDetailsBeEdited, CreateRequestBody, CreateSWUOpportunityStatus, CreateValidationErrors, DEFAULT_CODE_CHALLENGE_WEIGHT, DEFAULT_PRICE_WEIGHT, DEFAULT_QUESTIONS_WEIGHT, DEFAULT_SCENARIO_WEIGHT, parseSWUOpportunityPhaseType, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase, SWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Addendum } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
@@ -34,7 +35,7 @@ export type TabId = 'Overview' | 'Description' | 'Phases' | 'Team Questions' | '
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
-const newAttachmentMetadata = [adt('any' as const)];
+const newAttachmentMetadata: FileUploadMetadata = [];
 
 export interface State {
   opportunity?: SWUOpportunity;

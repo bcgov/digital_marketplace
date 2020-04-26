@@ -5,10 +5,12 @@ import Link, { emailDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/vi
 import React from 'react';
 
 export interface Props {
+  title: string;
   className?: string;
+  disabled?: boolean;
 }
 
-const GotQuestions: View<Props> = ({ className = '' }) => {
+const GotQuestions: View<Props> = ({ title, className = '', disabled }) => {
   return (
     <div className='sticky-md'>
       <div className={`rounded bg-blue-light-alt px-4 py-5 position-relative overflow-hidden ${className}`}>
@@ -22,7 +24,8 @@ const GotQuestions: View<Props> = ({ className = '' }) => {
         <h5 className='mb-3'>Got Questions?</h5>
         <p className='mb-4'>If you have questions about this opportunity, send an email to the Procurement team by clicking the "Contact" button below.</p>
         <Link
-          dest={emailDest(CONTACT_EMAIL)}
+          disabled={disabled}
+          dest={emailDest([CONTACT_EMAIL, title])}
           symbol_={leftPlacement(iconLinkSymbol('envelope'))}
           color='info'
           size='sm'
