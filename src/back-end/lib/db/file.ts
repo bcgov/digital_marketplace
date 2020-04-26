@@ -105,24 +105,34 @@ export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (conne
 
 export async function hasFilePermission(connection: Connection, session: Session | null, id: string): Promise<boolean> {
   try {
-    const query = connection<FileRecord>('files')
-      .where({ id });
-
-    if (!session) {
-      query
-        .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
-    } else {
-      query
-        .join('filePermissionsPublic as p', 'p.file', '=', 'files.id')
-        .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
-        .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
-        .where({ 'u.user': session.user.id, 'u.file': id })
-        .orWhere({ 'ut.userType': session.user.type, 'ut.file': id })
-        .orWhere({ 'files.createdBy': session.user.id, 'files.id': id });
+    // Check public file permissions first
+    let results = await connection('filePermissionsPublic as p')
+      .where({ 'p.file': id });
+    if (results.length > 0) {
+      return true;
     }
 
-    const results = await query;
-    return results.length > 0;
+    // If authenticated, check user, user type and ownership permissions
+    if (session) {
+      results = await connection('filePermissionsUser as u')
+        .where({ 'u.file': id, 'u.user': session.user.id });
+      if (results.length > 0) {
+        return true;
+      }
+
+      results = await connection('filePermissionsUserType as ut')
+        .where({ 'ut.file': id, 'ut.userType': session.user.type});
+      if (results.length > 0) {
+        return true;
+      }
+
+      results = await connection('files')
+        .where({ 'files.id': id, 'files.createdBy': session.user.id });
+      if (results.length > 0) {
+        return true;
+      }
+    }
+    return false;
   } catch (exception) {
     return false;
   }
