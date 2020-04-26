@@ -10,7 +10,7 @@ import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import Accordion from 'front-end/lib/views/accordion';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import Markdown from 'front-end/lib/views/markdown';
+import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import ReportCardList from 'front-end/lib/views/report-card-list';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
@@ -215,7 +215,7 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
       <Alert color='primary' fade={false} className='mb-4'>
         {question.guideline}
       </Alert>
-      <Markdown
+      <ProposalMarkdown
         box
         source={response.response || EMPTY_STRING} />
     </Accordion>
