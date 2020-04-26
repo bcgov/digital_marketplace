@@ -1,5 +1,5 @@
 import { CONTACT_EMAIL, EMPTY_STRING } from 'front-end/config';
-import { getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
 import { AttachmentList } from 'front-end/lib/components/attachments';
@@ -33,7 +33,7 @@ type InfoTab
 interface ValidState {
   toggleWatchLoading: number;
   opportunity: CWUOpportunity;
-  existingProposalId?: Id;
+  existingProposal?: CWUProposalSlim;
   viewerUser?: User;
   activeInfoTab: InfoTab;
   routePath: string;
@@ -68,7 +68,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
     toggleWatchLoading: 0,
     viewerUser,
     opportunity: oppR.value,
-    existingProposalId: existingProposal?.id,
+    existingProposal,
     activeInfoTab: 'details',
     routePath
   }));
@@ -386,6 +386,8 @@ const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
 };
 
 const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
+  const viewerUser = state.viewerUser;
+  if (viewerUser && !isVendor(viewerUser)) { return null; }
   return (
     <div className='bg-blue-light-alt py-5 mt-auto'>
       <Container>
@@ -394,16 +396,16 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
             <h2 className='mb-4'>How To Apply</h2>
             <p>
               To submit a proposal for this Code With Us opportunity, you must have &nbsp;
-              {!state.viewerUser
+              {!viewerUser
                 ? (<span><Link dest={routeDest(adt('signUpStepOne', null))}>signed up</Link> &nbsp;</span>)
                 : null}
               for a Digital Marketplace account. &nbsp;
-              {!state.viewerUser
+              {!viewerUser
                 ? (<span>If you already have a vendor account, please <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>sign in</Link>.</span>)
                 : null}
             </p>
             <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
-            {state.viewerUser && isVendor(state.viewerUser) && !state.existingProposalId && isCWUOpportunityAcceptingProposals(state.opportunity)
+            {viewerUser && isVendor(viewerUser) && !state.existingProposal && isCWUOpportunityAcceptingProposals(state.opportunity)
               ? (<Link
                   disabled={state.toggleWatchLoading > 0}
                   className='mt-4'
@@ -447,9 +449,33 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+
   getMetadata: getMetadataValid(state => {
     return makePageMetadata(state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE);
   }, makePageMetadata('Opportunity')),
+
+  getAlerts: getAlertsValid(state => {
+    const viewerUser = state.viewerUser;
+    const existingProposal = state.existingProposal;
+    const successfulProponentName = state.opportunity.successfulProponentName;
+    return {
+      info: (() => {
+        const alerts = [];
+        if (viewerUser && isVendor(viewerUser) && existingProposal?.submittedAt) {
+          alerts.push({
+            text: `You submitted a proposal to this opportunity on ${formatDateAndTime(existingProposal.submittedAt, true)}.`
+          });
+        }
+        if (successfulProponentName) {
+          alerts.push({
+            text: `This opportunity was awarded to ${successfulProponentName}.`
+          });
+        }
+        return alerts;
+      })()
+    };
+  }),
+
   getContextualActions: getContextualActionsValid(({ state }) => {
     const viewerUser = state.viewerUser;
     if (!viewerUser) { return null; }
@@ -486,7 +512,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
           return null;
         }
       case UserType.Vendor:
-        if (state.existingProposalId) {
+        if (state.existingProposal) {
           return adt('links', [
             {
               disabled: isToggleWatchLoading,
@@ -496,7 +522,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               color: 'primary',
               dest: routeDest(adt('proposalCWUEdit', {
                 opportunityId: state.opportunity.id,
-                proposalId: state.existingProposalId
+                proposalId: state.existingProposal.id
               }))
             }
           ]);
