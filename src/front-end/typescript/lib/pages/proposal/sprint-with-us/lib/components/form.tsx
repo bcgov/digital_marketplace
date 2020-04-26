@@ -16,7 +16,7 @@ import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import Markdown from 'front-end/lib/views/markdown';
+import Markdown, { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import { find } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
@@ -803,7 +803,7 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
       chevronHeight={1.5}
       open={isOpen}>
       <p className='mb-4'>{questionText}</p>
-      <Markdown
+      <ProposalMarkdown
         box
         source={response.response || 'You have not yet entered a response for this question.'} />
     </Accordion>

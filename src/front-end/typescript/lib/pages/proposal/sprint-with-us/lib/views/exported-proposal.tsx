@@ -1,7 +1,7 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { View } from 'front-end/lib/framework';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Markdown from 'front-end/lib/views/markdown';
+import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
@@ -43,7 +43,7 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
       <Alert color='primary' fade={false} className='mb-4'>
         {question.guideline}
       </Alert>
-      <Markdown
+      <ProposalMarkdown
         box
         source={response.response || EMPTY_STRING} />
     </div>
