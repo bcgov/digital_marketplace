@@ -20,14 +20,15 @@ export interface Props {
 const TabbedNav: View<Props> = ({ tabs, className = '' }) => {
   if (!tabs.length) { return null; }
   return (
-    <div className={className}>
-      <Nav tabs>
+    <div style={{ overflowX: 'auto' }} className={`d-flex ${className}`}>
+      <Nav tabs className='flex-nowrap flex-grow-1'>
         {tabs.map((t, i) => (
           <NavItem key={`tabbed-nav-item-${i}`}>
             <Link
               nav
               onClick={t.onClick}
               disabled={t.disabled}
+              focusable={!t.active}
               color={t.active ? 'body' : 'primary'}
               className={`${t.active ? 'active' : ''}`}>
               {t.count !== undefined

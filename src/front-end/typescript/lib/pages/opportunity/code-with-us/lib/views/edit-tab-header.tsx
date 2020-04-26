@@ -6,7 +6,7 @@ import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityPublic } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt } from 'shared/lib/types';
 
@@ -58,16 +58,14 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
       <Row>
         <Col xs='12'>
           <DescriptionList items={items} />
-          {isCWUOpportunityPublic(opportunity)
-            ? (<Link
-                newTab
-                color='info'
-                className='mt-3'
-                dest={routeDest(adt('opportunityCWUView', { opportunityId: opportunity.id }))}
-                symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
-                View Published Opportunity
-              </Link>)
-            : null}
+          <Link
+            newTab
+            color='info'
+            className='mt-3'
+            dest={routeDest(adt('opportunityCWUView', { opportunityId: opportunity.id }))}
+            symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
+            View Opportunity
+          </Link>
         </Col>
       </Row>
     </div>
