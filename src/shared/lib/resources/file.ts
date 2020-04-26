@@ -57,6 +57,7 @@ export function parseUserTypeList<UserType>(list: string[], parseOneUserType: (r
   }, []);
 }
 
+//TODO move to front-end and use apiNamespace
 export function fileBlobPath(file: FileRecord) {
   return `/api/files/${file.id}?type=blob`;
 }

@@ -20,7 +20,7 @@ import { adt, ClientHttpMethod, Id } from 'shared/lib/types';
 
 export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
-const apiNamespace = prefix(prefixPath('api'));
+export const apiNamespace = prefix(prefixPath('api'));
 
 // Markdown files.
 
@@ -361,8 +361,26 @@ const swuProposals: SWUProposalCrudApi = {
 // Proposals
 
 export const proposals = {
-  cwu: cwuProposals,
-  swu: swuProposals
+  cwu: {
+    ...cwuProposals,
+    async getExistingProposalForOpportunity(opportunityId: Id): Promise<CWUProposalResource.CWUProposalSlim | undefined> {
+      const result = await cwuProposals.readMany(opportunityId);
+      if (isValid(result) && result.value.length) {
+        return result.value[0];
+      }
+      return undefined;
+    }
+  },
+  swu: {
+    ...swuProposals,
+    async getExistingProposalForOpportunity(opportunityId: Id): Promise<SWUProposalResource.SWUProposalSlim | undefined> {
+      const result = await swuProposals.readMany(opportunityId);
+      if (isValid(result) && result.value.length) {
+        return result.value[0];
+      }
+      return undefined;
+    }
+  }
 };
 
 // Addenda

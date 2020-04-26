@@ -2,10 +2,10 @@ import { Route } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
-import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
+import Skills from 'front-end/lib/views/skills';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
@@ -159,31 +159,11 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
       <Row className='mt-3'>
         <Col xs='12' sm='6'>
           <div className='font-weight-bold mb-2'>Mandatory Skills</div>
-          <div className='d-flex flex-wrap'>
-            {mandatorySkills.length
-              ? mandatorySkills.map((skill, i, arr) => (
-                  <Badge
-                    key={`opportunity-mandatory-skill-${i}`}
-                    className={`mb-2 ${i < arr.length - 1 ? 'mr-2' : ''}`}
-                    text={skill}
-                    color='purple' />
-                ))
-              : 'None'}
-          </div>
+          <Skills skills={mandatorySkills} />
         </Col>
         <Col xs='12' sm='6'>
           <div className='font-weight-bold mb-2'>Optional Skills</div>
-          <div className='d-flex flex-wrap'>
-            {optionalSkills.length
-              ? optionalSkills.map((skill, i, arr) => (
-                  <Badge
-                    key={`opportunity-optional-skill-${i}`}
-                    className={`mb-2 ${i < arr.length - 1 ? 'mr-2' : ''}`}
-                    text={skill}
-                    color='purple' />
-                ))
-              : 'None'}
-          </div>
+          <Skills skills={optionalSkills} />
         </Col>
       </Row>
     </div>

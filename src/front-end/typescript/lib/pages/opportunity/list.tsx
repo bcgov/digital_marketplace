@@ -10,7 +10,7 @@ import * as api from 'front-end/lib/http/api';
 import { cwuOpportunityToPublicColor, cwuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import Icon, { IconInfo } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { debounce } from 'lodash';
 import React from 'react';
@@ -388,27 +388,6 @@ const OpportunityBadge: View<OpportunityBadgeProps> = ({ opportunity, viewerUser
         text={swuOpportunityToPublicStatus(opportunity.value, viewerUser)}
         color={swuOpportunityToPublicColor(opportunity.value, viewerUser)} />);
   }
-};
-
-interface IconInfoProps {
-  name: AvailableIcons;
-  value: string;
-  className?: string;
-}
-
-const IconInfo: View<IconInfoProps> = ({ name, value, className }) => {
-  return (
-    <div className={className}>
-      <div className='d-flex flex-nowrap align-items-center text-nowrap'>
-        <Icon
-          name={name}
-          width={0.9}
-          height={0.9}
-          className='mr-2 flex-shrink-0' />
-        {value}
-      </div>
-    </div>
-  );
 };
 
 interface OpportunityCardProps {
