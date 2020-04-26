@@ -150,7 +150,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     // No sidebar.
     return (
       <div className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container className='pt-6' />
+        <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} container className='pt-4 pt-md-6' />
         <component.view {...viewProps} />
       </div>
     );

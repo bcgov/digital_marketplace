@@ -134,8 +134,8 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         </Row>
         <Row className='align-items-center'>
           <Col xs='12' md='6' lg='6'>
-            <h1 className='mb-2'>{opp.title || EMPTY_STRING}</h1>
-            <ProgramType type_='cwu' className='font-size-large mb-4' />
+            <h1 className='mb-2'>{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h1>
+            <ProgramType size='lg' type_='cwu' className='mb-4' />
             <div className='d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4'>
               <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
               <IconInfo
@@ -143,9 +143,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 value={formatDateAndTime(opp.proposalDeadline, true)}
                 className='ml-sm-3 flex-shrink-0' />
             </div>
-            <p className='text-secondary mb-4'>
-              {opp.teaser || EMPTY_STRING}
-            </p>
+            {opp.teaser ? (<p className='text-secondary mb-4'>{opp.teaser}</p>) : null}
             <div className='d-flex flex-nowrap align-items-center'>
               <Link
                 disabled={isToggleWatchLoading}
@@ -293,7 +291,7 @@ const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const opp = state.opportunity;
   const hasAttachments = opp.attachments.length;
   const hasAddenda = opp.addenda.length;
-  if (!hasAttachments && !hasAddenda) { return null; }
+  if (!hasAttachments && !hasAddenda) { return (<div className='border-top mb-5' style={{ height: '2px' }}></div>); }
   const getTabInfo = (tab: InfoTab) => ({
     active: activeTab === tab,
     onClick: () => dispatch(adt('setActiveInfoTab', tab))
@@ -387,7 +385,7 @@ const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
 
 const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   const viewerUser = state.viewerUser;
-  if (viewerUser && !isVendor(viewerUser)) { return null; }
+  if ((viewerUser && !isVendor(viewerUser)) || !isCWUOpportunityAcceptingProposals(state.opportunity)) { return null; }
   return (
     <div className='bg-blue-light-alt py-5 mt-auto'>
       <Container>
@@ -395,11 +393,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
           <Col xs='12' md='8'>
             <h2 className='mb-4'>How To Apply</h2>
             <p>
-              To submit a proposal for this Code With Us opportunity, you must have &nbsp;
-              {!viewerUser
-                ? (<span><Link dest={routeDest(adt('signUpStepOne', null))}>signed up</Link> &nbsp;</span>)
-                : null}
-              for a Digital Marketplace account. &nbsp;
+              To submit a proposal for this Code With Us opportunity, you must have signed up for a Digital Marketplace vendor account.&nbsp;
               {!viewerUser
                 ? (<span>If you already have a vendor account, please <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>sign in</Link>.</span>)
                 : null}
