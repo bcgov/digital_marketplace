@@ -23,17 +23,17 @@ const TabbedNav: View<Props> = ({ tabs, className = '' }) => {
     <div className={className}>
       <Nav tabs>
         {tabs.map((t, i) => (
-          <NavItem>
+          <NavItem key={`tabbed-nav-item-${i}`}>
             <Link
               nav
               onClick={t.onClick}
               disabled={t.disabled}
               color={t.active ? 'body' : 'primary'}
               className={`${t.active ? 'active' : ''}`}>
-              {t.text}
               {t.count !== undefined
-                ? (<span className='small' style={{ marginTop: '-0.1rem', marginLeft: '0.35rem' }}><Badge pill color='warning' text={String(t.count)} /></span>)
+                ? (<span className='small' style={{ marginTop: '-0.1rem', marginRight: '0.35rem' }}><Badge pill color='warning' text={String(t.count)} /></span>)
                 : null}
+              {t.text}
             </Link>
           </NavItem>
         ))}

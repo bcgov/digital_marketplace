@@ -1,10 +1,12 @@
 import { getContextualActionsValid, getMetadataValid, makePageMetadata, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import { AddendaList } from 'front-end/lib/components/addenda';
+import { AttachmentList } from 'front-end/lib/components/attachments';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, PageComponent, PageInit, replaceRoute, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import GotQuestions from 'front-end/lib/views/got-questions';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
@@ -12,7 +14,8 @@ import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
-import { User, UserType } from 'shared/lib/resources/user';
+import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
+import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -26,6 +29,7 @@ interface ValidState {
   existingProposalId?: Id;
   viewerUser?: User;
   activeInfoTab: InfoTab;
+  routePath: string;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -42,18 +46,23 @@ export interface RouteParams {
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, routeParams, shared, routePath }) => {
   const { opportunityId } = routeParams;
+  const viewerUser = shared.session?.user;
   const oppR = await api.opportunities.cwu.readOne(opportunityId);
   if (!api.isValid(oppR)) {
     dispatch(replaceRoute(adt('notFound', { path: routePath }) as Route));
     return invalid(null);
   }
   await api.counters.update(getCWUOpportunityViewsCounterName(opportunityId), null);
-  const existingProposal = await api.proposals.cwu.getExistingProposalForOpportunity(opportunityId);
+  let existingProposal: CWUProposalSlim | undefined;
+  if (viewerUser && isVendor(viewerUser)) {
+    existingProposal = await api.proposals.cwu.getExistingProposalForOpportunity(opportunityId);
+  }
   return valid(immutable({
-    viewerUser: shared.session?.user,
+    viewerUser,
     opportunity: oppR.value,
     existingProposalId: existingProposal?.id,
-    activeInfoTab: 'details'
+    activeInfoTab: 'details',
+    routePath
   }));
 };
 
@@ -108,32 +117,40 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       {opp.submissionInfo
         ? (<Col xs='12' className='mt-4'>
             <InfoDetailsHeading icon='laptop-code-outline' text='Project Submission Information' />
-            <p>{opp.submissionInfo}</p>
+            <p className='mb-0'>{opp.submissionInfo}</p>
           </Col>)
         : null}
       {opp.remoteOk && opp.remoteDesc
         ? (<Col xs='12' className='mt-4'>
             <InfoDetailsHeading icon='laptop-outline' text='Remote Work Options' />
-            <p style={{ whiteSpace: 'pre-line' }}>{opp.remoteDesc}</p>
+            <p className='mb-0' style={{ whiteSpace: 'pre-line' }}>{opp.remoteDesc}</p>
           </Col>)
         : null}
     </Row>
   );
 };
 
-const InfoAttachments: ComponentView<ValidState, Msg> = props => {
+const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
+        <h2 className='mb-0'>Attachments</h2>
+      </Col>
+      <Col xs='12' className='mt-4'>
+        <AttachmentList files={state.opportunity.attachments} />
       </Col>
     </Row>
   );
 };
 
-const InfoAddenda: ComponentView<ValidState, Msg> = props => {
+const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
+        <h2 className='mb-0'>Addenda</h2>
+      </Col>
+      <Col xs='12' className='mt-4'>
+        <AddendaList addenda={state.opportunity.addenda} />
       </Col>
     </Row>
   );
@@ -142,6 +159,9 @@ const InfoAddenda: ComponentView<ValidState, Msg> = props => {
 const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const activeTab = state.activeInfoTab;
   const opp = state.opportunity;
+  const hasAttachments = opp.attachments.length;
+  const hasAddenda = opp.addenda.length;
+  if (!hasAttachments && !hasAddenda) { return null; }
   const getTabInfo = (tab: InfoTab) => ({
     active: activeTab === tab,
     onClick: () => dispatch(adt('setActiveInfoTab', tab))
@@ -150,14 +170,14 @@ const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
     ...getTabInfo('details'),
     text: 'Details'
   }];
-  if (opp.attachments.length) {
+  if (hasAttachments) {
     tabs.push({
       ...getTabInfo('attachments'),
       text: 'Attachments',
       count: opp.attachments.length
     });
   }
-  if (opp.addenda.length) {
+  if (hasAddenda) {
     tabs.push({
       ...getTabInfo('addenda'),
       text: 'Addenda',
@@ -165,7 +185,7 @@ const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
     });
   }
   return (
-    <Row>
+    <Row className='mb-5'>
       <Col xs='12'>
         <TabbedNav tabs={tabs} />
       </Col>
@@ -186,11 +206,11 @@ const Info: ComponentView<ValidState, Msg> = props => {
     <div>
       <Container>
         <InfoTabs {...props} />
-        <Row className='mt-5'>
+        <Row>
           <Col xs='12' md='8'>
             {activeTab}
           </Col>
-          <Col xs='12' md='4' lg={{ offset: 1, size: 3 }} className='mt-4 mt-md-0'>
+          <Col xs='12' md='4' lg={{ offset: 1, size: 3 }} className='mt-5 mt-md-0'>
             <GotQuestions />
           </Col>
         </Row>
@@ -233,12 +253,17 @@ const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const HowToApply: ComponentView<ValidState, Msg> = props => {
+const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
-    <div>
+    <div className='bg-blue-light-alt py-5 mt-auto'>
       <Container>
         <Row>
           <Col xs='12' md='8'>
+            <h2 className='mb-4'>How To Apply</h2>
+            <p>To submit a proposal for this Code With Us opportunity, you must have <Link dest={routeDest(adt('signUpStepOne', null))}>signed up</Link> for a Digital Marketplace account as a vendor and be <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>signed in</Link>.</p>
+            <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
+          </Col>
+          <Col xs='12' md='4' lg={{ offset: 1, size: 3 }}>
           </Col>
         </Row>
       </Container>
@@ -247,12 +272,15 @@ const HowToApply: ComponentView<ValidState, Msg> = props => {
 };
 
 const view: ComponentView<State, Msg> = viewValid(props => {
+  const isDetails = props.state.activeInfoTab === 'details';
   return (
-    <div>
-      <Header {...props} />
-      <Info {...props} />
-      <AcceptanceCriteria {...props} />
-      <EvaluationCriteria {...props} />
+    <div className='flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch'>
+      <div className='mb-5'>
+        <Header {...props} />
+        <Info {...props} />
+        {isDetails ? (<AcceptanceCriteria {...props} />) : null}
+        {isDetails ? (<EvaluationCriteria {...props} />) : null}
+      </div>
       <HowToApply {...props} />
     </div>
   );
