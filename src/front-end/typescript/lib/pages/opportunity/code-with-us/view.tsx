@@ -147,7 +147,6 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
             <div className='d-flex flex-nowrap align-items-center'>
               <Link
                 disabled={isToggleWatchLoading}
-                className='mr-3'
                 dest={emailDest([CONTACT_EMAIL, opp.title])}
                 symbol_={leftPlacement(iconLinkSymbol('envelope'))}
                 color='info'
@@ -156,17 +155,20 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 button>
                 Contact
               </Link>
-              <Link
-                disabled={isToggleWatchLoading}
-                loading={isToggleWatchLoading}
-                onClick={() => dispatch(adt('toggleWatch'))}
-                symbol_={leftPlacement(iconLinkSymbol(opp.subscribed ? 'check' : 'eye'))}
-                color={opp.subscribed ? 'info' : 'primary'}
-                size='sm'
-                outline={!opp.subscribed}
-                button>
-                {opp.subscribed ? 'Watching' : 'Watch'}
-              </Link>
+              {state.viewerUser
+                ? (<Link
+                    className='ml-3'
+                    disabled={isToggleWatchLoading}
+                    loading={isToggleWatchLoading}
+                    onClick={() => dispatch(adt('toggleWatch'))}
+                    symbol_={leftPlacement(iconLinkSymbol(opp.subscribed ? 'check' : 'eye'))}
+                    color={opp.subscribed ? 'info' : 'primary'}
+                    size='sm'
+                    outline={!opp.subscribed}
+                    button>
+                    {opp.subscribed ? 'Watching' : 'Watch'}
+                  </Link>)
+                : null}
             </div>
           </Col>
           <Col xs='12' md='6' lg={{ offset: 1, size: 5 }} className='mt-5 mt-md-0 pl-md-4'>
