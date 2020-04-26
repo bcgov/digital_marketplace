@@ -539,6 +539,10 @@ const resource: Resource = {
           switch (body.tag) {
             case 'edit':
               dbResult = await db.updateCWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
+              // Notify all subscribed users on the opportunity of the update (only if published)
+              if (isValid(dbResult) && dbResult.value.status === CWUOpportunityStatus.Published) {
+                cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
+              }
               break;
             case 'publish':
               const existingOpportunity = getValidValue(await db.readOneCWUOpportunity(connection, request.params.id, session), null);
