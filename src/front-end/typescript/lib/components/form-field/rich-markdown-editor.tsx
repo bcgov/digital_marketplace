@@ -5,7 +5,7 @@ import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/f
 import FileLink from 'front-end/lib/views/file-link';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
-import React from 'react';
+import React, { Fragment } from 'react';
 import { FormText, Spinner } from 'reactstrap';
 import { countWords } from 'shared/lib';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
@@ -38,12 +38,12 @@ interface ChildState extends FormField.ChildStateBase<Value> {
   loading: number;
   selectionStart: number;
   selectionEnd: number;
-  uploadImage: UploadImage;
+  uploadImage?: UploadImage;
 }
 
 export interface ChildParams extends FormField.ChildParamsBase<Value> {
   wordLimit?: number;
-  uploadImage: UploadImage;
+  uploadImage?: UploadImage;
 }
 
 type InnerChildMsg
@@ -253,10 +253,12 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
         separateLine: true
       });
     case 'controlImage':
+      if (!state.uploadImage) { return [state]; }
       return [
         startLoading(state),
         async (state, dispatch) => {
           state = stopLoading(state);
+          if (!state.uploadImage) { return state; }
           const uploadResult = await state.uploadImage(msg.value);
           if (uploadResult.tag === 'invalid') { return state; }
           const result = insert(state, {
@@ -375,21 +377,25 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
         disabled={isDisabled}
         className='mr-3'
         onClick={() => dispatch(adt('controlOrderedList'))} />
-      <ControlSeparator desktopOnly />
-      <div className='d-none d-sm-flex'>
-        <FileLink
-          focusable={false}
-          className='p-0'
-          disabled={isDisabled}
-          style={{
-            pointerEvents: isDisabled ? 'none' : undefined
-          }}
-          onChange={onSelectFile}
-          accept={SUPPORTED_IMAGE_EXTENSIONS}
-          color='secondary'>
-          <Icon name='image' width={1.1} height={1.1} />
-        </FileLink>
-      </div>
+      {state.uploadImage
+        ? (<Fragment>
+            <ControlSeparator desktopOnly />
+            <div className='d-none d-sm-flex'>
+              <FileLink
+                focusable={false}
+                className='p-0'
+                disabled={isDisabled}
+                style={{
+                  pointerEvents: isDisabled ? 'none' : undefined
+                }}
+                onChange={onSelectFile}
+                accept={SUPPORTED_IMAGE_EXTENSIONS}
+                color='secondary'>
+                <Icon name='image' width={1.1} height={1.1} />
+              </FileLink>
+            </div>
+            </Fragment>)
+        : null}
       <div className='ml-auto d-flex align-items-center'>
         <Spinner
           size='sm'
