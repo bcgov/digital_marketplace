@@ -393,11 +393,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
           <Col xs='12' md='8'>
             <h2 className='mb-4'>How To Apply</h2>
             <p>
-              To submit a proposal for this Code With Us opportunity, you must have&nbsp;
-              {!viewerUser
-                ? (<Link dest={routeDest(adt('signUpStepOne', null))}>signed up</Link>)
-                : 'signed up'}&nbsp;
-              for a Digital Marketplace vendor account.&nbsp;
+              To submit a proposal for this Code With Us opportunity, you must have signed up for a Digital Marketplace vendor account.&nbsp;
               {!viewerUser
                 ? (<span>If you already have a vendor account, please <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>sign in</Link>.</span>)
                 : null}
