@@ -144,8 +144,8 @@ export function createFile(session: Session): boolean {
   return isSignedIn(session);
 }
 
-export async function readOneFile(connection: Connection, session: Session, fileId: string): Promise<boolean> {
-  return isAdmin(session) ||
+export async function readOneFile(connection: Connection, session: Session | null, fileId: string): Promise<boolean> {
+  return (session && isAdmin(session)) ||
          await hasFilePermission(connection, session, fileId) ||
          await hasCWUAttachmentPermission(connection, session, fileId);
 }

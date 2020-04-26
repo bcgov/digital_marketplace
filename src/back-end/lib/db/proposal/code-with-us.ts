@@ -162,7 +162,7 @@ async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection:
  */
 
 //TODO gov opp owner can not download private opp's attachment if uploaded by admin.
-export async function hasCWUAttachmentPermission(connection: Connection, session: Session, id: string): Promise<boolean> {
+export async function hasCWUAttachmentPermission(connection: Connection, session: Session | null, id: string): Promise<boolean> {
   // If file is an attachment on a publicly viewable opportunity, allow
   const results = await generateCWUOpportunityQuery(connection)
     .join('cwuOpportunityAttachments as attachments', 'version.id', '=', 'attachments.opportunityVersion')

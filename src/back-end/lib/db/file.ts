@@ -103,7 +103,7 @@ export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (conne
   }));
 });
 
-export async function hasFilePermission(connection: Connection, session: Session, id: string): Promise<boolean> {
+export async function hasFilePermission(connection: Connection, session: Session | null, id: string): Promise<boolean> {
   try {
     const query = connection<FileRecord>('files')
       .where({ id });
@@ -113,7 +113,7 @@ export async function hasFilePermission(connection: Connection, session: Session
         .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id');
     } else {
       query
-        .innerJoin('filePermissionsPublic as p', 'p.file', '=', 'files.id')
+        .join('filePermissionsPublic as p', 'p.file', '=', 'files.id')
         .leftOuterJoin('filePermissionsUser as u', 'u.file', '=', 'files.id')
         .leftOuterJoin('filePermissionsUserType as ut', 'ut.file', '=', 'files.id')
         .where({ 'u.user': session.user.id, 'u.file': id })

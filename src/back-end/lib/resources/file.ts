@@ -47,10 +47,11 @@ const resource: Resource = {
   routeNamespace: 'files',
 
   readOne(connection) {
-    return nullRequestBodyHandler<FileResponseBody | JsonResponseBody<FileRecord | string[]>, Session>(async request => {
+    return nullRequestBodyHandler<FileResponseBody | JsonResponseBody<FileRecord | string[]>, Session | null>(async request => {
       const getBlob = getString(request.query, 'type') === 'blob';
       const respond = (code: number, body: FileRecord | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
       if (await permissions.readOneFile(connection, request.session, request.params.id)) {
+        console.log(request.params.id, 'has permission');
         const dbResult = await db.readOneFileById(connection, request.params.id);
         if (isInvalid(dbResult)) {
           return respond(503, [db.ERROR_MESSAGE]);
