@@ -1,7 +1,6 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
 import Accordion from 'front-end/lib/views/accordion';
 import Separator from 'front-end/lib/views/separator';
 import { find } from 'lodash';
@@ -52,8 +51,7 @@ export const init: Init<Params, State> = async ({ questions, responses }) => {
           child: {
             value: find(responses, { order: question.order })?.response || '',
             id: `swu-proposal-team-question-response-${question.order}`,
-            wordLimit: question.wordLimit,
-            uploadImage: api.makeUploadMarkdownImage()
+            wordLimit: question.wordLimit
           }
         }))
       })))
