@@ -6,6 +6,7 @@ import { AttachmentList } from 'front-end/lib/components/attachments';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, PageComponent, PageInit, replaceRoute, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { OpportunityBadge } from 'front-end/lib/views/badge';
+import DateMetadata from 'front-end/lib/views/date-metadata';
 import GotQuestions from 'front-end/lib/views/got-questions';
 import Icon, { AvailableIcons, IconInfo } from 'front-end/lib/views/icon';
 import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
@@ -86,6 +87,28 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <Container>
+        <Row>
+          <Col xs='12'>
+            <DateMetadata
+              className='mb-3'
+              dates={[
+                opp.publishedAt
+                  ? {
+                      tag: 'date',
+                      date: opp.publishedAt,
+                      label: 'Published',
+                      withTimeZone: true
+                    }
+                  : null,
+                {
+                  tag: 'date',
+                  date: opp.updatedAt,
+                  label: 'Updated',
+                  withTimeZone: true
+                }
+              ]} />
+          </Col>
+        </Row>
         <Row className='align-items-center'>
           <Col xs='12' md='6' lg='6'>
             <h1 className='mb-2'>{opp.title || EMPTY_STRING}</h1>
@@ -93,7 +116,6 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
             <div className='d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4'>
               <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
               <IconInfo
-                small
                 name='alarm-clock-outline'
                 value={formatDateAndTime(opp.proposalDeadline, true)}
                 className='ml-sm-3 flex-shrink-0' />
@@ -125,13 +147,13 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
           </Col>
           <Col xs='12' md='6' lg={{ offset: 1, size: 5 }} className='mt-5 mt-md-0 pl-md-4'>
             <Row className='mb-4'>
-              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='comment-dollar-outline'
                   name='Proposal Deadline'
                   value={formatDate(opp.proposalDeadline, true)} />
               </Col>
-              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='badge-dollar-outline'
                   name='Value'
@@ -139,13 +161,13 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               </Col>
             </Row>
             <Row className='mb-4'>
-              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='map-marker-outline'
                   name='Location'
                   value={opp.location || EMPTY_STRING} />
               </Col>
-              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='laptop-outline'
                   name='Remote OK?'
@@ -153,13 +175,13 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               </Col>
             </Row>
             <Row>
-              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='award-outline'
                   name='Assignment Date'
                   value={formatDate(opp.assignmentDate, true)} />
               </Col>
-              <Col xs='6' className='d-flex justify-content-start align-items-center flex-nowrap'>
+              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='user-hard-hat-outline'
                   name='Work Start Date'
