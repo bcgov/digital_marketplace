@@ -76,12 +76,6 @@ export async function handleSWUReadyForEvaluation(connection: db.Connection, opp
   if (author) {
     await readyForEvalSWUOpportunity(author, opportunity);
   }
-
-  // Notify any subscribed users or users with proposals
-  const subscribedUsers = getValidValue(await db.readManySWUSubscribedUsers(connection, opportunity.id), null) || [];
-  const usersWithProposals = getValidValue(await db.readManySWUProposalAuthors(connection, opportunity.id), null) || [];
-  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, 'id');
-  await Promise.all(unionedUsers.map(async user => await swuProposalDeadlinePassed(user, opportunity)));
 }
 
 export const newSWUOpportunityPublished = makeSend(newSWUOpportunityPublishedT);
@@ -295,24 +289,6 @@ export async function readyForEvalSWUOpportunityT(recipient: User, opportunity: 
           <p>You may now view proposals submitted by vendors and assign scores to each submission.  Please note that each vendor with a submitted proposal will remain anonymous until the next phase of the opportunity has begun.</p>
         </div>
       ),
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
-    })
-  }];
-}
-
-export const swuProposalDeadlinePassed = makeSend(swuProposalDeadlinePassedT);
-
-export async function swuProposalDeadlinePassedT(recipient: User, opportunity: SWUOpportunity): Promise<Emails> {
-  const title = 'A Sprint With Us Opportunity Proposal Deadline Has Passed';
-  const description = 'A Digital Marketplace opportunity has reached its proposal deadline.';
-  return [{
-    summary: 'SWU opportunity proposal deadline reached; sent to subscribed users and proposal authors.',
-    to: recipient.email,
-    subject: title,
-    html: templates.simple({
-      title,
-      description,
-      descriptionLists: [makeSWUOpportunityInformation(opportunity, false)],
       callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
     })
   }];
