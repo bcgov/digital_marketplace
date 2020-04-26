@@ -1,7 +1,7 @@
 import { megabytesToBytes } from 'shared/lib';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
-import { isValid } from 'shared/lib/validation';
+import { getValidValue, isValid, validateUUID } from 'shared/lib/validation';
 import { validateFilePermissions } from 'shared/lib/validation/file';
 
 export const MAX_MULTIPART_FILES_SIZE = megabytesToBytes(10);
@@ -58,7 +58,7 @@ export function parseUserTypeList<UserType>(list: string[], parseOneUserType: (r
 }
 
 //TODO move to front-end and use apiNamespace
-export function fileBlobPath(file: FileRecord) {
+export function fileBlobPath(file: Pick<FileRecord, 'id'>) {
   return `/api/files/${file.id}?type=blob`;
 }
 
@@ -73,4 +73,16 @@ export function enforceExtension(name: string, extension: string): string {
   } else {
     return name;
   }
+}
+
+const MARKDOWN_IMAGE_URL_PREFIX = 'FILE_ID:';
+const MARKDOWN_IMAGE_URL_PREFIX_REGEXP = new RegExp(`^${MARKDOWN_IMAGE_URL_PREFIX}`);
+
+export function encodeFileIdToMarkdownImageUrl(fileId: Id): string {
+  return `${MARKDOWN_IMAGE_URL_PREFIX}${fileId}`;
+}
+
+export function decodeMarkdownImageUrlToFileId(url: string): Id | null {
+  url = url.replace(MARKDOWN_IMAGE_URL_PREFIX_REGEXP, '');
+  return getValidValue(validateUUID(url), null);
 }

@@ -268,9 +268,12 @@ export function validateEmail(email: string): Validation<string> {
   }
 }
 
+// UUID v4 RegExp
+export const UUID_REGEXP = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 // Validates a v4 UUID
 export function validateUUID(raw: string): Validation<Id> {
-  if (!raw.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+  if (!raw.match(UUID_REGEXP)) {
     return invalid(['Invalid identifier provided.']);
   } else {
     return valid(raw);
