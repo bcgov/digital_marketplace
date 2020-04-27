@@ -21,6 +21,7 @@ import { Col, Container, Row } from 'reactstrap';
 import { formatAmount, formatDate, formatDateAndTime } from 'shared/lib';
 import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { DEFAULT_OPPORTUNITY_TITLE, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityPhase, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import { SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -40,6 +41,7 @@ interface ValidState {
   activeInfoTab: InfoTab;
   routePath: string;
   scopeContent: string;
+  isQualified: boolean;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -67,10 +69,15 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
   if (!api.isValid(scopeContentResult)) { return fail(); }
   await api.counters.update(getSWUOpportunityViewsCounterName(opportunityId), null);
   let existingProposal: SWUProposalSlim | undefined;
+  let isQualified = false;
   if (viewerUser && isVendor(viewerUser)) {
     existingProposal = await api.proposals.swu.getExistingProposalForOpportunity(opportunityId);
+    const orgR = await api.organizations.readMany();
+    if (!api.isValid(orgR)) { return fail(); }
+    isQualified = orgR.value.reduce((acc, o) => acc || doesOrganizationMeetSWUQualification(o), false as boolean);
   }
   return valid(immutable({
+    isQualified,
     toggleWatchLoading: 0,
     viewerUser,
     opportunity: oppR.value,
@@ -138,7 +145,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                   withTimeZone: true
                 }
               ]} />
-              <p className='font-italic small text-secondary'>This RFP is a Competition Notice under RFQ No. ON-003166 and is restricted to Proponents that have become Qualified Suppliers pursuant to that RFQ.</p>
+              <p className='font-italic small text-secondary mb-4'>This RFP is a Competition Notice under RFQ No. ON-003166 and is restricted to Proponents that have become Qualified Suppliers pursuant to that RFQ.</p>
           </Col>
         </Row>
         <Row className='align-items-center'>
@@ -521,10 +528,12 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const viewerUser = state.viewerUser;
     const existingProposal = state.existingProposal;
     const successfulProponentName = state.opportunity.successfulProponentName;
+    const vendor = !!viewerUser && isVendor(viewerUser);
+    const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
     return {
       info: (() => {
         const alerts = [];
-        if (viewerUser && isVendor(viewerUser) && existingProposal?.submittedAt) {
+        if (vendor && existingProposal?.submittedAt) {
           alerts.push({
             text: `You submitted a proposal to this opportunity on ${formatDateAndTime(existingProposal.submittedAt, true)}.`
           });
@@ -532,6 +541,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         if (successfulProponentName) {
           alerts.push({
             text: `This opportunity was awarded to ${successfulProponentName}.`
+          });
+        } else if (isAcceptingProposals && (!viewerUser || (vendor && !state.isQualified && !existingProposal && isAcceptingProposals))) {
+          alerts.push({
+            text: (<span>You must be a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link> in order to submit a proposal to this opportunity.</span>)
           });
         }
         return alerts;
@@ -574,7 +587,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         } else {
           return null;
         }
-      case UserType.Vendor:
+      case UserType.Vendor: {
+        const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
         if (state.existingProposal) {
           return adt('links', [
             {
@@ -589,7 +603,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
-        } else {
+        } else if (isAcceptingProposals && state.isQualified) {
           return adt('links', [
             {
               disabled: isToggleWatchLoading,
@@ -602,7 +616,10 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
+        } else {
+          return null;
         }
+      }
     }
   })
 };
