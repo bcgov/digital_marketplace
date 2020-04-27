@@ -56,8 +56,8 @@ function makeVendorBodyRows(cwu: CWUP.CWUProposalSlim[], swu: SWUP.SWUProposalSl
     return [
       {
         children: (<div>
-          <Link dest={routeDest(adt(p.tag === 'cwu' ? 'proposalCWUEdit' : 'proposalSWUEdit', { proposalId: p.value.id, opportunityId: ''/*p.value.opportunity.id*/ }))}>
-            {'title'/*p.value.opportunity.title*/}
+          <Link dest={routeDest(adt(p.tag === 'cwu' ? 'proposalCWUEdit' : 'proposalSWUEdit', { proposalId: p.value.id, opportunityId: p.value.opportunity.id }))}>
+            {p.value.opportunity.title}
           </Link>
           <div className='small text-secondary text-uppercase'>
             {p.tag === 'cwu' ? 'Code With Us' : 'Sprint With Us'}
