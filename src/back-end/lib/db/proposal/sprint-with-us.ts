@@ -4,11 +4,11 @@ import { readOneFileById } from 'back-end/lib/db/file';
 import { generateSWUOpportunityQuery, RawSWUOpportunity, readManyTeamQuestions, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
-import { isSignedIn, readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
+import { isSignedIn, readOneSWUProposal as hasReadPermissionSWUProposal, readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
 import { compareNumbers } from 'shared/lib';
 import { MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
-import { doesSWUOpportunityStatusAllowGovToViewFullProposal, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { doesSWUOpportunityStatusAllowGovToViewFullProposal, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { calculateProposalTeamQuestionScore, CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -38,7 +38,7 @@ interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | '
   createdBy?: Id;
   updatedBy?: Id;
   opportunity: Id;
-  organization: Id;
+  organization: Id | null;
   inceptionPhase?: Id;
   prototypePhase?: Id;
   implementationPhase: Id;
@@ -225,7 +225,7 @@ async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: 
 
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), undefined) : undefined;
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
-  const organization = organizationId ? getValidValue(await readOneOrganizationSlim(connection, organizationId, false), undefined) : undefined;
+  const organization = organizationId ? getValidValue(await readOneOrganizationSlim(connection, organizationId, true, session), undefined) : undefined;
 
   return {
     ...restOfRaw,
@@ -295,7 +295,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 
   // If user is vendor, scope results to those proposals they have authored
   if (session.user.type === UserType.Vendor) {
-    query.andWhere({ createdBy: session.user.id });
+    query.andWhere({ 'proposals.createdBy': session.user.id });
   }
 
   let results = await query;
@@ -549,7 +549,7 @@ export const updateSWUProposal = tryDb<[UpdateSWUProposalParams, AuthenticatedSe
       .transacting(trx)
       .where({ id })
       .update({
-        organization,
+        organization: organization || null,
         updatedAt: now,
         updatedBy: session.user.id
       }, '*');
@@ -1178,4 +1178,48 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(co
   });
 
   return proposals;
+}
+
+/**
+ * This function checks whether the user can read the file
+ * via its association to BOTH the SWU opportunity or proposal.
+ */
+export async function hasSWUAttachmentPermission(connection: Connection, session: Session | null, id: string): Promise<boolean> {
+  // If file is an attachment on a publicly viewable opportunity, allow
+  const query = generateSWUOpportunityQuery(connection)
+    .join('swuOpportunityAttachments as attachments', 'versions.id', '=', 'attachments.opportunityVersion')
+    .whereIn('statuses.status', publicOpportunityStatuses as SWUOpportunityStatus[])
+    .andWhere({ 'attachments.file': id })
+    .clearSelect()
+    .select('attachments.*');
+
+  // If the opportunity was created by the current user, allow for private opportunity statuses as well
+  if (session) {
+    query
+      .orWhere(function() {
+        this
+          .whereIn('statuses.status', privateOpportunityStatuses as SWUOpportunityStatus[])
+          .andWhere({ 'opportunities.createdBy': session.user.id, 'attachments.file': id });
+      });
+  }
+  const results = await query;
+  if (results.length > 0) {
+    return true;
+  }
+
+  // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
+  if (session) {
+    const rawProposals = await connection('swuProposalAttachments as attachments')
+      .join('swuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
+      .where({ 'attachments.file': id })
+      .select<RawSWUProposal[]>('proposals.*');
+
+    for (const rawProposal of rawProposals) {
+      const proposal = await rawSWUProposalToSWUProposal(connection, session, rawProposal);
+      if (await hasReadPermissionSWUProposal(connection, session, proposal)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

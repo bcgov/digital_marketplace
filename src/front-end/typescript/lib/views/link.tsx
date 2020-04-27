@@ -13,7 +13,7 @@ export const routeDest = adtCurried<RouteDest>('route');
 type ExternalDest = ADT<'external', string>;
 export const externalDest = adtCurried<ExternalDest>('external');
 
-type EmailDest = ADT<'email', string>;
+type EmailDest = ADT<'email', [string, string?]>; //[to, subject]
 export const emailDest = adtCurried<EmailDest>('email');
 
 export type Dest = RouteDest | ExternalDest | EmailDest;
@@ -141,7 +141,7 @@ function AnchorLink(props: AnchorProps) {
     switch (dest.tag) {
       case 'route': return router.routeToUrl(dest.value);
       case 'external': return dest.value;
-      case 'email': return `mailto:${dest.value}`;
+      case 'email': return `mailto:${dest.value[0]}${dest.value[1] ? `?subject=${dest.value[1]}` : ''}`;
     }
   })();
   let finalClassName = 'a d-inline-flex align-items-center flex-nowrap';

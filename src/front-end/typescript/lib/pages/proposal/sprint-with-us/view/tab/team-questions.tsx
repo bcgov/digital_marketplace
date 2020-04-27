@@ -10,7 +10,7 @@ import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import Accordion from 'front-end/lib/views/accordion';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import Markdown from 'front-end/lib/views/markdown';
+import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import ReportCardList from 'front-end/lib/views/report-card-list';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
@@ -204,18 +204,22 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
-      <p>{question.question}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>
+        {question.question}
+      </p>
       <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
         {countWords(response.response)} / {question.wordLimit} word{question.wordLimit === 1 ? '' : 's'}
-        <Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>
+        <Separator spacing='2' color='secondary'>|</Separator>
         {response.score === undefined || response.score === null
           ? `Unscored (${question.score} point${question.score === 1 ? '' : 's'} available)`
           : `${response.score} / ${question.score} point${question.score === 1 ? '' : 's'}`}
       </div>
       <Alert color='primary' fade={false} className='mb-4'>
-        {question.guideline}
+        <div style={{ whiteSpace: 'pre-line' }}>
+          {question.guideline}
+        </div>
       </Alert>
-      <Markdown
+      <ProposalMarkdown
         box
         source={response.response || EMPTY_STRING} />
     </Accordion>

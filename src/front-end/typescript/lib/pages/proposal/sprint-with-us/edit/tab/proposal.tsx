@@ -1,5 +1,5 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from 'front-end/config';
-import { getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getModalValid, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as SubmitProposalTerms from 'front-end/lib/components/submit-proposal-terms';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalMsg, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -249,7 +249,9 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             return stopDeleteLoading(state);
           }
           dispatch(toast(adt('success', toasts.deleted.success)));
-          dispatch(replaceRoute(adt('opportunities' as const, null)));
+          dispatch(replaceRoute(adt('opportunitySWUView' as const, {
+            opportunityId: state.opportunity.id
+          })));
           return state;
         }
       ];
@@ -310,6 +312,10 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
+  getAlerts: getAlertsValid<ValidState, Msg>(state => {
+    return Form.getAlerts(state.form);
+  }),
 
   getModal: getModalValid<ValidState, Msg>(state => {
     const formModal = mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
@@ -398,7 +404,7 @@ export const component: Tab.Component<State, Msg> = {
       case 'withdrawAfterDeadline':
         return {
           title: 'Withdraw Sprint With Us Proposal?',
-          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? Your proposal will no longer be considered for this opportunity.',
+          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? You will no longer be considered for this opportunity.',
           onCloseMsg: adt('hideModal'),
           actions: [
             {
@@ -560,7 +566,7 @@ export const component: Tab.Component<State, Msg> = {
             color: 'white',
             disabled,
             loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
+            onClick: () => dispatch(adt('showModal', isAcceptingProposals ? 'withdrawBeforeDeadline' as const : 'withdrawAfterDeadline' as const))
           }
         ]) as PageContextualActions;
       case SWUProposalStatus.UnderReviewTeamQuestions:

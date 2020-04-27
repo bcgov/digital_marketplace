@@ -10,16 +10,16 @@ import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { User } from 'shared/lib/resources/user';
 import { getValidValue } from 'shared/lib/validation';
 
-export async function handleCWUPublished(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
+export async function handleCWUPublished(connection: db.Connection, opportunity: CWUOpportunity, repost: boolean): Promise<void> {
   // Notify all users with notifications turned on
   const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
-  await Promise.all(subscribedUsers.map(async user => await newCWUOpportunityPublished(user, opportunity)));
+  await Promise.all(subscribedUsers.map(async user => await newCWUOpportunityPublished(user, opportunity, repost)));
 
   // Notify authoring gov user of successful publish
   if (opportunity.createdBy) {
     const author = getValidValue(await db.readOneUser(connection, opportunity.createdBy.id), null);
     if (author) {
-      await successfulCWUPublication(author, opportunity);
+      await successfulCWUPublication(author, opportunity, repost);
     }
   }
 }
@@ -70,15 +70,15 @@ export async function handleCWUReadyForEvaluation(connection: db.Connection, opp
 
 export const newCWUOpportunityPublished = makeSend(newCWUOpportunityPublishedT);
 
-export async function newCWUOpportunityPublishedT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
-  const title = 'A New Code With Us Opportunity Has Been Posted';
+export async function newCWUOpportunityPublishedT(recipient: User, opportunity: CWUOpportunity, repost: boolean): Promise<Emails> {
+  const title = `A ${repost ? '' : 'New'} Code With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
   return [{
-    summary: 'New CWU opportunity published; sent to user with notifications turned on.',
+    summary: `${repost ? 'CWU opportunity re-published after suspension' : 'New CWU opportunity published'}; sent to user with notifications turned on.`,
     to: recipient.email,
     subject: title,
     html: templates.simple({
       title,
-      description: 'A new opportunity has been posted to the Digital Marketplace:',
+      description: `A ${repost ? 'previously suspended' : 'new'} opportunity has been ${repost ? 're-posted' : 'posted'} to the Digital Marketplace:`,
       descriptionLists: [makeCWUOpportunityInformation(opportunity)],
       callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
@@ -87,11 +87,11 @@ export async function newCWUOpportunityPublishedT(recipient: User, opportunity: 
 
 export const successfulCWUPublication = makeSend(successfulCWUPublicationT);
 
-export async function successfulCWUPublicationT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
-  const title = 'Your Code With Us Opportunity Has Been Posted';
-  const description = 'You have successfully posted the following Digital Marketplace opportunity:';
+export async function successfulCWUPublicationT(recipient: User, opportunity: CWUOpportunity, repost: boolean): Promise<Emails> {
+  const title = `Your Code With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
+  const description = `You have successfully ${repost ? 're-posted' : 'posted'} the following Digital Marketplace opportunity`;
   return [{
-    summary: 'CWU successfully published; sent to publishing government user.',
+    summary: `CWU successfully ${repost ? 're-published' : 'published'}; sent to publishing government user.`,
     to: recipient.email,
     subject: title,
     html: templates.simple({

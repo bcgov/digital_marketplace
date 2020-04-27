@@ -4,7 +4,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
-import { Component, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { Component, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageAlerts, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { makeViewTeamMemberModal, PendingBadge } from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
@@ -16,14 +16,14 @@ import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import Markdown from 'front-end/lib/views/markdown';
+import Markdown, { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import { find } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { fileBlobPath } from 'shared/lib/resources/file';
-import { SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { doesOrganizationMeetSWUQualification, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -103,6 +103,15 @@ async function getAffiliations(orgId?: Id): Promise<AffiliationMember[]> {
   return api.getValidValue(await api.affiliations.readManyForOrganization(orgId), []);
 }
 
+function isSelectedOrgQualified(orgId: Id, opportunity: SWUOpportunity, organizations: OrganizationSlim[]): [boolean, OrganizationSlim?] {
+  if (!isSWUOpportunityAcceptingProposals(opportunity)) { return [true]; }
+  const org = find(organizations, ({ id }) => id === orgId);
+  return [
+    !org || !doesOrganizationMeetSWUQualification(org) ? false : true,
+    org
+  ];
+}
+
 export const init: Init<Params, State> = async ({ viewerUser, opportunity, organizations, evaluationContent, proposal, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const inceptionCost = proposal?.inceptionPhase?.proposedCost || 0;
   const prototypeCost = proposal?.prototypePhase?.proposedCost || 0;
@@ -141,6 +150,9 @@ export const init: Init<Params, State> = async ({ viewerUser, opportunity, organ
       errors: [],
       validate: option => {
         if (!option) { return invalid(['Please select an organization.']); }
+        if (!isSelectedOrgQualified(option.value, opportunity, organizations)[0]) {
+          return invalid(['Please select an organization that is a Qualified Supplier.']);
+        }
         return valid(option);
       },
       child: {
@@ -790,8 +802,10 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
-      <p className='mb-4'>{questionText}</p>
-      <Markdown
+      <p style={{ whiteSpace: 'pre-line' }} className='mb-4'>
+        {questionText}
+      </p>
+      <ProposalMarkdown
         box
         source={response.response || 'You have not yet entered a response for this question.'} />
     </Accordion>
@@ -968,3 +982,33 @@ export const getModal: PageGetModal<State, Msg> = state => {
       });
   }
 };
+
+export function getAlerts<Msg>(state: Immutable<State>): PageAlerts<Msg> {
+  const orgId = FormField.getValue(state.organization)?.value;
+  if (!orgId) { return {}; }
+  const [isQualified, org] = isSelectedOrgQualified(orgId, state.opportunity, state.organizations);
+  const meetsCriteria = 'meets the criteria to be a Qualified Supplier';
+  return {
+    warnings: (() => {
+      if (!isQualified && !org) {
+        return [{
+          text: (
+            <span>
+              The organization you have selected has been archived. Please select a different organization or <Link newTab dest={routeDest(adt('orgCreate', null))}>create a new one</Link> and ensure it {meetsCriteria}.
+            </span>
+          )
+        }];
+      } else if (!isQualified && org) {
+        return [{
+          text: (
+            <span>
+              The organization you have selected does not qualify to submit proposals for Sprint With Us opportunties. Please select a different organization or ensure it {org ? <Link newTab dest={routeDest(adt('orgEdit', { orgId: org.id, tab: 'qualification' as const }))}>{meetsCriteria}</Link> : meetsCriteria}.
+            </span>
+          )
+        }];
+      } else {
+        return [];
+      }
+    })()
+  };
+}

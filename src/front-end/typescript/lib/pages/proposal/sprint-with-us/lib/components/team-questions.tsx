@@ -1,7 +1,6 @@
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
 import Accordion from 'front-end/lib/views/accordion';
 import Separator from 'front-end/lib/views/separator';
 import { find } from 'lodash';
@@ -52,8 +51,7 @@ export const init: Init<Params, State> = async ({ questions, responses }) => {
           child: {
             value: find(responses, { order: question.order })?.response || '',
             id: `swu-proposal-team-question-response-${question.order}`,
-            wordLimit: question.wordLimit,
-            uploadImage: api.makeUploadMarkdownImage()
+            wordLimit: question.wordLimit
           }
         }))
       })))
@@ -133,14 +131,16 @@ const ResponseView: View<ResponseViewProps> = props => {
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={response.isAccordianOpen}>
-      <p>{response.question.question}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>{response.question.question}</p>
       <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
         {response.question.wordLimit} word limit
         <Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>
         Scored out of {response.question.score}
       </div>
       <Alert color='primary' fade={false} className='mb-4'>
-        {response.question.guideline}
+        <div style={{ whiteSpace: 'pre-line' }}>
+          {response.question.guideline}
+        </div>
       </Alert>
       <RichMarkdownEditor.view
         extraChildProps={{}}

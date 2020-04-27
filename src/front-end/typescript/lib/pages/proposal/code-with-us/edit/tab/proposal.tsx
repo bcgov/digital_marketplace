@@ -257,7 +257,9 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             return stopDeleteLoading(state);
           }
           dispatch(toast(adt('success', toasts.deleted.success)));
-          dispatch(replaceRoute(adt('opportunities' as const, null)));
+          dispatch(replaceRoute(adt('opportunityCWUView' as const, {
+            opportunityId: state.opportunity.id
+          })));
           return state;
         }
       ];
@@ -573,7 +575,7 @@ export const component: Tab.Component<State, Msg> = {
             color: 'white',
             disabled,
             loading: isWithdrawLoading,
-            onClick: () => dispatch(adt('showModal', 'withdrawBeforeDeadline' as const))
+            onClick: () => dispatch(adt('showModal', isAcceptingProposals ? 'withdrawBeforeDeadline' as const : 'withdrawAfterDeadline' as const))
           }
         ]) as PageContextualActions;
       case CWUProposalStatus.UnderReview:
