@@ -253,7 +253,7 @@ const resource: Resource = {
         const validatedTitle = opportunityValidation.validateTitle(title);
         const validatedTeaser = opportunityValidation.validateTeaser(teaser);
         const validatedRemoteOk =  opportunityValidation.validateRemoteOk(remoteOk);
-        const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc);
+        const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc, getValidValue(validatedRemoteOk, false));
         const validatedLocation = opportunityValidation.validateLocation(location);
         const validatedTotalMaxBudget = opportunityValidation.validateTotalMaxBudget(totalMaxBudget);
         const validatedMinTeamMembers = opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
@@ -576,7 +576,7 @@ const resource: Resource = {
             const validatedTitle = opportunityValidation.validateTitle(title);
             const validatedTeaser = opportunityValidation.validateTeaser(teaser);
             const validatedRemoteOk =  opportunityValidation.validateRemoteOk(remoteOk);
-            const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc);
+            const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc, getValidValue(validatedRemoteOk, false));
             const validatedLocation = opportunityValidation.validateLocation(location);
             const validatedTotalMaxBudget = opportunityValidation.validateTotalMaxBudget(totalMaxBudget);
             const validatedMinTeamMembers = opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
@@ -694,7 +694,7 @@ const resource: Resource = {
               opportunityValidation.validateTitle(validatedSWUOpportunity.value.title),
               opportunityValidation.validateTeaser(validatedSWUOpportunity.value.teaser),
               opportunityValidation.validateRemoteOk(validatedSWUOpportunity.value.remoteOk),
-              opportunityValidation.validateRemoteDesc(validatedSWUOpportunity.value.remoteDesc),
+              opportunityValidation.validateRemoteDesc(validatedSWUOpportunity.value.remoteDesc, validatedSWUOpportunity.value.remoteOk),
               opportunityValidation.validateLocation(validatedSWUOpportunity.value.location),
               opportunityValidation.validateTotalMaxBudget(validatedSWUOpportunity.value.totalMaxBudget),
               opportunityValidation.validateMinimumTeamMembers(validatedSWUOpportunity.value.minTeamMembers),

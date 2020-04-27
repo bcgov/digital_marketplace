@@ -235,8 +235,8 @@ export function validateRemoteOk(raw: any): Validation<boolean> {
   return isBoolean(raw) ? valid(raw) : invalid(['Invalid remote option provided.']);
 }
 
-export function validateRemoteDesc(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Remote Description', 0, 500);
+export function validateRemoteDesc(raw: string, remoteOk: boolean): Validation<string> {
+  return validateGenericString(raw, 'Remote description', remoteOk ? 1 : 0, 500);
 }
 
 export function validateLocation(raw: string): Validation<string> {

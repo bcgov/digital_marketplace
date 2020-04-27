@@ -181,7 +181,7 @@ const resource: Resource = {
         const validatedTitle = opportunityValidation.validateTitle(title);
         const validatedTeaser = opportunityValidation.validateTeaser(teaser);
         const validatedRemoteOk = opportunityValidation.validateRemoteOk(remoteOk);
-        const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc);
+        const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc, getValidValue(validatedRemoteOk, false));
         const validatedLocation = opportunityValidation.validateLocation(location);
         const validatedReward = opportunityValidation.validateReward(reward);
         const validatedSkills = opportunityValidation.validateSkills(skills);
@@ -392,7 +392,7 @@ const resource: Resource = {
             const validatedTitle = opportunityValidation.validateTitle(title);
             const validatedTeaser = opportunityValidation.validateTeaser(teaser);
             const validatedRemoteOk = opportunityValidation.validateRemoteOk(remoteOk);
-            const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc);
+            const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc, getValidValue(validatedRemoteOk, false));
             const validatedLocation = opportunityValidation.validateLocation(location);
             const validatedReward = opportunityValidation.validateReward(reward);
             const validatedSkills = opportunityValidation.validateSkills(skills);
@@ -470,7 +470,7 @@ const resource: Resource = {
               opportunityValidation.validateTitle(validatedCWUOpportunity.value.title),
               opportunityValidation.validateTeaser(validatedCWUOpportunity.value.teaser),
               opportunityValidation.validateRemoteOk(validatedCWUOpportunity.value.remoteOk),
-              opportunityValidation.validateRemoteDesc(validatedCWUOpportunity.value.remoteDesc),
+              opportunityValidation.validateRemoteDesc(validatedCWUOpportunity.value.remoteDesc, validatedCWUOpportunity.value.remoteOk),
               opportunityValidation.validateLocation(validatedCWUOpportunity.value.location),
               opportunityValidation.validateReward(validatedCWUOpportunity.value.reward),
               opportunityValidation.validateSkills(validatedCWUOpportunity.value.skills),
