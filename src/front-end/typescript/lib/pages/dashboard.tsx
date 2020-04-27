@@ -1,4 +1,4 @@
-import { getAlertsValid, makePageMetadata, prefixPath, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, makePageMetadata, prefixPath, updateValid, viewValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
@@ -9,7 +9,7 @@ import { swuOpportunityStatusToColor, swuOpportunityStatusToTitleCase } from 'fr
 import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
 import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareDates, formatDate } from 'shared/lib';
@@ -289,5 +289,16 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
           }]
         : []
     };
+  }),
+
+  getContextualActions: getContextualActionsValid(({ state }) => {
+    if (isVendor(state.viewerUser)) { return null; }
+    return adt('links', [{
+      children: 'Create Opportunity',
+      symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
+      dest: routeDest(adt('opportunityCreate', null)),
+      button: true,
+      color: 'primary'
+    }]);
   })
 };
