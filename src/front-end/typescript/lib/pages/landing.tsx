@@ -35,7 +35,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
 
-const Hero: View<{}> = () => {
+const Hero: View = () => {
   return (
     <Container className='pt-5 pb-7 pb-md-8'>
       <Row className='justify-content-center text-center'>
@@ -79,7 +79,7 @@ const Hero: View<{}> = () => {
   );
 };
 
-const Programs: View<{}> = () => {
+const Programs: View = () => {
   return (
     <div className='bg-blue-light-alt-2 py-7'>
       <Container>
@@ -132,7 +132,7 @@ const Programs: View<{}> = () => {
   );
 };
 
-const AppInfo: View<{}> = () => {
+const AppInfo: View = () => {
   return (
     <Container className='mt-7 mt-md-9'>
       <Row className='justify-content-center text-center'>
@@ -151,7 +151,7 @@ const AppInfo: View<{}> = () => {
   );
 };
 
-const VendorRoleInfo: View<{}> = () => {
+const VendorRoleInfo: View = () => {
   return (
     <Container className='mt-7 mt-md-9'>
       <Row>
@@ -187,7 +187,7 @@ const VendorRoleInfo: View<{}> = () => {
   );
 };
 
-const GovRoleInfo: View<{}> = () => {
+const GovRoleInfo: View = () => {
   return (
     <Container className='my-7 my-md-9'>
       <Row>
@@ -221,7 +221,7 @@ const GovRoleInfo: View<{}> = () => {
   );
 };
 
-const TestimonialsView: View<{}> = () => {
+const TestimonialsView: View = () => {
   return (
     <div className='bg-blue-dark-alt-2 py-7'>
       <Container>
@@ -254,7 +254,7 @@ const TestimonialsView: View<{}> = () => {
   );
 };
 
-const BottomView: View<{}> = () => {
+const BottomView: View = () => {
   return (
     <Container className='my-7'>
       <Row className='justify-content-center text-center'>

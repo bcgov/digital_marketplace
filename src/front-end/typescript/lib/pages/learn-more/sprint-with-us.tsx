@@ -2,7 +2,7 @@ import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
 import Accordion from 'front-end/lib/views/accordion';
-import HowItWorksItem from 'front-end/lib/views/hiw-item';
+import HowItWorksItem from 'front-end/lib/views/how-it-works-item';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
@@ -38,16 +38,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const TitleView: View<{}> = () => {
+const TitleView: View = () => {
   return (
-    <div className='bg-blue-light-alt-2 pb-5 pb-md-0'>
+    <div className='bg-blue-light-alt pt-4 pb-6 pb-md-7'>
       <Container>
         <Row>
-          <Col xs='12' md='8'>
+          <Col xs='12'>
             <h1>Sprint With Us</h1>
+          </Col>
+        </Row>
+        <Row>
+          <Col xs='12' md='8'>
             <em>Sprint With Us</em> is a procurement mechanism that allows the Government of B.C. to procure Agile software development teams.
           </Col>
-          <Col md='4'><img className='d-none d-md-block mx-auto mb-n8' src={prefixPath('/images/illustrations/swu-learnmore.svg')} /></Col>
+          <Col md='4'>
+            <img className='d-none d-md-block position-absolute ml-5' src={prefixPath('/images/illustrations/sprint_with_us_learn_more.svg')} />
+          </Col>
         </Row>
       </Container>
     </div>
@@ -65,7 +71,7 @@ const WhatToExpectView: ComponentView<State, Msg> = ({ state, dispatch }) => {
               toggle={() => dispatch(adt('toggleWhatToExpectAccordion'))}
               color='bcgov-blue'
               title='What To Expect'
-              titleClassName='h3 mb-0 ml-2'
+              titleClassName='h3 mb-0'
               chevronWidth={2}
               chevronHeight={2}
               open={state.isWhatToExpectAccordionOpen}>
@@ -135,26 +141,28 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
               toggle={() => dispatch(adt('toggleHowToApplyAccordion'))}
               color='bcgov-blue'
               title='How To Apply'
-              titleClassName='h3 mb-0 ml-2'
+              titleClassName='h3 mb-0'
               chevronWidth={2}
               chevronHeight={2}
               open={state.isHowToApplyAccordionOpen}>
                 <div className='mb-3'>To apply for <em>Sprint With Us</em> opportunities, complete the following steps:</div>
                 <HowItWorksItem
-                  iconText='1'
-                  foreColor='white'
+                  symbol_={adt('text', '1')}
+                  mobileSymbol={adt('text', '1.')}
+                  fgColor='white'
                   bgColor='purple'
-                  header='Sign In to Your Vendor Account'
-                  subText={(
+                  title='Sign In to Your Vendor Account'
+                  description={(
                     <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using GitHub. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', null))}>sign up</Link>, first.</div>)}
                   className='mb-4'
                 />
                 <HowItWorksItem
-                  iconText='2'
-                  foreColor='white'
+                  symbol_={adt('text', '2')}
+                  mobileSymbol={adt('text', '2.')}
+                  fgColor='white'
                   bgColor='purple'
-                  header='Register Your Organization'
-                  subText={(
+                  title='Register Your Organization'
+                  description={(
                     <div>
                       <p>Go to the Organizations page and click on the <strong>+ Create Organization</strong> button. Complete the form by providing all required information and submit.</p>
                       <p>Similarly, you may register your organization via your user profile.</p>
@@ -163,11 +171,12 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
                   className='mb-4'
                 />
                 <HowItWorksItem
-                  iconText='3'
-                  foreColor='white'
+                  symbol_={adt('text', '3')}
+                  mobileSymbol={adt('text', '3.')}
+                  fgColor='white'
                   bgColor='purple'
-                  header='Become a Qualified Supplier'
-                  subText={(
+                  title='Become a Qualified Supplier'
+                  description={(
                     <div>
                       <p>You must be considered a Qualified Supplier to apply for <em>Sprint With Us</em> opportunities.</p>
                       <p>To complete the qualification process, access your registered organization via your user profile and navigate to the <em>SWU Qualification</em> tab.  Complete the requirements as provided to become a Qualified Supplier.</p>
@@ -183,7 +192,7 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
   );
 };
 
-const Spacer: View<{}> = () => {
+const Spacer: View = () => {
   return (<div className='bg-white d-flex flex-grow-1' />);
 };
 
