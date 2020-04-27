@@ -27,7 +27,8 @@
     "typedoc:build": "npm run back-end:typedoc; npm run front-end:typedoc; npm run shared:typedoc",
     "typedoc:start": "npx serve --config typedoc/serve.json typedoc",
     "docs:readme-toc": "npx markdown-toc --maxdepth 3 -i README.md",
-    "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > OPEN_SOURCE_LICENSES.txt"
+    "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > OPEN_SOURCE_LICENSES.txt",
+    "docs:db": "npx pg-doc --connection"
   },
   "repository": {
     "type": "git",
@@ -119,6 +120,7 @@
     "nodemon": "^1.19.0",
     "path-to-regexp": "^6.1.0",
     "pathmodify": "^0.5.0",
+    "pg-doc": "^0.1.1-beta.4",
     "react-markdown": "^4.2.2",
     "react-select": "^3.0.8",
     "reactstrap": "^8.4.0",

@@ -66,12 +66,6 @@ export async function handleCWUReadyForEvaluation(connection: db.Connection, opp
   if (author) {
     await readyForEvalCWUOpportunity(author, opportunity);
   }
-
-  // Notify any subscribed users or users with proposals
-  const subscribedUsers = getValidValue(await db.readManyCWUSubscribedUsers(connection, opportunity.id), null) || [];
-  const usersWithProposals = getValidValue(await db.readManyCWUProposalAuthors(connection, opportunity.id), null) || [];
-  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, 'id');
-  await Promise.all(unionedUsers.map(async user => await cwuProposalDeadlinePassed(user, opportunity)));
 }
 
 export const newCWUOpportunityPublished = makeSend(newCWUOpportunityPublishedT);
@@ -230,24 +224,6 @@ export async function readyForEvalCWUOpportunityT(recipient: User, opportunity: 
           <p>You may now view proposals submitted by Vendors and assign scores to each submission.</p>
         </div>
       ),
-      callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
-    })
-  }];
-}
-
-export const cwuProposalDeadlinePassed = makeSend(cwuProposalDeadlinePassedT);
-
-export async function cwuProposalDeadlinePassedT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
-  const title = 'A Code With Us Opportunity Proposal Deadline Has Passed';
-  const description = 'A Digital Marketplace opportunity has reached its proposal deadline.';
-  return [{
-    summary: 'CWU opportunity proposal deadline reached; sent to subscribed users and proposal authors.',
-    to: recipient.email,
-    subject: title,
-    html: templates.simple({
-      title,
-      description,
-      descriptionLists: [makeCWUOpportunityInformation(opportunity, false)],
       callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
     })
   }];
