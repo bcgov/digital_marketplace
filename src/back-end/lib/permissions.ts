@@ -275,6 +275,10 @@ export async function readManySWUProposals(connection: Connection, session: Sess
   return false;
 }
 
+export function readOwnSWUProposals(session: Session): boolean {
+  return isVendor(session);
+}
+
 export async function readSWUProposalHistory(connection: Connection, session: Session, opportunityId: string, proposalId: string): Promise<boolean> {
   return isAdmin(session) ||
     (session && await isSWUOpportunityAuthor(connection, session.user, opportunityId) ||

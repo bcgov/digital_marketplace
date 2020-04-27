@@ -66,9 +66,10 @@ export interface RawSWUOpportunity extends Omit<SWUOpportunity, 'createdBy' | 'u
   versionId: Id;
 }
 
-interface RawSWUOpportunitySlim extends Omit<SWUOpportunitySlim, 'createdBy' | 'updatedBy'> {
+export interface RawSWUOpportunitySlim extends Omit<SWUOpportunitySlim, 'createdBy' | 'updatedBy'> {
   createdBy?: Id;
   updatedBy?: Id;
+  versionId: Id;
 }
 
 interface RawSWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
@@ -392,9 +393,13 @@ function processForRole<T extends RawSWUOpportunity | RawSWUOpportunitySlim>(res
 }
 
 export const readOneSWUOpportunitySlim = tryDb<[Id, Session], SWUOpportunitySlim | null>(async (connection, id, session) => {
-  const result = await generateSWUOpportunityQuery(connection)
+  let result = await generateSWUOpportunityQuery(connection)
     .where({ 'opportunities.id': id })
     .first();
+
+  if (result) {
+    result = processForRole(result, session);
+  }
 
   return result ? valid(await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, result)) : valid(null);
 });

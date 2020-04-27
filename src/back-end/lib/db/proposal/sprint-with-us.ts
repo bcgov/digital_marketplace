@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { generateSWUOpportunityQuery, RawSWUOpportunity, readManyTeamQuestions, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
+import { generateSWUOpportunityQuery, RawSWUOpportunity, RawSWUOpportunitySlim, readManyTeamQuestions, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
 import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { isSignedIn, readOneSWUProposal as hasReadPermissionSWUProposal, readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
@@ -46,7 +46,7 @@ interface RawSWUProposal extends Omit<SWUProposal, 'createdBy' | 'updatedBy' | '
   anonymousProponentName: string;
 }
 
-interface RawSWUProposalSlim extends Omit<SWUProposalSlim, 'createdBy' | 'updatedBy' | 'organization'> {
+interface RawSWUProposalSlim extends Omit<SWUProposalSlim, 'createdBy' | 'updatedBy' | 'organization' | 'opportunity'> {
   createdBy?: Id;
   updatedBy?: Id;
   organization: Id;
@@ -214,7 +214,8 @@ async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: 
       status: raw.status,
       submittedAt: raw.submittedAt,
       questionsScore: raw.questionsScore || undefined,
-      anonymousProponentName: raw.anonymousProponentName
+      anonymousProponentName: raw.anonymousProponentName,
+      opportunity
     };
   }
   const { createdBy: createdById,
@@ -229,6 +230,7 @@ async function rawSWUProposalSlimToSWUProposalSlim(connection: Connection, raw: 
 
   return {
     ...restOfRaw,
+    opportunity,
     createdBy: createdBy || undefined,
     updatedBy: updatedBy || undefined,
     organization: organization || undefined
@@ -320,6 +322,41 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
   return valid(await Promise.all(results.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result, session))));
 });
 
+export const readOwnSWUProposals = tryDb<[AuthenticatedSession], SWUProposalSlim[]>(async (connection, session) => {
+  const proposals = await generateSWUProposalQuery(connection)
+    .select<RawSWUProposalSlim[]>('proposals.id', 'statuses.status', 'proposals.challengeScore', 'proposals.scenarioScore', 'proposals.priceScore');
+
+  for (const proposal of proposals) {
+    if (proposal.status === SWUProposalStatus.Awarded || proposal.status === SWUProposalStatus.NotAwarded) {
+      const opportunity = await generateSWUOpportunityQuery(connection)
+        .where({ 'opportunities.id': proposal.opportunity })
+        .select(
+          'questionsWeight',
+          'codeChallengeWeight',
+          'scenarioWeight',
+          'priceWeight'
+        )
+        .first<RawSWUOpportunitySlim & { questionsWeight: number, codeChallengeWeight: number, scenarioWeight: number, priceWeight: number }>();
+      const opportunityTeamQuestions = getValidValue(await readManyTeamQuestions(connection, opportunity.versionId), null);
+      const questionResponses = getValidValue(await readManyProposalTeamQuestionResponses(connection, proposal.id, true), null);
+      proposal.questionsScore = (opportunityTeamQuestions && questionResponses) ? calculateProposalTeamQuestionScore(questionResponses, opportunityTeamQuestions) : undefined;
+
+      const includeTotalScore = proposal.questionsScore !== undefined && proposal.challengeScore !== null && proposal.scenarioScore !== null && proposal.priceScore !== null;
+      proposal.totalScore = includeTotalScore ? (opportunity.questionsWeight * (proposal.questionsScore || 0) / 100) +
+                                                (opportunity.codeChallengeWeight * (proposal.challengeScore || 0) / 100) +
+                                                (opportunity.scenarioWeight * (proposal.scenarioScore || 0) / 100) +
+                                                (opportunity.priceWeight * (proposal.priceScore || 0) / 100)
+                                              : undefined;
+    } else {
+      delete proposal.challengeScore;
+      delete proposal.scenarioScore;
+      delete proposal.priceScore;
+    }
+  }
+
+  return valid(await Promise.all(proposals.map(async result => await rawSWUProposalSlimToSWUProposalSlim(connection, result, session))));
+});
+
 export const readOneSWUProposalByOpportunityAndAuthor = tryDb<[Id, Session], Id | null>(async (connection, opportunityId, session) => {
   if (!session) {
     return valid(null);
@@ -373,7 +410,7 @@ export const readManyProposalTeamQuestionResponses = tryDb<[Id, boolean?], SWUPr
 });
 
 export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal | null>(async (connection, id, session) => {
-  const result = await generateSWUProposalQuery(connection, true)
+  const result = await generateSWUProposalQuery(connection)
     .where({ 'proposals.id': id })
     .first<RawSWUProposal>();
 
@@ -1092,7 +1129,7 @@ export const readManySWUProposalAuthors = tryDb<[Id], User[]>(async (connection,
   return valid(await Promise.all(result.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-function generateSWUProposalQuery(connection: Connection, full = false) {
+function generateSWUProposalQuery(connection: Connection) {
   const query = connection('swuProposals as proposals')
     .join('swuProposalStatuses as statuses', function() {
       this
@@ -1113,10 +1150,6 @@ function generateSWUProposalQuery(connection: Connection, full = false) {
       'proposals.anonymousProponentName',
       'statuses.status'
     );
-
-  if (full) {
-    query.select('proposals.opportunity');
-  }
 
   return query;
 }

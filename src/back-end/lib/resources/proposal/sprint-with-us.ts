@@ -67,19 +67,30 @@ const resource: Resource = {
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<SWUProposalSlim[] | string[]>, Session>(async request => {
       const respond = (code: number, body: SWUProposalSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-      const validatedSWUOpportunity = await validateSWUOpportunityId(connection, request.query.opportunity, request.session);
-      if (isInvalid(validatedSWUOpportunity)) {
-        return respond(404, ['Sprint With Us opportunity not found.']);
-      }
+      if (request.query.opportunity) {
+        const validatedSWUOpportunity = await validateSWUOpportunityId(connection, request.query.opportunity, request.session);
+        if (isInvalid(validatedSWUOpportunity)) {
+          return respond(404, ['Sprint With Us opportunity not found.']);
+        }
 
-      if (!permissions.isSignedIn(request.session) || !await permissions.readManySWUProposals(connection, request.session, validatedSWUOpportunity.value)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
+        if (!permissions.isSignedIn(request.session) || !await permissions.readManySWUProposals(connection, request.session, validatedSWUOpportunity.value)) {
+          return respond(401, [permissions.ERROR_MESSAGE]);
+        }
+        const dbResult = await db.readManySWUProposals(connection, request.session, request.query.opportunity);
+        if (isInvalid(dbResult)) {
+          return respond(503, [db.ERROR_MESSAGE]);
+        }
+        return respond(200, dbResult.value);
+      } else {
+        if (!permissions.isSignedIn(request.session) || !permissions.readOwnCWUProposals(request.session)) {
+          return respond(401, [permissions.ERROR_MESSAGE]);
+        }
+        const dbResult = await db.readOwnSWUProposals(connection, request.session);
+        if (isInvalid(dbResult)) {
+          return respond(503, [db.ERROR_MESSAGE]);
+        }
+        return respond(200, dbResult.value);
       }
-      const dbResult = await db.readManySWUProposals(connection, request.session, request.query.opportunity);
-      if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
-      }
-      return respond(200, dbResult.value);
     });
   },
 
