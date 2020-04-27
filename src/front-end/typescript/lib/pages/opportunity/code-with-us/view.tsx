@@ -107,13 +107,14 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const opp = state.opportunity;
   const isToggleWatchLoading = state.toggleWatchLoading > 0;
+  const isAcceptingProposals = isCWUOpportunityAcceptingProposals(state.opportunity);
   return (
     <div>
       <Container>
         <Row>
           <Col xs='12'>
             <DateMetadata
-              className='mb-3'
+              className='mb-4'
               dates={[
                 opp.publishedAt
                   ? {
@@ -140,7 +141,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
               <IconInfo
                 name='alarm-clock-outline'
-                value={formatDateAndTime(opp.proposalDeadline, true)}
+                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAndTime(opp.proposalDeadline, true)}`}
                 className='ml-sm-3 flex-shrink-0' />
             </div>
             {opp.teaser ? (<p className='text-secondary mb-4'>{opp.teaser}</p>) : null}
@@ -172,12 +173,12 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
             </div>
           </Col>
           <Col xs='12' md='6' lg={{ offset: 1, size: 5 }} className='mt-5 mt-md-0 pl-md-4'>
-            <Row className='mb-4'>
+            <Row className='mb-4 mb-md-5'>
               <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='comment-dollar-outline'
                   name='Proposal Deadline'
-                  value={formatDate(opp.proposalDeadline, true)} />
+                  value={formatDate(opp.proposalDeadline)} />
               </Col>
               <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
@@ -186,7 +187,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                   value={opp.reward ? formatAmount(opp.reward, '$') : EMPTY_STRING} />
               </Col>
             </Row>
-            <Row className='mb-4'>
+            <Row className='mb-4 mb-md-5'>
               <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='map-marker-outline'
@@ -205,13 +206,13 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 <OpportunityInfo
                   icon='award-outline'
                   name='Assignment Date'
-                  value={formatDate(opp.assignmentDate, true)} />
+                  value={formatDate(opp.assignmentDate)} />
               </Col>
               <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='user-hard-hat-outline'
                   name='Work Start Date'
-                  value={formatDate(opp.startDate, true)} />
+                  value={formatDate(opp.startDate)} />
               </Col>
             </Row>
           </Col>
@@ -239,7 +240,7 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       </Col>
       <Col xs='12' className='mt-4'>
         <InfoDetailsHeading icon='toolbox-outline' text='Required Skills' />
-        <p>To submit a proposal for this opportunity, you must possess the following skills:</p>
+        <p className='mb-2'>To submit a proposal for this opportunity, you must possess the following skills:</p>
         <Skills skills={opp.skills} />
       </Col>
       <Col xs='12' className='mt-4'>
@@ -263,26 +264,32 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
 };
 
 const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
+  const attachments = state.opportunity.attachments;
   return (
     <Row>
       <Col xs='12'>
         <h2 className='mb-0'>Attachments</h2>
       </Col>
       <Col xs='12' className='mt-4'>
-        <AttachmentList files={state.opportunity.attachments} />
+        {attachments.length
+          ? (<AttachmentList files={state.opportunity.attachments} />)
+          : 'There are currently no attachments for this opportunity.'}
       </Col>
     </Row>
   );
 };
 
 const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
+  const addenda = state.opportunity.addenda;
   return (
     <Row>
       <Col xs='12'>
         <h2 className='mb-0'>Addenda</h2>
       </Col>
       <Col xs='12' className='mt-4'>
-        <AddendaList addenda={state.opportunity.addenda} />
+        {addenda.length
+          ? (<AddendaList addenda={state.opportunity.addenda} />)
+          : 'There are currently no addenda for this opportunity.'}
       </Col>
     </Row>
   );
@@ -291,31 +298,26 @@ const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
 const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const activeTab = state.activeInfoTab;
   const opp = state.opportunity;
-  const hasAttachments = opp.attachments.length;
-  const hasAddenda = opp.addenda.length;
-  if (!hasAttachments && !hasAddenda) { return (<div className='border-top mb-5' style={{ height: '2px' }}></div>); }
   const getTabInfo = (tab: InfoTab) => ({
     active: activeTab === tab,
     onClick: () => dispatch(adt('setActiveInfoTab', tab))
   });
-  const tabs: Tab[] = [{
-    ...getTabInfo('details'),
-    text: 'Details'
-  }];
-  if (hasAttachments) {
-    tabs.push({
+  const tabs: Tab[] = [
+    {
+      ...getTabInfo('details'),
+      text: 'Details'
+    },
+    {
       ...getTabInfo('attachments'),
       text: 'Attachments',
       count: opp.attachments.length
-    });
-  }
-  if (hasAddenda) {
-    tabs.push({
+    },
+    {
       ...getTabInfo('addenda'),
       text: 'Addenda',
       count: opp.addenda.length
-    });
-  }
+    }
+  ];
   return (
     <Row className='mb-5'>
       <Col xs='12'>
@@ -357,7 +359,7 @@ const AcceptanceCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
     <Container>
       <div className='mt-5 pt-5 border-top'>
         <Row>
-          <Col xs='12' md='8'>
+          <Col xs='12'>
             <h2 className='mb-4'>Acceptance Criteria</h2>
             <p className='mb-4'>This is a fixed-price opportunity governed by the terms of our lightweight procurement model, Code With Us. To be paid the fixed price for this opportunity, you need to meet all of the following criteria:</p>
             <Markdown source={state.opportunity.acceptanceCriteria} smallerHeadings openLinksInNewTabs />
@@ -374,7 +376,7 @@ const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
     <Container>
       <div className='mt-5 pt-5 border-top'>
         <Row>
-          <Col xs='12' md='8'>
+          <Col xs='12'>
             <h2 className='mb-4'>Proposal Evaluation Criteria</h2>
             <p className='mb-4'>Your proposal will be scored using the following criteria:</p>
             <Markdown source={state.opportunity.evaluationCriteria} smallerHeadings openLinksInNewTabs />
