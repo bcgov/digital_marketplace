@@ -421,7 +421,7 @@ const Phase: View<PhaseProps> = ({ icon, phase }) => {
           <IconInfo name='toolbox-outline' value='Required Capabilities' className='font-weight-bold mb-2' />
           {phase.requiredCapabilities
             ? (<Capabilities capabilities={phase.requiredCapabilities} showChecked={false} showFullOrPartTime />)
-            : EMPTY_STRING}
+            : 'None Selected'}
         </div>
       </div>
     </Col>
