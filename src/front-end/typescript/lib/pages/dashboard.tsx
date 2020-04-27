@@ -121,7 +121,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<RoutePar
         children: vendor ? 'Opportunity' : 'Title',
         style: {
           width: '100%',
-          minWidth: '240px'
+          minWidth: '200px'
         }
       },
       {
@@ -240,7 +240,7 @@ const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
       </Row>
       <Row>
         <Col xs='12' md='9'>
-          <div className='rounded-lg border bg-white p-3 p-sm-4 shadow-hover'>
+          <div className='rounded-lg border bg-white p-4 p-sm-4h shadow-hover'>
             <div className='d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3'>
               <div className='font-weight-bold mr-3'>{table.title}</div>
               {table.link
