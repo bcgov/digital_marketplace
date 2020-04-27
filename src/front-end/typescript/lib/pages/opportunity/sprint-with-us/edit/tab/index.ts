@@ -5,8 +5,8 @@ import * as CodeChallengeTab from 'front-end/lib/pages/opportunity/sprint-with-u
 import * as HistoryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history';
 import * as OpportunityTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity';
 import * as ProposalsTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals';
-import * as ScoresheetTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/scoresheet';
 import * as SummaryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary';
+import * as TeamQuestionsTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions';
 import * as TeamScenarioTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario';
 import { routeDest } from 'front-end/lib/views/link';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -31,11 +31,11 @@ export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 export interface Tabs {
   summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
   opportunity: TabbedPage.Tab<Params, OpportunityTab.State, OpportunityTab.InnerMsg>;
-  proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
+  teamQuestions: TabbedPage.Tab<Params, TeamQuestionsTab.State, TeamQuestionsTab.InnerMsg>;
   history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
   codeChallenge: TabbedPage.Tab<Params, CodeChallengeTab.State, CodeChallengeTab.InnerMsg>;
   teamScenario: TabbedPage.Tab<Params, TeamScenarioTab.State, TeamScenarioTab.InnerMsg>;
-  scoresheet: TabbedPage.Tab<Params, ScoresheetTab.State, ScoresheetTab.InnerMsg>;
+  proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -48,10 +48,10 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
   switch (raw) {
     case 'summary':
     case 'opportunity':
-    case 'proposals':
+    case 'teamQuestions':
     case 'codeChallenge':
     case 'teamScenario':
-    case 'scoresheet':
+    case 'proposals':
     case 'history':
       return raw;
     default:
@@ -67,11 +67,11 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         icon: 'file-code',
         title: 'Opportunity'
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case 'proposals':
+    case 'teamQuestions':
       return {
-        component: ProposalsTab.component,
-        icon: 'comment-dollar',
-        title: 'Proposals'
+        component: TeamQuestionsTab.component,
+        icon: 'comments',
+        title: 'Team Questions'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'codeChallenge':
       return {
@@ -85,11 +85,11 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         icon: 'users-class',
         title: 'Team Scenario'
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case 'scoresheet':
+    case 'proposals':
       return {
-        component: ScoresheetTab.component,
-        icon: 'star-full',
-        title: 'Scoresheet'
+        component: ProposalsTab.component,
+        icon: 'comment-dollar',
+        title: 'Proposals'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'history':
       return {
@@ -120,13 +120,13 @@ export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId)
 export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
     links: [
-      makeSidebarLink('summary',              opportunityId,  activeTab),
-      makeSidebarLink('opportunity',          opportunityId,  activeTab),
-      makeSidebarLink('proposals',            opportunityId,  activeTab),
-      makeSidebarLink('codeChallenge',        opportunityId,  activeTab),
-      makeSidebarLink('teamScenario',         opportunityId,  activeTab),
-      makeSidebarLink('scoresheet',  opportunityId,  activeTab),
-      makeSidebarLink('history',              opportunityId,  activeTab),
+      makeSidebarLink('summary',       opportunityId,  activeTab),
+      makeSidebarLink('opportunity',   opportunityId,  activeTab),
+      makeSidebarLink('teamQuestions', opportunityId,  activeTab),
+      makeSidebarLink('codeChallenge', opportunityId,  activeTab),
+      makeSidebarLink('teamScenario',  opportunityId,  activeTab),
+      makeSidebarLink('proposals',     opportunityId,  activeTab),
+      makeSidebarLink('history',       opportunityId,  activeTab),
       {
         icon: 'external-link',
         text: 'Read Guide',
