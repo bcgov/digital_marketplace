@@ -324,6 +324,7 @@ export const readManySWUProposals = tryDb<[AuthenticatedSession, Id], SWUProposa
 
 export const readOwnSWUProposals = tryDb<[AuthenticatedSession], SWUProposalSlim[]>(async (connection, session) => {
   const proposals = await generateSWUProposalQuery(connection)
+    .where({ 'proposals.createdBy': session.user.id })
     .select<RawSWUProposalSlim[]>('proposals.id', 'statuses.status', 'proposals.challengeScore', 'proposals.scenarioScore', 'proposals.priceScore');
 
   for (const proposal of proposals) {
