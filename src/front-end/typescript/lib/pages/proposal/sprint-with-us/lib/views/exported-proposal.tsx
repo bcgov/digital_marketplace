@@ -32,7 +32,7 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
   return (
     <div className={className}>
       <h5 className='mb-3'>Question {index + 1}</h5>
-      <p>{question.question}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>{question.question}</p>
       <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
         {countWords(response.response)} / {question.wordLimit} word{question.wordLimit === 1 ? '' : 's'}
         <Separator spacing='2' color='secondary'>|</Separator>
@@ -41,7 +41,9 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
           : `${response.score} / ${question.score} point${question.score === 1 ? '' : 's'}`}
       </div>
       <Alert color='primary' fade={false} className='mb-4'>
-        {question.guideline}
+        <div style={{ whiteSpace: 'pre-line' }}>
+          {question.guideline}
+        </div>
       </Alert>
       <ProposalMarkdown
         box

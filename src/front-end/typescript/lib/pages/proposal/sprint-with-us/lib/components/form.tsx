@@ -802,7 +802,9 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
-      <p className='mb-4'>{questionText}</p>
+      <p style={{ whiteSpace: 'pre-line' }} className='mb-4'>
+        {questionText}
+      </p>
       <ProposalMarkdown
         box
         source={response.response || 'You have not yet entered a response for this question.'} />
