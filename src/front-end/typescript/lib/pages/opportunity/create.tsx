@@ -46,57 +46,59 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = () => {
   return (
-    <Row>
-      <ProgramCard
-        img={prefixPath('/images/illustrations/code_with_us.svg')}
-        title='Code With Us'
-        className='mb-4 mb-md-0'
-        description={(<span>Use a <em>Code With Us</em> opportunity to pay a fixed price of up to $70,000 for the delivery of code that meets your acceptance criteria.</span>)}
-        wideLinks
-        links={[
-          {
-            button: true,
-            dest: routeDest(adt('content', 'code-with-us-opportunity-guide')),
-            children: ['Read Guide'],
-            color: 'info' as TextColor,
-            outline: true
-          },
-          {
-            button: true,
-            dest: routeDest(adt('opportunityCWUCreate', null)),
-            children: ['Get Started'],
-            color: 'primary' as TextColor
-          }
-        ]}
-      />
-      <ProgramCard
-        img={prefixPath('/images/illustrations/sprint_with_us.svg')}
-        title='Sprint With Us'
-        description={(<span>Use a <em>Sprint With Us</em> opportunity to procure an Agile product development team for your digital service at a variable cost of up to $2,000,000.</span>)}
-        wideLinks
-        links={[
-          {
-            button: true,
-            dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide')),
-            children: ['Read Guide'],
-            color: 'info' as TextColor,
-            outline: true
-          },
-          {
-            button: true,
-            dest: routeDest(adt('opportunitySWUCreate', null)),
-            children: ['Get Started'],
-            color: 'primary' as TextColor
-          }
-        ]}
-      />
-    </Row>
+    <div className='d-flex flex-column justify-content-center align-items-stretch flex-grow-1'>
+      <Row>
+        <ProgramCard
+          img={prefixPath('/images/illustrations/code_with_us.svg')}
+          title='Code With Us'
+          className='mb-4 mb-md-0'
+          description={(<span>Use a <em>Code With Us</em> opportunity to pay a fixed price of up to $70,000 for the delivery of code that meets your acceptance criteria.</span>)}
+          wideLinks
+          links={[
+            {
+              button: true,
+              dest: routeDest(adt('content', 'code-with-us-opportunity-guide')),
+              children: ['Read Guide'],
+              color: 'info' as TextColor,
+              outline: true
+            },
+            {
+              button: true,
+              dest: routeDest(adt('opportunityCWUCreate', null)),
+              children: ['Get Started'],
+              color: 'primary' as TextColor
+            }
+          ]}
+        />
+        <ProgramCard
+          img={prefixPath('/images/illustrations/sprint_with_us.svg')}
+          title='Sprint With Us'
+          description={(<span>Use a <em>Sprint With Us</em> opportunity to procure an Agile product development team for your digital service at a variable cost of up to $2,000,000.</span>)}
+          wideLinks
+          links={[
+            {
+              button: true,
+              dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide')),
+              children: ['Read Guide'],
+              color: 'info' as TextColor,
+              outline: true
+            },
+            {
+              button: true,
+              dest: routeDest(adt('opportunitySWUCreate', null)),
+              children: ['Get Started'],
+              color: 'primary' as TextColor
+            }
+          ]}
+        />
+      </Row>
+    </div>
   );
 };
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   backgroundColor: 'blue-light-alt-2',
-  verticallyCentered: true,
+  //verticallyCentered: true,
   init,
   update,
   view,

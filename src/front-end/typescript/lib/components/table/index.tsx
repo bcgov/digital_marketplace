@@ -191,7 +191,7 @@ export type HeadCells = THSpec[];
 
 export type BodyRows = RowsSpec;
 
-interface ViewProps extends ComponentViewProps<State, Msg> {
+export interface Props extends ComponentViewProps<State, Msg> {
   headCells: HeadCells;
   bodyRows: BodyRows;
   className?: string;
@@ -200,7 +200,7 @@ interface ViewProps extends ComponentViewProps<State, Msg> {
   hover?: boolean;
 }
 
-export const view: View<ViewProps> = props => {
+export const view: View<Props> = props => {
   const { state, dispatch, className, style, headCells, bodyRows, borderless, hover = true } = props;
   const headProps: THeadProps = {
     THView: state.THView,
@@ -238,7 +238,7 @@ export const view: View<ViewProps> = props => {
   );
 };
 
-export type TableComponent = Component<Params, State, Msg, ViewProps>;
+export type TableComponent = Component<Params, State, Msg, Props>;
 
 export const component: TableComponent = {
   init,

@@ -204,7 +204,7 @@ interface CWUProposalResourceTypes {
 }
 
 interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany' | 'readOne'> {
-  readMany(opportunityId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readMany']>;
+  readMany(opportunityId?: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readMany']>;
   readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readOne']>;
 }
 
@@ -227,7 +227,7 @@ const cwuProposals: CWUProposalCrudApi = {
   async readMany(opportunityId) {
     return await makeRequest<ReadManyActionTypes<CWUProposalResourceTypes['readMany']> & { request: null; }>({
       method: ClientHttpMethod.Get,
-      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}${opportunityId !== undefined ? `?opportunity=${window.encodeURIComponent(opportunityId)}` : ''}`,
       body: null,
       transformValid: v => v.map(w => rawCWUProposalSlimToCWUProposalSlim(w))
     });
@@ -319,7 +319,7 @@ interface SWUProposalResourceTypes {
 }
 
 interface SWUProposalCrudApi extends Omit<CrudApi<SWUProposalResourceTypes>, 'readMany' | 'readOne'> {
-  readMany(opportunityId: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readMany']>;
+  readMany(opportunityId?: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readMany']>;
   readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readOne']>;
 }
 
@@ -342,7 +342,7 @@ const swuProposals: SWUProposalCrudApi = {
   async readMany(opportunityId) {
     return await makeRequest<ReadManyActionTypes<SWUProposalResourceTypes['readMany']> & { request: null; }>({
       method: ClientHttpMethod.Get,
-      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}${opportunityId !== undefined ? `?opportunity=${window.encodeURIComponent(opportunityId)}` : ''}`,
       body: null,
       transformValid: v => v.map(w => rawSWUProposalSlimToSWUProposalSlim(w))
     });

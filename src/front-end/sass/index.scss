@@ -330,6 +330,13 @@ nav {
 
 // Custom Bootstrap style overrides.
 
+.container {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: start;
+  align-items: stretch;
+}
+
 .dropdown-menu {
   min-width: 100%;
 }
