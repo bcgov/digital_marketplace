@@ -194,7 +194,7 @@ const Welcome: View<Pick<ValidState, 'viewerUser'>> = ({ viewerUser }) => {
     <div className='d-flex flex-column justify-content-center align-items-stretch flex-grow-1'>
       <Row className='justify-content-center text-center'>
         <Col xs='12' sm='10' md='6'>
-          <img src={prefixPath('/images/dashboard_welcome.svg')} className='mb-5 mb-md-6' />
+          <img src={prefixPath('/images/illustrations/dashboard_welcome.svg')} className='mb-5 mb-md-6' style={{ maxWidth: '100%' }} />
           <h1 className='mb-4'>Welcome to the Digital Marketplace!</h1>
           <p>
             {vendor
@@ -204,6 +204,7 @@ const Welcome: View<Pick<ValidState, 'viewerUser'>> = ({ viewerUser }) => {
           <div className='d-flex flex-column flex-sm-row flex-nowrap justify-content-center align-items-center mt-5'>
             <Link
               button
+              className='text-nowrap'
               dest={routeDest(adt('opportunities', null))}
               color={vendor ? 'primary' : 'info'}
               outline={!vendor}>
@@ -212,7 +213,7 @@ const Welcome: View<Pick<ValidState, 'viewerUser'>> = ({ viewerUser }) => {
             {!vendor
               ? (<Link
                   button
-                  className='ml-sm-4 mt-3 mt-sm-0'
+                  className='ml-sm-4 mt-3 mt-sm-0 text-nowrap'
                   dest={routeDest(adt('opportunityCreate', null))}
                   color='primary'>
                   Create Your First Opportunity
@@ -285,7 +286,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
 
   getAlerts: getAlertsValid(state => {
     return {
-      info: isVendor(state.viewerUser) && !state.isQualified
+      info: isVendor(state.viewerUser) && !state.isQualified && state.table
         ? [{
             text: (<span>You must <Link dest={routeDest(adt('orgCreate', null))}>create an organization</Link> and be a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link> in order to submit proposals to Sprint With Us opportunities.</span>)
           }]
