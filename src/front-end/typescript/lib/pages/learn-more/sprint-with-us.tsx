@@ -44,12 +44,12 @@ const TitleView: View = () => {
       <Container>
         <Row>
           <Col xs='12'>
-            <h1>Sprint With Us</h1>
+            <h1 className='mb-4'>Sprint With Us</h1>
           </Col>
         </Row>
         <Row>
           <Col xs='12' md='8'>
-            <em>Sprint With Us</em> is a procurement mechanism that allows the Government of B.C. to procure Agile software development teams.
+            <p className='mb-0'><em>Sprint With Us</em> is a procurement mechanism that allows the Government of B.C. to procure Agile software development teams.</p>
           </Col>
           <Col md='4'>
             <img className='d-none d-md-block position-absolute mt-n5 ml-6' src={prefixPath('/images/illustrations/sprint_with_us_learn_more.svg')} />
