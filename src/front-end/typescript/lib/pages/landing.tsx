@@ -5,7 +5,7 @@ import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, Vie
 import { TextColor } from 'front-end/lib/types';
 import { BulletPoint } from 'front-end/lib/views/bullet-point';
 import Icon from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
@@ -102,7 +102,7 @@ const Programs: View<{}> = () => {
                 children: ['Learn More'],
                 color: 'blue' as TextColor,
                 outline: true,
-                symbol_: leftPlacement(iconLinkSymbol('arrow-right'))
+                symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
             ]}
           />
@@ -122,7 +122,7 @@ const Programs: View<{}> = () => {
                 children: [('Learn More')],
                 color: 'blue' as TextColor,
                 outline: true,
-                symbol_: leftPlacement(iconLinkSymbol('arrow-right'))
+                symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
             ]}
           />
