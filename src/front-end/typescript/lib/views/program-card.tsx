@@ -17,7 +17,7 @@ const ProgramCard: View<Props> = ({ img, title, description, links, wideLinks, c
     <Col xs='12' md='6' className={className}>
       <div className='d-flex flex-column align-items-center bg-white rounded-lg border p-4 p-sm-5 text-center h-100'>
         <img src={img} className='w-100' style={{ maxHeight: '200px' }} alt={`${title} Image`} />
-        <h1 className='my-4'>{title}</h1>
+        <h2 className='my-4'>{title}</h2>
         <div className='mb-4 mb-sm-5'>{description}</div>
         <div className={`mt-auto d-flex flex-column ${wideLinks ? 'align-self-stretch' : ''} `}>
           {links.map((link, index) => (

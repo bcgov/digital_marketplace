@@ -168,7 +168,7 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
                   title='Register Your Organization'
                   description={(
                     <div>
-                      <p>Go to the Organizations page and click on the <strong>+ Create Organization</strong> button. Complete the form by providing all required information and submit.</p>
+                      <p>Go to the <em>Organizations</em> page and click on the <strong>+ Create Organization</strong> button. Complete the form by providing all required information and submit.</p>
                       <p className='mb-0'>Similarly, you may register your organization via your user profile.</p>
                     </div>
                   )}

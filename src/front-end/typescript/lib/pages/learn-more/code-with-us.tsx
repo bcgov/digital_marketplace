@@ -115,8 +115,7 @@ const VendorHIW: View = () => {
     <div>
       <h3 className='mb-4'>How It Works</h3>
       <HowItWorksItem
-        symbol_={adt('icon', 'search-outline' as const)}
-        mobileSymbol={adt('icon', 'search' as const)}
+        symbol_={adt('icon', 'search' as const)}
         fgColor='white'
         bgColor='purple'
         title='Search'
@@ -141,6 +140,7 @@ const VendorHIW: View = () => {
       />
       <HowItWorksItem
         symbol_={adt('icon', 'code' as const)}
+        mobileSymbol={adt('icon', 'code-solid' as const)}
         fgColor='white'
         bgColor='purple'
         title='Contribute'
@@ -152,7 +152,7 @@ const VendorHIW: View = () => {
         fgColor='white'
         bgColor='purple'
         title='Get Paid'
-        description='Once the acceptance criteria is met and your code is merged, submit your invoice and expect payment within 30 days. Read more about payment options here.'
+        description={(<p>Once the acceptance criteria is met and your code is merged, submit your invoice and expect payment within 30 days. Read more about payment options <Link dest={adt('external', 'https://github.com/BCDevExchange/code-with-us/wiki/4.-Payment')}>here</Link>.</p>)}
         className='mb-4'
       />
     </div>
