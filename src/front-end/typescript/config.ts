@@ -37,3 +37,5 @@ export const SWU_QUALIFICATION_TERMS_ID = 'sprint-with-us-qualification-terms-an
 export const TOTAL_AWARDED_COUNT_OFFSET = 62;
 
 export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
+
+export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;

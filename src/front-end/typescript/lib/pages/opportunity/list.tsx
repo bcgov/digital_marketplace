@@ -1,4 +1,4 @@
-import { SEARCH_DEBOUNCE_DURATION } from 'front-end/config';
+import { SEARCH_DEBOUNCE_DURATION, TRUNCATE_OPPORTUNITY_TITLE_LENGTH } from 'front-end/config';
 import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -11,7 +11,7 @@ import Badge, { OpportunityBadge } from 'front-end/lib/views/badge';
 import { IconInfo } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramType from 'front-end/lib/views/program-type';
-import { debounce } from 'lodash';
+import { debounce, truncate } from 'lodash';
 import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
 import { compareDates, find, formatAmount, formatDateAndTime } from 'shared/lib';
@@ -59,15 +59,19 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
+function truncateTitle(title: string): string {
+  return truncate(title, { length: TRUNCATE_OPPORTUNITY_TITLE_LENGTH });
+}
+
 function categorizeOpportunities(cwu: CWU.CWUOpportunitySlim[], swu: SWU.SWUOpportunitySlim[], viewerUser?: User): CategorizedOpportunities {
   const opportunities: Opportunity[] = [
     ...(cwu.map(o => adt('cwu' as const, {
       ...o,
-      title: o.title || CWU.DEFAULT_OPPORTUNITY_TITLE
+      title: truncateTitle(o.title || CWU.DEFAULT_OPPORTUNITY_TITLE)
     }))),
     ...(swu.map(o => adt('swu' as const, {
       ...o,
-      title: o.title || SWU.DEFAULT_OPPORTUNITY_TITLE
+      title: truncateTitle(o.title || SWU.DEFAULT_OPPORTUNITY_TITLE)
     })))
   ];
   const empty: CategorizedOpportunities = {

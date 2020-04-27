@@ -194,7 +194,7 @@ const Welcome: View<Pick<ValidState, 'viewerUser'>> = ({ viewerUser }) => {
     <div className='d-flex flex-column justify-content-center align-items-stretch flex-grow-1'>
       <Row className='justify-content-center text-center'>
         <Col xs='12' sm='10' md='6'>
-          <img src={prefixPath('/images/sprint_with_us.svg')} className='mb-5 mb-md-6' />
+          <img src={prefixPath('/images/dashboard_welcome.svg')} className='mb-5 mb-md-6' />
           <h1 className='mb-4'>Welcome to the Digital Marketplace!</h1>
           <p>
             {vendor
@@ -242,11 +242,13 @@ const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
         <Col xs='12' md='9'>
           <div className='rounded-lg border bg-white p-4 p-sm-4h shadow-hover'>
             <div className='d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3'>
-              <div className='font-weight-bold mr-3'>{table.title}</div>
+              <div className='font-weight-bold mr-sm-3'>{table.title}</div>
               {table.link
-                ? (<Link className='ml-auto font-size-small' dest={routeDest(table.link.route)} iconSymbolSize={0.9} symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}>
-                    {table.link.text}
-                  </Link>)
+                ? (<span className='d-none d-sm-inline-flex ml-sm-auto font-size-small'>
+                    <Link dest={routeDest(table.link.route)} iconSymbolSize={0.9} symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}>
+                      {table.link.text}
+                    </Link>
+                  </span>)
                 : null}
             </div>
             <Table.view
