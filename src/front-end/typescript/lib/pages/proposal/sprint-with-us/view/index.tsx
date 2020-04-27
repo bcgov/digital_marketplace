@@ -109,11 +109,11 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
               switch (state.tab[0]) {
                 case 'codeChallenge': return 'codeChallenge' as const;
                 case 'teamScenario': return 'teamScenario' as const;
-                case 'teamQuestions': return 'proposals' as const;
+                case 'teamQuestions': return 'teamQuestions' as const;
                 case 'proposal':
                 case 'history':
                 default:
-                  return 'scoresheet' as const;
+                  return 'proposals' as const;
               }
             })()
           }))
