@@ -539,8 +539,8 @@ const resource: Resource = {
           switch (body.tag) {
             case 'edit':
               dbResult = await db.updateCWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
-              // Notify all subscribed users on the opportunity of the update (only if published)
-              if (isValid(dbResult) && dbResult.value.status === CWUOpportunityStatus.Published) {
+              // Notify all subscribed users on the opportunity of the update (only if not draft)
+              if (isValid(dbResult) && dbResult.value.status !== CWUOpportunityStatus.Draft) {
                 cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
               }
               break;

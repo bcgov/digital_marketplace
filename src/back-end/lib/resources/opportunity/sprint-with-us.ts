@@ -821,8 +821,8 @@ const resource: Resource = {
           switch (body.tag) {
             case 'edit':
               dbResult = await db.updateSWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
-              // Notify all subscribed users on the opportunity of the update (only if published status)
-              if (isValid(dbResult) && dbResult.value.status === SWUOpportunityStatus.Published) {
+              // Notify all subscribed users on the opportunity of the update (only if not draft status)
+              if (isValid(dbResult) && dbResult.value.status !== SWUOpportunityStatus.Draft) {
                 swuOpportunityNotifications.handleSWUUpdated(connection, dbResult.value);
               }
               break;
