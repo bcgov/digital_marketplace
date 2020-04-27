@@ -419,7 +419,9 @@ const Phase: View<PhaseProps> = ({ icon, phase }) => {
           <IconInfo name='calendar' value='Phase Dates' className='font-weight-bold mb-1' />
           <p className='pb-4 border-bottom mb-4'>{formatDate(phase.startDate, true)} to {formatDate(phase.completionDate, true)}</p>
           <IconInfo name='toolbox-outline' value='Required Capabilities' className='font-weight-bold mb-2' />
-          <Capabilities capabilities={phase.requiredCapabilities} showChecked={false} showFullOrPartTime />
+          {phase.requiredCapabilities
+            ? (<Capabilities capabilities={phase.requiredCapabilities} showChecked={false} showFullOrPartTime />)
+            : EMPTY_STRING}
         </div>
       </div>
     </Col>
