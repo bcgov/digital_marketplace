@@ -295,7 +295,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   }),
 
   getContextualActions: getContextualActionsValid(({ state }) => {
-    if (isVendor(state.viewerUser)) { return null; }
+    if (isVendor(state.viewerUser) || !state.table) { return null; }
     return adt('links', [{
       children: 'Create Opportunity',
       symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
