@@ -2,10 +2,10 @@ import { Route } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
-import Badge from 'front-end/lib/views/badge';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
+import Skills from 'front-end/lib/views/skills';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
@@ -129,17 +129,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
         </Col>
         <Col xs='12' md='6'>
           <div className='font-weight-bold mb-2 mt-3 mt-md-0'>Required Skills</div>
-          <div className='d-flex flex-wrap'>
-            {skills.length
-              ? skills.map((skill, i) => (
-                  <Badge
-                    key={`opportunity-skill-${i}`}
-                    className={`mb-2 ${i < skills.length - 1 ? 'mr-2' : ''}`}
-                    text={skill}
-                    color='purple' />
-                ))
-              : 'None'}
-          </div>
+          <Skills skills={skills} />
         </Col>
       </Row>
     </div>

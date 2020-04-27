@@ -14,6 +14,7 @@ export type Grays
 export type Color
   = 'blue'
   | 'blue-alt'
+  | 'blue-alt-2'
   | 'blue-dark'
   | 'blue-dark-alt'
   | 'blue-dark-alt-2'

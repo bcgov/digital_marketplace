@@ -15,6 +15,7 @@ import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
+import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { Addendum, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
@@ -28,7 +29,7 @@ export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Ad
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
-const newAttachmentMetadata = [adt('any' as const)];
+const newAttachmentMetadata: FileUploadMetadata = [];
 
 export interface State {
   opportunity?: CWUOpportunity;

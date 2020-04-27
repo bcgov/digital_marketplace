@@ -7,7 +7,7 @@ import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { readCWUProposalHistory, readCWUProposalScore, readOneCWUProposal as hasReadPermissionCWUProposal } from 'back-end/lib/permissions';
 import { valid } from 'shared/lib/http';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CWUOpportunityStatus, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
@@ -156,15 +156,29 @@ async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection:
   };
 }
 
-export async function hasAttachmentPermission(connection: Connection, session: Session, id: string): Promise<boolean> {
+/**
+ * This function checks whether the user can read the file
+ * via its association to BOTH the CWU opportunity or proposal.
+ */
+export async function hasCWUAttachmentPermission(connection: Connection, session: Session | null, id: string): Promise<boolean> {
   // If file is an attachment on a publicly viewable opportunity, allow
-  const results = await generateCWUOpportunityQuery(connection)
-    .join('cwuOpportunityAttachments as attachments', 'versions.id', '=', 'attachments.opportunityVersion')
+  const query = generateCWUOpportunityQuery(connection)
+    .join('cwuOpportunityAttachments as attachments', 'version.id', '=', 'attachments.opportunityVersion')
     .whereIn('stat.status', publicOpportunityStatuses as CWUOpportunityStatus[])
     .andWhere({ 'attachments.file': id })
     .clearSelect()
     .select('attachments.*');
 
+  // If the opportunity was created by the current user, allow for private opportunity statuses as well
+  if (session) {
+    query
+      .orWhere(function() {
+        this
+          .whereIn('stat.status', privateOpportunitiesStatuses as CWUOpportunityStatus[])
+          .andWhere({ 'opp.createdBy': session.user.id, 'attachments.file': id });
+      });
+  }
+  const results = await query;
   if (results.length > 0) {
     return true;
   }
@@ -172,7 +186,7 @@ export async function hasAttachmentPermission(connection: Connection, session: S
   // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
   if (session) {
     const rawProposals = await connection('cwuProposalAttachments as attachments')
-      .innerJoin('cwuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
+      .join('cwuProposals as proposals', 'proposals.id', '=', 'attachments.proposal')
       .where({ 'attachments.file': id })
       .select<RawCWUProposal[]>('proposals.*');
 

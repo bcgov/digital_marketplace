@@ -3,6 +3,7 @@ import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-ma
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { makeUploadMarkdownImage } from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { compareDates, formatDateAndTime } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
@@ -174,4 +175,17 @@ export const view: View<Props> = props => {
           dispatch={mapComponentDispatch(dispatch, msg => adt('onChangeExistingAddendum', [i, msg]) as Msg)} />
       ))}
     </div>);
+};
+
+export const AddendaList: View<{ addenda: Addendum[]; }> = ({ addenda }) => {
+  return (
+    <div>
+      {addenda.map((a, i) => (
+        <div key={`addenda-list-${i}`} className={`border rounded overflow-hidden ${i < addenda.length - 1 ? 'mb-4' : ''}`}>
+          <Markdown source={a.description} className='p-3' smallerHeadings openLinksInNewTabs />
+          <div className='bg-light text-secondary p-3 border-top'>Posted on {formatDateAndTime(a.createdAt, true)}</div>
+        </div>
+      ))}
+    </div>
+  );
 };

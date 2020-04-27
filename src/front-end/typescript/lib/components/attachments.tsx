@@ -183,3 +183,20 @@ export const view: View<Props> = props => {
       ))}
     </div>);
 };
+
+export const AttachmentList: View<{ files: FileRecord[]; }> = ({ files }) => {
+  return (
+    <div className='d-flex flex-column flex-nowrap align-items-start'>
+      {files.map((f, i) => (
+        <Link
+          key={`file-list-${i}`}
+          download
+          dest={externalDest(fileBlobPath(f))}
+          className={`flex-nowrap ${i < files.length - 1 ? 'mb-3' : ''}`}>
+          <Icon name='paperclip' className='mr-2 flex-shrink-0 align-self-start mt-1' />
+          {f.name}
+        </Link>
+      ))}
+    </div>
+  );
+};

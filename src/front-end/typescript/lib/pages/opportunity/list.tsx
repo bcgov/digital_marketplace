@@ -7,11 +7,10 @@ import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { cwuOpportunityToPublicColor, cwuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/code-with-us/lib';
-import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
-import Badge from 'front-end/lib/views/badge';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import Badge, { OpportunityBadge } from 'front-end/lib/views/badge';
+import { IconInfo } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import ProgramType from 'front-end/lib/views/program-type';
 import { debounce } from 'lodash';
 import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
@@ -293,11 +292,12 @@ const Header: ComponentView<State, Msg> = () => {
       </Col>
       <Col xs='12' md='6' className='mb-4 mb-md-0'>
         <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
-          <OpportunityType type_='cwu' className='mb-2' />
+          <ProgramType type_='cwu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
           <Link
             className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            iconSymbolSize={0.9}
             dest={routeDest(adt('learnMoreCWU', null))}>
             Learn More
           </Link>
@@ -305,11 +305,12 @@ const Header: ComponentView<State, Msg> = () => {
       </Col>
       <Col xs='12' md='6'>
         <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
-          <OpportunityType type_='swu' className='mb-2' />
+          <ProgramType type_='swu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
           <Link
             className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            iconSymbolSize={0.9}
             dest={routeDest(adt('learnMoreSWU', null))}>
             Learn More
           </Link>
@@ -353,64 +354,6 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-interface OpportunityTypeProps {
-  type_: Opportunity['tag'];
-  className?: string;
-}
-
-const OpportunityType: View<OpportunityTypeProps> = ({ type_, className = '' }) => {
-  return (
-    <div className={`d-flex flex-nowrap align-items-center font-weight-bold text-info ${className}`}>
-      <Icon
-        className='mr-2 flex-shrink-0 flex-grow-0'
-        name={type_ === 'cwu' ? 'code-solid' : 'users-class'} />
-      {type_ === 'cwu' ? 'Code With Us' : 'Sprint With Us'}
-    </div>
-  );
-};
-
-interface OpportunityBadgeProps {
-  opportunity: Opportunity;
-  viewerUser?: User;
-  className?: string;
-}
-
-const OpportunityBadge: View<OpportunityBadgeProps> = ({ opportunity, viewerUser, className }) => {
-  switch (opportunity.tag) {
-    case 'cwu':
-      return (<Badge
-        className={className}
-        text={cwuOpportunityToPublicStatus(opportunity.value, viewerUser)}
-        color={cwuOpportunityToPublicColor(opportunity.value, viewerUser)} />);
-    case 'swu':
-      return (<Badge
-        className={className}
-        text={swuOpportunityToPublicStatus(opportunity.value, viewerUser)}
-        color={swuOpportunityToPublicColor(opportunity.value, viewerUser)} />);
-  }
-};
-
-interface IconInfoProps {
-  name: AvailableIcons;
-  value: string;
-  className?: string;
-}
-
-const IconInfo: View<IconInfoProps> = ({ name, value, className }) => {
-  return (
-    <div className={className}>
-      <div className='d-flex flex-nowrap align-items-center text-nowrap'>
-        <Icon
-          name={name}
-          width={0.9}
-          height={0.9}
-          className='mr-2 flex-shrink-0' />
-        {value}
-      </div>
-    </div>
-  );
-};
-
 interface OpportunityCardProps {
   opportunity: Opportunity;
   viewerUser?: User;
@@ -444,10 +387,11 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
           <h5 className='mb-2'>
             {opportunity.value.title}
           </h5>
-          <OpportunityType type_={opportunity.tag} />
+          <ProgramType type_={opportunity.tag} />
           <div className='mt-3 font-size-small d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-sm-center text-body'>
             <OpportunityBadge opportunity={opportunity} viewerUser={viewerUser} className='mb-2 mb-sm-0' />
             <IconInfo
+              small
               name='alarm-clock-outline'
               value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
               className='ml-sm-3 flex-shrink-0' />
@@ -458,16 +402,19 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
         </Link>
         <div className='px-4 pt-3 border-top d-flex flex-wrap mt-auto flex-shrink-0 flex-grow-0 font-size-small align-items-center'>
           <IconInfo
+            small
             className='mr-3 mb-3'
             value={formatAmount(opportunity.tag === 'cwu' ? opportunity.value.reward : opportunity.value.totalMaxBudget, '$')}
             name='badge-dollar-outline' />
           <IconInfo
+            small
             className='mr-3 mb-3 d-none d-sm-flex'
             value={opportunity.value.location}
             name='map-marker-outline' />
           <div className='mr-auto'>
             {opportunity.value.remoteOk
               ? (<IconInfo
+                  small
                   className='mr-3 mb-3'
                   value='Remote OK'
                   name='laptop-outline' />)

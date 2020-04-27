@@ -1,7 +1,7 @@
 import { View } from 'front-end/lib/framework';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import Markdown from 'front-end/lib/views/markdown';
+import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
@@ -41,14 +41,14 @@ export const ExportedPropsal: View<Props> = ({ proposal, showOpportunityInformat
       <Row className='mt-5'>
         <Col xs='12'>
           <h5 className='mb-4'>Proposal:</h5>
-          <div><Markdown box source={proposal.proposalText} openLinksInNewTabs /></div>
+          <div><ProposalMarkdown box source={proposal.proposalText} /></div>
         </Col>
       </Row>
       {proposal.additionalComments
         ? (<Row className='mt-5'>
             <Col xs='12'>
               <h5 className='mb-4'>Additional Comments:</h5>
-              <div><Markdown box source={proposal.additionalComments} openLinksInNewTabs /></div>
+              <div><ProposalMarkdown box source={proposal.additionalComments} /></div>
             </Col>
           </Row>)
         : null}

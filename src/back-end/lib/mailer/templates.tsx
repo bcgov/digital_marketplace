@@ -376,7 +376,7 @@ const Simple: View<SimpleProps> = props => {
       </Fragment>
       <Fragment>
         {callsToAction
-          ? <Row style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', ...styles.utilities.text.center}}>
+          ? <Row style={{...styles.utilities.text.center}}>
               {callsToAction.map((call, i) => (<CallToAction key={`call-to-action-${i}`} {...call} />))}
             </Row>
           : null}

@@ -255,7 +255,7 @@ const resource: Resource = {
           }
           // If published, notify subscribed users
           if (dbResult.value.status === CWUOpportunityStatus.Published) {
-            cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value);
+            cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value, false);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -539,12 +539,17 @@ const resource: Resource = {
           switch (body.tag) {
             case 'edit':
               dbResult = await db.updateCWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
+              // Notify all subscribed users on the opportunity of the update (only if published)
+              if (isValid(dbResult) && dbResult.value.status === CWUOpportunityStatus.Published) {
+                cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
+              }
               break;
             case 'publish':
+              const existingOpportunity = getValidValue(await db.readOneCWUOpportunity(connection, request.params.id, session), null);
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);
               // Notify subscribers of publication
               if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value);
+                cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value, existingOpportunity?.status === CWUOpportunityStatus.Suspended);
               }
               break;
             case 'startEvaluation':

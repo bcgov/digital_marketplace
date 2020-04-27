@@ -14,9 +14,10 @@ import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
+import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
-import { isVendor, User, UserType } from 'shared/lib/resources/user';
+import { isVendor, User } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
@@ -29,10 +30,7 @@ export type TabId = 'Proponent' | 'Proposal' | 'Attachments';
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
-const newAttachmentMetadata = [
-  adt('userType' as const, UserType.Admin),
-  adt('userType' as const, UserType.Government)
-];
+const newAttachmentMetadata: FileUploadMetadata = [];
 
 export interface State {
   opportunity: CWUOpportunity;
@@ -253,13 +251,7 @@ export const init: Init<Params, State> = async ({ viewerUser, canRemoveExistingA
       validate: proposalValidation.validateProposalText,
       child: {
         value: proposal?.proposalText || '',
-        id: 'cwu-proposal-proposalText',
-        //TODO need to figure out how to set permissions for markdown images here
-        //might require special back-end endpoint
-        uploadImage: api.makeUploadMarkdownImage([
-          adt('userType', UserType.Admin),
-          adt('userType', UserType.Government)
-        ])
+        id: 'cwu-proposal-proposalText'
       }
     })),
 
@@ -268,12 +260,7 @@ export const init: Init<Params, State> = async ({ viewerUser, canRemoveExistingA
       validate: proposalValidation.validateAdditionalComments,
       child: {
         value: proposal?.additionalComments || '',
-        id: 'cwu-proposal-additional-comments',
-        //TODO need to figure out how to set permissions for markdown images here
-        uploadImage: api.makeUploadMarkdownImage([
-          adt('userType', UserType.Admin),
-          adt('userType', UserType.Government)
-        ])
+        id: 'cwu-proposal-additional-comments'
       }
     })),
 

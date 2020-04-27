@@ -33,7 +33,7 @@ const links: AnchorProps[] = [
   },
   {
     children: 'Contact Us',
-    dest: emailDest(CONTACT_EMAIL)
+    dest: emailDest([CONTACT_EMAIL])
   },
   {
     children: 'Procurement Concierge',

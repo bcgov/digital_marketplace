@@ -249,7 +249,9 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             return stopDeleteLoading(state);
           }
           dispatch(toast(adt('success', toasts.deleted.success)));
-          dispatch(replaceRoute(adt('opportunities' as const, null)));
+          dispatch(replaceRoute(adt('opportunitySWUView' as const, {
+            opportunityId: state.opportunity.id
+          })));
           return state;
         }
       ];
@@ -402,7 +404,7 @@ export const component: Tab.Component<State, Msg> = {
       case 'withdrawAfterDeadline':
         return {
           title: 'Withdraw Sprint With Us Proposal?',
-          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? Your will no longer be considered for this opportunity.',
+          body: () => 'Are you sure you want to withdraw your Sprint With Us proposal? You will no longer be considered for this opportunity.',
           onCloseMsg: adt('hideModal'),
           actions: [
             {

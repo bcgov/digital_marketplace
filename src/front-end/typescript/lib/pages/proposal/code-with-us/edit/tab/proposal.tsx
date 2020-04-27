@@ -257,7 +257,9 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
             return stopDeleteLoading(state);
           }
           dispatch(toast(adt('success', toasts.deleted.success)));
-          dispatch(replaceRoute(adt('opportunities' as const, null)));
+          dispatch(replaceRoute(adt('opportunityCWUView' as const, {
+            opportunityId: state.opportunity.id
+          })));
           return state;
         }
       ];

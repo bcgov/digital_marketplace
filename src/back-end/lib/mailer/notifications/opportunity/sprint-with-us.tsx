@@ -22,15 +22,15 @@ export async function handleSWUSubmittedForReview(connection: db.Connection, opp
   }
 }
 
-export async function handleSWUPublished(connection: db.Connection, opportunity: SWUOpportunity): Promise<void> {
+export async function handleSWUPublished(connection: db.Connection, opportunity: SWUOpportunity, repost: boolean): Promise<void> {
   // Notify all users with notifications on
   const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
-  await Promise.all(subscribedUsers.map(async user => await newSWUOpportunityPublished(user, opportunity)));
+  await Promise.all(subscribedUsers.map(async user => await newSWUOpportunityPublished(user, opportunity, repost)));
 
   // Notify authoring gov user of successful publish
   const author = opportunity?.createdBy && getValidValue(await db.readOneUser(connection, opportunity.createdBy.id), null);
   if (author) {
-    await successfulSWUPublication(author, opportunity);
+    await successfulSWUPublication(author, opportunity, repost);
   }
 }
 
@@ -80,11 +80,11 @@ export async function handleSWUReadyForEvaluation(connection: db.Connection, opp
 
 export const newSWUOpportunityPublished = makeSend(newSWUOpportunityPublishedT);
 
-export async function newSWUOpportunityPublishedT(recipient: User, opportunity: SWUOpportunity): Promise<Emails> {
-  const title = 'A New Sprint With Us Opportunity Has Been Posted';
-  const description = 'A new opportunity has been posted to the Digital Marketplace:';
+export async function newSWUOpportunityPublishedT(recipient: User, opportunity: SWUOpportunity, repost: boolean): Promise<Emails> {
+  const title = `A ${repost ? '' : 'New'} Sprint With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
+  const description = `A ${repost ? 'previously suspended' : 'new'} opportunity has been ${repost ? 're-posted' : 'posted'} to the Digital Marketplace:`;
   return [{
-    summary: 'New SWU opportunity published; sent to user with notifications turned on.',
+    summary: `${repost ? 'SWU opportunity re-published after suspension' : 'New SWU opportunity published'}; sent to user with notifications turned on.`,
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -168,11 +168,11 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(recipient: User
 
 export const successfulSWUPublication = makeSend(successfulSWUPublicationT);
 
-export async function successfulSWUPublicationT(recipient: User, opportunity: SWUOpportunity): Promise<Emails> {
-  const title = 'Your Sprint With Us Opportunity Has Been Posted';
-  const description = 'You have successfully posted the following Digital Marketplace opportunity';
+export async function successfulSWUPublicationT(recipient: User, opportunity: SWUOpportunity, repost: boolean): Promise<Emails> {
+  const title = `Your Sprint With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
+  const description = `You have successfully ${repost ? 're-posted' : 'posted'} the following Digital Marketplace opportunity`;
   return[{
-    summary: 'SWU successfully published; sent to publishing government user.',
+    summary: `SWU successfully ${repost ? 're-published' : 'published'}; sent to publishing government user.`,
     to: recipient.email,
     subject: title,
     html: templates.simple({
@@ -277,6 +277,7 @@ export async function readyForEvalSWUOpportunityT(recipient: User, opportunity: 
   const title = 'Your Sprint With Us Opportunity is Ready to Be Evaluated';
   const description = 'Your Digital Marketplace opportunity has reached its proposal deadline.';
   return [{
+    summary: 'SWU opportunity proposal deadline reached; sent to government author.',
     to: recipient.email,
     subject: title,
     html: templates.simple({

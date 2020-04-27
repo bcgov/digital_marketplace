@@ -372,7 +372,7 @@ const resource: Resource = {
           }
           // If published, notify subscribed users
           if (dbResult.value.status === SWUOpportunityStatus.Published) {
-            swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value);
+            swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value, false);
           }
           return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
         }),
@@ -834,10 +834,11 @@ const resource: Resource = {
               }
               break;
             case 'publish':
+              const existingOpportunity = getValidValue(await db.readOneSWUOpportunity(connection, request.params.id, session), null);
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.Published, body.value, session);
               // Notify all users with notifications on of the new opportunity
               if (isValid(dbResult)) {
-                swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value);
+                swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value, existingOpportunity?.status === SWUOpportunityStatus.Suspended);
               }
               break;
             case 'startCodeChallenge':

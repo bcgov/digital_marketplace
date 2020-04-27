@@ -1,7 +1,7 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { View } from 'front-end/lib/framework';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Markdown from 'front-end/lib/views/markdown';
+import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
@@ -32,18 +32,20 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
   return (
     <div className={className}>
       <h5 className='mb-3'>Question {index + 1}</h5>
-      <p>{question.question}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>{question.question}</p>
       <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
         {countWords(response.response)} / {question.wordLimit} word{question.wordLimit === 1 ? '' : 's'}
-        <Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>
+        <Separator spacing='2' color='secondary'>|</Separator>
         {response.score === undefined || response.score === null
           ? `Unscored (${question.score} point${question.score === 1 ? '' : 's'} available)`
           : `${response.score} / ${question.score} point${question.score === 1 ? '' : 's'}`}
       </div>
       <Alert color='primary' fade={false} className='mb-4'>
-        {question.guideline}
+        <div style={{ whiteSpace: 'pre-line' }}>
+          {question.guideline}
+        </div>
       </Alert>
-      <Markdown
+      <ProposalMarkdown
         box
         source={response.response || EMPTY_STRING} />
     </div>

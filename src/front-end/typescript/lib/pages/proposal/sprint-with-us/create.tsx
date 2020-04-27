@@ -51,9 +51,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
   async success({ routeParams, shared, dispatch, routePath }) {
     const { opportunityId } = routeParams;
     // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
-    const proposalsResult = await api.proposals.swu.readMany(opportunityId);
-    if (api.isValid(proposalsResult) && proposalsResult.value.length) {
-      const existingProposal = proposalsResult.value[0];
+    const existingProposal = await api.proposals.swu.getExistingProposalForOpportunity(opportunityId);
+    if (existingProposal) {
       dispatch(replaceRoute(adt('proposalSWUEdit' as const, {
         opportunityId,
         proposalId: existingProposal.id
