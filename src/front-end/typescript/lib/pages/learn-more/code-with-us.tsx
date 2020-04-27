@@ -161,7 +161,7 @@ const VendorHIW: View = () => {
 
 const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
-    <div className='bg-white py-6'>
+    <div className='bg-white pt-5 pb-6'>
       <Container>
         <Row>
           <Col xs='12' md='8'>
