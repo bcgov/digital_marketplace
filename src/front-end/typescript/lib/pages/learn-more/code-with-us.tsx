@@ -52,7 +52,7 @@ const TitleView: View = () => {
             <em>Code With Us</em> is a procurement mechanism for public sector organizations in British Columbia to pay developers for code.
           </Col>
           <Col md='4'>
-            <img className='d-none d-md-block position-absolute ml-5' src={prefixPath('/images/illustrations/code_with_us_learn_more.svg')} />
+            <img className='d-none d-md-block position-absolute ml-6' src={prefixPath('/images/illustrations/code_with_us_learn_more.svg')} />
           </Col>
         </Row>
       </Container>
@@ -68,11 +68,11 @@ const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <Col xs='12' md='8'>
             <Accordion
               toggle={() => dispatch(adt('toggleVendorAccordion'))}
-              color='bcgov-blue'
+              color='info'
               title='Vendors'
-              titleClassName='h3 mb-0 ml-2'
+              titleClassName='h2 mb-0 ml-2'
               icon='store'
-              iconColor='bcgov-blue'
+              iconColor='info'
               iconWidth={2.5}
               iconHeight={2.5}
               chevronWidth={2}
@@ -167,11 +167,11 @@ const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <Col xs='12' md='8'>
             <Accordion
               toggle={() => dispatch(adt('togglePublicSectorAccordion'))}
-              color='bcgov-blue'
+              color='info'
               title='Public Sector'
-              titleClassName='h3 mb-0 ml-2'
+              titleClassName='h2 mb-0 ml-2'
               icon='government'
-              iconColor='bcgov-blue'
+              iconColor='info'
               iconWidth={2.5}
               iconHeight={2.5}
               chevronWidth={2}
