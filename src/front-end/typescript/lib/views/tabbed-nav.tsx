@@ -31,7 +31,7 @@ const TabbedNav: View<Props> = ({ tabs, className = '' }) => {
               focusable={!t.active}
               color={t.active ? 'body' : 'primary'}
               className={`${t.active ? 'active' : ''}`}>
-              {t.count !== undefined
+              {t.count
                 ? (<span className='small' style={{ marginTop: '-0.1rem', marginRight: '0.35rem' }}><Badge pill color='warning' text={String(t.count)} /></span>)
                 : null}
               {t.text}

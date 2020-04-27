@@ -1,9 +1,15 @@
-import { makePageMetadata } from 'front-end/lib';
+import { TOTAL_AWARDED_COUNT_OFFSET, TOTAL_AWARDED_VALUE_OFFSET } from 'front-end/config';
+import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, PageComponent, PageInit, toast, Update } from 'front-end/lib/framework';
-import Accordion from 'front-end/lib/views/accordion';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
+import { TextColor } from 'front-end/lib/types';
+import { BulletPoint } from 'front-end/lib/views/bullet-point';
+import Icon from 'front-end/lib/views/icon';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
-import { Col, Row } from 'reactstrap';
+import { Col, Container, Row } from 'reactstrap';
+import { formatAmount } from 'shared/lib';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State {
@@ -11,10 +17,7 @@ export interface State {
   showAccordion: boolean;
 }
 
-type InnerMsg
-  = ADT<'noop'>
-  | ADT<'showToast'>
-  | ADT<'toggleAccordion'>;
+type InnerMsg = ADT<'noop'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -29,78 +32,271 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
 });
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  switch (msg.tag) {
-    case 'showToast':
-      return [
-        state,
-        async (state, dispatch) => {
-          dispatch(toast(adt('info', {
-            title: state.toast[0],
-            body: state.toast[1]
-          })));
-          return null;
-        }
-      ];
-    case 'toggleAccordion':
-      return [state.update('showAccordion', v => !v)];
-    default:
-      return [state];
-  }
+  return [state];
 };
 
-const view: ComponentView<State, Msg> = ({state, dispatch}) => {
+const Hero: View = () => {
   return (
-    <Row>
-      <Col xs='12'>
-        Landing page coming soon.
-      </Col>
-      <Col xs='12' className='pt-7'>
-        <button onClick={() => dispatch(adt('showToast'))}>Show Toast</button>
-      </Col>
-      <Col xs='12' md='8' className='pt-7'>
-        <Accordion
-          toggle={() => dispatch(adt('toggleAccordion'))}
-          color='info'
-          title='Inception'
-          titleClassName='h3'
-          icon='map'
-          iconWidth={2}
-          iconHeight={2}
-          iconClassName='mr-3'
-          chevronWidth={1.5}
-          chevronHeight={1.5}
-          open={state.showAccordion}>
-          Children!
-        </Accordion>
-      </Col>
-    </Row>
+    <Container className='pt-5 pb-7 pb-md-8'>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='6'>
+          <h1 style={{lineHeight: '3.75rem'}}>
+            Discover Unique Opportunities to Collaborate with the BC Public Sector.
+          </h1>
+        </Col>
+      </Row>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='6' className='mt-3'>
+          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and BC's public sector.
+        </Col>
+      </Row>
+      <Row className='mt-5 mb-6 mb-md-8'>
+        <Col xs='12' className='d-flex justify-content-center'>
+          <Link
+            button
+            symbol_={leftPlacement(iconLinkSymbol('search'))}
+            dest={routeDest(adt('opportunities', null))}
+            color='primary'>
+            Browse Opportunities
+          </Link>
+        </Col>
+      </Row>
+      <Row className='text-nowrap'>
+        <Col xs='12'>
+          <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
+            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center mr-md-6 mb-4 mb-md-0'>
+              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(TOTAL_AWARDED_COUNT_OFFSET)}</div>
+              <div className='ml-md-3 font-size-small text-secondary'>Total Opportunities Awarded</div>
+            </div>
+            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
+              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(TOTAL_AWARDED_VALUE_OFFSET, '$')}</div>
+              <div className='ml-md-3 font-size-small text-secondary'>Total Value of All Opportunities</div>
+            </div>
+          </div>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const Programs: View = () => {
+  return (
+    <div className='bg-blue-light-alt-2 py-7'>
+      <Container>
+        <Row>
+          <ProgramCard
+            img={prefixPath('/images/illustrations/code_with_us.svg')}
+            title='Code With Us'
+            className='mb-4 mb-md-0'
+            description={
+              (<div>
+                <div>Commit Code.</div>
+                <div>Get Paid.</div>
+                <div className='mt-3'>Opportunities up to $70,000.</div>
+              </div>)
+            }
+            links={[
+              {
+                button: true,
+                dest: routeDest(adt('learnMoreCWU', null)),
+                children: ['Learn More'],
+                color: 'blue' as TextColor,
+                outline: true,
+                symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
+              }
+            ]}
+          />
+          <ProgramCard
+            img={prefixPath('/images/illustrations/sprint_with_us.svg')}
+            title='Sprint With Us'
+            description={
+              (<div>
+                <div>Supply an Agile Team to work with a government product manager in a modern DevOps environment.</div>
+                <div className='mt-3'>Opportunities up to $2,000,000.</div>
+              </div>)
+            }
+            links={[
+              {
+                button: true,
+                dest: routeDest(adt('learnMoreSWU', null)),
+                children: [('Learn More')],
+                color: 'blue' as TextColor,
+                outline: true,
+                symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
+              }
+            ]}
+          />
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+const AppInfo: View = () => {
+  return (
+    <Container className='mt-7 mt-md-9'>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='8'>
+          <h2 className='mb-0'>
+            Join a community of developers, entrepreneurs and public service innovators who are making public services better.
+          </h2>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs='12' className='d-flex align-items-center justify-content-center'>
+          <div className='px-1 pt-1 mt-4 bg-bcgov-yellow' style={{ width: '5rem' }} />
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const VendorRoleInfo: View = () => {
+  return (
+    <Container className='mt-7 mt-md-9'>
+      <Row>
+        <Col xs='12' className='order-2 order-md-1'>
+          <h6 className='text-bcgov-blue'><Icon name='store' className='mr-2 mb-1' />Vendors</h6>
+        </Col>
+        <Col xs='12' md='6' className='order-3 order-md-2'>
+          <h4 className='mb-3'>Collaborate with the BC Public Sector to Build Innovative Digital Products.</h4>
+          <BulletPoint
+            className='ml-3 my-4'
+            icon='star-exclamation'
+            iconColor='bcgov-yellow'
+            header='Submit proposals to open opportunities'
+            subText='Save a draft version of your proposal until you are ready to submit it.' />
+          <BulletPoint
+            className='ml-3 my-4'
+            icon='star-exclamation'
+            iconColor='bcgov-yellow'
+            header='View and export your submitted proposals'
+            subText='View all outstanding and past submissions, where you can see your scores and rankings once submitted.' />
+          <BulletPoint
+            className='ml-3 my-4'
+            icon='star-exclamation'
+            iconColor='bcgov-yellow'
+            header='Build your team'
+            subText='Add team members to your organization.' />
+        </Col>
+        <Col xs='12' md='6' className='order-1 order-md-3 mb-5 mb-md-0'>
+          <img className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/collaboration_work.svg')} />
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const GovRoleInfo: View = () => {
+  return (
+    <Container className='my-7 my-md-9'>
+      <Row>
+        <Col xs='12' md='6' className='mb-5 mb-md-0'>
+          <img className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/consultation.svg')} />
+        </Col>
+        <Col cs='12' md='6'>
+          <Row>
+            <Col xs='12'>
+              <h6 className='text-bcgov-blue'><Icon name='government' className='mr-2 pb-1' />Public Service Employees</h6>
+            </Col>
+            <Col xs='12'>
+              <h4 className='mb-3'>Connect with Talented Developers to Build Your Digital Products.</h4>
+              <BulletPoint
+                className='ml-3 my-4'
+                icon='star-exclamation'
+                iconColor='bcgov-yellow'
+                header='Post a new opportunity'
+                subText='Select the program that suits your unique needs, post your opportunity and wait for the proposals to come in.' />
+              <BulletPoint
+                className='ml-3 my-4'
+                icon='star-exclamation'
+                iconColor='bcgov-yellow'
+                header='View and manage your posted opportunities'
+                subText='View a complete history of your posted opportunities, where you can review and evaluate all received proposals, award the opportunity to the successful proponent, and more.' />
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const TestimonialsView: View = () => {
+  return (
+    <div className='bg-blue-dark-alt-2 py-7'>
+      <Container>
+        <Row>
+          <Col xs='12' md='6'>
+            <Row>
+              <Col xs='12' className='d-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
+              <Col xs='8' className='d-flex mx-auto pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“We quickly found a qualified developer, worked collaboratively in the open, and got a great final product.”</h6></Col>
+              <Col xs='12' className='d-flex flex-column justify-content-center'>
+                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/andy.jpg')} width='40px' height='40px' />
+                <div className='text-bcgov-yellow font-size-small text-center'>Andy, Environmental Analyst</div>
+                <div className='text-white small text-center'>Province of B.C.</div>
+              </Col>
+            </Row>
+          </Col>
+          <Col xs='12' md='6'>
+            <Row>
+              <Col xs='12' className='d-none d-md-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
+              <Col xs='8' className='d-flex mx-auto pt-7 pt-md-0 pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“I think this platform could be a game changer for matching government agencies with the best talent in this province.”</h6></Col>
+              <Col xs='12' className='d-flex flex-column justify-content-center'>
+                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/wayne.jpg')} width='40px' height='40px' />
+                <div className='text-bcgov-yellow font-size-small text-center'>Wayne, Developer</div>
+                <div className='text-white small text-center'>Vancouver</div>
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+const BottomView: View = () => {
+  return (
+    <Container className='my-7'>
+      <Row className='justify-content-center text-center'>
+        <Col xs='12' md='8'>
+          <h2>Check out the latest opportunities on the Digital Marketplace</h2>
+        </Col>
+      </Row>
+      <Row className='mt-5'>
+        <Col xs='12' className='d-flex justify-content-center'>
+          <Link
+            button
+            symbol_={leftPlacement(iconLinkSymbol('search'))}
+            dest={routeDest(adt('opportunities', null))}
+            color='primary'>
+            Browse Opportunities
+          </Link>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  return (
+    <div>
+      <Hero />
+      <Programs />
+      <AppInfo />
+      <VendorRoleInfo />
+      <GovRoleInfo />
+      <TestimonialsView />
+      <BottomView />
+    </div>
   );
 };
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+  fullWidth: true,
   init,
   update,
   view,
   getMetadata() {
     return makePageMetadata('Welcome');
-  },
-  getAlerts() {
-    return {
-      ...emptyPageAlerts(),
-      info: [
-        { text: 'first test alert' },
-        { text: 'second test alert' }
-      ],
-      errors: [
-        { text: 'first test alert' },
-        { text: 'second test alert' }
-      ]
-    };
-  },
-  getBreadcrumbs() {
-    return [
-      { text: 'First' },
-      { text: 'Second' }
-    ];
   }
 };

@@ -30,4 +30,10 @@ export const TOAST_AUTO_DISMISS_DURATION = 20000; //ms
 
 export const SWU_PROPOSAL_EVALUATION_CONTENT_ID = 'sprint-with-us-proposal-evaluation';
 
+export const SWU_OPPORTUNITY_SCOPE_CONTENT_ID = 'sprint-with-us-opportunity-scope';
+
 export const SWU_QUALIFICATION_TERMS_ID = 'sprint-with-us-qualification-terms-and-conditions';
+
+export const TOTAL_AWARDED_COUNT_OFFSET = 62;
+
+export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;

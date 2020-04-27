@@ -28,7 +28,7 @@
     "typedoc:start": "npx serve --config typedoc/serve.json typedoc",
     "docs:readme-toc": "npx markdown-toc --maxdepth 3 -i README.md",
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > OPEN_SOURCE_LICENSES.txt",
-    "docs:db": "npx pg-doc --connection"
+    "docs:db": "npx pg-doc --out docs/DATABASE.md --connection"
   },
   "repository": {
     "type": "git",
