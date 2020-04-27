@@ -157,7 +157,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<RoutePar
             bodyRows,
             state: immutable(await Table.init({
               idNamespace: 'dashboard-table'
-            }))
+            })),
+            link: vendor
+              ? undefined
+              : { text: 'View all opportunities', route: adt('opportunities', null) }
           }
         : undefined
     }));
@@ -237,11 +240,11 @@ const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
       </Row>
       <Row>
         <Col xs='12' md='9'>
-          <div className='rounded-lg border bg-white p-3 p-sm-4'>
+          <div className='rounded-lg border bg-white p-3 p-sm-4 shadow-hover'>
             <div className='d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3'>
-              <div className='font-weight-bold'>{table.title}</div>
+              <div className='font-weight-bold mr-3'>{table.title}</div>
               {table.link
-                ? (<Link className='font-size-small' dest={routeDest(table.link.route)} iconSymbolSize={0.9} symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}>
+                ? (<Link className='ml-auto font-size-small' dest={routeDest(table.link.route)} iconSymbolSize={0.9} symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}>
                     {table.link.text}
                   </Link>)
                 : null}
