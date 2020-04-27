@@ -303,29 +303,18 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
 });
 
 export const readOneCWUOpportunitySlim = tryDb<[Id, Session], CWUOpportunitySlim | null>(async (connection, oppId, session) => {
-  // Since slim opportunity requires the same joins, etc. as full to build, we query the full one, and reduce down to slim
-  const dbResult = await readOneCWUOpportunity(connection, oppId, session);
-  if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error('unable to read opportunity');
-  }
+  let result = await generateCWUOpportunityQuery(connection)
+    .where({ 'opp.id': oppId })
+    .first<RawCWUOpportunitySlim>();
 
-  const fullOpportunity = dbResult.value;
-  const { id, createdAt, createdBy, updatedAt, updatedBy, title, teaser, proposalDeadline, status, remoteOk, reward, location, subscribed } = fullOpportunity;
-  return valid({
-    id,
-    createdAt,
-    createdBy,
-    updatedAt,
-    updatedBy,
-    title,
-    teaser,
-    remoteOk,
-    reward,
-    location,
-    proposalDeadline,
-    status,
-    subscribed
-  });
+  if (result) {
+    result = processForRole(result, session);
+    // Add on subscription flag, if authenticated user
+    if (session) {
+      result.subscribed = await isSubscribed(connection, result.id, session.user.id);
+    }
+  }
+  return valid(result ? await rawCWUOpportunitySlimToCWUOpportunitySlim(connection, result) : null);
 });
 
 export const readOneCWUOpportunityAddendum = tryDb<[Id], Addendum>(async (connection, id) => {

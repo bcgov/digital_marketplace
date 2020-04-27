@@ -39,11 +39,12 @@ interface RawCWUProposal extends Omit<CWUProposal, 'createdBy' | 'updatedBy' | '
   attachments: Id[];
 }
 
-interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'updatedBy' | 'proponent'> {
+interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'updatedBy' | 'proponent' | 'opportunity'> {
   createdBy: Id;
   updatedBy: Id;
   proponentIndividual?: Id | null;
   proponentOrganization?: Id | null;
+  opportunity: Id;
 }
 
 interface RawCWUProposalHistoryRecord extends Omit<CWUProposalHistoryRecord, 'createdBy' | 'type'> {
@@ -54,7 +55,7 @@ interface RawCWUProposalHistoryRecord extends Omit<CWUProposalHistoryRecord, 'cr
 
 async function rawCWUProposalToCWUProposal(connection: Connection, session: Session, raw: RawCWUProposal): Promise<CWUProposal> {
   const { opportunity: opportunityId, attachments: attachmentIds, proposalText, additionalComments, history, ...restOfProposal } = raw;
-  const slimVersion = await rawCWUProposalSlimToCWUProposalSlim(connection, restOfProposal);
+  const slimVersion = await rawCWUProposalSlimToCWUProposalSlim(connection, {...restOfProposal, opportunity: opportunityId }, session);
   const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
   if (!opportunity) {
     throw new Error('unable to process proposal opportunity');
@@ -82,11 +83,13 @@ async function rawCWUProposalToCWUProposal(connection: Connection, session: Sess
   };
 }
 
-async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: RawCWUProposalSlim): Promise<CWUProposalSlim> {
+async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: RawCWUProposalSlim, session: Session): Promise<CWUProposalSlim> {
   const { createdBy: createdById,
           updatedBy: updatedById,
           proponentIndividual: proponentIndividualId,
           proponentOrganization: proponentOrganizationId,
+          opportunity: opportunityId,
+          score,
           ...restOfRaw
         } = raw;
 
@@ -94,8 +97,9 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
   const updatedBy = updatedById ? getValidValue(await readOneUserSlim(connection, updatedById), undefined) : undefined;
   const proponentIndividual = proponentIndividualId ? getValidValue(await readOneCWUProponent(connection, proponentIndividualId), undefined) : null;
   const proponentOrganization = proponentOrganizationId ? getValidValue(await readOneOrganization(connection, proponentOrganizationId), undefined) : null;
+  const opportunity = getValidValue(await readOneCWUOpportunitySlim(connection, opportunityId, session), null);
 
-  if (!createdBy) {
+  if (!createdBy || !opportunity) {
     throw new Error('unable to process proposal');
   }
 
@@ -110,9 +114,11 @@ async function rawCWUProposalSlimToCWUProposalSlim(connection: Connection, raw: 
 
   return {
     ...restOfRaw,
+    score: score || undefined,
     createdBy,
     updatedBy: updatedBy || undefined,
-    proponent
+    proponent,
+    opportunity
   };
 }
 
@@ -258,6 +264,7 @@ function generateCWUProposalQuery(connection: Connection, full = false) {
       'proposals.id',
       'proposals.createdBy',
       'proposals.createdAt',
+      'proposals.opportunity',
       connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedAt" ELSE statuses."createdAt" END) AS "updatedAt" '),
       connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'proponentIndividual',
@@ -267,7 +274,6 @@ function generateCWUProposalQuery(connection: Connection, full = false) {
 
   if (full) {
     query.select<RawCWUProposal[]>(
-      'proposals.opportunity',
       'proposalText',
       'additionalComments'
     );
@@ -328,7 +334,27 @@ export const readManyCWUProposals = tryDb<[AuthenticatedSession, Id], CWUProposa
     result.rank = match ? match.rank : undefined;
   }
 
-  return valid(await Promise.all(results.map(async result => await rawCWUProposalSlimToCWUProposalSlim(connection, result))));
+  return valid(await Promise.all(results.map(async result => await rawCWUProposalSlimToCWUProposalSlim(connection, result, session))));
+});
+
+export const readOwnCWUProposals = tryDb<[AuthenticatedSession], CWUProposalSlim[]>(async (connection, session) => {
+  const results = await generateCWUProposalQuery(connection)
+    .where({ 'proposals.createdBy': session.user.id })
+    .select<RawCWUProposalSlim[]>('score');
+
+  if (!results) {
+    throw new Error('unable to read proposals');
+  }
+
+  for (const proposal of results) {
+    proposal.submittedAt = await getCWUProposalSubmittedAt(connection, proposal);
+    // Remove score unless in awarded / not awarded state
+    if (proposal.status !== CWUProposalStatus.Awarded && proposal.status !== CWUProposalStatus.NotAwarded) {
+      delete proposal.score;
+    }
+  }
+
+  return valid(await Promise.all(results.map(async result => await rawCWUProposalSlimToCWUProposalSlim(connection, result, session))));
 });
 
 export const readOneProposalByOpportunityAndAuthor = tryDb<[Id, Session], CWUProposal | null>(async (connection, oppId, session) => {
@@ -678,7 +704,7 @@ export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | 
     })
     .first();
 
-  return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result)) : valid(null);
+  return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result, session)) : valid(null);
 });
 
 export const readManyCWUProposalAuthors = tryDb<[Id], User[]>(async (connection, opportunity) => {

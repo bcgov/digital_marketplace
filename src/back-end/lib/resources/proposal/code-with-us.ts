@@ -93,19 +93,30 @@ const resource: Resource = {
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<CWUProposalSlim[] | string[]>, Session>(async request => {
       const respond = (code: number, body: CWUProposalSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-      const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.query.opportunity, request.session);
-      if (isInvalid(validatedCWUOpportunity)) {
-       return respond(404, ['Code With Us opportunity not found.']);
-      }
+      if (request.query.opportunity) {
+        const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.query.opportunity, request.session);
+        if (isInvalid(validatedCWUOpportunity)) {
+        return respond(404, ['Code With Us opportunity not found.']);
+        }
 
-      if (!permissions.isSignedIn(request.session) || !await permissions.readManyCWUProposals(connection, request.session, validatedCWUOpportunity.value)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
+        if (!permissions.isSignedIn(request.session) || !await permissions.readManyCWUProposals(connection, request.session, validatedCWUOpportunity.value)) {
+          return respond(401, [permissions.ERROR_MESSAGE]);
+        }
+        const dbResult = await db.readManyCWUProposals(connection, request.session, request.query.opportunity);
+        if (isInvalid(dbResult)) {
+          return respond(503, [db.ERROR_MESSAGE]);
+        }
+        return respond(200, dbResult.value);
+      } else {
+        if (!permissions.isSignedIn(request.session) || !permissions.readOwnCWUProposals(request.session)) {
+          return respond(401, [permissions.ERROR_MESSAGE]);
+        }
+        const dbResult = await db.readOwnCWUProposals(connection, request.session);
+        if (isInvalid(dbResult)) {
+          return respond(503, [db.ERROR_MESSAGE]);
+        }
+        return respond(200, dbResult.value);
       }
-      const dbResult = await db.readManyCWUProposals(connection, request.session, request.query.opportunity);
-      if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
-      }
-      return respond(200, dbResult.value);
     });
   },
 

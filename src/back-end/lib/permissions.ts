@@ -178,6 +178,10 @@ export async function readManyCWUProposals(connection: Connection, session: Sess
   return false;
 }
 
+export function readOwnCWUProposals(session: Session): boolean {
+  return isVendor(session);
+}
+
 export async function readOneCWUProposal(connection: Connection, session: Session, proposal: CWUProposal): Promise<boolean> {
   if (isAdmin(session) || (session && await isCWUOpportunityAuthor(connection, session.user, proposal.opportunity.id))) {
     // Only provide permission to admins/gov owners if opportunity is not in draft/published

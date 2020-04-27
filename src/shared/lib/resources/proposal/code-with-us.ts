@@ -78,7 +78,7 @@ export function getCWUProponentTypeTitleCase(p: CWUProposal | CWUProposalSlim): 
   }
 }
 
-export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'history' | 'opportunity' | 'attachments'>;
+export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'history' | 'attachments'>;
 
 export interface CWUIndividualProponent {
   id: Id;
