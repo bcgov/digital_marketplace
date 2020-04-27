@@ -27,7 +27,7 @@ export const SignInCard: View<Props> = props => {
   return (
     <Row>
       <Col xs='12'>
-        <div className='mx-auto bg-white p-4 shadow mb-4 border rounded-sm'>
+        <div className='mx-auto bg-white p-4 shadow-hover mb-4 border rounded-sm'>
           <h3 className='d-flex align-items-start flex-nowrap'>
             <Icon
               name={userTypeToIcon(props.userType)}

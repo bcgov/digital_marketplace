@@ -346,7 +346,6 @@ export interface PageComponent<RouteParams, SharedState, State, Msg, Props exten
   fullWidth?: boolean;
   simpleNav?: boolean;
   backgroundColor?: ThemeColor;
-  verticallyCentered?: boolean;
   init: PageInit<RouteParams, SharedState, State, Msg>;
   update: Update<State, Msg>;
   view: View<Props>;

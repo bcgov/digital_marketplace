@@ -130,8 +130,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     getBreadcrumbs = emptyPageBreadcrumbs,
     getAlerts = emptyPageAlerts,
     fullWidth = false,
-    backgroundColor = 'white',
-    verticallyCentered = false
+    backgroundColor = 'white'
   } = component;
   const dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>> = mapAppDispatch(dispatch, mapPageMsg);
   const viewProps = {
@@ -186,8 +185,8 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     } else {
       // No sidebar.
       return (
-        <div className={`d-flex flex-column flex-grow-1 page-container ${verticallyCentered ? 'justify-content-center' : ''} ${backgroundClassName}`}>
-          <Container className={`pt-4 pt-md-6 pb-6 ${verticallyCentered ? '' : 'flex-grow-1'}`}>
+        <div className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
+          <Container className='pt-4 pt-md-6 pb-6 flex-grow-1'>
             <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
             <component.view {...viewProps} />
           </Container>

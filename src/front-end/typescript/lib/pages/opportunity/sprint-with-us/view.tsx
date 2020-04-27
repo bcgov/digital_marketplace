@@ -72,9 +72,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
   let isQualified = false;
   if (viewerUser && isVendor(viewerUser)) {
     existingProposal = await api.proposals.swu.getExistingProposalForOpportunity(opportunityId);
-    const orgR = await api.organizations.readMany();
-    if (!api.isValid(orgR)) { return fail(); }
-    isQualified = orgR.value.reduce((acc, o) => acc || doesOrganizationMeetSWUQualification(o), false as boolean);
+    const orgs = api.getValidValue(await api.organizations.readMany(), []);
+    isQualified = orgs.reduce((acc, o) => acc || doesOrganizationMeetSWUQualification(o), false as boolean);
   }
   return valid(immutable({
     isQualified,

@@ -1,4 +1,4 @@
-import { SEARCH_DEBOUNCE_DURATION } from 'front-end/config';
+import { SEARCH_DEBOUNCE_DURATION, TRUNCATE_OPPORTUNITY_TITLE_LENGTH } from 'front-end/config';
 import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -11,7 +11,7 @@ import Badge, { OpportunityBadge } from 'front-end/lib/views/badge';
 import { IconInfo } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramType from 'front-end/lib/views/program-type';
-import { debounce } from 'lodash';
+import { debounce, truncate } from 'lodash';
 import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
 import { compareDates, find, formatAmount, formatDateAndTime } from 'shared/lib';
@@ -19,8 +19,6 @@ import * as CWU from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWU from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
-
-const CARD_MARGIN_BOTTOM = '2rem';
 
 type Opportunity
   = ADT<'cwu', CWU.CWUOpportunitySlim>
@@ -61,15 +59,19 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
+function truncateTitle(title: string): string {
+  return truncate(title, { length: TRUNCATE_OPPORTUNITY_TITLE_LENGTH });
+}
+
 function categorizeOpportunities(cwu: CWU.CWUOpportunitySlim[], swu: SWU.SWUOpportunitySlim[], viewerUser?: User): CategorizedOpportunities {
   const opportunities: Opportunity[] = [
     ...(cwu.map(o => adt('cwu' as const, {
       ...o,
-      title: o.title || CWU.DEFAULT_OPPORTUNITY_TITLE
+      title: truncateTitle(o.title || CWU.DEFAULT_OPPORTUNITY_TITLE)
     }))),
     ...(swu.map(o => adt('swu' as const, {
       ...o,
-      title: o.title || SWU.DEFAULT_OPPORTUNITY_TITLE
+      title: truncateTitle(o.title || SWU.DEFAULT_OPPORTUNITY_TITLE)
     })))
   ];
   const empty: CategorizedOpportunities = {
@@ -381,7 +383,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
     }
   })();
   return (
-    <Col xs='12' md='6' style={{ marginBottom: CARD_MARGIN_BOTTOM, minHeight: '320px' }}>
+    <Col xs='12' md='6' className='mb-4h' style={{ minHeight: '320px' }}>
       <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
         <Link disabled={disabled} style={{ outline: 'none' }} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(dest)}>
           <h5 className='mb-2'>
@@ -484,7 +486,7 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
             : null}
         </Col>
         {opportunities.length
-          ? (<Col xs='12' style={{ marginBottom: `-${CARD_MARGIN_BOTTOM}` }}>
+          ? (<Col xs='12' className='mb-n4h'>
               <Row>
                 {opportunities.map((o, i) => (
                   <OpportunityCard
