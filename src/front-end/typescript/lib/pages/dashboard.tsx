@@ -15,6 +15,7 @@ import { Col, Row } from 'reactstrap';
 import { compareDates, formatDate } from 'shared/lib';
 import * as CWUO from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWUO from 'shared/lib/resources/opportunity/sprint-with-us';
+import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import * as CWUP from 'shared/lib/resources/proposal/code-with-us';
 import * as SWUP from 'shared/lib/resources/proposal/sprint-with-us';
 import { isVendor, User } from 'shared/lib/resources/user';
@@ -33,6 +34,7 @@ interface ValidState {
     state: Immutable<Table.State>;
   };
   viewerUser: User;
+  isQualified?: boolean;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -54,8 +56,8 @@ function makeVendorBodyRows(cwu: CWUP.CWUProposalSlim[], swu: SWUP.SWUProposalSl
     return [
       {
         children: (<div>
-          <Link dest={routeDest(adt(p.tag === 'cwu' ? 'proposalCWUEdit' : 'proposalSWUEdit', { opportunityId: p.value.opportunity.id }))}>
-            {p.value.opportunity.title}
+          <Link dest={routeDest(adt(p.tag === 'cwu' ? 'proposalCWUEdit' : 'proposalSWUEdit', { proposalId: p.value.id, opportunityId: ''/*p.value.opportunity.id*/ }))}>
+            {'title'/*p.value.opportunity.title*/}
           </Link>
           <div className='small text-secondary text-uppercase'>
             {p.tag === 'cwu' ? 'Code With Us' : 'Sprint With Us'}
@@ -133,16 +135,21 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<RoutePar
       }
     ];
     let bodyRows: Table.BodyRows = [];
+    let isQualified = false;
     if (vendor) {
-      const cwuProposalResult = await api.proposals.cwu.readMany();
-      const swuProposalResult = await api.proposals.swu.readMany();
-      bodyRows = makeVendorBodyRows(api.getValidValue(cwuProposalResult, []), api.getValidValue(swuProposalResult, []), viewerUser);
+      const cwu = api.getValidValue(await api.proposals.cwu.readMany(), []);
+      const swu = api.getValidValue(await api.proposals.swu.readMany(), []);
+      bodyRows = makeVendorBodyRows(cwu, swu, viewerUser);
+      const orgs = api.getValidValue(await api.organizations.readMany(), []);
+      isQualified = orgs.reduce((acc, o) => acc || doesOrganizationMeetSWUQualification(o), false as boolean);
     } else {
-      const cwuOppResult = await api.opportunities.cwu.readMany();
-      const swuOppResult = await api.opportunities.swu.readMany();
-      bodyRows = makePublicSectorBodyRows(api.getValidValue(cwuOppResult, []), api.getValidValue(swuOppResult, []), viewerUser);
+      const cwu = api.getValidValue(await api.opportunities.cwu.readMany(), []);
+      const swu = api.getValidValue(await api.opportunities.swu.readMany(), []);
+      bodyRows = makePublicSectorBodyRows(cwu, swu, viewerUser);
     }
     return valid(immutable({
+      isQualified,
+      viewerUser,
       table: bodyRows.length
         ? {
             title,
@@ -152,8 +159,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<RoutePar
               idNamespace: 'dashboard-table'
             }))
           }
-        : undefined,
-      viewerUser
+        : undefined
     }));
   },
 
@@ -232,7 +238,7 @@ const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
       <Row>
         <Col xs='12' md='9'>
           <div className='rounded-lg border bg-white p-3 p-sm-4'>
-            <div className='d-flex flex-column flex-md-row align-items-center mb-4'>
+            <div className='d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3'>
               <div className='font-weight-bold'>{table.title}</div>
               {table.link
                 ? (<Link className='font-size-small' dest={routeDest(table.link.route)} iconSymbolSize={0.9} symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}>
@@ -266,12 +272,19 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
+  backgroundColor: 'blue-light-alt-2',
 
   getMetadata() {
     return makePageMetadata('Dashboard');
   },
 
   getAlerts: getAlertsValid(state => {
-    return {};
+    return {
+      info: isVendor(state.viewerUser) && !state.isQualified
+        ? [{
+            text: (<span>You must <Link dest={routeDest(adt('orgCreate', null))}>create an organization</Link> and be a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link> in order to submit proposals to Sprint With Us opportunities.</span>)
+          }]
+        : []
+    };
   })
 };

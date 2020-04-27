@@ -201,7 +201,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
 }
 
 export const view: View<Props> = props => {
-  const { state, dispatch, className, style, headCells, bodyRows, borderless, hover = true } = props;
+  const { state, dispatch, className = '', style, headCells, bodyRows, borderless, hover = true } = props;
   const headProps: THeadProps = {
     THView: state.THView,
     cells: headCells.map((spec, index) => {
@@ -231,7 +231,7 @@ export const view: View<Props> = props => {
     borderless
   };
   return (
-    <Table className={className} style={style} responsive hover={hover}>
+    <Table className={`mb-0 ${className}`} style={style} responsive hover={hover}>
       <THead {...headProps} />
       <TBody {...bodyProps} />
     </Table>
