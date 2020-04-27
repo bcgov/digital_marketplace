@@ -38,7 +38,7 @@ export const HowItWorksItem: View<Props> = ({ symbol_, mobileSymbol, bgColor = '
             </div>
             <strong>{title}</strong>
           </div>
-          <p className='mb-0'>{description}</p>
+          <div className='mb-0'>{description}</div>
         </div>
       </Col>
     </Row>

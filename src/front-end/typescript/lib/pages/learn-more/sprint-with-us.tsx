@@ -201,6 +201,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <TitleView />
       <WhatToExpectView state={state} dispatch={dispatch} />
       <HowToApplyView state={state} dispatch={dispatch} />
+      <div className='flex-grow-1 bg-white'></div>
     </div>
   );
 };
