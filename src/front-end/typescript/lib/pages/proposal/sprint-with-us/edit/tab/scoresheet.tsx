@@ -72,19 +72,19 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return [[
     {
-      children: String(state.proposal.questionsScore === undefined ? EMPTY_STRING : state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS))
+      children: String(state.proposal.questionsScore === undefined ? EMPTY_STRING : `${state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS)}%`)
     },
     {
-      children: String(state.proposal.challengeScore === undefined ? EMPTY_STRING : state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS))
+      children: String(state.proposal.challengeScore === undefined ? EMPTY_STRING : `${state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS)}%`)
     },
     {
-      children: String(state.proposal.scenarioScore === undefined ? EMPTY_STRING : state.proposal.scenarioScore.toFixed(NUM_SCORE_DECIMALS))
+      children: String(state.proposal.scenarioScore === undefined ? EMPTY_STRING : `${state.proposal.scenarioScore.toFixed(NUM_SCORE_DECIMALS)}%`)
     },
     {
-      children: String(state.proposal.priceScore === undefined ? EMPTY_STRING : state.proposal.priceScore.toFixed(NUM_SCORE_DECIMALS))
+      children: String(state.proposal.priceScore === undefined ? EMPTY_STRING : `${state.proposal.priceScore.toFixed(NUM_SCORE_DECIMALS)}%`)
     },
     {
-      children: String(state.proposal.totalScore === undefined ? EMPTY_STRING : state.proposal.totalScore.toFixed(NUM_SCORE_DECIMALS))
+      children: String(state.proposal.totalScore === undefined ? EMPTY_STRING : `${state.proposal.totalScore.toFixed(NUM_SCORE_DECIMALS)}%`)
     }
   ]];
 }
