@@ -11,6 +11,7 @@ import affiliationResource from 'back-end/lib/resources/affiliation';
 import avatarResource from 'back-end/lib/resources/avatar';
 import counterResource from 'back-end/lib/resources/counter';
 import fileResource from 'back-end/lib/resources/file';
+import metricsResource from 'back-end/lib/resources/metrics';
 import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';
 import sprintWithUsOpportunityResource from 'back-end/lib/resources/opportunity/sprint-with-us';
 import organizationResource from 'back-end/lib/resources/organization';
@@ -78,7 +79,8 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     counterResource,
     organizationResource,
     sessionResource,
-    userResource
+    userResource,
+    metricsResource
   ];
 
   // Define CRUD routes.

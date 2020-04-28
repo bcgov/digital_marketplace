@@ -1,0 +1,27 @@
+import { tryDb } from 'back-end/lib/db';
+import { generateCWUOpportunityQuery as cwuQuery } from 'back-end/lib/db/opportunity/code-with-us';
+import { generateSWUOpportunityQuery as swuQuery } from 'back-end/lib/db/opportunity/sprint-with-us';
+import { valid } from 'shared/lib/http';
+import { OpportunityMetrics } from 'shared/lib/resources/metrics';
+import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+
+export const readOpportunityMetrics = tryDb<[], OpportunityMetrics>(async (connection) => {
+  const totals: OpportunityMetrics = {
+    totalCount: 0,
+    totalAwarded: 0
+  };
+  const cwuResult = await cwuQuery(connection)
+    .where({ 'stat.status': CWUOpportunityStatus.Awarded });
+
+  totals.totalCount += cwuResult?.length || 0;
+  totals.totalAwarded += cwuResult.reduce((acc, val) => acc + val.reward, 0);
+
+  const swuResult = await swuQuery(connection)
+    .where({ 'statuses.status': SWUOpportunityStatus.Awarded });
+
+  totals.totalCount += swuResult?.length || 0;
+  totals.totalAwarded += swuResult.reduce((acc, val) => acc + val.totalMaxBudget, 0);
+
+  return valid(totals);
+});
