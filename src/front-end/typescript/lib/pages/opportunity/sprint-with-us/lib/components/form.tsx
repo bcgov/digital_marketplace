@@ -704,7 +704,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => adt('remoteOk', value),
         updateAfter: state => [
           state.update('remoteDesc', s => {
-            const remoteOk = !!FormField.getValue(state.remoteOk);
+            const remoteOk = FormField.getValue(state.remoteOk) === 'yes';
             return FormField.setValidate(
               s,
               v => opportunityValidation.validateRemoteDesc(v, remoteOk),
