@@ -224,12 +224,14 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               </Col>
             </Row>
             <Row>
-              <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
-                <OpportunityInfo
-                  icon='users-outline'
-                  name='Min. Team Size'
-                  value={opp.minTeamMembers ? String(opp.minTeamMembers) : EMPTY_STRING} />
-              </Col>
+              {opp.minTeamMembers
+                ? (<Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
+                    <OpportunityInfo
+                      icon='users-outline'
+                      name='Min. Team Size'
+                      value={String(opp.minTeamMembers)} />
+                  </Col>)
+                : null}
               <Col xs='6' className='d-flex justify-content-start align-items-start flex-nowrap'>
                 <OpportunityInfo
                   icon='award-outline'
@@ -448,7 +450,7 @@ const Phases: ComponentView<ValidState, Msg> = ({ state }) => {
             <p className='mb-5'>The following phase(s) of work need to be carried out:</p>
           </Col>
         </Row>
-        <Row>
+        <Row className='mb-4'>
           {inception
             ? (<Phase
                   icon='map'
@@ -462,6 +464,11 @@ const Phases: ComponentView<ValidState, Msg> = ({ state }) => {
           <Phase
             icon='cogs'
             phase={implementation} />
+        </Row>
+        <Row>
+          <Col xs='12'>
+            <p className='mb-0 font-italic small'>* Capabilities are claimed by individuals in their personal profile.</p>
+          </Col>
         </Row>
       </div>
     </Container>
