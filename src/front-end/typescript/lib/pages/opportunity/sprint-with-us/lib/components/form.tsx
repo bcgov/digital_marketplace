@@ -953,6 +953,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
               extraChildProps={{}}
               label='Remote Description'
               placeholder={`Provide further information about this opportunity's remote work options.`}
+              required
               disabled={disabled}
               style={{ height: '160px' }}
               state={state.remoteDesc}
