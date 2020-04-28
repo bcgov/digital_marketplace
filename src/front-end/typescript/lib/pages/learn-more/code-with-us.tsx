@@ -139,8 +139,7 @@ const VendorHIW: View = () => {
         className='mb-4'
       />
       <HowItWorksItem
-        symbol_={adt('icon', 'code' as const)}
-        mobileSymbol={adt('icon', 'code-solid' as const)}
+        symbol_={adt('icon', 'code-solid' as const)}
         fgColor='white'
         bgColor='purple'
         title='Contribute'
