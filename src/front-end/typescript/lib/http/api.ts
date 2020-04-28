@@ -7,6 +7,7 @@ import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as CounterResource from 'shared/lib/resources/counter';
 import * as FileResource from 'shared/lib/resources/file';
+import * as MetricsResource from 'shared/lib/resources/metrics';
 import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWUOpportunityResource from 'shared/lib/resources/opportunity/sprint-with-us';
 import * as OrgResource from 'shared/lib/resources/organization';
@@ -35,6 +36,27 @@ export const getMarkdownFile = (id: string) => makeRequest<GetMarkdownFileAction
   method: ClientHttpMethod.Get,
   url: prefixPath(`/markdown/${id}.md`),
   body: undefined
+});
+
+// Metrics
+
+interface MetricsResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> {
+  readMany: ReadManyActionTypes<{
+    rawResponse: MetricsResource.OpportunityMetrics;
+    validResponse: MetricsResource.OpportunityMetrics;
+    invalidResponse: string[];
+  }>;
+}
+
+const METRICS_ROUTE_NAMESPACE = apiNamespace('metrics');
+
+export const metrics: CrudApi<MetricsResourceTypes> = makeCrudApi<MetricsResourceTypes>({
+  routeNamespace: METRICS_ROUTE_NAMESPACE,
+  readMany: { transformValid: a => a },
+  create: undefined,
+  readOne: undefined,
+  update: undefined,
+  delete: undefined
 });
 
 // Counters
