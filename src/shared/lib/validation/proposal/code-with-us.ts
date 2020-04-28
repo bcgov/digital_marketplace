@@ -1,6 +1,6 @@
 import { getString } from 'shared/lib';
 import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors, CWUProposalStatus, parseCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
-import { allValid, getInvalidValue, invalid, mapValid, optional, valid, validateEmail, validateGenericString, validateNumber, validatePhoneNumber, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, mapValid, optional, valid, validateEmail, validateGenericString, validateNumberWithPrecision, validatePhoneNumber, Validation } from 'shared/lib/validation';
 
 export function validateCWUProposalStatus(raw: string, isOneOf: CWUProposalStatus[]): Validation<CWUProposalStatus> {
   const parsed = parseCWUProposalStatus(raw);
@@ -28,7 +28,7 @@ export function validateDisqualificationReason(raw: string): Validation<string> 
 }
 
 export function validateScore(raw: number): Validation<number> {
-  return validateNumber(raw, 0, 100, 'score', 'a', false, false);
+  return validateNumberWithPrecision(raw, 0, 100, 2, 'score', 'a', false);
 }
 
 export function validateIndividualProponentLegalName(raw: string): Validation<string> {
