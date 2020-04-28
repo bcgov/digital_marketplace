@@ -20,9 +20,7 @@ import { canSWUProposalBeScreenedToFromCodeChallenge, getSWUProponentName, NUM_S
 import { ADT, adt, Id } from 'shared/lib/types';
 
 type ModalId
-  = ADT<'screenInToCodeChallenge', Id>
-  | ADT<'screenOutOfCodeChallenge', Id>
-  | ADT<'completeTeamQuestions'>;
+  = ADT<'completeTeamQuestions'>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -227,7 +225,7 @@ const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWU
           size='sm'
           disabled={disabled || loading}
           loading={loading}
-          onClick={() => dispatch(adt('showModal', adt('screenInToCodeChallenge' as const, proposal.id))) }>
+          onClick={() => dispatch(adt('screenInToCodeChallenge' as const, proposal.id)) }>
           Screen In
         </Link>
       );
@@ -240,7 +238,7 @@ const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWU
           size='sm'
           disabled={disabled || loading}
           loading={loading}
-          onClick={() => dispatch(adt('showModal', adt('screenOutOfCodeChallenge' as const, proposal.id))) }>
+          onClick={() => dispatch(adt('screenOutOfCodeChallenge' as const, proposal.id)) }>
           Screen Out
         </Link>
       );
@@ -412,46 +410,6 @@ export const component: Tab.Component<State, Msg> = {
   getModal: state => {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
-      case 'screenInToCodeChallenge':
-        return {
-          title: 'Screen Proponent into Code Challenge?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Screen In',
-              icon: 'stars',
-              color: 'info',
-              button: true,
-              msg: adt('screenInToCodeChallenge', state.showModal.value)
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to screen this proponent into the Code Challenge?'
-        };
-      case 'screenOutOfCodeChallenge':
-        return {
-          title: 'Screen Proponent Out of Code Challenge?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Screen Out',
-              icon: 'ban',
-              color: 'danger',
-              button: true,
-              msg: adt('screenOutOfCodeChallenge', state.showModal.value)
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to screen this proponent out of the Code Challenge?'
-        };
       case 'completeTeamQuestions':
         return {
           title: 'Complete Team Questions?',
