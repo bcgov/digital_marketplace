@@ -36,9 +36,13 @@ export async function handleSWUPublished(connection: db.Connection, opportunity:
 
 export async function handleSWUUpdated(connection: db.Connection, opportunity: SWUOpportunity): Promise<void> {
   // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
+  const author = opportunity.createdBy && getValidValue(await db.readOneUser(connection, opportunity.createdBy.id), null) || null;
   const subscribedUsers = getValidValue(await db.readManySWUSubscribedUsers(connection, opportunity.id), null) || [];
   const usersWithProposals = getValidValue(await db.readManyCWUProposalAuthors(connection, opportunity.id), null) || [];
   const unionedUsers = unionBy(subscribedUsers, usersWithProposals, 'id');
+  if (author) {
+    unionedUsers.push(author);
+  }
   await Promise.all(unionedUsers.map(async user => await updatedSWUOpportunity(user, opportunity)));
 }
 
