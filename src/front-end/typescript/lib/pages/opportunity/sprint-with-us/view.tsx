@@ -56,6 +56,14 @@ export interface RouteParams {
   opportunityId: Id;
 }
 
+function canVendorStartProposal(state: Immutable<ValidState>): boolean {
+  return !!state.viewerUser
+      && isVendor(state.viewerUser)
+      && !state.existingProposal
+      && isSWUOpportunityAcceptingProposals(state.opportunity)
+      && state.isQualified;
+}
+
 const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, routeParams, shared, routePath }) => {
   const fail = () => {
     dispatch(replaceRoute(adt('notFound', { path: routePath }) as Route));
@@ -476,7 +484,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
                 : null}
             </p>
             <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
-            {viewerUser && isVendor(viewerUser) && !state.existingProposal && isSWUOpportunityAcceptingProposals(state.opportunity)
+            {canVendorStartProposal(state)
               ? (<Link
                   disabled={state.toggleWatchLoading > 0}
                   className='mt-4'
@@ -589,7 +597,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
           return null;
         }
       case UserType.Vendor: {
-        const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
         if (state.existingProposal) {
           return adt('links', [
             {
@@ -604,7 +611,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
-        } else if (isAcceptingProposals && state.isQualified) {
+        } else if (canVendorStartProposal(state)) {
           return adt('links', [
             {
               disabled: isToggleWatchLoading,
