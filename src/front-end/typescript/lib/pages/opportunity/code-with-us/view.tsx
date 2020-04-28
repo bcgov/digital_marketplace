@@ -17,7 +17,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { formatAmount, formatDate, formatDateAndTime } from 'shared/lib';
+import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
@@ -141,7 +141,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
               <IconInfo
                 name='alarm-clock-outline'
-                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAndTime(opp.proposalDeadline, true)}`}
+                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAtTime(opp.proposalDeadline, true)}`}
                 className='ml-sm-3 flex-shrink-0' />
             </div>
             {opp.teaser ? (<p className='text-secondary mb-4'>{opp.teaser}</p>) : null}
@@ -461,7 +461,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         const alerts = [];
         if (viewerUser && isVendor(viewerUser) && existingProposal?.submittedAt) {
           alerts.push({
-            text: `You submitted a proposal to this opportunity on ${formatDateAndTime(existingProposal.submittedAt, true)}.`
+            text: `You submitted a proposal to this opportunity on ${formatDateAtTime(existingProposal.submittedAt, true)}.`
           });
         }
         if (successfulProponentName) {

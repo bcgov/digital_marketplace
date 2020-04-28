@@ -18,7 +18,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React, { Fragment } from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { formatAmount, formatDate, formatDateAndTime } from 'shared/lib';
+import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { DEFAULT_OPPORTUNITY_TITLE, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityPhase, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
@@ -155,7 +155,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               <OpportunityBadge opportunity={adt('swu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
               <IconInfo
                 name='alarm-clock-outline'
-                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAndTime(opp.proposalDeadline, true)}`}
+                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAtTime(opp.proposalDeadline, true)}`}
                 className='ml-sm-3 flex-shrink-0' />
             </div>
             {opp.teaser ? (<p className='text-secondary mb-4'>{opp.teaser}</p>) : null}
@@ -536,7 +536,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         const alerts = [];
         if (vendor && existingProposal?.submittedAt) {
           alerts.push({
-            text: `You submitted a proposal to this opportunity on ${formatDateAndTime(existingProposal.submittedAt, true)}.`
+            text: `You submitted a proposal to this opportunity on ${formatDateAtTime(existingProposal.submittedAt, true)}.`
           });
         }
         if (successfulProponentName) {

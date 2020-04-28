@@ -14,7 +14,7 @@ import ProgramType from 'front-end/lib/views/program-type';
 import { debounce, truncate } from 'lodash';
 import React from 'react';
 import { Col, Row, Spinner } from 'reactstrap';
-import { compareDates, find, formatAmount, formatDateAndTime } from 'shared/lib';
+import { compareDates, find, formatAmount, formatDateAtTime } from 'shared/lib';
 import * as CWU from 'shared/lib/resources/opportunity/code-with-us';
 import * as SWU from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
@@ -382,6 +382,9 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
         }
     }
   })();
+  const isAcceptingProposals = opportunity.tag === 'cwu'
+    ? CWU.isCWUOpportunityAcceptingProposals(opportunity.value)
+    : SWU.isSWUOpportunityAcceptingProposals(opportunity.value);
   return (
     <Col xs='12' md='6' className='mb-4h' style={{ minHeight: '320px' }}>
       <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
@@ -395,7 +398,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
             <IconInfo
               small
               name='alarm-clock-outline'
-              value={formatDateAndTime(opportunity.value.proposalDeadline, true)}
+              value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAtTime(opportunity.value.proposalDeadline, true)}`}
               className='ml-sm-3 flex-shrink-0' />
           </div>
           <p className='mt-3 mb-0 text-secondary font-size-small'>
