@@ -13,7 +13,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { formatAmount, formatDate } from 'shared/lib';
+import { formatAmount, formatDateAtTime } from 'shared/lib';
 import { AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
@@ -277,7 +277,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
     {
       icon: 'alarm-clock',
       name: 'Proposals Due',
-      value: formatDate(proposal.opportunity.proposalDeadline)
+      value: formatDateAtTime(proposal.opportunity.proposalDeadline, true)
     },
     showScoreAndRanking
       ? {
