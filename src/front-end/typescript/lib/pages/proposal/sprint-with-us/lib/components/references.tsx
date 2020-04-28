@@ -188,6 +188,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({ dispatch, disabled, in
             extraChildProps={{}}
             label='Name'
             placeholder='Name'
+            help='Provide the first and last name of your reference.'
             state={reference.name}
             dispatch={mapComponentDispatch(dispatch, v => adt('name', [index, v]) as Msg)}
             disabled={disabled} />
@@ -198,6 +199,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({ dispatch, disabled, in
             extraChildProps={{}}
             label='Company'
             placeholder='Company'
+            help='Provide the name of the company that employs your reference.'
             state={reference.company}
             dispatch={mapComponentDispatch(dispatch, v => adt('company', [index, v]) as Msg)}
             disabled={disabled} />

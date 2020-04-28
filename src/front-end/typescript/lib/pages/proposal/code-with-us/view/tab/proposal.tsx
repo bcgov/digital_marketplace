@@ -321,6 +321,7 @@ export const component: Tab.Component<State, Msg> = {
                 disabled={isScoreLoading}
                 label='Total Score'
                 placeholder='e.g. 75%'
+                help='Enter a score for the proponent’s proposal as a percentage (up to two decimal places).'
                 dispatch={mapComponentDispatch(dispatch, v => adt('scoreMsg' as const, v))}
                 state={state.score} />
             </div>
@@ -357,6 +358,7 @@ export const component: Tab.Component<State, Msg> = {
                 required
                 label='Reason'
                 placeholder='Reason'
+                help='Provide a reason for the disqualification of the proponent. This reason will not be shared with the disqualified proponent and is for record-keeping purposes only.'
                 dispatch={mapComponentDispatch(dispatch, v => adt('disqualificationReasonMsg' as const, v))}
                 state={state.disqualificationReason} />
             </div>

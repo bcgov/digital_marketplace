@@ -9,7 +9,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { isPublicSectorUserType, User } from 'shared/lib/resources/user';
+import { isPublicSectorUserType, User, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { ErrorTypeFrom, invalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import { validateEmail, validateJobTitle, validateName } from 'shared/lib/validation/user';
@@ -197,7 +197,9 @@ export const view: View<Props> = props => {
 
         <ShortText.view
           extraChildProps={{}}
-          help='TODO'
+          help={userTypeToKeycloakIdentityProvider(state.user.type) === 'github'
+            ? 'Your unique GitHub username (or handle).'
+            : 'Your unique IDIR username.'}
           label={userToKeyClockIdentityProviderTitleCase(state.user)}
           disabled
           state={state.idpUsername}

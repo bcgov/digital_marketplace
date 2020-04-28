@@ -575,6 +575,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
             className='mb-0'
             label='Organization'
             placeholder='Organization'
+            help='Select the Organization that will complete the work as outlined in the opportunity’s acceptance criteria.'
             hint={state.viewerUser.type === UserType.Vendor
               ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link> and it is qualified to apply for Sprint With Us opportunities. Also, please make sure that you have saved this proposal beforehand to avoid losing any unsaved changes you might have made.</span>)
               : undefined}

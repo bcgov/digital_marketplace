@@ -155,6 +155,7 @@ export const view: View<Props> = props => {
           disabled={disabled}
           style={style}
           label='New Addendum'
+          help='Provide additional information that was not provided on the original posting of the opportunity.'
           required
           action={{
             icon: 'trash',

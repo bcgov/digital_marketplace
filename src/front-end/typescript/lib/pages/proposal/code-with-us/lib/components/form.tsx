@@ -587,6 +587,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
         <ShortText.view
           disabled={disabled}
           placeholder='Legal Name'
+          help='Provide the first and last name of the individual that will complete the work as outlined in the opportunity’s acceptance criteria.'
           required
           extraChildProps={{}}
           label='Legal Name'
@@ -693,7 +694,6 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
-  //TODO Add hint about creating an organization
   return (
     <Row>
       <Col xs='12'>
@@ -702,6 +702,7 @@ const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label='Organization'
           placeholder='Organization'
+          help={`Select the Organization that will complete the work as outlined in the opportunity's acceptance criteria.`}
           hint={isVendor(state.viewerUser)
             ? (<span>If the organization you are looking for is not listed in this dropdown, please ensure that you have created the organization in <Link newTab dest={routeDest(adt('userProfile', { userId: state.viewerUser.id, tab: 'organizations' as const }))}>your user profile</Link>. Also, please make sure that you have saved this proposal beforehand to avoid losing any unsaved changes you might have made.</span>)
             : undefined}
@@ -770,7 +771,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs='12'>
         <p className='mb-4'>
           Enter your proposal and any additional comments in the spaces provided
-          below.  Be sure to address the Proposal Evaluation Criteria.
+          below. Be sure to address the Proposal Evaluation Criteria.
         </p>
       </Col>
       <Col xs='12'>
@@ -791,6 +792,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           style={{ height: '60vh', minHeight: '400px' }}
           label='Proposal'
+          help='Provide your complete proposal here. Be sure to address the Proposal Evaluation Criteria as outlined on the opportunity.'
           state={state.proposalText}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalText' as const, value))} />
       </Col>
@@ -800,6 +802,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           style={{ height: '300px' }}
           label='Additional Comments'
+          help='Provide any additional information or comments that are relevant to your proposal submission.'
           state={state.additionalComments}
           dispatch={mapComponentDispatch(dispatch, value => adt('additionalComments' as const, value))} />
       </Col>

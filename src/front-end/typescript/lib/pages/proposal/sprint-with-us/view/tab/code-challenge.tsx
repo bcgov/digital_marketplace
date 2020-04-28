@@ -215,6 +215,7 @@ export const component: Tab.Component<State, Msg> = {
                 disabled={isEnterScoreLoading}
                 label='Code Challenge Score'
                 placeholder='Code Challenge Score'
+                help={`Enter the score of this proponent's submission for the Code Challenge stage of the evaluation process as a percentage (up to two decimal places).`}
                 dispatch={mapComponentDispatch(dispatch, v => adt('scoreMsg' as const, v))}
                 state={state.score} />
             </div>

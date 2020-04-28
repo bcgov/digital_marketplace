@@ -268,6 +268,7 @@ export const component: Tab.Component<State, Msg> = {
                 extraChildProps={{}}
                 style={{ height: '180px' }}
                 disabled={isDisqualifyLoading}
+                help='Provide a reason for the disqualification of the proponent. This reason will not be shared with the disqualified proponent and is for record-keeping purposes only.'
                 required
                 label='Reason'
                 placeholder='Reason'

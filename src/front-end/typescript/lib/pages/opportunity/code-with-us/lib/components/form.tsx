@@ -1,3 +1,4 @@
+import { BC_INFORMATION_ON_PROCUREMENT_URL } from 'front-end/config';
 import * as Addenda from 'front-end/lib/components/addenda';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -11,6 +12,7 @@ import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as TabbedForm from 'front-end/lib/components/tabbed-form';
 import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import Link, { externalDest } from 'front-end/lib/views/link';
 import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -711,6 +713,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
         <ShortText.view
           extraChildProps={{}}
           label='Title'
+          help='Provide a brief and short title for the opportunity that highlights the work that you need done.'
           placeholder='Opportunity Title'
           required
           disabled={disabled}
@@ -722,6 +725,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
         <LongText.view
           extraChildProps={{}}
           label='Teaser'
+          help='Provide 1-2 sentences that will entice readers to apply to this opportunity and that describes what you are inviting them to do.'
           placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
           style={{ height: '200px' }}
           disabled={disabled}
@@ -734,6 +738,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{ inline: true }}
           required
           label='Remote OK?'
+          help='Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options.'
           disabled={disabled}
           state={state.remoteOk}
           dispatch={mapComponentDispatch(dispatch, value => adt('remoteOk' as const, value))} />
@@ -743,6 +748,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
         ? (<Col xs='12'>
             <LongText.view
               extraChildProps={{}}
+              required
               label='Remote Description'
               placeholder={`Provide further information about this opportunity's remote work options.`}
               disabled={disabled}
@@ -756,6 +762,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
         <ShortText.view
           extraChildProps={{}}
           label='Location'
+          help='Provide the location where you are located or where the work is expected to be completed.'
           placeholder='Location'
           required
           disabled={disabled}
@@ -768,6 +775,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{ prefix: '$' }}
           label='Fixed-Price Award'
           placeholder='Fixed-Price Award'
+          help='To the best of your ability, estimate a fair price for the amount of work that you think it should take from the successful proponent to meet the opportunity’s acceptance criteria. It is suggested that you overestimate. The price estimate must not exceed $70,000.'
           required
           disabled={disabled}
           state={state.reward}
@@ -779,6 +787,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Required Skills'
           placeholder='Required Skills'
+          help='Select the skill(s) from the list provided that the successful proponent must possess in order to be considered for the opportunity. If you do not see the skill that you are looking for, you may create a new skill by entering it into the field below.'
           required
           disabled={disabled}
           state={state.skills}
@@ -799,6 +808,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
           extraChildProps={{}}
           required
           label='Description'
+          help='Provide a complete description of the opportunity. You may provide background information, describe what you are attempting to accomplish by offering the opportunity, etc.'
           placeholder='Describe this opportunity.'
           style={{ height: '60vh', minHeight: '400px' }}
           disabled={disabled}
@@ -820,6 +830,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           required
           extraChildProps={{}}
           label='Proposal Deadline'
+          help='Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time. A deadline of at least five (5) days from the date that the opportunity is published is recommended.'
           state={state.proposalDeadline}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
@@ -829,6 +840,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           required
           extraChildProps={{}}
           label='Assignment Date'
+          help='Choose a date that you will award the successful proponent the opportunity. The assignment date is fixed to 4:00PM Pacific Time.'
           state={state.assignmentDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
@@ -839,6 +851,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           required
           extraChildProps={{}}
           label='Proposed Start Date'
+          help='Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria.'
           state={state.startDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
@@ -847,6 +860,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
         <DateField.view
           extraChildProps={{}}
           label='Completion Date'
+          help='Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria.'
           state={state.completionDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
@@ -856,6 +870,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
         <ShortText.view
           extraChildProps={{}}
           label='Project Submission Info'
+          help='Provide information on how the successful proponent may submit their work as outlined in the opportunity’s acceptance criteria (e.g. GitHub repository URL).'
           placeholder='e.g. GitHub repository URL'
           state={state.submissionInfo}
           disabled={disabled}
@@ -867,6 +882,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           required
           extraChildProps={{}}
           label='Acceptance Criteria'
+          help='Clearly define what the successful proponent must deliver and all of the criteria that must be met in order for payment to be released.'
           placeholder={`Describe this opportunity's acceptance criteria.`}
           style={{ height: '300px' }}
           state={state.acceptanceCriteria}
@@ -880,6 +896,12 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           extraChildProps={{}}
           label='Evaluation Criteria'
           placeholder={`Describe this opportunity's evaluation criteria.`}
+          help={(
+            <div>
+              <p>Describe the criteria that you will use to score the submitted proposals. State the weight, or points, that you will give to each criterion (e.g. “Experience contributing Java code to any public code repositories with more than 5 contributors (10 points)”.)</p>
+              <p className='mb-0'>It is at your discretion which mandatory and weighted criteria you wish to use. Please refer to the Government of B.C.’s <Link newTab dest={externalDest(BC_INFORMATION_ON_PROCUREMENT_URL)}>information on procurement</Link> for guidance.</p>
+            </div>
+          )}
           style={{ height: '300px' }}
           state={state.evaluationCriteria}
           disabled={disabled}

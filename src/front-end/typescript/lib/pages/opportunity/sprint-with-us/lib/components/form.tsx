@@ -917,6 +917,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Title'
           placeholder='Opportunity Title'
+          help='Provide a brief and short title for the opportunity that highlights the work that you need done.'
           required
           disabled={disabled}
           state={state.title}
@@ -928,6 +929,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Teaser'
           placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
+          help='Provide 1-2 sentences that will entice readers to apply to this opportunity and that describes what you are inviting them to do.'
           style={{ height: '200px' }}
           disabled={disabled}
           state={state.teaser}
@@ -939,6 +941,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{ inline: true }}
           required
           label='Remote OK?'
+          help='Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options.'
           disabled={disabled}
           state={state.remoteOk}
           dispatch={mapComponentDispatch(dispatch, value => adt('remoteOk' as const, value))} />
@@ -962,6 +965,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Location'
           placeholder='Location'
+          help='Provide the location where you are located or where the work is expected to be completed.'
           required
           disabled={disabled}
           state={state.location}
@@ -973,6 +977,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           required
           extraChildProps={{}}
           label='Proposal Deadline'
+          help='Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time. A deadline of at least five (5) days from the date that the opportunity is published is recommended.'
           state={state.proposalDeadline}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
@@ -983,6 +988,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           required
           extraChildProps={{}}
           label='Assignment Date'
+          help='Choose a date that you will award the successful proponent the opportunity. The assignment date is fixed to 4:00PM Pacific Time.'
           state={state.assignmentDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('assignmentDate' as const, value))} />
@@ -993,6 +999,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{ prefix: '$' }}
           label='Total Maximum Budget'
           placeholder='Total Maximum Budget'
+          help='Provide a dollar value for the maximum amount of money that you can spend to complete the work as provided in the opportunity’s details.'
           required
           disabled={disabled}
           state={state.totalMaxBudget}
@@ -1004,6 +1011,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Minimum Team Members'
           placeholder='Minimum Team Members'
+          help='Provide the minimum number of team members that you will require the successful proponent to supply in order to complete the work as outlined in the opportunity’s details.'
           disabled={disabled}
           state={state.minTeamMembers}
           dispatch={mapComponentDispatch(dispatch, value => adt('minTeamMembers' as const, value))} />
@@ -1014,6 +1022,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Mandatory Skills'
           placeholder='Mandatory Skills'
+          help='Select the skill(s) from the list provided that the successful proponent must possess in order to be considered for the opportunity. If you do not see the skill(s) that you are looking for, you may create a new skill by entering it into the field below.'
           required
           disabled={disabled}
           state={state.mandatorySkills}
@@ -1025,6 +1034,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{}}
           label='Optional Skills'
           placeholder='Optional Skills'
+          help='Select the skill(s) from the list provided that the successful proponent may possess that would be considered a bonus, or nice-to-have, but is/are not required in order to be awarded the opportunity. If you do not see the skill(s) that you are looking for, you may create a new skill by entering it into the field below.'
           disabled={disabled}
           state={state.optionalSkills}
           dispatch={mapComponentDispatch(dispatch, value => adt('optionalSkills' as const, value))} />
@@ -1045,6 +1055,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
           required
           label='Description'
           placeholder='Describe this opportunity.'
+          help='Provide a complete description of the opportunity. You may provide background information, describe what you are attempting to accomplish by offering the opportunity, etc.'
           style={{ height: '60vh', minHeight: '400px' }}
           disabled={disabled}
           state={state.description}
@@ -1068,6 +1079,7 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =>
           className='mb-0'
           label='Which phase do you want to start with?'
           placeholder='Select Phase'
+          help='Select the phase from which you would like to begin the opportunity. The phases progress in order from Inception, Proof of Concept and Implementation. Each phase has its own expected set of tasks and deliverables.'
           state={state.startingPhase}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startingPhase' as const, value))} />

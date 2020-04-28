@@ -242,6 +242,7 @@ const QuestionView: View<QuestionViewProps> = props => {
             extraChildProps={{}}
             label='Question'
             placeholder='Enter your question here.'
+            help='Enter your question in the field provided below.'
             required
             style={{ height: '200px' }}
             disabled={disabled}
@@ -255,6 +256,7 @@ const QuestionView: View<QuestionViewProps> = props => {
             extraChildProps={{}}
             label='Response Guidelines'
             placeholder='Provide some guidance on how proponents can effectively respond to your question.'
+            help='Provide some guidance on how proponents can effectively respond to your question.'
             required
             style={{ height: '160px' }}
             disabled={disabled}

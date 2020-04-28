@@ -173,6 +173,7 @@ export const component: Tab.Component<State, Msg> = {
                 disabled={isEnterScoreLoading}
                 label='Team Scenario Score'
                 placeholder='Team Scenario Score'
+                help={`Enter this proponent's score for the Team Scenario stage of the evaluation process as a percentage (up to two decimal places).`}
                 dispatch={mapComponentDispatch(dispatch, v => adt('scoreMsg' as const, v))}
                 state={state.score} />
             </div>

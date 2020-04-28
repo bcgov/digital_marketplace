@@ -228,6 +228,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           required
           extraChildProps={{}}
           label='Phase Start Date'
+          help='Choose a date for when you expect to begin the work required for this phase.'
           state={state.startDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('startDate' as const, value))} />
@@ -237,6 +238,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           required
           extraChildProps={{}}
           label='Phase Completion Date'
+          help='Choose a date for when you expect to complete the work required for this phase.'
           state={state.completionDate}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('completionDate' as const, value))} />
@@ -247,6 +249,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{ prefix: '$' }}
           placeholder='Maximum Phase Budget'
           label='Maximum Phase Budget'
+          help='Provide a dollar value for the maximum amount of money that you can spend to complete the work required for this phase.'
           state={state.maxBudget}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('maxBudget' as const, value))} />
