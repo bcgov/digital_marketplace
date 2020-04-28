@@ -301,7 +301,7 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
   const isAwarded = opportunity.status === SWUOpportunityStatus.Awarded;
   return [
     {
-      icon: 'users',
+      icon: 'comment-dollar',
       name: `Proposal${numProposals === 1 ? '' : 's'}`,
       value: numProposals ? String(numProposals) : EMPTY_STRING
     },
