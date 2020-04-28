@@ -211,8 +211,10 @@ export function createCWUProposal(session: Session): boolean {
   return isVendor(session);
 }
 
-export async function editCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
-  return session && await isCWUProposalAuthor(connection, session.user, proposalId) || false;
+export async function editCWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: CWUOpportunity): Promise<boolean> {
+  return isAdmin(session) ||
+    (session && await isCWUProposalAuthor(connection, session.user, proposalId)) ||
+    (session && await isCWUOpportunityAuthor(connection, session.user, opportunity.id) && doesCWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
 }
 
 export async function deleteCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {

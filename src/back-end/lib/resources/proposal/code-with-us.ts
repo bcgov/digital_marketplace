@@ -11,7 +11,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
 
 interface ValidatedCreateRequestBody {
@@ -290,7 +290,14 @@ const resource: Resource = {
           return invalid({ notFound: ['The specified proposal does not exist.'] });
         }
 
-        if (!permissions.isSignedIn(request.session) || !await permissions.editCWUProposal(connection, request.session, request.params.id)) {
+        const cwuOpportunity = getValidValue(await db.readOneCWUOpportunity(connection, validatedCWUProposal.value.opportunity.id, request.session), undefined);
+        if (!cwuOpportunity) {
+          return invalid({
+            database: [db.ERROR_MESSAGE]
+          });
+        }
+
+        if (!permissions.isSignedIn(request.session) || !await permissions.editCWUProposal(connection, request.session, request.params.id, cwuOpportunity)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
