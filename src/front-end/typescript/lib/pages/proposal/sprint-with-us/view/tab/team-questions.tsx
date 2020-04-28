@@ -22,7 +22,7 @@ import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
 import { validateTeamQuestionScoreScore } from 'shared/lib/validation/proposal/sprint-with-us';
 
-type ModalId = 'enterScore' | 'screenIn' | 'screenOut';
+type ModalId = 'enterScore';
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -336,46 +336,6 @@ export const component: Tab.Component<State, Msg> = {
             </div>
           )
         };
-      case 'screenIn':
-        return {
-          title: 'Screen Proponent into Code Challenge?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Screen In',
-              icon: 'stars',
-              color: 'info',
-              button: true,
-              msg: adt('screenIn')
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to screen this proponent into the Code Challenge?'
-        };
-      case 'screenOut':
-        return {
-          title: 'Screen Proponent Out of Code Challenge?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Screen Out',
-              icon: 'ban',
-              color: 'danger',
-              button: true,
-              msg: adt('screenOut')
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to screen this proponent out of the Code Challenge?'
-        };
       case null:
         return null;
     }
@@ -406,7 +366,7 @@ export const component: Tab.Component<State, Msg> = {
                 disabled: isScreenToFromLoading,
                 button: true,
                 color: 'primary',
-                onClick: () => dispatch(adt('showModal', 'screenIn' as const))
+                onClick: () => dispatch(adt('screenIn' as const))
               }]
             : []),
           {
@@ -430,7 +390,7 @@ export const component: Tab.Component<State, Msg> = {
             disabled: isScreenToFromLoading,
             button: true,
             color: 'danger',
-            onClick: () => dispatch(adt('showModal', 'screenOut' as const))
+            onClick: () => dispatch(adt('screenOut' as const))
           }
         ]);
       default:

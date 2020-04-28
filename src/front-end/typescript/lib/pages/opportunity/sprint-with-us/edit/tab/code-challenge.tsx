@@ -20,9 +20,7 @@ import { canSWUProposalBeScreenedToFromTeamScenario, getSWUProponentName, isSWUP
 import { ADT, adt, Id } from 'shared/lib/types';
 
 type ModalId
-  = ADT<'screenInToTeamScenario', Id>
-  | ADT<'screenOutOfTeamScenario', Id>
-  | ADT<'completeCodeChallenge'>;
+  = ADT<'completeCodeChallenge'>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -227,7 +225,7 @@ const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWU
           size='sm'
           disabled={disabled || loading}
           loading={loading}
-          onClick={() => dispatch(adt('showModal', adt('screenInToTeamScenario' as const, proposal.id))) }>
+          onClick={() => dispatch(adt('screenInToTeamScenario' as const, proposal.id)) }>
           Screen In
         </Link>
       );
@@ -240,7 +238,7 @@ const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWU
           size='sm'
           disabled={disabled || loading}
           loading={loading}
-          onClick={() => dispatch(adt('showModal', adt('screenOutOfTeamScenario' as const, proposal.id))) }>
+          onClick={() => dispatch(adt('screenOutOfTeamScenario' as const, proposal.id)) }>
           Screen Out
         </Link>
       );
@@ -402,46 +400,6 @@ export const component: Tab.Component<State, Msg> = {
   getModal: state => {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
-      case 'screenInToTeamScenario':
-        return {
-          title: 'Screen Proponent into Team Scenario?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Screen In',
-              icon: 'stars',
-              color: 'info',
-              button: true,
-              msg: adt('screenInToTeamScenario', state.showModal.value)
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to screen this proponent into the Team Scenario?'
-        };
-      case 'screenOutOfTeamScenario':
-        return {
-          title: 'Screen Proponent Out of Team Scenario?',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Screen Out',
-              icon: 'ban',
-              color: 'danger',
-              button: true,
-              msg: adt('screenOutOfTeamScenario', state.showModal.value)
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ],
-          body: () => 'Are you sure you want to screen this proponent out of the Team Scenario?'
-        };
       case 'completeCodeChallenge':
         return {
           title: 'Complete Code Challenge?',

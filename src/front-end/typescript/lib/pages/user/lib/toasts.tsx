@@ -30,3 +30,14 @@ export const reactivated = {
     body: 'Unable to reactivate profile. Please try again later.'
   }
 };
+
+export const adminStatusChanged = {
+  success: {
+    title: 'Admin Permissions Updated',
+    body: 'This user\'s administrative permissions have been successfully updated.'
+  },
+  error: {
+    title: 'Unable to Update Admin Permissions',
+    body: 'This user\'s administrative permissions could not be updated. Please try again later.'
+  }
+};

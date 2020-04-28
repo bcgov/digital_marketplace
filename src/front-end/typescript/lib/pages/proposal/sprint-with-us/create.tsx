@@ -10,7 +10,7 @@ import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts'
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { isSWUOpportunityAcceptingProposals, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
@@ -67,6 +67,12 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     };
     const opportunityResult = await api.opportunities.swu.readOne(opportunityId);
     if (!api.isValid(opportunityResult)) { return fail(); }
+    const opportunity = opportunityResult.value;
+    // If the opportunity is not accepting proposals, redirect to opportunity page.
+    if (!isSWUOpportunityAcceptingProposals(opportunity)) {
+      dispatch(replaceRoute(adt('opportunitySWUView' as const, { opportunityId })));
+      return invalid(null);
+    }
     const organizationsResult = await api.organizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }
     const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
@@ -78,7 +84,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       opportunity: opportunityResult.value,
       form: immutable(await Form.init({
         viewerUser: shared.sessionUser,
-        opportunity: opportunityResult.value,
+        opportunity,
         organizations: organizationsResult.value,
         evaluationContent: evalContentResult.value
       })),
@@ -185,12 +191,12 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       getDescription: state => (
         <div className='d-flex flex-column nowrap'>
           <Link newTab dest={routeDest(adt('opportunitySWUView', { opportunityId: state.opportunity.id }))} className='mb-3'>{state.opportunity.title}</Link>
-          <span>Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).</span>
+          <p className='mb-0'>Use the form provided to create your proposal for this <em>Sprint With Us</em> opportunity. You can either save a draft of your proposal to complete the form at a later time, or you can complete the form now to submit your proposal immediately.</p>
         </div>
       ),
       getFooter: () => (
         <span>
-          Need help? <Link dest={routeDest(adt('content', 'sprint-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a SWU proposal.
+          Need help? <Link dest={routeDest(adt('content', 'sprint-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Sprint With Us</em> proposal.
         </span>
       )
     })
