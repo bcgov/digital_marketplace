@@ -144,7 +144,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                   withTimeZone: true
                 }
               ]} />
-              <p className='font-italic small text-secondary mb-4'>This RFP is a Competition Notice under RFQ No. ON-003166 and is restricted to Proponents that have become Qualified Suppliers pursuant to that RFQ.</p>
+              <p className='font-italic small text-secondary mb-5'>This RFP is a Competition Notice under RFQ No. ON-003166 and is restricted to Proponents that have become Qualified Suppliers pursuant to that RFQ.</p>
           </Col>
         </Row>
         <Row className='align-items-center'>

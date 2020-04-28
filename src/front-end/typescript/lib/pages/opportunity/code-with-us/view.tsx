@@ -114,7 +114,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         <Row>
           <Col xs='12'>
             <DateMetadata
-              className='mb-4'
+              className='mb-5'
               dates={[
                 opp.publishedAt
                   ? {
