@@ -66,7 +66,7 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
     case 'codeChallenge':
       return {
         component: CodeChallengeTab.component,
-        icon: 'code',
+        icon: 'code-outline',
         title: 'Code Challenge'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'teamScenario':

@@ -383,7 +383,7 @@ export const component: Tab.Component<State, Msg> = {
     const isLoading = isCompleteCodeChallengeLoading || isScreenToFromLoading;
     return adt('links', [{
       children: 'Complete Code Challenge',
-      symbol_: leftPlacement(iconLinkSymbol('code')),
+      symbol_: leftPlacement(iconLinkSymbol('code-outline')),
       color: 'primary',
       button: true,
       loading: isCompleteCodeChallengeLoading,
@@ -407,7 +407,7 @@ export const component: Tab.Component<State, Msg> = {
           actions: [
             {
               text: 'Complete Code Challenge',
-              icon: 'code',
+              icon: 'code-outline',
               color: 'primary',
               button: true,
               msg: adt('completeCodeChallenge')

@@ -31,7 +31,7 @@ const ProgramType: View<Props> = ({ type_, className = '', size = 'md' }) => {
         className='mr-2 flex-shrink-0 flex-grow-0'
         width={iconSize}
         height={iconSize}
-        name={type_ === 'cwu' ? 'code-solid' : 'users-class'} />
+        name={type_ === 'cwu' ? 'code' : 'users-class'} />
       {type_ === 'cwu' ? 'Code With Us' : 'Sprint With Us'}
     </div>
   );
