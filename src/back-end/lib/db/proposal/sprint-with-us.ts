@@ -913,7 +913,6 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
         id: generateUuid(),
         proposal: proposalId,
         createdAt: new Date(), // New date so it appears after the previous updates
-        createdBy: session.user.id,
         event: SWUProposalEvent.PriceScoreEntered,
         note: `A price score of "${priceScore}" was calculated.`
       }, '*');
