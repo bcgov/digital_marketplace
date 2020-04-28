@@ -199,7 +199,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
 
     remoteDesc: immutable(await LongText.init({
       errors: [],
-      validate: opportunityValidation.validateRemoteDesc,
+      validate: v => opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
       child: {
         value: opportunity?.remoteDesc || '',
         id: 'cwu-opportunity-remote-desc'
@@ -569,7 +569,17 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ['remoteOk'],
         childUpdate: RemoteOkRadioGroup.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('remoteOk', value)
+        mapChildMsg: (value) => adt('remoteOk', value),
+        updateAfter: state => [
+          state.update('remoteDesc', s => {
+            const remoteOk = !!FormField.getValue(state.remoteOk);
+            return FormField.setValidate(
+              s,
+              v => opportunityValidation.validateRemoteDesc(v, remoteOk),
+              remoteOk
+            );
+          })
+        ]
       });
 
     case 'remoteDesc':

@@ -17,7 +17,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { formatAmount, formatDate, formatDateAndTime } from 'shared/lib';
+import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
@@ -114,7 +114,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         <Row>
           <Col xs='12'>
             <DateMetadata
-              className='mb-4'
+              className='mb-5'
               dates={[
                 opp.publishedAt
                   ? {
@@ -135,13 +135,13 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         </Row>
         <Row className='align-items-center'>
           <Col xs='12' md='6' lg='6'>
-            <h1 className='mb-2'>{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h1>
+            <h2 className='mb-2'>{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h2>
             <ProgramType size='lg' type_='cwu' className='mb-4' />
             <div className='d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4'>
               <OpportunityBadge opportunity={adt('cwu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
               <IconInfo
                 name='alarm-clock-outline'
-                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAndTime(opp.proposalDeadline, true)}`}
+                value={`Close${isAcceptingProposals ? 's' : 'd'} ${formatDateAtTime(opp.proposalDeadline, true)}`}
                 className='ml-sm-3 flex-shrink-0' />
             </div>
             {opp.teaser ? (<p className='text-secondary mb-4'>{opp.teaser}</p>) : null}
@@ -226,7 +226,7 @@ const InfoDetailsHeading: View<{ icon: AvailableIcons; text: string; }> = ({ ico
   return (
     <div className='d-flex align-items-start flex-nowrap mb-3'>
       <Icon name={icon} width={1.5} height={1.5} className='flex-shrink-0' style={{ marginTop: '0.3rem' }} />
-      <h3 className='mb-0 ml-2'>{text}</h3>
+      <h4 className='mb-0 ml-2'>{text}</h4>
     </div>
   );
 };
@@ -236,7 +236,7 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Details</h2>
+        <h3 className='mb-0'>Details</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         <InfoDetailsHeading icon='toolbox-outline' text='Required Skills' />
@@ -268,7 +268,7 @@ const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Attachments</h2>
+        <h3 className='mb-0'>Attachments</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         {attachments.length
@@ -284,7 +284,7 @@ const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Addenda</h2>
+        <h3 className='mb-0'>Addenda</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         {addenda.length
@@ -360,7 +360,7 @@ const AcceptanceCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>
-            <h2 className='mb-4'>Acceptance Criteria</h2>
+            <h3 className='mb-4'>Acceptance Criteria</h3>
             <p className='mb-4'>This is a fixed-price opportunity governed by the terms of our lightweight procurement model, Code With Us. To be paid the fixed price for this opportunity, you need to meet all of the following criteria:</p>
             <Markdown source={state.opportunity.acceptanceCriteria} smallerHeadings openLinksInNewTabs />
           </Col>
@@ -377,7 +377,7 @@ const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>
-            <h2 className='mb-4'>Proposal Evaluation Criteria</h2>
+            <h3 className='mb-4'>Proposal Evaluation Criteria</h3>
             <p className='mb-4'>Your proposal will be scored using the following criteria:</p>
             <Markdown source={state.opportunity.evaluationCriteria} smallerHeadings openLinksInNewTabs />
           </Col>
@@ -395,7 +395,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
       <Container>
         <Row>
           <Col xs='12' md='8'>
-            <h2 className='mb-4'>How To Apply</h2>
+            <h3 className='mb-4'>How To Apply</h3>
             <p>
               To submit a proposal for this Code With Us opportunity, you must have signed up for a Digital Marketplace vendor account.&nbsp;
               {!viewerUser
@@ -461,7 +461,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         const alerts = [];
         if (viewerUser && isVendor(viewerUser) && existingProposal?.submittedAt) {
           alerts.push({
-            text: `You submitted a proposal to this opportunity on ${formatDateAndTime(existingProposal.submittedAt, true)}.`
+            text: `You submitted a proposal to this opportunity on ${formatDateAtTime(existingProposal.submittedAt, true)}.`
           });
         }
         if (successfulProponentName) {
@@ -478,6 +478,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const viewerUser = state.viewerUser;
     if (!viewerUser) { return null; }
     const isToggleWatchLoading = state.toggleWatchLoading > 0;
+    const isAcceptingProposals = isCWUOpportunityAcceptingProposals(state.opportunity);
     switch (viewerUser.type) {
       case UserType.Admin:
         return adt('links', [
@@ -524,7 +525,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
-        } else {
+        } else if (isAcceptingProposals) {
           return adt('links', [
             {
               disabled: isToggleWatchLoading,
@@ -537,6 +538,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
+        } else {
+          return null;
         }
     }
   })

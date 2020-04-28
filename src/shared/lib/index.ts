@@ -111,6 +111,10 @@ export function rawFormatDate(date: Date, formatType: string, withTimeZone: bool
   return normalizeDateTimezone(date).format(`${formatType}${withTimeZone ? ' z' : ''}`);
 }
 
+export function formatDateAtTime(date: Date, withTimeZone = false): string {
+  return `${formatDate(date)} at ${formatTime(date, withTimeZone)}`;
+}
+
 export function formatDateAndTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, 'lll', withTimeZone);
 }
