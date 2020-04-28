@@ -478,6 +478,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const viewerUser = state.viewerUser;
     if (!viewerUser) { return null; }
     const isToggleWatchLoading = state.toggleWatchLoading > 0;
+    const isAcceptingProposals = isCWUOpportunityAcceptingProposals(state.opportunity);
     switch (viewerUser.type) {
       case UserType.Admin:
         return adt('links', [
@@ -524,7 +525,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
-        } else {
+        } else if (isAcceptingProposals) {
           return adt('links', [
             {
               disabled: isToggleWatchLoading,
@@ -537,6 +538,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               }))
             }
           ]);
+        } else {
+          return null;
         }
     }
   })
