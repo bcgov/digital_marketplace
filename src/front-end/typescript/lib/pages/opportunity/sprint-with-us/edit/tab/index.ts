@@ -122,10 +122,10 @@ export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Pro
     links: [
       makeSidebarLink('summary',       opportunityId,  activeTab),
       makeSidebarLink('opportunity',   opportunityId,  activeTab),
+      makeSidebarLink('proposals',     opportunityId,  activeTab),
       makeSidebarLink('teamQuestions', opportunityId,  activeTab),
       makeSidebarLink('codeChallenge', opportunityId,  activeTab),
       makeSidebarLink('teamScenario',  opportunityId,  activeTab),
-      makeSidebarLink('proposals',     opportunityId,  activeTab),
       makeSidebarLink('history',       opportunityId,  activeTab),
       {
         icon: 'external-link',
