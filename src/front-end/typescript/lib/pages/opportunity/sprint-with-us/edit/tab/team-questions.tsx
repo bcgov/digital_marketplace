@@ -211,7 +211,7 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
 };
 
 const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
-  return (<div>Proposals will be displayed here once the opportunity has closed.</div>);
+  return (<div>Proponents will be displayed here once the opportunity has closed.</div>);
 };
 
 const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ disabled, loading, proposal, dispatch }) => {

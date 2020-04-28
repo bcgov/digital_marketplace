@@ -130,7 +130,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
-  return (<div>Proponents will be displayed here once this opportunity has closed.</div>);
+  return (<div>Proposals will be displayed here once this opportunity has closed.</div>);
 };
 
 const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ disabled, loading, proposal, dispatch }) => {
