@@ -1,14 +1,16 @@
 import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
+import { swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/edit-tab-header';
 import ReportCardList from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { NUM_SCORE_DECIMALS, showScoreAndRankToProponent } from 'shared/lib/resources/proposal/sprint-with-us';
+import { NUM_SCORE_DECIMALS, showScoreAndRankToProponent, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
 export interface State extends Tab.Params {
@@ -108,6 +110,18 @@ const Rank: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
+const NotAvailable: View<Pick<State, 'proposal'>> = ({ proposal }) => {
+  switch (proposal.status) {
+    case SWUProposalStatus.Disqualified:
+    case SWUProposalStatus.Withdrawn:
+      const withdrawn = swuProposalStatusToTitleCase(SWUProposalStatus.Withdrawn, UserType.Vendor);
+      const disqualified = swuProposalStatusToTitleCase(SWUProposalStatus.Disqualified, UserType.Vendor);
+      return (<div>Scoresheets are not available for {withdrawn} or {disqualified} proposals.</div>);
+    default:
+      return (<div>This proposal's scoresheet will be available once the opportunity has been awarded.</div>);
+  }
+};
+
 const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <Row>
@@ -120,7 +134,7 @@ const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 bodyRows={tableBodyRows(state)}
                 state={state.table}
                 dispatch={mapComponentDispatch(dispatch, v => adt('table' as const, v))} />)
-            : 'This proposal\'s scoresheet will be available once the opportunity is awarded.'}
+            : (<NotAvailable proposal={state.proposal} />)}
         </div>
       </Col>
     </Row>
