@@ -152,10 +152,15 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
     color: 'blue-light',
     view: makeInstructionalSidebar<ValidState,  Msg>({
       getTitle: () => 'Create a Sprint With Us Opportunity',
-      getDescription: () => 'Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).',
+      getDescription: state => (
+        <div>
+          <p><em>Sprint With Us</em> opportunities are used to procure an Agile product development team for your digital service at a variable cost of up to $2,000,000.</p>
+          <p className='mb-0'>Use the form provided to create your <em>Sprint With Us</em> opportunity. You can either save a draft of your opportunity to complete the form at a later time, or you can complete the form now to {isAdmin(state.viewerUser) ? 'publish your opportunity immediately' : 'submit your opportunity for review to the Digital Marketplace\'s administrators'}.</p>
+        </div>
+      ),
       getFooter: () => (
         <span>
-          Need help? <Link newTab color='primary' dest={routeDest(adt('content', 'sprint-with-us-opportunity-guide'))}>Read the guide</Link> for creating and managing a SWU opportunity
+          Need help? <Link newTab color='primary' dest={routeDest(adt('content', 'sprint-with-us-opportunity-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Sprint With Us</em> opportunity.
         </span>
       )
     })

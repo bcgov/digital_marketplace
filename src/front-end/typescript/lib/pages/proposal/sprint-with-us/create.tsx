@@ -191,12 +191,12 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       getDescription: state => (
         <div className='d-flex flex-column nowrap'>
           <Link newTab dest={routeDest(adt('opportunitySWUView', { opportunityId: state.opportunity.id }))} className='mb-3'>{state.opportunity.title}</Link>
-          <span>Introductory text placeholder. Can provide brief instructions on how to create and manage an opportunity (e.g. save draft verion).</span>
+          <p className='mb-0'>Use the form provided to create your proposal for this <em>Sprint With Us</em> opportunity. You can either save a draft of your proposal to complete the form at a later time, or you can complete the form now to submit your proposal immediately.</p>
         </div>
       ),
       getFooter: () => (
         <span>
-          Need help? <Link dest={routeDest(adt('content', 'sprint-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a SWU proposal.
+          Need help? <Link dest={routeDest(adt('content', 'sprint-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Sprint With Us</em> proposal.
         </span>
       )
     })
