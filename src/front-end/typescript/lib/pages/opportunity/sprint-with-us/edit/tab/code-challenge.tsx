@@ -361,7 +361,7 @@ const view: ComponentView<State, Msg> = (props) => {
             <h4 className='mb-0'>Code Challenge Participants</h4>
           </Col>
           <Col xs='12'>
-            {state.canViewProposals
+            {state.canViewProposals && state.proposals.length
               ? (<EvaluationTable {...props} />)
               : (<WaitForCodeChallenge {...props} />)}
           </Col>

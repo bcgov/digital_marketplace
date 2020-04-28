@@ -15,7 +15,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareNumbers } from 'shared/lib';
-import { canSWUOpportunityBeScreenedInToCodeChallenge, canViewSWUOpportunityProposals, hasSWUOpportunityPassedTeamQuestions, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeScreenedInToCodeChallenge, canViewSWUOpportunityProposals, hasSWUOpportunityPassedTeamQuestions, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { canSWUProposalBeScreenedToFromCodeChallenge, getSWUProponentName, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -210,8 +210,12 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
   ];
 };
 
-const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
-  return (<div>Proponents will be displayed here once the opportunity has closed.</div>);
+const NotAvailable: ComponentView<State, Msg> = ({ state }) => {
+  if (isSWUOpportunityAcceptingProposals(state.opportunity)) {
+    return (<div>Proponents will be displayed here once this opportunity has closed.</div>);
+  } else {
+    return (<div>No proposals were submitted to this opportunity.</div>);
+  }
 };
 
 const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ disabled, loading, proposal, dispatch }) => {
@@ -371,9 +375,9 @@ const view: ComponentView<State, Msg> = (props) => {
               : null}
           </Col>
           <Col xs='12'>
-            {state.canViewProposals
+            {state.canViewProposals && state.proposals.length
               ? (<EvaluationTable {...props} />)
-              : (<WaitForOpportunityToClose {...props} />)}
+              : (<NotAvailable {...props} />)}
           </Col>
         </Row>
       </div>

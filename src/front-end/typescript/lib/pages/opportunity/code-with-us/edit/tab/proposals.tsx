@@ -13,7 +13,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareNumbers } from 'shared/lib';
-import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
@@ -161,8 +161,12 @@ const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[])
   ];
 };
 
-const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
-  return (<div>Proposals will be displayed here once the opportunity has closed.</div>);
+const NotAvailable: ComponentView<State, Msg> = ({ state }) => {
+  if (isCWUOpportunityAcceptingProposals(state.opportunity)) {
+    return (<div>Proposals will be displayed here once this opportunity has closed.</div>);
+  } else {
+    return (<div>No proposals were submitted to this opportunity.</div>);
+  }
 };
 
 const ContextMenuCell: View<{ loading: boolean; proposal: CWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ loading, proposal, dispatch }) => {
@@ -300,7 +304,7 @@ const view: ComponentView<State, Msg> = (props) => {
           <Col xs='12'>
             {state.canViewProposals
               ? (<EvaluationTable {...props} />)
-              : (<WaitForOpportunityToClose {...props} />)}
+              : (<NotAvailable {...props} />)}
           </Col>
         </Row>
       </div>

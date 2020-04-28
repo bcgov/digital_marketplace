@@ -13,7 +13,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareNumbers } from 'shared/lib';
-import { canSWUOpportunityBeAwarded, canViewSWUOpportunityProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeAwarded, canViewSWUOpportunityProposals, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { canSWUProposalBeAwarded, getSWUProponentName, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -129,8 +129,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const WaitForOpportunityToClose: ComponentView<State, Msg> = ({ state }) => {
-  return (<div>Proposals will be displayed here once this opportunity has closed.</div>);
+const NotAvailable: ComponentView<State, Msg> = ({ state }) => {
+  if (isSWUOpportunityAcceptingProposals(state.opportunity)) {
+    return (<div>Proposals will be displayed here once this opportunity has closed.</div>);
+  } else {
+    return (<div>No proposals were submitted to this opportunity.</div>);
+  }
 };
 
 const ContextMenuCell: View<{ disabled: boolean; loading: boolean; proposal: SWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ disabled, loading, proposal, dispatch }) => {
@@ -298,7 +302,7 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
   return [
     {
       icon: 'users',
-      name: `Proposals${numProposals === 1 ? '' : 's'}`,
+      name: `Proposal${numProposals === 1 ? '' : 's'}`,
       value: numProposals ? String(numProposals) : EMPTY_STRING
     },
     {
@@ -334,9 +338,9 @@ const view: ComponentView<State, Msg> = (props) => {
             <h4 className='mb-0'>Proposals</h4>
           </Col>
           <Col xs='12'>
-            {state.canViewProposals
+            {state.canViewProposals && state.proposals.length
               ? (<Scoresheet {...props} />)
-              : (<WaitForOpportunityToClose {...props} />)}
+              : (<NotAvailable {...props} />)}
           </Col>
         </Row>
       </div>
