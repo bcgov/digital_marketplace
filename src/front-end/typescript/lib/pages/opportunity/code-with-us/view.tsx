@@ -156,7 +156,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 button>
                 Contact
               </Link>
-              {state.viewerUser
+              {state.viewerUser && state.viewerUser.id !== opp.createdBy?.id
                 ? (<Link
                     className='ml-3'
                     disabled={isToggleWatchLoading}

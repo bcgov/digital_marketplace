@@ -425,7 +425,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
                   name='laptop-outline' />)
               : null}
           </div>
-          {subscribed !== undefined
+          {viewerUser && subscribed !== undefined && opportunity.value.createdBy?.id !== viewerUser.id
             ? (<Link
                 button
                 loading={isWatchLoading}
