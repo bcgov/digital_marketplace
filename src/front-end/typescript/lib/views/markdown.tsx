@@ -43,12 +43,12 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
     ? {
         link: noLinks
           ? () => { //React-Markdown types are not helpful here.
-              return (<span className='text-secondary font-weight-bold'>[Link Redacted]</span>);
+              return (<span className='text-danger font-weight-bold'>[Link Redacted]</span>);
             }
           : ReactMarkdown.renderers.link,
         image: noImages
           ? () => { //React-Markdown types are not helpful here.
-              return (<p className='text-secondary font-weight-bold'>[Image Redacted]</p>);
+              return (<p className='text-danger font-weight-bold'>[Image Redacted]</p>);
             }
           : (props: any) => {
               return (<img {...props} src={decodeImgSrc(props.src || '')} />);
