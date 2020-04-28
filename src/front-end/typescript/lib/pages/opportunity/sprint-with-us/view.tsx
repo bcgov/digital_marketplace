@@ -149,7 +149,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         </Row>
         <Row className='align-items-center'>
           <Col xs='12' md='6' lg='6'>
-            <h1 className='mb-2'>{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h1>
+            <h2 className='mb-2'>{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h2>
             <ProgramType size='lg' type_='swu' className='mb-4' />
             <div className='d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4'>
               <OpportunityBadge opportunity={adt('swu', opp)} viewerUser={state.viewerUser} className='mb-2 mb-sm-0' />
@@ -240,7 +240,7 @@ const InfoDetailsHeading: View<{ icon: AvailableIcons; text: string; }> = ({ ico
   return (
     <div className='d-flex align-items-start flex-nowrap mb-3'>
       <Icon name={icon} width={1.5} height={1.5} className='flex-shrink-0' style={{ marginTop: '0.3rem' }} />
-      <h3 className='mb-0 ml-2'>{text}</h3>
+      <h4 className='mb-0 ml-2'>{text}</h4>
     </div>
   );
 };
@@ -250,7 +250,7 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Details</h2>
+        <h3 className='mb-0'>Details</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         <InfoDetailsHeading icon='toolbox-outline' text='Skills' />
@@ -281,7 +281,7 @@ const InfoScope: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Scope &amp; Contract</h2>
+        <h3 className='mb-0'>Scope &amp; Contract</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         <Markdown source={state.scopeContent} openLinksInNewTabs />
@@ -295,7 +295,7 @@ const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Attachments</h2>
+        <h3 className='mb-0'>Attachments</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         {attachments.length
@@ -311,7 +311,7 @@ const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs='12'>
-        <h2 className='mb-0'>Addenda</h2>
+        <h3 className='mb-0'>Addenda</h3>
       </Col>
       <Col xs='12' className='mt-4'>
         {addenda.length
@@ -392,7 +392,7 @@ const Budget: ComponentView<ValidState, Msg> = ({ state }) => {
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>
-            <h2 className='mb-4'>Budget</h2>
+            <h3 className='mb-4'>Budget</h3>
             <p className='mb-0'>The Total Proponent Cost set out in the Proponent's Proposal must not exceed {totalMaxBudget ? formatAmount(totalMaxBudget, '$') : EMPTY_STRING} (inclusive of all expenses, but exclusive of applicable taxes). This RFP system will not permit a Proponent to submit a Proposal unless this mandatory requirement is satisfied.</p>
           </Col>
         </Row>
@@ -436,7 +436,7 @@ const Phases: ComponentView<ValidState, Msg> = ({ state }) => {
       <div className='mt-5 pt-5 border-top'>
         <Row>
           <Col xs='12'>
-            <h2 className='mb-4'>Phases of Work</h2>
+            <h3 className='mb-4'>Phases of Work</h3>
             <p className='mb-5'>The following phase(s) of work need to be carried out:</p>
           </Col>
         </Row>
@@ -468,7 +468,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
       <Container>
         <Row>
           <Col xs='12' md='8'>
-            <h2 className='mb-4'>How To Apply</h2>
+            <h3 className='mb-4'>How To Apply</h3>
             <p>
               To submit a proposal for this Sprint With Us opportunity, you must have signed up for a Digital Marketplace vendor account and be a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link>.&nbsp;
               {!viewerUser
