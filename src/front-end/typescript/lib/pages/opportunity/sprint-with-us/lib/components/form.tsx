@@ -1055,7 +1055,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
           required
           label='Description'
           placeholder='Describe this opportunity.'
-          help='Provide a complete description of the opportunity. You may provide background information, describe what you are attempting to accomplish by offering the opportunity, etc.'
+          help='Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown.'
           style={{ height: '60vh', minHeight: '400px' }}
           disabled={disabled}
           state={state.description}

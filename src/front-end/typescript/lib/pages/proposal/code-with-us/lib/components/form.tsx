@@ -792,7 +792,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           style={{ height: '60vh', minHeight: '400px' }}
           label='Proposal'
-          help='Provide your complete proposal here. Be sure to address the Proposal Evaluation Criteria as outlined on the opportunity.'
+          help='Provide your complete proposal here. Be sure to address the Proposal Evaluation Criteria as outlined on the opportunity. You can format your proposal with Markdown.'
           state={state.proposalText}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalText' as const, value))} />
       </Col>
@@ -802,7 +802,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           style={{ height: '300px' }}
           label='Additional Comments'
-          help='Provide any additional information or comments that are relevant to your proposal submission.'
+          help='Provide any additional information or comments that are relevant to your proposal submission. You can format your additional comments with Markdown.'
           state={state.additionalComments}
           dispatch={mapComponentDispatch(dispatch, value => adt('additionalComments' as const, value))} />
       </Col>

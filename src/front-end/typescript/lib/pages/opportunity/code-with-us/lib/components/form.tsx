@@ -808,7 +808,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
           extraChildProps={{}}
           required
           label='Description'
-          help='Provide a complete description of the opportunity. You may provide background information, describe what you are attempting to accomplish by offering the opportunity, etc.'
+          help='Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown.'
           placeholder='Describe this opportunity.'
           style={{ height: '60vh', minHeight: '400px' }}
           disabled={disabled}
@@ -882,7 +882,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           required
           extraChildProps={{}}
           label='Acceptance Criteria'
-          help='Clearly define what the successful proponent must deliver and all of the criteria that must be met in order for payment to be released.'
+          help='Clearly define what the successful proponent must deliver and all of the criteria that must be met in order for payment to be released. You can format this acceptance criteria with Markdown.'
           placeholder={`Describe this opportunity's acceptance criteria.`}
           style={{ height: '300px' }}
           state={state.acceptanceCriteria}
@@ -898,7 +898,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           placeholder={`Describe this opportunity's evaluation criteria.`}
           help={(
             <div>
-              <p>Describe the criteria that you will use to score the submitted proposals. State the weight, or points, that you will give to each criterion (e.g. “Experience contributing Java code to any public code repositories with more than 5 contributors (10 points)”.)</p>
+              <p>Describe the criteria that you will use to score the submitted proposals. State the weight, or points, that you will give to each criterion (e.g. “Experience contributing Java code to any public code repositories with more than 5 contributors (10 points)”). You can format this evaluation criteria with Markdown.</p>
               <p className='mb-0'>It is at your discretion which mandatory and weighted criteria you wish to use. Please refer to the Government of B.C.’s <Link newTab dest={externalDest(BC_INFORMATION_ON_PROCUREMENT_URL)}>information on procurement</Link> for guidance.</p>
             </div>
           )}

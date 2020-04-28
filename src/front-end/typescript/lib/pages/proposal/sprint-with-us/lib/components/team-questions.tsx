@@ -147,6 +147,7 @@ const ResponseView: View<ResponseViewProps> = props => {
         required
         label={`${title} Response`}
         placeholder={`${title} Response`}
+        help={`Provide your response to this question. You may use Markdown to write your response, however please do not include any images or links, as they will be redacted. Please ensure to stay within the question's response word limit.`}
         style={{ height: '50vh', minHeight: '400px' }}
         className='mb-0'
         disabled={disabled}

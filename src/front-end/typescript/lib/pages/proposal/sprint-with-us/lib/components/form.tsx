@@ -619,6 +619,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
                 extraChildProps={{ prefix: '$' }}
                 label={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)} Cost`}
                 placeholder={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Inception)} Cost`}
+                help='Provide a dollar value for the expected cost to complete the work required for this phase.'
                 hint={`Maximum phase budget is ${formatAmount(inceptionPhase.maxBudget, '$')}`}
                 disabled={disabled}
                 state={state.inceptionCost}
@@ -634,6 +635,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
                 extraChildProps={{ prefix: '$' }}
                 label={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)} Cost`}
                 placeholder={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Prototype)} Cost`}
+                help='Provide a dollar value for the expected cost to complete the work required for this phase.'
                 hint={`Maximum phase budget is ${formatAmount(prototypePhase.maxBudget, '$')}`}
                 disabled={disabled}
                 state={state.prototypeCost}
@@ -648,6 +650,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
               extraChildProps={{ prefix: '$' }}
               label={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)} Cost`}
               placeholder={`${swuOpportunityPhaseTypeToTitleCase(SWUOpportunityPhaseType.Implementation)} Cost`}
+              help='Provide a dollar value for the expected cost to complete the work required for this phase.'
               hint={`Maximum phase budget is ${formatAmount(implementationPhase.maxBudget, '$')}`}
               disabled={disabled}
               state={state.implementationCost}
