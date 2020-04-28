@@ -558,9 +558,21 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
           alerts.push({
             text: `This opportunity was awarded to ${successfulProponentName}.`
           });
-        } else if (isAcceptingProposals && (!viewerUser || (vendor && !state.isQualified && !existingProposal?.submittedAt && isAcceptingProposals))) {
+        } else if (isAcceptingProposals && !viewerUser) {
           alerts.push({
-            text: (<span>You must be a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link> in order to submit a proposal to this opportunity.</span>)
+            text: (
+              <span>
+                You must be <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>signed in</Link> and a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link> in order to submit a proposal to this opportunity.
+              </span>
+            )
+          });
+        } else if (isAcceptingProposals && vendor && !state.isQualified && !existingProposal?.submittedAt && isAcceptingProposals) {
+          alerts.push({
+            text: (
+              <span>
+                You must be a <Link dest={routeDest(adt('learnMoreSWU', null))}>Qualified Supplier</Link> in order to submit a proposal to this opportunity.
+              </span>
+            )
           });
         }
         return alerts;
