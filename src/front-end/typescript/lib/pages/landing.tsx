@@ -39,16 +39,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const Hero: View = () => {
   return (
-    <Container className='pb-7 pb-md-8 pt-sm-5 pt-md-3'>
+    <Container className='pb-7 pb-md-8 pt-sm-4 pt-md-3'>
       <Row className='justify-content-center text-center'>
-        <Col xs='12' md='6'>
+        <Col xs='12' sm='10' md='6'>
           <h1 style={{lineHeight: '3.75rem'}}>
             Discover Unique Opportunities to Collaborate with the BC Public Sector.
           </h1>
         </Col>
       </Row>
       <Row className='justify-content-center text-center'>
-        <Col xs='12' md='6' className='mt-3'>
+        <Col xs='12' sm='10' md='6' className='mt-3'>
           The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and BC's public sector.
         </Col>
       </Row>
