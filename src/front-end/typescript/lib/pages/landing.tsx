@@ -12,6 +12,8 @@ import { Col, Container, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
 import { adt, ADT } from 'shared/lib/types';
 
+const IMG_MAX_WIDTH = '550px';
+
 export interface State {
   toast: [string, string];
   showAccordion: boolean;
@@ -180,7 +182,7 @@ const VendorRoleInfo: View = () => {
             subText='Add team members to your organization.' />
         </Col>
         <Col xs='12' md='6' className='order-1 order-md-3 mb-5 mb-md-0'>
-          <img className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/collaboration_work.svg')} />
+          <img style={{ maxWidth: IMG_MAX_WIDTH }} className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/collaboration_work.svg')} />
         </Col>
       </Row>
     </Container>
@@ -192,7 +194,7 @@ const GovRoleInfo: View = () => {
     <Container className='my-7 my-md-9'>
       <Row>
         <Col xs='12' md='6' className='mb-5 mb-md-0'>
-          <img className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/consultation.svg')} />
+          <img style={{ maxWidth: IMG_MAX_WIDTH }} className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/consultation.svg')} />
         </Col>
         <Col cs='12' md='6'>
           <Row>
