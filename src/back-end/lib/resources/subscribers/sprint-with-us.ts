@@ -67,6 +67,13 @@ const resource: Resource = {
           });
         }
 
+        // Don't allow subscribing to owned opportunity
+        if (validatedSWUOpportunity.value.createdBy?.id === request.session.user.id) {
+          return invalid({
+            opportunity: ['You cannot subscribe to your own opportunity.']
+          });
+        }
+
         // Check for existing subscription for this user
         const dbResult = await db.readOneSWUSubscriberByOpportunityAndUser(connection, validatedSWUOpportunity.value.id, request.session.user.id, request.session);
         if (isInvalid(dbResult)) {
