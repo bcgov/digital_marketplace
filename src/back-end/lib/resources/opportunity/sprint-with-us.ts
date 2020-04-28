@@ -441,7 +441,7 @@ const resource: Resource = {
         }
         const swuOpportunity = validatedSWUOpportunity.value;
 
-        if (!permissions.editSWUOpportunity(connection, request.session, request.params.id) || !permissions.isSignedIn(request.session)) {
+        if (!await permissions.editSWUOpportunity(connection, request.session, request.params.id) || !permissions.isSignedIn(request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });

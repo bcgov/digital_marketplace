@@ -364,17 +364,17 @@ const resource: Resource = {
           return invalid({ notFound: getInvalidValue(validatedSWUProposal, undefined )});
         }
 
-        if (!permissions.editSWUProposal(connection, request.session, request.params.id)) {
-          return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
-          });
-        }
-
         // Retrieve the full opportunity to validate the proposal phases against
         const swuOpportunity = getValidValue(await db.readOneSWUOpportunity(connection, validatedSWUProposal.value.opportunity.id, request.session), undefined);
         if (!swuOpportunity) {
           return invalid({
             database: [db.ERROR_MESSAGE]
+          });
+        }
+
+        if (!await permissions.editSWUProposal(connection, request.session, request.params.id, swuOpportunity)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
           });
         }
 

@@ -59,7 +59,7 @@ const resource: Resource = {
         if (isInvalid(validatedOrganization)) {
           return respond(404, validatedOrganization.value);
         }
-        if (!request.session || !permissions.readManyAffiliationsForOrganization(connection, request.session, request.query.organization)) {
+        if (!request.session || !await permissions.readManyAffiliationsForOrganization(connection, request.session, request.query.organization)) {
           return respond(401, [permissions.ERROR_MESSAGE]);
         }
         const dbResult = await db.readManyAffiliationsForOrganization(connection, validatedOrganization.value.id);

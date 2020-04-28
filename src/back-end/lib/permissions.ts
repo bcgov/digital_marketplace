@@ -300,8 +300,10 @@ export async function submitSWUProposal(connection: Connection, session: Session
   return isVendor(session) && !!session && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
 }
 
-export async function editSWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
-  return session && await isSWUProposalAuthor(connection, session.user, proposalId) || false;
+export async function editSWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: SWUOpportunity): Promise<boolean> {
+  return isAdmin(session) ||
+    (session && await isSWUProposalAuthor(connection, session.user, proposalId)) ||
+    (session && await isSWUOpportunityAuthor(connection, session.user, opportunity.id) && doesSWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
 }
 
 export async function deleteSWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {

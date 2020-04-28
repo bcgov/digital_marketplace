@@ -290,7 +290,7 @@ const resource: Resource = {
           return invalid({ notFound: ['The specified proposal does not exist.'] });
         }
 
-        if (!permissions.isSignedIn(request.session) || !permissions.editCWUProposal(connection, request.session, request.params.id)) {
+        if (!permissions.isSignedIn(request.session) || !await permissions.editCWUProposal(connection, request.session, request.params.id)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
