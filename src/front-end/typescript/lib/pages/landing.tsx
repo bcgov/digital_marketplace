@@ -37,7 +37,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const Hero: View = () => {
   return (
-    <Container className='pb-7 pb-md-8'>
+    <Container className='pb-7 pb-md-8 pt-sm-5 pt-md-3'>
       <Row className='justify-content-center text-center'>
         <Col xs='12' md='6'>
           <h1 style={{lineHeight: '3.75rem'}}>
