@@ -161,32 +161,32 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     case 'adminCheckbox':
-      const adminValueChanged = msg.value.tag === 'child' && msg.value.value.tag === 'onChange';
-      const newAdminResult = updateComponentChild({
+      return updateComponentChild({
         state,
         childStatePath: ['adminCheckbox'],
         childUpdate: Checkbox.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('adminCheckbox' as const, value)
-      });
-      if (!adminValueChanged) { return newAdminResult; }
-      return [
-        startSavePermissionsLoading(newAdminResult[0]),
-        async (state, dispatch) => {
-          // Ensure async updates from child component have been run.
-          if (newAdminResult[1]) {
-            const newState = await newAdminResult[1](state, dispatch);
-            state = newState || state;
-          }
-          // Persist change to back-end.
-          state = stopSavePermissionsLoading(state);
-          const result = await api.users.update(state.profileUser.id, adt('updateAdminPermissions', FormField.getValue(state.adminCheckbox)));
-          if (api.isValid(result)) {
-            state.set('profileUser', result.value);
-          }
-          return state;
+        mapChildMsg: value => adt('adminCheckbox' as const, value),
+        updateAfter: state => {
+          const adminValueChanged = msg.value.tag === 'child' && msg.value.value.tag === 'onChange';
+          if (!adminValueChanged) { return [state]; }
+          return [
+            startSavePermissionsLoading(state),
+            async (state, dispatch) => {
+              state = stopSavePermissionsLoading(state);
+              // Persist change to back-end.
+              const result = await api.users.update(state.profileUser.id, adt('updateAdminPermissions', FormField.getValue(state.adminCheckbox)));
+              if (api.isValid(result)) {
+                dispatch(toast(adt('success', toasts.adminStatusChanged.success)));
+                return state.set('profileUser', result.value);
+              } else {
+                dispatch(toast(adt('error', toasts.adminStatusChanged.error)));
+                return state;
+              }
+            }
+          ];
         }
-      ];
+      });
     case 'hideActivationModal':
       return [state.set('showActivationModal', false)];
     default:
