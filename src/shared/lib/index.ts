@@ -77,7 +77,6 @@ export function formatAmount(amount: number, currency?: string, ordinal?: boolea
   const prepend = (s: string | number) => `${s}${formatted ? separator : ''}${formatted}`;
   while (remaining) {
     const remainder = remaining % separateBy;
-    remaining = Math.floor(remaining / separateBy);
     if (remainder) {
       let s = String(remainder);
       while (s.length < baseTenSeparator && remaining > separateBy) { s = '0' + s; }
@@ -85,6 +84,7 @@ export function formatAmount(amount: number, currency?: string, ordinal?: boolea
     } else {
       formatted = prepend(repeat('0', baseTenSeparator));
     }
+    remaining = Math.floor(remaining / separateBy);
   }
   if (currency) {
     formatted = `${currency}${formatted}`;
