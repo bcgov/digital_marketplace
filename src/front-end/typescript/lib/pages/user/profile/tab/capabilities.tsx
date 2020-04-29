@@ -1,7 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, Dispatch, GlobalComponentMsg, Init, toast, Update, View } from 'front-end/lib/framework';
+import { ComponentView, Dispatch, GlobalComponentMsg, Init, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import * as toasts from 'front-end/lib/pages/user/lib/toasts';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -52,13 +51,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const capabilities = state.capabilities.filter((c, i) => i === msg.value ? !c.checked : c.checked);
           const result = await api.users.update(state.profileUser.id, adt('updateCapabilities', capabilities.map(({ name }) => name)));
           if (api.isValid(result)) {
-            dispatch(toast(adt('success', toasts.updated.success)));
             return state.update('capabilities', cs => cs.map(c => ({
               ...c,
               checked: result.value.capabilities.indexOf(c.name) !== -1
             })));
-          } else {
-            dispatch(toast(adt('error', toasts.updated.error)));
           }
           return state;
         }
