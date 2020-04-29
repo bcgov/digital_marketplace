@@ -39,7 +39,7 @@ const SKILLS = [
   'JavaScript',
   'Jenkins',
   'jQuery',
-  'Koitlin',
+  'Kotlin',
   'Kubernetes',
   'LESS',
   'Linux',
