@@ -330,12 +330,13 @@ function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
 type Errors = CreateValidationErrors;
 
 export function isOverviewTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.title)                      &&
-    FormField.isValid(state.teaser)                          &&
-    FormField.isValid(state.remoteOk)                        &&
-    (!state.remoteOk || FormField.isValid(state.remoteDesc)) &&
-    FormField.isValid(state.location)                        &&
-    FormField.isValid(state.reward)                          &&
+  const remoteOk = FormField.getValue(state.remoteOk) === 'yes';
+  return FormField.isValid(state.title)                &&
+    FormField.isValid(state.teaser)                    &&
+    FormField.isValid(state.remoteOk)                  &&
+    (!remoteOk || FormField.isValid(state.remoteDesc)) &&
+    FormField.isValid(state.location)                  &&
+    FormField.isValid(state.reward)                    &&
     FormField.isValid(state.skills);
 }
 

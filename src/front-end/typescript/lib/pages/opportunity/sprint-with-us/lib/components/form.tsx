@@ -446,10 +446,11 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
 }
 
 export function isOverviewTabValid(state: Immutable<State>): boolean {
+  const remoteOk = FormField.getValue(state.remoteOk) === 'yes';
   return FormField.isValid(state.title)
       && FormField.isValid(state.teaser)
       && FormField.isValid(state.remoteOk)
-      && (!state.remoteOk || FormField.isValid(state.remoteDesc))
+      && (!remoteOk || FormField.isValid(state.remoteDesc))
       && FormField.isValid(state.location)
       && FormField.isValid(state.proposalDeadline)
       && FormField.isValid(state.assignmentDate)
