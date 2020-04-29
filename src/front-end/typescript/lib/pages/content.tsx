@@ -114,7 +114,7 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
     <Row className={`content-${state.id}`}>
       <Col xs='12'>
         <h1 className='mb-5'>{state.definition.title}</h1>
-        <Markdown source={state.body} openLinksInNewTabs />
+        <Markdown source={state.body} openLinksInNewTabs escapeHtml={false} />
       </Col>
     </Row>
   );
