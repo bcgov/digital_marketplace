@@ -127,7 +127,13 @@ export function formatTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, 'LT', withTimeZone);
 }
 
-export function compareNumbers(a: number, b: number): -1 | 0 | 1 {
+export type Comparison = -1 | 0 | 1;
+
+export function compareStrings(a: string, b: string): Comparison {
+  return a.toLowerCase().localeCompare(b.toLowerCase()) as Comparison;
+}
+
+export function compareNumbers(a: number, b: number): Comparison {
   if (a < b) {
     return -1;
   } else if (a > b) {
@@ -137,7 +143,7 @@ export function compareNumbers(a: number, b: number): -1 | 0 | 1 {
   }
 }
 
-export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
+export function compareDates(a: Date, b: Date): Comparison {
   return compareNumbers(normalizeDateTimezone(a).unix(), normalizeDateTimezone(b).unix());
 }
 

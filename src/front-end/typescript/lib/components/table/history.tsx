@@ -5,7 +5,7 @@ import { ThemeColor } from 'front-end/lib/types';
 import Badge from 'front-end/lib/views/badge';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
-import { compareDates, formatDate, formatTime } from 'shared/lib';
+import { formatDate, formatTime } from 'shared/lib';
 import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 
@@ -34,7 +34,7 @@ export type Msg = ADT<'table', Table.Msg>;
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
     viewerUser,
-    items: items.sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    items, //items sorted in the http/api module.
     table: immutable(await Table.init({
       idNamespace
     }))

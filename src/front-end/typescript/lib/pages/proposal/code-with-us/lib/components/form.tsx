@@ -12,7 +12,7 @@ import Link, { routeDest } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
-import { getString } from 'shared/lib';
+import { compareStrings, getString } from 'shared/lib';
 import { AffiliationSlim, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
@@ -241,7 +241,7 @@ export const init: Init<Params, State> = async ({ viewerUser, canRemoveExistingA
         id: 'cwu-proposal-organization-id',
         options: adt('options', affiliations
           .filter(a => a.membershipType === MembershipType.Owner)
-          .sort((a, b) => a.organization.legalName.localeCompare(b.organization.legalName))
+          .sort((a, b) => compareStrings(a.organization.legalName, b.organization.legalName))
           .map(a => ({ value: a.organization.id, label: a.organization.legalName })))
       }
     })),

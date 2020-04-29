@@ -12,7 +12,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { compareNumbers } from 'shared/lib';
+import { compareNumbers, compareStrings } from 'shared/lib';
 import { canSWUOpportunityBeAwarded, canViewSWUOpportunityProposals, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { canSWUProposalBeAwarded, getSWUProponentName, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { ADT, adt, Id } from 'shared/lib/types';
@@ -63,7 +63,7 @@ const init: Init<Tab.Params, State> = async params => {
           if (result) { return result; }
         }
         // Fallback to sorting by proponent name.
-        return getSWUProponentName(a).localeCompare(getSWUProponentName(b));
+        return compareStrings(getSWUProponentName(a), getSWUProponentName(b));
       });
   }
   // Can be screened in if...

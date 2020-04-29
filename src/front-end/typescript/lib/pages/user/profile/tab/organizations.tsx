@@ -10,7 +10,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { find } from 'shared/lib';
+import { compareStrings, find } from 'shared/lib';
 import { AffiliationSlim, memberIsPending, MembershipType } from 'shared/lib/resources/affiliation';
 import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 import { adt, ADT, Id } from 'shared/lib/types';
@@ -48,7 +48,7 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser, invitati
   const result = await api.affiliations.readMany();
   let affiliations: TableAffiliation[] = [];
   if (api.isValid(result)) {
-    affiliations = result.value.sort((a, b) => a.organization.legalName.localeCompare(b.organization.legalName));
+    affiliations = result.value.sort((a, b) => compareStrings(a.organization.legalName, b.organization.legalName));
   }
   let showModal: State['showModal'] = null;
   if (invitation) {

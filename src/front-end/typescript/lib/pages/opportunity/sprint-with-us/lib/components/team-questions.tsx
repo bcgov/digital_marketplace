@@ -35,17 +35,7 @@ export interface Params {
 
 export const init: Init<Params, State> = async ({ questions }) => {
   return {
-    questions: await Promise.all([...questions]
-      .sort((a, b) => {
-        if (a.order < b.order) {
-          return -1;
-        } else if (a.order > b.order) {
-          return 1;
-        } else {
-          return 0;
-        }
-      })
-      .map(q => createQuestion(q)))
+    questions: await Promise.all(questions.map(q => createQuestion(q)))
   };
 };
 

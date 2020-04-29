@@ -39,16 +39,7 @@ function makeBlankReference(order: number): SWUProposalReference {
 }
 
 export const init: Init<Params, State> = async ({ references }) => {
-  // Sort references by order.
-  references = [...references].sort((a, b) => {
-    if (a.order < b.order) {
-      return -1;
-    } else if (a.order > b.order) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
+  // References sorted in the http/api module.
   // Ensure there are only three references.
   references = [
     references[0] || makeBlankReference(0),

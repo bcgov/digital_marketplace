@@ -12,7 +12,7 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { compareNumbers } from 'shared/lib';
+import { compareNumbers, compareStrings } from 'shared/lib';
 import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
@@ -63,7 +63,7 @@ const init: Init<Tab.Params, State> = async params => {
           if (result) { return result; }
         }
         // Fallback to sorting by proponent name.
-        return getCWUProponentName(a).localeCompare(getCWUProponentName(b));
+        return compareStrings(getCWUProponentName(a), getCWUProponentName(b));
       });
   }
   return {

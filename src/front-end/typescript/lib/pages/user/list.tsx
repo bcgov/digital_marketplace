@@ -12,6 +12,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { compareStrings } from 'shared/lib';
 import { isAdmin, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -56,11 +57,11 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
           statusTitleCase: userStatusToTitleCase(user.status)
         }))
         .sort((a, b) => {
-          const statusCompare = a.statusTitleCase.localeCompare(b.statusTitleCase);
+          const statusCompare = compareStrings(a.statusTitleCase, b.statusTitleCase);
           if (statusCompare) { return statusCompare; }
-          const typeCompare = a.typeTitleCase.localeCompare(b.typeTitleCase);
+          const typeCompare = compareStrings(a.typeTitleCase, b.typeTitleCase);
           if (typeCompare) { return typeCompare; }
-          return a.name.localeCompare(b.name);
+          return compareStrings(a.name, b.name);
         })
     };
   },

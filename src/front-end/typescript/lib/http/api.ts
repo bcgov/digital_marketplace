@@ -298,7 +298,8 @@ function rawSWUProposalToSWUProposal(raw: RawSWUProposal): SWUProposalResource.S
     history: raw.history && raw.history
       .map(s => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
-    teamQuestionResponses: raw.teamQuestionResponses.sort((a, b) => compareNumbers(a.order, b.order))
+    teamQuestionResponses: raw.teamQuestionResponses.sort((a, b) => compareNumbers(a.order, b.order)),
+    references: raw.references?.sort((a, b) => compareNumbers(a.order, b.order))
   };
 }
 

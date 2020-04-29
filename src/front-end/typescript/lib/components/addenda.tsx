@@ -5,7 +5,7 @@ import { makeUploadMarkdownImage } from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
-import { compareDates, formatDateAndTime } from 'shared/lib';
+import { formatDateAndTime } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { validateAddendumText } from 'shared/lib/validation/addendum';
@@ -75,8 +75,7 @@ export const init: Init<Params, State> = async params => {
     j--;
   }
   return {
-    // Show newest addenda first.
-    existingAddenda: existingAddenda.sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    existingAddenda, //existingAddenda sorted in the http/api module.
     newAddenda
   };
 };

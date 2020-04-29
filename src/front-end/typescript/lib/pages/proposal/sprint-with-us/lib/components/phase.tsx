@@ -10,7 +10,7 @@ import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, CustomInput, Row } from 'reactstrap';
-import { find, formatDate } from 'shared/lib';
+import { compareStrings, find, formatDate } from 'shared/lib';
 import { AffiliationMember, memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
 import { SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, SWUProposalPhase, SWUProposalTeamMember } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -70,7 +70,7 @@ function affiliationsToMembers(affiliations: AffiliationMember[], existingMember
         toBeAdded: false
       };
     })
-    .sort((a, b) => a.user.name.localeCompare(b.user.name));
+    .sort((a, b) => compareStrings(a.user.name, b.user.name));
 }
 
 export function determineCapabilities(members: Member[], opportunityPhase?: SWUOpportunityPhase): Capability[] {

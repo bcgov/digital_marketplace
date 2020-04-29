@@ -7,6 +7,7 @@ import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { compareStrings } from 'shared/lib';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
@@ -44,7 +45,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
     ...(await baseState()),
     sessionUser: shared.session && shared.session.user,
     organizations: result.value
-      .sort((a, b) => a.legalName.localeCompare(b.legalName))
+      .sort((a, b) => compareStrings(a.legalName, b.legalName))
   };
 };
 

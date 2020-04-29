@@ -32,29 +32,19 @@ export interface Params {
 
 export const init: Init<Params, State> = async ({ questions, responses }) => {
   return {
-    responses: await Promise.all([...questions]
-      .sort((a, b) => {
-        if (a.order < b.order) {
-          return -1;
-        } else if (a.order > b.order) {
-          return 1;
-        } else {
-          return 0;
+    responses: await Promise.all(questions.map(async question => ({
+      isAccordianOpen: false,
+      question,
+      response: immutable(await RichMarkdownEditor.init({
+        errors: [],
+        validate: v => proposalValidation.validateSWUProposalTeamQuestionResponseResponse(v, question.wordLimit),
+        child: {
+          value: find(responses, { order: question.order })?.response || '',
+          id: `swu-proposal-team-question-response-${question.order}`,
+          wordLimit: question.wordLimit
         }
-      })
-      .map(async question => ({
-        isAccordianOpen: false,
-        question,
-        response: immutable(await RichMarkdownEditor.init({
-          errors: [],
-          validate: v => proposalValidation.validateSWUProposalTeamQuestionResponseResponse(v, question.wordLimit),
-          child: {
-            value: find(responses, { order: question.order })?.response || '',
-            id: `swu-proposal-team-question-response-${question.order}`,
-            wordLimit: question.wordLimit
-          }
-        }))
-      })))
+      }))
+    })))
   };
 };
 
