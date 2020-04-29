@@ -1,6 +1,6 @@
-Markdown is a way to write well-formatted content for the web using plain text. Traditionally, government websites rely on attachments (e.g. Microsoft Word, PDFs, etc) to communicate information over the internet. Markdown is easy to learn, and is a powerful skill that is supported by many different applications (e.g. GitHub, blogging).
+Markdown is a way to write well-formatted content for the web using plain text. Traditionally, government websites rely on attachments (e.g. Microsoft Word, PDFs, etc) to communicate information over the internet. Markdown offers better integration with web pages than attachments, and is a powerful skill that is easy to learn and is supported by many different applications (e.g. GitHub, blogging).
 
-The Digital Marketplace offers both public sector users and vendors the ability to write content using Markdown. For example, government users can write their opportunity descriptions in Markdown, while vendors can use Markdown to write their proposals.
+The Digital Marketplace offers the ability to write content using Markdown to both public sector users and vendors. For example, government users can write their opportunity descriptions in Markdown, while vendors can use Markdown to write their proposals.
 
 This brief guide offers you a snapshot of Markdown's most useful features. The Digital Marketplace's markdown editor supports all of the features listed here. If you would like to learn more about Markdown, there are plenty of resources available on the web that are easy to find.
 
