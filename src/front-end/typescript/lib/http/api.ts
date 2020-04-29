@@ -1,7 +1,7 @@
 import { prefixPath } from 'front-end/lib';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
-import { compareDates, prefix } from 'shared/lib';
+import { compareDates, compareNumbers, prefix } from 'shared/lib';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
@@ -163,10 +163,11 @@ function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(raw: RawCWUPropos
   };
 }
 
-interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'submittedAt' | 'history'> {
+interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'submittedAt' | 'history' | 'attachments'> {
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
+  attachments: RawFileRecord[];
   history?: RawCWUProposalHistoryRecord[];
 }
 
@@ -176,9 +177,12 @@ function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.C
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
+    attachments: raw.attachments
+      .map(a => rawFileRecordToFileRecord(a))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
     history: raw.history && raw.history
       .map(s => rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(s))
-      .sort((a, b) => compareDates(a.createdAt, b.createdAt))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
   };
 }
 
@@ -293,7 +297,8 @@ function rawSWUProposalToSWUProposal(raw: RawSWUProposal): SWUProposalResource.S
     submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
     history: raw.history && raw.history
       .map(s => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
-      .sort((a, b) => compareDates(a.createdAt, b.createdAt))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    teamQuestionResponses: raw.teamQuestionResponses.sort((a, b) => compareNumbers(a.order, b.order))
   };
 }
 
@@ -431,7 +436,7 @@ function rawCWUHistoryRecordToCWUHistoryRecord(raw: RawCWUOpportunityHistoryReco
   };
 }
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history'> {
+interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history' | 'attachments'> {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
@@ -439,6 +444,7 @@ interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  attachments: RawFileRecord[];
   addenda: RawAddendum[];
   history?: RawCWUOpportunityHistoryRecord[];
 }
@@ -453,8 +459,15 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
-    addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
-    history: raw.history && raw.history.map(s => rawCWUHistoryRecordToCWUHistoryRecord(s))
+    attachments: raw.attachments
+      .map(a => rawFileRecordToFileRecord(a))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
+    addenda: raw.addenda
+      .map(a => rawAddendumToAddendum(a))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    history: raw.history && raw.history
+      .map(s => rawCWUHistoryRecordToCWUHistoryRecord(s))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
   };
 }
 
@@ -542,12 +555,13 @@ function rawSWUTeamQuestionToSWUTeamQuestion(raw: RawSWUTeamQuestion): SWUOpport
   };
 }
 
-interface RawSWUOpportunity extends Omit<SWUOpportunityResource.SWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions'> {
+interface RawSWUOpportunity extends Omit<SWUOpportunityResource.SWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
   proposalDeadline: string;
   assignmentDate: string;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  attachments: RawFileRecord[];
   addenda: RawAddendum[];
   history?: RawSWUOpportunityHistoryRecord[];
   inceptionPhase?: RawSWUOpportunityPhase;
@@ -564,12 +578,21 @@ function rawSWUOpportunityToSWUOpportunity(raw: RawSWUOpportunity): SWUOpportuni
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
-    addenda: raw.addenda.map(a => rawAddendumToAddendum(a)),
-    history: raw.history && raw.history.map(s => rawSWUHistoryRecordToSWUHistoryRecord(s)),
+    attachments: raw.attachments
+      .map(a => rawFileRecordToFileRecord(a))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
+    addenda: raw.addenda
+      .map(a => rawAddendumToAddendum(a))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    history: raw.history && raw
+      .history.map(s => rawSWUHistoryRecordToSWUHistoryRecord(s))
+      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
     inceptionPhase: raw.inceptionPhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.inceptionPhase),
     prototypePhase: raw.prototypePhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.prototypePhase),
     implementationPhase: rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.implementationPhase),
-    teamQuestions: raw.teamQuestions.map(tq => rawSWUTeamQuestionToSWUTeamQuestion(tq))
+    teamQuestions: raw.teamQuestions
+      .map(tq => rawSWUTeamQuestionToSWUTeamQuestion(tq))
+      .sort((a, b) => compareNumbers(a.order, b.order))
   };
 }
 
