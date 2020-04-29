@@ -57,11 +57,6 @@ export function parseUserTypeList<UserType>(list: string[], parseOneUserType: (r
   }, []);
 }
 
-//TODO move to front-end and use apiNamespace
-export function fileBlobPath(file: Pick<FileRecord, 'id'>) {
-  return `/api/files/${file.id}?type=blob`;
-}
-
 export function getExtension(name: string): string {
   const match = name.match(/\.([^.\s]+)$/);
   return match ? match[1] : '';

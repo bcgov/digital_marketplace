@@ -1,3 +1,4 @@
+import { fileBlobPath } from 'front-end/lib';
 import { ComponentViewProps, Immutable, Init, Update, View } from 'front-end/lib/framework';
 import { CreateFileRequestBody } from 'front-end/lib/http/api';
 import FileLink from 'front-end/lib/views/file-link';
@@ -5,7 +6,7 @@ import Icon from 'front-end/lib/views/icon';
 import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { FormText } from 'reactstrap';
-import { CreateValidationErrors, enforceExtension, fileBlobPath, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';
+import { CreateValidationErrors, enforceExtension, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';
 import { adt, ADT } from 'shared/lib/types';
 import { getInvalidValue, optional } from 'shared/lib/validation';
 import { validateFileName } from 'shared/lib/validation/file';

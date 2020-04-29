@@ -1,6 +1,6 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
+import { fileBlobPath } from 'front-end/lib';
 import { ThemeColor } from 'front-end/lib/types';
-import { fileBlobPath } from 'shared/lib/resources/file';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 
 export function userAvatarPath(user?: Pick<User, 'avatarImageFile'>): string {

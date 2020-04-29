@@ -1,8 +1,9 @@
+import { fileBlobPath } from 'front-end/lib';
 import { View } from 'front-end/lib/framework';
 import isRelativeUrl from 'is-relative-url';
 import React from 'react';
 import ReactMarkdown, { Renderers } from 'react-markdown';
-import { decodeMarkdownImageUrlToFileId, fileBlobPath } from 'shared/lib/resources/file';
+import { decodeMarkdownImageUrlToFileId } from 'shared/lib/resources/file';
 
 interface Props {
   source: string;

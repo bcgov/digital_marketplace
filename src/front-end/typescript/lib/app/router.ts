@@ -373,7 +373,7 @@ const router: Router.Router<Route> = {
     },
     {
       path: prefixPath('/sign-in'),
-      makeRoute({query}) {
+      makeRoute({ query }) {
         return {
           tag: 'signIn',
           value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
@@ -391,10 +391,10 @@ const router: Router.Router<Route> = {
     },
     {
       path: prefixPath('/sign-up'),
-      makeRoute() {
+      makeRoute({ query }) {
         return {
           tag: 'signUpStepOne',
-          value: null
+          value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
         };
       }
     },
@@ -444,7 +444,7 @@ const router: Router.Router<Route> = {
       case 'signOut':
         return prefixPath('/sign-out');
       case 'signUpStepOne':
-        return prefixPath(`/sign-up`);
+        return prefixPath(`/sign-up${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`);
       case 'signUpStepTwo':
         return prefixPath(`/sign-up/complete`);
       case 'userProfile': {

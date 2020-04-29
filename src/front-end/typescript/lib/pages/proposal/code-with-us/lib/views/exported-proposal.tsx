@@ -1,3 +1,4 @@
+import { fileBlobPath } from 'front-end/lib';
 import { View } from 'front-end/lib/framework';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
@@ -5,7 +6,6 @@ import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
-import { fileBlobPath } from 'shared/lib/resources/file';
 import { CWUProposal, getCWUProponentName, getCWUProponentTypeTitleCase } from 'shared/lib/resources/proposal/code-with-us';
 import { User } from 'shared/lib/resources/user';
 

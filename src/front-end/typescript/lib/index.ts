@@ -1,6 +1,7 @@
 import { PATH_PREFIX } from 'front-end/config';
 import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, Immutable, PageGetAlerts, PageGetBreadcrumbs, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
 import { prefix } from 'shared/lib';
+import { FileRecord } from 'shared/lib/resources/file';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
@@ -115,7 +116,11 @@ export function makePageMetadata(title: string): PageMetadata {
 }
 
 export function getSignInUrl(userType: UserType, redirectOnSuccess?: string): string   {
-  let result = prefixPath(`/auth/sign-in?provider=${userTypeToKeycloakIdentityProvider(userType)}`);
+  let result = prefixPath(`auth/sign-in?provider=${userTypeToKeycloakIdentityProvider(userType)}`);
   if (redirectOnSuccess) { result += `&redirectOnSuccess=${window.encodeURIComponent(redirectOnSuccess)}`; }
   return result;
+}
+
+export function fileBlobPath(file: Pick<FileRecord, 'id'>) {
+  return prefixPath(`api/files/${file.id}?type=blob`);
 }

@@ -1,5 +1,5 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
-import { prefixPath } from 'front-end/lib';
+import { fileBlobPath, prefixPath } from 'front-end/lib';
 import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
@@ -47,7 +47,6 @@ import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rig
 import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader, Toast, ToastBody } from 'reactstrap';
-import { fileBlobPath } from 'shared/lib/resources/file';
 import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
@@ -450,7 +449,7 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
     children: 'Sign Up',
     button: true,
     color: 'primary',
-    dest: routeDest(adt('signUpStepOne', null))
+    dest: routeDest(adt('signUpStepOne', {}))
   })
 ]);
 
