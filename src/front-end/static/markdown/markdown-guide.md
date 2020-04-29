@@ -4,7 +4,7 @@ The Digital Marketplace offers the ability to write content using Markdown to bo
 
 This brief guide offers you a snapshot of Markdown's most useful features. The Digital Marketplace's markdown editor supports all of the features listed here. If you would like to learn more about Markdown, there are plenty of resources available on the web that are easy to find.
 
-##### Table of Contents  
+## Table of Contents  
 
 [Headers](#headers)  
 [Emphasis](#emphasis)  

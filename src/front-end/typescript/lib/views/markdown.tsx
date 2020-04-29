@@ -40,34 +40,33 @@ function decodeImgSrc(src: string): string {
 }
 
 const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true, openLinksInNewTabs = false, smallerHeadings = false, noImages = false, noLinks = false }) => {
-  const renderers: Renderers = smallerHeadings || noImages
-    ? {
-        link: noLinks
-          ? () => { //React-Markdown types are not helpful here.
-              return (<span className='text-danger font-weight-bold'>[Link Redacted]</span>);
-            }
-          : ReactMarkdown.renderers.link,
-        image: noImages
-          ? () => { //React-Markdown types are not helpful here.
-              return (<span className='text-danger font-weight-bold'>[Image Redacted]</span>);
-            }
-          : (props: any) => {
-              return (<img {...props} src={decodeImgSrc(props.src || '')} />);
-            },
-        heading: smallerHeadings
-          ? ({ level, children }: any) => { //React-Markdown types are not helpful here.
-              return (<div className={`${headingLevelToClassName(level)} text-secondary`} children={children} />);
-            }
-          : ReactMarkdown.renderers.heading
-      }
-    : ReactMarkdown.renderers;
+  const renderers: Renderers = {
+    link: noLinks
+      ? () => { //React-Markdown types are not helpful here.
+          return (<span className='text-danger font-weight-bold'>[Link Redacted]</span>);
+        }
+      : (props: any) => {
+        return (<a {...props} rel='external' target={openLinksInNewTabs ? linkTarget(props.href) : undefined} />);
+      },
+    image: noImages
+      ? () => { //React-Markdown types are not helpful here.
+          return (<span className='text-danger font-weight-bold'>[Image Redacted]</span>);
+        }
+      : (props: any) => {
+          return (<img {...props} src={decodeImgSrc(props.src || '')} />);
+        },
+    heading: smallerHeadings
+      ? ({ level, children }: any) => { //React-Markdown types are not helpful here.
+          return (<div className={`${headingLevelToClassName(level)} text-secondary`} children={children} />);
+        }
+      : ReactMarkdown.renderers.heading
+  };
   return (
     <div className={`markdown ${box ? 'p-4 bg-light border rounded' : ''} ${className}`}>
       <ReactMarkdown
         source={source}
         escapeHtml={escapeHtml}
-        renderers={renderers as any /*TODO remove once type cast TypeScript declaration file is fixed in react-markdown.*/}
-        linkTarget={openLinksInNewTabs ? linkTarget : undefined} />
+      renderers={renderers as any /*TODO remove once type cast TypeScript declaration file is fixed in react-markdown.*/} />
     </div>
   );
 };
