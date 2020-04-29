@@ -122,7 +122,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         state.set('screenToFromLoading', msg.value),
         async (state, dispatch) => {
           state = state.set('screenToFromLoading', null);
-          //TODO once back-end is ready
           const updateResult = await api.proposals.swu.update(msg.value, adt('screenOutFromCodeChallenge', ''));
           switch (updateResult.tag) {
             case 'valid':

@@ -267,7 +267,6 @@ export const init: Init<Params, State> = async ({ viewerUser, canRemoveExistingA
     attachments: immutable(await Attachments.init({
       canRemoveExistingAttachments,
       existingAttachments: proposal?.attachments || [],
-      //TODO need to figure out how to set permissions for proposal attachments here
       newAttachmentMetadata
     }))
 

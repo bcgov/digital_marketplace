@@ -215,8 +215,8 @@ export function getNonAddedMembers(state: Immutable<State>): Member[] {
 
 export type Errors = CreateSWUProposalPhaseValidationErrors;
 
+// No need to set errors as the fields themselves can't result in errors.
 export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
-  //TODO
   return state;
 }
 

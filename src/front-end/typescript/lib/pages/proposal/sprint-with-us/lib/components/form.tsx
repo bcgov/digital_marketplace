@@ -723,7 +723,6 @@ interface ReviewPhaseViewProps {
 }
 
 const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, proposedCost, opportunityPhase, members, toggleAccordion, isOpen, viewTeamMember }) => {
-  //TODO view team member modal when clicking on team member name
   return (
     <Accordion
       className={className}
