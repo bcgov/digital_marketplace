@@ -166,8 +166,6 @@ const resource: Resource = {
         }
 
         // Check for existing proposal on this opportunity, authored by this user
-        // Possible TODO - should a user be able to submit multiple proposals for different organizations?
-        // May need to extend this validation (may also apply to CWU)
         const dbResult = await db.readOneSWUProposalByOpportunityAndAuthor(connection, opportunity, request.session);
         if (isInvalid(dbResult)) {
           return invalid({
