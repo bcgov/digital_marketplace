@@ -8,8 +8,6 @@ export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'digitalmarketplace@go
 // e.g. www.example.com/marketplace/*
 export const PATH_PREFIX = process.env.PATH_PREFIX || '';
 
-export const MARKDOWN_HELP_URL = 'https://www.markdownguide.org/cheat-sheet';
-
 export const FORM_FIELD_DEBOUNCE_DURATION = 500;
 
 export const SEARCH_DEBOUNCE_DURATION = 200;

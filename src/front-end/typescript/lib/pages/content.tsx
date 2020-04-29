@@ -10,7 +10,8 @@ import { adt, ADT } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
 export type ContentId
-  = 'terms-and-conditions'
+  = 'markdown-guide'
+  | 'terms-and-conditions'
   | 'about'
   | 'disclaimer'
   | 'privacy'
@@ -39,6 +40,9 @@ type ContentDefinitions = {
 };
 
 const DEFINITIONS: ContentDefinitions = {
+  'markdown-guide': {
+    title: 'Markdown Guide'
+  },
   'terms-and-conditions': {
     title: 'Digital Marketplace Terms & Conditions for E-Bidding'
   },
