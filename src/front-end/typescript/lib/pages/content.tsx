@@ -43,13 +43,13 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Terms & Conditions'
   },
   'about': {
-    title: 'About'
+    title: 'About Us'
   },
   'disclaimer': {
     title: 'Disclaimer'
   },
   'privacy': {
-    title: 'Privacy'
+    title: 'B.C. Government Website Privacy Statement'
   },
   'accessibility': {
     title: 'Accessibility'
