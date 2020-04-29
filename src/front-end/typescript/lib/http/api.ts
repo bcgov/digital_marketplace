@@ -41,11 +41,11 @@ export const getMarkdownFile = (id: string) => makeRequest<GetMarkdownFileAction
 // Metrics
 
 interface MetricsResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> {
-  readMany: ReadManyActionTypes<{
+  readMany: {
     rawResponse: MetricsResource.OpportunityMetrics;
     validResponse: MetricsResource.OpportunityMetrics;
     invalidResponse: string[];
-  }>;
+  };
 }
 
 const METRICS_ROUTE_NAMESPACE = apiNamespace('metrics');

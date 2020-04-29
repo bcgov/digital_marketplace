@@ -40,7 +40,7 @@ type ContentDefinitions = {
 
 const DEFINITIONS: ContentDefinitions = {
   'terms-and-conditions': {
-    title: 'Terms & Conditions'
+    title: 'Digital Marketplace Terms & Conditions for E-Bidding'
   },
   'about': {
     title: 'About Us'
@@ -77,6 +77,7 @@ const DEFINITIONS: ContentDefinitions = {
 export type RouteParams = ContentId | null;
 
 interface ValidState {
+  id: ContentId;
   definition: ContentDefinition;
   body: string;
 }
@@ -90,6 +91,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routePath,
     const result = await api.getMarkdownFile(routeParams);
     if (api.isValid(result)) {
       return valid(immutable({
+        id: routeParams,
         definition: DEFINITIONS[routeParams],
         body: result.value
       }));
@@ -105,7 +107,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const view: ComponentView<State, Msg> = viewValid(({ state }) => {
   return (
-    <Row>
+    <Row className={`content-${state.id}`}>
       <Col xs='12'>
         <h1 className='mb-5'>{state.definition.title}</h1>
         <Markdown source={state.body} openLinksInNewTabs />

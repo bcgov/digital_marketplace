@@ -405,7 +405,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
             {opportunity.value.teaser}
           </p>
         </Link>
-        <div className='px-4 pt-3 border-top d-flex flex-wrap mt-auto flex-shrink-0 flex-grow-0 font-size-small align-items-center'>
+        <div style={{ minHeight: '4rem' }} className='px-4 pt-3 border-top d-flex flex-wrap mt-auto flex-shrink-0 flex-grow-0 font-size-small align-items-center'>
           <IconInfo
             small
             className='mr-3 mb-3'
