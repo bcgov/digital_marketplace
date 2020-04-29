@@ -1,5 +1,5 @@
 import * as FormField from 'front-end/lib/components/form-field';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { ADT } from 'shared/lib/types';
 
 export type Value = string;
@@ -11,7 +11,9 @@ type ChildParams = FormField.ChildParamsBase<Value>;
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+interface ExtraChildProps {
+  style?: CSSProperties;
+}
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -33,13 +35,14 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+  const { state, style, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
   return (
     <textarea
       id={state.id}
       value={state.value}
       placeholder={placeholder}
       className={`form-control ${className} ${validityClassName}`}
+      style={style}
       onChange={e => {
         const value = e.currentTarget.value;
         dispatch({ tag: 'onChange', value });

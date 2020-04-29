@@ -265,8 +265,9 @@ export const component: Tab.Component<State, Msg> = {
             <div>
               <p>Provide the reason why this Vendor has been disqualified from the Sprint With Us opportunity.</p>
               <LongText.view
-                extraChildProps={{}}
-                style={{ height: '180px' }}
+                extraChildProps={{
+                  style: { height: '180px' }
+                }}
                 disabled={isDisqualifyLoading}
                 help='Provide a reason for the disqualification of the proponent. This reason will not be shared with the disqualified proponent and is for record-keeping purposes only.'
                 required
