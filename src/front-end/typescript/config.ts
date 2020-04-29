@@ -34,10 +34,6 @@ export const SWU_OPPORTUNITY_SCOPE_CONTENT_ID = 'sprint-with-us-opportunity-scop
 
 export const SWU_QUALIFICATION_TERMS_ID = 'sprint-with-us-qualification-terms-and-conditions';
 
-export const TOTAL_AWARDED_COUNT_OFFSET = 62;
-
-export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
-
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 
 export const BC_INFORMATION_ON_PROCUREMENT_URL = 'https://www2.gov.bc.ca/gov/content/governments/services-for-government/bc-bid-resources/how-to-buy-services/procurement-process/pre-award/prepare-solicitation-documents/mandatory-and-weighted-criteria';
