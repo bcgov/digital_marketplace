@@ -3,7 +3,7 @@ import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
 import { generateSWUOpportunityQuery, RawSWUOpportunity, RawSWUOpportunitySlim, readManyTeamQuestions, readOneSWUOpportunitySlim, updateSWUOpportunityStatus } from 'back-end/lib/db/opportunity/sprint-with-us';
 import { readOneOrganizationSlim } from 'back-end/lib/db/organization';
-import { RawUser, rawUserToUser, readOneUserSlim } from 'back-end/lib/db/user';
+import { RawUser, rawUserToUser, readOneUser, readOneUserSlim } from 'back-end/lib/db/user';
 import { isSignedIn, readOneSWUProposal as hasReadPermissionSWUProposal, readSWUProposalHistory, readSWUProposalScore } from 'back-end/lib/permissions';
 import { compareNumbers } from 'shared/lib';
 import { MembershipStatus } from 'shared/lib/resources/affiliation';
@@ -1256,3 +1256,12 @@ export async function hasSWUAttachmentPermission(connection: Connection, session
   }
   return false;
 }
+
+export const readOneSWUProposalAuthor = tryDb<[Id], User | null>(async (connection, id) => {
+  const authorId = (await connection<{ createdBy: Id }>('swuProposals as proposals')
+    .where({ id })
+    .select<{ createdBy: Id }>('createdBy')
+    .first())?.createdBy || null;
+
+  return authorId ? await readOneUser(connection, authorId) : valid(null);
+});
