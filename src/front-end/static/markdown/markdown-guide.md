@@ -175,26 +175,30 @@ Some text to show that the reference links can follow later.
 ## Images
 
 ```no-highlight
-Here's our logo (hover to see the title text):
+Here's an illustration (hover to see the title text):
 
 Inline-style: 
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+
+![alt text](/images/illustrations/sprint_with_us.svg "Illustration Title Text 1")
 
 Reference-style: 
+
 ![alt text][logo]
 
-[logo]: https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 2"
+[logo]: /images/illustrations/sprint_with_us.svg "Illustration Title Text 2"
 ```
 
-Here's our logo (hover to see the title text):
+Here's an illustration (hover to see the title text):
 
 Inline-style: 
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+
+![alt text](/images/illustrations/sprint_with_us.svg "Illustration Title Text 1")
 
 Reference-style: 
+
 ![alt text][logo]
 
-[logo]: https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 2"
+[logo]: /images/illustrations/sprint_with_us.svg "Illustration Title Text 2"
 
 <a name="code"/>
 

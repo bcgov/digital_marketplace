@@ -1,4 +1,4 @@
-import { fileBlobPath } from 'front-end/lib';
+import { fileBlobPath, prefixPath } from 'front-end/lib';
 import { View } from 'front-end/lib/framework';
 import isRelativeUrl from 'is-relative-url';
 import React from 'react';
@@ -18,9 +18,13 @@ interface Props {
 
 const MAILTO_REGEXP = /^mailto:/i;
 
-function linkTarget(url: string): string {
-  if (isRelativeUrl(url) || url.match(MAILTO_REGEXP)) {
-    return '';
+function isHashLink(url: string): boolean {
+  return url.charAt(0) === '#';
+}
+
+function newTabLinkTarget(url: string): string | undefined {
+  if (isRelativeUrl(url) || url.match(MAILTO_REGEXP) || isHashLink) {
+    return undefined;
   } else {
     return '_blank';
   }
@@ -46,7 +50,12 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
           return (<span className='text-danger font-weight-bold'>[Link Redacted]</span>);
         }
       : (props: any) => {
-        return (<a {...props} rel='external' target={openLinksInNewTabs ? linkTarget(props.href) : undefined} />);
+        const href = isRelativeUrl(props.href) && !isHashLink(props.href) ? prefixPath(props.href) : props.href;
+        return (<a
+          {...props}
+          href={href}
+          rel='external'
+          target={openLinksInNewTabs ? newTabLinkTarget(props.href) : undefined} />);
       },
     image: noImages
       ? () => { //React-Markdown types are not helpful here.
