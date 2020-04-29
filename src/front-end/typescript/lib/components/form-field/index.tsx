@@ -2,10 +2,10 @@ import { FORM_FIELD_DEBOUNCE_DURATION } from 'front-end/config';
 import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
 import * as framework from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import { debounce } from 'lodash';
+import { debounce, get } from 'lodash';
 import React, { CSSProperties } from 'react';
 import { Alert, FormGroup, FormText, Label } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 import { getInvalidValue, getValidValue, isValid as isValidValidation, Validation } from 'shared/lib/validation';
 
 export interface ChildStateBase<Value> {
@@ -91,26 +91,20 @@ function makeUpdate<Value, ChildParams extends ChildParamsBase<Value>, ChildStat
       case 'validate':
         return [state, async state => validate(state)];
       case 'child':
-        const result = updateComponentChild({
+        return updateComponentChild({
           state,
-          mapChildMsg: value => ({ tag: 'child', value } as const),
+          mapChildMsg: value => (adt('child' as const, value)),
           childStatePath: ['child'],
           childUpdate,
-          childMsg: msg.value
-        });
-        return [
-          result[0],
-          async (state, dispatch) => {
-            if (msg.value && (msg.value as ADT<'@validate'>).tag === '@validate') {
-              dispatch({ tag: 'validate', value: undefined });
-            }
-            if (result[1]) {
-              return await result[1](state, dispatch);
+          childMsg: msg.value,
+          updateAfter: state => {
+            if (get(msg, ['value', 'tag']) === '@validate') {
+              return [validate(state)];
             } else {
-              return null;
+              return [state];
             }
           }
-        ];
+        });
       default:
         return [state];
     }
@@ -129,7 +123,7 @@ function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, 
         height={1}
         className='mt-n1 ml-2 flex-shrink-0 d-inline'
         onClick={e => {
-          dispatch({ tag: 'toggleHelp', value: undefined });
+          dispatch(adt('toggleHelp'));
           e.preventDefault();
         }} />
     );
@@ -207,10 +201,7 @@ function ConditionalErrors<Value, ChildState extends ChildStateBase<Value>, Inne
 }
 
 function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(ChildView: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view'] {
-  const debouncedValidate = debounce((dispatch: Dispatch<Msg<InnerChildMsg>>) => dispatch({
-    tag: 'validate',
-    value: undefined
-  }), FORM_FIELD_DEBOUNCE_DURATION);
+  const debouncedValidate = debounce((dispatch: Dispatch<Msg<InnerChildMsg>>) => dispatch(adt('validate')), FORM_FIELD_DEBOUNCE_DURATION);
   return props => {
     const { state, dispatch, style, extraChildProps } = props;
     const invalid = !!state.errors.length;
@@ -227,7 +218,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
           validityClassName={validityClassName}
           disabled={props.disabled}
           placeholder={props.placeholder}
-          dispatch={mapComponentDispatch(dispatch, value => ({ tag: 'child' as const, value }))}
+          dispatch={mapComponentDispatch(dispatch, value => adt('child' as const, value))}
           onChange={() => debouncedValidate(dispatch)} />
         <ConditionalHint {...props} />
         <ConditionalErrors {...props} />

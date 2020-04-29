@@ -267,7 +267,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       errors: [],
       validate: v => {
         if (v === null) { return valid(null); }
-        return mapValid(opportunityValidation.validateMinimumTeamMembers(v), w => w || null);
+        return opportunityValidation.validateMinimumTeamMembers(v);
       },
       child: {
         value: opportunity?.minTeamMembers || null,

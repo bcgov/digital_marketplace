@@ -1,5 +1,5 @@
 import * as immutable from 'immutable';
-import { isEmpty, uniq } from 'lodash';
+import { uniq } from 'lodash';
 import moment from 'moment';
 import { compareDates, countWords, formatAmount, formatDate, formatDateAndTime, formatTime } from 'shared/lib';
 import CAPABILITIES from 'shared/lib/data/capabilities';
@@ -132,13 +132,19 @@ export async function validateArrayCustomAsync<A, B, C>(raw: A[], validate: (v: 
 
 // Single Value Validators.
 
-// Validate a field only if it is truthy.
-export function optional<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Validation<Valid, Invalid>): Validation<Valid | undefined, Invalid> {
-  return isEmpty(v) ? valid(undefined) : validate(v as Value);
+type OptionalNotDefined = undefined | null | '';
+
+function isOptionalNotDefined<Value>(v: Value | OptionalNotDefined): v is OptionalNotDefined {
+  return v === null || v === undefined || v === '';
 }
 
-export async function optionalAsync<Value, Valid, Invalid>(v: Value | undefined, validate: (v: Value) => Promise<Validation<Valid, Invalid>>): Promise<Validation<Valid | undefined, Invalid>> {
-  return isEmpty(v) ? valid<undefined>(undefined) : await validate(v as Value);
+// Validate a field only if it is truthy.
+export function optional<Value, Valid, Invalid>(v: Value | OptionalNotDefined, validate: (v: Value) => Validation<Valid, Invalid>): Validation<Valid | undefined, Invalid> {
+  return isOptionalNotDefined(v) ? valid(undefined) : validate(v as Value);
+}
+
+export async function optionalAsync<Value, Valid, Invalid>(v: Value | OptionalNotDefined, validate: (v: Value) => Promise<Validation<Valid, Invalid>>): Promise<Validation<Valid | undefined, Invalid>> {
+  return isOptionalNotDefined(v) ? valid<undefined>(undefined) : await validate(v as Value);
 }
 
 export function validateGenericString(value: string, name: string, min = 1, max = 100, characters = 'characters'): Validation<string> {
