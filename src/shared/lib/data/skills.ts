@@ -23,6 +23,7 @@ const SKILLS = [
   'DevOps',
   'Django',
   'Docker',
+  'Domain-Specific Languages',
   'Elm',
   'Figma',
   'Flask',
