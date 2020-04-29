@@ -51,3 +51,5 @@ export interface BodyWithErrors {
   notFound?: string[];
   conflict?: string[];
 }
+
+export type Comparison = -1 | 0 | 1;

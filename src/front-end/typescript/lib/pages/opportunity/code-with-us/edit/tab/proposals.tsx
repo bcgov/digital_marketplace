@@ -12,9 +12,8 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { compareNumbers, compareStrings } from 'shared/lib';
 import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
-import { canCWUProposalBeAwarded, CWUProposalSlim, CWUProposalStatus, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
+import { canCWUProposalBeAwarded, compareCWUProposalsForPublicSector, CWUProposalSlim, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -44,27 +43,7 @@ const init: Init<Tab.Params, State> = async params => {
     const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
     proposals = api
       .getValidValue(proposalResult, [])
-      .sort((a, b) => {
-        // Disqualified and Withdrawn statuses come last.
-        if (a.status === CWUProposalStatus.Disqualified || a.status === CWUProposalStatus.Withdrawn) {
-          if (b.status === CWUProposalStatus.Disqualified || b.status === CWUProposalStatus.Withdrawn) {
-            return 0;
-          } else {
-            return 1;
-          }
-        }
-        // Compare by score.
-        // Give precendence to unscored proposals.
-        if (a.score === undefined && b.score !== undefined) { return -1; }
-        if (a.score !== undefined && b.score === undefined) { return 1; }
-        if (a.score !== undefined && b.score !== undefined) {
-          // If scores are not the same, sort by score.
-          const result = compareNumbers(a.score, b.score);
-          if (result) { return result; }
-        }
-        // Fallback to sorting by proponent name.
-        return compareStrings(getCWUProponentName(a), getCWUProponentName(b));
-      });
+      .sort((a, b) => compareCWUProposalsForPublicSector(a, b));
   }
   return {
     awardLoading: null,

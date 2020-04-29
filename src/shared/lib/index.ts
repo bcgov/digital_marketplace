@@ -1,6 +1,7 @@
 import { count } from '@wordpress/wordcount';
 import { get, isArray, isBoolean, repeat } from 'lodash';
 import moment, { isDate, Moment } from 'moment-timezone';
+import { Comparison } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 export function find<T>(arr: T[], pred: (_: T) => boolean): T | null {
@@ -128,8 +129,6 @@ export function formatDate(date: Date, withTimeZone = false): string {
 export function formatTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, 'LT', withTimeZone);
 }
-
-export type Comparison = -1 | 0 | 1;
 
 export function compareStrings(a: string, b: string): Comparison {
   return a.toLowerCase().localeCompare(b.toLowerCase()) as Comparison;

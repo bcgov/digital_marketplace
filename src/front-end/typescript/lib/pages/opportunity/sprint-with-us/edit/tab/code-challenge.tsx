@@ -14,9 +14,8 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { compareNumbers, compareStrings } from 'shared/lib';
 import { canSWUOpportunityBeScreenedInToTeamScenario, canViewSWUOpportunityProposals, hasSWUOpportunityPassedCodeChallenge, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { canSWUProposalBeScreenedToFromTeamScenario, getSWUProponentName, isSWUProposalInCodeChallenge, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { canSWUProposalBeScreenedToFromTeamScenario, compareSWUProposalsForPublicSector, getSWUProponentName, isSWUProposalInCodeChallenge, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { ADT, adt, Id } from 'shared/lib/types';
 
 type ModalId
@@ -50,27 +49,7 @@ const init: Init<Tab.Params, State> = async params => {
     proposals = api
       .getValidValue(proposalResult, [])
       .filter(p => isSWUProposalInCodeChallenge(p))
-      .sort((a, b) => {
-        // Disqualified and Withdrawn statuses come last.
-        if (a.status === SWUProposalStatus.Disqualified || a.status === SWUProposalStatus.Withdrawn) {
-          if (b.status === SWUProposalStatus.Disqualified || b.status === SWUProposalStatus.Withdrawn) {
-            return 0;
-          } else {
-            return 1;
-          }
-        }
-        // Compare by score.
-        // Give precendence to unscored proposals.
-        if (a.challengeScore === undefined && b.challengeScore !== undefined) { return -1; }
-        if (a.challengeScore !== undefined && b.challengeScore === undefined) { return 1; }
-        if (a.challengeScore !== undefined && b.challengeScore !== undefined) {
-          // If scores are not the same, sort by score.
-          const result = compareNumbers(a.challengeScore, b.challengeScore);
-          if (result) { return result; }
-        }
-        // Fallback to sorting by proponent name.
-        return compareStrings(getSWUProponentName(a), getSWUProponentName(b));
-      });
+      .sort((a, b) => compareSWUProposalsForPublicSector(a, b, 'challengeScore'));
   }
   // Can be screened in if...
   // - Opportunity has the appropriate status; and

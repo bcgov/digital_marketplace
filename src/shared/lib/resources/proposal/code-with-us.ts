@@ -1,9 +1,9 @@
-import { isDateInThePast } from 'shared/lib';
+import { compareNumbers, compareStrings, isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunitySlim } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { UserSlim, UserType } from 'shared/lib/resources/user';
-import { ADT, adt, BodyWithErrors, Id } from 'shared/lib/types';
+import { ADT, adt, BodyWithErrors, Comparison, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_CWU_PROPOSAL_TITLE = 'Unknown';
@@ -36,6 +36,42 @@ export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
     case CWUProposalStatus.Withdrawn: return CWUProposalStatus.Withdrawn;
     default: return null;
   }
+}
+
+function quantifyCWUProposalStatusForSort(a: CWUProposalStatus): number {
+  // 0 = first
+  switch (a) {
+    case CWUProposalStatus.Awarded: return 0;
+    case CWUProposalStatus.NotAwarded: return 1;
+    case CWUProposalStatus.UnderReview:
+    case CWUProposalStatus.Evaluated:
+      return 2;
+    case CWUProposalStatus.Withdrawn: return 3;
+    case CWUProposalStatus.Disqualified: return 4;
+    case CWUProposalStatus.Draft:
+    case CWUProposalStatus.Submitted:
+      return 5;
+  }
+}
+
+export function compareCWUProposalStatuses(a: CWUProposalStatus, b: CWUProposalStatus): Comparison {
+  return compareNumbers(quantifyCWUProposalStatusForSort(a), quantifyCWUProposalStatusForSort(b));
+}
+
+export function compareCWUProposalsForPublicSector(a: CWUProposalSlim, b: CWUProposalSlim): Comparison {
+  const statusComparison = compareCWUProposalStatuses(a.status, b.status);
+  if (statusComparison !== 0) { return statusComparison; }
+  // Compare by score.
+  // Give precendence to scored proposals.
+  if (a.score === undefined && b.score !== undefined) { return 1; }
+  if (a.score !== undefined && b.score === undefined) { return -1; }
+  if (a.score !== undefined && b.score !== undefined) {
+    // If scores are not the same, sort by score.
+    const result = compareNumbers(a.score, b.score);
+    if (result) { return result; }
+  }
+  // Fallback to sorting by proponent name.
+  return compareStrings(getCWUProponentName(a), getCWUProponentName(b));
 }
 
 export interface CWUProposalHistoryRecord {

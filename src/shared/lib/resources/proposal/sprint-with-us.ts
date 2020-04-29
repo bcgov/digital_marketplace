@@ -1,9 +1,9 @@
-import { isDateInThePast } from 'shared/lib';
+import { compareNumbers, compareStrings, isDateInThePast } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUOpportunity, SWUOpportunitySlim, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { UserSlim, UserType } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Comparison, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
 export const DEFAULT_SWU_PROPOSAL_TITLE = 'Unknown';
@@ -70,6 +70,54 @@ export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
     case SWUProposalStatus.Withdrawn: return SWUProposalStatus.Withdrawn;
     default: return null;
   }
+}
+
+function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
+  // 0 = first
+  switch (a) {
+    case SWUProposalStatus.Awarded: return 0;
+    case SWUProposalStatus.NotAwarded: return 1;
+    case SWUProposalStatus.UnderReviewTeamQuestions:
+    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.UnderReviewCodeChallenge:
+    case SWUProposalStatus.EvaluatedCodeChallenge:
+    case SWUProposalStatus.UnderReviewTeamScenario:
+    case SWUProposalStatus.EvaluatedTeamScenario:
+      return 2;
+    case SWUProposalStatus.Withdrawn: return 3;
+    case SWUProposalStatus.Disqualified: return 4;
+    case SWUProposalStatus.Draft:
+    case SWUProposalStatus.Submitted:
+      return 5;
+  }
+}
+
+export function compareSWUProposalStatuses(a: SWUProposalStatus, b: SWUProposalStatus): Comparison {
+  return compareNumbers(quantifySWUProposalStatusForSort(a), quantifySWUProposalStatusForSort(b));
+}
+
+type SWUProposalScore
+  = 'totalScore'
+  | 'questionsScore'
+  | 'challengeScore'
+  | 'scenarioScore';
+
+export function compareSWUProposalsForPublicSector(a: SWUProposalSlim, b: SWUProposalSlim, byScore: SWUProposalScore): Comparison {
+  const statusComparison = compareSWUProposalStatuses(a.status, b.status);
+  if (statusComparison !== 0) { return statusComparison; }
+  // Compare by score.
+  // Give precendence to scored proposals.
+  const aScore = a[byScore];
+  const bScore = b[byScore];
+  if (aScore === undefined && bScore !== undefined) { return 1; }
+  if (aScore !== undefined && bScore === undefined) { return -1; }
+  if (aScore !== undefined && bScore !== undefined) {
+    // If scores are not the same, sort by score.
+    const result = compareNumbers(aScore, bScore);
+    if (result) { return result; }
+  }
+  // Fallback to sorting by proponent name.
+  return compareStrings(getSWUProponentName(a), getSWUProponentName(b));
 }
 
 export interface SWUProposal {
