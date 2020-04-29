@@ -1,7 +1,7 @@
-import { TOTAL_AWARDED_COUNT_OFFSET, TOTAL_AWARDED_VALUE_OFFSET } from 'front-end/config';
 import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import { TextColor } from 'front-end/lib/types';
 import { BulletPoint } from 'front-end/lib/views/bullet-point';
 import Icon from 'front-end/lib/views/icon';
@@ -15,8 +15,8 @@ import { adt, ADT } from 'shared/lib/types';
 const IMG_MAX_WIDTH = '550px';
 
 export interface State {
-  toast: [string, string];
-  showAccordion: boolean;
+  totalCount: number;
+  totalAwarded: number;
 }
 
 type InnerMsg = ADT<'noop'>;
@@ -25,19 +25,23 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  toast: [
-    'Example Toast',
-    'This is an example toast. This is an example toast. This is an example toast. This is an example toast.'
-  ],
-  showAccordion: false
-});
+const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
+  const metricsR = await api.metrics.readMany();
+  if (!api.isValid(metricsR)) {
+    return {
+      totalCount: 0,
+      totalAwarded: 0
+    };
+  }
+
+  return metricsR.value[0];
+};
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   return [state];
 };
 
-const Hero: View = () => {
+const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
     <Container className='pb-7 pb-md-8 pt-sm-4 pt-md-3'>
       <Row className='justify-content-center text-center'>
@@ -67,11 +71,11 @@ const Hero: View = () => {
         <Col xs='12'>
           <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
             <div className='d-flex flex-column flex-md-row justify-content-center align-items-center mr-md-6 mb-4 mb-md-0'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(TOTAL_AWARDED_COUNT_OFFSET)}</div>
+              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalCount)}</div>
               <div className='ml-md-3 font-size-small text-secondary'>Total Opportunities Awarded</div>
             </div>
             <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(TOTAL_AWARDED_VALUE_OFFSET, '$')}</div>
+              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalAwarded, '$')}</div>
               <div className='ml-md-3 font-size-small text-secondary'>Total Value of All Opportunities</div>
             </div>
           </div>
@@ -282,7 +286,7 @@ const BottomView: View = () => {
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
-      <Hero />
+      <Hero state={state} dispatch={dispatch} />
       <Programs />
       <AppInfo />
       <VendorRoleInfo />
