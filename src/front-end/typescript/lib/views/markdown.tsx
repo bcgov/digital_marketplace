@@ -1,8 +1,9 @@
+import { fileBlobPath } from 'front-end/lib';
 import { View } from 'front-end/lib/framework';
 import isRelativeUrl from 'is-relative-url';
 import React from 'react';
 import ReactMarkdown, { Renderers } from 'react-markdown';
-import { decodeMarkdownImageUrlToFileId, fileBlobPath } from 'shared/lib/resources/file';
+import { decodeMarkdownImageUrlToFileId } from 'shared/lib/resources/file';
 
 interface Props {
   source: string;
@@ -48,7 +49,7 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
           : ReactMarkdown.renderers.link,
         image: noImages
           ? () => { //React-Markdown types are not helpful here.
-              return (<p className='text-danger font-weight-bold'>[Image Redacted]</p>);
+              return (<span className='text-danger font-weight-bold'>[Image Redacted]</span>);
             }
           : (props: any) => {
               return (<img {...props} src={decodeImgSrc(props.src || '')} />);

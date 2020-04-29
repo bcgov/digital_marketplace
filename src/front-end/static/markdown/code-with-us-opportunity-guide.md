@@ -19,11 +19,11 @@ If Yes - Remote Description – (If Yes was selected for Remote Ok?) – This id
 
 - Meet once in person every two weeks
 - Must be available in Prince George if requested
-- No In-person required
+- No in-person required
 
 Fixed-Price Award – This section identifies the amount you are offering the vendor for completion of the project. It is important to note that with CWU, this is a fixed amount and will be paid in full to the vendor upon completion of the project or paid in a phase approach as indicated in the opportunity.
 
-Required Skills – Here you can identify the skills that you require vendors to possess to complete the project. If you do not see the skill that you are looking for, you may create a new skill by entering it into the field directly.
+Required Skills – Here you can identify one or more skills that you require vendors to possess to complete the project. If you do not see the skill that you are looking for, you may create a new skill by entering it into the field directly.
 
 ## The Description Tab
 

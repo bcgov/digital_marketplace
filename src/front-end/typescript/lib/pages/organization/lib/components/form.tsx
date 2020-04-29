@@ -1,4 +1,5 @@
 import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH } from 'front-end/config';
+import { fileBlobPath } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
@@ -9,7 +10,6 @@ import FileLink from 'front-end/lib/views/file-link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString } from 'shared/lib';
-import { fileBlobPath } from 'shared/lib/resources/file';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
 import { CreateRequestBody, Organization, UpdateProfileRequestBody, UpdateProfileValidationErrors } from 'shared/lib/resources/organization';
 import { adt, ADT, Id } from 'shared/lib/types';

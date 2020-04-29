@@ -1,5 +1,5 @@
 import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH, DEFAULT_USER_AVATAR_IMAGE_PATH, EMPTY_STRING } from 'front-end/config';
-import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { fileBlobPath, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
 import * as Select from 'front-end/lib/components/form-field/select';
@@ -22,7 +22,6 @@ import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
 import { AffiliationMember, MembershipStatus } from 'shared/lib/resources/affiliation';
-import { fileBlobPath } from 'shared/lib/resources/file';
 import { isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { doesOrganizationMeetSWUQualification, OrganizationSlim } from 'shared/lib/resources/organization';
 import { CreateRequestBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateValidationErrors, SWUProposal, SWUProposalPhaseType, swuProposalPhaseTypeToTitleCase, UpdateEditValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';

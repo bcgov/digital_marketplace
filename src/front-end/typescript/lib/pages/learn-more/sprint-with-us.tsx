@@ -157,7 +157,7 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
                   bgColor='purple'
                   title='Sign In to Your Vendor Account'
                   description={(
-                    <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using GitHub. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', null))}>sign up</Link>, first.</div>)}
+                    <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using GitHub. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', {}))}>sign up</Link>, first.</div>)}
                   className='mb-4'
                 />
                 <HowItWorksItem
