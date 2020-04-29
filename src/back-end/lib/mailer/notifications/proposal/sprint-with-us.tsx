@@ -47,7 +47,7 @@ export async function handleSWUProposalDisqualified(connection: db.Connection, p
   //Notify the disqualified proponent
   const proposal = getValidValue(await db.readOneSWUProposal(connection, proposalId, session), null);
   const opportunity = proposal && getValidValue(await db.readOneSWUOpportunity(connection, proposal.opportunity.id, session), null);
-  const disqualifiedProponent = proposal?.createdBy && getValidValue(await db.readOneUser(connection, proposal.createdBy.id), null);
+  const disqualifiedProponent = getValidValue(await db.readOneSWUProposalAuthor(connection, proposalId), null);
   if (proposal && opportunity && disqualifiedProponent) {
     await disqualifiedSWUProposalSubmission(disqualifiedProponent, opportunity, proposal);
   }
