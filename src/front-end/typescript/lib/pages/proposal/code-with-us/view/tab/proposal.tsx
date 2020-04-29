@@ -352,8 +352,9 @@ export const component: Tab.Component<State, Msg> = {
             <div>
               <p>Provide the reason why this Vendor has been disqualified from the Code With Us opportunity.</p>
               <LongText.view
-                extraChildProps={{}}
-                style={{ height: '180px' }}
+                extraChildProps={{
+                  style: { height: '180px' }
+                }}
                 disabled={isDisqualifyLoading}
                 required
                 label='Reason'

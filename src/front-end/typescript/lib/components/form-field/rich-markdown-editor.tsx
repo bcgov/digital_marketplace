@@ -5,7 +5,7 @@ import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/f
 import FileLink from 'front-end/lib/views/file-link';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link, { externalDest } from 'front-end/lib/views/link';
-import React, { Fragment } from 'react';
+import React, { CSSProperties, Fragment } from 'react';
 import { FormText, Spinner } from 'reactstrap';
 import { countWords } from 'shared/lib';
 import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
@@ -61,7 +61,9 @@ type InnerChildMsg
   | ADT<'controlImage', File>
   | ADT<'focus'>;
 
-type ExtraChildProps = {};
+interface ExtraChildProps {
+  style?: CSSProperties;
+}
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -410,7 +412,7 @@ const Controls: ChildComponent['view'] = ({ state, dispatch, disabled = false })
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, style, placeholder, className = '', validityClassName, disabled = false } = props;
   const isLoading = state.loading > 0;
   const isDisabled = disabled || isLoading;
   const onChangeSelection = (target: EventTarget & HTMLTextAreaElement) => {
@@ -422,7 +424,7 @@ const ChildView: ChildComponent['view'] = props => {
     }
   };
   return (
-    <div className='d-flex flex-column flex-grow-1'>
+    <div style={style} className='d-flex flex-column flex-grow-1'>
       <div className={`${className} p-0 d-flex flex-column flex-nowrap align-items-stretch`}>
         <Controls {...props} />
         <textarea

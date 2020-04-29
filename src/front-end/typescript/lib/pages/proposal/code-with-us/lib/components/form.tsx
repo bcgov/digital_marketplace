@@ -789,8 +789,9 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
         <RichMarkdownEditor.view
           disabled={disabled}
           required
-          extraChildProps={{}}
-          style={{ height: '60vh', minHeight: '400px' }}
+          extraChildProps={{
+            style: { height: '60vh', minHeight: '400px' }
+          }}
           label='Proposal'
           help='Provide your complete proposal here. Be sure to address the Proposal Evaluation Criteria as outlined on the opportunity. You can format your proposal with Markdown.'
           state={state.proposalText}
@@ -799,8 +800,9 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs='12'>
         <RichMarkdownEditor.view
           disabled={disabled}
-          extraChildProps={{}}
-          style={{ height: '300px' }}
+          extraChildProps={{
+            style: { height: '300px' }
+          }}
           label='Additional Comments'
           help='Provide any additional information or comments that are relevant to your proposal submission. You can format your additional comments with Markdown.'
           state={state.additionalComments}

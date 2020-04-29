@@ -239,12 +239,13 @@ const QuestionView: View<QuestionViewProps> = props => {
       <Row>
         <Col xs='12'>
           <LongText.view
-            extraChildProps={{}}
             label='Question'
             placeholder='Enter your question here.'
             help='Enter your question in the field provided below.'
             required
-            style={{ height: '200px' }}
+            extraChildProps={{
+              style: { height: '200px' }
+            }}
             disabled={disabled}
             state={question.question}
             dispatch={mapComponentDispatch(dispatch, value => adt('questionText' as const, { childMsg: value, qIndex: index } ))} />
@@ -253,12 +254,13 @@ const QuestionView: View<QuestionViewProps> = props => {
       <Row>
         <Col xs='12'>
           <LongText.view
-            extraChildProps={{}}
             label='Response Guidelines'
             placeholder='Provide some guidance on how proponents can effectively respond to your question.'
             help='Provide some guidance on how proponents can effectively respond to your question.'
             required
-            style={{ height: '160px' }}
+            extraChildProps={{
+              style: { height: '160px' }
+            }}
             disabled={disabled}
             state={question.guideline}
             dispatch={mapComponentDispatch(dispatch, value => adt('guidelineText' as const, { childMsg: value, qIndex: index } )) } />

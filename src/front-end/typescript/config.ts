@@ -2,7 +2,7 @@ import { prefixPath } from 'front-end/lib';
 
 export const NODE_ENV = process.env.NODE_ENV || 'production';
 
-export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'TODO';
+export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'digitalmarketplace@gov.bc.ca';
 
 // Set this environment variable if behind reverse proxies at a particular path.
 // e.g. www.example.com/marketplace/*

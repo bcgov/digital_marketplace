@@ -723,11 +723,12 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
 
       <Col xs='12'>
         <LongText.view
-          extraChildProps={{}}
           label='Teaser'
           help='Provide 1-2 sentences that will entice readers to apply to this opportunity and that describes what you are inviting them to do.'
           placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
-          style={{ height: '200px' }}
+          extraChildProps={{
+            style: { height: '200px' }
+          }}
           disabled={disabled}
           state={state.teaser}
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
@@ -747,12 +748,13 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
       {RadioGroup.valueEquals(state.remoteOk, 'yes')
         ? (<Col xs='12'>
             <LongText.view
-              extraChildProps={{}}
               required
               label='Remote Description'
               placeholder={`Provide further information about this opportunity's remote work options.`}
               disabled={disabled}
-              style={{ height: '160px' }}
+              extraChildProps={{
+                style: { height: '160px' }
+              }}
               state={state.remoteDesc}
               dispatch={mapComponentDispatch(dispatch, value => adt('remoteDesc' as const, value))} />
           </Col>)
@@ -775,7 +777,10 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           extraChildProps={{ prefix: '$' }}
           label='Fixed-Price Award'
           placeholder='Fixed-Price Award'
-          help='To the best of your ability, estimate a fair price for the amount of work that you think it should take from the successful proponent to meet the opportunity’s acceptance criteria. It is suggested that you overestimate. The price estimate must not exceed $70,000.'
+          help={(<div>
+            <p>To the best of your ability, estimate a fair price for the amount of work that you think it should take from the successful proponent to meet the opportunity’s acceptance criteria. It is suggested that you overestimate.</p>
+            <p className='mb-0'>The price estimate must not exceed $70,000.</p>
+          </div>)}
           required
           disabled={disabled}
           state={state.reward}
@@ -805,12 +810,13 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
 
       <Col xs='12'>
         <RichMarkdownEditor.view
-          extraChildProps={{}}
           required
           label='Description'
           help='Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown.'
           placeholder='Describe this opportunity.'
-          style={{ height: '60vh', minHeight: '400px' }}
+          extraChildProps={{
+            style: { height: '60vh', minHeight: '400px' }
+          }}
           disabled={disabled}
           state={state.description}
           dispatch={mapComponentDispatch(dispatch, value => adt('description' as const, value))} />
@@ -830,7 +836,10 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
           required
           extraChildProps={{}}
           label='Proposal Deadline'
-          help='Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time. A deadline of at least five (5) days from the date that the opportunity is published is recommended.'
+          help={(<div>
+            <p>Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time.</p>
+            <p className='mb-0'>A deadline of at least five (5) days from the date that the opportunity is published is recommended.</p>
+          </div>)}
           state={state.proposalDeadline}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
@@ -880,11 +889,12 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
       <Col xs='12'>
         <RichMarkdownEditor.view
           required
-          extraChildProps={{}}
           label='Acceptance Criteria'
           help='Clearly define what the successful proponent must deliver and all of the criteria that must be met in order for payment to be released. You can format this acceptance criteria with Markdown.'
           placeholder={`Describe this opportunity's acceptance criteria.`}
-          style={{ height: '300px' }}
+          extraChildProps={{
+            style: { height: '300px' }
+          }}
           state={state.acceptanceCriteria}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('acceptanceCriteria' as const, value))} />
@@ -893,7 +903,6 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
       <Col xs='12'>
         <RichMarkdownEditor.view
           required
-          extraChildProps={{}}
           label='Evaluation Criteria'
           placeholder={`Describe this opportunity's evaluation criteria.`}
           help={(
@@ -902,7 +911,9 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
               <p className='mb-0'>It is at your discretion which mandatory and weighted criteria you wish to use. Please refer to the Government of B.C.’s <Link newTab dest={externalDest(BC_INFORMATION_ON_PROCUREMENT_URL)}>information on procurement</Link> for guidance.</p>
             </div>
           )}
-          style={{ height: '300px' }}
+          extraChildProps={{
+            style: { height: '300px' }
+          }}
           state={state.evaluationCriteria}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('evaluationCriteria' as const, value))} />

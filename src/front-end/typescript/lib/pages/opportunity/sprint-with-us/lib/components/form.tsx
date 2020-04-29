@@ -926,11 +926,12 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
 
       <Col xs='12'>
         <LongText.view
-          extraChildProps={{}}
           label='Teaser'
           placeholder='Provide 1-2 sentences that describe to readers what you are inviting them to do.'
           help='Provide 1-2 sentences that will entice readers to apply to this opportunity and that describes what you are inviting them to do.'
-          style={{ height: '200px' }}
+          extraChildProps={{
+            style: { height: '200px' }
+          }}
           disabled={disabled}
           state={state.teaser}
           dispatch={mapComponentDispatch(dispatch, value => adt('teaser' as const, value))} />
@@ -950,12 +951,13 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
       {RadioGroup.valueEquals(state.remoteOk, 'yes')
         ? (<Col xs='12'>
             <LongText.view
-              extraChildProps={{}}
               label='Remote Description'
               placeholder={`Provide further information about this opportunity's remote work options.`}
               required
               disabled={disabled}
-              style={{ height: '160px' }}
+              extraChildProps={{
+                style: { height: '160px' }
+              }}
               state={state.remoteDesc}
               dispatch={mapComponentDispatch(dispatch, value => adt('remoteDesc' as const, value))} />
           </Col>)
@@ -978,7 +980,10 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
           required
           extraChildProps={{}}
           label='Proposal Deadline'
-          help='Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time. A deadline of at least five (5) days from the date that the opportunity is published is recommended.'
+          help={(<div>
+            <p>Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time.</p>
+            <p className='mb-0'>A deadline of at least five (5) days from the date that the opportunity is published is recommended.</p>
+          </div>)}
           state={state.proposalDeadline}
           disabled={disabled}
           dispatch={mapComponentDispatch(dispatch, value => adt('proposalDeadline' as const, value))} />
@@ -1052,12 +1057,13 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
 
       <Col xs='12'>
         <RichMarkdownEditor.view
-          extraChildProps={{}}
           required
           label='Description'
           placeholder='Describe this opportunity.'
           help='Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown.'
-          style={{ height: '60vh', minHeight: '400px' }}
+          extraChildProps={{
+            style: { height: '60vh', minHeight: '400px' }
+          }}
           disabled={disabled}
           state={state.description}
           dispatch={mapComponentDispatch(dispatch, value => adt('description' as const, value))} />
