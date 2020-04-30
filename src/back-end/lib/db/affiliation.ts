@@ -143,7 +143,6 @@ export const createAffiliation = tryDb<[CreateAffiliationParams], Affiliation>(a
     throw new Error('unable to create affiliation');
   }
 
-  // TODO: send invitation email once emails notifications are in place.
   return valid(await rawAffiliationToAffiliation(connection, result));
 });
 

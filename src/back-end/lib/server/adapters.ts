@@ -138,7 +138,6 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       if (sessionId) {
         setSessionId(sessionId.toString());
       }
-      // TODO make switch statement more type-safe.
       switch (response.body.tag) {
         case 'error':
         case 'json':
