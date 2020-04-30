@@ -202,7 +202,7 @@ Reference-style:
 
 <a name="code"/>
 
-## Code and Syntax Highlighting
+## Pre-Formatted Text and Code
 
 Pre-formatted text and code blocks are part of the Markdown spec.
 
