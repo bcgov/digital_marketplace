@@ -11,7 +11,7 @@ This brief guide offers you a snapshot of Markdown's most useful features. The D
 [Lists](#lists)  
 [Links](#links)  
 [Images](#images)  
-[Code and Syntax Highlighting](#code)  
+[Pre-Formatted Text and Code](#code)  
 [Tables](#tables)  
 [Blockquotes](#blockquotes)  
 [Horizontal Rule](#hr)  
