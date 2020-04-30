@@ -257,7 +257,7 @@ const Reporting: ComponentView<State, Msg> = ({ state }) => {
     },
     {
       icon: 'comment-dollar',
-      name: 'Proposals',
+      name: `Proposal${reporting?.numProposals === 1 ? '' : 's'}`,
       value: formatAmount(reporting?.numProposals || 0)
     }
   ];
