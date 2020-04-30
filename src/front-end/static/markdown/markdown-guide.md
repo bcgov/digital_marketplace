@@ -348,4 +348,4 @@ This line is only separated by a single newline, so it's a separate line in the 
 
 ---
 
-_This guide has been adapted from the version written by [Adam Pritchard](https://github.com/adam-p), and the originally distributed version can be found [here](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet). It is licensed under a Creative Commons License: [CC-BY](https://creativecommons.org/licenses/by/3.0/)._
+_This guide has been adapted from the version originally written by [Adam Pritchard](https://github.com/adam-p), which can be found [here](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet). It is licensed under a Creative Commons License: [CC-BY](https://creativecommons.org/licenses/by/3.0/)._
