@@ -247,7 +247,7 @@ export function validateTotalMaxBudget(raw: string | number): Validation<number>
   return validateNumber(raw, 1, 2000000, 'Total Maximum Budget', 'a');
 }
 
-export function validateMinimumTeamMembers(raw?: number): Validation<number | null> {
+export function validateMinimumTeamMembers(raw?: number | null): Validation<number | null> {
   return mapValid(
     optional(raw, v => validateNumber(v, 1, 5, 'minimum team size', 'a')),
     v => v || null

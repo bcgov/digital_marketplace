@@ -105,7 +105,9 @@ const resource: Resource = {
           remoteDesc: getString(body, 'remoteDesc'),
           location: getString(body, 'location'),
           totalMaxBudget: getNumber(body, 'totalMaxBudget'),
-          minTeamMembers: getNumber<number | undefined>(body, 'minTeamMembers', undefined),
+          // Can't use undefined as fallback for minTeamMembers
+          // as getNumber will default it to zero.
+          minTeamMembers: getNumber<null>(body, 'minTeamMembers', null),
           mandatorySkills: getStringArray(body, 'mandatorySkills'),
           optionalSkills: getStringArray(body, 'optionalSkills'),
           description: getString(body, 'description'),
@@ -398,7 +400,9 @@ const resource: Resource = {
               remoteDesc: getString(value, 'remoteDesc'),
               location: getString(value, 'location'),
               totalMaxBudget: getNumber<number>(value, 'totalMaxBudget'),
-              minTeamMembers: getNumber<number | undefined>(value, 'minTeamMembers', undefined),
+              // Can't use undefined as fallback for minTeamMembers
+              // as getNumber will default it to zero.
+              minTeamMembers: getNumber<null>(value, 'minTeamMembers', null),
               mandatorySkills: getStringArray(value, 'mandatorySkills'),
               optionalSkills: getStringArray(value, 'optionalSkills'),
               description: getString(value, 'description'),
