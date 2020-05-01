@@ -30,7 +30,7 @@ export const SWU_PROPOSAL_EVALUATION_CONTENT_ID = 'sprint-with-us-proposal-evalu
 
 export const SWU_OPPORTUNITY_SCOPE_CONTENT_ID = 'sprint-with-us-opportunity-scope';
 
-export const SWU_QUALIFICATION_TERMS_ID = 'sprint-with-us-qualification-terms-and-conditions';
+export const SWU_QUALIFICATION_TERMS_ID = 'sprint-with-us-terms-and-conditions';
 
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 
