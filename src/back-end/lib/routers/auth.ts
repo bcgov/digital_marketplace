@@ -1,4 +1,4 @@
-import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
+import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
 import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
@@ -46,7 +46,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           const authQuery: KeyCloakAuthQuery = {
             client_id: KEYCLOAK_CLIENT_ID,
             client_secret: KEYCLOAK_CLIENT_SECRET,
-            redirect_uri: `${ORIGIN}/auth/callback`,
+            redirect_uri: prefixPath('auth/callback'),
             response_mode: 'query',
             response_type: 'code',
             scope: 'openid',
@@ -93,7 +93,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             client_id: KEYCLOAK_CLIENT_ID,
             client_secret: KEYCLOAK_CLIENT_SECRET,
             scope: 'openid',
-            redirect_uri: `${ORIGIN}/auth/callback`
+            redirect_uri: prefixPath('auth/callback')
           };
 
           // If redirectOnSuccess was provided on callback, this must also be provided on token request (redirect_uri must match for each request)
