@@ -22,6 +22,10 @@ function get(name: string , fallback: string): string {
 
 export const ENV = get('NODE_ENV', 'production');
 
+// Set this environment variable if behind reverse proxies at a particular path.
+// e.g. www.example.com/marketplace/*
+export const PATH_PREFIX = get('PATH_PREFIX', '');
+
 export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
 
 export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);

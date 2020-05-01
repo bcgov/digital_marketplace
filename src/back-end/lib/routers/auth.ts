@@ -1,4 +1,5 @@
 import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, ORIGIN } from 'back-end/config';
+import { prefixPath } from 'back-end/lib';
 import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
@@ -113,7 +114,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             throw new Error('unable to create session');
           }
 
-          const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? '/dashboard' : '/sign-up/complete');
+          const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? prefixPath('/dashboard') : prefixPath('/sign-up/complete'));
 
           return {
             code: 302,
@@ -252,7 +253,7 @@ function makeAuthErrorRedirect(request: Request<any, Session>) {
   return {
     code: 302,
     headers: {
-      'Location': '/notice/authFailure'
+      'Location': prefixPath('/notice/authFailure')
     },
     session: request.session,
     body: makeTextResponseBody('')
