@@ -97,7 +97,7 @@ export async function newSWUOpportunityPublishedT(recipient: User, opportunity: 
       descriptionLists: [makeSWUOpportunityInformation(opportunity)],
       body: (
         <div>
-          <p>Please note that you must be a <templates.Link text='Qualified Supplier' url={templates.makeUrl('/')} /> in order to submit a proposal to a Sprint With Us opportunity.</p>
+          <p>Please note that you must be a <templates.Link text='Qualified Supplier' url={templates.makeUrl('/learn-more/sprint-with-us')} /> in order to submit a proposal to a Sprint With Us opportunity.</p>
         </div>
       ),
       callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
