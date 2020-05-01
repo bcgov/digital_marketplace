@@ -207,12 +207,14 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({ opportu
       <p style={{ whiteSpace: 'pre-line' }}>
         {question.question}
       </p>
-      <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
-        {countWords(response.response)} / {question.wordLimit} word{question.wordLimit === 1 ? '' : 's'}
-        <Separator spacing='2' color='secondary'>|</Separator>
-        {response.score === undefined || response.score === null
-          ? `Unscored (${question.score} point${question.score === 1 ? '' : 's'} available)`
-          : `${response.score} / ${question.score} point${question.score === 1 ? '' : 's'}`}
+      <div className='mb-3 small text-secondary d-flex flex-column flex-sm-row flex-nowrap'>
+        <div className='mb-2 mb-sm-0'>{countWords(response.response)} / {question.wordLimit} word{question.wordLimit === 1 ? '' : 's'}</div>
+        <Separator spacing='2' color='secondary' className='d-none d-sm-block'>|</Separator>
+        <div>
+          {response.score === undefined || response.score === null
+            ? `Unscored (${question.score} point${question.score === 1 ? '' : 's'} available)`
+            : `${response.score} / ${question.score} point${question.score === 1 ? '' : 's'}`}
+        </div>
       </div>
       <Alert color='primary' fade={false} className='mb-4'>
         <div style={{ whiteSpace: 'pre-line' }}>
