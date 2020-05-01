@@ -122,10 +122,10 @@ const ResponseView: View<ResponseViewProps> = props => {
       chevronHeight={1.5}
       open={response.isAccordianOpen}>
       <p style={{ whiteSpace: 'pre-line' }}>{response.question.question}</p>
-      <div className='mb-3 small text-secondary d-flex flex-row flex-nowrap'>
-        {response.question.wordLimit} word limit
+      <div className='mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap'>
+        <div className='mb-2 mb-md-0'>{response.question.wordLimit} word limit</div>
         <Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>
-        Scored out of {response.question.score}
+        <div>Scored out of {response.question.score}</div>
       </div>
       <Alert color='primary' fade={false} className='mb-4'>
         <div style={{ whiteSpace: 'pre-line' }}>
