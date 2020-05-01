@@ -13,7 +13,11 @@ export function find<T>(arr: T[], pred: (_: T) => boolean): T | null {
 
 export const deslash = (s: string) => s.replace(/^\/*/, '').replace(/\/*$/, '');
 
-export const prefix = (a: string) => (b: string) => `/${a ? deslash(a) + '/' : ''}${deslash(b)}`;
+export const prefix = (a: string) => (b: string) => {
+  a = a && deslash(a);
+  b = b && deslash(b);
+  return `/${a}${a && b ? '/' : ''}${b}`;
+};
 
 export function getString(obj: any, keyPath: string | string[], fallback = ''): string {
   const value = get(obj, keyPath);
