@@ -152,7 +152,7 @@ export async function memberLeavesT(recipient: User, affiliation: Affiliation): 
 export function viewOrganizationCallToAction(organization: Organization): templates.LinkProps {
   return {
     text: 'View Organization',
-    url: templates.makeUrl(`organizations/${organization.id}`)
+    url: templates.makeUrl(`organizations/${organization.id}/edit`)
   };
 }
 

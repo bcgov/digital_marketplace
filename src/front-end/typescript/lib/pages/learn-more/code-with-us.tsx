@@ -81,14 +81,14 @@ const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 <div className='mb-3'>We know that there are tons of brilliant tech professionals like you who never get an opportunity to apply their skills to public service. We want to change that!</div>
                 <div className='mb-5'><em>Code With Us</em> makes it easy to get paid for contributing to government’s digital services by providing a process that allows you to focus on writing code, not contract paperwork.</div>
                 <VendorHIW />
-                <div className='d-flex flex-row mt-5 flex-nowrap'>
+                <div className='d-flex flex-column flex-sm-row mt-5 flex-nowrap align-items-start align-items-sm-center'>
                   <Link
                     button
                     dest={routeDest(adt('content', 'code-with-us-proposal-guide'))}
                     color='info'
                     outline
                     symbol_={leftPlacement(iconLinkSymbol('book-user'))}
-                    className='mr-3 text-nowrap'
+                    className='mb-4 mb-sm-0 mr-0 mr-sm-4 text-nowrap'
                   >
                     Read the Guide
                   </Link>
@@ -97,7 +97,7 @@ const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
                     dest={routeDest(adt('opportunities', null))}
                     color='primary'
                     symbol_={leftPlacement(iconLinkSymbol('search'))}
-                    className='ml-3 text-nowrap'
+                    className='text-nowrap'
                   >
                     Browse Opportunities
                   </Link>

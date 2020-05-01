@@ -1,8 +1,7 @@
-
 import { MAILER_ROOT_URL } from 'back-end/config';
-import { prefixPath } from 'back-end/lib';
 import { CSSProperties, default as React, Fragment, ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { deslash } from 'shared/lib';
 
 // Styles.
 
@@ -198,7 +197,7 @@ export const styles: Styles = (() => {
 // Utility types and functions.
 
 export function makeUrl(path: string): string {
-  return `${MAILER_ROOT_URL}${prefixPath(path)}`;
+  return `${MAILER_ROOT_URL}/${deslash(path)}`;
 }
 
 type Child = ReactElement | string | null;
