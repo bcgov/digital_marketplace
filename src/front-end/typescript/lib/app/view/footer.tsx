@@ -60,7 +60,7 @@ const Footer: View<{}> = () => {
           </Col>
           <Col xs='12' className='small pb-3 o-75'>
             <Link newTab color='white' dest={externalDest('https://www.realfolk.io')}>
-              Designed and Implemented by Real Folk Inc.
+              Designed and Implemented by Real Folk.
             </Link>
           </Col>
         </Row>
