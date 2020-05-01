@@ -1,5 +1,5 @@
 import { NODE_ENV } from 'front-end/config';
-import app from 'front-end/lib/app/index';
+import app from 'front-end/lib/app';
 import { start } from 'front-end/lib/framework';
 import { debounce, set } from 'lodash';
 import { adt } from 'shared/lib/types';
