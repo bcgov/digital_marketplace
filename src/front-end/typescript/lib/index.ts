@@ -6,7 +6,7 @@ import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resourc
 import { getValidValue, isInvalid, mapValid, Validation } from 'shared/lib/validation';
 
 export function prefixPath(path: string): string {
-  return prefix(PATH_PREFIX)(path);
+  return `/${prefix(PATH_PREFIX)(path)}`;
 }
 
 export type WithState<State, OtherArgs extends unknown[] = [], Result = Immutable<State>> = (state: Immutable<State>, ...otherArgs: OtherArgs) => Result;

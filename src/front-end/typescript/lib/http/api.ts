@@ -21,7 +21,7 @@ import { adt, ClientHttpMethod, Id } from 'shared/lib/types';
 
 export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
 
-export const apiNamespace = prefix(prefixPath('api'));
+export const apiNamespace = (p: string) => `/${prefix(prefixPath('api'))(p)}`;
 
 // Markdown files.
 

@@ -3,7 +3,6 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
 import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
-import url from 'url';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config');
 
@@ -22,10 +21,6 @@ function get(name: string , fallback: string): string {
 
 export const ENV = get('NODE_ENV', 'production');
 
-// Set this environment variable if behind reverse proxies at a particular path.
-// e.g. www.example.com/marketplace/*
-export const PATH_PREFIX = get('PATH_PREFIX', '');
-
 export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
 
 export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
@@ -36,7 +31,7 @@ export const BASIC_AUTH_USERNAME = get('BASIC_AUTH_USERNAME', '');
 
 export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
 
-export const ORIGIN = get('ORIGIN', 'http://digital-marketplace.bcgov.realfolk.io').replace(/\/*$/, '');
+export const ORIGIN = get('ORIGIN', 'https://digital.gov.bc.ca/marketplace').replace(/\/*$/, '');
 
 export const CONTACT_EMAIL = get('CONTACT_EMAIL', 'digitalmarketplace@gov.bc.ca');
 
@@ -93,8 +88,6 @@ export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOpti
 export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
 
 export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NOREPLY}>`);
-
-export const MAILER_ROOT_URL = get('MAILER_ROOT_URL', ORIGIN).replace(/\/*$/, '');
 
 // Keycloak configuration
 export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://sso-dev.pathfinder.gov.bc.ca');
@@ -212,11 +205,6 @@ export function getConfigErrors(): string[] {
 
   if (!MAILER_FROM || !MAILER_FROM.match(/^[^<>@]+<[^@]+@[^@]+\.[^@]+>$/)) {
     errors.push('MAILER_FROM must be specified using the format: "Name <email@domain.tld>".');
-  }
-
-  const mailerRootUrl = url.parse(MAILER_ROOT_URL);
-  if (!MAILER_ROOT_URL || !mailerRootUrl.protocol || !mailerRootUrl.host) {
-    errors.push('MAILER_ROOT_URL must be specified as a valid URL with a protocol and host.');
   }
 
   return errors;
