@@ -123,7 +123,7 @@ export async function membershipCompleteT(affiliation: Affiliation): Promise<Ema
           <p>{organizationName} can now include you on proposals to  Sprint With Us opportunities.</p>
         </div>
       ),
-      callsToAction: [viewOrganizationCallToAction(affiliation.organization)]
+      callsToAction: [viewMyOrganizationsCallToAction(recipient)]
     })
   }];
 }
@@ -153,6 +153,13 @@ export function viewOrganizationCallToAction(organization: Organization): templa
   return {
     text: 'View Organization',
     url: templates.makeUrl(`organizations/${organization.id}/edit`)
+  };
+}
+
+export function viewMyOrganizationsCallToAction(user: User): templates.LinkProps {
+  return {
+    text: 'View Organizations',
+    url: templates.makeUrl(`users/${user.id}?tab=organizations`)
   };
 }
 
