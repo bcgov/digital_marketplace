@@ -75,21 +75,21 @@ Throughout this Request for Proposals, the following definitions apply:
 
 ## 1.2. Submission of Proposals
 
-  a) **Digital Marketplace**
+#### a) Digital Marketplace
 
-	Proposals must be in English and must be submitted by an authorized representative of the Proponent, in accordance with the following:
+Proposals must be in English and must be submitted by an authorized representative of the Proponent, in accordance with the following:
 
-		(i) Only Proponents who are Qualified Suppliers may submit Proposals.
+(i) Only Proponents who are Qualified Suppliers may submit Proposals.
 
-		(ii) Bidding by a subcontractor is not acceptable.
+(ii) Bidding by a subcontractor is not acceptable.
 
-		(iii) Proposals must not be submitted through BC Bid.  Proposals must be submitted at the Closing Location by an authorized representative of the Proponent by clicking on the "submit" button located thereon.
+(iii) Proposals must not be submitted through BC Bid.  Proposals must be submitted at the Closing Location by an authorized representative of the Proponent by clicking on the "submit" button located thereon.
 
-		(iv) Use of the Proponent’s profile on the Digital Marketplace in connection with this RFP and clicking on the "submit" button is as effective as a signature, and Proponents assume all responsibility for Proposals submitted under their name. The Province will assume that all Proposals submitted using the "submit" button have been authorized and approved by the Proponent and the Province will have no obligation to confirm or verify the authenticity or authorization of any such submission.
+(iv) Use of the Proponent’s profile on the Digital Marketplace in connection with this RFP and clicking on the "submit" button is as effective as a signature, and Proponents assume all responsibility for Proposals submitted under their name. The Province will assume that all Proposals submitted using the "submit" button have been authorized and approved by the Proponent and the Province will have no obligation to confirm or verify the authenticity or authorization of any such submission.
 
-		(v) Proposals must be received before the Closing Time to be considered.  Proponents are solely responsible for ensuring that the Province receives a complete Proposal, including all attachments or enclosures, if applicable, before the Closing Time, and the Proponent bears all risk associated with delivering its Proposal by electronic submission, including but not limited to delays in transmission between the Proponent’s computer and the Digital Marketplace system. For this reason, the Province strongly encourages Proponents to submit Proposals with sufficient time to complete the Proposal and any activities required by the Proposal before Closing Time.
+(v) Proposals must be received before the Closing Time to be considered.  Proponents are solely responsible for ensuring that the Province receives a complete Proposal, including all attachments or enclosures, if applicable, before the Closing Time, and the Proponent bears all risk associated with delivering its Proposal by electronic submission, including but not limited to delays in transmission between the Proponent’s computer and the Digital Marketplace system. For this reason, the Province strongly encourages Proponents to submit Proposals with sufficient time to complete the Proposal and any activities required by the Proposal before Closing Time.
 
-		(vi) Proponents should refer to the Digital Marketplace Website or contact [digitalmarketplace@gov.bc.ca](mailto:digitalmarketplace@gov.bc.ca) for more information on the use of the Digital Marketplace Website.
+(vi) Proponents should refer to the Digital Marketplace Website or contact [digitalmarketplace@gov.bc.ca](mailto:digitalmarketplace@gov.bc.ca) for more information on the use of the Digital Marketplace Website.
 
 ## 1.3. Government Contact
 
@@ -123,25 +123,25 @@ By selecting either the "withdraw proposal" (a Proposal will be saved but not su
 
 ## 1.10. Conflict of Interest/No Lobbying
 
-  a) A Proponent may be disqualified if the Proponent’s current or past corporate or other interests, or those of a proposed subcontractor, may, in the Province’s opinion, give rise to an actual or potential conflict of interest in connection with the services described in the RFP.  This includes, but is not limited to, involvement by a Proponent in the preparation of the RFP or a relationship with any employee, contractor or representative of the Province involved in preparation of the RFP, participating on the evaluation committee or in the administration of the Contract.  If a Proponent is in doubt as to whether there might be a conflict of interest, the Proponent should consult with the Government Contact prior to submitting a Proposal.  By submitting a Proposal, the Proponent represents that it is not aware of any circumstances that would give rise to a conflict of interest that is actual or potential, in respect of the RFP.
+a) A Proponent may be disqualified if the Proponent’s current or past corporate or other interests, or those of a proposed subcontractor, may, in the Province’s opinion, give rise to an actual or potential conflict of interest in connection with the services described in the RFP.  This includes, but is not limited to, involvement by a Proponent in the preparation of the RFP or a relationship with any employee, contractor or representative of the Province involved in preparation of the RFP, participating on the evaluation committee or in the administration of the Contract.  If a Proponent is in doubt as to whether there might be a conflict of interest, the Proponent should consult with the Government Contact prior to submitting a Proposal.  By submitting a Proposal, the Proponent represents that it is not aware of any circumstances that would give rise to a conflict of interest that is actual or potential, in respect of the RFP.
 
-  b) A Proponent must not attempt to influence the outcome of the RFP process by engaging in lobbying activities.  Any attempt by the Proponent to communicate for this purpose directly or indirectly with any employee, contractor or representative of the Province, including members of the evaluation committee and any elected officials of the Province, or with the media, may result in disqualification of the Proponent.
+b) A Proponent must not attempt to influence the outcome of the RFP process by engaging in lobbying activities.  Any attempt by the Proponent to communicate for this purpose directly or indirectly with any employee, contractor or representative of the Province, including members of the evaluation committee and any elected officials of the Province, or with the media, may result in disqualification of the Proponent.
 
 ## 1.11. Subcontractors
 
-  a) Unless the RFP states otherwise, the Province will accept Proposals where more than one organization or individual is proposed to deliver the services described in the RFP, so long as the Proposal identifies the lead entity that will be the Proponent and that will have sole responsibility to deliver the services under the Contract.  The Province will enter into a Contract with the Proponent only.  The evaluation of the Proponent will include evaluation of the Resources and experience of proposed subcontractors.
+a) Unless the RFP states otherwise, the Province will accept Proposals where more than one organization or individual is proposed to deliver the services described in the RFP, so long as the Proposal identifies the lead entity that will be the Proponent and that will have sole responsibility to deliver the services under the Contract.  The Province will enter into a Contract with the Proponent only.  The evaluation of the Proponent will include evaluation of the Resources and experience of proposed subcontractors.
 
-  b) All subcontractors, including affiliates of the Proponent, should be clearly identified in the Proposal.
+b) All subcontractors, including affiliates of the Proponent, should be clearly identified in the Proposal.
 
-  c) A Proponent may not subcontract to a firm or individual whose current or past corporate or other interests, may, in the Province’s opinion, give rise to an actual or potential conflict of interest in connection with the services described in the RFP.  This includes, but is not limited to, involvement by the firm or individual in the preparation of the RFP or a relationship with any employee, contractor or representative of the Province involved in preparation of the RFP, participating on the evaluation committee or in the administration of the Contract.  Proponents are expected to conduct their own due diligence with respect to conflicts of interest in connection with Resources.  If a Proponent is in doubt as to whether a proposed subcontractor or Resource might be in a conflict of interest, the Proponent should consult with the Government Contact prior to submitting a Proposal.  By submitting a Proposal, the Proponent represents that it is not aware of any circumstances that would give rise to a conflict of interest that is actual or potential, in respect of the RFP.
+c) A Proponent may not subcontract to a firm or individual whose current or past corporate or other interests, may, in the Province’s opinion, give rise to an actual or potential conflict of interest in connection with the services described in the RFP.  This includes, but is not limited to, involvement by the firm or individual in the preparation of the RFP or a relationship with any employee, contractor or representative of the Province involved in preparation of the RFP, participating on the evaluation committee or in the administration of the Contract.  Proponents are expected to conduct their own due diligence with respect to conflicts of interest in connection with Resources.  If a Proponent is in doubt as to whether a proposed subcontractor or Resource might be in a conflict of interest, the Proponent should consult with the Government Contact prior to submitting a Proposal.  By submitting a Proposal, the Proponent represents that it is not aware of any circumstances that would give rise to a conflict of interest that is actual or potential, in respect of the RFP.
 
-  d) Where applicable, the names of approved subcontractors listed in the Proposal will be included in the Contract and may only be changed or added to in accordance with the terms of the Contract.
+d) Where applicable, the names of approved subcontractors listed in the Proposal will be included in the Contract and may only be changed or added to in accordance with the terms of the Contract.
 
 ## 1.12. Contract
 
-  a) By submitting a Proposal, the Proponent agrees that, should its Proposal be successful, the Proponent will enter into a Contract with the Province on substantially the same terms and conditions as the Contract set out on the Opportunity Webpage and such other terms and conditions to be finalized to the satisfaction of the Province, as applicable.
+a) By submitting a Proposal, the Proponent agrees that, should its Proposal be successful, the Proponent will enter into a Contract with the Province on substantially the same terms and conditions as the Contract set out on the Opportunity Webpage and such other terms and conditions to be finalized to the satisfaction of the Province, as applicable.
 
-  b) Written notice to a Proponent that it has been identified as the successful Proponent and the subsequent full execution of a written Contract will constitute a Contract for the goods or services, and no Proponent will acquire any legal or equitable rights or privileges relative to the goods or services until the occurrence of both such events.
+b) Written notice to a Proponent that it has been identified as the successful Proponent and the subsequent full execution of a written Contract will constitute a Contract for the goods or services, and no Proponent will acquire any legal or equitable rights or privileges relative to the goods or services until the occurrence of both such events.
 
 ## 1.13. Contract Finalization Delay
 
@@ -175,31 +175,31 @@ Neither acceptance of a Proposal nor execution of a Contract will constitute app
 
 The Province reserves the right in its sole discretion to:
 
-  a) disqualify a Proposal if the Province is not satisfied that the Proponent is clearly identified;
+a) disqualify a Proposal if the Province is not satisfied that the Proponent is clearly identified;
 
-  b) prior to entering into a Contract with a Proponent, request that the Proponent provide confirmation of the Proponent’s legal status (or in the case of a sole proprietorship, the Proponent’s legal name and identification) and certification in a form satisfactory to the Province that the Proponent has the power and capacity to enter into the Contract;
+b) prior to entering into a Contract with a Proponent, request that the Proponent provide confirmation of the Proponent’s legal status (or in the case of a sole proprietorship, the Proponent’s legal name and identification) and certification in a form satisfactory to the Province that the Proponent has the power and capacity to enter into the Contract;
 
-  c) not to enter into a Contract with a Proponent if the Proponent cannot satisfy the Province that it is the same legal entity that submitted the Proponent’s Proposal; and
+c) not to enter into a Contract with a Proponent if the Proponent cannot satisfy the Province that it is the same legal entity that submitted the Proponent’s Proposal; and
 
-  d) require security screenings for a Proponent who is a natural person, subcontractors, and key personnel (including any Resources) before entering into a Contract and the Province may elect not to enter into a Contract with a Proponent or to approve a subcontractor or Resource that fails to pass the security screenings to the Province’s satisfaction.  In this regard, Proponents should note that a criminal history check obtained through the applicable local policing agency will be required for all Resources involved in the delivery of services under the Contract, and that criminal history checks must be repeated as necessary in accordance with the Contract to ensure that at all times the most recent criminal history check for a particular Resource was completed within the previous five years.
+d) require security screenings for a Proponent who is a natural person, subcontractors, and key personnel (including any Resources) before entering into a Contract and the Province may elect not to enter into a Contract with a Proponent or to approve a subcontractor or Resource that fails to pass the security screenings to the Province’s satisfaction.  In this regard, Proponents should note that a criminal history check obtained through the applicable local policing agency will be required for all Resources involved in the delivery of services under the Contract, and that criminal history checks must be repeated as necessary in accordance with the Contract to ensure that at all times the most recent criminal history check for a particular Resource was completed within the previous five years.
 
 ## 1.21. Reservation of Rights
 
 In addition to any other reservation of rights set out in the RFP, the Province reserves the right, in its sole discretion:
 
-  a) to modify the terms of the RFP at any time prior to the Closing Time, including the right to cancel the RFP at any time prior to entering into a Contract with a Proponent;
+a) to modify the terms of the RFP at any time prior to the Closing Time, including the right to cancel the RFP at any time prior to entering into a Contract with a Proponent;
 
-  b) in accordance with the terms of the RFP, to accept the Proposal or Proposals that it deems most advantageous to itself;
+b) in accordance with the terms of the RFP, to accept the Proposal or Proposals that it deems most advantageous to itself;
 
-  c) to waive any non-material irregularity, defect or deficiency in a Proposal;
+c) to waive any non-material irregularity, defect or deficiency in a Proposal;
 
-  d) to request clarifications from a Proponent with respect to its Proposal, including clarifications as to provisions in its Proposal that are conditional or that may be inconsistent with the terms and conditions of the RFP, without any obligation to make such a request to all Proponents, and consider such clarifications in evaluating the Proposal;
+d) to request clarifications from a Proponent with respect to its Proposal, including clarifications as to provisions in its Proposal that are conditional or that may be inconsistent with the terms and conditions of the RFP, without any obligation to make such a request to all Proponents, and consider such clarifications in evaluating the Proposal;
 
-  e) to reject any Proposal due to unsatisfactory references or unsatisfactory past performance under contracts with the Province, or any material error, omission or misrepresentation in the Proposal;
+e) to reject any Proposal due to unsatisfactory references or unsatisfactory past performance under contracts with the Province, or any material error, omission or misrepresentation in the Proposal;
 
-  f) at any time, to reject any or all Proposals; and
+f) at any time, to reject any or all Proposals; and
 
-  g) at any time, to terminate the competition without award and obtain the goods and services described in the RFP by other means or do nothing.
+g) at any time, to terminate the competition without award and obtain the goods and services described in the RFP by other means or do nothing.
 
 ## 1.22. Ownership of Proposals
 
@@ -221,22 +221,22 @@ Proponents are solely responsible for familiarizing themselves, and ensuring tha
 
 ## 1.26. Evaluation
 
-  a) Proposals will be assessed in accordance with the evaluation criteria. The Province will be under no obligation to receive further information, whether written or oral, from any Proponent. The Province is under no obligation to perform any investigations or to otherwise verify any statements or representations made in a Proposal.
-  b) Proposals from not-for-profit entities will be evaluated against the same criteria as those received from any other Proponents.
-  c) The Province may consider and evaluate any proposals from other jurisdictions on the same basis that the government purchasing authorities in those jurisdictions would treat a similar proposal from a British Columbia supplier.
+a) Proposals will be assessed in accordance with the evaluation criteria. The Province will be under no obligation to receive further information, whether written or oral, from any Proponent. The Province is under no obligation to perform any investigations or to otherwise verify any statements or representations made in a Proposal.
+
+b) Proposals from not-for-profit entities will be evaluated against the same criteria as those received from any other Proponents.
+
+c) The Province may consider and evaluate any proposals from other jurisdictions on the same basis that the government purchasing authorities in those jurisdictions would treat a similar proposal from a British Columbia supplier.
 
 ## 1.27. Trade Agreements
 
 This RFP is covered by trade agreements between the Province and other jurisdictions, including the following:
 
-  a) Trade, Investment and Labour Mobility Agreement;
+a) Trade, Investment and Labour Mobility Agreement;
 
-  b) New West Partnership Trade Agreement;
+b) New West Partnership Trade Agreement;
 
-  c) Canadian Free Trade Agreement;
+c) Canadian Free Trade Agreement;
 
-  d) World Trade Organization Agreement on Government Procurement; and
+d) World Trade Organization Agreement on Government Procurement; and
 
-  e) The Canada-European Union Comprehensive Economic and Trade Agreement.
-
-
+e) The Canada-European Union Comprehensive Economic and Trade Agreement.
