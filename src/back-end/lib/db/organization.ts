@@ -104,8 +104,10 @@ function generateOrganizationQuery(connection: Connection) {
       (connection
         .countDistinct('user')
         .from('affiliations')
-        .where({ organization: connection.ref('organizations.id') })
-        .andWhere({ membershipStatus: MembershipStatus.Active })
+        .where({
+          organization: connection.ref('organizations.id'),
+          membershipStatus: MembershipStatus.Active
+        })
       ).as('numTeamMembers')
     );
 }
