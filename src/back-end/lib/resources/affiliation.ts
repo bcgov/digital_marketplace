@@ -106,7 +106,7 @@ const resource: Resource = {
             userEmail: validatedUserEmail.value
           });
         }
-        const validatedUser = await db.readOneUserByEmail(connection, validatedUserEmail.value);
+        const validatedUser = await db.readOneUserByEmail(connection, validatedUserEmail.value, false, UserType.Vendor);
         const validatedOrganization = await validateOrganizationId(connection, organization, request.session);
         const validatedMembershipType = affiliationValidation.validateMembershipType(membershipType);
         if (allValid([validatedUser, validatedOrganization, validatedMembershipType])) {
