@@ -23,7 +23,7 @@ function isHashLink(url: string): boolean {
 }
 
 function newTabLinkTarget(url: string): string | undefined {
-  if (isRelativeUrl(url) || url.match(MAILTO_REGEXP) || isHashLink) {
+  if (isRelativeUrl(url) || url.match(MAILTO_REGEXP) || isHashLink(url)) {
     return undefined;
   } else {
     return '_blank';
@@ -55,7 +55,7 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
           {...props}
           href={href}
           rel='external'
-          target={openLinksInNewTabs ? newTabLinkTarget(props.href) : undefined} />);
+          target={openLinksInNewTabs ? newTabLinkTarget(props.href) : props.target} />);
       },
     image: noImages
       ? () => { //React-Markdown types are not helpful here.
@@ -75,7 +75,7 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
       <ReactMarkdown
         source={source}
         escapeHtml={escapeHtml}
-      renderers={renderers as any /*TODO remove once type cast TypeScript declaration file is fixed in react-markdown.*/} />
+        renderers={renderers as any /*TODO remove once type cast TypeScript declaration file is fixed in react-markdown.*/} />
     </div>
   );
 };
