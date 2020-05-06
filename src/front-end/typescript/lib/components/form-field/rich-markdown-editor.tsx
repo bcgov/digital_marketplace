@@ -456,8 +456,9 @@ const ChildView: ChildComponent['view'] = props => {
           }}
           onKeyDown={e => {
             const isModifier = e.ctrlKey || e.metaKey;
-            const isUndo = isModifier && !e.shiftKey && e.keyCode === 90; //Ctrl-Z or Cmd-Z
-            const isRedo = isModifier && ((e.shiftKey && e.keyCode === 90) || e.keyCode === 89); //Ctrl-Shift-Z, Cmd-Shift-Z, Ctrl-Y or Cmd-Y
+            const code = e.keyCode || e.which;
+            const isUndo = isModifier && !e.shiftKey && code === 90; //Ctrl-Z or Cmd-Z
+            const isRedo = isModifier && ((e.shiftKey && code === 90) || code === 89); //Ctrl-Shift-Z, Cmd-Shift-Z, Ctrl-Y or Cmd-Y
             const run = (msg: InnerChildMsg) => {
               e.preventDefault();
               dispatch(msg);
