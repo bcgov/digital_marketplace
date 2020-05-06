@@ -795,16 +795,19 @@ nav.navbar .nav-link:hover {
 
 // Page-specific overrides
 
+.route-orgSWUTerms,
 .route-content .content-sprint-with-us-terms-and-conditions {
-  ul {
-    list-style-type: none;
-
-    li {
-      margin-bottom: 1rem;
-    }
-
+  .markdown {
     ul {
-      margin-top: 1rem;
+      list-style-type: none;
+
+      li {
+        margin-bottom: 1rem;
+      }
+
+      ul {
+        margin-top: 1rem;
+      }
     }
   }
 }
