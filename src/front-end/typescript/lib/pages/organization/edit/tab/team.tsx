@@ -302,7 +302,8 @@ const view: ComponentView<State, Msg> = props => {
         swuQualified={state.swuQualified} />
       <Row className='mt-5'>
         <Col xs='12'>
-          <h3 className='mb-4'>Team Members</h3>
+          <h3>Team Members</h3>
+          <p className='mb-4'>Add team members to your organization by clicking on the "Add Team Member(s)" button above. Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization.</p>
           {state.affiliations.length
             ? (<Table.view
                 headCells={membersTableHeadCells(state)}
@@ -316,7 +317,7 @@ const view: ComponentView<State, Msg> = props => {
         <Row>
           <Col xs='12'>
             <h3>Team Capabilities</h3>
-            <p className='mb-4'>This is a summary of the capabilities your organization's team possesses as whole. It only includes the capabilities of confirmed (non-pending) team members.</p>
+            <p className='mb-4'>This is a summary of the capabilities your organization's team possesses as whole, only including the capabilities of confirmed (non-pending) members. Team members can claim capabilities in their user profiles in the "Capabilities" section.</p>
             <Capabilities grid capabilities={state.capabilities} />
           </Col>
         </Row>
@@ -351,10 +352,14 @@ export const component: Tab.Component<State, Msg> = {
           title: 'Add Team Member(s)',
           onCloseMsg: adt('hideModal'),
           body: dispatch => {
+            const addField = () => dispatch(adt('addTeamMembersEmailsAddField'));
             return (
               <div>
-                <p>Provide an email address for each team member to invite to join your organization.</p>
+                <p>Provide an email address for each team member to invite them to join your organization.</p>
+                <p><strong>Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization, and only enter the email addresses associated with their Digital Marketplace accounts.</strong></p>
                 {state.addTeamMembersEmails.map((s, i) => {
+                  const isFirst = i === 0;
+                  const isLast = i === state.addTeamMembersEmails.length - 1;
                   const props = {
                     extraChildProps: {},
                     className: 'flex-grow-1 mb-0',
@@ -362,8 +367,6 @@ export const component: Tab.Component<State, Msg> = {
                     dispatch: mapComponentDispatch(dispatch, v => adt('addTeamMembersEmails', [i, v]) as Msg),
                     state: s
                   };
-                  const isFirst = i === 0;
-                  const isLast = i === state.addTeamMembersEmails.length - 1;
                   return (
                     <div key={`organization-add-team-member-email-${i}`}>
                       {isFirst
@@ -389,7 +392,7 @@ export const component: Tab.Component<State, Msg> = {
                             className={`ml-2 ${isLast ? 'o-100' : 'o-0'}`}
                             width={1.1}
                             height={1.1}
-                            onClick={() => isLast && dispatch(adt('addTeamMembersEmailsAddField'))} />
+                            onClick={isLast ? addField : undefined} />
                         </div>
                       </div>
                     </div>

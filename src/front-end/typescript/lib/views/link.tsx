@@ -158,8 +158,9 @@ function AnchorLink(props: AnchorProps) {
     : undefined;
   const finalOnKeyUp = !disabled && !newTab && !dest && onClick
     ? ((e: KeyboardEvent) => {
+        const code = e.keyCode || e.which;
         // Simulate click if the user presses the enter or space keys.
-        if (e.keyCode === 13 || e.keyCode === 32) {
+        if (code === 13 || code === 32) {
           e.preventDefault();
           onClick();
         }

@@ -13,7 +13,9 @@ type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'type'>;
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+interface ExtraChildProps {
+  onEnter?(): void;
+}
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
@@ -35,7 +37,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false, onEnter } = props;
   return (
     <input
       id={state.id}
@@ -49,6 +51,10 @@ const ChildView: ChildComponent['view'] = props => {
         // Let the parent form field component know that the value has been updated.
         props.onChange(value);
       }}
+      onKeyUp={onEnter && (e => {
+        const code = e.keyCode || e.which;
+        if (code === 13 && onEnter) { onEnter(); }
+      })}
       disabled={disabled} />
   );
 };
