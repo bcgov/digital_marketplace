@@ -543,16 +543,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'noop':
       return [state];
 
-    case 'scrollToTop':
-      return [
-        state,
-        async () => {
-          const html = document.documentElement;
-          if (html.scrollTo) { html.scrollTo(0, 0); }
-          return null;
-        }
-      ];
-
     case '@incomingRoute':
       const incomingRoute: Route = msg.value;
       return [
@@ -579,7 +569,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (incomingRoute.tag === 'signOut') {
             state = setSession(state, await api.sessions.readOne(CURRENT_SESSION_ID));
           }
-          dispatch(adt('scrollToTop'));
+          const html = document.documentElement;
+          if (html.scrollTo) { html.scrollTo(0, 0); }
           return state;
         }
       ];

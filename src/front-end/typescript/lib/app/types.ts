@@ -147,7 +147,6 @@ export interface State {
 
 type InnerMsg
   = ADT<'noop'>
-  | ADT<'scrollToTop'>
   | ADT<'dismissToast',             number>
   | ADT<'dismissLapsedToasts'>
   | ADT<'closeModal'>
