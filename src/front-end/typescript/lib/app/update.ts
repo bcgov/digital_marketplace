@@ -544,7 +544,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [state];
 
     case '@incomingRoute':
-      const incomingRoute: Route = msg.value;
+      const incomingRoute = msg.value.route;
+      const preserveScrollPosition = msg.value.preserveScrollPosition;
       return [
         startTransition(state),
         async (state, dispatch) => {
@@ -569,8 +570,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (incomingRoute.tag === 'signOut') {
             state = setSession(state, await api.sessions.readOne(CURRENT_SESSION_ID));
           }
+          // Scroll to top if not a popstate event.
           const html = document.documentElement;
-          if (html.scrollTo) { html.scrollTo(0, 0); }
+          if (!preserveScrollPosition && html.scrollTo) { html.scrollTo(0, 0); }
           return state;
         }
       ];

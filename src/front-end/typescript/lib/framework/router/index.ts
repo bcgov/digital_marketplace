@@ -5,7 +5,12 @@ import qs from 'querystring';
 import { adt, ADT } from 'shared/lib/types';
 import url from 'url';
 
-export type IncomingRouteMsg<Route> = ADT<'@incomingRoute', Route>;
+export interface IncomingRoute<Route> {
+  route: Route;
+  preserveScrollPosition: boolean;
+}
+
+export type IncomingRouteMsg<Route> = ADT<'@incomingRoute', IncomingRoute<Route>>;
 
 export type NewUrlMsg = ADT<'@newUrl', string>;
 
@@ -118,8 +123,8 @@ export function parseUrl(s: string): Url {
 }
 
 interface RouteManager<Route> {
-  dispatchRoute(route: Route, replace?: boolean, skipHandle?: boolean): void;
-  dispatchUrl(url: Url, replace?: boolean, skipHandle?: boolean): void;
+  dispatchRoute(route: Route, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void;
+  dispatchUrl(url: Url, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void;
   handleRouterMsg(msg: RouterMsg<Route>): boolean;
 }
 
@@ -148,27 +153,28 @@ export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispa
     }
     return null;
   }
-  function dispatchRoute(route: Route, replace?: boolean, skipHandle?: boolean): void {
+  function dispatchRoute(route: Route, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void {
     if (!skipHandle) { handleRoute(router, route, replace); }
-    dispatch(adt('@incomingRoute', route));
+    dispatch(adt('@incomingRoute', { route, preserveScrollPosition }));
   }
-  function dispatchUrl(url: Url, replace?: boolean, skipHandle?: boolean): void {
+  function dispatchUrl(url: Url, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void {
     const route = urlToRoute(url);
-    if (route) { dispatchRoute(route, replace, skipHandle); }
+    if (route) { dispatchRoute(route, preserveScrollPosition, replace, skipHandle); }
   }
   function handleRouterMsg(msg: RouterMsg<Route>): boolean {
+    const preserveScrollPosition = false;
     switch (msg.tag) {
       case '@newUrl':
-        dispatchUrl(parseUrl(msg.value), false);
+        dispatchUrl(parseUrl(msg.value), preserveScrollPosition, false);
         return true;
       case '@replaceUrl':
-        dispatchUrl(parseUrl(msg.value), true);
+        dispatchUrl(parseUrl(msg.value), preserveScrollPosition, true);
         return true;
       case '@newRoute':
-        dispatchRoute(msg.value, false);
+        dispatchRoute(msg.value, preserveScrollPosition, false);
         return true;
       case '@replaceRoute':
-        dispatchRoute(msg.value, true);
+        dispatchRoute(msg.value, preserveScrollPosition, true);
         return true;
     }
     return false;
@@ -178,16 +184,16 @@ export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispa
 
 export function start<Route>(routeManager: RouteManager<Route>): void {
   // Intercept link clicks.
-  window.document.body.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, false)), false);
+  window.document.body.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, false, false)), false);
   // Handle popstate events.
   window.addEventListener('popstate', e => {
     if (e.state && e.state.url) {
-      routeManager.dispatchUrl(parseUrl(e.state.url), false, true);
+      routeManager.dispatchUrl(parseUrl(e.state.url), true, false, true);
     }
   });
   // Kick-start the router.
   routeManager.dispatchUrl({
     pathname: window.location.pathname,
     search: window.location.search
-  }, true);
+  }, true, true);
 }
