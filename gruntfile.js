@@ -2,13 +2,19 @@ const path = require("path");
 //set up global constants and helpers for all grunt tasks
 const deslash = s => s.replace(/^\/*/, '').replace(/\/*$/, '');
 const prefix = a => b => `/${a ? deslash(a) + '/' : ''}${deslash(b)}`;
-const env = process.env.NODE_ENV || "development";
+const NODE_ENV = process.env.NODE_ENV === "development" ? "development" : "production";
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "digitalmarketplace@gov.bc.ca";
+const PATH_PREFIX = process.env.PATH_PREFIX || "";
 const src = path.resolve(__dirname, "./src/front-end");
 const tmp = path.resolve(__dirname, "./tmp/grunt");
 const build = path.resolve(__dirname, "./build/front-end");
 global.gruntConfig = {
+  env: {
+    NODE_ENV,
+    CONTACT_EMAIL
+  },
   helpers: {
-    prefixPath: prefix(process.env.PATH_PREFIX || "")
+    prefixPath: prefix(PATH_PREFIX)
   },
   dir: {
     src,
@@ -72,6 +78,6 @@ module.exports = function (grunt) {
     "compress:gzip",
     "compress:brotli"
   ]);
-  grunt.registerTask("build", [ `${env}-build` ]);
+  grunt.registerTask("build", [ `${NODE_ENV}-build` ]);
   grunt.registerTask("default", [ "development-watch" ]);
 };

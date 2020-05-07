@@ -37,7 +37,6 @@ in
     buildInputs = with pkgs; [ nodejs-10_x sass postgresql100 docker_compose docker openshift ctags ];
     shellHook = ''
       [ -f ~/.bashrc ] && source ~/.bashrc
-      #npm install
-      #test -f ./tmp/aws.sh && source ./tmp/aws.sh
+      npm install
     '';
   }

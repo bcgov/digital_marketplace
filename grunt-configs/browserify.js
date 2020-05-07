@@ -3,7 +3,6 @@ const path = require("path");
 const root = path.resolve(__dirname, "..", gruntConfig.src.ts);
 const compilerOptions = require(path.join(root, "tsconfig.json")).compilerOptions;
 const pathmodify = require("pathmodify");
-const isDev = process.env.NODE_ENV === "development";
 
 module.exports = {
   build: {
@@ -11,10 +10,7 @@ module.exports = {
       transform: [
         [
           "envify",
-          {
-            NODE_ENV: isDev ? "development" : "production",
-            CONTACT_EMAIL: process.env.CONTACT_EMAIL
-          }
+          gruntConfig.env
         ]
       ],
       plugin: [
