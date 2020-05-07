@@ -118,7 +118,7 @@ const view: ComponentView<State, Msg> = props => {
     <Row>
       <Col xs='12'>
         <h2>Capabilities & Skills</h2>
-        <p className='mb-5'>Sprint With Us opportunities required teams with the capabilities and skills shown below. Let us know what you can do!</p>
+        <p className='mb-5'>Sprint With Us opportunities require teams with the capabilities and skills shown below. Select the capabilities that you possess by clicking on their names or checkboxes. Let us know what you can do!</p>
       </Col>
       <Col xs='12'>
         <h4 className='mb-4'>Capabilities</h4>
