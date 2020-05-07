@@ -164,9 +164,9 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
       })();
       const isEmptyOnMobile = sidebar.isEmptyOnMobile && sidebar.isEmptyOnMobile(viewProps.state);
       return (
-        <div className='d-flex flex-column flex-grow-1 page-container'>
+        <div className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
           <div className='d-flex flex-column flex-grow-1'>
-            <Container className={`position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch ${backgroundClassName}`}>
+            <Container className='position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch'>
               <div className={`d-none d-md-block position-absolute bg-${sidebar.color}`} style={{ top: 0, right: '100%', bottom: 0, width: '50vw' }}></div>
               <Row className='flex-grow-1 align-content-start align-content-md-stretch'>
                 <Col xs='12' md={sidebarColWidth} className={`sidebar bg-${sidebar.color} pr-md-4 pr-lg-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 align-self-start align-self-md-stretch ${isEmptyOnMobile ? 'pb-md-6' : 'pb-5'}`}>

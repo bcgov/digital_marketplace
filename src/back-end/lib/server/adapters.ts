@@ -12,7 +12,7 @@ import { IncomingHttpHeaders } from 'http';
 import { castArray } from 'lodash';
 import multiparty from 'multiparty';
 import * as path from 'path';
-import { parseJsonSafely } from 'shared/lib';
+import { addDays, parseJsonSafely } from 'shared/lib';
 import { Validation } from 'shared/lib/validation';
 
 const SESSION_COOKIE_NAME = 'sid';
@@ -132,7 +132,8 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       const setSessionId = (id: string) => expressRes.cookie(SESSION_COOKIE_NAME, id, {
         signed: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
+        expires: addDays(new Date(), 2) //Expire cookie if not re-used within 2 days.
       });
       const sessionId = sessionToSessionId(response.session);
       if (sessionId) {
