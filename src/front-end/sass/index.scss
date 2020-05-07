@@ -180,8 +180,12 @@ $transition-duration: 240ms;
   box-sizing: border-box;
 }
 
-html {
+html,
+body {
   background: $bcgov-blue;
+}
+
+html {
   font-size: 16px;
 
   @media print {
@@ -278,18 +282,28 @@ nav {
       @extend .bg-blue-dark-alt;
       @extend .py-4;
       @extend .d-md-none;
+
+      @mixin menu-transition($opacity-delay) {
+        transition: transform $transition-duration ease-out
+                  , opacity 0ms linear $opacity-delay;
+      }
+
       overflow: hidden;
       position: absolute;
       z-index: 1;
       top: 100%;
       left: 0;
       width: 100%;
-      transition: transform ease-out $transition-duration;
+      // Transition properties.
+      @include menu-transition($transition-duration);
       transform: translateY(-100%);
+      opacity: 0;
 
       &.open {
         @extend .shadow;
+        @include menu-transition(0ms);
         transform: translateY(0);
+        opacity: 1;
       }
     }
 
