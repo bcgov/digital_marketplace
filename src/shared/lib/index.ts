@@ -135,7 +135,7 @@ export function formatTime(date: Date, withTimeZone = false): string {
 }
 
 export function compareStrings(a: string, b: string): Comparison {
-  return a.toLowerCase().localeCompare(b.toLowerCase()) as Comparison;
+  return a.toLowerCase().localeCompare(b.toLowerCase(), 'en', { numeric: true }) as Comparison;
 }
 
 export function compareNumbers(a: number, b: number): Comparison {

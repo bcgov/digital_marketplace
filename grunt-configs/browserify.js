@@ -25,7 +25,7 @@ module.exports = {
         ]
       ],
       browserifyOptions: {
-        debug: isDev,
+        debug: gruntConfig.env.NODE_ENV === "development",
         paths: ['./node_modules']
       }
     },
