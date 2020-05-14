@@ -112,8 +112,8 @@ export function compareSWUProposalsForPublicSector(a: SWUProposalSlim, b: SWUPro
   if (aScore === undefined && bScore !== undefined) { return 1; }
   if (aScore !== undefined && bScore === undefined) { return -1; }
   if (aScore !== undefined && bScore !== undefined) {
-    // If scores are not the same, sort by score.
-    const result = compareNumbers(aScore, bScore);
+    // If scores are not the same, sort by score, highest first.
+    const result = (compareNumbers(aScore, bScore) * -1 as Comparison);
     if (result) { return result; }
   }
   // Fallback to sorting by proponent name.

@@ -66,8 +66,8 @@ export function compareCWUProposalsForPublicSector(a: CWUProposalSlim, b: CWUPro
   if (a.score === undefined && b.score !== undefined) { return 1; }
   if (a.score !== undefined && b.score === undefined) { return -1; }
   if (a.score !== undefined && b.score !== undefined) {
-    // If scores are not the same, sort by score.
-    const result = compareNumbers(a.score, b.score);
+    // If scores are not the same, sort by score, highest first.
+    const result = (compareNumbers(a.score, b.score) * -1) as Comparison;
     if (result) { return result; }
   }
   // Fallback to sorting by proponent name.
