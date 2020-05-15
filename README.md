@@ -7,6 +7,27 @@ This document describes this project's developer environment, technical architec
 ## Table of Contents
 
 <!-- toc -->
+
+- [Authors and Licensing](#authors-and-licensing)
+- [Project Organisation](#project-organisation)
+  * [Front-End (`src/front-end`)](#front-end-srcfront-end)
+  * [Back-End (`src/back-end`)](#back-end-srcback-end)
+  * [Shared (`src/shared`)](#shared-srcshared)
+  * [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
+- [Contributing](#contributing)
+- [Development Environment](#development-environment)
+  * [Dependencies](#dependencies)
+  * [Quick Start](#quick-start)
+  * [NPM Scripts](#npm-scripts)
+  * [Environment Variables](#environment-variables)
+- [Deployment](#deployment)
+  * [Environments](#environments)
+  * [Deployment Process](#deployment-process)
+  * [Backups](#backups)
+  * [High Availability Database Deployment](#high-availability-database-deployment)
+- [Team](#team)
+- [Credits](#credits)
+
 <!-- tocstop -->
 
 ## Authors and Licensing
