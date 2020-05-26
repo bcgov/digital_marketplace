@@ -1,4 +1,6 @@
 FROM node:10-jessie
+RUN apt-get update
+RUN apt-get -y install sendmail
 COPY . /usr/app
 WORKDIR /usr/app
 RUN npm install
