@@ -3,6 +3,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
 import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
+import SendmailTransport from 'nodemailer/lib/sendmail-transport';
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config');
 
@@ -72,6 +73,7 @@ const productionMailerConfigOptions = {
   }
 };
 
+/*
 const developmentMailerConfigOptions = {
   service: 'gmail',
   auth: {
@@ -81,6 +83,13 @@ const developmentMailerConfigOptions = {
   tls: {
     rejectUnauthorized: false
   }
+};
+*/
+
+const developmentMailerConfigOptions: SendmailTransport.Options = {
+  sendmail: true,
+  path: '/usr/sbin/sendmail',
+  newline: 'unix'
 };
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
@@ -195,14 +204,14 @@ export function getConfigErrors(): string[] {
       'MAILER_HOST and MAILER_PORT (positive integer) must all be specified.'
     ]);
   }
-
+/*
   if (ENV === 'development' && (!developmentMailerConfigOptions.auth.user || !developmentMailerConfigOptions.auth.pass)) {
     errors = errors.concat([
       'MAILER_* variables must be properly specified for development.',
       'MAILER_GMAIL_USER and MAILER_GMAIL_PASS must both be specified.'
     ]);
   }
-
+*/
   if (!MAILER_FROM || !MAILER_FROM.match(/^[^<>@]+<[^@]+@[^@]+\.[^@]+>$/)) {
     errors.push('MAILER_FROM must be specified using the format: "Name <email@domain.tld>".');
   }
