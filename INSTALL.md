@@ -32,7 +32,7 @@
                 * Autorization callback url : "http://localhost:3000"
             * Renseigner "Client Id" et "Client Secret" avec les valeurs fournies par GitHub
             * Dans l'onglet Mappers, créer un mapper nommé "loginSource" de type "Hardcoded Attribute" avec "User Attribute" : "loginSource" et "User Attribute Value" : "GITHUB"
-        * Créer un Identity provider "Keycloak OpenID connect" nommé "IDIR"
+        * Créer un Identity provider "Keycloak OpenID connect" nommé "idir"
             * Importer la config à l'aide de l'url du Endpoint Config OIDC du realm IDIR noté précedement.
             * Dans "Client Authentication" choisir "Client secret sent as post"
             * Client ID : "keycloak-devex"
