@@ -66,7 +66,7 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <Row>
-        <Col xs='12' md='4'>
+        <Col xs='12' md='4' className='mb-4 mb-md-0'>
           <ReportCard
             icon='star-full'
             iconColor='yellow'
