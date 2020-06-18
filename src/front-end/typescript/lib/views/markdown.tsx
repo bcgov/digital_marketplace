@@ -82,15 +82,15 @@ const Markdown: View<Props> = ({ source, box, className = '', escapeHtml = true,
 
 export default Markdown;
 
-type ProposalMarkdownProps = Pick<Props, 'source' | 'className' | 'box'>;
+type ProposalMarkdownProps = Pick<Props, 'source' | 'className' | 'box' | 'noLinks' | 'noImages'>;
 
 export const ProposalMarkdown: View<ProposalMarkdownProps> = props => {
   return (
     <Markdown
-      {...props}
       openLinksInNewTabs
       smallerHeadings
       noLinks
-      noImages />
+      noImages
+      {...props} />
   );
 };
