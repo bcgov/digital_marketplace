@@ -65,7 +65,7 @@
     "immutable": "^4.0.0-rc.12",
     "keycloak-connect": "^8.0.0",
     "knex": "^0.19.3",
-    "lodash": "^4.17.14",
+    "lodash": "^4.17.19",
     "mime-types": "^2.1.22",
     "moment": "^2.24.0",
     "multiparty": "^4.2.1",
