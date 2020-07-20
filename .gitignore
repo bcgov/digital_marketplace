@@ -15,7 +15,8 @@ node_modules/
 /typedoc/shared/
 /.rpt2_cache/
 .vscode/
-
+/keycloak/backup/
 Session.vim
 tags
 __tmp/
+/openshift/examples/

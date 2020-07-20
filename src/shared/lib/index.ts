@@ -108,7 +108,7 @@ export function parseDate(raw: string): Date | null {
   }
 }
 
-const TIMEZONE = 'America/Vancouver';
+const TIMEZONE = 'America/Toronto';
 
 export function normalizeDateTimezone(date: Date | string): Moment {
   return moment(date).tz(TIMEZONE);
