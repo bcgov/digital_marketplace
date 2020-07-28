@@ -8,6 +8,7 @@ ARG KEYCLOAKURL
 
 USER root
 
+#Install uuidgen
 RUN microdnf update -y && microdnf install -y util-linux
 
 USER 1000
@@ -17,8 +18,8 @@ COPY realms ./realms
 COPY ./realmconfig.sh .
 
 #Pass your template VARS to realmconfig script:
-RUN ./realmconfig.sh $ROOTURL $GITHUBID $GITHUBSECRET $KEYCLOAKURL
+RUN ./realmconfig.sh "${ROOTURL}" "${GITHUBID}" "${GITHUBSECRET}" "${KEYCLOAKURL}"
 
 RUN ls -m -d $PWD/realms/*.json | tr -d '[:space:]' > realmfileslist
 
-ENTRYPOINT /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Dkeycloak.import=$(cat /tmp/realmconfig/realmfileslist) -Djboss.bind.address.private=127.0.0.1 -Djboss.bind.address=127.0.0.1
+ENTRYPOINT /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Dkeycloak.import=$(cat /tmp/realmconfig/realmfileslist)
