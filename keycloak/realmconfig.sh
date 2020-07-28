@@ -5,36 +5,36 @@ OIFS="$IFS"
 # Update the IFS to only include newline
 IFS=$'\n'
 
-    #Test your custom vars here:
+#Test your custom vars here:
 
-    #?ROOTURL?
-    if [ ! "$1" ];
-    then read -p "Root Url: " ROOTURL
-    else ROOTURL=$1
-    fi
+#?ROOTURL?
+if [ ! "$1" ];
+then read -p "Root Url: " ROOTURL
+else ROOTURL=$1
+fi
 
-    #?GITHUBID?
-    if [ ! "$2" ];
-    then read -p "Github Client ID: " GITHUBID
-    else GITHUBID=$2
-    fi
+#?GITHUBID?
+if [ ! "$2" ];
+then read -p "Github Client ID: " GITHUBID
+else GITHUBID=$2
+fi
 
-    #?GITHUBSECRET?
-    if [ ! "$3" ];
-    then read -p "Github Client Secret: " GITHUBSECRET
-    else GITHUBSECRET=$3
-    fi
+#?GITHUBSECRET?
+if [ ! "$3" ];
+then read -p "Github Client Secret: " GITHUBSECRET
+else GITHUBSECRET=$3
+fi
 
-    #?KEYCLOAKURL?
-    if [ ! "$4" ];
-    then read -p "Keycloak Url: " KEYCLOAKURL
-    else KEYCLOAKURL=$4
-    fi
+#?KEYCLOAKURL?
+if [ ! "$4" ];
+then read -p "Keycloak Url: " KEYCLOAKURL
+else KEYCLOAKURL=$4
+fi
 
-    #Add generated or constant Custom vars
-    
-    #?IDIRCLIENTSECRET?
-    IDIRCLIENTSECRET="$(uuidgen)"
+#Add generated or constant Custom vars
+
+#?IDIRCLIENTSECRET?
+IDIRCLIENTSECRET="$(uuidgen)"
 
 for REALMFILE in realms/*.template.json; do
     PRODREALMFILE="${REALMFILE%%.*}.json"
