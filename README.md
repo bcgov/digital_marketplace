@@ -220,6 +220,8 @@ Environment variables that affect the back-end server's functionality are stored
 | `MAILER_GMAIL_USER` | A GMail SMTP username to test transactional emails in development. |
 | `MAILER_GMAIL_PASS` | A GMail SMTP password to test transactional emails in development. |
 | `MAILER_FROM` | The sender for transactional emails. |
+| `MAILER_BATCH_SIZE` | The maximum number of email addresses to include in batch notification emails. Defaults to `50`. |
+| `MAILER_MAX_CONNECTIONS` | The maximum number of simultaneous SMTP connections to use for the mailer. Defaults to `5`. |
 | `KEYCLOAK_URL` | The URL of the Keycloak server to use for authentication. |
 | `KEYCLOAK_REALM` | The Keycloak realm. Please contact a team member to retrieve this credential. |
 | `KEYCLOAK_CLIENT_ID` | The Keycloak client ID. Please contact a team member to retrieve this credential. |
