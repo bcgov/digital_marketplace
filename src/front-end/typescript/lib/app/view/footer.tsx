@@ -58,9 +58,10 @@ const Footer: View<{}> = () => {
               </div>
             ))}
           </Col>
-          <Col xs='12' className='small pb-3 o-75'>
-            <Link newTab color='white' dest={externalDest('https://www.realfolk.io')}>
-              Designed and Implemented by Real Folk.
+          <Col xs='12' className='small pb-3 o-75 text-white'>
+            Owned and operated by the Government of B.C.&nbsp;
+            <Link newTab color='white' dest={externalDest('https://www.realfolk.io')} className='text-decoration-underline'>
+              Designed and implemented by Real Folk.
             </Link>
           </Col>
         </Row>
