@@ -71,7 +71,7 @@ const productionMailerConfigOptions = {
     rejectUnauthorized: false
   },
   pool: true,
-  maxConnections: 5
+  maxConnections: parseInt(get('MAILER_MAX_CONNECTIONS', '5'), 10)
 };
 
 const developmentMailerConfigOptions = {
@@ -84,7 +84,7 @@ const developmentMailerConfigOptions = {
     rejectUnauthorized: false
   },
   pool: true,
-  maxConnections: 5
+  maxConnections: parseInt(get('MAILER_MAX_CONNECTIONS', '5'), 10)
 };
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
@@ -92,6 +92,8 @@ export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOpti
 export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
 
 export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NOREPLY}>`);
+
+export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
 
 // Keycloak configuration
 export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://sso-dev.pathfinder.gov.bc.ca');

@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL } from 'back-end/config';
+import { CONTACT_EMAIL, MAILER_BATCH_SIZE } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
@@ -87,23 +87,28 @@ export const newSWUOpportunityPublished = makeSend(newSWUOpportunityPublishedT);
 export async function newSWUOpportunityPublishedT(recipients: User[], opportunity: SWUOpportunity, repost: boolean): Promise<Emails> {
   const title = `A ${repost ? '' : 'New'} Sprint With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
   const description = `A ${repost ? 'previously suspended' : 'new'} opportunity has been ${repost ? 're-posted' : 'posted'} to the Digital Marketplace:`;
-  return [{
-    summary: `${repost ? 'SWU opportunity re-published after suspension' : 'New SWU opportunity published'}; sent to user with notifications turned on.`,
-    to: CONTACT_EMAIL,
-    bcc: recipients.map(r => r.email),
-    subject: title,
-    html: templates.simple({
-      title,
-      description,
-      descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-      body: (
-        <div>
-          <p>Please note that you must be a <templates.Link text='Qualified Supplier' url={templates.makeUrl('/learn-more/sprint-with-us')} /> in order to submit a proposal to a Sprint With Us opportunity.</p>
-        </div>
-      ),
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
-    })
-  }];
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary: `${repost ? 'SWU opportunity re-published after suspension' : 'New SWU opportunity published'}; sent to user with notifications turned on.`,
+      to: CONTACT_EMAIL,
+      bcc: batch.map(r => r.email),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>Please note that you must be a <templates.Link text='Qualified Supplier' url={templates.makeUrl('/learn-more/sprint-with-us')} /> in order to submit a proposal to a Sprint With Us opportunity.</p>
+          </div>
+        ),
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 export const updatedSWUOpportunity = makeSend(updatedSWUOpportunityT);

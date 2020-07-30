@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL } from 'back-end/config';
+import { CONTACT_EMAIL, MAILER_BATCH_SIZE } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
@@ -76,18 +76,23 @@ export const newCWUOpportunityPublished = makeSend(newCWUOpportunityPublishedT);
 
 export async function newCWUOpportunityPublishedT(recipients: User[], opportunity: CWUOpportunity, repost: boolean): Promise<Emails> {
   const title = `A ${repost ? '' : 'New'} Code With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
-  return [{
-    summary: `${repost ? 'CWU opportunity re-published after suspension' : 'New CWU opportunity published'}; sent to user with notifications turned on.`,
-    to: CONTACT_EMAIL,
-    bcc: recipients.map(r => r.email),
-    subject: title,
-    html: templates.simple({
-      title,
-      description: `A ${repost ? 'previously suspended' : 'new'} opportunity has been ${repost ? 're-posted' : 'posted'} to the Digital Marketplace:`,
-      descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
-    })
-  }];
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary: `${repost ? 'CWU opportunity re-published after suspension' : 'New CWU opportunity published'}; sent to user with notifications turned on.`,
+      to: CONTACT_EMAIL,
+      bcc: batch.map(r => r.email),
+      subject: title,
+      html: templates.simple({
+        title,
+        description: `A ${repost ? 'previously suspended' : 'new'} opportunity has been ${repost ? 're-posted' : 'posted'} to the Digital Marketplace:`,
+        descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+        callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 export const successfulCWUPublication = makeSend(successfulCWUPublicationT);
