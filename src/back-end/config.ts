@@ -71,7 +71,7 @@ const productionMailerConfigOptions = {
     rejectUnauthorized: false
   },
   pool: true,
-  maxConnections: 1
+  maxConnections: 5
 };
 
 const developmentMailerConfigOptions = {
@@ -84,7 +84,7 @@ const developmentMailerConfigOptions = {
     rejectUnauthorized: false
   },
   pool: true,
-  maxConnections: 1
+  maxConnections: 5
 };
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
