@@ -88,14 +88,14 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     {
       title: 'CWU Opportunity Published',
       emails: [
-        ...await newCWUOpportunityPublishedT(mocks.vendorUser, mocks.cwuOpportunity, false),
+        ...await newCWUOpportunityPublishedT([mocks.vendorUser], mocks.cwuOpportunity, false),
         ...await successfulCWUPublicationT(mocks.govUser, mocks.cwuOpportunity, false)
       ]
     },
     {
       title: 'CWU Opportunity Re-published after being suspended',
       emails: [
-        ...await newCWUOpportunityPublishedT(mocks.vendorUser, mocks.publishedCWUOpportunity, true),
+        ...await newCWUOpportunityPublishedT([mocks.vendorUser], mocks.publishedCWUOpportunity, true),
         ...await successfulCWUPublicationT(mocks.govUser, mocks.publishedCWUOpportunity, true)
       ]
     },
@@ -146,14 +146,14 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     {
       title: 'SWU Opportunity Published',
       emails: [
-        ...await newSWUOpportunityPublishedT(mocks.vendorUser, mocks.swuOpportunity, false),
+        ...await newSWUOpportunityPublishedT([mocks.vendorUser], mocks.swuOpportunity, false),
         ...await successfulSWUPublicationT(mocks.govUser, mocks.swuOpportunity, false)
       ]
     },
     {
       title: 'SWU Opportunity Re-published after being suspended',
       emails: [
-        ...await newSWUOpportunityPublishedT(mocks.vendorUser, mocks.publishedSWUOpportunity, true),
+        ...await newSWUOpportunityPublishedT([mocks.vendorUser], mocks.publishedSWUOpportunity, true),
         ...await successfulSWUPublicationT(mocks.govUser, mocks.publishedSWUOpportunity, true)
       ]
     },

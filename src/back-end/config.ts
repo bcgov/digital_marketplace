@@ -69,7 +69,9 @@ const productionMailerConfigOptions = {
   ignoreTLS: false,
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  pool: true,
+  maxConnections: 5
 };
 
 const developmentMailerConfigOptions = {
@@ -80,7 +82,9 @@ const developmentMailerConfigOptions = {
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  pool: true,
+  maxConnections: 5
 };
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;

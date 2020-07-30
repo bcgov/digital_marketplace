@@ -13,7 +13,7 @@ import { getValidValue } from 'shared/lib/validation';
 export async function handleCWUPublished(connection: db.Connection, opportunity: CWUOpportunity, repost: boolean): Promise<void> {
   // Notify all users with notifications turned on
   const subscribedUsers = getValidValue(await db.readManyUsersNotificationsOn(connection), null) || [];
-  await Promise.all(subscribedUsers.map(async user => await newCWUOpportunityPublished(user, opportunity, repost)));
+  await newCWUOpportunityPublished(subscribedUsers, opportunity, repost);
 
   // Notify authoring gov user of successful publish
   if (opportunity.createdBy) {
@@ -74,11 +74,12 @@ export async function handleCWUReadyForEvaluation(connection: db.Connection, opp
 
 export const newCWUOpportunityPublished = makeSend(newCWUOpportunityPublishedT);
 
-export async function newCWUOpportunityPublishedT(recipient: User, opportunity: CWUOpportunity, repost: boolean): Promise<Emails> {
+export async function newCWUOpportunityPublishedT(recipients: User[], opportunity: CWUOpportunity, repost: boolean): Promise<Emails> {
   const title = `A ${repost ? '' : 'New'} Code With Us Opportunity Has Been ${repost ? 'Re-posted' : 'Posted'}`;
   return [{
     summary: `${repost ? 'CWU opportunity re-published after suspension' : 'New CWU opportunity published'}; sent to user with notifications turned on.`,
-    to: recipient.email,
+    to: CONTACT_EMAIL,
+    bcc: recipients.map(r => r.email),
     subject: title,
     html: templates.simple({
       title,
