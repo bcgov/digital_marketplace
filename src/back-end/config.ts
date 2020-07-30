@@ -69,7 +69,9 @@ const productionMailerConfigOptions = {
   ignoreTLS: false,
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  pool: true,
+  maxConnections: 20
 };
 
 const developmentMailerConfigOptions = {
