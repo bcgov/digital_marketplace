@@ -1,0 +1,207 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: dm-keycloak
+  annotations:
+    description: Experimentation Digital Marketplace 
+    tags: cqen,experimentation,digital,marketplace
+objects:
+#Keycloak
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: dm-keycloak-build
+  stringData:
+    github-client-id: "${GITHUB_CLIENT_ID}"
+    github-client-secret: "${GITHUB_CLIENT_SECRET}"
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: dm-keycloak
+  stringData:
+    keycloak-admin-user: "${KEYCLOAK_ADMIN_USER}"
+    keycloak-admin-pass: "${KEYCLOAK_ADMIN_PASSWORD}"
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: dm-keycloak-db
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: dm-keycloak
+- kind: BuildConfig 
+  apiVersion: v1
+  metadata:
+    annotations:
+      app.openshift.io/vcs-ref: experimentation
+      app.openshift.io/vcs-uri: https://github.com/CQEN-QDCE/digital_marketplace.git
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: dm-keycloak
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: dm-keycloak:latest
+    source:
+      contextDir: /keycloak
+      git:
+        ref: experimentation
+        uri: https://github.com/CQEN-QDCE/digital_marketplace.git
+      type: Git
+    strategy:
+      dockerStrategy:
+        dockerfilePath: Dockerfile
+        buildArgs:
+          - name: "ROOTURL"
+            value: "${DM_APP_ROOT_URL}"
+          - name: "GITHUBID"
+            value: "${GITHUB_CLIENT_ID}"
+          - name: "GITHUBSECRET"
+            value: "${GITHUB_CLIENT_SECRET}"
+          - name: "KEYCLOAKURL"
+            value: "${KEYCLOAK_URL}" 
+      type: Docker
+    triggers:
+      - type: ConfigChange
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: dm-keycloak
+    annotations:
+      template.alpha.openshift.io/wait-for-ready: "true"
+  spec:
+    strategy:
+      type: Rolling
+      rollingParams:
+        updatePeriodSeconds: 1
+        intervalSeconds: 1
+        timeoutSeconds: 600
+        maxUnavailable: 25%
+        maxSurge: 25%
+      resources: {}
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - dm-keycloak
+          from:
+            kind: ImageStreamTag
+            name: dm-keycloak:latest
+    replicas: 1
+    selector:
+      app: dm-keycloak
+      deploymentconfig: dm-keycloak
+    template:
+      metadata:
+        labels:
+          app: dm-keycloak
+          deploymentconfig: dm-keycloak
+      spec:
+        containers:
+        - env:
+          - name: KEYCLOAK_USER
+            valueFrom:
+              secretKeyRef:
+                key: keycloak-admin-user
+                name: dm-keycloak
+          - name: KEYCLOAK_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: keycloak-admin-pass
+                name: dm-keycloak
+          image: ' '
+          imagePullPolicy: IfNotPresent
+          name: dm-keycloak
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8443
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /opt/jboss/keycloak/standalone/data
+              name: dm-keycloak-db
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+          - name: dm-keycloak-db
+            persistentVolumeClaim:
+              claimName: dm-keycloak-db
+- kind: Route
+  apiVersion: v1
+  metadata:
+    annotations:
+      description: Route for Keycloak http service
+    labels:
+      app: dm-keycloak
+    name: keycloak
+  spec:
+    port:
+      targetPort: dm-keycloak-http
+    to:
+      kind: Service
+      name: dm-keycloak
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: dm-keycloak
+  spec:
+    ports:
+    - name: dm-keycloak-http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: dm-keycloak-https
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      app: dm-keycloak
+      deploymentconfig: dm-keycloak
+    sessionAffinity: None
+    type: ClusterIP
+parameters:
+- name: KEYCLOAK_ADMIN_USER
+  displayName: Keycloak Admin Username
+  description: Username for Keycloak administrator user.
+  value: admin
+  required: true
+- name: KEYCLOAK_ADMIN_PASSWORD
+  displayName: Keycloak admin password
+  description: Keycloak administrator user password.
+  generate: expression
+  from: "[a-zA-Z0-9]{16}"
+  required: true
+- name: GITHUB_CLIENT_ID
+  displayName: Github Client ID
+  description: Github OAUTH App Client ID
+  value: ""
+  required: true
+- name: GITHUB_CLIENT_SECRET
+  displayName: Github Client Secret
+  description: Github OAUTH App Client Secret
+  value: ""
+  required: true
+- name: DM_APP_ROOT_URL
+  displayName: Digital Marketplace Root Url
+  description: Digital Markerplace Application root Url
+  value: http://marketplace-project-name.apps.exp.lab.pocquebec.org
+  required: true
+- name: KEYCLOAK_URL
+  displayName: Keycloak Url
+  description: Planned Keycloak Url
+  value: http://keycloak-project-name.apps.exp.lab.pocquebec.org
+  required: true
