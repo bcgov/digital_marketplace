@@ -1,0 +1,404 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: marketplace-experimentation
+  annotations:
+    description: Experimentation Digital Marketplace 
+    tags: cqen,experimentation,digital,marketplace
+objects:
+#PostgreSQL
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: postgresql
+    annotations:
+      template.openshift.io/expose-username: "{.data['database-user']}"
+      template.openshift.io/expose-password: "{.data['database-password']}"
+      template.openshift.io/expose-database_name: "{.data['database-name']}"
+  stringData:
+    database-user: "${POSTGRESQL_USER}"
+    database-password: "${POSTGRESQL_PASSWORD}"
+    database-name: "${POSTGRESQL_DATABASE}"
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: postgresql
+  spec:
+    ports:
+    - name: postgresql
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
+      nodePort: 0
+    selector:
+      name: postgresql
+    type: ClusterIP
+    sessionAffinity: None
+  status:
+    loadBalancer: {}
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: postgresql
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: postgresql
+    annotations:
+      template.alpha.openshift.io/wait-for-ready: 'true'
+    labels:
+      app.kubernetes.io/part-of: marketplace
+  spec:
+    strategy:
+      type: Recreate
+    triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - postgresql
+        from:
+          kind: ImageStreamTag
+          name: postgresql:10
+          namespace: openshift
+        lastTriggeredImage: ''
+    - type: ConfigChange
+    replicas: 1
+    selector:
+      name: postgresql
+    template:
+      metadata:
+        labels:
+          name: postgresql
+      spec:
+        containers:
+        - name: postgresql
+          image: " "
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          readinessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+            exec:
+              command:
+              - "/usr/libexec/check-container"
+          livenessProbe:
+            timeoutSeconds: 10
+            initialDelaySeconds: 120
+            exec:
+              command:
+              - "/usr/libexec/check-container"
+              - "--live"
+          env:
+          - name: POSTGRESQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-user
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-password
+          - name: POSTGRESQL_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-name
+          resources:
+            limits:
+              memory: 512Mi
+          volumeMounts:
+          - name: postgresql-data
+            mountPath: "/var/lib/pgsql/data"
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: IfNotPresent
+          capabilities: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+        volumes:
+        - name: postgresql-data
+          persistentVolumeClaim:
+            claimName: postgresql
+        restartPolicy: Always
+        dnsPolicy: ClusterFirst
+  status: {}
+#Marketplace (NodeJS)
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: marketplace-build
+  stringData:
+    WebHookSecretKey: "${GITHUB_WEBHOOK_SECRET}"
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: marketplace-app
+  stringData:
+    keycloak-url: "${KEYCLOAK_URL}"
+    keycloak-realm: "${KEYCLOAK_REALM}"
+    keycloak-client-id: "${KEYCLOAK_CLIENT_ID}"
+    keycloak-client-secret: "${KEYCLOAK_CLIENT_SECRET}"
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: digital-marketplace
+- kind: BuildConfig 
+  apiVersion: v1
+  metadata:
+    annotations:
+      app.openshift.io/vcs-ref: experimentation
+      app.openshift.io/vcs-uri: https://github.com/CQEN-QDCE/digital_marketplace.git
+      template.alpha.openshift.io/wait-for-ready: "true"
+    labels:
+      app: marketplace
+    name: digital-marketplace
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: digital-marketplace:latest
+    source:
+      contextDir: /
+      git:
+        ref: experimentation
+        uri: https://github.com/CQEN-QDCE/digital_marketplace.git
+      type: Git
+    strategy:
+      dockerStrategy:
+        dockerfilePath: Dockerfile
+      type: Docker
+    triggers:
+    - github:
+        secretReference:
+          name: marketplace-build
+      type: GitHub
+    - type: ConfigChange
+- kind: Route 
+  apiVersion: v1
+  metadata:
+    annotations:
+      description: Route for Marketplace http service
+    labels:
+      app: marketplace
+    name: marketplace
+  spec:
+    port:
+      targetPort: marketplace-http
+    to:
+      kind: Service
+      name: marketplace
+- kind: Service 
+  apiVersion: v1
+  metadata:
+    labels:
+      app: marketplace
+      app.kubernetes.io/component: marketplace
+      app.kubernetes.io/instance: marketplace
+      app.kubernetes.io/part-of: marketplace
+    name: marketplace
+  spec:
+    ports:
+    - name: marketplace-http
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: marketplace
+      deploymentconfig: marketplace
+    sessionAffinity: None
+    type: ClusterIP
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: marketplace
+    annotations:
+      app.openshift.io/connects-to: postgresql
+    labels:
+      app: marketplace
+      app.kubernetes.io/component: marketplace
+      app.kubernetes.io/instance: marketplace
+      app.kubernetes.io/part-of: marketplace
+  spec:
+    strategy:
+      type: Recreate
+      recreateParams:
+        post:
+          failurePolicy: Abort
+          execNewPod:
+            containerName: marketplace 
+            command: [ "npm", "run", "migrations:latest" ]
+    triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - marketplace
+        from:
+          kind: ImageStreamTag
+          name: digital-marketplace:latest
+        lastTriggeredImage: ''
+    - type: ConfigChange
+    replicas: 1
+    selector:
+      name: marketplace
+    template:
+      metadata:
+        labels:
+          name: marketplace
+          app: marketplace
+          deploymentconfig: marketplace
+      spec:
+        containers:
+        - name: marketplace
+          image: " "
+          ports:
+          - containerPort: 3000
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/status"
+              port: 3000
+              scheme: "HTTP"
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: "/status"
+              port: 3000
+              scheme: "HTTP"
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: NODE_ENV
+            value: development
+          - name: SERVER_HOST
+            value: 0.0.0.0
+          - name: SERVER_PORT
+            value: "3000"
+          - name: POSTGRESQL_SERVICE_HOST
+            value: postgresql
+          - name: POSTGRESQL_SERVICE_PORT
+            value: "5432"
+          - name: COOKIE_SECRET
+            value: ${COOKIE_SECRET}
+          - name: ORIGIN
+            value: "http://marketplace-$(POD_NAMESPACE).${CLUSTER_DOMAIN}"
+          - name: KEYCLOAK_URL
+            valueFrom:
+              secretKeyRef:
+                key: keycloak-url
+                name: marketplace-app
+          - name: KEYCLOAK_REALM
+            valueFrom:
+              secretKeyRef:
+                key: keycloak-realm
+                name: marketplace-app
+          - name: KEYCLOAK_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: keycloak-client-id
+                name: marketplace-app
+          - name: KEYCLOAK_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: keycloak-client-secret
+                name: marketplace-app
+          - name: CONTACT_EMAIL
+          - name: SCHEDULED_DOWNTIME
+          - name: UPDATE_HOOK_TROTTLE
+            value: "60000"
+          - name: DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: postgresql
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: postgresql
+          - name: DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                key: database-name
+                name: postgresql
+          resources: {}
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: Always
+          capabilities: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+        restartPolicy: Always
+        dnsPolicy: ClusterFirst
+  status: {}
+parameters:
+- name: POSTGRESQL_USER
+  displayName: PostgreSQL Connection Username
+  description: Username for PostgreSQL user that will be used for accessing the database.
+  generate: expression
+  from: user[A-Z0-9]{3}
+  required: true
+- name: POSTGRESQL_PASSWORD
+  displayName: PostgreSQL Connection Password
+  description: Password for the PostgreSQL connection user.
+  generate: expression
+  from: "[a-zA-Z0-9]{16}"
+  required: true
+- name: POSTGRESQL_DATABASE
+  displayName: PostgreSQL Database Name
+  description: Name of the PostgreSQL database accessed.
+  value: digital_marketplace
+  required: true
+- name: GITHUB_WEBHOOK_SECRET
+  description: A secret string used to configure the GitHub webhook for the marketplace app build
+  generate: expression 
+  from: "[a-zA-Z0-9]{40}"
+  required: true
+- name: CLUSTER_DOMAIN
+  displayName: Cluster domain name
+  description: Complete domain name which the cluster use for routes
+  value: apps.exp.lab.pocquebec.org
+  required: true
+- name: COOKIE_SECRET
+  displayName: Cookie Secret
+  description: Cookie Secret key
+  generate: expression
+  from: "[a-zA-Z0-9]{16}"
+- name: KEYCLOAK_URL
+  displayName: Keycloak Url
+  description: Keycloak Server Url
+  value: ""
+  required: true
+- name: KEYCLOAK_REALM
+  displayName: Keycloak Realm
+  description: Keycloak Realm Name
+  value: "digitalmarketplace"
+  required: true
+- name: KEYCLOAK_CLIENT_ID
+  displayName: Keycloak Client Id
+  description: Keycloak Client Id
+  value: "dm-app"
+  required: true
+- name: KEYCLOAK_CLIENT_SECRET
+  displayName: Keycloak Client Secret
+  description: Keycloak Client Secret
+  value: ""
+  required: true
