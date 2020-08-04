@@ -18,6 +18,7 @@ import Icon from 'front-end/lib/views/icon';
 import { flatten } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';
+import { getNumber } from 'shared/lib';
 import SKILLS from 'shared/lib/data/skills';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { canSWUOpportunityDetailsBeEdited, CreateRequestBody, CreateSWUOpportunityStatus, CreateValidationErrors, DEFAULT_CODE_CHALLENGE_WEIGHT, DEFAULT_PRICE_WEIGHT, DEFAULT_QUESTIONS_WEIGHT, DEFAULT_SCENARIO_WEIGHT, parseSWUOpportunityPhaseType, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase, SWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -152,10 +153,10 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
 export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, viewerUser, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
   activeTab = !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab;
   const startingPhase = getStartingPhase(opportunity);
-  const questionsWeight = opportunity?.questionsWeight || DEFAULT_QUESTIONS_WEIGHT;
-  const codeChallengeWeight = opportunity?.codeChallengeWeight || DEFAULT_CODE_CHALLENGE_WEIGHT;
-  const scenarioWeight = opportunity?.scenarioWeight || DEFAULT_SCENARIO_WEIGHT;
-  const priceWeight = opportunity?.priceWeight || DEFAULT_PRICE_WEIGHT;
+  const questionsWeight = getNumber(opportunity, 'questionsWeight', DEFAULT_QUESTIONS_WEIGHT);
+  const codeChallengeWeight = getNumber(opportunity, 'codeChallengeWeight', DEFAULT_CODE_CHALLENGE_WEIGHT);
+  const scenarioWeight = getNumber(opportunity, 'scenarioWeight', DEFAULT_SCENARIO_WEIGHT);
+  const priceWeight = getNumber(opportunity, 'priceWeight', DEFAULT_PRICE_WEIGHT);
   return {
     opportunity,
     viewerUser,
@@ -353,7 +354,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       child: {
         value: questionsWeight,
         id: 'swu-opportunity-questions-weight',
-        min: 1
+        min: 0
       }
     })),
 
@@ -366,7 +367,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       child: {
         value: codeChallengeWeight,
         id: 'swu-opportunity-code-challenge-weight',
-        min: 1
+        min: 0
       }
     })),
 
@@ -379,7 +380,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       child: {
         value: scenarioWeight,
         id: 'swu-opportunity-scenario-weight',
-        min: 1
+        min: 0
       }
     })),
 
@@ -392,7 +393,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       child: {
         value: priceWeight,
         id: 'swu-opportunity-price-weight',
-        min: 1
+        min: 0
       }
     })),
 
