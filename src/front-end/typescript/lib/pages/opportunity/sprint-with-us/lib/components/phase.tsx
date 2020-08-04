@@ -80,7 +80,7 @@ export const init: Init<Params, State> = async ({ isAccordionOpen, totalMaxBudge
         const found = find(existingCapabilities, { capability });
         return {
           capability,
-          fullTime: found?.fullTime || true,
+          fullTime: found?.fullTime === undefined ? true : found.fullTime,
           checked: !!found
         };
       })
