@@ -1,0 +1,73 @@
+---
+apiVersion: 1.0.0
+metadata:
+  generateName: dm-
+projects:
+  -
+    name: digital-marketplace
+    source:
+      type: git
+      location: "https://github.com/CQEN-QDCE/digital_marketplace"
+      branch: "experimentation"
+components:
+  -
+    type: chePlugin
+    id: che-incubator/typescript/latest
+    memoryLimit: 512Mi
+  -
+    type: dockerimage
+    alias: nodejs
+    image: quay.io/eclipse/che-nodejs10-community:nightly
+    memoryLimit: 1Gi
+    endpoints:
+      - name: 'nodejs'
+        port: 3000
+    mountSources: true
+  -
+    type: dockerimage
+    alias: postgresql
+    image: postgresql-10-centos7
+    env:
+      - name: POSTGRESQL_USER
+        value: marketplace
+      - name: POSTGRESQL_PASSWORD
+        value: marketplace00
+      - name: POSTGRESQL_DATABASE
+        value: marketplace
+    memoryLimit: 256Mi
+    endpoints:
+      - name: 'postgresql_database'
+        port: 5432
+        attributes:
+          discoverable: "true"
+          public: "false"
+    mountSources: true
+commands:
+  -
+    name: npm install
+    actions:
+      - type: exec
+        component: nodejs
+        command: npm install
+        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace
+  -
+    name: npm run front-end:build
+    actions:
+      - type: exec
+        component: nodejs
+        command: npm run front-end:build
+        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace  
+  -
+    name: npm run migrations:latest
+    actions:
+      - type: exec
+        component: nodejs
+        command: npm run migrations:latest
+        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace
+  -
+    name: npm run start
+    actions:
+      - type: exec
+        component: nodejs
+        command: npm run start
+        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace
