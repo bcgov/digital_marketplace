@@ -54,15 +54,15 @@ $black:            #000000;
 $blue:             #0C99D6;
 $blue-alt:         #17A2B8;
 $blue-alt-2:       #1e98d2;
-$blue-dark:        #003366;
+$blue-dark:        #095797;
 $blue-dark-alt:    #38598A;
-$blue-dark-alt-2:  #0F4C8B;
+$blue-dark-alt-2:  #223654;
 $blue-light:       #E7EDF3;
 $blue-light-alt:   #E9F5FB;
 $blue-light-alt-2: #F4FAFD;
 $purple:           #52489C;
 $purple-light:     lighten($purple, 20);
-$yellow:           #FCBA19;
+$yellow:           #F8E69A;
 $red:              #DC3545;
 $green:            #2E8540;
 $orange:           #FD7E14;
@@ -111,7 +111,7 @@ $success:      $green;
 $body:         $body-color;
 $light:        $gray-100;
 $dark:         $gray-800;
-$bcgov-blue:   $blue-dark;
+$qcgov-blue:   $blue-dark;
 $bcgov-yellow: $yellow;
 
 $theme-colors:   map-merge(
@@ -125,7 +125,7 @@ $theme-colors:   map-merge(
     'body':         $body,
     'light':        $light,
     'dark':         $dark,
-    'bcgov-blue':   $bcgov-blue,
+    'qcgov-blue':   $qcgov-blue,
     'bcgov-yellow': $bcgov-yellow
   ),
   $colors
@@ -134,7 +134,7 @@ $theme-colors:   map-merge(
 // Other overrides.
 $border-width: 1px;
 
-$font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-sans-serif: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 $font-weight-bold:       500;
 $font-weight-bolder:     700;
 
@@ -182,7 +182,7 @@ $transition-duration: 240ms;
 
 html,
 body {
-  background: $bcgov-blue;
+  background: $qcgov-blue;
 }
 
 html {
@@ -257,8 +257,8 @@ textarea {
 
 nav {
 
-  $main-nav-top-height: 67px;
-  $main-nav-bottom-navbar-height: 56px;
+  $main-nav-top-height: 80px;
+  $main-nav-bottom-navbar-height: 80px;
   &.main-nav {
     z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
     position: sticky;
@@ -270,8 +270,7 @@ nav {
     }
 
     .main-nav-top-navbar {
-      @extend .bg-bcgov-blue;
-      @extend .border-bottom-gov;
+      @extend .bg-qcgov-blue;
       width: 100%;
       height: $main-nav-top-height;
       position: relative;
@@ -311,9 +310,8 @@ nav {
 
       &.mobile,
       &.desktop {
-        @extend .bg-blue-dark-alt;
+        @extend .bg-white;
         @extend .align-items-center;
-        @extend .shadow;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
@@ -594,14 +592,6 @@ nav.navbar .nav-link:hover {
 
 .text-wrap {
   white-space: normal !important;
-}
-
-.border-bottom-gov {
-  border-bottom: 2px solid $bcgov-yellow;
-}
-
-.border-top-gov {
-  border-top: 2px solid $bcgov-yellow;
 }
 
 @each $breakpoint in map-keys($grid-breakpoints) {

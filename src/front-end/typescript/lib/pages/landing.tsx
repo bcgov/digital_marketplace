@@ -162,7 +162,7 @@ const VendorRoleInfo: View = () => {
     <Container className='mt-7 mt-md-9'>
       <Row>
         <Col xs='12' className='order-2 order-md-1'>
-          <h6 className='text-bcgov-blue'><Icon name='store' className='mr-2 mb-1' />Vendors</h6>
+          <h6 className='text-qcgov-blue'><Icon name='store' className='mr-2 mb-1' />Vendors</h6>
         </Col>
         <Col xs='12' md='6' className='order-3 order-md-2'>
           <h4 className='mb-3'>Collaborate with the BC Public Sector to build innovative digital products.</h4>
@@ -203,7 +203,7 @@ const GovRoleInfo: View = () => {
         <Col cs='12' md='6'>
           <Row>
             <Col xs='12'>
-              <h6 className='text-bcgov-blue'><Icon name='government' className='mr-2 pb-1' />Public Service Employees</h6>
+              <h6 className='text-qcgov-blue'><Icon name='government' className='mr-2 pb-1' />Public Service Employees</h6>
             </Col>
             <Col xs='12'>
               <h4 className='mb-3'>Connect with talented developers to build your digital products.</h4>
@@ -224,39 +224,6 @@ const GovRoleInfo: View = () => {
         </Col>
       </Row>
     </Container>
-  );
-};
-
-const TestimonialsView: View = () => {
-  return (
-    <div className='bg-blue-dark-alt-2 py-7'>
-      <Container>
-        <Row>
-          <Col xs='12' md='6'>
-            <Row>
-              <Col xs='12' className='d-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
-              <Col xs='10' className='d-flex mx-auto pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“We quickly found a qualified developer, worked collaboratively in the open, and got a great final product.”</h6></Col>
-              <Col xs='12' className='d-flex flex-column justify-content-center'>
-                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/andy.jpg')} width='40px' height='40px' />
-                <div className='text-bcgov-yellow font-size-small text-center'>Andy, Environmental Analyst</div>
-                <div className='text-white small text-center'>Province of B.C.</div>
-              </Col>
-            </Row>
-          </Col>
-          <Col xs='12' md='6'>
-            <Row>
-              <Col xs='12' className='d-none d-md-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
-              <Col xs='10' className='d-flex mx-auto pt-7 pt-md-0 pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“I think this platform could be a game changer for matching government agencies with the best talent in this province.”</h6></Col>
-              <Col xs='12' className='d-flex flex-column justify-content-center'>
-                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/wayne.jpg')} width='40px' height='40px' />
-                <div className='text-bcgov-yellow font-size-small text-center'>Wayne, Developer</div>
-                <div className='text-white small text-center'>Vancouver</div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </Container>
-    </div>
   );
 };
 
@@ -291,7 +258,6 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <AppInfo />
       <VendorRoleInfo />
       <GovRoleInfo />
-      <TestimonialsView />
       <BottomView />
     </div>
   );

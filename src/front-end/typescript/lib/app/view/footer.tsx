@@ -45,7 +45,7 @@ const links: AnchorProps[] = [
 
 const Footer: View<{}> = () => {
   return (
-    <footer className='w-100 bg-bcgov-blue text-light border-top-gov d-print-none'>
+    <footer className='w-100 bg-qcgov-blue text-light d-print-none'>
       <Container>
         <Row>
           <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3'>

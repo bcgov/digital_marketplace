@@ -524,12 +524,12 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
   const sessionUser = state.shared.session && state.shared.session.user;
   let links: Nav.NavLink[] = [];
   const opportunitiesLink: Nav.NavLink = {
-    children: 'Opportunities',
+    children: 'Opportunités',
     active: state.activeRoute.tag === 'opportunities',
     dest: routeDest(adt('opportunities', null))
   };
   const organizationsLink: Nav.NavLink = {
-    children: 'Organizations',
+    children: 'Organisations',
     active: state.activeRoute.tag === 'orgList',
     dest: routeDest(adt('orgList', null))
   };
@@ -558,7 +558,7 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
     // User has not signed in.
     links = links.concat([
       {
-        children: 'Home',
+        children: 'Accueil',
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
@@ -585,8 +585,8 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     state: state.nav,
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
-    logoImageUrl: prefixPath('/images/bcgov_logo.svg'),
-    title: 'Digital Marketplace',
+    logoImageUrl: prefixPath('/images/quebec_logo_PIV.svg'),
+    title: 'Marché numérique',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
     appLinks: navAppLinks(state),
