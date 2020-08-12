@@ -33,7 +33,7 @@ export async function handleCWUUpdated(connection: db.Connection, opportunity: C
   if (author) {
     unionedUsers.push(author);
   }
-  await Promise.all(unionedUsers.map(async user => await updatedCWUOpportunity(user, opportunity)));
+  await updatedCWUOpportunity(unionedUsers, opportunity);
 }
 
 export async function handleCWUCancelled(connection: db.Connection, opportunity: CWUOpportunity): Promise<void> {
@@ -123,19 +123,25 @@ export async function successfulCWUPublicationT(recipient: User, opportunity: CW
 
 export const updatedCWUOpportunity = makeSend(updatedCWUOpportunityT);
 
-export async function updatedCWUOpportunityT(recipient: User, opportunity: CWUOpportunity): Promise<Emails> {
+export async function updatedCWUOpportunityT(recipients: User[], opportunity: CWUOpportunity): Promise<Emails> {
   const title = 'A Code With Us Opportunity Has Been Updated';
   const description = 'The following Digital Marketplace opportunity has been updated:';
-  return[{
-    to: recipient.email,
-    subject: title,
-    html: templates.simple({
-      title,
-      description,
-      descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-      callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
-    })
-  }];
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      to: MAILER_NOREPLY,
+      subject: title,
+      bcc: batch.map(r => r.email),
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+        callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 export const cancelledCWUOpportunitySubscribed = makeSend(cancelledCWUOpportunitySubscribedT);

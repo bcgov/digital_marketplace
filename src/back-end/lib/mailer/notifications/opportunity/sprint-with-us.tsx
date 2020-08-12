@@ -43,7 +43,7 @@ export async function handleSWUUpdated(connection: db.Connection, opportunity: S
   if (author) {
     unionedUsers.push(author);
   }
-  await Promise.all(unionedUsers.map(async user => await updatedSWUOpportunity(user, opportunity)));
+  await updatedSWUOpportunity(unionedUsers, opportunity);
 }
 
 export async function handleSWUCancelled(connection: db.Connection, opportunity: SWUOpportunity): Promise<void> {
@@ -113,19 +113,25 @@ export async function newSWUOpportunityPublishedT(recipients: User[], opportunit
 
 export const updatedSWUOpportunity = makeSend(updatedSWUOpportunityT);
 
-export async function updatedSWUOpportunityT(recipient: User, opportunity: SWUOpportunity): Promise<Emails> {
+export async function updatedSWUOpportunityT(recipients: User[], opportunity: SWUOpportunity): Promise<Emails> {
   const title = 'A Sprint With Us Opportunity Has Been Updated';
   const description = 'The following Digital Marketplace opportunity has been updated:';
-  return [{
-    to: recipient.email,
-    subject: title,
-    html: templates.simple({
-      title,
-      description,
-      descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-      callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
-    })
-  }];
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      to: MAILER_NOREPLY,
+      bcc: batch.map(r => r.email),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 export const newSWUOpportunitySubmittedForReview = makeSend(newSWUOpportunitySubmittedForReviewT);

@@ -101,7 +101,7 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     },
     {
       title: 'CWU Opportunity Updated',
-      emails: await updatedCWUOpportunityT(mocks.vendorUser, mocks.cwuOpportunity)
+      emails: await updatedCWUOpportunityT([mocks.vendorUser], mocks.cwuOpportunity)
     },
     {
       title: 'CWU Opportunity Cancelled',
@@ -159,7 +159,7 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
     },
     {
       title: 'SWU Opportunity Updated',
-      emails: await updatedSWUOpportunityT(mocks.vendorUser, mocks.swuOpportunity)
+      emails: await updatedSWUOpportunityT([mocks.vendorUser], mocks.swuOpportunity)
     },
     {
       title: 'SWU Opportunity Submitted For Review',
