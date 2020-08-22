@@ -274,53 +274,32 @@ Using an environment's deployment shell, run `npm run migrations:latest` in the 
 
 ### Backups
 
-**TODO_ANDREW Under Construction**
+Automated backups of the PostgreSQL database are performed with the BC Government Backup Container. Full documentation for this tool can be found here: https://github.com/BCDevOps/backup-container. The schedule for automated backups is as follows:
 
-Automated backups are currently performed once per day at 12:00 AM UTC.  A rolling set of 7 backups is kept (1 week's worth), and as each new backup is created it replaces the oldest in the set.  The automated backups are completed using the BC Developers' Exchange Backup Utility located here: https://github.com/BCDevExchange/devexUtils/tree/master/backup
+* Every 6 hours with a retention of 4 backups
+* Every 24 hours with a retention of 1 backup (daily)
+* Every week with a retention of 4 backups (weekly)
+* Every month with a retention of 1 backup (monthly)
 
-Backups are stored in OpenShift on a separate provisioned volume.  For instructions on how to deploy and configure the MongoDB backup utility to your OpenShift project, please refer to: https://github.com/BCDevExchange/devexUtils/blob/master/openshift/README.md
+A manual backup can be immediately performed by connecting to the backup container pod in OpenShift and running `backup.sh -1`.
+
+Backup archives are stored in the same OpenShift project as the Digital Marketplace application, on a separate provisioned volume.
 
 #### Restoring from Backup
 
-**TODO_ANDREW Under Construction**
-
-In the unfortunate event that you need to restore your data from a backup archive, you will need to use the following command to do so:
-
-```bash
-mongorestore -u admin -p $MONGODB_ADMIN_PASSWORD --authenticationDatabase=admin --gzip --archive="/path/to/backup/archive"
-```
+In the unfortunate event that you need to restore your data from a backup archive, the `backup.sh` script can  be used to restore from the last backup file. Refer to https://github.com/BCDevOps/backup-container#restore for details on how to use this script.
 
 ### High Availability Database Deployment
 
-**TODO_ANDREW Under Construction**
+The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL replicaset. The template used to deploy this replicaset is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/patroni-deploy-config.json` for deployment in other OpenShift environments. 
 
-If you are deploying the Concierge application to OpenShift, we recommend running the MongoDB database as a replica set, or Stateful Set in OpenShift.  Replica sets use redundant pods on separate nodes to minimize downtime and mitigate data loss.  We have provided the necessary configuration and instructions for setting up the replica set and configuring the application below.
+Use the following command to run this deployment script using the OpenShift command line tools (first ensure that you have the correct OpenShift project selected using `oc project`):
 
-IMPORTANT: Create a backup of your existing database before migrating to a replica set.  This is in case anything goes wrong, and for transferring over data to the replica set.
+```
+oc process -f openshift/templates/patroni-deploy-config.json | oc create -f -
+```
 
-1. Create the replicaset
-	* If you wish to change any of the defaults (i.e. database name, passwords, etc.), edit the file `openshift/mongodb-replicaset` and change the appropriate parameters values before performing the steps below
-	* Run `oc new-app openshift/mongodb-replicaset.yaml` to create the replicaset from the openshift command line tools
-
-2. Migrate existing data to the replicaset
-	* Scale down the Concierge application using the existing MongoDB database OR set the SCHEDULED_MAINTENANCE environment variable in the Concierge application deployment to 1
-	* Create a data dump of your existing database with `mongodump -u admin -p <admin-password> --authenticationDatabase=admin`
-	* Use the mongo-restore tool to transfer the existing database data to the new replicaset `mongorestore -u admin -p <admin-password> --authenticationDatabase=admin`
-
-3. Configure the Concierge application to use the replicaset
-	* Update the environment variables for DATABASE_SERVICE_NAME, MONGODB_USER, MONGODB_PASSWORD, MONGODB_DATABASE_NAME
-	* Add a new environment variable called MONGODB_REPLICA_NAME and assign it the name of the replicaset (by default this is `rs0`)
-	* Scale the Concierge application back up / change SCHEDULED_MAINTENANCE environment variable to 0
-
-4. Set the backup pod to point to the replicaset
-	* Update the environment variable MONGODB_URI in the devexutils_backup deployment to reflect the new username, password, database service name, and database name.
-	* Redeploy
-
-5. Cleanup
-	* Remove the old mongodb deployment
-	* Remove the old mongodb service
-	* Remove the old mongodb storage
-	* Remove the old mongodb persistent volume
+Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/postgres-deploy-config.json` and can be run using the same OpenShift CLI command above.  
 
 ## Team
 
