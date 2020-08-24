@@ -11,7 +11,7 @@ import { FileRecord } from 'shared/lib/resources/file';
 import { doesSWUOpportunityStatusAllowGovToViewFullProposal, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { calculateProposalTeamQuestionScore, CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { User, UserType } from 'shared/lib/resources/user';
+import { User, userToUserSlim, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { getValidValue, isInvalid, valid } from 'shared/lib/validation';
 
@@ -63,7 +63,7 @@ interface RawProposalPhase extends Omit<SWUProposalPhase, 'members'> {
   id: Id;
 }
 
-interface RawProposalTeamMember extends Omit<SWUProposalTeamMember, 'member'> {
+interface RawProposalTeamMember extends Omit<SWUProposalTeamMember, 'member' | 'idpUsername'> {
   member: Id;
 }
 
@@ -98,14 +98,14 @@ async function rawSWUProposalPhaseToSWUProposalPhase(connection: Connection, raw
 
 async function rawProposalTeamMemberToProposalTeamMember(connection: Connection, raw: RawProposalTeamMember): Promise<SWUProposalTeamMember> {
   const { member: memberId, ...restOfRaw } = raw;
-  const member = getValidValue(await readOneUserSlim(connection, memberId), undefined);
-  if (!member) {
+  const user = getValidValue(await readOneUser(connection, memberId), undefined);
+  if (!user) {
     throw new Error('unable to process proposal team member');
   }
-
   return {
     ...restOfRaw,
-    member
+    idpUsername: user.idpUsername,
+    member: userToUserSlim(user)
   };
 }
 

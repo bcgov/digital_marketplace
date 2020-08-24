@@ -48,6 +48,14 @@ export interface UserSlim {
   avatarImageFile?: FileRecord;
 }
 
+export function userToUserSlim(u: User): UserSlim {
+  return {
+    id: u.id,
+    name: u.name,
+    avatarImageFile: u.avatarImageFile || undefined
+  };
+}
+
 export function usersAreEquivalent(a: User, b: User): boolean {
   return a.id === b.id;
 }
