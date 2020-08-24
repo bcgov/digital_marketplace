@@ -20,6 +20,17 @@ export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloak
   }
 }
 
+const GITHUB_IDP_USERNAME_REGEXP = /^(.+)@github$/i;
+
+export function userGitHubUsername(user: Pick<User, 'idpUsername'>): string | null {
+  const match = user.idpUsername.match(GITHUB_IDP_USERNAME_REGEXP);
+  return match ? match[1] : null;
+}
+
+export function gitHubProfileLink(username: string): string {
+  return `https://github.com/${username}`;
+}
+
 export enum UserStatus {
   Active = 'ACTIVE',
   InactiveByUser = 'INACTIVE_USER',

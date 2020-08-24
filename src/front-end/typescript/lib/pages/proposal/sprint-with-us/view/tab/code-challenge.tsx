@@ -1,18 +1,20 @@
+import { EMPTY_STRING } from 'front-end/config';
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as NumberField from 'front-end/lib/components/form-field/number';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
 import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
-import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import ReportCardList from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { canSWUOpportunityBeScreenedInToTeamScenario, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamScenario } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
+import { isSWUProposalInCodeChallenge, NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus, swuProposalTeamMembers } from 'shared/lib/resources/proposal/sprint-with-us';
+import { gitHubProfileLink, userGitHubUsername } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
 import { validateCodeChallengeScore } from 'shared/lib/validation/proposal/sprint-with-us';
@@ -151,23 +153,66 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+const Participants: View<Pick<State, 'proposal'>> = ({ proposal }) => {
+  const participants = swuProposalTeamMembers(proposal, true);
+  return (
+    <div>
+      <h4 className='mb-4'>Participants</h4>
+      <div className='table-responsive'>
+        <table className='table-hover'>
+          <thead>
+            <tr>
+              <th style={{ width: '100%' }}>Name</th>
+              <th className='text-nowrap' style={{ width: '0px' }}>GitHub Profile</th>
+            </tr>
+          </thead>
+          <tbody>
+            {participants.map((p, i) => {
+              const username = userGitHubUsername(p);
+              return (
+                <tr>
+                  <td>{p.member.name}</td>
+                  <td className='text-nowrap'>
+                    {username
+                      ? (<Link dest={externalDest(gitHubProfileLink(username))} newTab>{username}</Link>)
+                      : EMPTY_STRING}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-        <Row className='mt-5'>
-          <Col xs='12'>
-            {state.proposal.challengeScore !== null && state.proposal.challengeScore !== undefined
-              ? (<ReportCardList
+        {state.proposal.challengeScore !== null && state.proposal.challengeScore !== undefined
+          ? (<Row className='mt-5'>
+              <Col xs='12'>
+                <ReportCardList
                   reportCards={[{
                     icon: 'star-full',
                     iconColor: 'yellow',
                     name: 'Code Challenge Score',
                     value: `${String(state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS))}%`
-                  }]} />)
-              : <div className='pt-5 border-top'>If this proposal is screened into the Code Challenge, it can be scored once the opportunity reaches the Code Challenge too.</div>}
-          </Col>
-        </Row>
+                  }]} />
+              </Col>
+            </Row>)
+          : null}
+          <Row className='mt-5'>
+            <Col xs='12'>
+              <div className='pt-5 border-top'>
+                {hasSWUOpportunityPassedCodeChallenge(state.opportunity) && isSWUProposalInCodeChallenge(state.proposal)
+                  ? (<Participants proposal={state.proposal} />)
+                  : 'If this proposal is screened into the Code Challenge, it can be scored once the opportunity has reached the Code Challenge too.'}
+              </div>
+            </Col>
+          </Row>
     </div>
   );
 };
@@ -176,7 +221,7 @@ function isValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.score);
 }
 
-export const component: Tab.Component<State, Msg> = {
+export const component: Tab.Component<State,  Msg> = {
   init,
   update,
   view,

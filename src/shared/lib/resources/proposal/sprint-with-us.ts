@@ -396,13 +396,34 @@ export function calculateTotalProposalScore(proposal: SWUProposal, opportunity: 
          ((proposal.priceScore || 0) * opportunity.priceWeight) / 100;
 }
 
-export function swuProposalNumTeamMembers(proposal: SWUProposal): number {
-  const compute = (members: SWUProposalTeamMember[]) => members.reduce((acc, m) => acc.add(m.member.id), new Set()).size;
-  return compute([
+type SWUProposalTeamMembersAcc = [Set<string>, SWUProposalTeamMember[]];
+
+export function swuProposalTeamMembers(proposal: SWUProposal, sort = false): SWUProposalTeamMember[] {
+  const compute = (members: SWUProposalTeamMember[]) => members.reduce((acc, m) => {
+    const [set, members] = acc;
+    if (set.has(m.member.id)) {
+      return acc;
+    } else {
+      return [
+        set.add(m.member.id),
+        [...members, m]
+      ] as SWUProposalTeamMembersAcc;
+    }
+  }, [new Set(), []] as SWUProposalTeamMembersAcc);
+  const members = compute([
     ...(proposal.inceptionPhase?.members || []),
     ...(proposal.prototypePhase?.members || []),
     ...(proposal.implementationPhase?.members || [])
-  ]);
+  ])[1];
+  if (sort) {
+    return members.sort((a, b) => compareStrings(a.member.name, b.member.name));
+  } else {
+    return members;
+  }
+}
+
+export function swuProposalNumTeamMembers(proposal: SWUProposal): number {
+  return swuProposalTeamMembers(proposal).length;
 }
 
 export function swuProposalTotalProposedCost(proposal: SWUProposal): number {
