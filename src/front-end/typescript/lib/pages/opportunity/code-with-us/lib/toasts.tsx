@@ -1,5 +1,8 @@
 import { cwuOpportunityStatusToPastTenseVerb, cwuOpportunityStatusToPresentTenseVerb } from 'front-end/lib/pages/opportunity/code-with-us/lib';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import React from 'react';
 import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { adt, Id } from 'shared/lib/types';
 
 export const statusChanged = {
   success: (s: CWUOpportunityStatus) => {
@@ -15,6 +18,24 @@ export const statusChanged = {
       body: `Code With Us opportunity could not be ${cwuOpportunityStatusToPastTenseVerb(s).toLowerCase()}. Please try again later.`
     };
   }
+};
+
+export const published = {
+  success: (opportunityId: Id) => {
+    const { title, body } = statusChanged.success(CWUOpportunityStatus.Published);
+    return {
+      title,
+      body: (
+        <div>
+          {body}
+          <div className='mt-2'>
+            <Link newTab symbol_={rightPlacement(iconLinkSymbol('external-link'))} dest={routeDest(adt('opportunityCWUView', { opportunityId }))}>View opportunity</Link>
+          </div>
+        </div>
+      )
+    };
+  },
+  error: statusChanged.error(CWUOpportunityStatus.Published)
 };
 
 export const draftCreated = {

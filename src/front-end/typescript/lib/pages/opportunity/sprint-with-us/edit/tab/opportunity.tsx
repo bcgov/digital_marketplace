@@ -195,16 +195,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             state,
             state1 => updateStatus(state1, SWUOpportunityStatus.Published,
               async state2 => {
-                dispatch(toast(adt('success', toasts.statusChanged.success(SWUOpportunityStatus.Published))));
+                dispatch(toast(adt('success', toasts.published.success(state.opportunity.id))));
                 return state2;
               },
               async state2 => {
-                dispatch(toast(adt('error', toasts.statusChanged.error(SWUOpportunityStatus.Published))));
+                dispatch(toast(adt('error', toasts.published.error)));
                 return state2;
               }
             ),
             async state1 => {
-              dispatch(toast(adt('error', toasts.statusChanged.error(SWUOpportunityStatus.Published))));
+              dispatch(toast(adt('error', toasts.published.error)));
               return state1;
             }
           );
@@ -243,15 +243,24 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         startUpdateStatusLoading(state),
         async (state, dispatch) => {
           state = stopUpdateStatusLoading(state);
+          const isPublish = msg.value === SWUOpportunityStatus.Published;
           return await updateStatus(
             state,
             msg.value,
             async (state1, opportunity) => {
-              dispatch(toast(adt('success', toasts.statusChanged.success(opportunity.status))));
+              if (isPublish) {
+                dispatch(toast(adt('success', toasts.published.success(opportunity.id))));
+              } else {
+                dispatch(toast(adt('success', toasts.statusChanged.success(opportunity.status))));
+              }
               return state1;
             },
             async (state1) => {
-              dispatch(toast(adt('error', toasts.statusChanged.error(msg.value))));
+              if (isPublish) {
+                dispatch(toast(adt('error', toasts.published.error)));
+              } else {
+                dispatch(toast(adt('error', toasts.statusChanged.error(msg.value))));
+              }
               return state1;
             }
           );

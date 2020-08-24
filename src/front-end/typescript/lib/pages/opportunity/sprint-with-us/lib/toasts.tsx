@@ -1,5 +1,8 @@
 import { swuOpportunityStatusToPastTenseVerb, swuOpportunityStatusToPresentTenseVerb } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import React from 'react';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { adt, Id } from 'shared/lib/types';
 
 export const statusChanged = {
   success: (s: SWUOpportunityStatus) => {
@@ -15,6 +18,24 @@ export const statusChanged = {
       body: `Sprint With Us opportunity could not be ${swuOpportunityStatusToPastTenseVerb(s).toLowerCase()}. Please try again later.`
     };
   }
+};
+
+export const published = {
+  success: (opportunityId: Id) => {
+    const { title, body } = statusChanged.success(SWUOpportunityStatus.Published);
+    return {
+      title,
+      body: (
+        <div>
+          {body}
+          <div className='mt-2'>
+            <Link newTab symbol_={rightPlacement(iconLinkSymbol('external-link'))} dest={routeDest(adt('opportunitySWUView', { opportunityId }))}>View opportunity</Link>
+          </div>
+        </div>
+      )
+    };
+  },
+  error: statusChanged.error(SWUOpportunityStatus.Published)
 };
 
 export const draftCreated = {

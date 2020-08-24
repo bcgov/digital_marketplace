@@ -78,14 +78,15 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published as const : CWUOpportunityStatus.Draft as const));
           switch (result.tag) {
             case 'valid':
+              const opportunityId = result.value[1].id;
               dispatch(newRoute(adt('opportunityCWUEdit' as const, {
-                opportunityId: result.value[1].id,
+                opportunityId,
                 tab: isPublish ? 'summary' as const : 'opportunity' as const
               })));
-              dispatch(toast(adt('success', isPublish ? toasts.statusChanged.success(CWUOpportunityStatus.Published) : toasts.draftCreated.success)));
+              dispatch(toast(adt('success', isPublish ? toasts.published.success(opportunityId) : toasts.draftCreated.success)));
               return state.set('form', result.value[0]);
             case 'invalid':
-              dispatch(toast(adt('error', isPublish ? toasts.statusChanged.error(CWUOpportunityStatus.Published) : toasts.draftCreated.error)));
+              dispatch(toast(adt('error', isPublish ? toasts.published.error : toasts.draftCreated.error)));
               state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
               return state
                 .set('showErrorAlert', isPublish ? 'publish' : 'save')
