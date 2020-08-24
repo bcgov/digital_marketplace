@@ -1,7 +1,7 @@
 import { Route } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import Link, { emailDest, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDate, formatTime } from 'shared/lib';
@@ -50,7 +50,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
                 : 'You have not yet agreed to the following.'}
             </p>
             <h3>Privacy Policy</h3>
-            <p>Your personal information is being collected by the Ministry of Citizens’ Services under s.26(c) of the Freedom of Information and Protection of Privacy Act (FOIPPA). The collection, use and disclosure of your personal information is for the purpose of notifying, applying and awarding opportunities on the BCDevExchange. If you have any questions, please contact: Peter Watkins, Executive Director, BC Developers’ Exchange and DevOps, Ministry of Citizens’ Services, 250-514-2739.</p>
+            <p>Your personal information is being collected by the Ministry of Citizens’ Services under s.26(c) of the Freedom of Information and Protection of Privacy Act (FOIPPA). The collection, use and disclosure of your personal information is for the purpose of notifying, applying and awarding opportunities on the Digital Marketplace. If you have any questions, please contact: Zachary Woodward, Senior Director, Procurement, Ministry of Citizens’ Services, <Link dest={emailDest(['procurementadvisory@gov.bc.ca'])}>procurementadvisory@gov.bc.ca</Link>.</p>
           </div>
         </Col>
         <Col xs='12'>
