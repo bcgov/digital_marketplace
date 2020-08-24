@@ -269,7 +269,7 @@ const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
 };
 
 const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[]): ReportCard[]  => {
-  const numProposals = proposals.length;
+  const numProposals = opportunity.reporting?.numProposals || 0;
   const [highestScore, averageScore] = proposals.reduce(([highest, average], { totalScore }, i) => {
     if (!totalScore) { return [highest, average]; }
     return [

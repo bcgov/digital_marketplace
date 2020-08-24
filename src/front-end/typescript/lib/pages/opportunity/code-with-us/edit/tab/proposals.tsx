@@ -110,7 +110,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[]): ReportCard[]  => {
-  const numProposals = proposals.length;
+  const numProposals = opportunity.reporting?.numProposals || 0;
   const [highestScore, averageScore] = proposals.reduce(([highest, average], { score }, i) => {
     if (!score) { return [highest, average]; }
     return [
