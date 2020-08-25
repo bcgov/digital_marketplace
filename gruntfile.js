@@ -35,7 +35,8 @@ global.gruntConfig = {
     },
     env: {
       NODE_ENV,
-      CONTACT_EMAIL
+      CONTACT_EMAIL,
+      PATH_PREFIX
     }
   },
   backEnd: {

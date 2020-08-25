@@ -1,15 +1,13 @@
 const { transform, assign } = require("lodash");
 const path = require("path");
 const pathmodify = require("pathmodify");
+const envify = require("envify/custom");
 
 module.exports = {
   frontEnd: {
     options: {
       transform: [
-        [
-          "envify",
-          gruntConfig.frontEnd.env
-        ]
+        [envify(gruntConfig.frontEnd.env)]
       ],
       plugin: [
         [
