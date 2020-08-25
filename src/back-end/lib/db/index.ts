@@ -1,9 +1,10 @@
+import { ENV } from 'back-end/config';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
 import { invalid, Validation } from 'shared/lib/validation';
 
-const logger = makeDomainLogger(consoleAdapter, 'back-end');
+const logger = makeDomainLogger(consoleAdapter, 'back-end', ENV);
 
 export type Connection = Knex;
 

@@ -1,4 +1,4 @@
-import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
+import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
@@ -41,7 +41,7 @@ type BasicRoute = Route<SupportedRequestBodies, any, any, any, SupportedResponse
 
 type AppRouter = Router<SupportedRequestBodies, any, any, any, SupportedResponseBodies, any, Session>;
 
-const logger = makeDomainLogger(consoleAdapter, 'back-end');
+const logger = makeDomainLogger(consoleAdapter, 'back-end', ENV);
 
 export function connectToDatabase(postgresUrl: string): Connection {
   return Knex({

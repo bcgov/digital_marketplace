@@ -37,12 +37,15 @@ export function makeLogger(adapter: Adapter): Logger {
   };
 }
 
-export function makeDomainLogger(adapter: Adapter, domain: string): DomainLogger {
+const noOpLog: LogFunction = logWith((domain, msg) => { return; });
+
+export function makeDomainLogger(adapter: Adapter, domain: string, env: 'development' | 'production'): DomainLogger {
   const { info, warn, error, debug } = makeLogger(adapter);
+  const isDev = env === 'development';
   return {
     info: info.bind(null, domain),
     warn: warn.bind(null, domain),
     error: error.bind(null, domain),
-    debug: debug.bind(null, domain)
+    debug: isDev ? debug.bind(null, domain) : noOpLog.bind(null, domain)
   };
 }

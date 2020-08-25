@@ -1,4 +1,4 @@
-import { COOKIE_SECRET, TMP_DIR } from 'back-end/config';
+import { COOKIE_SECRET, ENV, TMP_DIR } from 'back-end/config';
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
@@ -121,7 +121,7 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
 }
 
 export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session, FileUploadMetaData>(): ExpressAdapter<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookState, Session, FileUploadMetaData> {
-  const logger = makeDomainLogger(consoleAdapter, 'adapter:express');
+  const logger = makeDomainLogger(consoleAdapter, 'adapter:express', ENV);
 
   return ({ router, sessionIdToSession, sessionToSessionId, host, port, maxMultipartFilesSize, parseFileUploadMetadata }) => {
     function respond(response: Response<ExpressResponseBodies, Session>, expressRes: expressLib.Response): void {
@@ -206,7 +206,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           method,
           headers,
           session,
-          logger: makeDomainLogger(consoleAdapter, `request:${requestId}`),
+          logger: makeDomainLogger(consoleAdapter, `request:${requestId}`, ENV),
           params: expressReq.params,
           query: expressReq.query,
           body

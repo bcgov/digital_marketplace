@@ -1,4 +1,4 @@
-import { UPDATE_HOOK_THROTTLE } from 'back-end/config';
+import { ENV, UPDATE_HOOK_THROTTLE } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
@@ -7,7 +7,7 @@ import { throttle } from 'lodash';
 import { Session } from 'shared/lib/resources/session';
 import { isInvalid, isValid, Validation } from 'shared/lib/validation';
 
-const logger = makeDomainLogger(consoleAdapter, 'hooks');
+const logger = makeDomainLogger(consoleAdapter, 'hooks', ENV);
 
 const createCrudHook: (connection: db.Connection) => RouteHook<unknown, unknown, unknown, unknown, null, Session> = (connection: db.Connection) => {
   const throttledBefore = throttle(() => {

@@ -4,8 +4,6 @@ import dotenv from 'dotenv';
 import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
 
-const logger = makeDomainLogger(consoleAdapter, 'back-end:config');
-
 // export the root directory of the repository.
 export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../');
 
@@ -19,7 +17,15 @@ function get(name: string , fallback: string): string {
   return process.env[name] || fallback;
 }
 
-export const ENV = get('NODE_ENV', 'production');
+export const ENV: 'development' | 'production' = (() => {
+  switch (get('NODE_ENV', 'production')) {
+    case 'development': return 'development';
+    case 'production': return 'production';
+    default: return 'production';
+  }
+})();
+
+const logger = makeDomainLogger(consoleAdapter, 'back-end:config', ENV);
 
 export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
 
