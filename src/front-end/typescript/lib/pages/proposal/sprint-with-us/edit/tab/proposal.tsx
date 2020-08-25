@@ -119,7 +119,7 @@ async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal
     .set('form', immutable(await Form.init({
       viewerUser: state.viewerUser,
       opportunity: state.opportunity,
-      proposal: state.proposal,
+      proposal,
       organizations: state.organizations,
       evaluationContent: state.evaluationContent,
       activeTab: Form.getActiveTab(state.form)
