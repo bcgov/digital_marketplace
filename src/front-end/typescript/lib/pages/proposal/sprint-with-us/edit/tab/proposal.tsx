@@ -113,9 +113,9 @@ const stopWithdrawLoading = makeStopLoading<ValidState>('withdrawLoading');
 const startDeleteLoading = makeStartLoading<ValidState>('deleteLoading');
 const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
 
-async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal): Promise<Immutable<ValidState>> {
-  state = state.set('proposal', proposal);
-  return state
+async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal, validate = false): Promise<Immutable<ValidState>> {
+  state = state
+    .set('proposal', proposal)
     .set('form', immutable(await Form.init({
       viewerUser: state.viewerUser,
       opportunity: state.opportunity,
@@ -124,6 +124,10 @@ async function resetProposal(state: Immutable<ValidState>, proposal: SWUProposal
       evaluationContent: state.evaluationContent,
       activeTab: Form.getActiveTab(state.form)
     })));
+  if (validate) {
+    state = state.update('form', s => Form.validate(s));
+  }
+  return state;
 }
 
 function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
@@ -161,7 +165,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = stopStartEditingLoading(state);
           const proposalResult = await api.proposals.swu.readOne(state.proposal.opportunity.id, state.proposal.id);
           if (!api.isValid(proposalResult)) { return state; }
-          state = await resetProposal(state, proposalResult.value);
+          state = await resetProposal(state, proposalResult.value, proposalResult.value.status === SWUProposalStatus.Draft);
           state = state.set('isEditing', true);
           return state;
         }

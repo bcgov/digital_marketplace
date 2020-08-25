@@ -220,6 +220,11 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
   return state;
 }
 
+// Nothing to visibly validate for this component.
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state;
+}
+
 function areAllCapabilitiesChecked(capabilities: Capability[]): boolean {
   for (const c of capabilities) {
     if (!c.checked) {

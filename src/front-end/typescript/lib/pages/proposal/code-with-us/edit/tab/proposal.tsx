@@ -64,8 +64,8 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSlim[], proposal: CWUProposal, viewerUser: User, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
-  return immutable(await Form.init({
+async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSlim[], proposal: CWUProposal, viewerUser: User, activeTab?: Form.TabId, validate = false): Promise<Immutable<Form.State>> {
+  let state = immutable(await Form.init({
     viewerUser,
     opportunity,
     proposal,
@@ -74,6 +74,10 @@ async function initForm(opportunity: CWUOpportunity, affiliations: AffiliationSl
     canRemoveExistingAttachments: proposal.status === CWUProposalStatus.Draft
                                || (proposal.status === CWUProposalStatus.Submitted && isCWUOpportunityAcceptingProposals(opportunity))
   }));
+  if (validate) {
+    state = Form.validate(state);
+  }
+  return state;
 }
 
 const init: Init<Tab.Params, State> = async params => {
@@ -167,7 +171,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (!api.isValid(proposalResult) || !api.isValid(affiliationsResult)) { return state; }
           state = state
             .set('isEditing', true)
-            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, state.viewerUser, Form.getActiveTab(state.form)))
+            .set('form', await initForm(state.opportunity, affiliationsResult.value, proposalResult.value, state.viewerUser, Form.getActiveTab(state.form), proposalResult.value.status === CWUProposalStatus.Draft))
             .set('proposal', proposalResult.value);
           return state;
         }

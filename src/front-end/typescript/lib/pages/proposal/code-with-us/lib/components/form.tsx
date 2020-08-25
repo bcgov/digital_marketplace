@@ -515,6 +515,24 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
     .update('organization', s => FormField.setErrors(s, organizationErrors));
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state
+    .update('proposalText', s => FormField.validate(s))
+    .update('additionalComments', s => FormField.validate(s))
+    .update('proponentType', s => FormField.validate(s))
+    .update('legalName', s => FormField.validate(s))
+    .update('email', s => FormField.validate(s))
+    .update('phone', s => FormField.validate(s))
+    .update('street1', s => FormField.validate(s))
+    .update('street2', s => FormField.validate(s))
+    .update('city', s => FormField.validate(s))
+    .update('region', s => FormField.validate(s))
+    .update('mailCode', s => FormField.validate(s))
+    .update('country', s => FormField.validate(s))
+    .update('organization', s => FormField.validate(s))
+    .update('attachments', s => Attachments.validate(s));
+}
+
 type PersistAction
   = ADT<'create', CreateCWUProposalStatus>
   | ADT<'update', Id>;

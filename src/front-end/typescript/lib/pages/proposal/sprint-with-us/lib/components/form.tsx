@@ -249,6 +249,18 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
     .update('references', s => References.setErrors(s, errors?.references || []));
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state
+    .update('organization', s => FormField.validate(s))
+    .update('team', s => Team.validate(s))
+    .update('inceptionCost', s => FormField.validate(s))
+    .update('prototypeCost', s => FormField.validate(s))
+    .update('implementationCost', s => FormField.validate(s))
+    .update('totalCost', s => FormField.validate(s))
+    .update('teamQuestions', s => TeamQuestions.validate(s))
+    .update('references', s => References.validate(s));
+}
+
 export function isTeamTabValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.organization)
       && Team.isValid(state.team);
