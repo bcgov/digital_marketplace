@@ -175,7 +175,6 @@ const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({ state, dispatc
 const view: ComponentView<State, Msg> = viewValid(props => {
   const { state, dispatch } = props;
   const isDisabled = state.completeProfileLoading > 0;
-  if (!isValid(state)) { return null; }
   return (
     <div>
       <ProfileForm.view
