@@ -1,4 +1,4 @@
-import { makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid, withValid } from 'front-end/lib';
+import { makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isSignedIn } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -38,9 +38,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
   async success({ shared, dispatch }) {
     const user = shared.sessionUser;
     if (user.acceptedTerms) {
-      dispatch(replaceRoute(adt('userProfile' as const, {
-        userId: user.id
-      })));
+      dispatch(replaceRoute(adt('dashboard' as const, null)));
       return invalid(null);
     }
     return valid(immutable({
@@ -110,7 +108,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           });
           switch (result.tag) {
             case 'valid':
-              dispatch(replaceRoute(adt('landing' as const, null)));
+              dispatch(replaceRoute(adt('dashboard' as const, null)));
               return state = state
                 .set('user', result.value[1])
                 .set('profileForm', result.value[0]);
@@ -177,6 +175,7 @@ const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({ state, dispatc
 const view: ComponentView<State, Msg> = viewValid(props => {
   const { state, dispatch } = props;
   const isDisabled = state.completeProfileLoading > 0;
+  if (!isValid(state)) { return null; }
   return (
     <div>
       <ProfileForm.view
@@ -193,15 +192,15 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  sidebar: {
+  sidebar: sidebarValid({
     size: 'large',
     color: 'blue-light',
-    view: makeInstructionalSidebar<State, Msg>({
+    view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'You\'re almost done!',
-      getDescription: withValid(state => `Your ${userTypeToTitleCase(state.user.type)} account for the Digital Marketplace is almost ready. Please confirm your information below to complete your profile.`, ''),
+      getDescription: state => `Your ${userTypeToTitleCase(state.user.type)} account for the Digital Marketplace is almost ready. Please confirm your information below to complete your profile.`,
       getFooter: () => (<span></span>)
     })
-  },
+  }),
   getMetadata() {
     return makePageMetadata('Complete Your Profile');
   }
