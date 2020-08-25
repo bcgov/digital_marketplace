@@ -327,6 +327,29 @@ function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
   }
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  state = state
+    .update('title',              s => FormField.validate(s))
+    .update('teaser',             s => FormField.validate(s))
+    .update('location',           s => FormField.validate(s))
+    .update('reward',             s => FormField.validate(s))
+    .update('skills',             s => FormField.validate(s))
+    .update('description',        s => FormField.validate(s))
+    .update('remoteOk',           s => FormField.validate(s))
+    .update('proposalDeadline',   s => FormField.validate(s))
+    .update('startDate',          s => FormField.validate(s))
+    .update('assignmentDate',     s => FormField.validate(s))
+    .update('completionDate',     s => FormField.validate(s))
+    .update('submissionInfo',     s => FormField.validate(s))
+    .update('acceptanceCriteria', s => FormField.validate(s))
+    .update('evaluationCriteria', s => FormField.validate(s))
+    .update('attachments',        s => Attachments.validate(s));
+  if (FormField.getValue(state.remoteOk) === 'yes') {
+    state = state.update('remoteDesc', s => FormField.validate(s));
+  }
+  return state;
+}
+
 type Errors = CreateValidationErrors;
 
 export function isOverviewTabValid(state: Immutable<State>): boolean {

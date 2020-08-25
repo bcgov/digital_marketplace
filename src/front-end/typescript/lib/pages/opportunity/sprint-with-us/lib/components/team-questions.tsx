@@ -185,6 +185,16 @@ export function setErrors(state: Immutable<State>, errors: Errors = []): Immutab
   }, state);
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state.questions.reduce((acc, q, i) => {
+    return state
+      .updateIn(['questions', i, 'question'], s => FormField.validate(s))
+      .updateIn(['questions', i, 'guideline'], s => FormField.validate(s))
+      .updateIn(['questions', i, 'wordLimit'], s => FormField.validate(s))
+      .updateIn(['questions', i, 'score'], s => FormField.validate(s));
+  }, state);
+}
+
 export function isValid(state: Immutable<State>): boolean {
   if (!state.questions.length) { return false; }
   return state.questions.reduce((acc, q) => {

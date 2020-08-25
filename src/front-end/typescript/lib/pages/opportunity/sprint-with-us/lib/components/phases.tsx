@@ -184,6 +184,13 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
     .update('implementationPhase', s => Phase.setErrors(s, errors.implementationPhase));
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state
+    .update('inceptionPhase', s => Phase.validate(s))
+    .update('prototypePhase', s => Phase.validate(s))
+    .update('implementationPhase', s => Phase.validate(s));
+}
+
 export function isValid(state: Immutable<State>): boolean {
   return (!hasPhase(state, SWUOpportunityPhaseType.Inception) || Phase.isValid(state.inceptionPhase))
       && (!hasPhase(state, SWUOpportunityPhaseType.Prototype) || Phase.isValid(state.prototypePhase))

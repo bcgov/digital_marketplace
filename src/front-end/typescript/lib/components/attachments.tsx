@@ -8,13 +8,17 @@ import React from 'react';
 import { FormText } from 'reactstrap';
 import { CreateValidationErrors, enforceExtension, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';
 import { adt, ADT } from 'shared/lib/types';
-import { getInvalidValue, optional } from 'shared/lib/validation';
+import { getInvalidValue, mapValid, optional, Validation } from 'shared/lib/validation';
 import { validateFileName } from 'shared/lib/validation/file';
 
 interface NewAttachment extends CreateFileRequestBody {
   newName: string;
   errors: string[];
   url: string;
+}
+
+function validateNewName(name?: string): Validation<string> {
+  return mapValid(optional(name, validateFileName), v => v || '');
 }
 
 export interface State {
@@ -31,6 +35,18 @@ export type Msg
   | ADT<'onChangeNewAttachmentName', [number, string]>;
 
 export type Params = Pick<State, 'canRemoveExistingAttachments' | 'existingAttachments' | 'newAttachmentMetadata'>;
+
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state.newAttachments.reduce((acc, a, i) => {
+    return acc.updateIn(['newAttachments', i], newAttachment => {
+      const errors = getInvalidValue(validateNewName(newAttachment.newName), []);
+      return {
+        ...newAttachment,
+        errors
+      };
+    });
+  }, state);
+}
 
 export function isValid(state: Immutable<State>): boolean {
   return state.newAttachments.reduce((valid, attachment) => valid && !attachment.errors.length, true as boolean);
@@ -76,7 +92,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'onChangeNewAttachmentName':
       return [state.update('newAttachments', attachments => attachments.map((a, i) => {
         if (i === msg.value[0]) {
-          const errors = getInvalidValue(optional(msg.value[1], v => validateFileName(v)), []);
+          const errors = getInvalidValue(validateNewName(msg.value[1]), []);
           return {
             ...a,
             errors,

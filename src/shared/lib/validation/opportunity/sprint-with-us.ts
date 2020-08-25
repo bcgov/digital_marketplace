@@ -41,7 +41,7 @@ export function validateSWUOpportunityPhaseCompletionDate(raw: string, startDate
 }
 
 export function validateSWUOpportunityPhaseMaxBudget(raw: number, totalMaxBudget?: number): Validation<number> {
-  return validateNumber(raw, 0, totalMaxBudget);
+  return validateNumber(raw, 1, totalMaxBudget);
 }
 
 interface ValidatedCreateSWUOpportunityPhaseBody extends Omit<CreateSWUOpportunityPhaseBody, 'startDate' | 'completionDate'> {

@@ -35,6 +35,12 @@ export interface Params {
   newAddenda?: NewAddendumParam[];
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state.newAddenda.reduce((acc, a, i) => {
+    return state.updateIn(['newAddenda', i], s => FormField.validate(a));
+  }, state);
+}
+
 export function isValid(state: Immutable<State>): boolean {
   return state.newAddenda.reduce((valid, addendum) => valid && FormField.isValid(addendum), true as boolean);
 }

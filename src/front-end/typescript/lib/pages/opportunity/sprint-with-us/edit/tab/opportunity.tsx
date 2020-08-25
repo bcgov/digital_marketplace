@@ -11,7 +11,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { canAddAddendumToSWUOpportunity, canSWUOpportunityDetailsBeEdited, isSWUOpportunityPublic, SWUOpportunity, SWUOpportunityStatus, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canAddAddendumToSWUOpportunity, canSWUOpportunityDetailsBeEdited, isSWUOpportunityPublic, isUnpublished, SWUOpportunity, SWUOpportunityStatus, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -57,14 +57,18 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function initForm(opportunity: SWUOpportunity, viewerUser: User, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
-  return immutable(await Form.init({
+async function initForm(opportunity: SWUOpportunity, viewerUser: User, activeTab?: Form.TabId, validate = false): Promise<Immutable<Form.State>> {
+  let state = immutable(await Form.init({
     opportunity,
     viewerUser,
     activeTab,
     showAddendaTab: canAddAddendumToSWUOpportunity(opportunity),
     canRemoveExistingAttachments: canSWUOpportunityDetailsBeEdited(opportunity, isAdmin(viewerUser))
   }));
+  if (validate) {
+    state = Form.validate(state);
+  }
+  return state;
 }
 
 const init: Init<Tab.Params, State> = async params => ({
@@ -150,7 +154,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (api.isValid(result)) {
             return state
               .set('isEditing', true)
-              .set('form', await initForm(result.value, state.viewerUser, Form.getActiveTab(state.form)));
+              .set('form', await initForm(result.value, state.viewerUser, Form.getActiveTab(state.form), isUnpublished(result.value)));
           } else {
             dispatch(toast(adt('error', toasts.startedEditing.error)));
             return state;

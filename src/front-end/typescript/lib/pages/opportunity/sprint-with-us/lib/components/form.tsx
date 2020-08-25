@@ -446,6 +446,34 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
   }
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  state = state
+    .update('title', s => FormField.validate(s))
+    .update('teaser', s => FormField.validate(s))
+    .update('remoteOk', s => FormField.validate(s))
+    .update('remoteDesc', s => FormField.validate(s))
+    .update('location', s => FormField.validate(s))
+    .update('proposalDeadline', s => FormField.validate(s))
+    .update('assignmentDate', s => FormField.validate(s))
+    .update('totalMaxBudget', s => FormField.validate(s))
+    .update('minTeamMembers', s => FormField.validate(s))
+    .update('mandatorySkills', s => FormField.validate(s))
+    .update('optionalSkills', s => FormField.validate(s))
+    .update('description', s => FormField.validate(s))
+    .update('phases', s => Phases.validate(s))
+    .update('teamQuestions', s => TeamQuestions.validate(s))
+    .update('questionsWeight', s => FormField.validate(s))
+    .update('codeChallengeWeight', s => FormField.validate(s))
+    .update('scenarioWeight', s => FormField.validate(s))
+    .update('priceWeight', s => FormField.validate(s))
+    .update('weightsTotal', s => FormField.validate(s))
+    .update('attachments', s => Attachments.validate(s));
+  if (state.addenda) {
+    state = state.set('addenda', Addenda.validate(state.addenda));
+  }
+  return state;
+}
+
 export function isOverviewTabValid(state: Immutable<State>): boolean {
   const remoteOk = FormField.getValue(state.remoteOk) === 'yes';
   return FormField.isValid(state.title)

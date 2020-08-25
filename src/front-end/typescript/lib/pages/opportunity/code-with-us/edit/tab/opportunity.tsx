@@ -12,7 +12,7 @@ import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { canAddAddendumToCWUOpportunity, canCWUOpportunityDetailsBeEdited, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { canAddAddendumToCWUOpportunity, canCWUOpportunityDetailsBeEdited, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, isUnpublished, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 type ModalId = 'publish' | 'publishChanges' | 'saveChangesAndPublish' | 'delete' | 'cancel' | 'suspend';
@@ -46,13 +46,17 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId): Promise<Immutable<Form.State>> {
-  return immutable(await Form.init({
+async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId, validate = false): Promise<Immutable<Form.State>> {
+  let state = immutable(await Form.init({
     opportunity,
     activeTab,
     showAddendaTab: canAddAddendumToCWUOpportunity(opportunity),
     canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(opportunity)
   }));
+  if (validate) {
+    state = Form.validate(state);
+  }
+  return state;
 }
 
 const init: Init<Tab.Params, State> = async params => ({
@@ -137,7 +141,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (api.isValid(result)) {
             return state
               .set('isEditing', true)
-              .set('form', await initForm(result.value, Form.getActiveTab(state.form)));
+              .set('form', await initForm(result.value, Form.getActiveTab(state.form), isUnpublished(result.value)));
           } else {
             dispatch(toast(adt('error', toasts.startedEditing.error)));
             return state;

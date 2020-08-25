@@ -183,6 +183,13 @@ export function setErrors(state: Immutable<State>, errors?: Errors): Immutable<S
     .update('maxBudget', s => FormField.setErrors(s, errors?.maxBudget || []));
 }
 
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state
+    .update('startDate', s => FormField.validate(s))
+    .update('completionDate', s => FormField.validate(s))
+    .update('maxBudget', s => FormField.validate(s));
+}
+
 export function isValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.startDate)
       && FormField.isValid(state.completionDate)
