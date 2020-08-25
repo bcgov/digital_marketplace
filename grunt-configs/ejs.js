@@ -6,12 +6,12 @@ module.exports = {
       prefixPath: gruntConfig.helpers.prefixPath
     },
     files: [{
-      src: [ `${gruntConfig.src.html}/**/*.ejs` ],
+      src: [ `${gruntConfig.frontEnd.src.html}/**/*.ejs` ],
       filter: "isFile",
-      dest: gruntConfig.dir.build,
+      dest: gruntConfig.frontEnd.build.dir,
       expand: true,
       rename(_dest, src) {
-        return path.join(_dest, `${path.relative(gruntConfig.src.html, src).replace(/\.ejs$/i, '')}.html`);
+        return path.join(_dest, `${path.relative(gruntConfig.frontEnd.src.html, src).replace(/\.ejs$/i, '')}.html`);
       }
     }]
   }

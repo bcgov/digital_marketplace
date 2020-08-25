@@ -5,20 +5,20 @@ module.exports = {
   },
   js: {
     files: [
-      `${gruntConfig.src.ts}/**`,
-      `${gruntConfig.src.tsShared}/**`
+      `${gruntConfig.frontEnd.src.ts}/**`,
+      `${gruntConfig.shared.src.dir}/**`
     ],
     tasks: [
       // Do not clean tmp dir here to ensure
       // TypeScript builds incrementally (faster).
-      "shell:typescript",
-      "browserify",
+      "shell:typeScriptFrontEnd",
+      "browserify:frontEnd",
       "compress:gzip"
     ]
   },
   sass: {
     files: [
-      `${gruntConfig.src.sass}/**`
+      `${gruntConfig.frontEnd.src.sass}/**`
     ],
     tasks: [
       "sass",
@@ -28,10 +28,10 @@ module.exports = {
   },
   static: {
     files: [
-      `${gruntConfig.src.static}/**`
+      `${gruntConfig.frontEnd.src.static}/**`
     ],
     tasks: [
-      "common",
+      "front-end:common",
       "compress:gzip"
     ]
   },

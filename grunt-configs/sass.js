@@ -10,7 +10,7 @@ module.exports = {
   },
   dist: {
     files: {
-      [gruntConfig.out.css]: `${gruntConfig.src.sass}/index.scss`
+      [gruntConfig.frontEnd.build.css]: `${gruntConfig.frontEnd.src.sass}/index.scss`
     }
   }
 };

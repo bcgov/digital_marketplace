@@ -8,7 +8,7 @@ module.exports = {
         autoprefixer({ browsers: "last 2 versions" })
       ]
     },
-    src: gruntConfig.out.css
+    src: gruntConfig.frontEnd.build.css
   },
   min: {
     options: {
@@ -16,6 +16,6 @@ module.exports = {
         cssnano()
       ]
     },
-    src: gruntConfig.out.css
+    src: gruntConfig.frontEnd.build.css
   }
 };

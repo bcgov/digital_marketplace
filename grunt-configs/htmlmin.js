@@ -1,4 +1,4 @@
-const html = gruntConfig.out.html;
+const html = gruntConfig.frontEnd.build.dir;
 const index = `${html}/index.html`;
 
 module.exports = {

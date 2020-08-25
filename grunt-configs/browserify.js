@@ -1,16 +1,14 @@
 const { transform, assign } = require("lodash");
 const path = require("path");
-const root = path.resolve(__dirname, "..", gruntConfig.src.ts);
-const compilerOptions = require(path.join(root, "tsconfig.json")).compilerOptions;
 const pathmodify = require("pathmodify");
 
 module.exports = {
-  build: {
+  frontEnd: {
     options: {
       transform: [
         [
           "envify",
-          gruntConfig.env
+          gruntConfig.frontEnd.env
         ]
       ],
       plugin: [
@@ -18,20 +16,20 @@ module.exports = {
           "pathmodify",
           {
             mods: [
-              pathmodify.mod.dir("front-end", `${gruntConfig.tmp.frontEnd}`),
-              pathmodify.mod.dir("shared", `${gruntConfig.tmp.shared}`)
+              pathmodify.mod.dir("front-end", `${gruntConfig.frontEnd.tmp.dir}/front-end/typescript`),
+              pathmodify.mod.dir("shared", `${gruntConfig.frontEnd.tmp.dir}/shared`)
             ]
           }
         ]
       ],
       browserifyOptions: {
-        debug: gruntConfig.env.NODE_ENV === "development",
+        debug: gruntConfig.frontEnd.env.NODE_ENV === "development",
         paths: ['./node_modules']
       }
     },
     src: [
-      `${gruntConfig.tmp.frontEnd}/index.js`
+      `${gruntConfig.frontEnd.tmp.dir}/front-end/typescript/index.js`
     ],
-    dest: `${gruntConfig.out.js}`
+    dest: gruntConfig.frontEnd.build.js
   }
 };

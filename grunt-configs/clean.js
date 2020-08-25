@@ -1,4 +1,11 @@
 module.exports = {
-  tmp: [ `${gruntConfig.dir.tmp}/*` ],
-  build: [ `${gruntConfig.dir.build}/*` ]
+  frontEndTmp: [
+    `${gruntConfig.frontEnd.tmp.dir}/*`
+  ],
+  frontEndBuild: [
+    `${gruntConfig.frontEnd.build.dir}/*`
+  ],
+  backEndBuild: [
+    `${gruntConfig.backEnd.build.dir}/*`
+  ]
 };

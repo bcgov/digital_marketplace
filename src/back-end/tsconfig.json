@@ -5,7 +5,6 @@
     "moduleResolution": "node",
     "jsx": "react",
     "allowJs": true,
-    "noEmit": true,
     "strict": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,19 +12,19 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    "noErrorTruncation": true,
+    "baseUrl": ".",
     "incremental": true,
-    "baseUrl": "../../src",
     "paths": {
-      "back-end/*": ["./back-end/*"],
-      "migrations/*": ["./migrations/*"],
-      "shared/*": ["./shared/*"]
-    },
-    "types": [
-      "node"
-    ],
+      "back-end/*": ["./*"],
+      "migrations/*": ["../migrations/*"],
+      "shared/*": ["../shared/*"]
+    }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "**/*.json",
+    "**/*.js"
   ]
 }

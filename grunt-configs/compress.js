@@ -14,11 +14,11 @@ const files = ext => [{
   expand: true,
   filter: "isFile",
   src: [
-    `${gruntConfig.dir.build}/**/*`, //compress all build assets
-    `!${gruntConfig.dir.build}/**/*.woff2`, //woff2 fonts are already well-compressed
-    ...compressions.map(([_, ext]) => `!${gruntConfig.dir.build}/**/*.${ext}`) //don't recompress files
+    `${gruntConfig.frontEnd.build.dir}/**/*`, //compress all build assets
+    `!${gruntConfig.frontEnd.build.dir}/**/*.woff2`, //woff2 fonts are already well-compressed
+    ...compressions.map(([_, ext]) => `!${gruntConfig.frontEnd.build.dir}/**/*.${ext}`) //don't recompress files
   ],
-  dest: gruntConfig.dir.build,
+  dest: gruntConfig.frontEnd.build.dir,
   rename(_dest, src) {
     // No need to relativize src against src dir as they
     // are read from build dir.

@@ -6,7 +6,7 @@ module.exports = {
       }
     },
     files: {
-      [gruntConfig.out.js]: [gruntConfig.out.js]
+      [gruntConfig.frontEnd.build.js]: [gruntConfig.frontEnd.build.js]
     }
   }
 };

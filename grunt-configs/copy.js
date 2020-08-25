@@ -1,8 +1,8 @@
 module.exports = {
   "static": {
     expand: true,
-    cwd: gruntConfig.src.static,
+    cwd: gruntConfig.frontEnd.src.static,
     src: "**",
-    dest: gruntConfig.dir.build
+    dest: gruntConfig.frontEnd.build.dir
   }
 };

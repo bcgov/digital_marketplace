@@ -5,37 +5,51 @@ const prefix = a => b => `/${a ? deslash(a) + '/' : ''}${deslash(b)}`;
 const NODE_ENV = process.env.NODE_ENV === "development" ? "development" : "production";
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "digitalmarketplace@gov.bc.ca";
 const PATH_PREFIX = process.env.PATH_PREFIX || "";
-const src = path.resolve(__dirname, "./src/front-end");
-const tmp = path.resolve(__dirname, "./tmp/grunt");
-const build = path.resolve(__dirname, "./build/front-end");
+const srcFrontEnd = path.resolve(__dirname, "./src/front-end");
+const srcBackEnd = path.resolve(__dirname, "./src/back-end");
+const srcShared = path.resolve(__dirname, "./src/shared");
+const buildFrontEnd = path.resolve(__dirname, "./build/front-end");
+const buildBackEnd = path.resolve(__dirname, "./build/back-end");
+const tmpFrontEnd = path.resolve(__dirname, "./tmp/grunt/front-end");
+const tmpBackEnd = path.resolve(__dirname, "./tmp/grunt/back-end");
+const tmpShared = path.resolve(__dirname, "./tmp/grunt/shared");
 global.gruntConfig = {
-  env: {
-    NODE_ENV,
-    CONTACT_EMAIL
-  },
   helpers: {
     prefixPath: prefix(PATH_PREFIX)
   },
-  dir: {
-    src,
-    tmp,
-    build
+  frontEnd: {
+    src: {
+      dir: srcFrontEnd,
+      "static": `${srcFrontEnd}/static`,
+      "html": `${srcFrontEnd}/html`,
+      sass: `${srcFrontEnd}/sass`,
+      ts: `${srcFrontEnd}/typescript`
+    },
+    build: {
+      dir: buildFrontEnd,
+      css: `${buildFrontEnd}/app.css`,
+      js: `${buildFrontEnd}/app.js`
+    },
+    tmp: {
+      dir: tmpFrontEnd
+    },
+    env: {
+      NODE_ENV,
+      CONTACT_EMAIL
+    }
   },
-  src: {
-    "static": `${src}/static`,
-    "html": `${src}/html`,
-    sass: `${src}/sass`,
-    ts: `${src}/typescript`,
-    tsShared: `src/shared`
+  backEnd: {
+    src: {
+      dir: srcBackEnd
+    },
+    build: {
+      dir: buildBackEnd
+    }
   },
-  tmp: {
-    js: `${tmp}/js`,
-    frontEnd: `${tmp}/js/front-end/typescript`,
-    shared: `${tmp}/js/shared`
-  },
-  out: {
-    css: `${build}/app.css`,
-    js: `${build}/app.js`
+  shared: {
+    src: {
+      dir: srcShared
+    }
   }
 };
 
@@ -53,31 +67,37 @@ module.exports = function (grunt) {
     return _.isFunction(v) ? v(grunt) : v;
   }));
   //create task lists for dev and prod envs
-  grunt.registerTask("common", [
-    "clean",
+  //front-end
+  grunt.registerTask("front-end-common", [
+    "clean:frontEndTmp",
+    "clean:frontEndBuild",
     "copy",
     "ejs",
     "sass",
     "postcss:prefix",
-    "shell:typescript",
-    "browserify",
+    "shell:typeScriptFrontEnd",
+    "browserify:frontEnd",
   ]);
-  grunt.registerTask("development-build", [
-    "common",
+  grunt.registerTask("front-end-build-development", [
+    "front-end-common",
     "compress:gzip"
   ]);
-  grunt.registerTask("development-watch", [
-    "development-build",
-    "watch"
-  ]);
-  grunt.registerTask("production-build", [
-    "common",
+  grunt.registerTask("front-end-build-production", [
+    "front-end-common",
     "postcss:min",
     "terser:production",
     "htmlmin:production",
     "compress:gzip",
     "compress:brotli"
   ]);
-  grunt.registerTask("build", [ `${NODE_ENV}-build` ]);
-  grunt.registerTask("default", [ "development-watch" ]);
+  grunt.registerTask("front-end-build", [ `front-end-build-${NODE_ENV}` ]);
+  grunt.registerTask("front-end-watch-development", [
+    "front-end-build-development",
+    "watch"
+  ]);
+  //back-end
+  grunt.registerTask("back-end-build", [
+    "clean:backEndBuild",
+    "shell:typeScriptBackEnd"
+  ]);
 };
