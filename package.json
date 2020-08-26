@@ -55,7 +55,7 @@
     "@types/react-dom": "^16.8.4",
     "@types/uuid": "^3.4.5",
     "@wordpress/wordcount": "^2.7.0",
-    "bcrypt": "^3.0.6",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.18.3",
     "bowser": "^2.9.0",
     "chalk": "^2.4.2",
