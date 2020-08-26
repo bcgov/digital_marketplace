@@ -1,9 +1,11 @@
 
+import { AVATAR_MAX_IMAGE_HEIGHT, AVATAR_MAX_IMAGE_WIDTH } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection } from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import FileResource, { CreateRequestBody, ValidatedCreateRequestBody } from 'back-end/lib/resources/file';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import jimp from 'jimp';
 import { CreateValidationErrors } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { getInvalidValue, invalid, isValid, valid } from 'shared/lib/validation';
@@ -26,6 +28,17 @@ type Resource = crud.Resource<
   Connection
 >;
 
+export async function compressFile(path: string) {
+  let image = await jimp.read(path);
+  if (image.bitmap.width >= image.bitmap.height && image.bitmap.width > AVATAR_MAX_IMAGE_WIDTH) {
+    image = image.resize(AVATAR_MAX_IMAGE_WIDTH, jimp.AUTO);
+  } else if (image.bitmap.height > AVATAR_MAX_IMAGE_HEIGHT) {
+    image = image.resize(jimp.AUTO, AVATAR_MAX_IMAGE_HEIGHT);
+  }
+
+  image.write(path);
+}
+
 const resource: Resource = {
   routeNamespace: 'avatars',
 
@@ -46,6 +59,8 @@ const resource: Resource = {
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
+            // Compress avatar image files to max width/height
+            await compressFile(validatedRequestBody.value.path);
             return valid({
               ...validatedRequestBody.value,
               name: validatedFileName.value
