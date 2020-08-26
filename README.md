@@ -230,6 +230,8 @@ Environment variables that affect the back-end server's functionality are stored
 | `UPDATE_HOOK_THROTTLE` | The number of milliseconds used to throttle per-request jobs (e.g. automatically closing opportunities). Defaults to `60000`ms. |
 | `TOTAL_AWARDED_COUNT_OFFSET` | The number of awarded opportunities prior to the launch of the Digital Marketplace. |
 | `TOTAL_AWARDED_VALUE_OFFSET` | The CAD value of awarded opportunities prior to the launch of the Digital Marketplace. |
+| `AVATAR_MAX_IMAGE_WIDTH` | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. |
+| `AVATAR_MAX_IMAGE_HEIGHT` | The maximum image height for uploaded avatar image files. Files with a greater height will be resixzed. |
 | `FILE_STORAGE_DIR` | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing. |
 
 #### Front-End Environment Variables
