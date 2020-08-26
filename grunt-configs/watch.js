@@ -3,7 +3,7 @@ module.exports = {
     interrupt: true,
     debounceDelay: 250
   },
-  js: {
+  frontEndTS: {
     files: [
       `${gruntConfig.frontEnd.src.ts}/**`,
       `${gruntConfig.shared.src.dir}/**`
@@ -11,12 +11,12 @@ module.exports = {
     tasks: [
       // Do not clean tmp dir here to ensure
       // TypeScript builds incrementally (faster).
-      "shell:typeScriptFrontEnd",
+      "shell:frontEndTypeScript",
       "browserify:frontEnd",
       "compress:gzip"
     ]
   },
-  sass: {
+  frontEndSass: {
     files: [
       `${gruntConfig.frontEnd.src.sass}/**`
     ],
@@ -26,7 +26,7 @@ module.exports = {
       "compress:gzip"
     ]
   },
-  static: {
+  frontEndStatic: {
     files: [
       `${gruntConfig.frontEnd.src.static}/**`
     ],
@@ -34,5 +34,5 @@ module.exports = {
       "front-end:common",
       "compress:gzip"
     ]
-  },
+  }
 };

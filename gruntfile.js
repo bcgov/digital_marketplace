@@ -76,7 +76,7 @@ module.exports = function (grunt) {
     "ejs",
     "sass",
     "postcss:prefix",
-    "shell:typeScriptFrontEnd",
+    "shell:frontEndTypeScript",
     "browserify:frontEnd",
   ]);
   grunt.registerTask("front-end-build-development", [
@@ -94,11 +94,15 @@ module.exports = function (grunt) {
   grunt.registerTask("front-end-build", [ `front-end-build-${NODE_ENV}` ]);
   grunt.registerTask("front-end-watch-development", [
     "front-end-build-development",
-    "watch"
+    "concurrent:frontEndWatch"
   ]);
   //back-end
-  grunt.registerTask("back-end-build", [
+  grunt.registerTask("back-end-build-production", [
     "clean:backEndBuild",
-    "shell:typeScriptBackEnd"
+    "shell:backEndTypeScript"
   ]);
+  grunt.registerTask("back-end-build-development", [
+    "shell:backEndTypeScript"
+  ]);
+  grunt.registerTask("back-end-build", [ `back-end-build-${NODE_ENV}` ]);
 };

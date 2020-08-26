@@ -5,7 +5,8 @@ import { existsSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
 
 // export the root directory of the repository.
-export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../');
+// assumed the code is running via $ROOT/build/back-end/back-end/start.js
+export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../../');
 
 // Load environment variables from a .env file.
 dotenv.config({
