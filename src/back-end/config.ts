@@ -122,6 +122,11 @@ export const TOTAL_AWARDED_COUNT_OFFSET = parseInt(get('TOTAL_AWARDED_COUNT_OFFS
 
 export const TOTAL_AWARDED_VALUE_OFFSET = parseInt(get('TOTAL_AWARDED_VALUE_OFFSET', '13782000'), 10);
 
+// Maximum image dimensions for user and organization avatars
+export const AVATAR_MAX_IMAGE_WIDTH = parseInt(get('AVATAR_MAX_IMAGE_WIDTH', '500'), 10);
+
+export const AVATAR_MAX_IMAGE_HEIGHT = parseInt(get('AVATAR_MAX_IMAGE_HEIGHT', '500'), 10);
+
 // Temp storage for file uploads
 const fileStorageDir = get('FILE_STORAGE_DIR', '.');
 export const FILE_STORAGE_DIR = fileStorageDir && resolve(REPOSITORY_ROOT_DIR, fileStorageDir);

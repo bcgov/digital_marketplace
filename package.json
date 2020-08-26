@@ -64,6 +64,7 @@
     "express": "^4.16.4",
     "html-to-text": "^5.1.1",
     "immutable": "^4.0.0-rc.12",
+    "jimp": "^0.16.0",
     "keycloak-connect": "^8.0.0",
     "knex": "^0.19.3",
     "lodash": "^4.17.19",
