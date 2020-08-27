@@ -21,7 +21,8 @@ export function send(params: SendParams): Promise<void> {
     transport.sendMail({
       ...params,
       from: MAILER_FROM,
-      text: fromString(params.html, { wordwrap: 130 })
+      text: fromString(params.html, { wordwrap: 130 }),
+      headers: { 'Cache-Control': ['no-cache', 'max-age=0'] }
     }, error => {
       if (error) {
         // Do not reject promise, only log the error.
