@@ -328,7 +328,7 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
         <Container>
           <Row>
             <a href={makeUrl('')} target='_blank' style={styles.classes.logoBackground}>
-              <img src={makeUrl('images/bcgov_logo.svg')} alt='Digital Marketplace' style={styles.classes.logo} />
+              <img src={makeUrl('images/bcgov_logo.png')} alt='Digital Marketplace' style={styles.classes.logo} />
             </a>
           </Row>
           <Row style={styles.classes.title}>
