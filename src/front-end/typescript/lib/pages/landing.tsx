@@ -269,6 +269,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Welcome');
+    return makePageMetadata('Accueil');
   }
 };

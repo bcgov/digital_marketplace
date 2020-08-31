@@ -1,13 +1,11 @@
 @font-face{
-  font-family: 'BCSans';
+  font-family: 'Open Sans';
   font-style: normal;
   font-weight: 400;
-  src: url(prefix-path('/fonts/BCSans/BCSans-Regular.woff2')) format('woff2'),
-       url(prefix-path('/fonts/BCSans/BCSans-Regular.woff')) format('woff');
+  src: url(prefix-path('/fonts/OpenSans/OpenSans-Regular.ttf'));
 }
 @font-face{
-  font-family: 'BCSans';
+  font-family: 'Open Sans';
   font-weight: 500 700;
-  src: url(prefix-path('/fonts/BCSans/BCSans-Bold.woff2')) format('woff2'),
-       url(prefix-path('/fonts/BCSans/BCSans-Bold.woff')) format('woff');
+  src: url(prefix-path('/fonts/OpenSans/OpenSans-Bold.ttf'));
 }

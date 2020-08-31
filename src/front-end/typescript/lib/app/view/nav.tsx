@@ -340,14 +340,20 @@ const TopNavbar: View<Props> = props => {
                 <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
                   <img src={props.logoImageUrl} style={{ height: '32px' }} />
                 </Link>
-                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-3 d-none d-md-block' />
+                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-5 d-none d-md-block' />
                 {isLoading
                   ? (<Spinner size='sm' color='blue-dark-alt' className='transition-indicator ml-3' />)
                   : null}
               </div>
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
-                <a>English</a>
-                <a>Nous joindre</a>
+              <ul className='main-nav-top-navbar-list'>  
+                <li>
+                  <a href="#" lang="en"><span>English</span></a>
+                </li>
+								<li>
+                  <a href="#">Nous joindre</a>
+                </li>
+              </ul>
               </div>
               <div className='d-md-none'>
                 <Icon

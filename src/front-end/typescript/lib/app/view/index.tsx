@@ -439,14 +439,14 @@ const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
 const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
-    children: 'Sign In',
+    children: 'Connexion',
     button: true,
     outline: true,
     color: 'white',
     dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
-    children: 'Sign Up',
+    children: 'Créer un compte',
     button: true,
     color: 'primary',
     dest: routeDest(adt('signUpStepOne', {}))
@@ -586,7 +586,7 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
     logoImageUrl: prefixPath('/images/quebec_logo_PIV.svg'),
-    title: 'Marché numérique',
+    title: 'Échanges entre concepteurs',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
     appLinks: navAppLinks(state),

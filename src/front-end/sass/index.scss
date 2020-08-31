@@ -55,7 +55,7 @@ $blue:             #0C99D6;
 $blue-alt:         #17A2B8;
 $blue-alt-2:       #1e98d2;
 $blue-dark:        #095797;
-$blue-dark-alt:    #38598A;
+$blue-dark-alt:    #235892;
 $blue-dark-alt-2:  #223654;
 $blue-light:       #E7EDF3;
 $blue-light-alt:   #E9F5FB;
@@ -134,7 +134,7 @@ $theme-colors:   map-merge(
 // Other overrides.
 $border-width: 1px;
 
-$font-family-sans-serif: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-sans-serif: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 $font-weight-bold:       500;
 $font-weight-bolder:     700;
 
@@ -186,7 +186,6 @@ body {
 }
 
 html {
-  font-size: 16px;
 
   @media print {
     background: none;
@@ -271,10 +270,25 @@ nav {
 
     .main-nav-top-navbar {
       @extend .bg-qcgov-blue;
+      color: $white;
       width: 100%;
       height: $main-nav-top-height;
       position: relative;
       z-index: 2;
+    }
+
+    .main-nav-top-navbar a:link {
+      color: $white;
+    }
+
+    .main-nav-top-navbar-list {
+      list-style: none;
+      padding: 0 0 0 0.5rem;
+      margin: 0;
+    }
+
+    .main-nav-top-navbar-list a:link {
+      font-size: 0.875rem;
     }
 
     .main-nav-mobile-menu {
