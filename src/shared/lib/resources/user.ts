@@ -20,11 +20,13 @@ export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloak
   }
 }
 
-const GITHUB_IDP_USERNAME_REGEXP = /^(.+)@github$/i;
-
-export function userGitHubUsername(user: Pick<User, 'idpUsername'>): string | null {
-  const match = user.idpUsername.match(GITHUB_IDP_USERNAME_REGEXP);
-  return match ? match[1] : null;
+export function userGitHubUsername(user: Pick<User, 'idpUsername' | 'type'>): string | null {
+  switch (user.type) {
+    case UserType.Vendor:
+      return user.idpUsername;
+    default:
+      return null;
+  }
 }
 
 export function gitHubProfileLink(username: string): string {
