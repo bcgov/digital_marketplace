@@ -419,8 +419,6 @@ const DesktopBottomNavbar: View<Props> = props => {
               ))}
             </div>
             <ContextualLinks {...props} isOpen={props.state.isDesktopContextualDropdownOpen} toggle={() => props.dispatch(adt('toggleDesktopContextualDropdown'))} />
-          </Col>
-          <Col>
             <div className='d-none d-md-flex align-items-center flex-shrink-0'>
               <DesktopAccountMenu {...props} />
             </div>

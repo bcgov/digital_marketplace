@@ -9,3 +9,15 @@
   font-weight: 500 700;
   src: url(prefix-path('/fonts/OpenSans/OpenSans-Bold.ttf'));
 }
+
+@font-face{
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: url(prefix-path('/fonts/Roboto/Roboto-Regular.ttf'));
+}
+@font-face{
+  font-family: 'Roboto';
+  font-weight: 500 700;
+  src: url(prefix-path('/fonts/Roboto/Roboto-Bold.ttf'));
+}

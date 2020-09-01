@@ -9,7 +9,6 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { formatAmount } from 'shared/lib';
 import { adt, ADT } from 'shared/lib/types';
 
 const IMG_MAX_WIDTH = '550px';
@@ -43,42 +42,37 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
-    <Container className='pb-7 pb-md-8 pt-sm-4 pt-md-3'>
-      <Row className='justify-content-center text-center'>
-        <Col xs='12' sm='10' md='6'>
-          <h1 style={{lineHeight: '3.75rem'}}>
-            Discover Unique Opportunities to Collaborate with the BC Public Sector.
+    <Container className='hero-component pb-7 pb-md-8 pt-sm-4 pt-md-3'>
+      <Row className='justify-content-left text-left'>
+        <Col md='5'>
+          <h1 className='roboto' style={{lineHeight: '3.75rem'}}>
+            Collaborez <br/>avec le gouvernement <br/>du Québec
           </h1>
-        </Col>
-      </Row>
-      <Row className='justify-content-center text-center'>
-        <Col xs='12' sm='10' md='6' className='mt-3'>
-          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and BC's public sector.
-        </Col>
-      </Row>
-      <Row className='mt-5 mb-6 mb-md-8'>
-        <Col xs='12' className='d-flex justify-content-center'>
+          <div className='mt-3 mb-3'>
+          Le marché numérique gouvernemental est une nouvelle
+          plateforme qui contribue à bâtir un écosystème en matière
+          d'innovation et de collaboration entre les entrepreneurs
+          technologiques et le gouvernement du Québec.
+          </div>
           <Link
             button
-            symbol_={leftPlacement(iconLinkSymbol('search'))}
+            outline
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            dest={routeDest(adt('content', 'about'))}
+            color='primary'
+            className='mr-3'>
+            À propos
+          </Link>
+          <Link
+            button
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('opportunities', null))}
             color='primary'>
-            Browse Opportunities
+            Parcourez les opportunités
           </Link>
         </Col>
-      </Row>
-      <Row className='text-nowrap'>
-        <Col xs='12'>
-          <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center mr-md-6 mb-4 mb-md-0'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalCount)}</div>
-              <div className='ml-md-3 font-size-small text-secondary'>Total Opportunities Awarded</div>
-            </div>
-            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalAwarded, '$')}</div>
-              <div className='ml-md-3 font-size-small text-secondary'>Total Value of All Opportunities</div>
-            </div>
-          </div>
+        <Col xs='12' sm='10' md='7'>
+          <img src={prefixPath('images/illustrations/accueil.svg')} className='w-100' alt='Logo Échanges entre concepteurs' />
         </Col>
       </Row>
     </Container>

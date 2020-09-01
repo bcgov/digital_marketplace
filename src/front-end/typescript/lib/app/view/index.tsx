@@ -442,7 +442,7 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
     children: 'Connexion',
     button: true,
     outline: true,
-    color: 'white',
+    color: 'primary',
     dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
