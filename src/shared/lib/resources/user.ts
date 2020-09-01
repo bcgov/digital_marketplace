@@ -20,15 +20,6 @@ export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloak
   }
 }
 
-export function userGitHubUsername(user: Pick<User, 'idpUsername' | 'type'>): string | null {
-  switch (user.type) {
-    case UserType.Vendor:
-      return user.idpUsername;
-    default:
-      return null;
-  }
-}
-
 export function gitHubProfileLink(username: string): string {
   return `https://github.com/${username}`;
 }
