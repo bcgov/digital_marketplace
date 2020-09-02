@@ -138,7 +138,7 @@ const resource: Resource = {
                 teamQuestionResponses,
                 references } = request.body;
 
-        if (!permissions.isSignedIn(request.session) || !permissions.createSWUProposal(request.session)) {
+        if (!permissions.isSignedIn(request.session) || !await permissions.createSWUProposal(connection, request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });

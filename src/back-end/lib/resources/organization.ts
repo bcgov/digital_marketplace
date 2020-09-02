@@ -150,7 +150,7 @@ const resource: Resource = {
                       validatedContactEmail,
                       validatedContactPhone
                     ])) {
-                      if (!permissions.createOrganization(request.session) || !permissions.isSignedIn(request.session)) {
+                      if (!await permissions.createOrganization(connection, request.session) || !permissions.isSignedIn(request.session)) {
                         return invalid({
                           permissions: [permissions.ERROR_MESSAGE]
                         });

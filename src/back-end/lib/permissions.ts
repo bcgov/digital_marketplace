@@ -1,4 +1,4 @@
-import { Connection, hasCWUAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isSWUOpportunityAuthor, isUserOwnerOfOrg } from 'back-end/lib/db';
+import { Connection, hasCWUAttachmentPermission, hasFilePermission, isCWUOpportunityAuthor, isCWUProposalAuthor, isSWUOpportunityAuthor, isUserOwnerOfOrg, userHasAcceptedTerms } from 'back-end/lib/db';
 import { hasSWUAttachmentPermission, isSWUProposalAuthor } from 'back-end/lib/db/proposal/sprint-with-us';
 import { Affiliation } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, doesCWUOpportunityStatusAllowGovToViewProposals } from 'shared/lib/resources/opportunity/code-with-us';
@@ -43,6 +43,10 @@ export function isGovernment(session: Session): boolean {
   return !!session && session.user.type === UserType.Government;
 }
 
+export async function hasAcceptedTerms(connection: Connection, session: Session): Promise<boolean> {
+  return !!session && await userHasAcceptedTerms(connection, session?.user.id);
+}
+
 // Users.
 
 export function readManyUsers(session: Session): boolean {
@@ -85,8 +89,8 @@ export function deleteSession(session: Session, id: string): boolean {
 
 // Organizations.
 
-export function createOrganization(session: Session): boolean {
-  return isVendor(session);
+export async function createOrganization(connection: Connection, session: Session): Promise<boolean> {
+  return isVendor(session) && await hasAcceptedTerms(connection, session);
 }
 
 export async function readOneOrganization(connection: Connection, session: Session, orgId: string): Promise<boolean> {
@@ -207,8 +211,8 @@ export async function readCWUProposalHistory(connection: Connection, session: Se
     (session && await isCWUOpportunityAuthor(connection, session.user, opportunityId)) || false;
 }
 
-export function createCWUProposal(session: Session): boolean {
-  return isVendor(session);
+export async function createCWUProposal(connection: Connection, session: Session): Promise<boolean> {
+  return !!session && isVendor(session) && await userHasAcceptedTerms(connection, session.user.id);
 }
 
 export async function editCWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: CWUOpportunity): Promise<boolean> {
@@ -294,12 +298,12 @@ export async function readSWUProposalScore(connection: Connection, session: Sess
           (proposalStatus === SWUProposalStatus.Awarded || proposalStatus === SWUProposalStatus.NotAwarded) || false));
 }
 
-export function createSWUProposal(session: Session): boolean {
-  return isVendor(session);
+export async function createSWUProposal(connection: Connection, session: Session): Promise<boolean> {
+  return !!session && isVendor(session) && await userHasAcceptedTerms(connection, session.user.id);
 }
 
 export async function submitSWUProposal(connection: Connection, session: Session, organization: Organization): Promise<boolean> {
-  return isVendor(session) && !!session && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
+  return !!session && isVendor(session) && await userHasAcceptedTerms(connection, session.user.id) && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
 }
 
 export async function editSWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: SWUOpportunity): Promise<boolean> {
