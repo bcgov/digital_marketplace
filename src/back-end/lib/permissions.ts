@@ -212,7 +212,7 @@ export async function readCWUProposalHistory(connection: Connection, session: Se
 }
 
 export async function createCWUProposal(connection: Connection, session: Session): Promise<boolean> {
-  return !!session && isVendor(session) && await userHasAcceptedTerms(connection, session.user.id);
+  return isVendor(session) && await hasAcceptedTerms(connection, session);
 }
 
 export async function editCWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: CWUOpportunity): Promise<boolean> {
@@ -299,11 +299,11 @@ export async function readSWUProposalScore(connection: Connection, session: Sess
 }
 
 export async function createSWUProposal(connection: Connection, session: Session): Promise<boolean> {
-  return !!session && isVendor(session) && await userHasAcceptedTerms(connection, session.user.id);
+  return isVendor(session) && await hasAcceptedTerms(connection, session);
 }
 
 export async function submitSWUProposal(connection: Connection, session: Session, organization: Organization): Promise<boolean> {
-  return !!session && isVendor(session) && await userHasAcceptedTerms(connection, session.user.id) && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
+  return !!session && isVendor(session) && await hasAcceptedTerms(connection, session) && await isUserOwnerOfOrg(connection, session.user, organization.id) && doesOrganizationMeetSWUQualification(organization);
 }
 
 export async function editSWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: SWUOpportunity): Promise<boolean> {
