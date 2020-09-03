@@ -57,7 +57,7 @@ $blue-alt-2:       #1e98d2;
 $blue-dark:        #095797;
 $blue-dark-alt:    #235892;
 $blue-dark-alt-2:  #223654;
-$blue-light:       #E7EDF3;
+$blue-light:       #F4F9FF;
 $blue-light-alt:   #E9F5FB;
 $blue-light-alt-2: #F4FAFD;
 $purple:           #52489C;
@@ -112,7 +112,6 @@ $body:         $body-color;
 $light:        $gray-100;
 $dark:         $gray-800;
 $qcgov-blue:   $blue-dark;
-$bcgov-yellow: $yellow;
 
 $theme-colors:   map-merge(
   (
@@ -126,7 +125,6 @@ $theme-colors:   map-merge(
     'light':        $light,
     'dark':         $dark,
     'qcgov-blue':   $qcgov-blue,
-    'bcgov-yellow': $bcgov-yellow
   ),
   $colors
 );
@@ -135,6 +133,8 @@ $theme-colors:   map-merge(
 $border-width: 1px;
 
 $font-family-sans-serif: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-weight-light:      300;
+$font-weight-normal:     400;
 $font-weight-bold:       500;
 $font-weight-bolder:     700;
 
@@ -359,6 +359,41 @@ nav {
   }
 }
 
+footer {
+  .footer-link-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.5;
+    color: $white;
+    font-size: 0.8rem;
+  }
+
+  .footer-link-list a {
+    color: $white;
+  }
+
+  .footer-social-list-title {
+    padding-left: 5px;
+  }
+
+  .footer-social-list {
+    list-style: none;
+    padding-left: 5px;
+    align-items: center;
+  }
+
+  .footer-social-list li {
+    flex-basis: auto;
+    margin-right: 1.4rem;
+  }
+
+  .footer-social-list li img {
+    max-width: 34px;
+    max-height: 34px;
+  }
+}
+
 // Custom Bootstrap style overrides.
 
 .container {
@@ -540,7 +575,7 @@ nav.navbar .nav-link:hover {
 }
 
 .font-size-extra-small {
-  font-size: $font-size-sm*0.8;
+  font-size: $font-size-sm*0.85;
 }
 
 .font-size-small {

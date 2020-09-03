@@ -346,14 +346,14 @@ const TopNavbar: View<Props> = props => {
                   : null}
               </div>
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
-              <ul className='main-nav-top-navbar-list'>  
-                <li>
-                  <a href="#" lang="en"><span>English</span></a>
-                </li>
-								<li>
-                  <a href="#">Nous joindre</a>
-                </li>
-              </ul>
+                <ul className='main-nav-top-navbar-list'>  
+                  <li>
+                    <a href="#" lang="en"><span>English</span></a>
+                  </li>
+                  <li>
+                    <a href="#">Nous joindre</a>
+                  </li>
+                </ul>
               </div>
               <div className='d-md-none'>
                 <Icon

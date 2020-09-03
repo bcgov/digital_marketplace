@@ -40,7 +40,6 @@ export type ThemeColor
   | 'light'
   | 'dark'
   | 'qcgov-blue'
-  | 'bcgov-yellow'
   | Color
   | Grays;
 
