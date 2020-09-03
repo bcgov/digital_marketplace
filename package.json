@@ -60,6 +60,7 @@
     "bowser": "^2.9.0",
     "chalk": "^2.4.2",
     "cookie-parser": "^1.4.4",
+    "cors": "^2.8.5",
     "dotenv": "^6.2.0",
     "express": "^4.16.4",
     "html-to-text": "^5.1.1",
@@ -84,6 +85,7 @@
     "uuid": "^3.3.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.7",
     "@types/html-to-text": "^1.4.31",
     "@types/keycloak-connect": "^4.5.1",
     "@types/mocha": "^7.0.2",

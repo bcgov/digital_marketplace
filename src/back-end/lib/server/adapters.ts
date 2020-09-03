@@ -1,4 +1,4 @@
-import { COOKIE_SECRET, ENV, TMP_DIR } from 'back-end/config';
+import { COOKIE_SECRET, ENV, ORIGIN, TMP_DIR } from 'back-end/config';
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
@@ -6,6 +6,7 @@ import { ErrorResponseBody, FileRequestBody, FileResponseBody, HtmlResponseBody,
 import { parseServerHttpMethod, ServerHttpMethod } from 'back-end/lib/types';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
+import corsLib from 'cors';
 import expressLib from 'express';
 import { createWriteStream, existsSync, unlinkSync } from 'fs';
 import { IncomingHttpHeaders } from 'http';
@@ -238,6 +239,17 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       });
     }
 
+    const allowedList = [ORIGIN];
+    function corsOptionDelegate(req: expressLib.Request, callback: (err: Error | null, options?: corsLib.CorsOptions) => void) {
+      let corsOptions: corsLib.CorsOptions;
+      if (allowedList.indexOf(req.header('Origin') || '') !== -1) {
+        corsOptions = { origin: true };
+      } else {
+        corsOptions = { origin: false };
+      }
+      callback(null, corsOptions);
+    }
+
     // Set up the express app.
     const app = expressLib();
     // Parse JSON request bodies when provided.
@@ -247,6 +259,9 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
 
     // Sign and parse cookies.
     app.use(cookieParser(COOKIE_SECRET));
+
+    // Set up CORS to limit API access to specific domains
+    app.use(corsLib(corsOptionDelegate));
 
     // Mount each route to the Express application.
     router.forEach(route => {
