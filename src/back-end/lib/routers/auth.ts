@@ -199,7 +199,12 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       return null;
   }
 
-  const username = getString(claims, 'preferred_username');
+  let username = getString(claims, 'preferred_username');
+
+  // Strip the @github / @idir suffix if present.  We want to match and store the username without suffix.
+  if (username.endsWith('@github') || username.endsWith('@idir')) {
+    username = username.slice(0, username.lastIndexOf('@'));
+  }
 
   if (!username || !tokenSet.access_token || !tokenSet.refresh_token) {
     throw new Error('authentication failure - invalid claims');
@@ -218,7 +223,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       name: claims.name || '',
       email: claims.email || '',
       jobTitle: '',
-      idpUsername: claims.preferred_username
+      idpUsername: username
     }), null);
 
     // If email present, notify of successful account creation
