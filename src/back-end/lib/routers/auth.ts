@@ -202,7 +202,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   let username = getString(claims, 'preferred_username');
 
   // Strip the @github / @idir suffix if present.  We want to match and store the username without suffix.
-  if (username.endsWith('@github') || username.endsWith('@idir')) {
+  if ((username.endsWith('@github') && userType === UserType.Vendor) || (username.endsWith('@idir') && userType === UserType.Government)) {
     username = username.slice(0, username.lastIndexOf('@'));
   }
 
