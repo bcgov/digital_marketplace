@@ -217,7 +217,7 @@ export async function createCWUProposal(connection: Connection, session: Session
 
 export async function editCWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: CWUOpportunity): Promise<boolean> {
   return isAdmin(session) ||
-    (session && await isCWUProposalAuthor(connection, session.user, proposalId)) ||
+    (session && await isCWUProposalAuthor(connection, session.user, proposalId) && await hasAcceptedTerms(connection, session)) ||
     (session && await isCWUOpportunityAuthor(connection, session.user, opportunity.id) && doesCWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
 }
 
@@ -308,7 +308,7 @@ export async function submitSWUProposal(connection: Connection, session: Session
 
 export async function editSWUProposal(connection: Connection, session: Session, proposalId: string, opportunity: SWUOpportunity): Promise<boolean> {
   return isAdmin(session) ||
-    (session && await isSWUProposalAuthor(connection, session.user, proposalId)) ||
+    (session && await isSWUProposalAuthor(connection, session.user, proposalId) && await hasAcceptedTerms(connection, session)) ||
     (session && await isSWUOpportunityAuthor(connection, session.user, opportunity.id) && doesSWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
 }
 
