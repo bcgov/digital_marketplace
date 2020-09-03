@@ -1,10 +1,16 @@
-import { DB_MIGRATIONS_TABLE_NAME, POSTGRES_URL } from 'back-end/config';
+import dotenv from 'dotenv';
+
+// Working directory changed to src/migrations so ensure env is loaded from correct path.
+dotenv.config({
+  debug: true,
+  path: '../../.env'
+});
 
 module.exports = {
   client: 'pg',
-  connection: POSTGRES_URL,
+  connection: process.env.POSTGRES_URL,
   migrations: {
-    tableName: DB_MIGRATIONS_TABLE_NAME,
+    tableName: 'migrations',
     directory: './tasks'
   }
 };
