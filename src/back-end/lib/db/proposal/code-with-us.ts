@@ -269,7 +269,8 @@ function generateCWUProposalQuery(connection: Connection, full = false) {
       connection.raw('(CASE WHEN proposals."updatedAt" > statuses."createdAt" THEN proposals."updatedBy" ELSE statuses."createdBy" END) AS "updatedBy" '),
       'proponentIndividual',
       'proponentOrganization',
-      'statuses.status'
+      'statuses.status',
+      'statuses.createdAt'
     );
 
   if (full) {
@@ -689,11 +690,24 @@ export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(async (connec
 });
 
 export const readSubmittedCWUProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
-  return valid((await generateCWUProposalQuery(connection)
+  // Retrieve the opportunity, since we need to see if any proposals were withdrawn after proposal deadline
+  // and include them in the count.
+  const [cwuOpportunity] = await generateCWUOpportunityQuery(connection)
+    .where({ 'opp.id': opportunity });
+
+  if (!cwuOpportunity) {
+    return valid(0);
+  }
+
+  const results = await generateCWUProposalQuery(connection)
     .where({
       'proposals.opportunity': opportunity
     })
-    .whereNotIn('statuses.status', [CWUProposalStatus.Draft, CWUProposalStatus.Withdrawn]))?.length || 0);
+    .andWhere(q1 => q1
+      .whereNotIn('statuses.status', [CWUProposalStatus.Draft, CWUProposalStatus.Withdrawn])
+      .orWhere(q => q.where('statuses.status', '=', CWUProposalStatus.Withdrawn).andWhere('statuses.createdAt', '>=', cwuOpportunity.proposalDeadline)));
+
+  return valid(results?.length || 0);
 });
 
 export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | null>(async (connection, opportunity, session) => {
