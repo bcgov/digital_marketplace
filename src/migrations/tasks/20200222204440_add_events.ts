@@ -11,7 +11,7 @@ enum CWUProposalEvent {
   ScoreEntered = 'SCORE_ENTERED'
 }
 
-const logger = makeDomainLogger(consoleAdapter, 'migrations');
+const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
 
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.alterTable('cwuOpportunityStatuses', table => {
