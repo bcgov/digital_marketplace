@@ -120,3 +120,17 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   }
   return valid(await rawUserToUser(connection, result));
 });
+
+export async function userHasAcceptedTerms(connection: Connection, id: Id): Promise<boolean> {
+  const [result] = await connection<{ acceptedTerms: Date }>('users')
+    .where({ id })
+    .select('acceptedTerms');
+
+  if (!result) {
+    throw new Error('unable to check terms status for user');
+  }
+  if (result.acceptedTerms) {
+    return true;
+  }
+  return false;
+}

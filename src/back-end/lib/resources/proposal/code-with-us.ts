@@ -160,7 +160,7 @@ const resource: Resource = {
                 proponent,
                 attachments } = request.body;
 
-        if (!permissions.isSignedIn(request.session) || !permissions.createCWUProposal(request.session)) {
+        if (!permissions.isSignedIn(request.session) || !await permissions.createCWUProposal(connection, request.session)) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
