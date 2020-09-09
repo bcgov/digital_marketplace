@@ -54,15 +54,15 @@ $black:            #000000;
 $blue:             #0C99D6;
 $blue-alt:         #17A2B8;
 $blue-alt-2:       #1e98d2;
-$blue-dark:        #003366;
-$blue-dark-alt:    #38598A;
-$blue-dark-alt-2:  #0F4C8B;
-$blue-light:       #E7EDF3;
+$blue-dark:        #095797;
+$blue-dark-alt:    #235892;
+$blue-dark-alt-2:  #223654;
+$blue-light:       #F4F9FF;
 $blue-light-alt:   #E9F5FB;
 $blue-light-alt-2: #F4FAFD;
 $purple:           #52489C;
 $purple-light:     lighten($purple, 20);
-$yellow:           #FCBA19;
+$yellow:           #F8E69A;
 $red:              #DC3545;
 $green:            #2E8540;
 $orange:           #FD7E14;
@@ -93,8 +93,8 @@ $nav-tabs-border-color:             $border-color;
 $nav-tabs-link-hover-border-color:  $gray-200 $gray-200 transparent;
 $nav-tabs-link-active-bg:           $white;
 $nav-tabs-link-active-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
-$component-active-bg:               $blue;
-$link-color:                        $blue;
+$component-active-bg:               $blue-dark;
+$link-color:                        $blue-dark;
 $dropdown-link-hover-bg:            $gray-100;
 $dropdown-link-active-bg:           $gray-200;
 $table-hover-bg: $blue-light-alt;
@@ -102,17 +102,16 @@ $table-hover-bg: $blue-light-alt;
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
 // so we don't need to update the map at all.
-$primary:      $blue;
+$primary:      $blue-dark;
 $secondary:    $gray-600;
-$info:         $blue-dark-alt-2;
+$info:         $blue;
 $warning:      $orange;
 $danger:       $red;
 $success:      $green;
 $body:         $body-color;
 $light:        $gray-100;
 $dark:         $gray-800;
-$bcgov-blue:   $blue-dark;
-$bcgov-yellow: $yellow;
+$qcgov-blue:   $blue-dark;
 
 $theme-colors:   map-merge(
   (
@@ -125,8 +124,7 @@ $theme-colors:   map-merge(
     'body':         $body,
     'light':        $light,
     'dark':         $dark,
-    'bcgov-blue':   $bcgov-blue,
-    'bcgov-yellow': $bcgov-yellow
+    'qcgov-blue':   $qcgov-blue,
   ),
   $colors
 );
@@ -134,7 +132,9 @@ $theme-colors:   map-merge(
 // Other overrides.
 $border-width: 1px;
 
-$font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-sans-serif: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-weight-light:      300;
+$font-weight-normal:     400;
 $font-weight-bold:       500;
 $font-weight-bolder:     700;
 
@@ -182,11 +182,10 @@ $transition-duration: 240ms;
 
 html,
 body {
-  background: $bcgov-blue;
+  background: $qcgov-blue;
 }
 
 html {
-  font-size: 16px;
 
   @media print {
     background: none;
@@ -257,8 +256,8 @@ textarea {
 
 nav {
 
-  $main-nav-top-height: 67px;
-  $main-nav-bottom-navbar-height: 56px;
+  $main-nav-top-height: 80px;
+  $main-nav-bottom-navbar-height: 80px;
   &.main-nav {
     z-index: 1000; // Modals have a 1050 z-index, and should be above the nav.
     position: sticky;
@@ -270,12 +269,26 @@ nav {
     }
 
     .main-nav-top-navbar {
-      @extend .bg-bcgov-blue;
-      @extend .border-bottom-gov;
+      @extend .bg-qcgov-blue;
+      color: $white;
       width: 100%;
       height: $main-nav-top-height;
       position: relative;
       z-index: 2;
+    }
+
+    .main-nav-top-navbar a:link {
+      color: $white;
+    }
+
+    .main-nav-top-navbar-list {
+      list-style: none;
+      padding: 0 0 0 0.5rem;
+      margin: 0;
+    }
+
+    .main-nav-top-navbar-list a:link {
+      font-size: 0.875rem;
     }
 
     .main-nav-mobile-menu {
@@ -311,9 +324,8 @@ nav {
 
       &.mobile,
       &.desktop {
-        @extend .bg-blue-dark-alt;
+        @extend .bg-white;
         @extend .align-items-center;
-        @extend .shadow;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
@@ -344,6 +356,41 @@ nav {
 
   .dropdown-toggle:hover img {
     border-color: $blue-dark-alt;
+  }
+}
+
+footer {
+  .footer-link-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.5;
+    color: $white;
+    font-size: 0.8rem;
+  }
+
+  .footer-link-list a {
+    color: $white;
+  }
+
+  .footer-social-list-title {
+    padding-left: 5px;
+  }
+
+  .footer-social-list {
+    list-style: none;
+    padding-left: 5px;
+    align-items: center;
+  }
+
+  .footer-social-list li {
+    flex-basis: auto;
+    margin-right: 1.4rem;
+  }
+
+  .footer-social-list li img {
+    max-width: 34px;
+    max-height: 34px;
   }
 }
 
@@ -484,6 +531,10 @@ nav.navbar .nav-link:hover {
 
 // Custom utilities.
 
+.roboto {
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
 .shadow-hover {
   transition: box-shadow $transition-duration;
   &:hover {
@@ -524,7 +575,7 @@ nav.navbar .nav-link:hover {
 }
 
 .font-size-extra-small {
-  font-size: $font-size-sm*0.8;
+  font-size: $font-size-sm*0.85;
 }
 
 .font-size-small {
@@ -596,14 +647,6 @@ nav.navbar .nav-link:hover {
   white-space: normal !important;
 }
 
-.border-bottom-gov {
-  border-bottom: 2px solid $bcgov-yellow;
-}
-
-.border-top-gov {
-  border-top: 2px solid $bcgov-yellow;
-}
-
 @each $breakpoint in map-keys($grid-breakpoints) {
   $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
@@ -639,6 +682,17 @@ nav.navbar .nav-link:hover {
 }
 
 // Custom components
+
+.hero-component {
+
+}
+
+.hero-component h1 {
+  font-style: normal;
+  font-weight: normal;
+  /*font-size: 30px;
+  line-height: 30px;*/
+}
 
 .toast-wrapper {
   position: fixed;

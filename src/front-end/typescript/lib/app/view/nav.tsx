@@ -284,7 +284,7 @@ const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) 
       color='white'
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : 'none' }}
-      className='font-weight-bolder font-size-large' />
+      className='' />
   </div>
 );
 
@@ -338,15 +338,22 @@ const TopNavbar: View<Props> = props => {
             <Col xs='12' className='h-100 d-flex flex-nowrap align-items-center justify-content-between'>
               <div className='d-flex align-items-center flex-grow-1'>
                 <Link dest={props.homeDest} style={{ pointerEvents: props.homeDest ? undefined : 'none' }} className='align-self-stretch d-flex align-items-center'>
-                  <img src={props.logoImageUrl} style={{ height: '44px' }} />
+                  <img src={props.logoImageUrl} style={{ height: '32px' }} />
                 </Link>
-                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-3 d-none d-md-block' />
+                <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-5 d-none d-md-block' />
                 {isLoading
                   ? (<Spinner size='sm' color='blue-dark-alt' className='transition-indicator ml-3' />)
                   : null}
               </div>
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
-                <DesktopAccountMenu {...props} />
+                <ul className='main-nav-top-navbar-list'>  
+                  <li>
+                    <a href="#" lang="en"><span>English</span></a>
+                  </li>
+                  <li>
+                    <a href="#">Nous joindre</a>
+                  </li>
+                </ul>
               </div>
               <div className='d-md-none'>
                 <Icon
@@ -403,15 +410,18 @@ const DesktopBottomNavbar: View<Props> = props => {
                   <NavLink
                     {...link}
                     dispatch={props.dispatch}
-                    color='white'
+                    color='blue-dark-alt'
                     className={linkClassName(link)} />
                   {i < appLinks.length - 1
-                    ? (<Separator spacing='2' color='bcgov-blue' className='o-50'>|</Separator>)
+                    ? (<Separator spacing='4' color='white' className='o-50'>|</Separator>)
                     : null}
                 </Fragment>
               ))}
             </div>
             <ContextualLinks {...props} isOpen={props.state.isDesktopContextualDropdownOpen} toggle={() => props.dispatch(adt('toggleDesktopContextualDropdown'))} />
+            <div className='d-none d-md-flex align-items-center flex-shrink-0'>
+              <DesktopAccountMenu {...props} />
+            </div>
           </Col>
         </Row>
       </Container>
