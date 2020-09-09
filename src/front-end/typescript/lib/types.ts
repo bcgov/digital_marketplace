@@ -39,8 +39,7 @@ export type ThemeColor
   | 'body'
   | 'light'
   | 'dark'
-  | 'bcgov-blue'
-  | 'bcgov-yellow'
+  | 'qcgov-blue'
   | Color
   | Grays;
 

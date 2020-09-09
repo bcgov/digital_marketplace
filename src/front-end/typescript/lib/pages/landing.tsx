@@ -4,15 +4,13 @@ import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, Vie
 import * as api from 'front-end/lib/http/api';
 import { TextColor } from 'front-end/lib/types';
 import { BulletPoint } from 'front-end/lib/views/bullet-point';
-import Icon from 'front-end/lib/views/icon';
-import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { formatAmount } from 'shared/lib';
 import { adt, ADT } from 'shared/lib/types';
 
-const IMG_MAX_WIDTH = '550px';
+const IMG_MAX_WIDTH = '400px';
 
 export interface State {
   totalCount: number;
@@ -43,42 +41,37 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
   return (
-    <Container className='pb-7 pb-md-8 pt-sm-4 pt-md-3'>
-      <Row className='justify-content-center text-center'>
-        <Col xs='12' sm='10' md='6'>
-          <h1 style={{lineHeight: '3.75rem'}}>
-            Discover Unique Opportunities to Collaborate with the BC Public Sector.
+    <Container className='hero-component pb-7 pb-md-8 pt-sm-4 pt-md-3'>
+      <Row className='justify-content-left text-left'>
+        <Col md='5'>
+          <h1 className='roboto' style={{lineHeight: '3.75rem'}}>
+            Collaborez <br/>avec le gouvernement <br/>du Québec
           </h1>
-        </Col>
-      </Row>
-      <Row className='justify-content-center text-center'>
-        <Col xs='12' sm='10' md='6' className='mt-3'>
-          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and BC's public sector.
-        </Col>
-      </Row>
-      <Row className='mt-5 mb-6 mb-md-8'>
-        <Col xs='12' className='d-flex justify-content-center'>
+          <div className='mt-3 mb-3'>
+          Le marché numérique gouvernemental est une nouvelle
+          plateforme qui contribue à bâtir un écosystème en matière
+          d'innovation et de collaboration entre les entrepreneurs
+          technologiques et le gouvernement du Québec.
+          </div>
           <Link
             button
-            symbol_={leftPlacement(iconLinkSymbol('search'))}
+            outline
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            dest={routeDest(adt('content', 'about'))}
+            color='primary'
+            className='mr-3'>
+            À propos
+          </Link>
+          <Link
+            button
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('opportunities', null))}
             color='primary'>
-            Browse Opportunities
+            Parcourez les opportunités
           </Link>
         </Col>
-      </Row>
-      <Row className='text-nowrap'>
-        <Col xs='12'>
-          <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center mr-md-6 mb-4 mb-md-0'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalCount)}</div>
-              <div className='ml-md-3 font-size-small text-secondary'>Total Opportunities Awarded</div>
-            </div>
-            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalAwarded, '$')}</div>
-              <div className='ml-md-3 font-size-small text-secondary'>Total Value of All Opportunities</div>
-            </div>
-          </div>
+        <Col xs='12' sm='10' md='7'>
+          <img src={prefixPath('images/illustrations/accueil.svg')} className='w-100' alt='Logo Échanges entre concepteurs' />
         </Col>
       </Row>
     </Container>
@@ -87,46 +80,46 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
 
 const Programs: View = () => {
   return (
-    <div className='bg-blue-light-alt-2 py-7'>
+    <div className='py-7'>
       <Container>
         <Row>
           <ProgramCard
-            img={prefixPath('/images/illustrations/code_with_us.svg')}
-            title='Code With Us'
+            img={prefixPath('/images/illustrations/developpez_avec_nous.svg')}
+            title='Développez avec nous'
             className='mb-4 mb-md-0'
             description={
               (<div>
-                <div>Commit Code.</div>
-                <div>Get Paid.</div>
-                <div className='mt-3'>Opportunities up to $70,000.</div>
+                <div>Soyez payé</div>
+                <div>pour soumettre du code.</div>
+                <div className='mt-3'>Des opportunités allant jusqu’à 70 000 $</div>
               </div>)
             }
             links={[
               {
                 button: true,
                 dest: routeDest(adt('learnMoreCWU', null)),
-                children: ['Learn More'],
-                color: 'blue' as TextColor,
+                children: ['Plus d\'information'],
+                color: 'qcgov-blue' as TextColor,
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
             ]}
           />
           <ProgramCard
-            img={prefixPath('/images/illustrations/sprint_with_us.svg')}
-            title='Sprint With Us'
+            img={prefixPath('/images/illustrations/cocreez_avec_nous.svg')}
+            title='Cocréez avec nous'
             description={
               (<div>
-                <div>Supply an Agile Team to work with a government product manager in a modern DevOps environment.</div>
-                <div className='mt-3'>Opportunities up to $2,000,000.</div>
+                <div>Fournissez une équipe Agile pour travailler avec un gestionnaire de produit gouvernemental dans un environnement DevOps moderne.</div>
+                <div className='mt-3'>Des opportunités allant jusqu’à 2 000 000$.</div>
               </div>)
             }
             links={[
               {
                 button: true,
                 dest: routeDest(adt('learnMoreSWU', null)),
-                children: [('Learn More')],
-                color: 'blue' as TextColor,
+                children: [('Plus d\'information')],
+                color: 'qcgov-blue' as TextColor,
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -140,17 +133,17 @@ const Programs: View = () => {
 
 const AppInfo: View = () => {
   return (
-    <Container className='mt-7 mt-md-9'>
+    <Container className=''>
       <Row className='justify-content-center text-center'>
         <Col xs='12' md='8'>
-          <h2 className='mb-0'>
-            Join a community of developers, entrepreneurs and public service innovators who are making public services better.
-          </h2>
+          <div className='mb-0 font-size-large'>
+            Rejoignez une communauté de développeurs, d'entrepreneurs <br />et d'innovateurs pour participer au développement <br />technologique de la fonction publique.
+          </div>
         </Col>
       </Row>
       <Row>
         <Col xs='12' className='d-flex align-items-center justify-content-center'>
-          <div className='px-1 pt-1 mt-4 bg-bcgov-yellow' style={{ width: '5rem' }} />
+          <div className='px-1 pt-1 mt-4 bg-qcgov-blue' style={{ width: '5rem' }} />
         </Col>
       </Row>
     </Container>
@@ -162,31 +155,25 @@ const VendorRoleInfo: View = () => {
     <Container className='mt-7 mt-md-9'>
       <Row>
         <Col xs='12' className='order-2 order-md-1'>
-          <h6 className='text-bcgov-blue'><Icon name='store' className='mr-2 mb-1' />Vendors</h6>
+          <h6 className='text-qcgov-blue font-size-large'>Fournisseurs</h6>
         </Col>
         <Col xs='12' md='6' className='order-3 order-md-2'>
-          <h4 className='mb-3'>Collaborate with the BC Public Sector to build innovative digital products.</h4>
+          <div className='mb-3 font-size-large font-weight-light'>Collaborez avec la fonction publique afin de créer de produits numériques innovants.</div>
           <BulletPoint
-            className='ml-3 my-4'
-            icon='star-exclamation'
-            iconColor='bcgov-yellow'
-            header='Submit proposals to open opportunities'
-            subText='Save a draft version of your proposal until you are ready to submit it.' />
+            className='my-4'
+            header='Soumettez des propositions pour ouvrir des opportunités'
+            subText="Enregistrez une version provisoire de votre proposition jusqu'à ce que vous soyez prêt à la soumettre." />
           <BulletPoint
-            className='ml-3 my-4'
-            icon='star-exclamation'
-            iconColor='bcgov-yellow'
-            header='View and export your submitted proposals'
-            subText='View all outstanding and past submissions, where you can see your scores and rankings once submitted.' />
+            className='my-4'
+            header='Affichez et exportez vos propositions soumises'
+            subText='Affichez toutes les soumissions passées et en suspens. Vous pourrez voir vos scores et classements une fois soumis.' />
           <BulletPoint
-            className='ml-3 my-4'
-            icon='star-exclamation'
-            iconColor='bcgov-yellow'
-            header='Build your team'
-            subText='Add team members to your organization.' />
+            className='my-4'
+            header='Créez votre équipe'
+            subText='Ajoutez des membres à votre organisation.' />
         </Col>
         <Col xs='12' md='6' className='order-1 order-md-3 mb-5 mb-md-0'>
-          <img style={{ maxWidth: IMG_MAX_WIDTH }} className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/collaboration_work.svg')} />
+          <img style={{ maxWidth: IMG_MAX_WIDTH }} className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/vendeurs.svg')} />
         </Col>
       </Row>
     </Container>
@@ -197,28 +184,24 @@ const GovRoleInfo: View = () => {
   return (
     <Container className='my-7 my-md-9'>
       <Row>
-        <Col xs='12' md='6' className='mb-5 mb-md-0'>
-          <img style={{ maxWidth: IMG_MAX_WIDTH }} className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/consultation.svg')} />
+        <Col xs='12' md='7' className='mb-5 mb-md-0'>
+          <img style={{ maxWidth: IMG_MAX_WIDTH }} className='w-100 mx-auto d-block' src={prefixPath('/images/illustrations/employes.svg')} />
         </Col>
-        <Col cs='12' md='6'>
+        <Col cs='12' md='5'>
           <Row>
             <Col xs='12'>
-              <h6 className='text-bcgov-blue'><Icon name='government' className='mr-2 pb-1' />Public Service Employees</h6>
+              <h6 className='text-qcgov-blue font-size-large'>Employés de la fonction publique</h6>
             </Col>
             <Col xs='12'>
-              <h4 className='mb-3'>Connect with talented developers to build your digital products.</h4>
+              <div className='mb-3 font-size-large font-weight-light'>Faites affaires avec des développeurs talentueux et qualifiés pour créer vos produits numériques.</div>
               <BulletPoint
-                className='ml-3 my-4'
-                icon='star-exclamation'
-                iconColor='bcgov-yellow'
-                header='Post a new opportunity'
-                subText='Select the program that suits your unique needs, post your opportunity and wait for the proposals to come in.' />
+                className='my-4'
+                header='Publiez une nouvelle opportunité'
+                subText='Sélectionnez le programme qui convient à vos besoins, publiez votre opportunité et attendez que les propositions arrivent.' />
               <BulletPoint
-                className='ml-3 my-4'
-                icon='star-exclamation'
-                iconColor='bcgov-yellow'
-                header='View and manage your posted opportunities'
-                subText='View a complete history of your posted opportunities, where you can review and evaluate all received proposals, award the opportunity to the successful proponent, and more.' />
+                className='my-4'
+                header='Affichez et gérez vos opportunités publiées'
+                subText="Affichez un historique complet de vos opportunités publiées où vous pouvez examiner et évaluer toutes les propositions reçues, attribuer l'opportunité au soumissionaire retenu et plus encore." />
             </Col>
           </Row>
         </Col>
@@ -227,55 +210,22 @@ const GovRoleInfo: View = () => {
   );
 };
 
-const TestimonialsView: View = () => {
-  return (
-    <div className='bg-blue-dark-alt-2 py-7'>
-      <Container>
-        <Row>
-          <Col xs='12' md='6'>
-            <Row>
-              <Col xs='12' className='d-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
-              <Col xs='10' className='d-flex mx-auto pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“We quickly found a qualified developer, worked collaboratively in the open, and got a great final product.”</h6></Col>
-              <Col xs='12' className='d-flex flex-column justify-content-center'>
-                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/andy.jpg')} width='40px' height='40px' />
-                <div className='text-bcgov-yellow font-size-small text-center'>Andy, Environmental Analyst</div>
-                <div className='text-white small text-center'>Province of B.C.</div>
-              </Col>
-            </Row>
-          </Col>
-          <Col xs='12' md='6'>
-            <Row>
-              <Col xs='12' className='d-none d-md-flex justify-content-center pb-5'><Icon name='quote' color='primary' width={2.875} height={2.875} /></Col>
-              <Col xs='10' className='d-flex mx-auto pt-7 pt-md-0 pb-5'><h6 className='text-white text-center' style={{lineHeight: '1.5rem'}}>“I think this platform could be a game changer for matching government agencies with the best talent in this province.”</h6></Col>
-              <Col xs='12' className='d-flex flex-column justify-content-center'>
-                <img className='mx-auto d-block rounded-circle' src={prefixPath('/images/wayne.jpg')} width='40px' height='40px' />
-                <div className='text-bcgov-yellow font-size-small text-center'>Wayne, Developer</div>
-                <div className='text-white small text-center'>Vancouver</div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  );
-};
-
 const BottomView: View = () => {
   return (
     <Container className='my-7'>
       <Row className='justify-content-center text-center'>
         <Col xs='12' md='8'>
-          <h2>Check out the latest opportunities on the Digital Marketplace</h2>
+          <div className="font-size-large">Découvrez les dernières opportunités<br /> sur le marché numérique</div>
         </Col>
       </Row>
       <Row className='mt-5'>
         <Col xs='12' className='d-flex justify-content-center'>
           <Link
             button
-            symbol_={leftPlacement(iconLinkSymbol('search'))}
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('opportunities', null))}
             color='primary'>
-            Browse Opportunities
+            Parcourez les opportunités
           </Link>
         </Col>
       </Row>
@@ -289,9 +239,8 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Hero state={state} dispatch={dispatch} />
       <Programs />
       <AppInfo />
-      <VendorRoleInfo />
       <GovRoleInfo />
-      <TestimonialsView />
+      <VendorRoleInfo />
       <BottomView />
     </div>
   );
@@ -303,6 +252,6 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Welcome');
+    return makePageMetadata('Accueil');
   }
 };

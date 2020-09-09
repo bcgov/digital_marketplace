@@ -4,20 +4,20 @@ import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import React from 'react';
 
 export interface Props {
-  icon: AvailableIcons;
-  iconColor: ThemeColor;
+  icon?: AvailableIcons;
+  iconColor?: ThemeColor;
   header: string;
   subText?: string;
   className?: string;
 }
 
-export const BulletPoint: View<Props> = ({ icon, iconColor = 'info', header, subText, className }) => {
+export const BulletPoint: View<Props> = ({ icon = null, iconColor = 'info', header, subText, className }) => {
   return (
     <div className={`d-flex ${className}`}>
-      <Icon className='flex-shrink-0' name={icon} color={iconColor} />
-      <div className='ml-2'>
-        <h6 className='m-0'>{header}</h6>
-        <span className='font-size-small'>{subText}</span>
+      {icon ? <Icon className='flex-shrink-0' name={icon} color={iconColor} />:null}
+      <div className=''>
+        <h6 className='m-0 mb-2'>{header}</h6>
+        <span className='font-weight-light'>{subText}</span>
       </div>
     </div>
   );
