@@ -110,7 +110,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
   const { text, imageUrl, linkGroups, isOpen, dispatch } = props;
   return (
     <Dropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleDesktopAccountDropdown'))}>
-      <DropdownToggle tag='div' className='text-white text-hover-white' style={{ cursor: 'pointer' }}>
+      <DropdownToggle tag='div' className='' style={{ cursor: 'pointer' }}>
         <span className='mr-2 o-75'>{text}</span>
         <img
           src={imageUrl}
