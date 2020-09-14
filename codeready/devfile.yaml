@@ -1,73 +1,67 @@
----
-apiVersion: 1.0.0
 metadata:
-  generateName: dm-
+  name: dm-dev
 projects:
-  -
-    name: digital-marketplace
+  - name: digital-marketplace
     source:
+      location: 'https://github.com/CQEN-QDCE/digital_marketplace'
       type: git
-      location: "https://github.com/CQEN-QDCE/digital_marketplace"
-      branch: "experimentation"
+      branch: experimentation
 components:
-  -
-    type: chePlugin
-    id: che-incubator/typescript/latest
+  - id: che-incubator/typescript/latest
     memoryLimit: 512Mi
-  -
-    type: dockerimage
-    alias: nodejs
-    image: quay.io/eclipse/che-nodejs10-community:nightly
-    memoryLimit: 1Gi
+    type: chePlugin
+  - mountSources: true
     endpoints:
-      - name: 'nodejs'
+      - name: nodejs
         port: 3000
-    mountSources: true
-  -
+    memoryLimit: 1Gi
     type: dockerimage
-    alias: postgresql
-    image: centos/postgresql-10-centos7
-    env:
-      - name: POSTGRESQL_USER
-        value: marketplace
-      - name: POSTGRESQL_PASSWORD
-        value: marketplace00
-      - name: POSTGRESQL_DATABASE
-        value: marketplace
-    memoryLimit: 256Mi
+    image: 'quay.io/eclipse/che-nodejs10-community:nightly'
+    alias: nodejs
+  - mountSources: true
     endpoints:
-      - name: 'postgresql_database'
+      - name: postgresql-database
         port: 5432
         attributes:
-          discoverable: "true"
-          public: "false"
-    mountSources: true
+          discoverable: 'true'
+          public: 'false'
+    memoryLimit: 256Mi
+    type: dockerimage
+    volumes:
+      - name: postgresql-storage
+        containerPath: /var/lib/pgsql/data
+    image: centos/postgresql-10-centos7
+    alias: postgresql
+    env:
+      - value: marketplace
+        name: POSTGRESQL_USER
+      - value: marketplace00
+        name: POSTGRESQL_PASSWORD
+      - value: marketplace
+        name: POSTGRESQL_DATABASE
+apiVersion: 1.0.0
 commands:
-  -
-    name: npm install
+  - name: npm install
     actions:
-      - type: exec
-        component: nodejs
+      - workdir: '${CHE_PROJECTS_ROOT}/digital-marketplace'
+        type: exec
         command: npm install
-        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace
-  -
-    name: npm run front-end:build
-    actions:
-      - type: exec
         component: nodejs
-        command: npm run front-end:build
-        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace  
-  -
-    name: npm run migrations:latest
+  - name: 'npm run front-end:build'
     actions:
-      - type: exec
+      - workdir: '${CHE_PROJECTS_ROOT}/digital-marketplace'
+        type: exec
+        command: 'npm run front-end:build'
         component: nodejs
-        command: npm run migrations:latest
-        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace
-  -
-    name: npm run start
+  - name: 'npm run migrations:latest'
     actions:
-      - type: exec
+      - workdir: '${CHE_PROJECTS_ROOT}/digital-marketplace'
+        type: exec
+        command: 'npm run migrations:latest'
         component: nodejs
+  - name: npm run start
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/digital-marketplace'
+        type: exec
         command: npm run start
-        workdir: ${CHE_PROJECTS_ROOT}/digital-marketplace
+        component: nodejs
