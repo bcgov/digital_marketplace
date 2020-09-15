@@ -21,7 +21,7 @@ enum CWUProposalStatus {
   Withdrawn = 'WITHDRAWN'
 }
 
-const logger = makeDomainLogger(consoleAdapter, 'migrations');
+const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
 
 export async function up(connection: Knex): Promise<void> {
   // Create CWUOpportunity table
