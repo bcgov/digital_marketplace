@@ -238,23 +238,23 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       <Col xs='12'>
         <h3 className='mb-0'>Details</h3>
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='toolbox-outline' text='Required Skills' />
         <p className='mb-2'>To submit a proposal for this opportunity, you must possess the following skills:</p>
         <Skills skills={opp.skills} />
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='info-circle-outline' text='Description' />
         <Markdown source={opp.description || EMPTY_STRING} smallerHeadings openLinksInNewTabs />
       </Col>
       {opp.submissionInfo
-        ? (<Col xs='12' className='mt-4'>
+        ? (<Col xs='12' className='mt-5'>
             <InfoDetailsHeading icon='laptop-code-outline' text='Project Submission Information' />
             <p className='mb-0'>{opp.submissionInfo}</p>
           </Col>)
         : null}
       {opp.remoteOk && opp.remoteDesc
-        ? (<Col xs='12' className='mt-4'>
+        ? (<Col xs='12' className='mt-5'>
             <InfoDetailsHeading icon='laptop-outline' text='Remote Work Options' />
             <p className='mb-0' style={{ whiteSpace: 'pre-line' }}>{opp.remoteDesc}</p>
           </Col>)

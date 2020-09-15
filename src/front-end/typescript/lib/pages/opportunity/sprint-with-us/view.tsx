@@ -262,23 +262,23 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       <Col xs='12'>
         <h3 className='mb-0'>Details</h3>
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='toolbox-outline' text='Skills' />
         <p className='mb-2'>To submit a proposal for this opportunity, you must possess the following skills:</p>
-        <Skills skills={opp.mandatorySkills} className='mb-3' />
+        <Skills skills={opp.mandatorySkills} />
         {opp.optionalSkills.length
           ? (<Fragment>
-              <p className='mb-2'>Additionally, possessing the following skills would be considered a bonus:</p>
+              <p className='mt-3 mb-2'>Additionally, possessing the following skills would be considered a bonus:</p>
               <Skills skills={opp.optionalSkills} />
             </Fragment>)
           : null}
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='info-circle-outline' text='Description' />
         <Markdown source={opp.description || EMPTY_STRING} smallerHeadings openLinksInNewTabs />
       </Col>
       {opp.remoteOk && opp.remoteDesc
-        ? (<Col xs='12' className='mt-4'>
+        ? (<Col xs='12' className='mt-5'>
             <InfoDetailsHeading icon='laptop-outline' text='Remote Work Options' />
             <p className='mb-0' style={{ whiteSpace: 'pre-line' }}>{opp.remoteDesc}</p>
           </Col>)
