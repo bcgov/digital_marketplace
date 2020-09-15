@@ -1,12 +1,12 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
+import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
-import { join, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
 
 // export the root directory of the repository.
-// assumed the code is running via $ROOT/build/back-end/back-end/start.js
-export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../../');
+export const REPOSITORY_ROOT_DIR = dirname(findUp.sync('package.json') || '') || __dirname;
 
 // Load environment variables from a .env file.
 dotenv.config({
