@@ -1,12 +1,4 @@
 # Docker
-- task: Docker@2
-  inputs:
-    containerRegistry: 'digitalMarketplaceTestRegistry'
-    repository: 'digitalMarketplaceTest'
-    command: 'buildAndPush'
-    Dockerfile: '**/Dockerfile'
-# Build a Docker image 
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
 - master
@@ -27,9 +19,11 @@ stages:
       vmImage: 'ubuntu-latest'
     steps:
     - task: Docker@2
-      displayName: Build an image
+      displayName: Build an image and push to container registry
       inputs:
-        command: build
+        command: 'buildAndPush'
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        repository: 'digitalMarketplaceTest'
+        containerRegistry: 'digitalMarketplaceTestRegistry'
         tags: |
           $(tag)
