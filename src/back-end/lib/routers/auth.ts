@@ -152,7 +152,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
         try {
           // Retrieve service token from query paramters and validate
           const serviceToken = request.query.token;
-          if (!await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH)) {
+          if (!serviceToken || !await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH)) {
             return {
               code: 401,
               headers: {},
@@ -194,7 +194,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
     // This should be used only for testing and QA purposes, and is not meant for use in production.
     router.push({
       method: ServerHttpMethod.Get,
-      path: '/auth/override-session',
+      path: '/auth/override-session/:id',
       handler: nullRequestBodyHandler(async request => {
         try {
           // Retrieve service token from query paramters and validate.
