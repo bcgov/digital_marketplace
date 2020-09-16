@@ -7,5 +7,8 @@ module.exports = {
   ],
   backEndBuild: [
     `${gruntConfig.backEnd.build.dir}/*`
+  ],
+  scriptsBuild: [
+    `${gruntConfig.scripts.build.dir}/*`
   ]
 };
