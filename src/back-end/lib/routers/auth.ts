@@ -227,8 +227,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             session: request.session,
             body: makeTextResponseBody('')
           };
-
-          // Retrieve user id to override session with from query parameters and validate.
         } catch (error) {
           return {
             code: 400,
