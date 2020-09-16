@@ -218,6 +218,9 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             case 'gov':
               overrideAccountType = UserType.Government;
               break;
+            case 'admin':
+              overrideAccountType = UserType.Admin;
+              break;
             default:
               return {
                 code: 400,
