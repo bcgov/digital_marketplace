@@ -75,19 +75,19 @@ export function idToDefinition<K extends TabId>(id: K, organization: Organizatio
   }
 }
 
-export function makeSidebarLink(tab: TabId, organization: Organization, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: TabId, organization: Organization, activeTab: TabId): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab, organization);
-  return {
+  return adt('link', {
     icon,
     text: title,
     active: activeTab === tab,
     dest: routeDest(adt('orgEdit', { orgId: organization.id, tab }))
-  };
+  });
 }
 
 export async function makeSidebarState(organization: Organization, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
-    links: [
+    items: [
       makeSidebarLink('organization', organization, activeTab),
       makeSidebarLink('team', organization, activeTab),
       makeSidebarLink('qualification', organization, activeTab)

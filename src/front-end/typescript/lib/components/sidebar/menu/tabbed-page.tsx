@@ -132,7 +132,7 @@ export function makeParentSidebar<
     size: 'medium',
     color: 'light',
     isEmptyOnMobile: state => {
-      return !state.sidebar.links.length;
+      return !state.sidebar.items.length;
     },
     view: ({ state, dispatch }) => {
       return (<MenuSidebar.view

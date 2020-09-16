@@ -107,19 +107,19 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
   }
 }
 
-export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
-  return {
+  return adt('link', {
     icon,
     text: title,
     active: activeTab === tab,
     dest: routeDest(adt('opportunitySWUEdit', { opportunityId, tab }))
-  };
+  });
 }
 
 export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
-    links: [
+    items: [
       makeSidebarLink('summary',       opportunityId,  activeTab),
       makeSidebarLink('opportunity',   opportunityId,  activeTab),
       makeSidebarLink('proposals',     opportunityId,  activeTab),
@@ -127,13 +127,13 @@ export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Pro
       makeSidebarLink('codeChallenge', opportunityId,  activeTab),
       makeSidebarLink('teamScenario',  opportunityId,  activeTab),
       makeSidebarLink('history',       opportunityId,  activeTab),
-      {
+      adt('link', {
         icon: 'external-link',
         text: 'Read Guide',
         active: false,
         newTab: true,
         dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide'))
-      }
+      })
     ]
   }));
 }
