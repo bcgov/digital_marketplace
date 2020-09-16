@@ -107,6 +107,23 @@ export function makeSidebarLink(tab: TabId, proposal: SWUProposal, activeTab: Ta
 
 export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
+    backLink: {
+      text: 'Back to Opportunity',
+      route: adt('opportunitySWUEdit', {
+        opportunityId: proposal.opportunity.id,
+        tab: (() => {
+          switch (activeTab) {
+            case 'codeChallenge': return 'codeChallenge' as const;
+            case 'teamScenario': return 'teamScenario' as const;
+            case 'teamQuestions': return 'teamQuestions' as const;
+            case 'proposal':
+            case 'history':
+            default:
+              return 'proposals' as const;
+          }
+        })()
+      })
+    },
     items: [
       adt('heading', 'Vendor Proposal'),
       makeSidebarLink('proposal', proposal, activeTab),

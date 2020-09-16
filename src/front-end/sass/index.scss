@@ -621,6 +621,8 @@ nav.navbar .nav-link:hover {
       position: sticky;
       z-index: 2;
       top: 6rem;
+      max-height: calc(100vh - 6rem);
+      overflow-y: auto;
 
       &::after {
         content: " ";
