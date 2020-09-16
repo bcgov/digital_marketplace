@@ -189,7 +189,7 @@ npm run <SCRIPT_NAME>
 | `migrations:rollback` | Rolls all migrations back using their exported `down` functions. |
 | `migrations:up` | Runs one migration `up`. |
 | `migrations:down` | Runs one migration `down`. |
-| `scripts:run` | Runs a script. Usage: `npm run scripts:run <SCRIPT_NAME> [...args]`. |
+| `scripts:run` | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed. |
 | `typedoc:build` | Builds all TypeDoc API documentation. |
 | `typedoc:start` | Serves TypeDoc documentation on a local server. |
 | `docs:readme-toc` | Generate and insert a table of contents for `README.md`. |
