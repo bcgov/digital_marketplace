@@ -1,9 +1,11 @@
-import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL } from 'back-end/config';
+import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
 import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
+import { authenticatePassword } from 'back-end/lib/security';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
+import { validateUserId } from 'back-end/lib/validation';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
 import { getString, getStringArray } from 'shared/lib';
@@ -137,12 +139,27 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
     }
   ];
 
-  if (ENV === 'development') {
+  // Routes that are added only if running the application in a development environment and if the service token is defined
+  // Requests to these routes much include the correct service token in order to be processed.
+  if (ENV === 'development' && SERVICE_TOKEN_HASH) {
+
+    // The /auth/service endpoint is for creating user accounts for testing purposes.
+    // The test users must already exist in KeyCloak with the appropriate attributes and claims.
     router.push({
       method: ServerHttpMethod.Post,
       path: '/auth/service',
       handler: passThroughRequestBodyHandler(async request => {
         try {
+          // Retrieve service token from query paramters and validate
+          const serviceToken = request.query.token;
+          if (!await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH)) {
+            return {
+              code: 401,
+              headers: {},
+              session: request.session,
+              body: makeTextResponseBody('Not authorized')
+            };
+          }
           // Extract claims and create/update user
           const validRequestBody = getValidValue(request.body, undefined);
           if (!validRequestBody) {
@@ -161,6 +178,57 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             session,
             body: makeTextResponseBody('')
           };
+        } catch (error) {
+          return {
+            code: 400,
+            headers: {},
+            session: request.session,
+            body: makeTextResponseBody('')
+          };
+        }
+      })
+    });
+
+    // The /auth/override-session endpoint is for overriding an existing session with a new user account.
+    // For instance, a session attached to a government account, could be overridden to use a vendor account instead.
+    // This should be used only for testing and QA purposes, and is not meant for use in production.
+    router.push({
+      method: ServerHttpMethod.Get,
+      path: '/auth/override-session',
+      handler: nullRequestBodyHandler(async request => {
+        try {
+          // Retrieve service token from query paramters and validate.
+          // Also check that current session is authenticated.
+          const serviceToken = request.query.token;
+          if (!await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH) || !request.session.user) {
+            return {
+              code: 401,
+              headers: {},
+              session: request.session,
+              body: makeTextResponseBody('Not authorized')
+            };
+          }
+
+          // Validate the given user id for overriding, and modify the session
+          const overrideUserId = request.params.id;
+          const validatedUser = await validateUserId(connection, overrideUserId);
+          if (isValid(validatedUser)) {
+            request.session.user = getValidValue(validatedUser, undefined);
+            return {
+              code: 200,
+              headers: {},
+              session: request.session,
+              body: makeTextResponseBody('OK')
+            };
+          }
+          return {
+            code: 400,
+            headers: {},
+            session: request.session,
+            body: makeTextResponseBody('')
+          };
+
+          // Retrieve user id to override session with from query parameters and validate.
         } catch (error) {
           return {
             code: 400,
