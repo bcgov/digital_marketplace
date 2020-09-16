@@ -15,19 +15,21 @@ export interface SidebarLink {
   onClick?(): void;
 }
 
+export type SidebarItem = ADT<'link', SidebarLink> | ADT<'heading', string>;
+
 export interface State {
   isOpen: boolean;
-  links: SidebarLink[];
+  items: SidebarItem[];
 }
 
-export type Params = Pick<State, 'links'>;
+export type Params = Pick<State, 'items'>;
 
 export type Msg
   = ADT<'toggleOpen', boolean | undefined>;
 
-export const init: Init<Params, State> = async ({ links }) => ({
+export const init: Init<Params, State> = async ({ items }) => ({
   isOpen: false,
-  links
+  items
 });
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
@@ -73,16 +75,56 @@ const SidebarLink: View<SidebarLinkProps> = props => {
   );
 };
 
-const linksByActive = (links: SidebarLink[], activePredicate: boolean) => links.filter(({ active }) => active === activePredicate);
+const SidebarHeading: View<{ className?: string; text: string; }> = ({ text, className }) => {
+  return (
+    <div className={`overline mb-3 text-secondary ${className}`}>{text}</div>
+  );
+};
+
+interface SidebarItemProps {
+  isOpen?: boolean;
+  item: SidebarItem;
+  isFirst: boolean;
+}
+
+const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
+  switch (item.tag) {
+    case 'link':
+      const caret = (() => {
+        switch (isOpen) {
+          case true: return 'up';
+          case false: return 'down';
+          default: return undefined;
+        }
+      })();
+      return (<SidebarLink {...item.value} className='mb-3' caret={caret} />);
+    case 'heading':
+      return (<SidebarHeading text={item.value} className={isFirst ? 'mb-3' : 'mb-3 mt-5'} />);
+  }
+};
+
+function linksOnly(items: SidebarItem[]): SidebarLink[] {
+  return items.reduce((acc, item) => {
+    if (item.tag === 'link') {
+      acc.push(item.value);
+    }
+    return acc;
+  }, [] as SidebarLink[]);
+}
+
+const linksByActive = (links: SidebarLink[], activePredicate: boolean) => links.filter(link => link.active === activePredicate);
 
 export const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
-  if (!state.links.length) { return null; }
-  const [activeLink] = linksByActive(state.links, true);
+  const items = state.items;
+  const links = linksOnly(items);
+  if (!links.length) { return null; }
+  const [activeLink] = linksByActive(links, true);
+  if (!activeLink) { return null; }
   return (
     <Sticky className='d-print-none'>
       <div className='d-none d-md-flex flex-column flex-nowrap align-items-start'>
-        {state.links.map((props, i) => (<SidebarLink {...props} className='mb-2' key={`desktop-sidebar-link-${i}`} />))}
+        {items.map((item, i) => (<SidebarItem item={item} isFirst={i === 0} key={`desktop-sidebar-link-${i}`} />))}
       </div>
       <div className='d-flex flex-column flex-nowrap align-items-stretch d-md-none position-relative'>
         <SidebarLink
@@ -100,7 +142,7 @@ export const view: ComponentView<State, Msg> = props => {
             left: 0,
             zIndex: 99
           }}>
-          {state.links.map((link, i) => (
+          {links.map((link, i) => (
             <SidebarLink {...link} active={false} className='rounded-0' key={`mobile-sidebar-link-${i}`} />
           ))}
         </div>

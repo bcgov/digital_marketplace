@@ -107,18 +107,18 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
   }
 }
 
-export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
-  return {
+  return adt('link', {
     icon,
     text: title,
     active: activeTab === tab,
     dest: routeDest(adt('userProfile', { userId, tab }))
-  };
+  });
 }
 
 export async function makeSidebarState(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
-  const links = (() => {
+  const items = (() => {
     switch (viewerUser.type) {
       case UserType.Admin:
         if (usersAreEquivalent(profileUser, viewerUser)) {
@@ -146,5 +146,5 @@ export async function makeSidebarState(profileUser: User, viewerUser: User, acti
         ];
     }
   })();
-  return immutable(await MenuSidebar.init({ links }));
+  return immutable(await MenuSidebar.init({ items }));
 }

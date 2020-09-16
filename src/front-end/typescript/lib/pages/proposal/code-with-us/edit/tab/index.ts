@@ -53,27 +53,27 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
   }
 }
 
-export function makeSidebarLink(tab: TabId, proposalId: Id, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: TabId, proposalId: Id, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
-  return {
+  return adt('link', {
     icon,
     text: title,
     active: activeTab === tab,
     dest: routeDest(adt('proposalCWUEdit', { proposalId, opportunityId, tab }))
-  };
+  });
 }
 
 export async function makeSidebarState(proposalId: Id, opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
-    links: [
+    items: [
       makeSidebarLink('proposal', proposalId, opportunityId, activeTab),
-      {
+      adt('link', {
         icon: 'external-link',
         text: 'Read Guide',
         active: false,
         newTab: true,
         dest: routeDest(adt('content', 'code-with-us-proposal-guide'))
-      }
+      })
     ]
   }));
 }
