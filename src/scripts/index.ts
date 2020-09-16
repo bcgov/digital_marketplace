@@ -6,7 +6,7 @@ import { Script } from 'scripts/lib/types';
 import { argv } from 'yargs';
 
 const scripts: Record<string, Script> = {
-  hashPassword
+  'hash-password': hashPassword
 };
 
 const scriptName = argv._[0];
