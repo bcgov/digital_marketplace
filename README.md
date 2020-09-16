@@ -46,7 +46,7 @@ It is written in a functional and declarative style with the goal of maximizing 
 
 ![Digital Marketplace Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Digital%20Marketplace%20Architecture.svg)
 
-The source code is split into four parts:
+The source code is split into five parts:
 
 ### Front-End (`src/front-end`)
 
@@ -90,6 +90,14 @@ npm run migrations:create -- <MIGRATION_NAME>
 This command creates a migration file from a template and stores it at `src/migrations/tasks/{TIMESTAMP}_{MIGRATION_NAME}.ts`.
 
 **DO NOT delete or change committed migration files. Creating and executing migrations is a stateful process, and, unless you know what you are doing, running a database migration should be viewed as an irreversible process.**
+
+### Scripts (`src/scripts`)
+
+General purpose scripts are stored in this folder. The scripts themselves are stored in the `src/scripts/bin/` folder, and can be run using the following command:
+
+```
+npm run scripts:run -- <SCRIPT_NAME> [...args]
+```
 
 ## Contributing
 
@@ -170,8 +178,9 @@ npm run <SCRIPT_NAME>
 | `back-end:lint` | Lints the back-end source code using tslint. |
 | `back-end:typecheck` | Typechecks the back-end source code using tsc. |
 | `back-end:test` | Runs unit tests for the back-end source code. |
-| `back-end:start` | Starts the back-end server. |
-| `back-end:watch` | Starts the back-end server inside a nodemon process, and restarts it whenever a back-end or shared source file changes. |
+| `back-end:start` | Starts the back-end server (assumes it has already been built by grunt). |
+| `back-end:build` | Builds the back-end server using grunt. |
+| `back-end:watch` | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes. |
 | `back-end:typedoc` | Builds TypeDoc API documentation for the back-end source code. |
 | `shared:typedoc` | Builds TypeDoc API documentation for the shared source code. |
 | `migrations:helper` | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below. |
@@ -180,6 +189,7 @@ npm run <SCRIPT_NAME>
 | `migrations:rollback` | Rolls all migrations back using their exported `down` functions. |
 | `migrations:up` | Runs one migration `up`. |
 | `migrations:down` | Runs one migration `down`. |
+| `scripts:run` | Runs a script. Usage: `npm run scripts:run <SCRIPT_NAME> [...args]`. |
 | `typedoc:build` | Builds all TypeDoc API documentation. |
 | `typedoc:start` | Serves TypeDoc documentation on a local server. |
 | `docs:readme-toc` | Generate and insert a table of contents for `README.md`. |
