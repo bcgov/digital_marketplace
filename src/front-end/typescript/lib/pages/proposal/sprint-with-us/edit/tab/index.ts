@@ -81,8 +81,11 @@ export function makeSidebarLink(tab: TabId, proposal: SWUProposal, activeTab: Ta
 export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
     items: [
+      adt('heading', 'Proposal Management'),
       makeSidebarLink('proposal', proposal, activeTab),
+      adt('heading', 'Vendor Evaluation'),
       makeSidebarLink('scoresheet', proposal, activeTab),
+      adt('heading', 'Need Help?'),
       adt('link', {
         icon: 'external-link',
         text: 'Read Guide',

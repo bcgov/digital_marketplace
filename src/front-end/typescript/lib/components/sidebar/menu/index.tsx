@@ -99,7 +99,7 @@ const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
       })();
       return (<SidebarLink {...item.value} className='mb-3' caret={caret} />);
     case 'heading':
-      return (<SidebarHeading text={item.value} className={isFirst ? 'mb-3' : 'mb-3 mt-5'} />);
+      return (<SidebarHeading text={item.value} className={isFirst ? 'mb-3' : 'mb-3 mt-n3 pt-5'} />);
   }
 };
 

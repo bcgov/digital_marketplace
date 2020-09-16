@@ -108,10 +108,13 @@ export function makeSidebarLink(tab: TabId, proposal: SWUProposal, activeTab: Ta
 export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
     items: [
+      adt('heading', 'Vendor Proposal'),
       makeSidebarLink('proposal', proposal, activeTab),
+      adt('heading', 'Vendor Evaluation'),
       makeSidebarLink('teamQuestions', proposal, activeTab),
       makeSidebarLink('codeChallenge', proposal, activeTab),
       makeSidebarLink('teamScenario', proposal, activeTab),
+      adt('heading', 'Management'),
       makeSidebarLink('history', proposal, activeTab)
     ]
   }));
