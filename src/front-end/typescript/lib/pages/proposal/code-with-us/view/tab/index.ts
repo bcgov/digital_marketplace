@@ -74,6 +74,10 @@ export function makeSidebarLink(tab: TabId, proposalId: Id, opportunityId: Id, a
 
 export async function makeSidebarState(proposalId: Id, opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
+    backLink: {
+      text: 'Back to Opportunity',
+      route: adt('opportunityCWUEdit', { opportunityId, tab: 'proposals' as const })
+    },
     items: [
       adt('heading', 'Vendor Proposal'),
       makeSidebarLink('proposal', proposalId, opportunityId, activeTab),

@@ -1,6 +1,7 @@
+import { Route } from 'front-end/lib/app/types';
 import { ComponentView, Init, Update, View } from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { Dest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { Dest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 import { ADT, adt } from 'shared/lib/types';
@@ -17,19 +18,26 @@ export interface SidebarLink {
 
 export type SidebarItem = ADT<'link', SidebarLink> | ADT<'heading', string>;
 
+export interface BackLink {
+  text: string;
+  route: Route;
+}
+
 export interface State {
   isOpen: boolean;
   items: SidebarItem[];
+  backLink?: BackLink;
 }
 
-export type Params = Pick<State, 'items'>;
+export type Params = Pick<State, 'items' | 'backLink'>;
 
 export type Msg
   = ADT<'toggleOpen', boolean | undefined>;
 
-export const init: Init<Params, State> = async ({ items }) => ({
+export const init: Init<Params, State> = async ({ backLink, items }) => ({
   isOpen: false,
-  items
+  items,
+  backLink
 });
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
@@ -103,6 +111,18 @@ const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
   }
 };
 
+const BackLink: View<BackLink> = ({ text, route }) => {
+  return (
+    <Link
+      dest={routeDest(route)}
+      symbol_={leftPlacement(iconLinkSymbol('arrow-left'))}
+      className='mb-4 mb-md-6 font-size-small'
+      color='secondary'>
+      {text}
+    </Link>
+  );
+};
+
 function linksOnly(items: SidebarItem[]): SidebarLink[] {
   return items.reduce((acc, item) => {
     if (item.tag === 'link') {
@@ -123,6 +143,7 @@ export const view: ComponentView<State, Msg> = props => {
   if (!activeLink) { return null; }
   return (
     <Sticky className='d-print-none'>
+      {state.backLink ? (<BackLink {...state.backLink} />) : null}
       <div className='d-none d-md-flex flex-column flex-nowrap align-items-start'>
         {items.map((item, i) => (<SidebarItem item={item} isFirst={i === 0} key={`desktop-sidebar-link-${i}`} />))}
       </div>
