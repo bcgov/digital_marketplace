@@ -79,7 +79,7 @@ export function validateSubmissionInfo(raw: string): Validation<string> {
 }
 
 export function validateAcceptanceCriteria(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Acceptance Criteria', 1, 2000);
+  return validateGenericString(raw, 'Acceptance Criteria', 1, 5000);
 }
 
 export function validateEvaluationCriteria(raw: string): Validation<string> {
