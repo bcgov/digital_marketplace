@@ -243,6 +243,7 @@ Environment variables that affect the back-end server's functionality are stored
 | `AVATAR_MAX_IMAGE_WIDTH` | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. Defaults to 500 pixels. |
 | `AVATAR_MAX_IMAGE_HEIGHT` | The maximum image height for uploaded avatar image files. Files with a greater height will be resized. Defaults to 500 pixels. |
 | `FILE_STORAGE_DIR` | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing. |
+| `SERVICE_TOKEN_HASH` | A hashed token used to control access to service API endpoints that are only enabled in development and test environments. Defining the variable will enable service endpoints that can be used to override user accounts and sessions. |
 
 #### Front-End Environment Variables
 

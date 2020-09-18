@@ -1,11 +1,10 @@
-import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
+import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
-import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
+import { Connection, createSession, createUser, deleteSession, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { authenticatePassword } from 'back-end/lib/security';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
-import { validateUserId } from 'back-end/lib/validation';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
 import { getString, getStringArray } from 'shared/lib';
@@ -139,9 +138,9 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
     }
   ];
 
-  // Routes that are added only if running the application in a development environment and if the service token is defined
+  // Routes that are added only if the service token environment variable is defined
   // Requests to these routes much include the correct service token in order to be processed.
-  if (ENV === 'development' && SERVICE_TOKEN_HASH) {
+  if (SERVICE_TOKEN_HASH) {
 
     // The /auth/service endpoint is for creating user accounts for testing purposes.
     // The test users must already exist in KeyCloak with the appropriate attributes and claims.
@@ -194,7 +193,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
     // This should be used only for testing and QA purposes, and is not meant for use in production.
     router.push({
       method: ServerHttpMethod.Get,
-      path: '/auth/override-session/:id',
+      path: '/auth/override-session/:type/:username',
       handler: nullRequestBodyHandler(async request => {
         try {
           // Retrieve service token from query paramters and validate.
@@ -209,15 +208,36 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             };
           }
 
-          // Validate the given user id for overriding, and modify the session
-          const overrideUserId = request.params.id;
-          const validatedUser = await validateUserId(connection, overrideUserId);
-          if (isValid(validatedUser)) {
-            request.session.user = getValidValue(validatedUser, undefined);
+          // Validate the given user username and type for overriding, and modify the session with the returned id
+          const overrideUserName = request.params.username;
+          let overrideAccountType;
+          switch (request.params.type.toLowerCase()) {
+            case 'vendor':
+              overrideAccountType = UserType.Vendor;
+              break;
+            case 'gov':
+              overrideAccountType = UserType.Government;
+              break;
+            case 'admin':
+              overrideAccountType = UserType.Admin;
+              break;
+            default:
+              return {
+                code: 400,
+                headers: {},
+                session: request.session,
+                body: makeTextResponseBody('')
+              };
+          }
+          const overrideUser = getValidValue(await findOneUserByTypeAndUsername(connection, overrideAccountType, overrideUserName), undefined);
+          const currentSession = getValidValue(await readOneSession(connection, request.session.id), undefined);
+          if (overrideUser && currentSession) {
+            const newSession = getValidValue(await createSession(connection, { accessToken: currentSession.accessToken, user: overrideUser.id }), currentSession);
+            await deleteSession(connection, currentSession.id);
             return {
               code: 200,
               headers: {},
-              session: request.session,
+              session: newSession,
               body: makeTextResponseBody('OK')
             };
           }
