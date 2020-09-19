@@ -127,7 +127,6 @@ export interface Props extends ComponentViewProps<State, Msg> {
 }
 
 const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
-  if (disabled) { return null; }
   const hasAddenda = !!(state.existingAddenda.length || state.newAddenda.length);
   return (
     <Link

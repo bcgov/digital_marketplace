@@ -105,7 +105,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Row>
           <Col xs='12'>
             <h3 className='mb-4'>Addenda</h3>
-            <p className='mb-5'>
+            <p className='mb-4'>
               Provide additional information here to clarify or support the information in the original opportunity.
             </p>
             <Addenda.view
