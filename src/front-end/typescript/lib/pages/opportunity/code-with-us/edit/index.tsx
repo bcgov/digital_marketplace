@@ -52,7 +52,7 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
       return valid(immutable({
         opportunity,
         tab: [tabId, tabState],
-        sidebar: await Tab.makeSidebarState(opportunity.id, tabId)
+        sidebar: await Tab.makeSidebarState(opportunity, tabId)
       })) as State_<K>;
     },
 
