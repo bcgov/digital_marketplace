@@ -8,6 +8,7 @@ import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
 import { getString, getStringArray } from 'shared/lib';
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/lib/config.json';
 import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -59,7 +60,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             authQuery.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
           }
 
-          if (provider === 'github' || provider === 'idir') {
+          if (provider === VENDOR_IDP_SUFFIX || provider === GOV_IDP_SUFFIX) {
             authQuery.kc_idp_hint = provider;
           }
           // Cast authQuery as any to support use with qs.stringify.
@@ -268,7 +269,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   let userType: UserType;
   const identityProvider = getString(claims, 'loginSource');
   switch (identityProvider) {
-    case 'IDIR':
+    case GOV_IDP_SUFFIX.toUpperCase():
       const roles = getStringArray(claims, 'roles');
       if (roles.includes('dm_admin')) {
         userType = UserType.Admin;
@@ -276,7 +277,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
         userType = UserType.Government;
       }
       break;
-    case 'GITHUB':
+    case VENDOR_IDP_SUFFIX.toUpperCase():
       userType = UserType.Vendor;
       break;
     default:
@@ -287,8 +288,8 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
 
   let username = getString(claims, 'preferred_username');
 
-  // Strip the @github / @idir suffix if present.  We want to match and store the username without suffix.
-  if ((username.endsWith('@github') && userType === UserType.Vendor) || (username.endsWith('@idir') && userType === UserType.Government)) {
+  // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
+  if ((username.endsWith('@' + VENDOR_IDP_SUFFIX) && userType === UserType.Vendor) || (username.endsWith('@' + GOV_IDP_SUFFIX) && userType === UserType.Government)) {
     username = username.slice(0, username.lastIndexOf('@'));
   }
 

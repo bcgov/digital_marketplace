@@ -1,8 +1,9 @@
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/lib/config.json';
 import { FileRecord } from 'shared/lib/resources/file';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
 
-export type KeyCloakIdentityProvider = 'github' | 'idir';
+export type KeyCloakIdentityProvider = string;
 
 export enum UserType {
   Vendor = 'VENDOR',
@@ -13,10 +14,10 @@ export enum UserType {
 export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloakIdentityProvider {
   switch (userType) {
     case UserType.Vendor:
-      return 'github';
+      return VENDOR_IDP_SUFFIX;
     case UserType.Government:
     case UserType.Admin:
-      return 'idir';
+      return GOV_IDP_SUFFIX;
   }
 }
 
