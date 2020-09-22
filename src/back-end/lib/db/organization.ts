@@ -96,8 +96,9 @@ async function doesOrganizationMeetAllCapabilities(connection: Connection, organ
 function generateOrganizationQuery(connection: Connection) {
   return connection<RawOrganization>('organizations')
     .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
-    .join('users', 'users.id', '=', 'affiliations.user')
+    .leftOuterJoin('users', 'users.id', '=', 'affiliations.user')
     .where({ 'affiliations.membershipType': MembershipType.Owner })
+    .orWhereNull('affiliations.membershipType')
     .select(
       'organizations.*',
       'users.id as owner',
@@ -124,6 +125,9 @@ export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], Organizat
   }
 
   const result = await query.first<RawOrganization>();
+  if (!result) {
+    return valid(null);
+  }
   const { id, legalName, logoImageFile, owner, acceptedSWUTerms, numTeamMembers, active } = result;
   // If no session, or user is not an admin/government or owning vendor, do not include RFQ data
   if (!session || (isVendor(session) && owner !== session.user?.id)) {
