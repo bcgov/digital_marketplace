@@ -1,2 +1,2 @@
 #! /usr/bin/env bash
-nix-shell $@
+nix-shell "$@"
