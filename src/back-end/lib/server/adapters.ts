@@ -3,6 +3,7 @@ import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { ErrorResponseBody, FileRequestBody, FileResponseBody, HtmlResponseBody, JsonRequestBody, JsonResponseBody, makeErrorResponseBody, makeFileRequestBody, makeJsonRequestBody, parseSessionId, Request, Response, Route, Router, SessionIdToSession, SessionToSessionId, TextResponseBody } from 'back-end/lib/server';
+import * as specs from 'back-end/lib/swagger';
 import { parseServerHttpMethod, ServerHttpMethod } from 'back-end/lib/types';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -15,6 +16,7 @@ import multiparty from 'multiparty';
 import * as path from 'path';
 import { addDays, parseJsonSafely } from 'shared/lib';
 import { Validation } from 'shared/lib/validation';
+import swaggerUI from 'swagger-ui-express';
 
 const SESSION_COOKIE_NAME = 'sid';
 
@@ -266,6 +268,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
     // Mount each route to the Express application.
     router.forEach(route => {
       app.all(route.path, makeExpressRequestHandler(route));
+      app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
     });
 
     // Listen for incoming connections.
