@@ -9,14 +9,15 @@ export function userAvatarPath(user?: Pick<User, 'avatarImageFile'>): string {
     : DEFAULT_USER_AVATAR_IMAGE_PATH;
 }
 
-export function keyCloakIdentityProviderToTitleCase(v: KeyCloakIdentityProvider): string {
+export function keyCloakIdentityProviderToTitleCase(v: KeyCloakIdentityProvider): string | null {
   switch (v) {
     case 'github': return 'GitHub';
     case 'idir': return 'IDIR';
+    default: return null;
   }
 }
 
-export function userToKeyClockIdentityProviderTitleCase(user: User): string {
+export function userToKeyClockIdentityProviderTitleCase(user: User): string | null {
   return keyCloakIdentityProviderToTitleCase(userTypeToKeycloakIdentityProvider(user.type));
 }
 
