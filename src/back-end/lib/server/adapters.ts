@@ -268,7 +268,9 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
     // Mount each route to the Express application.
     router.forEach(route => {
       app.all(route.path, makeExpressRequestHandler(route));
-      app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
+      if (ENV === 'development') {
+        app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
+      }
     });
 
     // Listen for incoming connections.
