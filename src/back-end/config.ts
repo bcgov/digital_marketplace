@@ -44,6 +44,8 @@ export const CONTACT_EMAIL = get('CONTACT_EMAIL', 'digitalmarketplace@gov.bc.ca'
 
 export const SERVICE_TOKEN_HASH = get('SERVICE_TOKEN_HASH', '');
 
+export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
+
 export function getPostgresUrl(): string | null {
   // *SERVICE* variables are set automatically by OpenShift.
   const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
