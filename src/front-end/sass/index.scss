@@ -8,7 +8,7 @@ $grid-breakpoints: (
   xs: 0,
   sm: 576px,
   md: 1100px,
-  lg: 1200px 
+  lg: 1200px
 );
 
 $container-max-widths: (
@@ -69,21 +69,7 @@ $orange:           #FD7E14;
 
 $colors: (
   'white':            $white,
-  'black':            $black,
-  'blue':             $blue,
-  'blue-alt':         $blue-alt,
-  'blue-alt-2':       $blue-alt-2,
-  'blue-dark':        $blue-dark,
-  'blue-dark-alt':    $blue-dark-alt,
-  'blue-dark-alt-2':  $blue-dark-alt-2,
-  'blue-light':       $blue-light,
-  'blue-light-alt':   $blue-light-alt,
-  'blue-light-alt-2': $blue-light-alt-2,
-  'purple':           $purple,
-  'purple-light':     $purple-light,
-  'yellow':           $yellow,
-  'red':              $red,
-  'green':            $green
+  'black':            $black
 );
 
 // Utility colors.
@@ -99,6 +85,21 @@ $dropdown-link-hover-bg:            $gray-100;
 $dropdown-link-active-bg:           $gray-200;
 $table-hover-bg: $blue-light-alt;
 
+// App-specific utility colors
+//TODO
+$body-bg: $blue-dark;
+$nav-bg: $blue-dark;
+$nav-bg-alt: $blue-dark-alt;
+$nav-border-bottom: $yellow;
+$footer-bg: $blue-dark;
+$footer-separator: $blue-dark-alt;
+$footer-border-top: $yellow;
+$proposal-swu-form-team-question-response-heading: $blue-dark;
+$landing-role-heading: $blue-dark;
+$landing-role-icon: $yellow;
+$landing-testimonial-source: $yellow;
+$landing-small-underline: $yellow;
+
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
 // so we don't need to update the map at all.
@@ -111,7 +112,6 @@ $success:      $green;
 $body:         $body-color;
 $light:        $gray-100;
 $dark:         $gray-800;
-$bcgov-blue:   $blue-dark;
 $bcgov-yellow: $yellow;
 
 $theme-colors:   map-merge(
@@ -124,9 +124,7 @@ $theme-colors:   map-merge(
     'success':      $success,
     'body':         $body,
     'light':        $light,
-    'dark':         $dark,
-    'bcgov-blue':   $bcgov-blue,
-    'bcgov-yellow': $bcgov-yellow
+    'dark':         $dark
   ),
   $colors
 );
@@ -182,7 +180,7 @@ $transition-duration: 240ms;
 
 html,
 body {
-  background: $bcgov-blue;
+  background: $body-bg;
 }
 
 html {
@@ -270,18 +268,18 @@ nav {
     }
 
     .main-nav-top-navbar {
-      @extend .bg-bcgov-blue;
-      @extend .border-bottom-gov;
+      background: $nav-bg;
       width: 100%;
       height: $main-nav-top-height;
       position: relative;
       z-index: 2;
+      border-bottom: 2px solid $nav-border-bottom;
     }
 
     .main-nav-mobile-menu {
-      @extend .bg-blue-dark-alt;
       @extend .py-4;
       @extend .d-md-none;
+      background: $nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
         transition: transform $transition-duration ease-out
@@ -311,9 +309,9 @@ nav {
 
       &.mobile,
       &.desktop {
-        @extend .bg-blue-dark-alt;
         @extend .align-items-center;
         @extend .shadow;
+        background: $nav-bg-alt;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
@@ -343,8 +341,12 @@ nav {
   }
 
   .dropdown-toggle:hover img {
-    border-color: $blue-dark-alt;
+    border-color: $nav-bg-alt;
   }
+}
+
+footer {
+  border-top: 2px solid $footer-border-top;
 }
 
 // Custom Bootstrap style overrides.
@@ -604,14 +606,6 @@ nav.navbar .nav-link:hover {
   white-space: normal !important;
 }
 
-.border-bottom-gov {
-  border-bottom: 2px solid $bcgov-yellow;
-}
-
-.border-top-gov {
-  border-top: 2px solid $bcgov-yellow;
-}
-
 @each $breakpoint in map-keys($grid-breakpoints) {
   $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
@@ -775,7 +769,7 @@ nav.navbar .nav-link:hover {
 }
 
 .markdown {
-  
+
   img {
     width: 100%;
     max-width: 600px;

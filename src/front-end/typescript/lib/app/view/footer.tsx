@@ -45,7 +45,7 @@ const links: AnchorProps[] = [
 
 const Footer: View<{}> = () => {
   return (
-    <footer className='w-100 bg-bcgov-blue text-light border-top-gov d-print-none'>
+    <footer className='w-100 bg-footer-bg text-light d-print-none'>
       <Container>
         <Row>
           <Col xs='12' className='d-flex flex-row flex-wrap align-items-center pt-3'>
@@ -53,7 +53,7 @@ const Footer: View<{}> = () => {
               <div key={`footer-link-${i}`} className='mb-3'>
                 <Link {...link} className='o-75' color='white' button={false} />
                 {i < links.length - 1
-                  ? (<Separator spacing='2' color='blue-dark-alt'>|</Separator>)
+                  ? (<Separator spacing='2' color='footer-separator'>|</Separator>)
                   : null}
               </div>
             ))}

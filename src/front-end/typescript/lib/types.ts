@@ -16,8 +16,7 @@ export type Color
   | 'blue-alt'
   | 'blue-alt-2'
   | 'blue-dark'
-  | 'blue-dark-alt'
-  | 'blue-dark-alt-2'
+  //| 'blue-dark-alt'
   | 'blue-light'
   | 'blue-light-alt'
   | 'blue-light-alt-2'
@@ -28,6 +27,9 @@ export type Color
   | 'orange'
   | 'red'
   | 'green';
+
+export type UtilityColor
+  = 'TODO';
 
 export type ThemeColor
   = 'primary'
@@ -42,6 +44,7 @@ export type ThemeColor
   | 'bcgov-blue'
   | 'bcgov-yellow'
   | Color
+  | UtilityColor
   | Grays;
 
 export type TextColor = ThemeColor;
