@@ -42,7 +42,7 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
       ? {
           name: 'Created By',
           children: isAdmin(viewerUser)
-            ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+            ? (<Link dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
             : createdBy.name
         }
       : null
@@ -55,7 +55,6 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
             Sprint With Us:&nbsp;
             <Link
               newTab
-              color='primary'
               dest={routeDest(adt('opportunitySWUView', { opportunityId: opportunity.id }))}>
               {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
             </Link>

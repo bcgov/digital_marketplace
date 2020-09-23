@@ -41,7 +41,7 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
       ? {
           name: 'Created By',
           children: viewerUser.type === UserType.Admin
-            ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+            ? (<Link dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
             : createdBy.name
         }
       : null
@@ -54,7 +54,6 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
             Code With Us:&nbsp;
             <Link
               newTab
-              color='primary'
               dest={routeDest(adt('opportunityCWUView', { opportunityId: opportunity.id }))}>
               {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
             </Link>

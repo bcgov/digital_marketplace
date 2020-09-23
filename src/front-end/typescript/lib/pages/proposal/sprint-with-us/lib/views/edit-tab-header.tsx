@@ -64,7 +64,6 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
             Sprint With Us:&nbsp;
             <Link
               newTab
-              color='primary'
               dest={routeDest(adt('opportunitySWUView', { opportunityId: proposal.opportunity.id }))}>
               {proposal.opportunity.title}
             </Link>

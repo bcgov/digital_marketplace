@@ -46,7 +46,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
       ? {
           name: 'Submitted By',
           children: isAdmin(viewerUser)
-            ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+            ? (<Link dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
             : createdBy.name
         }
       : null
