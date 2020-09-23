@@ -36,7 +36,6 @@ type ModalId = 'publish' | 'cancel';
 export interface State {
   isEditing: boolean;
   publishLoading: number;
-  disabled: boolean;
   showModal: ModalId | null;
   publishNewAddendum: PublishNewAddendum;
   newAddendum: Immutable<RichMarkdownEditor.State> | null;
@@ -54,7 +53,7 @@ type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export interface Params extends Pick<State, 'disabled' | 'publishNewAddendum'> {
+export interface Params extends Pick<State, 'publishNewAddendum'> {
   existingAddenda: Addendum[];
   newAddendum?: {
     errors: string[];
@@ -94,7 +93,6 @@ export const init: Init<Params, State> = async params => {
     i++;
   }
   return {
-    disabled: params.disabled,
     publishNewAddendum: params.publishNewAddendum,
     isEditing: false,
     publishLoading: 0,
@@ -145,7 +143,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           if (validation.isValid(result)) {
             dispatch(toast(adt('success', toasts.success)));
             return immutable(await init({
-              disabled: state.disabled,
               publishNewAddendum: state.publishNewAddendum,
               existingAddenda: result.value
             }));
@@ -196,7 +193,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
 export const view: View<Props> = props => {
   const { className, state, dispatch } = props;
   const isPublishLoading = state.publishLoading > 0;
-  const isDisabled = state.disabled || isPublishLoading;
+  const isDisabled = isPublishLoading;
   const style = {
     height: '300px'
   };
@@ -228,16 +225,14 @@ export const view: View<Props> = props => {
 };
 
 export const getContextualActions: PageGetContextualActions<State, Msg> = ({ state, dispatch }) => {
-  if (state.disabled) { return null; }
   if (state.isEditing) {
     const isPublishLoading = state.publishLoading > 0;
-    const isNewAddendumValid = isValid(state);
     return adt('links', [
       {
         children: 'Publish Addendum',
         onClick: () => dispatch(adt('showModal', 'publish' as const)),
         button: true,
-        disabled: isPublishLoading || !isNewAddendumValid,
+        disabled: isPublishLoading || !isValid(state),
         loading: isPublishLoading,
         symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
         color: 'primary'

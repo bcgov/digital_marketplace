@@ -6,7 +6,7 @@ import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { Addendum } from 'shared/lib/resources/addendum';
+import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -24,7 +24,6 @@ const init: Init<Tab.Params, State> = async params => {
     ...params,
     addenda: immutable(await Addenda.init({
       existingAddenda: params.opportunity.addenda,
-      disabled: false,
       async publishNewAddendum(value) {
         const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addAddendum', value));
         let outcome: Validation<Addendum[], string[]> | undefined;
