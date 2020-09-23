@@ -585,7 +585,7 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     state: state.nav,
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
-    logoImageUrl: prefixPath('/images/bcgov_logo.svg'),
+    logoImageUrl: prefixPath('/images/logo.svg'),
     title: 'Digital Marketplace',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
