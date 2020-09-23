@@ -200,7 +200,7 @@ export const view: View<Props> = props => {
           help={userTypeToKeycloakIdentityProvider(state.user.type) === 'github'
             ? 'Your unique GitHub username (or handle).'
             : 'Your unique IDIR username.'}
-          label={userToKeyClockIdentityProviderTitleCase(state.user)}
+          label={userToKeyClockIdentityProviderTitleCase(state.user) || undefined}
           disabled
           state={state.idpUsername}
           dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />

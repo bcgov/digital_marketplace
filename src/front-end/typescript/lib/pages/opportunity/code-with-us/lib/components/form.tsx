@@ -1,5 +1,4 @@
 import { BC_INFORMATION_ON_PROCUREMENT_URL } from 'front-end/config';
-import * as Addenda from 'front-end/lib/components/addenda';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
@@ -18,7 +17,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
-import { Addendum, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
@@ -27,7 +26,7 @@ type RemoteOk = 'yes' | 'no';
 
 const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
-export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments' | 'Addenda';
+export type TabId = 'Overview' | 'Description' | 'Details' | 'Attachments';
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
@@ -57,8 +56,6 @@ export interface State {
   evaluationCriteria: Immutable<RichMarkdownEditor.State>;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
-  // Addenda tab
-  addenda: Immutable<Addenda.State> | null;
 }
 
 export type Msg
@@ -82,15 +79,12 @@ export type Msg
   | ADT<'acceptanceCriteria', RichMarkdownEditor.Msg>
   | ADT<'evaluationCriteria', RichMarkdownEditor.Msg>
   // Attachments tab
-  | ADT<'attachments',        Attachments.Msg>
-  // Addenda tab
-  | ADT<'addenda',            Addenda.Msg>;
+  | ADT<'attachments',        Attachments.Msg>;
 
 export interface Params {
   canRemoveExistingAttachments: boolean;
   opportunity?: CWUOpportunity;
   activeTab?: TabId;
-  showAddendaTab?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -104,8 +98,7 @@ export function setValidateDate(state: Immutable<State>, k: DateFieldKey, valida
   return state.update(k, s => FormField.setValidate(s, DateField.validateDate(validate), !!FormField.getValue(s)));
 }
 
-export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
-  activeTab = !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab;
+export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, activeTab = DEFAULT_ACTIVE_TAB }) => {
   return {
     opportunity,
 
@@ -114,8 +107,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
         'Overview',
         'Description',
         'Details',
-        'Attachments',
-        ...(showAddendaTab ? ['Addenda' as const] : [])
+        'Attachments'
       ],
       activeTab
     })),
@@ -293,13 +285,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       canRemoveExistingAttachments,
       existingAttachments: opportunity?.attachments || [],
       newAttachmentMetadata
-    })),
-
-    addenda: showAddendaTab
-      ? immutable(await Addenda.init({
-          existingAddenda: opportunity?.addenda || []
-        }))
-      : null
+    }))
 
   };
 };
@@ -381,16 +367,11 @@ export function isAttachmentsTabValid(state: Immutable<State>): boolean {
   return Attachments.isValid(state.attachments);
 }
 
-export function isAddendaTabValid(state: Immutable<State>): boolean {
-  return (!state.addenda || Addenda.isValid(state.addenda));
-}
-
 export function isValid(state: Immutable<State>): boolean {
   return isOverviewTabValid(state) &&
     isDescriptionTabValid(state)   &&
     isDetailsTabValid(state)       &&
-    isAttachmentsTabValid(state)   &&
-    isAddendaTabValid(state);
+    isAttachmentsTabValid(state);
 }
 
 export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
@@ -444,45 +425,6 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
       case 'unhandled':
         return invalid(state);
-    }
-  }
-  // Always add addenda.
-  if (action.tag === 'update' && state.opportunity && state.addenda) {
-    const newAddenda = Addenda.getNewAddenda(state.addenda);
-    if (newAddenda.length) {
-      let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
-      const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
-      //Persist each addendum.
-      for (const addendum of newAddenda) {
-        const addAddendumResult: api.ResponseValidation<CWUOpportunity, UpdateValidationErrors> = await api.opportunities.cwu.update(state.opportunity.id, adt('addAddendum', addendum));
-        switch (addAddendumResult.tag) {
-          case 'valid':
-            updatedExistingAddenda = addAddendumResult.value.addenda;
-            break;
-          case 'invalid':
-            if (addAddendumResult.value.opportunity?.tag === 'addAddendum') {
-              updatedNewAddenda.push({
-                value: addendum,
-                errors: addAddendumResult.value.opportunity.value
-              });
-            }
-            break;
-          case 'unhandled':
-            updatedNewAddenda.push({
-              value: addendum,
-              errors: ['Unable to add addenda due to a system error.']
-            });
-        }
-      }
-      //Update the addenda field in state.
-      state = state.set('addenda', immutable(await Addenda.init({
-        existingAddenda: updatedExistingAddenda,
-        newAddenda: updatedNewAddenda
-      })));
-      //Check if any addenda failed.
-      if (updatedNewAddenda.length) {
-        return invalid(state);
-      }
     }
   }
   const actionResult: api.ResponseValidation<CWUOpportunity, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
@@ -712,24 +654,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('attachments', value)
       });
-
-    case 'addenda':
-      return updateComponentChild({
-        state,
-        childStatePath: ['addenda'],
-        childUpdate: Addenda.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt('addenda', value)
-      });
   }
 };
 
-function areNonAddendaDisabled(opportunity?: CWUOpportunity, disabledProp?: boolean): boolean {
-  return disabledProp || (!!opportunity && !canCWUOpportunityDetailsBeEdited(opportunity));
-}
-
-const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
+const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -827,8 +755,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
   );
 };
 
-const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
+const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -850,8 +777,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
   );
 };
 
-const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
+const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -948,8 +874,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.opportunity, disabledProp);
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -959,24 +884,6 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp 
         <Attachments.view
           dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
           state={state.attachments}
-          disabled={disabled}
-          className='mt-4' />
-      </Col>
-    </Row>
-  );
-};
-
-const AddendaView: View<Props> = ({ state, dispatch, disabled }) => {
-  if (!state.addenda) { return null; }
-  return (
-    <Row>
-      <Col xs='12'>
-        <p>
-          Provide additional information here to clarify or support the information in the original opportunity.
-        </p>
-        <Addenda.view
-          dispatch={mapComponentDispatch(dispatch, msg => adt('addenda' as const, msg))}
-          state={state.addenda}
           disabled={disabled}
           className='mt-4' />
       </Col>
@@ -996,7 +903,6 @@ export const view: View<Props> = props => {
       case 'Description': return (<DescriptionView {...props} />);
       case 'Details':     return (<DetailsView {...props} />);
       case 'Attachments': return (<AttachmentsView {...props} />);
-      case 'Addenda':     return (<AddendaView {...props} />);
     }
   })();
   return (
@@ -1010,7 +916,6 @@ export const view: View<Props> = props => {
           case 'Description': return isDescriptionTabValid(state);
           case 'Details':     return isDetailsTabValid(state);
           case 'Attachments': return isAttachmentsTabValid(state);
-          case 'Addenda':     return isAddendaTabValid(state);
         }
       }}
       state={state.tabbedForm}
