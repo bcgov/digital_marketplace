@@ -45,6 +45,7 @@ export interface User {
   deactivatedOn: Date | null;
   deactivatedBy: Id | null;
   capabilities: string[];
+  idpId: string;
 }
 
 export interface UserSlim {
