@@ -11,7 +11,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { canAddAddendumToSWUOpportunity, canSWUOpportunityDetailsBeEdited, isSWUOpportunityPublic, isUnpublished, SWUOpportunity, SWUOpportunityStatus, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityDetailsBeEdited, isSWUOpportunityPublic, isUnpublished, SWUOpportunity, SWUOpportunityStatus, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -62,7 +62,6 @@ async function initForm(opportunity: SWUOpportunity, viewerUser: User, activeTab
     opportunity,
     viewerUser,
     activeTab,
-    showAddendaTab: canAddAddendumToSWUOpportunity(opportunity),
     canRemoveExistingAttachments: canSWUOpportunityDetailsBeEdited(opportunity, isAdmin(viewerUser))
   }));
   if (validate) {
