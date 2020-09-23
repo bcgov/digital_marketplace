@@ -810,7 +810,7 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
     <Accordion
       className={className}
       toggle={() => toggleAccordion()}
-      color='proposal-swu-form-team-question-response-heading'
+      color='c-proposal-swu-form-team-question-response-heading'
       title={`Question ${index + 1}`}
       titleClassName='h3 mb-0'
       chevronWidth={1.5}

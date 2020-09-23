@@ -87,18 +87,18 @@ $table-hover-bg: $blue-light-alt;
 
 // App-specific utility colors
 //TODO
-$body-bg: $blue-dark;
-$nav-bg: $blue-dark;
-$nav-bg-alt: $blue-dark-alt;
-$nav-border-bottom: $yellow;
-$footer-bg: $blue-dark;
-$footer-separator: $blue-dark-alt;
-$footer-border-top: $yellow;
-$proposal-swu-form-team-question-response-heading: $blue-dark;
-$landing-role-heading: $blue-dark;
-$landing-role-icon: $yellow;
-$landing-testimonial-source: $yellow;
-$landing-small-underline: $yellow;
+$c-body-bg: $blue-dark;
+$c-nav-bg: $blue-dark;
+$c-nav-bg-alt: $blue-dark-alt;
+$c-nav-border-bottom: $yellow;
+$c-footer-bg: $blue-dark;
+$c-footer-separator: $blue-dark-alt;
+$c-footer-border-top: $yellow;
+$c-proposal-swu-form-team-question-response-heading: $blue-dark;
+$c-landing-role-heading: $blue-dark;
+$c-landing-role-icon: $yellow;
+$c-landing-testimonial-source: $yellow;
+$c-landing-small-underline: $yellow;
 
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
@@ -180,7 +180,7 @@ $transition-duration: 240ms;
 
 html,
 body {
-  background: $body-bg;
+  background: $c-body-bg;
 }
 
 html {
@@ -268,18 +268,18 @@ nav {
     }
 
     .main-nav-top-navbar {
-      background: $nav-bg;
+      background: $c-nav-bg;
       width: 100%;
       height: $main-nav-top-height;
       position: relative;
       z-index: 2;
-      border-bottom: 2px solid $nav-border-bottom;
+      border-bottom: 2px solid $c-nav-border-bottom;
     }
 
     .main-nav-mobile-menu {
       @extend .py-4;
       @extend .d-md-none;
-      background: $nav-bg-alt;
+      background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
         transition: transform $transition-duration ease-out
@@ -311,7 +311,7 @@ nav {
       &.desktop {
         @extend .align-items-center;
         @extend .shadow;
-        background: $nav-bg-alt;
+        background: $c-nav-bg-alt;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
@@ -341,12 +341,12 @@ nav {
   }
 
   .dropdown-toggle:hover img {
-    border-color: $nav-bg-alt;
+    border-color: $c-nav-bg-alt;
   }
 }
 
 footer {
-  border-top: 2px solid $footer-border-top;
+  border-top: 2px solid $c-footer-border-top;
 }
 
 // Custom Bootstrap style overrides.

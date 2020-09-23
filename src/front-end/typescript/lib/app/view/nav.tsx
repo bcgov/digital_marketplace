@@ -342,7 +342,7 @@ const TopNavbar: View<Props> = props => {
                 </Link>
                 <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-3 d-none d-md-block' />
                 {isLoading
-                  ? (<Spinner size='sm' color='nav-bg-alt' className='transition-indicator ml-3' />)
+                  ? (<Spinner size='sm' color='c-nav-bg-alt' className='transition-indicator ml-3' />)
                   : null}
               </div>
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
@@ -406,7 +406,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                     color='white'
                     className={linkClassName(link)} />
                   {i < appLinks.length - 1
-                    ? (<Separator spacing='2' color='nav-bg' className='o-50'>|</Separator>)
+                    ? (<Separator spacing='2' color='c-nav-bg' className='o-50'>|</Separator>)
                     : null}
                 </Fragment>
               ))}

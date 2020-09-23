@@ -55,7 +55,7 @@ body {
   line-height: $line-height-base;
   color: $body-color;
   text-align: left; // 3
-  background-color: $body-bg; // 2
+  background-color: $c-body-bg; // 2
 }
 
 // Suppress the focus outline on elements that cannot be accessed via keyboard.
