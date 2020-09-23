@@ -27,6 +27,12 @@ export type UtilityColor
   | 'c-toast-warning-icon'
   | 'c-toast-success-icon'
   | 'c-sidebar-instructional-bg'
+  | 'c-sidebar-menu-link-inactive-fg'
+  | 'c-sidebar-menu-link-inactive-icon'
+  | 'c-sidebar-menu-link-active-fg'
+  | 'c-sidebar-menu-link-active-icon'
+  | 'c-sidebar-menu-link-active-bg'
+  | 'c-sidebar-menu-mobile-caret'
   // Pages
   | 'c-landing-role-heading'
   | 'c-landing-role-icon'

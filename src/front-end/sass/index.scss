@@ -96,6 +96,12 @@ $c-toast-error-icon: $red;
 $c-toast-warning-icon: $orange;
 $c-toast-success-icon: $green;
 $c-sidebar-instructional-bg: $blue-light;
+$c-sidebar-menu-link-inactive-fg: $blue;
+$c-sidebar-menu-link-inactive-icon: $blue-dark-alt-2;
+$c-sidebar-menu-link-active-fg: $white;
+$c-sidebar-menu-link-active-icon: $blue;
+$c-sidebar-menu-link-active-bg: $blue-dark-alt-2;
+$c-sidebar-menu-mobile-caret: $white;
 // Pages
 $c-landing-role-heading: $blue-dark;
 $c-landing-role-icon: $yellow;
@@ -142,6 +148,12 @@ $app-utility-colors: (
   'c-toast-warning-icon': $c-toast-warning-icon,
   'c-toast-success-icon': $c-toast-success-icon,
   'c-sidebar-instructional-bg': $c-sidebar-instructional-bg,
+  'c-sidebar-menu-link-inactive-fg': $c-sidebar-menu-link-inactive-fg,
+  'c-sidebar-menu-link-inactive-icon': $c-sidebar-menu-link-inactive-icon,
+  'c-sidebar-menu-link-active-fg': $c-sidebar-menu-link-active-fg,
+  'c-sidebar-menu-link-active-icon': $c-sidebar-menu-link-active-icon,
+  'c-sidebar-menu-link-active-bg': $c-sidebar-menu-link-active-bg,
+  'c-sidebar-menu-mobile-caret': $c-sidebar-menu-mobile-caret,
   // Pages
   'c-landing-role-heading': $c-landing-role-heading,
   'c-landing-role-icon': $c-landing-role-icon,

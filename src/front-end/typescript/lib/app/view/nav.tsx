@@ -281,7 +281,7 @@ interface TitleProps extends Pick<Props, 'title' | 'homeDest'> {
 }
 
 const Title: View<TitleProps> = ({ title, homeDest, dispatch, color = 'c-nav-fg', className = '' }) => (
-  <div className={className}>
+  <div className={`nav-title ${className}`}>
     <NavLink
       dispatch={dispatch}
       children={title}

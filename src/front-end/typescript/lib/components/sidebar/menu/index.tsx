@@ -58,9 +58,9 @@ const SidebarLink: View<SidebarLinkProps> = props => {
     if (disabled) {
       return undefined;
     } else if (active) {
-      return 'primary';
+      return 'c-sidebar-menu-link-active-icon';
     } else {
-      return 'info';
+      return 'c-sidebar-menu-link-inactive-icon';
     }
   })();
   return (
@@ -73,11 +73,11 @@ const SidebarLink: View<SidebarLinkProps> = props => {
       symbol_={leftPlacement(iconLinkSymbol(icon))}
       symbolClassName={`align-self-start text-${symbolColor}`}
       symbolStyle={{ marginTop: '0.15rem' }}
-      color={active ? 'info' : 'light'}
-      className={`${className} text-left text-wrap ${active ? '' : 'text-primary'}`}>
+      color={active ? 'c-sidebar-menu-link-active-bg' : 'light'}
+      className={`${className} text-left text-wrap ${active ? 'text-c-sidebar-menu-link-active-fg' : 'text-c-sidebar-menu-link-inactive-fg'}`}>
       <span className={caret ? 'mr-2' : undefined}>{text}</span>
       {caret
-        ? (<Icon name='caret-down' color='white' className='ml-auto' style={{ transform: caret === 'up' ? 'rotate(180deg)' : undefined }}/>)
+        ? (<Icon name='caret-down' color='c-sidebar-menu-mobile-caret' className='ml-auto' style={{ transform: caret === 'up' ? 'rotate(180deg)' : undefined }}/>)
         : null}
     </Link>
   );
