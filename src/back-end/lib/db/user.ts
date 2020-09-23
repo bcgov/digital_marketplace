@@ -73,6 +73,12 @@ export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | nul
   return valid(result ? result : null);
 });
 
+export const findOneUserByIdpId = tryDb<[string], User | null>(async (connection, idpId) => {
+  const result = await connection<User>('users')
+    .where({ idpId }).first();
+  return valid(result ? result : null);
+});
+
 export const readManyUsers = tryDb<[], User[]>(async (connection) => {
   const results = await connection<RawUser>('users').select();
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
