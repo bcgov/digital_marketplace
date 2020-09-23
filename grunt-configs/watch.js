@@ -31,7 +31,7 @@ module.exports = {
       `${gruntConfig.frontEnd.src.static}/**`
     ],
     tasks: [
-      "front-end:common",
+      "front-end-common",
       "compress:gzip"
     ]
   }
