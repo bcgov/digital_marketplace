@@ -2,7 +2,7 @@ import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, PageGetContextualActions, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, PageGetContextualActions, PageGetModal, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { makeUploadMarkdownImage } from 'front-end/lib/http/api';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
@@ -31,17 +31,22 @@ interface ExistingAddendum extends Addendum {
 // Either return the updated list of existing addenda, or the list of errors for the new addendum field.
 export type PublishNewAddendum = (value: string) => Promise<validation.Validation<Addendum[], string[]>>;
 
+type ModalId = 'publish' | 'cancel';
+
 export interface State {
   isEditing: boolean;
   publishLoading: number;
   disabled: boolean;
+  showModal: ModalId | null;
   publishNewAddendum: PublishNewAddendum;
   newAddendum: Immutable<RichMarkdownEditor.State> | null;
   existingAddenda: ExistingAddendum[];
 }
 
 type InnerMsg
-  = ADT<'add'>
+  = ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'add'>
   | ADT<'cancel'>
   | ADT<'publish'>
   | ADT<'onChangeExisting', [number, RichMarkdownEditor.Msg]>
@@ -93,6 +98,7 @@ export const init: Init<Params, State> = async params => {
     publishNewAddendum: params.publishNewAddendum,
     isEditing: false,
     publishLoading: 0,
+    showModal: null,
     existingAddenda, //existingAddenda sorted in the http/api module.
     newAddendum:
       params.newAddendum
@@ -106,6 +112,10 @@ const stopPublishLoading = makeStopLoading<State>('publishLoading');
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal':
+      return [state.set('showModal', null)];
     case 'add':
       return [
         state,
@@ -119,11 +129,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'cancel':
       return [
-        state.set('isEditing', false).set('newAddendum', null)
+        state
+          .set('showModal', null)
+          .set('isEditing', false)
+          .set('newAddendum', null)
       ];
     case 'publish':
       return [
-        startPublishLoading(state),
+        startPublishLoading(state).set('showModal', null),
         async (state, dispatch) => {
           state = stopPublishLoading(state);
           const newAddendum = getNewAddendum(state);
@@ -132,7 +145,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           if (validation.isValid(result)) {
             dispatch(toast(adt('success', toasts.success)));
             return immutable(await init({
-              disabled: true,
+              disabled: state.disabled,
               publishNewAddendum: state.publishNewAddendum,
               existingAddenda: result.value
             }));
@@ -222,7 +235,7 @@ export const getContextualActions: PageGetContextualActions<State, Msg> = ({ sta
     return adt('links', [
       {
         children: 'Publish Addendum',
-        onClick: () => dispatch(adt('publish')),
+        onClick: () => dispatch(adt('showModal', 'publish' as const)),
         button: true,
         disabled: isPublishLoading || !isNewAddendumValid,
         loading: isPublishLoading,
@@ -232,7 +245,7 @@ export const getContextualActions: PageGetContextualActions<State, Msg> = ({ sta
       {
         children: 'Cancel',
         disabled: isPublishLoading,
-        onClick: () => dispatch(adt('cancel')),
+        onClick: () => dispatch(adt('showModal', 'cancel' as const)),
         color: 'white'
       }
     ]);
@@ -246,5 +259,51 @@ export const getContextualActions: PageGetContextualActions<State, Msg> = ({ sta
         color: 'primary'
       }
     ]);
+  }
+};
+
+export const getModal: PageGetModal<State, Msg> = state => {
+  switch (state.showModal) {
+    case 'publish':
+      return {
+        title: 'Publish Addendum?',
+        onCloseMsg: adt('hideModal'),
+        actions: [
+          {
+            text: 'Publish Addendum',
+            icon: 'bullhorn',
+            color: 'primary',
+            button: true,
+            msg: adt('publish')
+          },
+          {
+            text: 'Cancel',
+            color: 'secondary',
+            msg: adt('hideModal')
+          }
+        ],
+        body: () => 'Are you sure you want to publish this addendum? Once published, all subscribers will be notified.'
+      };
+    case 'cancel':
+      return {
+        title: 'Cancel Adding an Addendum?',
+        onCloseMsg: adt('hideModal'),
+        actions: [
+          {
+            text: 'Yes, I want to cancel',
+            color: 'danger',
+            button: true,
+            msg: adt('cancel')
+          },
+          {
+            text: 'Go Back',
+            color: 'secondary',
+            msg: adt('hideModal')
+          }
+        ],
+        body: () => 'Are you sure you want to cancel? Any information you may have entered will be lost if you do so.'
+      };
+    case null:
+      return null;
   }
 };

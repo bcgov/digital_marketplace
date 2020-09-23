@@ -1,6 +1,6 @@
 import { Route } from 'front-end/lib/app/types';
 import * as Addenda from 'front-end/lib/components/addenda';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalGlobalComponentMsg, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
@@ -84,6 +84,10 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
+  getModal(state) {
+    return mapPageModalGlobalComponentMsg(Addenda.getModal(state.addenda), value => adt('addenda', value));
+  },
 
   getContextualActions({ state, dispatch }) {
     return Addenda.getContextualActions({
