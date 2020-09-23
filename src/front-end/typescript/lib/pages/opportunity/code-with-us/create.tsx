@@ -141,7 +141,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       ),
       getFooter: () => (
         <span>
-          Need help? <Link newTab color='primary' dest={routeDest(adt('content', 'code-with-us-opportunity-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Code With Us</em> opportunity.
+          Need help? <Link newTab dest={routeDest(adt('content', 'code-with-us-opportunity-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Code With Us</em> opportunity.
         </span>
       )
     })
