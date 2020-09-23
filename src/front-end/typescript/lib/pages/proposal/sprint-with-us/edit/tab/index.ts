@@ -87,7 +87,7 @@ export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId):
       makeSidebarLink('scoresheet', proposal, activeTab),
       adt('heading', 'Need Help?'),
       adt('link', {
-        icon: 'external-link',
+        icon: 'external-link-alt',
         text: 'Read Guide',
         active: false,
         newTab: true,

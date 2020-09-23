@@ -113,7 +113,7 @@ export async function makeSidebarState(opportunity: CWUOpportunity, activeTab: T
       makeSidebarLink('proposals', opportunity.id, activeTab),
       adt('heading', 'Need Help?'),
       adt('link', {
-        icon: 'external-link',
+        icon: 'external-link-alt',
         text: 'Read Guide',
         active: false,
         newTab: true,

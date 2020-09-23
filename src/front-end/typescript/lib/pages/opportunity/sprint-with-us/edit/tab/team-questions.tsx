@@ -375,7 +375,7 @@ export const component: Tab.Component<State, Msg> = {
     const isLoading = isCompleteTeamQuestionsLoading || isScreenToFromLoading;
     return adt('links', [{
       children: 'Complete Team Questions',
-      symbol_: leftPlacement(iconLinkSymbol('comments')),
+      symbol_: leftPlacement(iconLinkSymbol('comments-alt')),
       color: 'primary',
       button: true,
       loading: isCompleteTeamQuestionsLoading,
@@ -399,7 +399,7 @@ export const component: Tab.Component<State, Msg> = {
           actions: [
             {
               text: 'Complete Team Questions',
-              icon: 'comments',
+              icon: 'comments-alt',
               color: 'primary',
               button: true,
               msg: adt('completeTeamQuestions')

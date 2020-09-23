@@ -79,13 +79,13 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
     case 'teamQuestions':
       return {
         component: TeamQuestionsTab.component,
-        icon: 'comments',
+        icon: 'comments-alt',
         title: 'Team Questions'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'codeChallenge':
       return {
         component: CodeChallengeTab.component,
-        icon: 'code-outline',
+        icon: 'code',
         title: 'Code Challenge'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'teamScenario':
@@ -143,7 +143,7 @@ export async function makeSidebarState(opportunity: SWUOpportunity, activeTab: T
       makeSidebarLink('teamScenario',  opportunity.id,  activeTab),
       adt('heading', 'Need Help?'),
       adt('link', {
-        icon: 'external-link',
+        icon: 'external-link-alt',
         text: 'Read Guide',
         active: false,
         newTab: true,

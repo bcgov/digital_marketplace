@@ -70,7 +70,7 @@ export async function makeSidebarState(proposalId: Id, opportunityId: Id, active
       makeSidebarLink('proposal', proposalId, opportunityId, activeTab),
       adt('heading', 'Need Help?'),
       adt('link', {
-        icon: 'external-link',
+        icon: 'external-link-alt',
         text: 'Read Guide',
         active: false,
         newTab: true,
