@@ -11,8 +11,6 @@ export type Grays
   | 'gray-800'
   | 'gray-900';
 
-export type Color = 'white' | 'black';
-
 export type UtilityColor
   // App Views
   = 'c-body-bg'
@@ -58,7 +56,9 @@ export type UtilityColor
   | 'c-form-field-required';
 
 export type ThemeColor
-  = 'primary'
+  = 'white'
+  | 'black'
+  | 'primary'
   | 'secondary'
   | 'info'
   | 'warning'
@@ -69,7 +69,6 @@ export type ThemeColor
   | 'dark'
   | 'bcgov-blue'
   | 'bcgov-yellow'
-  | Color
   | UtilityColor
   | Grays;
 

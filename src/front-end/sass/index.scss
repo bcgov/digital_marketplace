@@ -67,11 +67,6 @@ $red:              #DC3545;
 $green:            #2E8540;
 $orange:           #FD7E14;
 
-$colors: (
-  'white':            $white,
-  'black':            $black
-);
-
 // Bootstrap Utility colors.
 $body-color:                        $gray-900;
 $border-color:                      $gray-400;
@@ -189,17 +184,19 @@ $dark:         $gray-800;
 
 $theme-colors:   map-merge(
   (
-    'primary':      $primary,
-    'secondary':    $secondary,
-    'info':         $info,
-    'warning':      $warning,
-    'danger':       $danger,
-    'success':      $success,
-    'body':         $body,
-    'light':        $light,
-    'dark':         $dark
+    'white':     $white,
+    'black':     $black
+    'primary':   $primary,
+    'secondary': $secondary,
+    'info':      $info,
+    'warning':   $warning,
+    'danger':    $danger,
+    'success':   $success,
+    'body':      $body,
+    'light':     $light,
+    'dark':      $dark
   ),
-  map-merge($app-utility-colors, $colors)
+  $app-utility-colors
 );
 
 // Other overrides.
