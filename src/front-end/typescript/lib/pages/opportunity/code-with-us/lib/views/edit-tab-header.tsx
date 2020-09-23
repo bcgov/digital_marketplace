@@ -3,7 +3,7 @@ import { cwuOpportunityStatusToColor, cwuOpportunityStatusToTitleCase } from 'fr
 import Badge from 'front-end/lib/views/badge';
 import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE } from 'shared/lib/resources/opportunity/code-with-us';
@@ -50,22 +50,21 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
     <div>
       <Row className='mb-5'>
         <Col xs='12'>
-          <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Opportunity</div>
-          <h3 className='mb-2'>{opportunity.title || DEFAULT_OPPORTUNITY_TITLE}</h3>
+          <h3 className='mb-2'>
+            Code With Us:&nbsp;
+            <Link
+              newTab
+              color='primary'
+              dest={routeDest(adt('opportunityCWUView', { opportunityId: opportunity.id }))}>
+              {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
+            </Link>
+          </h3>
           <DateMetadata dates={dates} />
         </Col>
       </Row>
       <Row>
         <Col xs='12'>
           <DescriptionList items={items} />
-          <Link
-            newTab
-            color='info'
-            className='mt-3'
-            dest={routeDest(adt('opportunityCWUView', { opportunityId: opportunity.id }))}
-            symbol_={rightPlacement(iconLinkSymbol('external-link'))}>
-            View Opportunity
-          </Link>
         </Col>
       </Row>
     </div>

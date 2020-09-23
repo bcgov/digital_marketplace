@@ -41,9 +41,14 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     <div>
       <Row className='mb-5'>
         <Col xs='12'>
-          <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Proposal</div>
           <h3 className='mb-2'>
-            Proposal: <Link dest={routeDest(adt('opportunityCWUView', { opportunityId: proposal.opportunity.id }))}>{proposal.opportunity.title}</Link>
+            Code With Us:&nbsp;
+            <Link
+              newTab
+              color='primary'
+              dest={routeDest(adt('opportunitySWUView', { opportunityId: proposal.opportunity.id }))}>
+              {proposal.opportunity.title}
+            </Link>
           </h3>
           <DateMetadata dates={dates} />
         </Col>

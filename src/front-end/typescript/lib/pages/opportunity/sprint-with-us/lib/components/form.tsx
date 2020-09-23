@@ -1,4 +1,3 @@
-import * as Addenda from 'front-end/lib/components/addenda';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
@@ -21,8 +20,7 @@ import { Alert, Col, Row } from 'reactstrap';
 import { getNumber } from 'shared/lib';
 import SKILLS from 'shared/lib/data/skills';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
-import { canSWUOpportunityDetailsBeEdited, CreateRequestBody, CreateSWUOpportunityStatus, CreateValidationErrors, DEFAULT_CODE_CHALLENGE_WEIGHT, DEFAULT_PRICE_WEIGHT, DEFAULT_QUESTIONS_WEIGHT, DEFAULT_SCENARIO_WEIGHT, parseSWUOpportunityPhaseType, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase, SWUOpportunityStatus, UpdateEditValidationErrors, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { Addendum } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityDetailsBeEdited, CreateRequestBody, CreateSWUOpportunityStatus, CreateValidationErrors, DEFAULT_CODE_CHALLENGE_WEIGHT, DEFAULT_PRICE_WEIGHT, DEFAULT_QUESTIONS_WEIGHT, DEFAULT_SCENARIO_WEIGHT, parseSWUOpportunityPhaseType, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase, SWUOpportunityStatus, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
@@ -32,7 +30,7 @@ type RemoteOk = 'yes' | 'no';
 
 const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
-export type TabId = 'Overview' | 'Description' | 'Phases' | 'Team Questions' | 'Scoring' | 'Attachments' | 'Addenda';
+export type TabId = 'Overview' | 'Description' | 'Phases' | 'Team Questions' | 'Scoring' | 'Attachments';
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
@@ -70,8 +68,6 @@ export interface State {
   weightsTotal: Immutable<NumberField.State>;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
-  // Addenda tab
-  addenda: Immutable<Addenda.State> | null;
 }
 
 export type Msg
@@ -103,16 +99,13 @@ export type Msg
   | ADT<'priceWeight', NumberField.Msg>
   | ADT<'weightsTotal', NumberField.Msg>
   // Attachments tab
-  | ADT<'attachments', Attachments.Msg>
-  // Addenda tab
-  | ADT<'addenda', Addenda.Msg>;
+  | ADT<'attachments', Attachments.Msg>;
 
 export interface Params {
   canRemoveExistingAttachments: boolean;
   opportunity?: SWUOpportunity;
   viewerUser: User;
   activeTab?: TabId;
-  showAddendaTab?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -150,8 +143,7 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
   });
 }
 
-export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, viewerUser, activeTab = DEFAULT_ACTIVE_TAB, showAddendaTab = false }) => {
-  activeTab = !showAddendaTab && activeTab === 'Addenda' ? DEFAULT_ACTIVE_TAB : activeTab;
+export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, opportunity, viewerUser, activeTab = DEFAULT_ACTIVE_TAB }) => {
   const startingPhase = getStartingPhase(opportunity);
   const questionsWeight = getNumber(opportunity, 'questionsWeight', DEFAULT_QUESTIONS_WEIGHT);
   const codeChallengeWeight = getNumber(opportunity, 'codeChallengeWeight', DEFAULT_CODE_CHALLENGE_WEIGHT);
@@ -168,8 +160,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
         'Phases',
         'Team Questions',
         'Scoring',
-        'Attachments',
-        ...(showAddendaTab ? ['Addenda' as const] : [])
+        'Attachments'
       ],
       activeTab
     })),
@@ -411,13 +402,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       canRemoveExistingAttachments,
       existingAttachments: opportunity?.attachments || [],
       newAttachmentMetadata: [adt('any')]
-    })),
-
-    addenda: showAddendaTab
-      ? immutable(await Addenda.init({
-          existingAddenda: opportunity?.addenda || []
-        }))
-      : null
+    }))
 
   };
 };
@@ -447,7 +432,7 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
-  state = state
+  return state
     .update('title', s => FormField.validate(s))
     .update('teaser', s => FormField.validate(s))
     .update('remoteOk', s => FormField.validate(s))
@@ -468,10 +453,6 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update('priceWeight', s => FormField.validate(s))
     .update('weightsTotal', s => FormField.validate(s))
     .update('attachments', s => Attachments.validate(s));
-  if (state.addenda) {
-    state = state.set('addenda', Addenda.validate(state.addenda));
-  }
-  return state;
 }
 
 export function isOverviewTabValid(state: Immutable<State>): boolean {
@@ -514,18 +495,13 @@ export function isAttachmentsTabValid(state: Immutable<State>): boolean {
   return Attachments.isValid(state.attachments);
 }
 
-export function isAddendaTabValid(state: Immutable<State>): boolean {
-  return (!state.addenda || Addenda.isValid(state.addenda));
-}
-
 export function isValid(state: Immutable<State>): boolean {
   return isOverviewTabValid(state)
       && isDescriptionTabValid(state)
       && isPhasesTabValid(state)
       && isTeamQuestionsTabValid(state)
       && isScoringTabValid(state)
-      && isAttachmentsTabValid(state)
-      && isAddendaTabValid(state);
+      && isAttachmentsTabValid(state);
 }
 
 export type Values = Omit<CreateRequestBody, 'attachments' | 'status'>;
@@ -592,44 +568,44 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state);
     }
   }
-  if (action.tag === 'update' && state.opportunity && state.addenda) {
-    const newAddenda = Addenda.getNewAddenda(state.addenda);
-    if (newAddenda.length) {
-      let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
-      const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
-      //Persist each addendum.
-      for (const addendum of newAddenda) {
-        const addAddendumResult: api.ResponseValidation<SWUOpportunity, UpdateValidationErrors> = await api.opportunities.swu.update(state.opportunity.id, adt('addAddendum', addendum));
-        switch (addAddendumResult.tag) {
-          case 'valid':
-            updatedExistingAddenda = addAddendumResult.value.addenda;
-            break;
-          case 'invalid':
-            if (addAddendumResult.value.opportunity?.tag === 'addAddendum') {
-              updatedNewAddenda.push({
-                value: addendum,
-                errors: addAddendumResult.value.opportunity.value
-              });
-            }
-            break;
-          case 'unhandled':
-            updatedNewAddenda.push({
-              value: addendum,
-              errors: ['Unable to add addenda due to a system error.']
-            });
-        }
-      }
-      //Update the addenda field in state.
-      state = state.set('addenda', immutable(await Addenda.init({
-        existingAddenda: updatedExistingAddenda,
-        newAddenda: updatedNewAddenda
-      })));
-      //Check if any addenda failed.
-      if (updatedNewAddenda.length) {
-        return invalid(state);
-      }
-    }
-  }
+  //if (action.tag === 'update' && state.opportunity && state.addenda) {
+    //const newAddenda = Addenda.getNewAddenda(state.addenda);
+    //if (newAddenda.length) {
+      //let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
+      //const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
+      ////Persist each addendum.
+      //for (const addendum of newAddenda) {
+        //const addAddendumResult: api.ResponseValidation<SWUOpportunity, UpdateValidationErrors> = await api.opportunities.swu.update(state.opportunity.id, adt('addAddendum', addendum));
+        //switch (addAddendumResult.tag) {
+          //case 'valid':
+            //updatedExistingAddenda = addAddendumResult.value.addenda;
+            //break;
+          //case 'invalid':
+            //if (addAddendumResult.value.opportunity?.tag === 'addAddendum') {
+              //updatedNewAddenda.push({
+                //value: addendum,
+                //errors: addAddendumResult.value.opportunity.value
+              //});
+            //}
+            //break;
+          //case 'unhandled':
+            //updatedNewAddenda.push({
+              //value: addendum,
+              //errors: ['Unable to add addenda due to a system error.']
+            //});
+        //}
+      //}
+      ////Update the addenda field in state.
+      //state = state.set('addenda', immutable(await Addenda.init({
+        //existingAddenda: updatedExistingAddenda,
+        //newAddenda: updatedNewAddenda
+      //})));
+      ////Check if any addenda failed.
+      //if (updatedNewAddenda.length) {
+        //return invalid(state);
+      //}
+    //}
+  //}
   const actionResult: api.ResponseValidation<SWUOpportunity, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
     switch (action.tag) {
         case 'create':
@@ -921,24 +897,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('attachments', value)
       });
-
-    case 'addenda':
-      return updateComponentChild({
-        state,
-        childStatePath: ['addenda'],
-        childUpdate: Addenda.update,
-        childMsg: msg.value,
-        mapChildMsg: value => adt('addenda', value)
-      });
   }
 };
 
-function areNonAddendaDisabled(viewerUser: User, opportunity?: SWUOpportunity, disabledProp?: boolean): boolean {
-  return disabledProp || (!!opportunity && !canSWUOpportunityDetailsBeEdited(opportunity, isAdmin(viewerUser)));
-}
-
-const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
+const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -1080,8 +1042,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled: disabledProp }) 
   );
 };
 
-const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
+const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
 
@@ -1103,8 +1064,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled: disabledProp 
   );
 };
 
-const PhasesView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
+const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
   const rawStartingPhase = FormField.getValue(state.startingPhase);
   const startingPhase = rawStartingPhase ? parseSWUOpportunityPhaseType(rawStartingPhase.value) : null;
   return (
@@ -1169,8 +1129,7 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =>
   );
 };
 
-const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
+const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -1183,8 +1142,7 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled: disabledPro
   );
 };
 
-const ScoringView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
+const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <div>
       <Row>
@@ -1248,8 +1206,7 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled: disabledProp }) =
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp }) => {
-  const disabled = areNonAddendaDisabled(state.viewerUser, state.opportunity, disabledProp);
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   return (
     <Row>
       <Col xs='12'>
@@ -1259,24 +1216,6 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled: disabledProp 
         <Attachments.view
           dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
           state={state.attachments}
-          disabled={disabled}
-          className='mt-4' />
-      </Col>
-    </Row>
-  );
-};
-
-const AddendaView: View<Props> = ({ state, dispatch, disabled }) => {
-  if (!state.addenda) { return null; }
-  return (
-    <Row>
-      <Col xs='12'>
-        <p>
-          Provide additional information here to clarify or support the information in the original opportunity.
-        </p>
-        <Addenda.view
-          dispatch={mapComponentDispatch(dispatch, msg => adt('addenda' as const, msg))}
-          state={state.addenda}
           disabled={disabled}
           className='mt-4' />
       </Col>
@@ -1298,7 +1237,6 @@ export const view: View<Props> = props => {
       case 'Team Questions': return (<TeamQuestionsView {...props} />);
       case 'Scoring':        return (<ScoringView {...props} />);
       case 'Attachments':    return (<AttachmentsView {...props} />);
-      case 'Addenda':        return (<AddendaView {...props} />);
     }
   })();
   return (
@@ -1314,7 +1252,6 @@ export const view: View<Props> = props => {
           case 'Team Questions': return isTeamQuestionsTabValid(state);
           case 'Scoring':       return isScoringTabValid(state);
           case 'Attachments':   return isAttachmentsTabValid(state);
-          case 'Addenda':       return isAddendaTabValid(state);
         }
       }}
       state={state.tabbedForm}
