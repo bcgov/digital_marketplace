@@ -1,7 +1,8 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, PageGetContextualActions, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, PageGetContextualActions, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import { makeUploadMarkdownImage } from 'front-end/lib/http/api';
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Markdown from 'front-end/lib/views/markdown';
@@ -9,43 +10,51 @@ import React from 'react';
 import { formatDateAndTime } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
+import * as validation from 'shared/lib/validation';
 import { validateAddendumText } from 'shared/lib/validation/addendum';
+
+const toasts = {
+  success: {
+    title: 'Addendum Published',
+    body: 'Your addendum has been successfully published.'
+  },
+  error: {
+    title: 'Unable to Publish Addendum',
+    body: 'Your addendum could not be published. Please try again later.'
+  }
+};
 
 interface ExistingAddendum extends Addendum {
   field: Immutable<RichMarkdownEditor.State>;
 }
 
+// Either return the updated list of existing addenda, or the list of errors for the new addendum field.
+export type PublishNewAddendum = (value: string) => Promise<validation.Validation<Addendum[], string[]>>;
+
 export interface State {
   isEditing: boolean;
   publishLoading: number;
   disabled: boolean;
+  publishNewAddendum: PublishNewAddendum;
   newAddendum: Immutable<RichMarkdownEditor.State> | null;
   existingAddenda: ExistingAddendum[];
 }
 
-export type Msg
+type InnerMsg
   = ADT<'add'>
   | ADT<'cancel'>
   | ADT<'publish'>
   | ADT<'onChangeExisting', [number, RichMarkdownEditor.Msg]>
   | ADT<'onChangeNew', RichMarkdownEditor.Msg>;
 
-export interface NewAddendumParam {
-  errors: string[];
-  value: string;
-}
+export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export interface Params {
-  disabled: boolean;
+export interface Params extends Pick<State, 'disabled' | 'publishNewAddendum'> {
   existingAddenda: Addendum[];
   newAddendum?: {
     errors: string[];
     value: string;
   };
-}
-
-export function validate(state: Immutable<State>): Immutable<State> {
-  return state.update('newAddendum', s => s ? FormField.validate(s) : s);
 }
 
 export function isValid(state: Immutable<State>): boolean {
@@ -81,6 +90,7 @@ export const init: Init<Params, State> = async params => {
   }
   return {
     disabled: params.disabled,
+    publishNewAddendum: params.publishNewAddendum,
     isEditing: false,
     publishLoading: 0,
     existingAddenda, //existingAddenda sorted in the http/api module.
@@ -114,10 +124,22 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case 'publish':
       return [
         startPublishLoading(state),
-        async (state) => {
+        async (state, dispatch) => {
           state = stopPublishLoading(state);
-          //TODO
-          return state;
+          const newAddendum = getNewAddendum(state);
+          if (!newAddendum) { return state; }
+          const result = await state.publishNewAddendum(newAddendum);
+          if (validation.isValid(result)) {
+            dispatch(toast(adt('success', toasts.success)));
+            return immutable(await init({
+              disabled: true,
+              publishNewAddendum: state.publishNewAddendum,
+              existingAddenda: result.value
+            }));
+          } else {
+            dispatch(toast(adt('error', toasts.error)));
+            return state.update('newAddendum', s => s ? FormField.setErrors(s, result.value) : s);
+          }
         }
       ];
     case 'onChangeExisting':
@@ -136,6 +158,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => adt('onChangeNew', value) as Msg
       });
+    default:
+      return [state];
   }
 };
 
@@ -194,12 +218,13 @@ export const getContextualActions: PageGetContextualActions<State, Msg> = ({ sta
   if (state.disabled) { return null; }
   if (state.isEditing) {
     const isPublishLoading = state.publishLoading > 0;
+    const isNewAddendumValid = isValid(state);
     return adt('links', [
       {
         children: 'Publish Addendum',
         onClick: () => dispatch(adt('publish')),
         button: true,
-        disabled: isPublishLoading,
+        disabled: isPublishLoading || !isNewAddendumValid,
         loading: isPublishLoading,
         symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
         color: 'primary'
