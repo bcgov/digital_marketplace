@@ -743,14 +743,6 @@ export const component: Tab.Component<State, Msg> = {
         if (!viewerIsAdmin) { return null; }
         return adt('links', [
           {
-            children: 'Edit',
-            loading: isStartEditingLoading,
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing')),
-            button: true,
-            color: 'primary'
-          },
-          {
             children: 'Cancel',
             symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
             onClick: () => dispatch(adt('showModal', 'cancel' as const)),
@@ -759,19 +751,8 @@ export const component: Tab.Component<State, Msg> = {
             color: 'white'
           }
         ]);
-      case SWUOpportunityStatus.Awarded:
-      case SWUOpportunityStatus.Canceled:
-        if (!viewerIsAdmin) { return null; }
-        return adt('links', [
-          {
-            children: 'Edit',
-            loading: isStartEditingLoading,
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing')),
-            button: true,
-            color: 'primary'
-          }
-        ]);
+      default:
+        return null;
     }
   }
 };

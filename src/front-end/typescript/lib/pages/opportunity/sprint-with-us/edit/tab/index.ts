@@ -1,6 +1,7 @@
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable } from 'front-end/lib/framework';
+import * as AddendaTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/addenda';
 import * as CodeChallengeTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge';
 import * as HistoryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history';
 import * as OpportunityTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity';
@@ -9,7 +10,7 @@ import * as SummaryTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit
 import * as TeamQuestionsTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions';
 import * as TeamScenarioTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario';
 import { routeDest } from 'front-end/lib/views/link';
-import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canAddAddendumToSWUOpportunity, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 
@@ -31,6 +32,7 @@ export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 export interface Tabs {
   summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
   opportunity: TabbedPage.Tab<Params, OpportunityTab.State, OpportunityTab.InnerMsg>;
+  addenda: TabbedPage.Tab<Params, AddendaTab.State, AddendaTab.InnerMsg>;
   teamQuestions: TabbedPage.Tab<Params, TeamQuestionsTab.State, TeamQuestionsTab.InnerMsg>;
   history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
   codeChallenge: TabbedPage.Tab<Params, CodeChallengeTab.State, CodeChallengeTab.InnerMsg>;
@@ -48,6 +50,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
   switch (raw) {
     case 'summary':
     case 'opportunity':
+    case 'addenda':
     case 'teamQuestions':
     case 'codeChallenge':
     case 'teamScenario':
@@ -66,6 +69,12 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         component: OpportunityTab.component,
         icon: 'file-code',
         title: 'Opportunity'
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case 'addenda':
+      return {
+        component: AddendaTab.component,
+        icon: 'file-plus',
+        title: 'Addenda'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'teamQuestions':
       return {
@@ -117,19 +126,21 @@ export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId)
   });
 }
 
-export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+export async function makeSidebarState(opportunity: SWUOpportunity, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
     items: [
       adt('heading', 'Summary'),
-      makeSidebarLink('summary',       opportunityId,  activeTab),
+      makeSidebarLink('summary',       opportunity.id,  activeTab),
       adt('heading', 'Opportunity Management'),
-      makeSidebarLink('opportunity',   opportunityId,  activeTab),
-      makeSidebarLink('history',       opportunityId,  activeTab),
+      makeSidebarLink('opportunity',   opportunity.id,  activeTab),
+      //Only show Addenda sidebar link if opportunity can have addenda.
+      ...(canAddAddendumToSWUOpportunity(opportunity) ? [makeSidebarLink('addenda', opportunity.id, activeTab)] : []),
+      makeSidebarLink('history',       opportunity.id,  activeTab),
       adt('heading', 'Opportunity Evaluation'),
-      makeSidebarLink('proposals',     opportunityId,  activeTab),
-      makeSidebarLink('teamQuestions', opportunityId,  activeTab),
-      makeSidebarLink('codeChallenge', opportunityId,  activeTab),
-      makeSidebarLink('teamScenario',  opportunityId,  activeTab),
+      makeSidebarLink('proposals',     opportunity.id,  activeTab),
+      makeSidebarLink('teamQuestions', opportunity.id,  activeTab),
+      makeSidebarLink('codeChallenge', opportunity.id,  activeTab),
+      makeSidebarLink('teamScenario',  opportunity.id,  activeTab),
       adt('heading', 'Need Help?'),
       adt('link', {
         icon: 'external-link',
