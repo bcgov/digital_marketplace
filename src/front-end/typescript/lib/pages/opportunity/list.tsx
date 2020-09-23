@@ -479,7 +479,7 @@ const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoad
                   className='order-1 order-md-2'
                   disabled={disabled}
                   onClick={toggleNotifications}
-                  color={viewerUser.notificationsOn ? 'secondary' : 'primary'}
+                  color={viewerUser.notificationsOn ? 'secondary' : undefined}
                   symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
                   {viewerUser.notificationsOn
                     ? 'Stop notifying me about new opportunities'
