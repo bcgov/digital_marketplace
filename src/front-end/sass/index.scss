@@ -86,6 +86,8 @@ $c-body-bg: $blue-dark;
 $c-nav-bg: $blue-dark;
 $c-nav-bg-alt: $blue-dark-alt;
 $c-nav-border-bottom: $yellow;
+$c-nav-fg: $white;
+$c-nav-fg-alt: $white;
 $c-footer-bg: $blue-dark;
 $c-footer-separator: $blue-dark-alt;
 $c-footer-border-top: $yellow;
@@ -105,7 +107,7 @@ $c-dashboard-bg: $blue-light-alt-2;
 $c-opportunity-list-learn-more-bg: $blue-light-alt-2;
 $c-opportunity-list-card-hover-bg: $blue-light-alt-2;
 $c-opportunity-create-bg: $blue-light-alt-2;
-$c-opportunity-view-got-questions-icon: rgba($primary, 0.12);
+$c-opportunity-view-got-questions-icon: rgba($blue, 0.12);
 $c-opportunity-view-got-questions-bg: $blue-light-alt;
 $c-opportunity-view-apply-bg: $blue-light-alt;
 $c-proposal-swu-form-team-question-response-heading: $blue-dark;
@@ -130,6 +132,8 @@ $app-utility-colors: (
   'c-nav-bg': $c-nav-bg,
   'c-nav-bg-alt': $c-nav-bg-alt,
   'c-nav-border-bottom': $c-nav-border-bottom,
+  'c-nav-fg': $c-nav-fg,
+  'c-nav-fg-alt': $c-nav-fg-alt,
   'c-footer-bg': $c-footer-bg,
   'c-footer-separator': $c-footer-separator,
   'c-footer-border-top': $c-footer-border-top,

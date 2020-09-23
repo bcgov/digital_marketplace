@@ -298,7 +298,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('user-slash')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             onClick: () => dispatch(adt('showModal', 'disqualify' as const))
           }
         ]);
@@ -316,7 +316,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('user-slash')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             onClick: () => dispatch(adt('showModal', 'disqualify' as const))
           }
         ]);

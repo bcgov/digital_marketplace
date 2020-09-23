@@ -17,6 +17,8 @@ export type UtilityColor
   | 'c-nav-bg'
   | 'c-nav-bg-alt'
   | 'c-nav-border-bottom'
+  | 'c-nav-fg'
+  | 'c-nav-fg-alt'
   | 'c-footer-bg'
   | 'c-footer-separator'
   | 'c-footer-border-top'

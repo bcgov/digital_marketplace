@@ -288,7 +288,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       },
       {
         children: 'Cancel',
-        color: 'white',
+        color: 'c-nav-fg-alt',
         disabled: isLoading,
         onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }

@@ -476,7 +476,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled: isLoading,
           onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         }
       ])) as PageContextualActions; //TypeScript type inference not good enough here
     }
@@ -580,7 +580,7 @@ export const component: Tab.Component<State, Msg> = {
             onClick: () => dispatch(adt('showModal', 'cancel' as const)),
             button: true,
             outline: true,
-            color: 'white'
+            color: 'c-nav-fg-alt'
           }
         ]);
       default:

@@ -240,8 +240,7 @@ export const getContextualActions: PageGetContextualActions<State, Msg> = ({ sta
       {
         children: 'Cancel',
         disabled: isPublishLoading,
-        onClick: () => dispatch(adt('showModal', 'cancel' as const)),
-        color: 'white'
+        onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }
     ]);
   } else {

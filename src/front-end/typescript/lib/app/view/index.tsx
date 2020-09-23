@@ -442,7 +442,6 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
     children: 'Sign In',
     button: true,
     outline: true,
-    color: 'white',
     dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
@@ -603,13 +602,13 @@ const completeProfileAction = Nav.linkAccountAction({
 });
 
 function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
-  const accountMenu = Nav.unauthenticatedAccountMenu([
+  const accountMenu = (color: ThemeColor) => Nav.unauthenticatedAccountMenu([
     ...(props.state.activeRoute.tag !== 'signUpStepTwo' ? [completeProfileAction] : []),
     Nav.linkAccountAction({
       ...signOutLink,
       button: true,
       outline: true,
-      color: 'white'
+      color
     })
   ]);
   return {
@@ -618,8 +617,8 @@ function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     contextualActions: undefined,
     homeDest: undefined,
     accountMenus: {
-      desktop: accountMenu,
-      mobile: accountMenu
+      desktop: accountMenu('c-nav-fg'),
+      mobile: accountMenu('c-nav-fg-alt')
     }
   };
 }

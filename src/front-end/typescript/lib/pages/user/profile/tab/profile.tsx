@@ -434,7 +434,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled: isDisabled,
           onClick: () => dispatch(adt('cancelEditingForm')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         }
       ]);
     }
