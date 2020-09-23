@@ -179,7 +179,7 @@ export const AddendaList: View<{ addenda: Addendum[]; }> = ({ addenda }) => {
       {addenda.map((a, i) => (
         <div key={`addenda-list-${i}`} className={`border rounded overflow-hidden ${i < addenda.length - 1 ? 'mb-4' : ''}`}>
           <Markdown source={a.description} className='p-3' smallerHeadings openLinksInNewTabs />
-          <div className='bg-light text-secondary p-3 border-top'>Posted on {formatDateAndTime(a.createdAt, true)}{a.createdBy ? `by ${a.createdBy.name}` : ''}</div>
+          <div className='bg-light text-secondary p-3 border-top'>Posted on {formatDateAndTime(a.createdAt, true)}{a.createdBy ? ` by ${a.createdBy.name}` : ''}</div>
         </div>
       ))}
     </div>
