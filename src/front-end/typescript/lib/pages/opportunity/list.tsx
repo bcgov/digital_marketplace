@@ -293,7 +293,7 @@ const Header: ComponentView<State, Msg> = () => {
         <h1 className='mb-4'>Welcome to the Digital Marketplace</h1>
       </Col>
       <Col xs='12' md='6' className='mb-4 mb-md-0'>
-        <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
+        <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <ProgramType type_='cwu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
           <Link
@@ -306,7 +306,7 @@ const Header: ComponentView<State, Msg> = () => {
         </div>
       </Col>
       <Col xs='12' md='6'>
-        <div className='rounded bg-blue-light-alt-2 p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
+        <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <ProgramType type_='swu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
           <Link
@@ -388,7 +388,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
   return (
     <Col xs='12' md='6' className='mb-4h' style={{ minHeight: '320px' }}>
       <div className='overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch'>
-        <Link disabled={disabled} style={{ outline: 'none' }} className='bg-hover-blue-light-alt-2 text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(dest)}>
+        <Link disabled={disabled} style={{ outline: 'none' }} className='bg-hover-c-opportunity-list-card-hover-bg text-decoration-none d-flex flex-column align-items-stretch p-4 flex-grow-1' color='body' dest={routeDest(dest)}>
           <h5 className='mb-2'>
             {opportunity.value.title}
           </h5>

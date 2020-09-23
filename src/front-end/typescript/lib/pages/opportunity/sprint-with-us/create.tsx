@@ -159,7 +159,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
   view,
   sidebar: sidebarValid({
     size: 'large',
-    color: 'blue-light',
+    color: 'c-sidebar-instructional-bg',
     view: makeInstructionalSidebar<ValidState,  Msg>({
       getTitle: () => 'Create a Sprint With Us Opportunity',
       getDescription: state => (

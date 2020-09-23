@@ -7,9 +7,9 @@ export function cwuProposalStatusToColor(s: CWUProposalStatus, viewerUserType: U
     case CWUProposalStatus.Draft        : return 'secondary';
     case CWUProposalStatus.Submitted    : return 'success';
     case CWUProposalStatus.UnderReview  : return 'warning';
-    case CWUProposalStatus.Evaluated    : return viewerUserType === UserType.Vendor ? 'warning' : 'blue';
+    case CWUProposalStatus.Evaluated    : return viewerUserType === UserType.Vendor ? 'warning' : 'primary';
     case CWUProposalStatus.Awarded      : return 'success';
-    case CWUProposalStatus.NotAwarded   : return 'blue';
+    case CWUProposalStatus.NotAwarded   : return 'primary';
     case CWUProposalStatus.Disqualified : return 'danger';
     case CWUProposalStatus.Withdrawn    : return 'danger';
   }

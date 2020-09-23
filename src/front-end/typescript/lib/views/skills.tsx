@@ -17,7 +17,7 @@ const Skills: View<Props> = ({ skills, className = '' }) => {
               key={`skill-${i}`}
               className={`mb-2 ${i < arr.length - 1 ? 'mr-2' : ''}`}
               text={skill}
-              color='purple' />
+              color='c-skills-bg' />
           ))
         : EMPTY_STRING}
     </div>

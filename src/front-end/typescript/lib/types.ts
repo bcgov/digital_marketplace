@@ -11,25 +11,51 @@ export type Grays
   | 'gray-800'
   | 'gray-900';
 
-export type Color
-  = 'blue'
-  | 'blue-alt'
-  | 'blue-alt-2'
-  | 'blue-dark'
-  //| 'blue-dark-alt'
-  | 'blue-light'
-  | 'blue-light-alt'
-  | 'blue-light-alt-2'
-  | 'white'
-  | 'purple'
-  | 'purple-light'
-  | 'yellow'
-  | 'orange'
-  | 'red'
-  | 'green';
+export type Color = 'white' | 'black';
 
 export type UtilityColor
-  = 'TODO';
+  // App Views
+  = 'c-body-bg'
+  | 'c-nav-bg'
+  | 'c-nav-bg-alt'
+  | 'c-nav-border-bottom'
+  | 'c-footer-bg'
+  | 'c-footer-separator'
+  | 'c-footer-border-top'
+  | 'c-toast-info-icon'
+  | 'c-toast-error-icon'
+  | 'c-toast-warning-icon'
+  | 'c-toast-success-icon'
+  | 'c-sidebar-instructional-bg'
+  // Pages
+  | 'c-landing-role-heading'
+  | 'c-landing-role-icon'
+  | 'c-landing-testimonial-source'
+  | 'c-landing-small-underline'
+  | 'c-landing-programs-bg'
+  | 'c-learn-more-bg'
+  | 'c-dashboard-bg'
+  | 'c-opportunity-list-learn-more-bg'
+  | 'c-opportunity-list-card-hover-bg'
+  | 'c-opportunity-create-bg'
+  | 'c-opportunity-view-got-questions-icon'
+  | 'c-opportunity-view-got-questions-bg'
+  | 'c-opportunity-view-apply-bg'
+  | 'c-proposal-swu-form-team-question-response-heading'
+  | 'c-proposal-swu-form-scrum-master'
+  | 'c-user-profile-permission'
+  // Misc. Views
+  | 'c-report-card-bg'
+  | 'c-report-card-icon-default'
+  | 'c-report-card-icon-highlight'
+  | 'c-capability-ft-bg'
+  | 'c-capability-pt-bg'
+  | 'c-capability-grid-switch'
+  | 'c-how-it-works-item-bg'
+  | 'c-skills-bg'
+  | 'c-multi-select-item-bg'
+  | 'c-multi-select-item-remove'
+  | 'c-form-field-required';
 
 export type ThemeColor
   = 'primary'

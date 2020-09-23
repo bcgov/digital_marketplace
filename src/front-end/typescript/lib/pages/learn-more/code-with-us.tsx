@@ -40,7 +40,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const TitleView: View = () => {
   return (
-    <div className='bg-blue-light-alt pt-4 pb-6 pb-md-7'>
+    <div className='bg-c-learn-more-bg pt-4 pb-6 pb-md-7'>
       <Container>
         <Row>
           <Col xs='12'>
@@ -116,40 +116,30 @@ const VendorHIW: View = () => {
       <h3 className='mb-4'>How It Works</h3>
       <HowItWorksItem
         symbol_={adt('icon', 'search' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Search'
         description='Find an opportunity that matches your skills and interest. The acceptance criteria describes what you need to deliver to get paid the fixed price.'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'comments-alt' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Connect'
         description='Speak directly with the opportunity contact to get more clarity. If you have suggestions, or think the price is too low, say so!'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'paper-plane' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Apply'
         description='Submit a proposal using the app. If you are awarded the opportunity, you will be offered the exclusive right to work on the issue for a set period of time.'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'code' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Contribute'
         description='Work collaboratively and iteratively with the opportunity contact. Commit code early and often to ensure you are on the right track.'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'sack-dollar' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Get Paid'
         description={(<p>Once the acceptance criteria is met and your code is merged, submit your invoice and expect payment within 30 days. Read more about payment options <Link dest={adt('external', 'https://github.com/BCDevExchange/code-with-us/wiki/4.-Payment')}>here</Link>.</p>)}
         className='mb-4'
@@ -211,7 +201,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   fullWidth: true,
-  backgroundColor: 'blue-light-alt',
+  backgroundColor: 'c-learn-more-bg',
   init,
   update,
   view,

@@ -771,7 +771,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, p
                     {m.user.name}
                   </Link>
                   {m.scrumMaster
-                    ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
+                    ? (<Badge text='Scrum Master' color='c-proposal-swu-form-scrum-master' className='ml-3' />)
                     : null}
                   {m.membershipStatus === MembershipStatus.Pending
                     ? (<PendingBadge className={m.scrumMaster ? 'ml-2' : 'ml-3'} />)

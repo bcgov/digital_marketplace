@@ -167,13 +167,13 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   const reportCards: Array<ReportCard | null> = [
     {
       icon: 'star-full',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Total Score',
       value: proposal.totalScore ? `${proposal.totalScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'trophy',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Ranking',
       value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
     }

@@ -2,7 +2,6 @@ import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { TextColor } from 'front-end/lib/types';
 import { BulletPoint } from 'front-end/lib/views/bullet-point';
 import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
@@ -87,7 +86,7 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
 
 const Programs: View = () => {
   return (
-    <div className='bg-blue-light-alt-2 py-7'>
+    <div className='bg-c-landing-programs-bg py-7'>
       <Container>
         <Row>
           <ProgramCard
@@ -106,7 +105,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreCWU', null)),
                 children: ['Learn More'],
-                color: 'blue' as TextColor,
+                color: 'primary',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -126,7 +125,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreSWU', null)),
                 children: [('Learn More')],
-                color: 'blue' as TextColor,
+                color: 'primary',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }

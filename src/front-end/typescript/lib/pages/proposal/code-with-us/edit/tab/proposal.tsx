@@ -286,7 +286,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
     showScoreAndRanking
       ? {
           icon: 'star-full',
-          iconColor: 'yellow',
+          iconColor: 'c-report-card-icon-highlight',
           name: 'Total Score',
           value: proposal.score ? `${proposal.score}%` : EMPTY_STRING
         }
@@ -294,7 +294,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
     showScoreAndRanking
       ? {
           icon: 'trophy',
-          iconColor: 'yellow',
+          iconColor: 'c-report-card-icon-highlight',
           name: 'Ranking',
           value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
         }

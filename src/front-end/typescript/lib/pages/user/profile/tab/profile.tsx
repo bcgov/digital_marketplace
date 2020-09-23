@@ -205,7 +205,7 @@ const ViewPermissionsAsGovernment: ComponentView<State, Msg> = ({ state }) => {
           className={i === permissions.length ? '' : 'mr-2'}
           key={`user-permission-pill-${i}`}
           text={p}
-          color='purple' />
+          color='c-user-profile-permission' />
       ))}
     </DescriptionItem>
   );

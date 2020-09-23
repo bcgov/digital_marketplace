@@ -141,9 +141,9 @@ export const view: ComponentView<State, Msg> = props => {
   if (!links.length) { return null; }
   const [activeLink] = linksByActive(links, true);
   if (!activeLink) { return null; }
-  // Add pl-2 ml-n2 to Sticky to ensure link focus is not clipped.
+  // Add p*-2 m*-n2 to Sticky to ensure link focus is not clipped.
   return (
-    <Sticky className='d-print-none pl-2 ml-n2'>
+    <Sticky className='d-print-none pt-2 mt-n2 pl-2 ml-n2'>
       {state.backLink ? (<BackLink {...state.backLink} />) : null}
       <div className='d-none d-md-flex flex-column flex-nowrap align-items-start'>
         {items.map((item, i) => (<SidebarItem item={item} isFirst={i === 0} key={`desktop-sidebar-link-${i}`} />))}

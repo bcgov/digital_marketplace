@@ -183,7 +183,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
 
   sidebar: sidebarValid({
     size: 'large',
-    color: 'blue-light',
+    color: 'c-sidebar-instructional-bg',
     view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Create a Code With Us Proposal',
       getDescription: state => (

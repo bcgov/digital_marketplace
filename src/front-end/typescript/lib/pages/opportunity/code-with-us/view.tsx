@@ -391,7 +391,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   const viewerUser = state.viewerUser;
   if ((viewerUser && !isVendor(viewerUser)) || !isCWUOpportunityAcceptingProposals(state.opportunity)) { return null; }
   return (
-    <div className='bg-blue-light-alt py-5 mt-auto'>
+    <div className='bg-c-opportunity-view-apply-bg py-5 mt-auto'>
       <Container>
         <Row>
           <Col xs='12' md='8'>

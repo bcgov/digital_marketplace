@@ -97,7 +97,7 @@ const view: ComponentView<State, Msg> = () => {
 };
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
-  backgroundColor: 'blue-light-alt-2',
+  backgroundColor: 'c-opportunity-create-bg',
   //verticallyCentered: true,
   init,
   update,

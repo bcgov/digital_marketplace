@@ -175,13 +175,13 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
     },
     {
       icon: 'star-full',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Top TQ Score',
       value: isComplete && highestScore ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'star-half',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Avg. TQ Score',
       value: isComplete && averageScore ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     }

@@ -69,7 +69,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   sidebar: sidebarValid({
     size: 'large',
-    color: 'blue-light',
+    color: 'c-sidebar-instructional-bg',
     view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Welcome Back to the Digital Marketplace',
       getDescription: () => 'Please sign in to access your Digital Marketplace account.',

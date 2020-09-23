@@ -278,7 +278,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  backgroundColor: 'blue-light-alt-2',
+  backgroundColor: 'c-dashboard-bg',
 
   getMetadata() {
     return makePageMetadata('Dashboard');

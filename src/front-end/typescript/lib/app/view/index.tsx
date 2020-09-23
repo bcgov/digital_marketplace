@@ -409,10 +409,10 @@ const ViewToastIcon: View<{ toast: FrameworkToast; }> = ({ toast }) => {
   })();
   const color: ThemeColor = (() => {
     switch (toast.tag) {
-      case 'info': return 'blue-alt';
-      case 'error': return 'danger';
-      case 'warning': return 'warning';
-      case 'success': return 'success';
+      case 'info': return 'c-toast-info-icon';
+      case 'error': return 'c-toast-error-icon';
+      case 'warning': return 'c-toast-warning-icon';
+      case 'success': return 'c-toast-success-icon';
     }
   })();
   return (<Icon name={name} color={color} />);

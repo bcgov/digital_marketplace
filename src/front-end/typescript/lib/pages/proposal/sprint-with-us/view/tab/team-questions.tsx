@@ -253,7 +253,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
               <ReportCardList
                 reportCards={[{
                   icon: 'star-full',
-                  iconColor: 'yellow',
+                  iconColor: 'c-report-card-icon-highlight',
                   name: 'Team Questions Score',
                   value: `${String(state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS))}%`
                 }]} />
