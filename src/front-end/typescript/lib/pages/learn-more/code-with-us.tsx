@@ -52,7 +52,7 @@ const TitleView: View = () => {
             <p className='mb-0'><em>Code With Us</em> is a procurement mechanism for public sector organizations in British Columbia to pay developers for code.</p>
           </Col>
           <Col md='4'>
-            <img className='d-none d-md-block position-absolute ml-6' src={prefixPath('/images/illustrations/code_with_us_learn_more.svg')} />
+            <img style={{ maxWidth: '250px' }} className='d-none d-md-block position-absolute ml-6' src={prefixPath('/images/illustrations/code_with_us_learn_more.svg')} />
           </Col>
         </Row>
       </Container>

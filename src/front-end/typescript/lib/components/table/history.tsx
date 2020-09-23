@@ -105,7 +105,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
                 return (<div className='text-secondary text-uppercase small'>System</div>);
               }
               if (isAdmin(state.viewerUser)) {
-                return (<Link color='primary' className='text-uppercase small' dest={routeDest(adt('userProfile', { userId: item.createdBy.id }))}>{item.createdBy.name}</Link>);
+                return (<Link className='text-uppercase small' dest={routeDest(adt('userProfile', { userId: item.createdBy.id }))}>{item.createdBy.name}</Link>);
               }
               return (<div className='text-secondary text-uppercase small'>{item.createdBy.name}</div>);
             })()}
