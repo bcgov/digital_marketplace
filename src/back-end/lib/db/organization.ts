@@ -96,9 +96,8 @@ async function doesOrganizationMeetAllCapabilities(connection: Connection, organ
 function generateOrganizationQuery(connection: Connection) {
   return connection<RawOrganization>('organizations')
     .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
-    .leftOuterJoin('users', 'users.id', '=', 'affiliations.user')
+    .join('users', 'users.id', '=', 'affiliations.user')
     .where({ 'affiliations.membershipType': MembershipType.Owner })
-    .orWhereNull('affiliations.membershipType')
     .select(
       'organizations.*',
       'users.id as owner',
