@@ -1,10 +1,11 @@
-import { CONTACT_EMAIL, MAILER_BATCH_SIZE, MAILER_NOREPLY } from 'back-end/config';
+import { MAILER_BATCH_SIZE, MAILER_NOREPLY } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import { unionBy } from 'lodash';
 import React from 'react';
+import { CONTACT_EMAIL } from 'shared/config';
 import { formatAmount, formatDate, formatTime } from 'shared/lib';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { User } from 'shared/lib/resources/user';

@@ -5,6 +5,17 @@ import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 
+// HARDCODED CONFIG
+// Offset for total opportunity metrics displayed on landing page
+export const TOTAL_AWARDED_COUNT_OFFSET = 62;
+
+export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
+
+export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
+
+export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
+
+// ENV CONFIG
 // export the root directory of the repository.
 export const REPOSITORY_ROOT_DIR = dirname(findUp.sync('package.json') || '') || __dirname;
 
@@ -40,8 +51,6 @@ export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
 
 export const ORIGIN = get('ORIGIN', 'https://digital.gov.bc.ca/marketplace').replace(/\/*$/, '');
 
-export const CONTACT_EMAIL = get('CONTACT_EMAIL', 'digitalmarketplace@gov.bc.ca');
-
 export const SERVICE_TOKEN_HASH = get('SERVICE_TOKEN_HASH', '');
 
 export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
@@ -64,8 +73,6 @@ export function getPostgresUrl(): string | null {
 }
 
 export const POSTGRES_URL = getPostgresUrl();
-
-export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 
 export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
@@ -100,8 +107,6 @@ const developmentMailerConfigOptions = {
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
 
-export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
-
 export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NOREPLY}>`);
 
 export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
@@ -120,11 +125,6 @@ export const KNEX_DEBUG = get('KNEX_DEBUG', '') === 'true';
 
 // Configuration for CWU/SWU auto-update hooks
 export const UPDATE_HOOK_THROTTLE = parseInt(get('UPDATE_HOOK_THROTTLE', '60000'), 10);
-
-// Offset for total opportunity metrics displayed on landing page
-export const TOTAL_AWARDED_COUNT_OFFSET = parseInt(get('TOTAL_AWARDED_COUNT_OFFSET', '62'), 10);
-
-export const TOTAL_AWARDED_VALUE_OFFSET = parseInt(get('TOTAL_AWARDED_VALUE_OFFSET', '13782000'), 10);
 
 // Maximum image dimensions for user and organization avatars
 export const AVATAR_MAX_IMAGE_WIDTH = parseInt(get('AVATAR_MAX_IMAGE_WIDTH', '500'), 10);

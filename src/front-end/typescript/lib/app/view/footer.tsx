@@ -1,9 +1,10 @@
-import { CONTACT_EMAIL, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
+import { PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import { View } from 'front-end/lib/framework';
 import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { CONTACT_EMAIL } from 'shared/config';
 import { adt } from 'shared/lib/types';
 
 const links: AnchorProps[] = [

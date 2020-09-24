@@ -1,10 +1,10 @@
-import { CONTACT_EMAIL } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { Emails } from 'back-end/lib/mailer';
 import { makeSWUOpportunityInformation, viewSWUOpportunityCallToAction } from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import React from 'react';
+import { CONTACT_EMAIL } from 'shared/config';
 import { isSWUOpportunityClosed, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposal, SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession } from 'shared/lib/resources/session';

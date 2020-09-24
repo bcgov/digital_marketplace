@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, EMPTY_STRING } from 'front-end/config';
+import { EMPTY_STRING } from 'front-end/config';
 import { getAlertsValid, getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
@@ -17,6 +17,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { CONTACT_EMAIL } from 'shared/config';
 import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';

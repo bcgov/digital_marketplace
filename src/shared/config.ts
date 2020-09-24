@@ -1,3 +1,5 @@
+export const CONTACT_EMAIL = 'digitalmarketplace@gov.bc.ca';
+
 export const GOV_IDP_SUFFIX = 'idir';
 
 export const VENDOR_IDP_SUFFIX = 'github';

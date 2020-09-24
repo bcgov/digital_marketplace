@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, EMPTY_STRING, SWU_OPPORTUNITY_SCOPE_CONTENT_ID } from 'front-end/config';
+import { EMPTY_STRING, SWU_OPPORTUNITY_SCOPE_CONTENT_ID } from 'front-end/config';
 import { getAlertsValid, getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
@@ -18,6 +18,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React, { Fragment } from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { CONTACT_EMAIL } from 'shared/config';
 import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { DEFAULT_OPPORTUNITY_TITLE, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityPhase, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
