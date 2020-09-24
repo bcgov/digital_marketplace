@@ -34,7 +34,7 @@ This document describes this project's developer environment, technical architec
 
 This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
 
-**Dhruv Dang**, Managing Director  
+**Dhruv Dang**, Managing Director
 [dhruv@realfolk.io](mailto:dhruv@realfolk.io)
 
 This project available to use under the Apache 2.0 license (see `LICENSE.txt`).
@@ -216,7 +216,6 @@ Environment variables that affect the back-end server's functionality are stored
 | `BASIC_AUTH_USERNAME` | An HTTP basic auth username to limit access to the web application. |
 | `BASIC_AUTH_PASSWORD_HASH` | A password hash to authenticate HTTP basic auth passwords to limit access to the web application. |
 | `ORIGIN` | The root URL of the web app. This is used for authentication and generating URLs in email notifications. The value must include the protocol and any path prefixes. e.g. `https://digital.gov.bc.ca/marketplace`. |
-| `CONTACT_EMAIL` | The Procurement Transformation team's contact email address. |
 | `POSTGRES_URL` | The PostgreSQL database to connect to (you only need to use this variable in development, not the other `DATABASE_*` variables defined below). |
 | `DATABASE_SERVICE_NAME` | Auto-generated in OpenShift. |
 | `${DATABASE_SERVICE_NAME}_SERVICE_HOST` | The PostgreSQL host to connect to in OpenShift. |
@@ -238,8 +237,6 @@ Environment variables that affect the back-end server's functionality are stored
 | `KEYCLOAK_CLIENT_SECRET` | The Keycloak client secret. Please contact a team member to retrieve this credential. |
 | `KNEX_DEBUG` | Set this to `true` to debug `knex` operations. |
 | `UPDATE_HOOK_THROTTLE` | The number of milliseconds used to throttle per-request jobs (e.g. automatically closing opportunities). Defaults to `60000`ms. |
-| `TOTAL_AWARDED_COUNT_OFFSET` | The number of awarded opportunities prior to the launch of the Digital Marketplace. |
-| `TOTAL_AWARDED_VALUE_OFFSET` | The CAD value of awarded opportunities prior to the launch of the Digital Marketplace. |
 | `AVATAR_MAX_IMAGE_WIDTH` | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. Defaults to 500 pixels. |
 | `AVATAR_MAX_IMAGE_HEIGHT` | The maximum image height for uploaded avatar image files. Files with a greater height will be resized. Defaults to 500 pixels. |
 | `FILE_STORAGE_DIR` | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing. |
@@ -305,7 +302,7 @@ In the unfortunate event that you need to restore your data from a backup archiv
 
 ### High Availability Database Deployment
 
-The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL replicaset. The template used to deploy this replicaset is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/patroni-deploy-config.json` for deployment in other OpenShift environments. 
+The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL replicaset. The template used to deploy this replicaset is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/patroni-deploy-config.json` for deployment in other OpenShift environments.
 
 Use the following command to run this deployment script using the OpenShift command line tools (first ensure that you have the correct OpenShift project selected using `oc project`):
 
@@ -313,7 +310,7 @@ Use the following command to run this deployment script using the OpenShift comm
 oc process -f openshift/templates/patroni-deploy-config.json | oc create -f -
 ```
 
-Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/postgres-deploy-config.json` and can be run using the same OpenShift CLI command above.  
+Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/postgres-deploy-config.json` and can be run using the same OpenShift CLI command above.
 
 ## Team
 
@@ -321,7 +318,7 @@ The Digital Marketplace is currently operated by the Procurement Services Branch
 
 This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
 
-**Dhruv Dang**, Managing Director  
+**Dhruv Dang**, Managing Director
 [dhruv@realfolk.io](mailto:dhruv@realfolk.io)
 
 ## Credits
