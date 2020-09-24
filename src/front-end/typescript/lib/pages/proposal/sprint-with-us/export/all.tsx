@@ -12,7 +12,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
+import { isSWUProposalInCodeChallenge, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -95,7 +95,9 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
           key={`swu-proposal-export-${i}`}
           className='mt-5 pt-5 border-top'
           opportunity={opportunity}
-          proposal={p} />
+          proposal={p}
+          anonymous={!isSWUProposalInCodeChallenge(p)}
+          exportedBy={state.viewerUser}/>
       ))}
     </div>
   );

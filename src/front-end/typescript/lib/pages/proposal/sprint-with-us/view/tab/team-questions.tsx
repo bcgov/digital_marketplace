@@ -242,7 +242,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 className='mt-3'
                 dest={routeDest(adt('proposalSWUExportOne', { opportunityId: state.proposal.opportunity.id, proposalId: state.proposal.id }))}
                 symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
-                Export Anonymized Team Questions
+                {!hasSWUOpportunityPassedCodeChallenge(state.opportunity) ? 'Export Anonymized Team Questions' : 'Export Proposal'}
               </Link>
             </Col>
           </Row>)

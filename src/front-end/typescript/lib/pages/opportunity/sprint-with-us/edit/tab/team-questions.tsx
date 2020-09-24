@@ -14,7 +14,7 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { canSWUOpportunityBeScreenedInToCodeChallenge, canViewSWUOpportunityProposals, hasSWUOpportunityPassedTeamQuestions, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeScreenedInToCodeChallenge, canViewSWUOpportunityProposals, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamQuestions, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { canSWUProposalBeScreenedToFromCodeChallenge, compareSWUProposalsForPublicSector, getSWUProponentName, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -348,7 +348,7 @@ const view: ComponentView<State, Msg> = (props) => {
                   className='mt-3 mt-md-0'
                   symbol_={rightPlacement(iconLinkSymbol('file-export'))}
                   dest={routeDest(adt('proposalSWUExportAll', { opportunityId: opportunity.id }))}>
-                  Export All Anonymized Team Questions
+                  {!hasSWUOpportunityPassedCodeChallenge(opportunity) ? 'Export All Anonymized Team Questions' : 'Export All Proposals'}
                 </Link>)
               : null}
           </Col>
