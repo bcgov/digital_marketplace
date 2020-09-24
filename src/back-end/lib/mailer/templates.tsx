@@ -65,9 +65,11 @@ export const styles: Styles = (() => {
       borderRadius: px(scale(0.25))
     },
     colors: {
-      primary: '#003366',
-      action: '#0c99d6',
-      white: '#fff'
+      logoBackground: '#003366',
+      bodyBackground: '#fff',
+      linkText: '#0c99d6',
+      buttonText: '#fff',
+      buttonBackground: '#0c99d6'
     }
   };
   const utilities: StyleUtilities = {
@@ -107,7 +109,7 @@ export const styles: Styles = (() => {
       ...utilities.p[0],
       ...utilities.font.sans,
       ...utilities.font.md,
-      backgroundColor: variables.colors.white,
+      backgroundColor: variables.colors.bodyBackground,
       width: '100%'
     },
     table: {
@@ -152,7 +154,7 @@ export const styles: Styles = (() => {
       ...utilities.mb[3]
     },
     link: {
-      color: variables.colors.action,
+      color: variables.colors.linkText,
       cursor: 'pointer',
       textDecoration: 'underline'
     },
@@ -162,8 +164,8 @@ export const styles: Styles = (() => {
       ...utilities.text.center,
       padding: `${px(scale(0.75))} ${px(scale(1.5))}`,
       margin: '0 auto',
-      backgroundColor: variables.colors.action,
-      color: variables.colors.white,
+      backgroundColor: variables.colors.buttonBackground,
+      color: variables.colors.buttonText,
       cursor: 'pointer',
       display: 'inline-block',
       textDecoration: 'none'
@@ -172,7 +174,7 @@ export const styles: Styles = (() => {
       ...utilities.border.radius,
       ...utilities.p[3],
       ...utilities.text.center,
-      backgroundColor: variables.colors.primary,
+      backgroundColor: variables.colors.logoBackground,
       display: 'block'
     },
     logo: {
