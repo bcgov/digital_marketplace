@@ -9,6 +9,8 @@ import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
+import * as cwu from 'shared/lib/resources/opportunity/code-with-us';
+import * as swu from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 const IMG_MAX_WIDTH = '550px';
@@ -97,7 +99,7 @@ const Programs: View = () => {
               (<div>
                 <div>Commit Code.</div>
                 <div>Get Paid.</div>
-                <div className='mt-3'>Opportunities up to $70,000.</div>
+                <div className='mt-3'>Opportunities up to {cwu.FORMATTED_MAX_BUDGET}.</div>
               </div>)
             }
             links={[
@@ -117,7 +119,7 @@ const Programs: View = () => {
             description={
               (<div>
                 <div>Supply an Agile Team to work with a government product manager in a modern DevOps environment.</div>
-                <div className='mt-3'>Opportunities up to $2,000,000.</div>
+                <div className='mt-3'>Opportunities up to {swu.FORMATTED_MAX_BUDGET}.</div>
               </div>)
             }
             links={[

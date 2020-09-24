@@ -17,7 +17,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import SKILLS from 'shared/lib/data/skills';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
-import { canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { FORMATTED_MAX_BUDGET, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
@@ -731,7 +731,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           placeholder='Fixed-Price Award'
           help={(<div>
             <p>To the best of your ability, estimate a fair price for the amount of work that you think it should take from the successful proponent to meet the opportunity’s acceptance criteria. It is suggested that you overestimate.</p>
-            <p className='mb-0'>The price estimate must not exceed $70,000.</p>
+            <p className='mb-0'>The price estimate must not exceed {FORMATTED_MAX_BUDGET}.</p>
           </div>)}
           required
           disabled={disabled}

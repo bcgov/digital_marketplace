@@ -7,7 +7,7 @@ import * as toasts from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toas
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { FORMATTED_MAX_BUDGET, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -164,7 +164,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       getTitle: () => 'Create a Sprint With Us Opportunity',
       getDescription: state => (
         <div>
-          <p><em>Sprint With Us</em> opportunities are used to procure an Agile product development team for your digital service at a variable cost of up to $2,000,000.</p>
+          <p><em>Sprint With Us</em> opportunities are used to procure an Agile product development team for your digital service at a variable cost of up to {FORMATTED_MAX_BUDGET}.</p>
           <p className='mb-0'>Use the form provided to create your <em>Sprint With Us</em> opportunity. You can either save a draft of your opportunity to complete the form at a later time, or you can complete the form now to {isAdmin(state.viewerUser) ? 'publish your opportunity immediately' : 'submit your opportunity for review to the Digital Marketplace\'s administrators'}.</p>
         </div>
       ),

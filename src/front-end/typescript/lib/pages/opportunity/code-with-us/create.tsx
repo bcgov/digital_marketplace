@@ -7,7 +7,7 @@ import * as toasts from 'front-end/lib/pages/opportunity/code-with-us/lib/toasts
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
-import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunityStatus, FORMATTED_MAX_BUDGET } from 'shared/lib/resources/opportunity/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -135,7 +135,7 @@ export const component: PageComponent<RouteParams,  SharedState, State, Msg> = {
       getTitle: () => 'Create a Code With Us Opportunity',
       getDescription: () => (
         <div>
-          <p><em>Code With Us</em> opportunities pay a fixed price of up to $70,000 for the delivery of code that meets your acceptance criteria.</p>
+          <p><em>Code With Us</em> opportunities pay a fixed price of up to {FORMATTED_MAX_BUDGET} for the delivery of code that meets your acceptance criteria.</p>
           <p className='mb-0'>Use the form provided to create your <em>Code With Us</em> opportunity. You can either save a draft of your opportunity to complete the form at a later time, or you can complete the form now to publish your opportunity immediately.</p>
         </div>
       ),

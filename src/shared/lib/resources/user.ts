@@ -1,4 +1,4 @@
-import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/lib/config.json';
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
 import { FileRecord } from 'shared/lib/resources/file';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';

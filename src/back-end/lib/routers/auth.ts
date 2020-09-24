@@ -7,8 +7,8 @@ import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, pa
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
 import { getString, getStringArray } from 'shared/lib';
-import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/lib/config.json';
 import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';

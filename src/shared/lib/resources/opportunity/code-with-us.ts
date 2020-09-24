@@ -1,4 +1,5 @@
-import { isDateInTheFuture, isDateInThePast } from 'shared/lib';
+import { CWU_MAX_BUDGET } from 'shared/config';
+import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
@@ -9,6 +10,7 @@ import { ErrorTypeFrom } from 'shared/lib/validation';
 export { Addendum } from 'shared/lib/resources/addendum';
 
 export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
+export const FORMATTED_MAX_BUDGET = formatAmount(CWU_MAX_BUDGET, '$');
 
 export enum CWUOpportunityStatus {
   Draft = 'DRAFT',

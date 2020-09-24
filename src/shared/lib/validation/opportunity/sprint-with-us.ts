@@ -1,4 +1,5 @@
 import { get, uniq } from 'lodash';
+import { SWU_MAX_BUDGET } from 'shared/config';
 import { getISODateString, getNumber, getString, setDateTo4PM } from 'shared/lib';
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, isSWUOpportunityClosed, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, optional, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
@@ -244,7 +245,7 @@ export function validateLocation(raw: string): Validation<string> {
 }
 
 export function validateTotalMaxBudget(raw: string | number): Validation<number> {
-  return validateNumber(raw, 1, 2000000, 'Total Maximum Budget', 'a');
+  return validateNumber(raw, 1, SWU_MAX_BUDGET, 'Total Maximum Budget', 'a');
 }
 
 export function validateMinimumTeamMembers(raw?: number | null): Validation<number | null> {
