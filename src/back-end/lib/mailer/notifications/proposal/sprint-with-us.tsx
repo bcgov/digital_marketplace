@@ -215,6 +215,6 @@ export function viewSWUProposalCallToAction(proposal: SWUProposal | SWUProposalS
   return {
     text: 'View Proposal',
     url: templates.makeUrl(`/proposals/sprint-with-us/${proposal.id}`),
-    style: { backgroundColor: '#0F4C8B' }
+    style: templates.styles.classes.buttonInfo
   };
 }

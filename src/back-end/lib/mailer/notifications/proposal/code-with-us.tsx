@@ -215,6 +215,6 @@ export function viewCWUProposalCallToAction(proposal: CWUProposal | CWUProposalS
   return {
     text: 'View Proposal',
     url: templates.makeUrl(`/proposals/code-with-us/${proposal.id}`),
-    style: { backgroundColor: '#0F4C8B' }
+    style: templates.styles.classes.buttonInfo
   };
 }

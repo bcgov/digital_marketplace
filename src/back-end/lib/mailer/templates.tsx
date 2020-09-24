@@ -68,8 +68,14 @@ export const styles: Styles = (() => {
       logoBackground: '#003366',
       bodyBackground: '#fff',
       linkText: '#0c99d6',
-      buttonText: '#fff',
-      buttonBackground: '#0c99d6'
+      buttonPrimaryText: '#fff',
+      buttonPrimaryBackground: '#0c99d6',
+      buttonInfoText: '#fff',
+      buttonInfoBackground: '#0f4c8b',
+      buttonSuccessText: '#fff',
+      buttonSuccessBackground: '#2E8540',
+      buttonDangerText: '#fff',
+      buttonDangerBackground: '#dc3545'
     }
   };
   const utilities: StyleUtilities = {
@@ -102,6 +108,16 @@ export const styles: Styles = (() => {
         borderRadius: variables.sizes.borderRadius
       }
     }
+  };
+  const button = {
+    ...utilities.border.radius,
+    ...utilities.font.lg,
+    ...utilities.text.center,
+    padding: `${px(scale(0.75))} ${px(scale(1.5))}`,
+    margin: '0 auto',
+    cursor: 'pointer',
+    display: 'inline-block',
+    textDecoration: 'none'
   };
   const classes: StyleClasses = {
     body: {
@@ -158,17 +174,25 @@ export const styles: Styles = (() => {
       cursor: 'pointer',
       textDecoration: 'underline'
     },
-    button: {
-      ...utilities.border.radius,
-      ...utilities.font.lg,
-      ...utilities.text.center,
-      padding: `${px(scale(0.75))} ${px(scale(1.5))}`,
-      margin: '0 auto',
-      backgroundColor: variables.colors.buttonBackground,
-      color: variables.colors.buttonText,
-      cursor: 'pointer',
-      display: 'inline-block',
-      textDecoration: 'none'
+    buttonPrimary: {
+      ...button,
+      backgroundColor: variables.colors.buttonPrimaryBackground,
+      color: variables.colors.buttonPrimaryText
+    },
+    buttonInfo: {
+      ...button,
+      backgroundColor: variables.colors.buttonInfoBackground,
+      color: variables.colors.buttonInfoText
+    },
+    buttonSuccess: {
+      ...button,
+      backgroundColor: variables.colors.buttonSuccessBackground,
+      color: variables.colors.buttonSuccessText
+    },
+    buttonDanger: {
+      ...button,
+      backgroundColor: variables.colors.buttonDangerBackground,
+      color: variables.colors.buttonDangerText
     },
     logoBackground: {
       ...utilities.border.radius,
@@ -231,7 +255,7 @@ export const Link: View<LinkProps> = ({ text, url }) => {
 const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style = {} }) => {
   return (
     <Fragment>
-      <a href={url} target='_blank' style={{ ...styles.classes.button, ...style, marginLeft: '1em', marginRight: '1em' }}>
+      <a href={url} target='_blank' style={{ ...styles.classes.buttonPrimary, ...style, marginLeft: '1em', marginRight: '1em' }}>
         {text}
       </a>
     </Fragment>
