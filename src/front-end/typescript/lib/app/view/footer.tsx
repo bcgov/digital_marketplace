@@ -1,10 +1,10 @@
-import { PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
+import { PROCUREMENT_CONCIERGE_URL, SOURCE_CODE_URL } from 'front-end/config';
 import { View } from 'front-end/lib/framework';
-import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { CONTACT_EMAIL } from 'shared/config';
+import { CONTACT_EMAIL, COPY } from 'shared/config';
 import { adt } from 'shared/lib/types';
 
 const links: AnchorProps[] = [
@@ -37,6 +37,12 @@ const links: AnchorProps[] = [
     dest: emailDest([CONTACT_EMAIL])
   },
   {
+    children: 'Source Code',
+    dest: externalDest(SOURCE_CODE_URL),
+    newTab: true,
+    symbol_: leftPlacement(iconLinkSymbol('github'))
+  },
+  {
     children: 'Procurement Concierge',
     dest: externalDest(PROCUREMENT_CONCIERGE_URL),
     newTab: true,
@@ -60,7 +66,7 @@ const Footer: View<{}> = () => {
             ))}
           </Col>
           <Col xs='12' className='small pb-3 o-75 text-white'>
-            Owned and operated by the Government of B.C.&nbsp;
+            Owned and operated by the {COPY.gov.name.short}.&nbsp;
             <Link newTab color='white' dest={externalDest('https://www.realfolk.io')} className='text-decoration-underline'>
               Designed and implemented by Real Folk.
             </Link>

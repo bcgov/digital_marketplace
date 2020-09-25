@@ -1,6 +1,15 @@
 import { prefixPath } from 'front-end/lib';
 
+// ENV CONFIG
+export const NODE_ENV = process.env.NODE_ENV || 'production';
+
+// Set this environment variable if behind reverse proxies at a particular path.
+// e.g. www.example.com/marketplace/*
+export const PATH_PREFIX = process.env.PATH_PREFIX || '';
+
 // HARDCODED CONFIG
+export const SOURCE_CODE_URL = 'https://github.com/bcgov/digital_marketplace/';
+
 export const FORM_FIELD_DEBOUNCE_DURATION = 500;
 
 export const SEARCH_DEBOUNCE_DURATION = 200;
@@ -29,9 +38,4 @@ export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 
 export const MANDATORY_WEIGHTED_CRITERIA_URL = 'https://www2.gov.bc.ca/gov/content/governments/services-for-government/bc-bid-resources/how-to-buy-services/procurement-process/pre-award/prepare-solicitation-documents/mandatory-and-weighted-criteria';
 
-// ENV CONFIG
-export const NODE_ENV = process.env.NODE_ENV || 'production';
-
-// Set this environment variable if behind reverse proxies at a particular path.
-// e.g. www.example.com/marketplace/*
-export const PATH_PREFIX = process.env.PATH_PREFIX || '';
+export const CWU_PAYMENT_OPTIONS_URL = 'https://github.com/BCDevExchange/code-with-us/wiki/4.-Payment';

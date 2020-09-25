@@ -15,6 +15,7 @@ import Link, { externalDest } from 'front-end/lib/views/link';
 import { flatten } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import SKILLS from 'shared/lib/data/skills';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
 import { FORMATTED_MAX_BUDGET, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
@@ -858,7 +859,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           help={(
             <div>
               <p>Describe the criteria that you will use to score the submitted proposals. State the weight, or points, that you will give to each criterion (e.g. “Experience contributing Java code to any public code repositories with more than 5 contributors (10 points)”). You can format this evaluation criteria with Markdown.</p>
-              <p className='mb-0'>It is at your discretion which mandatory and weighted criteria you wish to use.{MANDATORY_WEIGHTED_CRITERIA_URL ? (<span>&nbsp;Please refer to the Government of B.C.’s <Link newTab dest={externalDest(MANDATORY_WEIGHTED_CRITERIA_URL)}>information on procurement</Link> for guidance.</span>) : ''}</p>
+              <p className='mb-0'>It is at your discretion which mandatory and weighted criteria you wish to use.{MANDATORY_WEIGHTED_CRITERIA_URL ? (<span>&nbsp;Please refer to the {COPY.gov.name.short}’s <Link newTab dest={externalDest(MANDATORY_WEIGHTED_CRITERIA_URL)}>information on procurement</Link> for guidance.</span>) : ''}</p>
             </div>
           )}
           extraChildProps={{

@@ -6,6 +6,7 @@ import HowItWorksItem from 'front-end/lib/views/how-it-works-item';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
@@ -49,7 +50,7 @@ const TitleView: View = () => {
         </Row>
         <Row>
           <Col xs='12' md='8'>
-            <p className='mb-0'><em>Sprint With Us</em> is a procurement mechanism that allows the Government of B.C. to procure Agile software development teams.</p>
+            <p className='mb-0'><em>Sprint With Us</em> is a procurement mechanism that allows the {COPY.gov.name.short} to procure Agile software development teams.</p>
           </Col>
           <Col md='4'>
             <img style={{ maxWidth: '213px' }} className='d-none d-md-block position-absolute mt-n5 ml-6' src={prefixPath('/images/illustrations/sprint_with_us_learn_more.svg')} />
