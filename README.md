@@ -47,8 +47,6 @@ This project available to use under the Apache 2.0 license (see `LICENSE.txt`). 
 The Digital Marketplace is a full-stack TypeScript web application that uses PostgreSQL for persistence.
 It is written in a functional and declarative style with the goal of maximizing compile-time guarantees through type-safety.
 
-![Digital Marketplace Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Digital%20Marketplace%20Architecture.svg)
-
 The source code is split into five parts:
 
 ### Front-End (`src/front-end`)
@@ -58,15 +56,11 @@ The front-end's build system is executed by Grunt.
 
 The front-end's state management framework (`src/front-end/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
-![Digital Marketplace Front-End Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Front-End%20Architecture.svg)
-
 ### Back-End (`src/back-end`)
 
 A TypeScript server that vends the front-end's build assets (`src/back-end/lib/routers/front-end.ts`) as well as a JSON CRUD API (`src/back-end/lib/resources/**/*.ts`) that performs business logic and persists data to a PostgreSQL database.
 
 The server framework (`src/back-end/lib/server/index.ts`) provides type-safe abstractions for API development, and is executed by Express (`src/back-end/lib/server/adapters.ts`).
-
-![Digital Marketplace Back-End Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Back-End%20Architecture.svg)
 
 #### Authentication
 
