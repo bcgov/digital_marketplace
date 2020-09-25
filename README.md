@@ -109,6 +109,10 @@ The `master` branch contains work that has passed the Quality Assurance process 
 
 Hotfixes can be merged directly to `master` via a pull request, but should be merged back into the `development` branch as well.
 
+### Changelog & Versioning
+
+This project introduced a Changelog and versioning system in 2020-09 to track changes made to the code. Please refer to `CHANGELOG.md` for further information. Generally, core maintainers of this project should be the only people adding to the Changelog.
+
 ## Development Environment
 
 ### Dependencies
