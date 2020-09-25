@@ -226,6 +226,8 @@ Environment variables that affect the back-end server's functionality are stored
 | `COOKIE_SECRET` | The secret used to hash cookies. |
 | `MAILER_HOST` | SMTP server host for transactional emails in production. |
 | `MAILER_PORT` | SMTP server port for transactional emails in production. |
+| `MAILER_USERNAME` | SMTP server username for authentication. If specified, `MAILER_PASSWORD` must also be provided. |
+| `MAILER_PASSWORD` | SMTP server password for authentication. If specified, `MAILER_USERNAME` must also be provided. |
 | `MAILER_GMAIL_USER` | A GMail SMTP username to test transactional emails in development. |
 | `MAILER_GMAIL_PASS` | A GMail SMTP password to test transactional emails in development. |
 | `MAILER_FROM` | The sender for transactional emails. |

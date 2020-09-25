@@ -80,10 +80,15 @@ export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
 export const FRONT_END_BUILD_DIR = resolve(REPOSITORY_ROOT_DIR, 'build/front-end');
 
+const mailerPort = parseInt(get('MAILER_PORT', '25'), 10);
 const productionMailerConfigOptions = {
   host: get('MAILER_HOST', ''),
-  port: parseInt(get('MAILER_PORT', '25'), 10),
-  secure: false,
+  port: mailerPort,
+  auth: {
+    user: get('MAILER_USERNAME', ''),
+    pass: get('MAILER_PASSWORD', '')
+  },
+  secure: mailerPort === 465 ? true : false,
   connectionTimeout: 5000,
   greetingTimeout: 5000,
   ignoreTLS: false,
@@ -217,6 +222,13 @@ export function getConfigErrors(): string[] {
     errors = errors.concat([
       'MAILER_* variables must be properly specified for production.',
       'MAILER_HOST and MAILER_PORT (positive integer) must all be specified.'
+    ]);
+  }
+
+  if (ENV === 'production' && (!productionMailerConfigOptions.auth.user || !productionMailerConfigOptions.auth.pass)) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for production.',
+      'MAILER_USERNAME and MAILER_PASSWORD must be either both specified or both absent'
     ]);
   }
 
