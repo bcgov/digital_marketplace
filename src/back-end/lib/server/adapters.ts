@@ -1,4 +1,4 @@
-import { COOKIE_SECRET, ENV, ORIGIN, SWAGGER_UI_PATH, TMP_DIR } from 'back-end/config';
+import { COOKIE_SECRET, ENV, ORIGIN, SWAGGER_ENABLE, SWAGGER_UI_PATH, TMP_DIR } from 'back-end/config';
 import { generateUuid } from 'back-end/lib';
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
@@ -268,7 +268,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
     // Mount each route to the Express application.
     router.forEach(route => {
       app.all(route.path, makeExpressRequestHandler(route));
-      if (ENV === 'development') {
+      if (SWAGGER_ENABLE) {
         app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs));
       }
     });

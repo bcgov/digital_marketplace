@@ -241,6 +241,7 @@ Environment variables that affect the back-end server's functionality are stored
 | `AVATAR_MAX_IMAGE_HEIGHT` | The maximum image height for uploaded avatar image files. Files with a greater height will be resized. Defaults to 500 pixels. |
 | `FILE_STORAGE_DIR` | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing. |
 | `SERVICE_TOKEN_HASH` | A hashed token used to control access to service API endpoints that are only enabled in development and test environments. Defining the variable will enable service endpoints that can be used to override user accounts and sessions. |
+| `SWAGGER_ENABLE` | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.
 | `SWAGGER_UI_PATH` | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`. |
 
 #### Front-End Environment Variables

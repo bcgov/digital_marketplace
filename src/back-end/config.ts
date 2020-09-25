@@ -53,6 +53,8 @@ export const ORIGIN = get('ORIGIN', 'https://digital.gov.bc.ca/marketplace').rep
 
 export const SERVICE_TOKEN_HASH = get('SERVICE_TOKEN_HASH', '');
 
+export const SWAGGER_ENABLE = get('SWAGGER_ENABLE', '') === 'true';
+
 export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
 
 export function getPostgresUrl(): string | null {
