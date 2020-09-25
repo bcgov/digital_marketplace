@@ -69,7 +69,7 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Code With Us Proposal Guide'
   },
   'code-with-us-terms-and-conditions': {
-    title: 'Code With Us Terms'
+    title: 'Code With Us Terms & Conditions'
   },
   'sprint-with-us-opportunity-guide': {
     title: 'Sprint With Us Opportunity Guide'
@@ -78,7 +78,7 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Sprint With Us Proposal Guide'
   },
   'sprint-with-us-terms-and-conditions': {
-    title: 'Sprint With Us Terms and Conditions'
+    title: 'Sprint With Us Terms & Conditions'
   }
 };
 
