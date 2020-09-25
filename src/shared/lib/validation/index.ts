@@ -296,3 +296,12 @@ export function validateCapabilities(raw: string[], minCapabilities = 1): ArrayV
   const validatedArray = validateArray(raw, validateCapability);
   return mapValid(validatedArray, v => uniq(v));
 }
+
+// Validate pagination index and size query params
+export function validatePageIndex(raw: string | number): Validation<number> {
+  return validateNumber(raw, 1);
+}
+
+export function validatePageSize(raw: string | number): Validation<number> {
+  return validateNumber(raw, 1);
+}

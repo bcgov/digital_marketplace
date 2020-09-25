@@ -183,11 +183,15 @@ export const readOneOrganization = tryDb<[Id, boolean?, Session?], Organization 
  * - A vendor: Include owner information only for owned organizations.
  * - Owner information includes owner id/name, swuQualification status and numTeamMembers
  */
-export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim[]>(async (connection, session, allowInactive = false) => {
+export const readManyOrganizations = tryDb<[Session, boolean?, number?, number?], OrganizationSlim[]>(async (connection, session, allowInactive = false, page, pageSize) => {
   let query = generateOrganizationQuery(connection);
 
   if (!allowInactive) {
     query = query.andWhere({ 'organizations.active': true });
+  }
+
+  if (page && pageSize) {
+    query.offset((page - 1) * pageSize).limit(pageSize);
   }
 
   // Execute query, and the destructure results to only choose 'slim' fields that user has access to

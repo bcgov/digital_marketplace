@@ -10,7 +10,7 @@ import { getString } from 'shared/lib';
 import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, OrganizationSlim, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, validatePageIndex, validatePageSize, validateUUID, Validation } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
@@ -54,8 +54,24 @@ const resource: Resource = {
   readMany(connection) {
     return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[] | string[]>, Session>(async request => {
       const respond = (code: number, body: OrganizationSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      let pageIndex;
+      if (request.query.page) {
+        const validatedPageIndex = validatePageIndex(request.query.page);
+        if (isInvalid(validatedPageIndex)) {
+          return respond(400, ['Invalid page index provided.']);
+        }
+        pageIndex = getValidValue(validatedPageIndex, undefined);
+      }
+      let pageSize;
+      if (request.query.pageSize) {
+        const validatedPageSize = validatePageSize(request.query.pageSize);
+        if (isInvalid(validatedPageSize)) {
+          return respond(400, ['Invalid page size provided.']);
+        }
+        pageSize = getValidValue(validatedPageSize, undefined);
+      }
       // Pass session in so we can add owner name, swuQualified status for admin/owner only
-      const dbResult = await db.readManyOrganizations(connection, request.session);
+      const dbResult = await db.readManyOrganizations(connection, request.session, false, pageIndex, pageSize);
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
