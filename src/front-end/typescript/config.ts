@@ -1,5 +1,12 @@
 import { prefixPath } from 'front-end/lib';
 
+// ENV CONFIG
+export const NODE_ENV = process.env.NODE_ENV || 'production';
+
+// Set this environment variable if behind reverse proxies at a particular path.
+// e.g. www.example.com/marketplace/*
+export const PATH_PREFIX = process.env.PATH_PREFIX || '';
+
 // HARDCODED CONFIG
 export const FORM_FIELD_DEBOUNCE_DURATION = 500;
 
@@ -28,10 +35,3 @@ export const SWU_QUALIFICATION_TERMS_ID = 'sprint-with-us-terms-and-conditions';
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 
 export const MANDATORY_WEIGHTED_CRITERIA_URL = 'https://www2.gov.bc.ca/gov/content/governments/services-for-government/bc-bid-resources/how-to-buy-services/procurement-process/pre-award/prepare-solicitation-documents/mandatory-and-weighted-criteria';
-
-// ENV CONFIG
-export const NODE_ENV = process.env.NODE_ENV || 'production';
-
-// Set this environment variable if behind reverse proxies at a particular path.
-// e.g. www.example.com/marketplace/*
-export const PATH_PREFIX = process.env.PATH_PREFIX || '';
