@@ -19,6 +19,7 @@ export type ContentId
   | 'copyright'
   | 'code-with-us-opportunity-guide'
   | 'code-with-us-proposal-guide'
+  | 'code-with-us-terms-and-conditions'
   | 'sprint-with-us-opportunity-guide'
   | 'sprint-with-us-proposal-guide'
   | 'sprint-with-us-terms-and-conditions';
@@ -66,6 +67,9 @@ const DEFINITIONS: ContentDefinitions = {
   },
   'code-with-us-proposal-guide': {
     title: 'Code With Us Proposal Guide'
+  },
+  'code-with-us-terms-and-conditions': {
+    title: 'Code With Us Terms'
   },
   'sprint-with-us-opportunity-guide': {
     title: 'Sprint With Us Opportunity Guide'
