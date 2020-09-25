@@ -15,6 +15,7 @@ Throughout the Process Terms the following definitions apply:
 "**Contract Terms**" has the meaning ascribed to it in section 20 of these Process Terms;
 
 "**Contractor**" has the meaning ascribed to it in section 16 of these Process Terms;
+
 "**Contribution**" means the work, such as source code, delivered by the Contractor to the Issuer with regard to an Opportunity;
 
 "**Digital Marketplace**" means the Digital Marketplace website located at https://digital.gov/marketplace where Opportunities will be posted by the Issuer;
