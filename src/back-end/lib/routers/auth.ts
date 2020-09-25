@@ -1,6 +1,6 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
-import { Connection, createSession, createUser, deleteSession, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
+import { Connection, createSession, createUser, deleteSession, findOneUserByTypeAndIdp, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { authenticatePassword } from 'back-end/lib/security';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
@@ -287,17 +287,18 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   }
 
   let username = getString(claims, 'preferred_username');
+  const idpId = getString(claims, 'idp_id');
 
   // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
   if ((username.endsWith('@' + VENDOR_IDP_SUFFIX) && userType === UserType.Vendor) || (username.endsWith('@' + GOV_IDP_SUFFIX) && userType === UserType.Government)) {
     username = username.slice(0, username.lastIndexOf('@'));
   }
 
-  if (!username || !tokenSet.access_token || !tokenSet.refresh_token) {
+  if (!username || !idpId || !tokenSet.access_token || !tokenSet.refresh_token) {
     throw new Error('authentication failure - invalid claims');
   }
 
-  const dbResult = await findOneUserByTypeAndUsername(connection, userType, username);
+  const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
   if (isInvalid(dbResult)) {
     makeAuthErrorRedirect(request);
   }
@@ -305,6 +306,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   const existingUser = !!user;
   if (!user) {
     user = getValidValue(await createUser(connection, {
+      idpId,
       type: userType,
       status: UserStatus.Active,
       name: claims.name || '',

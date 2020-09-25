@@ -27,7 +27,8 @@ export const vendorUser: User = {
   idpUsername: 'vendor_user',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'vendor_user'
 };
 
 export const vendorUserSlim: UserSlim = {
@@ -48,7 +49,8 @@ export const govUser: User = {
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'username'
 };
 
 export const adminUser: User = {
@@ -64,7 +66,8 @@ export const adminUser: User = {
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'username'
 };
 
 export const cwuOpportunity: CWUOpportunity = {
