@@ -8,6 +8,8 @@ export const NODE_ENV = process.env.NODE_ENV || 'production';
 export const PATH_PREFIX = process.env.PATH_PREFIX || '';
 
 // HARDCODED CONFIG
+export const SOURCE_CODE_URL = 'https://github.com/bcgov/digital_marketplace/';
+
 export const FORM_FIELD_DEBOUNCE_DURATION = 500;
 
 export const SEARCH_DEBOUNCE_DURATION = 200;
