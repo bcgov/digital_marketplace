@@ -39,6 +39,15 @@ Note that each log must include a version number that has either an incremented 
 
 ### 2020-09-25
 
+- Version Number: 1.1
+- Commit Hash: ebf1d2d97c1a847714f39c6f6327fa9834933457
+
+#### Changes
+
+- Fix an incorrect check at startup for optional configuration variables.
+
+### 2020-09-25
+
 - Version Number: 1.0
 - Commit Hash: 8d22333274b3b7baa1c66f10ca02afa5e8f92787
 
