@@ -6,6 +6,7 @@ import Markdown from 'front-end/lib/views/markdown';
 import { includes } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
@@ -54,7 +55,7 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Disclaimer'
   },
   'privacy': {
-    title: 'B.C. Government Website Privacy Statement'
+    title: `${COPY.gov.name.long} Website Privacy Statement`
   },
   'accessibility': {
     title: 'Accessibility'

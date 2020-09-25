@@ -8,6 +8,7 @@ import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from '
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import { formatAmount } from 'shared/lib';
 import * as cwu from 'shared/lib/resources/opportunity/code-with-us';
 import * as swu from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -48,13 +49,13 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
       <Row className='justify-content-center text-center'>
         <Col xs='12' sm='10' md='6'>
           <h1 style={{lineHeight: '3.75rem'}}>
-            Discover Unique Opportunities to Collaborate with the BC Public Sector.
+            Discover Unique Opportunities to Collaborate with the {COPY.region.name.short} Public Sector.
           </h1>
         </Col>
       </Row>
       <Row className='justify-content-center text-center'>
         <Col xs='12' sm='10' md='6' className='mt-3'>
-          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and BC's public sector.
+          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and {COPY.region.name.short}'s public sector.
         </Col>
       </Row>
       <Row className='mt-5 mb-6 mb-md-8'>
@@ -166,7 +167,7 @@ const VendorRoleInfo: View = () => {
           <h6 className='text-c-landing-role-heading'><Icon name='store' className='mr-2 mb-1' />Vendors</h6>
         </Col>
         <Col xs='12' md='6' className='order-3 order-md-2'>
-          <h4 className='mb-3'>Collaborate with the BC Public Sector to build innovative digital products.</h4>
+          <h4 className='mb-3'>Collaborate with the {COPY.region.name.short} Public Sector to build innovative digital products.</h4>
           <BulletPoint
             className='ml-3 my-4'
             icon='star-exclamation'
