@@ -340,6 +340,12 @@ This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.
 - Modify the fonts sourced in `src/front-end/sass/_font.scss`.
 - Modify the colors in `src/back-end/lib/mailer/templates.tsx` that are used for email notifications.
 
+#### Migrations
+
+When maintaining a fork of this project that has its own database migrations, special attention must be given to the `CHANGELOG.md` and source code diff whenever the root repository is merged into the fork. You will need to verify that any new migrations from the root repository do not conflict with your own database migrations and schema.
+
+**Migrations can be destructive operations, so please ensure they are monitored and executed with special care.**
+
 ## Team
 
 The Digital Marketplace is currently operated by the Procurement Services Branch within the Government of British Columbia's Ministry of Citizen's Services.
