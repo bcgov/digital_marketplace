@@ -1,6 +1,6 @@
-## Process Terms
-
 Version: September 8, 2020
+
+## Process Terms
 
 ### Definitions
 
