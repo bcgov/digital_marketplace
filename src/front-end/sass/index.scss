@@ -901,17 +901,20 @@ nav.navbar .nav-link:hover {
 // Page-specific overrides
 
 .route-orgSWUTerms,
-.route-content .content-sprint-with-us-terms-and-conditions {
-  .markdown {
-    ul {
-      list-style-type: none;
-
-      li {
-        margin-bottom: 1rem;
-      }
-
+.route-content {
+  .content-sprint-with-us-terms-and-conditions,
+  .content-code-with-us-terms-and-conditions {
+    .markdown {
       ul {
-        margin-top: 1rem;
+        list-style-type: none;
+
+        li {
+          margin-bottom: 1rem;
+        }
+
+        ul {
+          margin-top: 1rem;
+        }
       }
     }
   }
