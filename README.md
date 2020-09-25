@@ -14,7 +14,7 @@ This document describes this project's developer environment, technical architec
   * [Back-End (`src/back-end`)](#back-end-srcback-end)
   * [Shared (`src/shared`)](#shared-srcshared)
   * [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
-- [Contributing](#contributing)
+  * [Scripts (`src/scripts`)](#scripts-srcscripts)
 - [Development Environment](#development-environment)
   * [Dependencies](#dependencies)
   * [Quick Start](#quick-start)
@@ -25,6 +25,9 @@ This document describes this project's developer environment, technical architec
   * [Deployment Process](#deployment-process)
   * [Backups](#backups)
   * [High Availability Database Deployment](#high-availability-database-deployment)
+- [Community](#community)
+  * [Contributing](#contributing)
+  * [Forking this Repository](#forking-this-repository)
 - [Team](#team)
 - [Credits](#credits)
 
@@ -37,7 +40,7 @@ This project is designed, implemented and maintained by the team at Real Folk. I
 **Dhruv Dang**, Managing Director
 [dhruv@realfolk.io](mailto:dhruv@realfolk.io)
 
-This project available to use under the Apache 2.0 license (see `LICENSE.txt`).
+This project available to use under the Apache 2.0 license (see `LICENSE.txt`). Please note the `NOTICE.txt` file included with this repository and the guidelines in section 4(d) of the license.
 
 ## Project Organisation
 
@@ -98,20 +101,6 @@ General purpose scripts are stored in this folder. The scripts themselves are st
 ```
 npm run scripts:run -- <SCRIPT_NAME> [...args]
 ```
-
-## Contributing
-
-Features should be implemented in feature branches. Create a pull request against the `development` branch to have your work reviewed for subsequent deployment.
-
-The `development` branch contains all approved code.
-
-The `master` branch contains work that has passed the Quality Assurance process and is ready to be deployed to production.
-
-Hotfixes can be merged directly to `master` via a pull request, but should be merged back into the `development` branch as well.
-
-### Changelog & Versioning
-
-This project introduced a Changelog and versioning system in 2020-09 to track changes made to the code. Please refer to `CHANGELOG.md` for further information. Generally, core maintainers of this project should be the only people adding to the Changelog.
 
 ## Development Environment
 
@@ -316,6 +305,43 @@ oc process -f openshift/templates/patroni-deploy-config.json | oc create -f -
 ```
 
 Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/postgres-deploy-config.json` and can be run using the same OpenShift CLI command above.
+
+## Community
+
+### Contributing
+
+Features should be implemented in feature branches. Create a pull request against the `development` branch to have your work reviewed for subsequent deployment.
+
+The `development` branch contains all approved code.
+
+The `master` branch contains work that has passed the Quality Assurance process and is ready to be deployed to production.
+
+Hotfixes can be merged directly to `master` via a pull request, but should be merged back into the `development` branch as well.
+
+#### Changelog & Versioning
+
+This project introduced a Changelog and versioning system in 2020-09 to track changes made to the code. Please refer to `CHANGELOG.md` for further information. Generally, core maintainers of this project should be the only people adding to the Changelog.
+
+### Forking this Repository
+
+Please note the section above titled "Authors and Licensing" before forking this repository.
+
+#### Configuration
+
+Various aspects of this application can be configured. In addition to the environment variables described in the section title "Environment Variables", the following files contain hard-coded configuration variables that can be overridden as needed:
+
+- `src/back-end/config.ts`
+- `src/front-end/typescript/config.ts`
+- `src/shared/config.ts`
+
+#### Theming
+
+This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.scss`. If you would like to theme this project to match your own style guide, updating the values of the variables in that file is where the majority of the changes will be made. You will likely also need to make the following changes to ensure a consistent user experience:
+
+- Replace `logo.svg` and `logo.png` in `src/front-end/static/images`.
+- Modify the colors within the SVGs in `src/front-end/static/images/illustrations`.
+- Modify the fonts sourced in `src/front-end/sass/_fonts.scss`.
+- Modify the colors in `src/back-end/lib/mailer/templates.tsx` that are used for email notifications.
 
 ## Team
 

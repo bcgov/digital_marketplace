@@ -73,8 +73,8 @@
 | 2 | organization |  uuid | NO |  | **FK** ([organizations.id](#organizations)) |  |
 | 3 | createdAt |  timestamp with time zone | NO |  |  |  |
 | 4 | membershipType |  text | YES |  |  |  |
-| 5 | updatedAt |  timestamp with time zone | NO | '2020-02-26 00:00:00+00' |  |  |
-| 6 | id |  uuid | NO | '5bd005d7-0a26-49ad-a4e4-fde3abb97867' | **PK**, **UNIQ** |  |
+| 5 | updatedAt |  timestamp with time zone | NO | '2020-08-04 00:00:00+00' |  |  |
+| 6 | id |  uuid | NO | '77a5b885-cc5d-4b87-8efe-2850ab3e6a63' | **PK**, **UNIQ** |  |
 | 7 | membershipStatus |  text | NO | 'PENDING' |  |  |
 ### cwuOpportunities
 
@@ -262,7 +262,7 @@
 | 3 | legalName |  text | NO |  |  |  |
 | 4 | logoImageFile |  uuid | YES |  | **FK** ([files.id](#files)) |  |
 | 5 | websiteUrl |  text | YES |  |  |  |
-| 6 | updatedAt |  timestamp with time zone | NO | '2020-02-26 00:00:00+00' |  |  |
+| 6 | updatedAt |  timestamp with time zone | NO | '2020-08-04 00:00:00+00' |  |  |
 | 7 | streetAddress1 |  text | NO |  |  |  |
 | 8 | streetAddress2 |  text | YES |  |  |  |
 | 9 | city |  text | NO |  |  |  |
