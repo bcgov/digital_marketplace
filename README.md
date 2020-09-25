@@ -330,7 +330,7 @@ Various aspects of this application can be configured. In addition to the enviro
 
 #### Theming
 
-This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.scss`. If you would like to theme this project to match your own style guide, updating the values of the variables in that file is where the majority of the changes will be made. You will likely also need to make the following changes to ensure a consistent user experience:
+This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.scss`. If you would like to theme this project to match your own style guide, you will need to update many of the values of the variables in that file. You will likely also need to make the following changes to ensure a consistent user experience:
 
 - Replace `logo.svg` and `logo.png` in `src/front-end/static/images`.
 - Modify the colors within the SVGs in `src/front-end/static/images/illustrations`.
