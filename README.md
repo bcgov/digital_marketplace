@@ -324,7 +324,7 @@ Please note the section above titled "Authors and Licensing" before forking this
 
 #### Configuration
 
-Various aspects of this application can be configured. In addition to the environment variables described in the section title "Environment Variables", the following files contain hard-coded configuration variables that can be overridden as needed:
+Various aspects of this application can be configured. In addition to the environment variables described in the section titled "Environment Variables", the following files contain hard-coded configuration variables that can be overridden as needed:
 
 - `src/back-end/config.ts`
 - `src/front-end/typescript/config.ts`
@@ -332,7 +332,7 @@ Various aspects of this application can be configured. In addition to the enviro
 
 #### Theming
 
-This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.scss`. If you would like to theme this project to match your own style guide, you will need to update many of the values of the variables in that file. You will likely also need to make the following changes to ensure a consistent user experience:
+This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.scss`. If you would like to theme this project to match your own style guide, you will need to update many of the variables in that file. You will likely also need to make the following changes to ensure a consistent user experience:
 
 - Replace `logo.svg` and `logo.png` in `src/front-end/static/images`.
 - Modify the colors within `default_user_avatar.svg` and `default_organization_logo.svg` in `src/front-end/static/images`.
