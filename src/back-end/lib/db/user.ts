@@ -73,9 +73,9 @@ export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | nul
   return valid(result ? result : null);
 });
 
-export const findOneUserByIdpId = tryDb<[string], User | null>(async (connection, idpId) => {
+export const findOneUserByTypeAndIdp = tryDb<[UserType, string], User | null>(async (connection, type, idpId) => {
   const result = await connection<User>('users')
-    .where({ idpId }).first();
+    .where({ idpId, type }).first();
   return valid(result ? result : null);
 });
 

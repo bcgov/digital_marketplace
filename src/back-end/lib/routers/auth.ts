@@ -1,6 +1,6 @@
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
-import { Connection, createSession, createUser, deleteSession, findOneUserByIdpId, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
+import { Connection, createSession, createUser, deleteSession, findOneUserByTypeAndIdp, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
 import { authenticatePassword } from 'back-end/lib/security';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
@@ -298,7 +298,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
     throw new Error('authentication failure - invalid claims');
   }
 
-  const dbResult = await findOneUserByIdpId(connection, idpId);
+  const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
   if (isInvalid(dbResult)) {
     makeAuthErrorRedirect(request);
   }
