@@ -225,7 +225,7 @@ export function getConfigErrors(): string[] {
     ]);
   }
 
-  if (ENV === 'production' && (!productionMailerConfigOptions.auth.user || !productionMailerConfigOptions.auth.pass)) {
+  if (ENV === 'production' && (!!productionMailerConfigOptions.auth.user !== !!productionMailerConfigOptions.auth.pass)) {
     errors = errors.concat([
       'MAILER_* variables must be properly specified for production.',
       'MAILER_USERNAME and MAILER_PASSWORD must be either both specified or both absent'
