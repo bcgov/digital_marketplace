@@ -9,7 +9,7 @@ import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/component
 import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
 import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
-import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -193,6 +193,20 @@ const view: ComponentView<State, Msg> = viewValid(props => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
+      {show
+        ? (<Row>
+            <Col xs='12'>
+              <Link
+                newTab
+                color='info'
+                className='mt-3'
+                dest={routeDest(adt('proposalSWUExportOne', { opportunityId: state.proposal.opportunity.id, proposalId: state.proposal.id }))}
+                symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
+                Export Proposal
+              </Link>
+            </Col>
+          </Row>)
+        : null}
       {show ? (<Reporting {...props} />) : null}
       <Row className='mt-5'>
         <Col xs='12'>

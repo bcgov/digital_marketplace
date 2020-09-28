@@ -10,7 +10,7 @@ import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/vi
 import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import * as proposalToasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
 import Badge from 'front-end/lib/views/badge';
-import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -338,16 +338,6 @@ const view: ComponentView<State, Msg> = (props) => {
         <Row>
           <Col xs='12' className='d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4'>
             <h4 className='mb-0'>Code Challenge Participants</h4>
-            {state.canViewProposals
-              ? (<Link
-                  newTab
-                  color='info'
-                  className='mt-3 mt-md-0'
-                  symbol_={rightPlacement(iconLinkSymbol('file-export'))}
-                  dest={routeDest(adt('proposalSWUExportAll', { opportunityId: opportunity.id }))}>
-                  Export All Proposals
-                </Link>)
-              : null}
           </Col>
           <Col xs='12'>
             {state.canViewProposals && state.proposals.length

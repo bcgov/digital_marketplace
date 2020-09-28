@@ -12,7 +12,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { isSWUProposalInCodeChallenge, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
+import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -22,6 +22,7 @@ interface ValidState {
   proposals: SWUProposal[];
   viewerUser: User;
   exportedAt: Date;
+  anonymous: boolean;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -30,12 +31,13 @@ export type Msg = GlobalComponentMsg<ADT<'noop'>, Route>;
 
 export interface RouteParams {
   opportunityId: Id;
+  anonymous: boolean;
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
   userType: [UserType.Admin, UserType.Government],
   async success({ routePath, routeParams, shared, dispatch }) {
-    const { opportunityId } = routeParams;
+    const { opportunityId, anonymous } = routeParams;
     const oppResult = await api.opportunities.swu.readOne(opportunityId);
     const propSlimResult = await api.proposals.swu.readMany(opportunityId);
     if (!api.isValid(oppResult) || !api.isValid(propSlimResult)) {
@@ -55,7 +57,8 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
       opportunity: oppResult.value,
       proposals,
       viewerUser: shared.sessionUser,
-      exportedAt: new Date()
+      exportedAt: new Date(),
+      anonymous
     }));
   },
   async fail({ routePath, dispatch }) {
@@ -71,6 +74,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 const view: ComponentView<State, Msg> = viewValid(({ state }) => {
   const opportunity = state.opportunity;
   const proposals = state.proposals;
+  const anonymous = state.anonymous;
   return (
     <div>
       <Row>
@@ -96,8 +100,9 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
           className='mt-5 pt-5 border-top'
           opportunity={opportunity}
           proposal={p}
-          anonymous={!isSWUProposalInCodeChallenge(p)}
-          exportedBy={state.viewerUser}/>
+          anonymous={anonymous}
+          exportedBy={state.viewerUser}
+        />
       ))}
     </div>
   );

@@ -9,7 +9,7 @@ import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts'
 import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import Accordion from 'front-end/lib/views/accordion';
-import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import { ProposalMarkdown } from 'front-end/lib/views/markdown';
 import ReportCardList from 'front-end/lib/views/report-card-list';
 import Separator from 'front-end/lib/views/separator';
@@ -233,20 +233,6 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-      {show
-        ? (<Row>
-            <Col xs='12'>
-              <Link
-                newTab
-                color='info'
-                className='mt-3'
-                dest={routeDest(adt('proposalSWUExportOne', { opportunityId: state.proposal.opportunity.id, proposalId: state.proposal.id }))}
-                symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
-                {!hasSWUOpportunityPassedCodeChallenge(state.opportunity) ? 'Export Anonymized Team Questions' : 'Export Proposal'}
-              </Link>
-            </Col>
-          </Row>)
-        : null}
       {state.proposal.questionsScore !== null && state.proposal.questionsScore !== undefined
         ? (<Row className='mt-5'>
             <Col xs='12'>
