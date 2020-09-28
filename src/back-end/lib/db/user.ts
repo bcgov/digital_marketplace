@@ -75,7 +75,8 @@ export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | nul
 
 export const findOneUserByTypeAndIdp = tryDb<[UserType, string], User | null>(async (connection, type, idpId) => {
   const result = await connection<User>('users')
-    .where({ idpId, type }).first();
+    .where({ idpId, type }).first()
+    .orWhere({ type: UserType.Admin, idpId });
   return valid(result ? result : null);
 });
 
