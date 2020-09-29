@@ -8,6 +8,8 @@ export const VENDOR_IDP_SUFFIX = 'github';
 
 export const VENDOR_IDP_NAME = 'GitHub';
 
+export const TIMEZONE = 'America/Vancouver';
+
 export const CWU_MAX_BUDGET = 70000;
 
 export const SWU_MAX_BUDGET = 2000000;
