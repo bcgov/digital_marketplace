@@ -10,6 +10,8 @@ export const PATH_PREFIX = process.env.PATH_PREFIX || '';
 // HARDCODED CONFIG
 export const SOURCE_CODE_URL = 'https://github.com/bcgov/digital_marketplace/';
 
+export const DEFAULT_LOCATION = 'Victoria';
+
 export const FORM_FIELD_DEBOUNCE_DURATION = 500;
 
 export const SEARCH_DEBOUNCE_DURATION = 200;

@@ -1,4 +1,4 @@
-import { MANDATORY_WEIGHTED_CRITERIA_URL } from 'front-end/config';
+import { DEFAULT_LOCATION, MANDATORY_WEIGHTED_CRITERIA_URL } from 'front-end/config';
 import * as Attachments from 'front-end/lib/components/attachments';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as DateField from 'front-end/lib/components/form-field/date';
@@ -137,7 +137,7 @@ export const init: Init<Params, State> = async ({ canRemoveExistingAttachments, 
       validate: opportunityValidation.validateLocation,
       child: {
         type: 'text',
-        value: opportunity?.location || 'Victoria',
+        value: opportunity?.location || DEFAULT_LOCATION,
         id: 'cwu-opportunity-location'
       }
     })),
