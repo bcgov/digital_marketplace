@@ -40,7 +40,7 @@ Note that each log must include a version number that has either an incremented 
 ### 2020-09-29
 
 - Version Number: 1.2
-- Commit Hash: TODO
+- Commit Hash: 2d8edad5bc80e9414bc8d0da22bf54f10dfe65ff
 
 #### Changes
 
