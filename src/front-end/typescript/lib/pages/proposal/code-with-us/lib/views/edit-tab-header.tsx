@@ -45,7 +45,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
             Code With Us:&nbsp;
             <Link
               newTab
-              dest={routeDest(adt('opportunitySWUView', { opportunityId: proposal.opportunity.id }))}>
+              dest={routeDest(adt('opportunityCWUView', { opportunityId: proposal.opportunity.id }))}>
               {proposal.opportunity.title}
             </Link>
           </h3>
