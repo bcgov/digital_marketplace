@@ -70,6 +70,10 @@ The server uses OpenID Connect to authenticate users with a Keycloak server (man
 
 CRUD resources are created in a standardised, type-safe way in this project. CRUD abstractions are located in `src/back-end/lib/crud.ts`, and it is recommended to review this module prior to extending the API.
 
+#### Email Notifications
+
+Email notifications are all rendered server-side using React's static HTML renderer. Stub versions of all email notifications can be viewed by authenticated admin users at `{HOST}/admin/email-notification-reference` in your browser.
+
 ### Shared (`src/shared`)
 
 The `src/shared` folder contains modules that expose types and functions that are used across the entire stack: front-end and back-end.
