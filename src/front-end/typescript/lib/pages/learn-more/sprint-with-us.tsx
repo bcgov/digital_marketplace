@@ -6,7 +6,7 @@ import HowItWorksItem from 'front-end/lib/views/how-it-works-item';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { COPY } from 'shared/config';
+import { COPY, VENDOR_IDP_NAME } from 'shared/config';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
@@ -156,7 +156,7 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
                   mobileSymbol={adt('text', '1.')}
                   title='Sign In to Your Vendor Account'
                   description={(
-                    <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using GitHub. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', {}))}>sign up</Link>, first.</div>)}
+                    <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using {VENDOR_IDP_NAME}. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', {}))}>sign up</Link>, first.</div>)}
                   className='mb-4'
                 />
                 <HowItWorksItem
