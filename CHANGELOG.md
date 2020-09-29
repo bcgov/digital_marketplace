@@ -37,6 +37,23 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2020-09-29
+
+- Version Number: 1.2
+- Commit Hash: TODO
+
+#### Changes
+
+- Abstract the following configuration variables to `shared/config.ts`.
+  - GOV_IDP_NAME
+  - VENDOR_IDP_NAME
+- Abstract the default opportunity location as a configuration variable to `front-end/typescript/config.ts`.
+- Fix broken opportunity link when editing a CWU proposal.
+- Update placement of SWU export proposal links.
+- Fix retrieval of admin users when signing in.
+- Fix bug in phase validation.
+- Add organization resource API documentation.
+
 ### 2020-09-25
 
 - Version Number: 1.1
