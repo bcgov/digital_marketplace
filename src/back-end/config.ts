@@ -13,7 +13,7 @@ export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
 
 export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 
-export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
+export const MAILER_REPLY = get('MAILER_REPLY', 'noreply@digitalmarketplace.gov.bc.ca');
 
 // ENV CONFIG
 // export the root directory of the repository.
@@ -114,7 +114,7 @@ const developmentMailerConfigOptions = {
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
 
-export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NOREPLY}>`);
+export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_REPLY}>`);
 
 export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
 

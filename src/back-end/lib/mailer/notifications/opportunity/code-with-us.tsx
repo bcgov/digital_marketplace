@@ -1,4 +1,4 @@
-import { MAILER_BATCH_SIZE, MAILER_NOREPLY } from 'back-end/config';
+import { MAILER_BATCH_SIZE, MAILER_REPLY } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
@@ -82,7 +82,7 @@ export async function newCWUOpportunityPublishedT(recipients: User[], opportunit
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
       summary: `${repost ? 'CWU opportunity re-published after suspension' : 'New CWU opportunity published'}; sent to user with notifications turned on.`,
-      to: MAILER_NOREPLY,
+      to: MAILER_REPLY,
       bcc: batch.map(r => r.email),
       subject: title,
       html: templates.simple({
@@ -131,7 +131,7 @@ export async function updatedCWUOpportunityT(recipients: User[], opportunity: CW
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      to: MAILER_NOREPLY,
+      to: MAILER_REPLY,
       subject: title,
       bcc: batch.map(r => r.email),
       html: templates.simple({
