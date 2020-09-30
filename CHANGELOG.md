@@ -37,6 +37,16 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2020-09-30
+
+- Version Number: 1.3
+- Commit Hash: TODO
+
+#### Changes
+
+- Rename the configuration variable `MAILER_NOREPLY` to `MAILER_REPLY` for better semantics.
+- Allow `MAILER_REPLY` to be set via the environment.
+
 ### 2020-09-29
 
 - Version Number: 1.2
