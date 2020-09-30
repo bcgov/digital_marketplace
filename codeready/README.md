@@ -7,6 +7,9 @@
  - Choisir un nom (Workspace Name) et charger le devfile (Champ URL of Devfile) depuis l'URL suivant: https://raw.githubusercontent.com/CQEN-QDCE/digital_marketplace/experimentation/codeready/devfile.yaml
 
 - Changer les valeurs des variables PGSQL dans le devfile.yaml
+
+> Attention: Le mot de passe ne doit pas contenir les caractères suivants: `#`, `?` (Voir [billet](https://github.com/iceddev/pg-connection-string/issues/23))
+
   ```yaml
       - name: POSTGRESQL_USER
         value: marketplace
