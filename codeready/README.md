@@ -35,6 +35,7 @@
      ```bash
 	cd digital-marketplace
 
+        npm install # ou npm i
 	npm run front-end:build
 	npm run back-end:build
 	npm run migrations:latest
