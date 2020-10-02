@@ -1,7 +1,7 @@
 import { SOURCE_CODE_URL, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import { prefixPath } from 'front-end/lib';
 import { View } from 'front-end/lib/framework';
-import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { AnchorProps, externalDest, iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
@@ -45,7 +45,7 @@ const links: AnchorProps[] = [
 const Footer: View<{}> = () => {
   return (
     <footer className='w-100 d-print-none bg-white'>
-      <div className="bg-blue-dark-alt-2">
+      <div className="footer-top-bar">
       <Container className='w-100'>
         <Row className=" mb-4 mt-4">
           <Col xs='12' className='d-flex flex-row flex-wrap pt-3'>

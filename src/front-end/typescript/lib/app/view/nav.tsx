@@ -111,11 +111,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
   const { text, imageUrl, linkGroups, isOpen, dispatch } = props;
   return (
     <Dropdown isOpen={isOpen} toggle={() => dispatch(adt('toggleDesktopAccountDropdown'))}>
-<<<<<<< HEAD
-      <DropdownToggle tag='div' className='' style={{ cursor: 'pointer' }}>
-=======
       <DropdownToggle tag='div' className='text-c-nav-fg text-hover-c-nav-fg' style={{ cursor: 'pointer' }}>
->>>>>>> upstream_BC/development
         <span className='mr-2 o-75'>{text}</span>
         <img
           src={imageUrl}
@@ -420,17 +416,10 @@ const DesktopBottomNavbar: View<Props> = props => {
                   <NavLink
                     {...link}
                     dispatch={props.dispatch}
-<<<<<<< HEAD
-                    color='blue-dark-alt'
-                    className={linkClassName(link)} />
-                  {i < appLinks.length - 1
-                    ? (<Separator spacing='4' color='white' className='o-50'>|</Separator>)
-=======
                     color='c-nav-fg-alt'
                     className={linkClassName(link)} />
                   {i < appLinks.length - 1
-                    ? (<Separator spacing='2' color='c-nav-bg' className='o-50'>|</Separator>)
->>>>>>> upstream_BC/development
+                    ? (<Separator spacing='4' color='white' className='o-50'>|</Separator>)
                     : null}
                 </Fragment>
               ))}

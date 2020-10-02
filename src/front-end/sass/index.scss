@@ -83,13 +83,13 @@ $table-hover-bg: $blue-light-alt;
 
 // App-Specific Utility Colors
 // App Views
-$c-body-bg: $blue-dark;
+$c-body-bg: $white;
 $c-nav-bg: $blue-dark;
 $c-nav-bg-alt: $blue-dark-alt;
 $c-nav-border-bottom: $yellow;
 $c-nav-fg: $white;
-$c-nav-fg-alt: $white;
-$c-footer-bg: $blue-dark;
+$c-nav-fg-alt: $blue-dark-alt;
+$c-footer-bg: $blue-dark-alt-2;
 $c-footer-separator: $blue-dark-alt;
 $c-footer-border-top: $yellow;
 $c-toast-info-icon: $blue-alt;
@@ -361,7 +361,6 @@ nav {
       height: $main-nav-top-height;
       position: relative;
       z-index: 2;
-      border-bottom: 2px solid $c-nav-border-bottom;
     }
 
     .main-nav-top-navbar a:link {
@@ -411,9 +410,8 @@ nav {
 
       &.mobile,
       &.desktop {
+        background: $c-body-bg;
         @extend .align-items-center;
-        @extend .shadow;
-        background: $c-nav-bg-alt;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
@@ -448,6 +446,10 @@ nav {
 }
 
 footer {
+  .footer-top-bar {
+    background: $c-footer-bg;
+  }
+
   .footer-link-list {
     list-style: none;
     padding: 0;
@@ -480,7 +482,6 @@ footer {
     max-width: 34px;
     max-height: 34px;
   }
-  border-top: 2px solid $c-footer-border-top;
 }
 
 // Custom Bootstrap style overrides.
@@ -781,10 +782,6 @@ nav.navbar .nav-link:hover {
 }
 
 // Custom components
-
-.hero-component {
-
-}
 
 .hero-component h1 {
   font-style: normal;

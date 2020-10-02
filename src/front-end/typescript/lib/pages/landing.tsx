@@ -7,10 +7,6 @@ import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/v
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
-import { COPY } from 'shared/config';
-import { formatAmount } from 'shared/lib';
-import * as cwu from 'shared/lib/resources/opportunity/code-with-us';
-import * as swu from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 const IMG_MAX_WIDTH = '400px';
@@ -102,7 +98,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreCWU', null)),
                 children: ['Plus d\'information'],
-                color: 'qcgov-blue',
+                color: 'primary',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -111,6 +107,7 @@ const Programs: View = () => {
           <ProgramCard
             img={prefixPath('/images/illustrations/cocreez_avec_nous.svg')}
             title='Cocréez avec nous'
+            className='mb-4 mb-md-0'
             description={
               (<div>
                 <div>Fournissez une équipe Agile pour travailler avec un gestionnaire de produit gouvernemental dans un environnement DevOps moderne.</div>
@@ -122,7 +119,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreSWU', null)),
                 children: [('Plus d\'information')],
-                color: 'qcgov-blue',
+                color: 'primary',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -158,7 +155,7 @@ const VendorRoleInfo: View = () => {
     <Container className='mt-7 mt-md-9'>
       <Row>
         <Col xs='12' className='order-2 order-md-1'>
-          <h6 className='text-qcgov-blue font-size-large'>Fournisseurs</h6>
+          <h6 className='text-c-landing-role-heading font-size-large'>Fournisseurs</h6>
         </Col>
         <Col xs='12' md='6' className='order-3 order-md-2'>
           <div className='mb-3 font-size-large font-weight-light'>Collaborez avec la fonction publique afin de créer de produits numériques innovants.</div>
@@ -193,7 +190,7 @@ const GovRoleInfo: View = () => {
         <Col cs='12' md='5'>
           <Row>
             <Col xs='12'>
-              <h6 className='text-qcgov-blue font-size-large'>Employés de la fonction publique</h6>
+              <h6 className='text-c-landing-role-heading font-size-large'>Employés de la fonction publique</h6>
             </Col>
             <Col xs='12'>
               <div className='mb-3 font-size-large font-weight-light'>Faites affaires avec des développeurs talentueux et qualifiés pour créer vos produits numériques.</div>
