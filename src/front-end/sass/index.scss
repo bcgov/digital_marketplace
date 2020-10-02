@@ -132,6 +132,9 @@ $c-skills-bg: $purple;
 $c-multi-select-item-bg: $purple;
 $c-multi-select-item-remove: $purple-light;
 $c-form-field-required: $yellow;
+// Static HTML Pages
+$c-static-html-bg: $blue-dark;
+$c-static-html-fg: $white;
 
 $app-utility-colors: (
   // App Views
@@ -183,7 +186,10 @@ $app-utility-colors: (
   'c-skills-bg': $c-skills-bg,
   'c-multi-select-item-bg': $c-multi-select-item-bg,
   'c-multi-select-item-remove': $c-multi-select-item-remove,
-  'c-form-field-required': $c-form-field-required
+  'c-form-field-required': $c-form-field-required,
+  // Static HTML Pages
+  'c-static-html-bg': $c-static-html-bg,
+  'c-static-html-fg': $c-static-html-fg
 );
 
 // Theme colors.

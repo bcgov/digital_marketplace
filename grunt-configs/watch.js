@@ -28,7 +28,8 @@ module.exports = {
   },
   frontEndStatic: {
     files: [
-      `${gruntConfig.frontEnd.src.static}/**`
+      `${gruntConfig.frontEnd.src.static}/**`,
+      `${gruntConfig.frontEnd.src.html}/**`
     ],
     tasks: [
       "front-end-common",
