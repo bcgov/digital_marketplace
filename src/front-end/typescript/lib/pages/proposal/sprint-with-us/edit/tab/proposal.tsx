@@ -500,7 +500,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled,
           onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         }
       ])) as PageContextualActions;
     }
@@ -542,7 +542,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               button: true,
               outline: true,
-              color: 'white',
+              color: 'c-nav-fg-alt',
               children: 'Delete',
               symbol_: leftPlacement(iconLinkSymbol('trash')),
               onClick: () => dispatch(adt('showModal', 'delete' as const))
@@ -567,7 +567,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('ban')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             disabled,
             loading: isWithdrawLoading,
             onClick: () => dispatch(adt('showModal', isAcceptingProposals ? 'withdrawBeforeDeadline' as const : 'withdrawAfterDeadline' as const))
@@ -586,7 +586,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('ban')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             disabled,
             loading: isWithdrawLoading,
             onClick: () => dispatch(adt('showModal', 'withdrawAfterDeadline' as const))

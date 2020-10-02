@@ -1,11 +1,11 @@
-import { getAlertsValid, getBreadcrumbsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { SharedState } from 'front-end/lib/app/types';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { immutable, Immutable, newRoute, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
+import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
-import { DEFAULT_SWU_PROPOSAL_TITLE, getSWUProponentName, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
+import { DEFAULT_SWU_PROPOSAL_TITLE, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -87,40 +87,7 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<RouteParams, Shared
     getMetadata: getMetadataValid(TabbedPage.makeGetParentMetadata({
       idToDefinition,
       getTitleSuffix: state => getProposal(state).organization?.legalName || state.proposal.anonymousProponentName || DEFAULT_SWU_PROPOSAL_TITLE
-    }), makePageMetadata('View Sprint With Us Proposal')),
-    getBreadcrumbs: getBreadcrumbsValid((state) => {
-      return [
-        {
-          text: (() => {
-            switch (state.tab[0]) {
-              case 'codeChallenge':
-              case 'teamScenario':
-                return 'All Participants';
-              case 'proposal':
-              case 'teamQuestions':
-              case 'history':
-              default:
-                return 'All Proposals';
-            }
-          })(),
-          onClickMsg: newRoute(adt('opportunitySWUEdit' as const, {
-            opportunityId: state.proposal.opportunity.id,
-            tab: (() => {
-              switch (state.tab[0]) {
-                case 'codeChallenge': return 'codeChallenge' as const;
-                case 'teamScenario': return 'teamScenario' as const;
-                case 'teamQuestions': return 'teamQuestions' as const;
-                case 'proposal':
-                case 'history':
-                default:
-                  return 'proposals' as const;
-              }
-            })()
-          }))
-        },
-        { text: `Vendor Proposal — ${getSWUProponentName(state.proposal)}` }
-      ];
-    })
+    }), makePageMetadata('View Sprint With Us Proposal'))
   };
 }
 

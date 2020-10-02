@@ -12,7 +12,7 @@ import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount } from 'shared/lib';
-import { canAddAddendumToCWUOpportunity, canCWUOpportunityDetailsBeEdited, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, isUnpublished, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { canCWUOpportunityDetailsBeEdited, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityPublic, isUnpublished, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 type ModalId = 'publish' | 'publishChanges' | 'saveChangesAndPublish' | 'delete' | 'cancel' | 'suspend';
@@ -50,7 +50,6 @@ async function initForm(opportunity: CWUOpportunity, activeTab?: Form.TabId, val
   let state = immutable(await Form.init({
     opportunity,
     activeTab,
-    showAddendaTab: canAddAddendumToCWUOpportunity(opportunity),
     canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(opportunity)
   }));
   if (validate) {
@@ -477,7 +476,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled: isLoading,
           onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         }
       ])) as PageContextualActions; //TypeScript type inference not good enough here
     }
@@ -576,34 +575,16 @@ export const component: Tab.Component<State, Msg> = {
       case CWUOpportunityStatus.Evaluation:
         return adt('links', [
           {
-            children: 'Edit',
-            loading: isStartEditingLoading,
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing')),
-            button: true,
-            color: 'primary'
-          },
-          {
             children: 'Cancel',
             symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
             onClick: () => dispatch(adt('showModal', 'cancel' as const)),
             button: true,
             outline: true,
-            color: 'white'
+            color: 'c-nav-fg-alt'
           }
         ]);
-      case CWUOpportunityStatus.Awarded:
-      case CWUOpportunityStatus.Canceled:
-        return adt('links', [
-          {
-            children: 'Edit',
-            loading: isStartEditingLoading,
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing')),
-            button: true,
-            color: 'primary'
-          }
-        ]);
+      default:
+        return null;
     }
   }
 };

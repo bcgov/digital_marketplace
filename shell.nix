@@ -1,6 +1,15 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ systemPkgs ? import <nixpkgs> {} }:
 
 let
+
+  realfolk = import (systemPkgs.fetchFromGitHub {
+    owner = "realfolk";
+    repo = "nix";
+    rev = "a3b366208534596705f1c0faff6b9d96584109a8";
+    sha256 = "0i5v2r8r7vazdm1ywzl85xnakddg53rq4cjmk1vznay4d8z4m5sh";
+  });
+
+  pkgs = realfolk.config.pkgSet;
 
   ctagsArgs = [
     # Exclude version control, tmp files and node_modules.
@@ -33,8 +42,8 @@ let
 
 in
 
-  pkgs.mkShell {
-    buildInputs = with pkgs; [ nodejs-10_x sass postgresql100 docker_compose docker openshift ctags ];
+  realfolk.lib.mkShell {
+    buildInputs = with pkgs; [ nodejs-10_x sass postgresql_10 docker_compose docker openshift ctags ];
     shellHook = ''
       [ -f ~/.bashrc ] && source ~/.bashrc
       npm install

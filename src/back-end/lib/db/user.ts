@@ -73,6 +73,13 @@ export const findOneUserByTypeAndUsername = tryDb<[UserType, string], User | nul
   return valid(result ? result : null);
 });
 
+export const findOneUserByTypeAndIdp = tryDb<[UserType, string], User | null>(async (connection, type, idpId) => {
+  const result = await connection<User>('users')
+    .where({ idpId, type }).first()
+    .orWhere({ type: UserType.Admin, idpId });
+  return valid(result ? result : null);
+});
+
 export const readManyUsers = tryDb<[], User[]>(async (connection) => {
   const results = await connection<RawUser>('users').select();
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
@@ -120,3 +127,17 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   }
   return valid(await rawUserToUser(connection, result));
 });
+
+export async function userHasAcceptedTerms(connection: Connection, id: Id): Promise<boolean> {
+  const [result] = await connection<{ acceptedTerms: Date }>('users')
+    .where({ id })
+    .select('acceptedTerms');
+
+  if (!result) {
+    throw new Error('unable to check terms status for user');
+  }
+  if (result.acceptedTerms) {
+    return true;
+  }
+  return false;
+}

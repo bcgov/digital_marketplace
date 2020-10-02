@@ -409,10 +409,10 @@ const ViewToastIcon: View<{ toast: FrameworkToast; }> = ({ toast }) => {
   })();
   const color: ThemeColor = (() => {
     switch (toast.tag) {
-      case 'info': return 'blue-alt';
-      case 'error': return 'danger';
-      case 'warning': return 'warning';
-      case 'success': return 'success';
+      case 'info': return 'c-toast-info-icon';
+      case 'error': return 'c-toast-error-icon';
+      case 'warning': return 'c-toast-warning-icon';
+      case 'success': return 'c-toast-success-icon';
     }
   })();
   return (<Icon name={name} color={color} />);
@@ -442,7 +442,6 @@ const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
     children: 'Sign In',
     button: true,
     outline: true,
-    color: 'white',
     dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
@@ -585,7 +584,7 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     state: state.nav,
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
-    logoImageUrl: prefixPath('/images/bcgov_logo.svg'),
+    logoImageUrl: prefixPath('/images/logo.svg'),
     title: 'Digital Marketplace',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
@@ -603,13 +602,13 @@ const completeProfileAction = Nav.linkAccountAction({
 });
 
 function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
-  const accountMenu = Nav.unauthenticatedAccountMenu([
+  const accountMenu = (color: ThemeColor) => Nav.unauthenticatedAccountMenu([
     ...(props.state.activeRoute.tag !== 'signUpStepTwo' ? [completeProfileAction] : []),
     Nav.linkAccountAction({
       ...signOutLink,
       button: true,
       outline: true,
-      color: 'white'
+      color
     })
   ]);
   return {
@@ -618,8 +617,8 @@ function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     contextualActions: undefined,
     homeDest: undefined,
     accountMenus: {
-      desktop: accountMenu,
-      mobile: accountMenu
+      desktop: accountMenu('c-nav-fg'),
+      mobile: accountMenu('c-nav-fg-alt')
     }
   };
 }

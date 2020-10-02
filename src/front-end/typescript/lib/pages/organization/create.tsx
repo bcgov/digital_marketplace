@@ -150,7 +150,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       },
       {
         children: 'Cancel',
-        color: 'white',
+        color: 'c-nav-fg-alt',
         dest: routeDest(adt('userProfile', {
           userId: state.user.id,
           tab: 'organizations' as const

@@ -14,7 +14,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { canSWUOpportunityBeScreenedInToTeamScenario, hasSWUOpportunityPassedCodeChallenge, hasSWUOpportunityPassedTeamScenario } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isSWUProposalInCodeChallenge, NUM_SCORE_DECIMALS, SWUProposal, SWUProposalStatus, swuProposalTeamMembers } from 'shared/lib/resources/proposal/sprint-with-us';
-import { gitHubProfileLink, userGitHubUsername } from 'shared/lib/resources/user';
+import { gitHubProfileLink } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid } from 'shared/lib/validation';
 import { validateCodeChallengeScore } from 'shared/lib/validation/proposal/sprint-with-us';
@@ -168,7 +168,7 @@ const Participants: View<Pick<State, 'proposal'>> = ({ proposal }) => {
           </thead>
           <tbody>
             {participants.map((p, i) => {
-              const username = userGitHubUsername(p);
+              const username = p.idpUsername;
               return (
                 <tr>
                   <td>{p.member.name}</td>
@@ -197,7 +197,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 <ReportCardList
                   reportCards={[{
                     icon: 'star-full',
-                    iconColor: 'yellow',
+                    iconColor: 'c-report-card-icon-highlight',
                     name: 'Code Challenge Score',
                     value: `${String(state.proposal.challengeScore.toFixed(NUM_SCORE_DECIMALS))}%`
                   }]} />

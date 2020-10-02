@@ -175,13 +175,13 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
     },
     {
       icon: 'star-full',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Top TQ Score',
       value: isComplete && highestScore ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'star-half',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Avg. TQ Score',
       value: isComplete && averageScore ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     }
@@ -347,7 +347,7 @@ const view: ComponentView<State, Msg> = (props) => {
                   color='info'
                   className='mt-3 mt-md-0'
                   symbol_={rightPlacement(iconLinkSymbol('file-export'))}
-                  dest={routeDest(adt('proposalSWUExportAll', { opportunityId: opportunity.id }))}>
+                  dest={routeDest(adt('proposalSWUExportAll', { opportunityId: opportunity.id, anonymous: true }))}>
                   Export All Anonymized Team Questions
                 </Link>)
               : null}
@@ -375,7 +375,7 @@ export const component: Tab.Component<State, Msg> = {
     const isLoading = isCompleteTeamQuestionsLoading || isScreenToFromLoading;
     return adt('links', [{
       children: 'Complete Team Questions',
-      symbol_: leftPlacement(iconLinkSymbol('comments')),
+      symbol_: leftPlacement(iconLinkSymbol('comments-alt')),
       color: 'primary',
       button: true,
       loading: isCompleteTeamQuestionsLoading,
@@ -399,7 +399,7 @@ export const component: Tab.Component<State, Msg> = {
           actions: [
             {
               text: 'Complete Team Questions',
-              icon: 'comments',
+              icon: 'comments-alt',
               color: 'primary',
               button: true,
               msg: adt('completeTeamQuestions')

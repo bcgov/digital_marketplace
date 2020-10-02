@@ -1,5 +1,6 @@
 import { PATH_PREFIX } from 'front-end/config';
 import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, Immutable, PageGetAlerts, PageGetBreadcrumbs, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
+import { COPY } from 'shared/config';
 import { prefix } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
@@ -111,7 +112,7 @@ export const TITLE_SEPARATOR = '—';
 
 export function makePageMetadata(title: string): PageMetadata {
   return {
-    title: `${title} ${TITLE_SEPARATOR} Digital Marketplace`
+    title: `${title} ${TITLE_SEPARATOR} ${COPY.region.name.short} Digital Marketplace`
   };
 }
 

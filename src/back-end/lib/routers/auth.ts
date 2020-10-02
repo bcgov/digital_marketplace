@@ -1,11 +1,13 @@
-import { ENV, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL } from 'back-end/config';
+import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
-import { Connection, createSession, createUser, findOneUserByTypeAndUsername, updateUser } from 'back-end/lib/db';
+import { Connection, createSession, createUser, deleteSession, findOneUserByTypeAndIdp, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
+import { authenticatePassword } from 'back-end/lib/security';
 import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
 import { getString, getStringArray } from 'shared/lib';
 import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
@@ -58,7 +60,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             authQuery.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
           }
 
-          if (provider === 'github' || provider === 'idir') {
+          if (provider === VENDOR_IDP_SUFFIX || provider === GOV_IDP_SUFFIX) {
             authQuery.kc_idp_hint = provider;
           }
           // Cast authQuery as any to support use with qs.stringify.
@@ -137,12 +139,27 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
     }
   ];
 
-  if (ENV === 'development') {
+  // Routes that are added only if the service token environment variable is defined
+  // Requests to these routes much include the correct service token in order to be processed.
+  if (SERVICE_TOKEN_HASH) {
+
+    // The /auth/service endpoint is for creating user accounts for testing purposes.
+    // The test users must already exist in KeyCloak with the appropriate attributes and claims.
     router.push({
       method: ServerHttpMethod.Post,
       path: '/auth/service',
       handler: passThroughRequestBodyHandler(async request => {
         try {
+          // Retrieve service token from query paramters and validate
+          const serviceToken = request.query.token;
+          if (!serviceToken || !await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH)) {
+            return {
+              code: 401,
+              headers: {},
+              session: request.session,
+              body: makeTextResponseBody('Not authorized')
+            };
+          }
           // Extract claims and create/update user
           const validRequestBody = getValidValue(request.body, undefined);
           if (!validRequestBody) {
@@ -171,6 +188,76 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
         }
       })
     });
+
+    // The /auth/override-session endpoint is for overriding an existing session with a new user account.
+    // For instance, a session attached to a government account, could be overridden to use a vendor account instead.
+    // This should be used only for testing and QA purposes, and is not meant for use in production.
+    router.push({
+      method: ServerHttpMethod.Get,
+      path: '/auth/override-session/:type/:username',
+      handler: nullRequestBodyHandler(async request => {
+        try {
+          // Retrieve service token from query paramters and validate.
+          // Also check that current session is authenticated.
+          const serviceToken = request.query.token;
+          if (!await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH) || !request.session.user) {
+            return {
+              code: 401,
+              headers: {},
+              session: request.session,
+              body: makeTextResponseBody('Not authorized')
+            };
+          }
+
+          // Validate the given user username and type for overriding, and modify the session with the returned id
+          const overrideUserName = request.params.username;
+          let overrideAccountType;
+          switch (request.params.type.toLowerCase()) {
+            case 'vendor':
+              overrideAccountType = UserType.Vendor;
+              break;
+            case 'gov':
+              overrideAccountType = UserType.Government;
+              break;
+            case 'admin':
+              overrideAccountType = UserType.Admin;
+              break;
+            default:
+              return {
+                code: 400,
+                headers: {},
+                session: request.session,
+                body: makeTextResponseBody('')
+              };
+          }
+          const overrideUser = getValidValue(await findOneUserByTypeAndUsername(connection, overrideAccountType, overrideUserName), undefined);
+          const currentSession = getValidValue(await readOneSession(connection, request.session.id), undefined);
+          if (overrideUser && currentSession) {
+            const newSession = getValidValue(await createSession(connection, { accessToken: currentSession.accessToken, user: overrideUser.id }), currentSession);
+            await deleteSession(connection, currentSession.id);
+            return {
+              code: 200,
+              headers: {},
+              session: newSession,
+              body: makeTextResponseBody('OK')
+            };
+          }
+          return {
+            code: 400,
+            headers: {},
+            session: request.session,
+            body: makeTextResponseBody('')
+          };
+        } catch (error) {
+          return {
+            code: 400,
+            headers: {},
+            session: request.session,
+            body: makeTextResponseBody('')
+          };
+        }
+      })
+    });
   }
   return router;
 }
@@ -182,7 +269,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   let userType: UserType;
   const identityProvider = getString(claims, 'loginSource');
   switch (identityProvider) {
-    case 'IDIR':
+    case GOV_IDP_SUFFIX.toUpperCase():
       const roles = getStringArray(claims, 'roles');
       if (roles.includes('dm_admin')) {
         userType = UserType.Admin;
@@ -190,7 +277,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
         userType = UserType.Government;
       }
       break;
-    case 'GITHUB':
+    case VENDOR_IDP_SUFFIX.toUpperCase():
       userType = UserType.Vendor;
       break;
     default:
@@ -199,13 +286,19 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       return null;
   }
 
-  const username = getString(claims, 'preferred_username');
+  let username = getString(claims, 'preferred_username');
+  const idpId = getString(claims, 'idp_id');
 
-  if (!username || !tokenSet.access_token || !tokenSet.refresh_token) {
+  // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
+  if ((username.endsWith('@' + VENDOR_IDP_SUFFIX) && userType === UserType.Vendor) || (username.endsWith('@' + GOV_IDP_SUFFIX) && userType === UserType.Government)) {
+    username = username.slice(0, username.lastIndexOf('@'));
+  }
+
+  if (!username || !idpId || !tokenSet.access_token || !tokenSet.refresh_token) {
     throw new Error('authentication failure - invalid claims');
   }
 
-  const dbResult = await findOneUserByTypeAndUsername(connection, userType, username);
+  const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
   if (isInvalid(dbResult)) {
     makeAuthErrorRedirect(request);
   }
@@ -213,12 +306,13 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   const existingUser = !!user;
   if (!user) {
     user = getValidValue(await createUser(connection, {
+      idpId,
       type: userType,
       status: UserStatus.Active,
       name: claims.name || '',
       email: claims.email || '',
       jobTitle: '',
-      idpUsername: claims.preferred_username
+      idpUsername: username
     }), null);
 
     // If email present, notify of successful account creation

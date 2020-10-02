@@ -9,7 +9,7 @@ import * as Form from 'front-end/lib/pages/proposal/sprint-with-us/lib/component
 import * as toasts from 'front-end/lib/pages/proposal/sprint-with-us/lib/toasts';
 import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
 import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
-import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -167,13 +167,13 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   const reportCards: Array<ReportCard | null> = [
     {
       icon: 'star-full',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Total Score',
       value: proposal.totalScore ? `${proposal.totalScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'trophy',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Ranking',
       value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
     }
@@ -193,6 +193,20 @@ const view: ComponentView<State, Msg> = viewValid(props => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
+      {show
+        ? (<Row>
+            <Col xs='12'>
+              <Link
+                newTab
+                color='info'
+                className='mt-3'
+                dest={routeDest(adt('proposalSWUExportOne', { opportunityId: state.proposal.opportunity.id, proposalId: state.proposal.id }))}
+                symbol_={rightPlacement(iconLinkSymbol('file-export'))}>
+                Export Proposal
+              </Link>
+            </Col>
+          </Row>)
+        : null}
       {show ? (<Reporting {...props} />) : null}
       <Row className='mt-5'>
         <Col xs='12'>
@@ -298,7 +312,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('user-slash')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             onClick: () => dispatch(adt('showModal', 'disqualify' as const))
           }
         ]);
@@ -316,7 +330,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('user-slash')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             onClick: () => dispatch(adt('showModal', 'disqualify' as const))
           }
         ]);

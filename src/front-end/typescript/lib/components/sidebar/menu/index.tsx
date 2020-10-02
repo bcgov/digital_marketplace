@@ -1,6 +1,7 @@
+import { Route } from 'front-end/lib/app/types';
 import { ComponentView, Init, Update, View } from 'front-end/lib/framework';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { Dest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { Dest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 import { ADT, adt } from 'shared/lib/types';
@@ -15,19 +16,28 @@ export interface SidebarLink {
   onClick?(): void;
 }
 
-export interface State {
-  isOpen: boolean;
-  links: SidebarLink[];
+export type SidebarItem = ADT<'link', SidebarLink> | ADT<'heading', string>;
+
+export interface BackLink {
+  text: string;
+  route: Route;
 }
 
-export type Params = Pick<State, 'links'>;
+export interface State {
+  isOpen: boolean;
+  items: SidebarItem[];
+  backLink?: BackLink;
+}
+
+export type Params = Pick<State, 'items' | 'backLink'>;
 
 export type Msg
   = ADT<'toggleOpen', boolean | undefined>;
 
-export const init: Init<Params, State> = async ({ links }) => ({
+export const init: Init<Params, State> = async ({ backLink, items }) => ({
   isOpen: false,
-  links
+  items,
+  backLink
 });
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
@@ -48,9 +58,9 @@ const SidebarLink: View<SidebarLinkProps> = props => {
     if (disabled) {
       return undefined;
     } else if (active) {
-      return 'primary';
+      return 'c-sidebar-menu-link-active-icon';
     } else {
-      return 'info';
+      return 'c-sidebar-menu-link-inactive-icon';
     }
   })();
   return (
@@ -63,26 +73,80 @@ const SidebarLink: View<SidebarLinkProps> = props => {
       symbol_={leftPlacement(iconLinkSymbol(icon))}
       symbolClassName={`align-self-start text-${symbolColor}`}
       symbolStyle={{ marginTop: '0.15rem' }}
-      color={active ? 'info' : 'light'}
-      className={`${className} text-left text-wrap ${active ? '' : 'text-primary'}`}>
+      color={active ? 'c-sidebar-menu-link-active-bg' : 'light'}
+      className={`${className} text-left text-wrap ${active ? 'text-c-sidebar-menu-link-active-fg' : 'text-c-sidebar-menu-link-inactive-fg'}`}>
       <span className={caret ? 'mr-2' : undefined}>{text}</span>
       {caret
-        ? (<Icon name='caret-down' color='white' className='ml-auto' style={{ transform: caret === 'up' ? 'rotate(180deg)' : undefined }}/>)
+        ? (<Icon name='caret-down' color='c-sidebar-menu-mobile-caret' className='ml-auto' style={{ transform: caret === 'up' ? 'rotate(180deg)' : undefined }}/>)
         : null}
     </Link>
   );
 };
 
-const linksByActive = (links: SidebarLink[], activePredicate: boolean) => links.filter(({ active }) => active === activePredicate);
+const SidebarHeading: View<{ className?: string; text: string; }> = ({ text, className }) => {
+  return (
+    <div className={`overline mb-3 text-secondary ${className}`}>{text}</div>
+  );
+};
+
+interface SidebarItemProps {
+  isOpen?: boolean;
+  item: SidebarItem;
+  isFirst: boolean;
+}
+
+const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
+  switch (item.tag) {
+    case 'link':
+      const caret = (() => {
+        switch (isOpen) {
+          case true: return 'up';
+          case false: return 'down';
+          default: return undefined;
+        }
+      })();
+      return (<SidebarLink {...item.value} className='mb-3' caret={caret} />);
+    case 'heading':
+      return (<SidebarHeading text={item.value} className={isFirst ? 'mb-3' : 'mb-3 mt-n3 pt-5'} />);
+  }
+};
+
+const BackLink: View<BackLink> = ({ text, route }) => {
+  return (
+    <Link
+      dest={routeDest(route)}
+      symbol_={leftPlacement(iconLinkSymbol('arrow-left'))}
+      className='mb-4 mb-md-6 font-size-small'
+      color='secondary'>
+      {text}
+    </Link>
+  );
+};
+
+function linksOnly(items: SidebarItem[]): SidebarLink[] {
+  return items.reduce((acc, item) => {
+    if (item.tag === 'link') {
+      acc.push(item.value);
+    }
+    return acc;
+  }, [] as SidebarLink[]);
+}
+
+const linksByActive = (links: SidebarLink[], activePredicate: boolean) => links.filter(link => link.active === activePredicate);
 
 export const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
-  if (!state.links.length) { return null; }
-  const [activeLink] = linksByActive(state.links, true);
+  const items = state.items;
+  const links = linksOnly(items);
+  if (!links.length) { return null; }
+  const [activeLink] = linksByActive(links, true);
+  if (!activeLink) { return null; }
+  // Add p*-2 m*-n2 to Sticky to ensure link focus is not clipped.
   return (
-    <Sticky className='d-print-none'>
+    <Sticky className='d-print-none pt-2 mt-n2 pl-2 ml-n2'>
+      {state.backLink ? (<BackLink {...state.backLink} />) : null}
       <div className='d-none d-md-flex flex-column flex-nowrap align-items-start'>
-        {state.links.map((props, i) => (<SidebarLink {...props} className='mb-2' key={`desktop-sidebar-link-${i}`} />))}
+        {items.map((item, i) => (<SidebarItem item={item} isFirst={i === 0} key={`desktop-sidebar-link-${i}`} />))}
       </div>
       <div className='d-flex flex-column flex-nowrap align-items-stretch d-md-none position-relative'>
         <SidebarLink
@@ -100,7 +164,7 @@ export const view: ComponentView<State, Msg> = props => {
             left: 0,
             zIndex: 99
           }}>
-          {state.links.map((link, i) => (
+          {links.map((link, i) => (
             <SidebarLink {...link} active={false} className='rounded-0' key={`mobile-sidebar-link-${i}`} />
           ))}
         </div>

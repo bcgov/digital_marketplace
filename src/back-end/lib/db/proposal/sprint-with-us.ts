@@ -1094,11 +1094,24 @@ export const deleteSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal>(
 });
 
 export const readSubmittedSWUProposalCount = tryDb<[Id], number>(async (connection, opportunity) => {
-  return valid((await generateSWUProposalQuery(connection)
+  // Retrieve the opportunity, since we need to see if any proposals were withdrawn after proposal deadline
+  // and include them in the count.
+  const [swuOpportunity] = await generateSWUOpportunityQuery(connection)
+    .where({ 'opportunities.id': opportunity });
+
+  if (!swuOpportunity) {
+    return valid(0);
+  }
+
+  const results = (await generateSWUProposalQuery(connection)
     .where({
       'proposals.opportunity': opportunity
     })
-    .whereNotIn('statuses.status', [SWUProposalStatus.Draft, SWUProposalStatus.Withdrawn]))?.length || 0);
+    .andWhere(q1 => q1
+      .whereNotIn('statuses.status', [SWUProposalStatus.Draft, SWUProposalStatus.Withdrawn])
+      .orWhere(q => q.where('statuses.status', '=', SWUProposalStatus.Withdrawn).andWhere('statuses.createdAt', '>=', swuOpportunity.proposalDeadline))));
+
+  return valid(results?.length || 0);
 });
 
 export const readOneSWUAwardedProposal = tryDb<[Id, Session], SWUProposalSlim | null>(async (connection, opportunity, session) => {
@@ -1148,7 +1161,8 @@ function generateSWUProposalQuery(connection: Connection) {
       'proposals.opportunity',
       'proposals.organization',
       'proposals.anonymousProponentName',
-      'statuses.status'
+      'statuses.status',
+      'statuses.createdAt'
     );
 
   return query;

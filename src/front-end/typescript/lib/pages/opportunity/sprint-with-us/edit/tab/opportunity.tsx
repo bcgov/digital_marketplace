@@ -11,7 +11,7 @@ import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
-import { canAddAddendumToSWUOpportunity, canSWUOpportunityDetailsBeEdited, isSWUOpportunityPublic, isUnpublished, SWUOpportunity, SWUOpportunityStatus, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityDetailsBeEdited, isSWUOpportunityPublic, isUnpublished, SWUOpportunity, SWUOpportunityStatus, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -62,7 +62,6 @@ async function initForm(opportunity: SWUOpportunity, viewerUser: User, activeTab
     opportunity,
     viewerUser,
     activeTab,
-    showAddendaTab: canAddAddendumToSWUOpportunity(opportunity),
     canRemoveExistingAttachments: canSWUOpportunityDetailsBeEdited(opportunity, isAdmin(viewerUser))
   }));
   if (validate) {
@@ -594,7 +593,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled: isLoading,
           onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         });
         return links;
       })()) as PageContextualActions; //TypeScript type inference not good enough here
@@ -744,35 +743,16 @@ export const component: Tab.Component<State, Msg> = {
         if (!viewerIsAdmin) { return null; }
         return adt('links', [
           {
-            children: 'Edit',
-            loading: isStartEditingLoading,
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing')),
-            button: true,
-            color: 'primary'
-          },
-          {
             children: 'Cancel',
             symbol_: leftPlacement(iconLinkSymbol('minus-circle')),
             onClick: () => dispatch(adt('showModal', 'cancel' as const)),
             button: true,
             outline: true,
-            color: 'white'
+            color: 'c-nav-fg-alt'
           }
         ]);
-      case SWUOpportunityStatus.Awarded:
-      case SWUOpportunityStatus.Canceled:
-        if (!viewerIsAdmin) { return null; }
-        return adt('links', [
-          {
-            children: 'Edit',
-            loading: isStartEditingLoading,
-            symbol_: leftPlacement(iconLinkSymbol('edit')),
-            onClick: () => dispatch(adt('startEditing')),
-            button: true,
-            color: 'primary'
-          }
-        ]);
+      default:
+        return null;
     }
   }
 };

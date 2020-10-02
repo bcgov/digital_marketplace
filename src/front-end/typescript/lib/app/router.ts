@@ -115,7 +115,8 @@ const router: Router.Router<Route> = {
         return {
           tag: 'proposalSWUExportAll',
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || '',
+            anonymous: query.anonymous === 'true'
           }
         };
       }
@@ -479,7 +480,7 @@ const router: Router.Router<Route> = {
       case 'proposalSWUExportOne':
         return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`);
       case 'proposalSWUExportAll':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/export`);
+        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/export/${route.value.anonymous ? `?anonymous=${route.value.anonymous}` : ''}`);
       case 'opportunitySWUCreate':
         return prefixPath('/opportunities/sprint-with-us/create');
       case 'opportunitySWUEdit':
