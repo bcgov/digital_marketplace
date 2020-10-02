@@ -37,6 +37,15 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### TBD
+
+- Version Number: 1.4
+- Commit Hash: TBD
+
+#### Changes
+
+- Support theming colours in static HTML pages (`downtime.ejs`, `unsupported-browser.ejs`).
+
 ### 2020-09-30
 
 - Version Number: 1.3
