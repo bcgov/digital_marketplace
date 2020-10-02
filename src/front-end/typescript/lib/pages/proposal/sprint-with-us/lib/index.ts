@@ -9,11 +9,11 @@ export function swuProposalStatusToColor(s: SWUProposalStatus, viewerUserType: U
     case SWUProposalStatus.UnderReviewTeamQuestions: return 'warning';
     case SWUProposalStatus.UnderReviewCodeChallenge: return 'warning';
     case SWUProposalStatus.UnderReviewTeamScenario:  return 'warning';
-    case SWUProposalStatus.EvaluatedTeamQuestions:   return viewerUserType === UserType.Vendor ? 'warning' : 'blue';
-    case SWUProposalStatus.EvaluatedCodeChallenge:   return viewerUserType === UserType.Vendor ? 'warning' : 'blue';
-    case SWUProposalStatus.EvaluatedTeamScenario:    return viewerUserType === UserType.Vendor ? 'warning' : 'blue';
+    case SWUProposalStatus.EvaluatedTeamQuestions:   return viewerUserType === UserType.Vendor ? 'warning' : 'primary';
+    case SWUProposalStatus.EvaluatedCodeChallenge:   return viewerUserType === UserType.Vendor ? 'warning' : 'primary';
+    case SWUProposalStatus.EvaluatedTeamScenario:    return viewerUserType === UserType.Vendor ? 'warning' : 'primary';
     case SWUProposalStatus.Awarded:                  return 'success';
-    case SWUProposalStatus.NotAwarded:               return 'blue';
+    case SWUProposalStatus.NotAwarded:               return 'primary';
     case SWUProposalStatus.Disqualified:             return 'danger';
     case SWUProposalStatus.Withdrawn:                return 'danger';
   }

@@ -286,7 +286,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
     showScoreAndRanking
       ? {
           icon: 'star-full',
-          iconColor: 'yellow',
+          iconColor: 'c-report-card-icon-highlight',
           name: 'Total Score',
           value: proposal.score ? `${proposal.score}%` : EMPTY_STRING
         }
@@ -294,7 +294,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
     showScoreAndRanking
       ? {
           icon: 'trophy',
-          iconColor: 'yellow',
+          iconColor: 'c-report-card-icon-highlight',
           name: 'Ranking',
           value: proposal.rank ? formatAmount(proposal.rank, undefined, true) : EMPTY_STRING
         }
@@ -343,8 +343,8 @@ export const component: Tab.Component<State, Msg> = {
             <SubmitProposalTerms.view
               opportunityType='Code With Us'
               action='submitting'
-              termsTitle='Digital Marketplace Terms & Conditions'
-              termsRoute={adt('content', 'terms-and-conditions')}
+              termsTitle='Code With Us Terms & Conditions'
+              termsRoute={adt('content', 'code-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),
@@ -372,8 +372,8 @@ export const component: Tab.Component<State, Msg> = {
             <SubmitProposalTerms.view
               opportunityType='Code With Us'
               action='submitting changes to'
-              termsTitle='Digital Marketplace Terms & Conditions'
-              termsRoute={adt('content', 'terms-and-conditions')}
+              termsTitle='Code With Us Terms & Conditions'
+              termsRoute={adt('content', 'code-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),
@@ -509,7 +509,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled,
           onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         }
       ])) as PageContextualActions;
     }
@@ -551,7 +551,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               button: true,
               outline: true,
-              color: 'white',
+              color: 'c-nav-fg-alt',
               children: 'Delete',
               symbol_: leftPlacement(iconLinkSymbol('trash')),
               onClick: () => dispatch(adt('showModal', 'delete' as const))
@@ -576,7 +576,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('ban')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             disabled,
             loading: isWithdrawLoading,
             onClick: () => dispatch(adt('showModal', isAcceptingProposals ? 'withdrawBeforeDeadline' as const : 'withdrawAfterDeadline' as const))
@@ -591,7 +591,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol('ban')),
             button: true,
             outline: true,
-            color: 'white',
+            color: 'c-nav-fg-alt',
             disabled,
             loading: isWithdrawLoading,
             onClick: () => dispatch(adt('showModal', 'withdrawAfterDeadline' as const))

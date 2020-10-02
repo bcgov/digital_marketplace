@@ -168,7 +168,7 @@ export const view: View<Props> = props => {
       multiValue(styles) {
         return {
           ...styles,
-          backgroundColor: '#52489C', //purple
+          backgroundColor: 'var(--c-multi-select-item-bg)',
           opacity: disabled ? 0.75 : undefined
         };
       },
@@ -185,11 +185,11 @@ export const view: View<Props> = props => {
           ...styles,
           borderRadius: '0 2px 2px 0',
           borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
-          color: '#8c84c6', //purple-light
+          color: 'var(--c-multi-select-item-remove)',
           ':hover': {
             cursor: 'pointer',
             color: '#fff',
-            backgroundColor: '#DC3545' //red
+            backgroundColor: 'var(--danger)'
           }
         };
       }

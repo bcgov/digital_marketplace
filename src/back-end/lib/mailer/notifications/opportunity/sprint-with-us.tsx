@@ -1,10 +1,11 @@
-import { CONTACT_EMAIL, MAILER_BATCH_SIZE, MAILER_NOREPLY } from 'back-end/config';
+import { MAILER_BATCH_SIZE, MAILER_REPLY } from 'back-end/config';
 import * as db from 'back-end/lib/db';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import { unionBy } from 'lodash';
 import React from 'react';
+import { CONTACT_EMAIL } from 'shared/config';
 import { formatAmount, formatDate, formatTime } from 'shared/lib';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { User, UserType } from 'shared/lib/resources/user';
@@ -92,7 +93,7 @@ export async function newSWUOpportunityPublishedT(recipients: User[], opportunit
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
       summary: `${repost ? 'SWU opportunity re-published after suspension' : 'New SWU opportunity published'}; sent to user with notifications turned on.`,
-      to: MAILER_NOREPLY,
+      to: MAILER_REPLY,
       bcc: batch.map(r => r.email),
       subject: title,
       html: templates.simple({
@@ -120,7 +121,7 @@ export async function updatedSWUOpportunityT(recipients: User[], opportunity: SW
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      to: MAILER_NOREPLY,
+      to: MAILER_REPLY,
       bcc: batch.map(r => r.email),
       subject: title,
       html: templates.simple({

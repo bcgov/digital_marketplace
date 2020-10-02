@@ -124,6 +124,9 @@ export const readOneOrganizationSlim = tryDb<[Id, boolean?, Session?], Organizat
   }
 
   const result = await query.first<RawOrganization>();
+  if (!result) {
+    return valid(null);
+  }
   const { id, legalName, logoImageFile, owner, acceptedSWUTerms, numTeamMembers, active } = result;
   // If no session, or user is not an admin/government or owning vendor, do not include RFQ data
   if (!session || (isVendor(session) && owner !== session.user?.id)) {

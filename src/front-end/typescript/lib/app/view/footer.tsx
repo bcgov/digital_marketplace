@@ -1,7 +1,7 @@
-import { CONTACT_EMAIL, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
+import { SOURCE_CODE_URL, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import { prefixPath } from 'front-end/lib';
 import { View } from 'front-end/lib/framework';
-import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
@@ -29,7 +29,13 @@ const links: AnchorProps[] = [
     dest: routeDest(adt('content', 'about'))
   },
   {
-    children: 'Contrats',
+    children: 'Source Code',
+    dest: externalDest(SOURCE_CODE_URL),
+    newTab: true,
+    symbol_: leftPlacement(iconLinkSymbol('github'))
+  },
+  {
+    children: 'Procurement Concierge',
     dest: externalDest(PROCUREMENT_CONCIERGE_URL),
     newTab: true,
     symbol_: rightPlacement(iconLinkSymbol('external-link'))
@@ -47,7 +53,7 @@ const Footer: View<{}> = () => {
             
             </div>
             <div className='flex-shrink-0 mr-5'>
-              <div className='mb-2'><Link dest={emailDest([CONTACT_EMAIL])} className="font-size-large roboto" color='white'>Nous joindre</Link></div>
+              <div className='mb-2'><Link className="font-size-large roboto" color='white'>Nous joindre</Link></div>
               <ul className='footer-link-list'>
                 <li><a href="#">Téléphone</a></li>
                 <li><a target="_blank" href="/bureaux-de-services/">Bureaux de services&nbsp;</a></li>

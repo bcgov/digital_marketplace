@@ -1,0 +1,129 @@
+
+paths:
+  /users:
+    get:
+      summary: Retrieves all Users.
+      tags:
+        - Users
+      produces:
+        - application/json
+      description: This routes returns all available Users.
+      responses:
+        200:
+          description: Receive the array of Users
+
+  /users/{id}:
+    get:
+      summary: Retrieves an individual User.
+      tags:
+        - Users
+      description: This route takes a User ID as a parameter and returns the corresponding User.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the User to retrieve
+          type: uuid
+      responses:
+        200:
+          description: Receive the requested User
+
+    post:
+      summary: Updates an existing User.
+      tags:
+        - Users
+      description: This route takes a User ID as a parameter and updates the corresponding User using the ADT supplied in the request body.
+      consumes:
+        — application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the User to update
+          type: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                value:
+                  nullable: true
+                  oneOf:
+                    - type: object
+                    - type: boolean
+                    - type: array
+                      items:
+                        type: string
+            examples:
+              updateProfile:
+                $ref: '#/components/examples/updateProfile'
+              updateCapabilities:
+                $ref: '#/components/examples/updateCapabilities'
+              acceptTerms:
+                $ref: '#/components/examples/acceptTerms'
+              updateNotifications:
+                $ref: '#/components/examples/updateNotifications'
+              reactivateUser:
+                $ref: '#/components/examples/reactivateUser'
+              updateAdminPermissions:
+                $ref: '#/components/examples/updateAdminPermissions'
+      responses:
+        200:
+          description: Receive back the updated User.
+
+    delete:
+      summary: Deactivates an existing User account.
+      tags:
+        - Users
+      description: This route takes an ID as a parameter and changes the corresponding User to have a status of 'Inactive'.
+      consumes:
+        — application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the User to deactivate
+          type: uuid
+      responses:
+        200:
+          description: Receive back the deactivated User.
+
+components:
+  examples:
+    updateProfile:
+      summary: Updating a user profile
+      value:
+        tag: updateProfile
+        value:
+          name: John Smith
+          email: john.smith@email.com
+          jobTitle: Analyst
+          avatarImageFile: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+    updateCapabilities:
+      summary: Updating user capabilities
+      value:
+        tag: updateCapabilities
+        value:
+          - Agile Coaching
+          - Backend Development
+    acceptTerms:
+      summary: Accepting the application terms
+      value:
+        tag: acceptTerms
+    updateNotifications:
+      summary: Updating a user's notification settings
+      value:
+        tag: updateNotifications
+        value: true
+    reactivateUser:
+      summary: Reactivate an inactive user
+      value:
+        tag: reactivateUser
+    updateAdminPermissions:
+      summary: Add/revoke admininstrator permissions
+      value:
+        tag: updateAdminPermissions
+        value: true # True sets to admin, false reverts to government user

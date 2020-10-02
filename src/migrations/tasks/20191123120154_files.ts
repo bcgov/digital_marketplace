@@ -3,7 +3,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
 import { UserType } from 'shared/lib/resources/user';
 
-const logger = makeDomainLogger(consoleAdapter, 'migrations');
+const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
 
 export async function up(connection: Knex): Promise<void> {
     // File binaries

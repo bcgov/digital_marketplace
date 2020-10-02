@@ -2,12 +2,15 @@ import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { TextColor } from 'front-end/lib/types';
 import { BulletPoint } from 'front-end/lib/views/bullet-point';
 import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
+import { formatAmount } from 'shared/lib';
+import * as cwu from 'shared/lib/resources/opportunity/code-with-us';
+import * as swu from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';
 
 const IMG_MAX_WIDTH = '400px';
@@ -99,7 +102,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreCWU', null)),
                 children: ['Plus d\'information'],
-                color: 'qcgov-blue' as TextColor,
+                color: 'qcgov-blue',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -119,7 +122,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreSWU', null)),
                 children: [('Plus d\'information')],
-                color: 'qcgov-blue' as TextColor,
+                color: 'qcgov-blue',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }

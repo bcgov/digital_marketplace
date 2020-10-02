@@ -101,7 +101,7 @@ const Rank: ComponentView<State, Msg> = ({ state }) => {
             reportCards={[{
               icon: 'trophy',
               name: 'Ranking',
-              iconColor: 'yellow',
+              iconColor: 'c-report-card-icon-highlight',
               value: formatAmount(state.proposal.rank, undefined, true)
             }]} />
         </div>

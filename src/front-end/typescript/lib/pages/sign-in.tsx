@@ -7,6 +7,7 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import { SignInCard } from 'front-end/lib/views/sign-in-card';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { GOV_IDP_NAME, VENDOR_IDP_NAME } from 'shared/config';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -50,15 +51,15 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
       <SignInCard
         userType={UserType.Vendor}
         title='Vendor'
-        description='Use your GitHub account to sign in to the Digital Marketplace.'
+        description={`Use your ${VENDOR_IDP_NAME} account to sign in to the Digital Marketplace.`}
         redirectOnSuccess={state.redirectOnSuccess}
-        buttonText='Sign In Using GitHub' />
+        buttonText={`Sign In Using ${VENDOR_IDP_NAME}`} />
       <SignInCard
         userType={UserType.Government}
         redirectOnSuccess={state.redirectOnSuccess}
         title='Public Sector Employee'
-        description='Use your IDIR to sign in to the Digital Marketplace.'
-        buttonText='Sign In Using IDIR' />
+        description={`Use your ${GOV_IDP_NAME} to sign in to the Digital Marketplace.`}
+        buttonText={`Sign In Using ${GOV_IDP_NAME}`} />
     </div>
   );
 });
@@ -69,7 +70,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   sidebar: sidebarValid({
     size: 'large',
-    color: 'blue-light',
+    color: 'c-sidebar-instructional-bg',
     view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Welcome Back to the Digital Marketplace',
       getDescription: () => 'Please sign in to access your Digital Marketplace account.',

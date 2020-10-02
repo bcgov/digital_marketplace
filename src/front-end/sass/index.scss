@@ -8,7 +8,7 @@ $grid-breakpoints: (
   xs: 0,
   sm: 576px,
   md: 1100px,
-  lg: 1200px 
+  lg: 1200px
 );
 
 $container-max-widths: (
@@ -67,37 +67,124 @@ $red:              #DC3545;
 $green:            #2E8540;
 $orange:           #FD7E14;
 
-$colors: (
-  'white':            $white,
-  'black':            $black,
-  'blue':             $blue,
-  'blue-alt':         $blue-alt,
-  'blue-alt-2':       $blue-alt-2,
-  'blue-dark':        $blue-dark,
-  'blue-dark-alt':    $blue-dark-alt,
-  'blue-dark-alt-2':  $blue-dark-alt-2,
-  'blue-light':       $blue-light,
-  'blue-light-alt':   $blue-light-alt,
-  'blue-light-alt-2': $blue-light-alt-2,
-  'purple':           $purple,
-  'purple-light':     $purple-light,
-  'yellow':           $yellow,
-  'red':              $red,
-  'green':            $green
-);
-
-// Utility colors.
+// Bootstrap Utility colors.
 $body-color:                        $gray-900;
 $border-color:                      $gray-400;
 $nav-tabs-border-color:             $border-color;
 $nav-tabs-link-hover-border-color:  $gray-200 $gray-200 transparent;
 $nav-tabs-link-active-bg:           $white;
 $nav-tabs-link-active-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
-$component-active-bg:               $blue-dark;
-$link-color:                        $blue-dark;
+$component-active-bg:               $blue;
+$custom-control-indicator-checked-disabled-bg: rgba($component-active-bg, 0.5);
+$link-color:                        $blue;
 $dropdown-link-hover-bg:            $gray-100;
 $dropdown-link-active-bg:           $gray-200;
 $table-hover-bg: $blue-light-alt;
+
+// App-Specific Utility Colors
+// App Views
+$c-body-bg: $blue-dark;
+$c-nav-bg: $blue-dark;
+$c-nav-bg-alt: $blue-dark-alt;
+$c-nav-border-bottom: $yellow;
+$c-nav-fg: $white;
+$c-nav-fg-alt: $white;
+$c-footer-bg: $blue-dark;
+$c-footer-separator: $blue-dark-alt;
+$c-footer-border-top: $yellow;
+$c-toast-info-icon: $blue-alt;
+$c-toast-error-icon: $red;
+$c-toast-warning-icon: $orange;
+$c-toast-success-icon: $green;
+$c-sidebar-instructional-bg: $blue-light;
+$c-sidebar-menu-link-inactive-fg: $blue;
+$c-sidebar-menu-link-inactive-icon: $blue-dark-alt-2;
+$c-sidebar-menu-link-active-fg: $white;
+$c-sidebar-menu-link-active-icon: $blue;
+$c-sidebar-menu-link-active-bg: $blue-dark-alt-2;
+$c-sidebar-menu-mobile-caret: $white;
+// Pages
+$c-landing-role-heading: $blue-dark;
+$c-landing-role-icon: $yellow;
+$c-landing-testimonial-source: $yellow;
+$c-landing-small-underline: $yellow;
+$c-landing-programs-bg: $blue-light-alt-2;
+$c-learn-more-bg: $blue-light-alt;
+$c-dashboard-bg: $blue-light-alt-2;
+$c-opportunity-list-learn-more-bg: $blue-light-alt-2;
+$c-opportunity-list-card-hover-bg: $blue-light-alt-2;
+$c-opportunity-create-bg: $blue-light-alt-2;
+$c-opportunity-view-got-questions-icon: rgba($blue, 0.12);
+$c-opportunity-view-got-questions-bg: $blue-light-alt;
+$c-opportunity-view-apply-bg: $blue-light-alt;
+$c-proposal-swu-form-team-question-response-heading: $blue-dark;
+$c-proposal-swu-form-scrum-master: $purple;
+$c-user-profile-permission: $purple;
+// Misc. Views
+$c-report-card-bg: $blue-light-alt;
+$c-report-card-icon-default: $blue-dark-alt-2;
+$c-report-card-icon-highlight: $yellow;
+$c-capability-ft-bg: $purple;
+$c-capability-pt-bg: $purple-light;
+$c-capability-grid-switch: $purple;
+$c-how-it-works-item-bg: $purple;
+$c-skills-bg: $purple;
+$c-multi-select-item-bg: $purple;
+$c-multi-select-item-remove: $purple-light;
+$c-form-field-required: $yellow;
+
+$app-utility-colors: (
+  // App Views
+  'c-body-bg': $c-body-bg,
+  'c-nav-bg': $c-nav-bg,
+  'c-nav-bg-alt': $c-nav-bg-alt,
+  'c-nav-border-bottom': $c-nav-border-bottom,
+  'c-nav-fg': $c-nav-fg,
+  'c-nav-fg-alt': $c-nav-fg-alt,
+  'c-footer-bg': $c-footer-bg,
+  'c-footer-separator': $c-footer-separator,
+  'c-footer-border-top': $c-footer-border-top,
+  'c-toast-info-icon': $c-toast-info-icon,
+  'c-toast-error-icon': $c-toast-error-icon,
+  'c-toast-warning-icon': $c-toast-warning-icon,
+  'c-toast-success-icon': $c-toast-success-icon,
+  'c-sidebar-instructional-bg': $c-sidebar-instructional-bg,
+  'c-sidebar-menu-link-inactive-fg': $c-sidebar-menu-link-inactive-fg,
+  'c-sidebar-menu-link-inactive-icon': $c-sidebar-menu-link-inactive-icon,
+  'c-sidebar-menu-link-active-fg': $c-sidebar-menu-link-active-fg,
+  'c-sidebar-menu-link-active-icon': $c-sidebar-menu-link-active-icon,
+  'c-sidebar-menu-link-active-bg': $c-sidebar-menu-link-active-bg,
+  'c-sidebar-menu-mobile-caret': $c-sidebar-menu-mobile-caret,
+  // Pages
+  'c-landing-role-heading': $c-landing-role-heading,
+  'c-landing-role-icon': $c-landing-role-icon,
+  'c-landing-testimonial-source': $c-landing-testimonial-source,
+  'c-landing-small-underline': $c-landing-small-underline,
+  'c-landing-programs-bg': $c-landing-programs-bg,
+  'c-learn-more-bg': $c-learn-more-bg,
+  'c-dashboard-bg': $c-dashboard-bg,
+  'c-opportunity-list-learn-more-bg': $c-opportunity-list-learn-more-bg,
+  'c-opportunity-list-card-hover-bg': $c-opportunity-list-card-hover-bg,
+  'c-opportunity-create-bg': $c-opportunity-create-bg,
+  'c-opportunity-view-got-questions-icon': $c-opportunity-view-got-questions-icon,
+  'c-opportunity-view-got-questions-bg': $c-opportunity-view-got-questions-bg,
+  'c-opportunity-view-apply-bg': $c-opportunity-view-apply-bg,
+  'c-proposal-swu-form-team-question-response-heading': $c-proposal-swu-form-team-question-response-heading,
+  'c-proposal-swu-form-scrum-master': $c-proposal-swu-form-scrum-master,
+  'c-user-profile-permission': $c-user-profile-permission,
+  // Misc. Views
+  'c-report-card-bg': $c-report-card-bg,
+  'c-report-card-icon-default': $c-report-card-icon-default,
+  'c-report-card-icon-highlight': $c-report-card-icon-highlight,
+  'c-capability-ft-bg': $c-capability-ft-bg,
+  'c-capability-pt-bg': $c-capability-pt-bg,
+  'c-capability-grid-switch': $c-capability-grid-switch,
+  'c-how-it-works-item-bg': $c-how-it-works-item-bg,
+  'c-skills-bg': $c-skills-bg,
+  'c-multi-select-item-bg': $c-multi-select-item-bg,
+  'c-multi-select-item-remove': $c-multi-select-item-remove,
+  'c-form-field-required': $c-form-field-required
+);
 
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
@@ -111,22 +198,22 @@ $success:      $green;
 $body:         $body-color;
 $light:        $gray-100;
 $dark:         $gray-800;
-$qcgov-blue:   $blue-dark;
 
 $theme-colors:   map-merge(
   (
-    'primary':      $primary,
-    'secondary':    $secondary,
-    'info':         $info,
-    'warning':      $warning,
-    'danger':       $danger,
-    'success':      $success,
-    'body':         $body,
-    'light':        $light,
-    'dark':         $dark,
-    'qcgov-blue':   $qcgov-blue,
+    'white':     $white,
+    'black':     $black,
+    'primary':   $primary,
+    'secondary': $secondary,
+    'info':      $info,
+    'warning':   $warning,
+    'danger':    $danger,
+    'success':   $success,
+    'body':      $body,
+    'light':     $light,
+    'dark':      $dark
   ),
-  $colors
+  $app-utility-colors
 );
 
 // Other overrides.
@@ -182,7 +269,7 @@ $transition-duration: 240ms;
 
 html,
 body {
-  background: $qcgov-blue;
+  background: $c-body-bg;
 }
 
 html {
@@ -269,12 +356,12 @@ nav {
     }
 
     .main-nav-top-navbar {
-      @extend .bg-qcgov-blue;
-      color: $white;
+      background: $c-nav-bg;
       width: 100%;
       height: $main-nav-top-height;
       position: relative;
       z-index: 2;
+      border-bottom: 2px solid $c-nav-border-bottom;
     }
 
     .main-nav-top-navbar a:link {
@@ -292,9 +379,9 @@ nav {
     }
 
     .main-nav-mobile-menu {
-      @extend .bg-blue-dark-alt;
       @extend .py-4;
       @extend .d-md-none;
+      background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
         transition: transform $transition-duration ease-out
@@ -324,8 +411,9 @@ nav {
 
       &.mobile,
       &.desktop {
-        @extend .bg-white;
         @extend .align-items-center;
+        @extend .shadow;
+        background: $c-nav-bg-alt;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
@@ -355,7 +443,7 @@ nav {
   }
 
   .dropdown-toggle:hover img {
-    border-color: $blue-dark-alt;
+    border-color: $c-nav-bg-alt;
   }
 }
 
@@ -392,6 +480,7 @@ footer {
     max-width: 34px;
     max-height: 34px;
   }
+  border-top: 2px solid $c-footer-border-top;
 }
 
 // Custom Bootstrap style overrides.
@@ -513,8 +602,8 @@ nav.navbar .nav-link:hover {
 
 .badge {
   display: inline-flex;
-  padding: 0.35em 0.7em;
-  letter-spacing: 0.5px;
+  padding: 0.5em 0.75em;
+  letter-spacing: 0.75px;
 }
 
 .custom-radio,
@@ -533,6 +622,14 @@ nav.navbar .nav-link:hover {
 
 .roboto {
   font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.overline {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: 1.5px;
 }
 
 .shadow-hover {
@@ -656,6 +753,8 @@ nav.navbar .nav-link:hover {
       position: sticky;
       z-index: 2;
       top: 6rem;
+      max-height: calc(100vh - 6rem);
+      overflow-y: auto;
 
       &::after {
         content: " ";
@@ -819,7 +918,7 @@ nav.navbar .nav-link:hover {
 }
 
 .markdown {
-  
+
   img {
     width: 100%;
     max-width: 600px;
@@ -840,7 +939,8 @@ nav.navbar .nav-link:hover {
   img,
   blockquote,
   table,
-  pre {
+  pre,
+  hr {
     margin-top: 1.5*$spacer;
     margin-bottom: 1.5*$spacer;
   }
@@ -864,17 +964,20 @@ nav.navbar .nav-link:hover {
 // Page-specific overrides
 
 .route-orgSWUTerms,
-.route-content .content-sprint-with-us-terms-and-conditions {
-  .markdown {
-    ul {
-      list-style-type: none;
-
-      li {
-        margin-bottom: 1rem;
-      }
-
+.route-content {
+  .content-sprint-with-us-terms-and-conditions,
+  .content-code-with-us-terms-and-conditions {
+    .markdown {
       ul {
-        margin-top: 1rem;
+        list-style-type: none;
+
+        li {
+          margin-bottom: 1rem;
+        }
+
+        ul {
+          margin-top: 1rem;
+        }
       }
     }
   }

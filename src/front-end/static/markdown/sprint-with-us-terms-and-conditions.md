@@ -6,9 +6,9 @@ Throughout this Request for Proposals, the following definitions apply:
 
 "**Addenda**" means all additional information regarding this RFP including amendments to the RFP and as set forth on the Addenda tab to the RFP;
 
-"**Business Day**" means a day, other than a Saturday or Sunday, on which provincial government offices are open for normal business in British Columbia; 
+"**Business Day**" means a day, other than a Saturday or Sunday, on which provincial government offices are open for normal business in British Columbia;
 
-"**Capabilities**" means the following skills set forth with more particularity in the RFQ consisting of: agile coaching, delivery management, user research, user experience design, front end web development, back end web development, technical architecture, devOps engineering, security engineering and as may be required on the Select Team tab on the RFP for the Opportunity; 
+"**Capabilities**" means the following skills set forth with more particularity in the RFQ consisting of: agile coaching, delivery management, user research, user experience design, front end web development, back end web development, technical architecture, devOps engineering, security engineering and as may be required on the Select Team tab on the RFP for the Opportunity;
 
 "**Closing Location**" means the automated submission function on and accessed through the Review and Submit tab of the RFP;
 
@@ -18,7 +18,7 @@ Throughout this Request for Proposals, the following definitions apply:
 
 "**Contractor**" means the successful Proponent to the RFP that enters into a Contract with the Province;
 
-"**Digital Marketplace**" means the automated system used for Sprint with Us Opportunities and associated Proposal submissions, and maintained by the Province on the Digital Marketplace Website; 
+"**Digital Marketplace**" means the automated system used for Sprint with Us Opportunities and associated Proposal submissions, and maintained by the Province on the Digital Marketplace Website;
 
 "**Digital Marketplace Website**" means the Digital Marketplace website located at https://digital.gov.bc.ca/marketplace ;
 
@@ -31,11 +31,11 @@ Throughout this Request for Proposals, the following definitions apply:
 "**Inception**", or "**Inception Phase**" means the first phase of Product development as further described in the Contract;
 
 
-"**Implementation**", or "**Implementation Phase**" means the third phase of Product development as further described in the Contract; 
+"**Implementation**", or "**Implementation Phase**" means the third phase of Product development as further described in the Contract;
 
 "**Ministry**" means the ministry of the government of British Columbia issuing the RFP;
 
-"**must**", or "**mandatory**" means a requirement that must be met in order for a Proposal to receive consideration; 
+"**must**", or "**mandatory**" means a requirement that must be met in order for a Proposal to receive consideration;
 
 "**Opportunity**" means the software development project which is the subject of this RFP;
 
@@ -43,7 +43,7 @@ Throughout this Request for Proposals, the following definitions apply:
 
 "**Phase**" means any one of the Inception, Proof of Concept or Implementation Phases, and "**Phases**" means any two or more, as applicable;
 
-"**Phase Window**" means the date range set out in the RFP for the Inception, Proof of Concept and Implementation Phases of an Opportunity; 
+"**Phase Window**" means the date range set out in the RFP for the Inception, Proof of Concept and Implementation Phases of an Opportunity;
 
 "**Preferred Technical Skill**" means the preferred technical skills identified on the Select team that are evaluated;
 
@@ -61,9 +61,9 @@ Throughout this Request for Proposals, the following definitions apply:
 
 "**Request for Proposals**", or "**RFP**" means the solicitation described on the Opportunity Webpage and which includes all associated RFP tabs for submission of a Proposal and any attached or referenced appendices, schedules or exhibits, as may be modified in writing from time to time by the Province by Addenda;
 
-"**Request for Qualifications**" or "**RFQ**" means the process described in RFQ No 003166 as posted on BC Bid with a link on the BC Developers’ Website; 
+"**Request for Qualifications**" or "**RFQ**" means the process described in RFQ No 003166 as posted on BC Bid with a link on the BC Developers’ Website;
 
-"**Resource**" means an individual identified by a Proponent as part of a Team; 
+"**Resource**" means an individual identified by a Proponent as part of a Team;
 
 "**Shortlisted Proponents**" has the meaning ascribed to that term in section c, step 3 of the evaluation process described on the Evaluation tab;
 
@@ -81,16 +81,16 @@ Throughout this Request for Proposals, the following definitions apply:
 
 Proposals must be in English and must be submitted by an authorized representative of the Proponent, in accordance with the following:
 
-- (i) Only Proponents who are Qualified Suppliers may submit Proposals.
-- (ii) Bidding by a subcontractor is not acceptable.
-- (iii) Proposals must not be submitted through BC Bid. Proposals must be submitted at the Closing Location by an authorized representative of the Proponent by clicking on the "submit" button located thereon. 
-- (iv) Use of the Proponent’s profile on the Digital Marketplace in connection with this RFP and clicking on the "submit" button is as effective as a signature, and Proponents assume all responsibility for Proposals submitted under their name. The Province will assume that all Proposals submitted using the "submit" button have been authorized and approved by the Proponent and the Province will have no obligation to confirm or verify the authenticity or authorization of any such submission.
-- (v) Proposals must be received before the Closing Time to be considered. Proponents are solely responsible for ensuring that the Province receives a complete Proposal, including all attachments or enclosures, if applicable, before the Closing Time, and the Proponent bears all risk associated with delivering its Proposal by electronic submission, including but not limited to delays in transmission between the Proponent’s computer and the Digital Marketplace system. For this reason, the Province strongly encourages Proponents to submit Proposals with sufficient time to complete the Proposal and any activities required by the Proposal before Closing Time.
-- (vi) Proponents should refer to the Digital Marketplace Website or contact [digitalmarketplace@gov.bc.ca](mailto:digitalmarketplace@gov.bc.ca) for more information on the use of the Digital Marketplace Website.
+- i) Only Proponents who are Qualified Suppliers may submit Proposals.
+- ii) Bidding by a subcontractor is not acceptable.
+- iii) Proposals must not be submitted through BC Bid. Proposals must be submitted at the Closing Location by an authorized representative of the Proponent by clicking on the "submit" button located thereon.
+- iv) Use of the Proponent’s profile on the Digital Marketplace in connection with this RFP and clicking on the "submit" button is as effective as a signature, and Proponents assume all responsibility for Proposals submitted under their name. The Province will assume that all Proposals submitted using the "submit" button have been authorized and approved by the Proponent and the Province will have no obligation to confirm or verify the authenticity or authorization of any such submission.
+- v) Proposals must be received before the Closing Time to be considered. Proponents are solely responsible for ensuring that the Province receives a complete Proposal, including all attachments or enclosures, if applicable, before the Closing Time, and the Proponent bears all risk associated with delivering its Proposal by electronic submission, including but not limited to delays in transmission between the Proponent’s computer and the Digital Marketplace system. For this reason, the Province strongly encourages Proponents to submit Proposals with sufficient time to complete the Proposal and any activities required by the Proposal before Closing Time.
+- vi) Proponents should refer to the Digital Marketplace Website or contact [digitalmarketplace@gov.bc.ca](mailto:digitalmarketplace@gov.bc.ca) for more information on the use of the Digital Marketplace Website.
 
 ## 1.3. Government Contact
 
-Enquiries related to this RFP, including any requests for information or clarification, may only be directed electronically to the Government Contact, who will respond if time permits before the Closing Time. Information obtained from any other source is not official and should not be relied upon. Enquiries and any responses providing new information regarding this RFP, and any changes to the RFP, will be communicated on the Addendum tab on the RFP, and, in the sole discretion of the Province, also sent directly from the Government Contact to all Qualified Suppliers. The Province may choose in its sole discretion not to respond, respond in whole or in part, or reformulate questions to be answered. 
+Enquiries related to this RFP, including any requests for information or clarification, may only be directed electronically to the Government Contact, who will respond if time permits before the Closing Time. Information obtained from any other source is not official and should not be relied upon. Enquiries and any responses providing new information regarding this RFP, and any changes to the RFP, will be communicated on the Addendum tab on the RFP, and, in the sole discretion of the Province, also sent directly from the Government Contact to all Qualified Suppliers. The Province may choose in its sole discretion not to respond, respond in whole or in part, or reformulate questions to be answered.
 
 ## 1.4. Proponents’ Meeting
 
@@ -114,7 +114,7 @@ Proposals will be open for acceptance for at least 45 days after the Closing Tim
 
 By submitting a Proposal the Proponent warrants that, if the RFP is to design, create or provide a system or manage a program, all components required to run the system or manage the program have been identified in the Proposal or will be provided by the Contractor at no additional charge.
 
-## 1.9. Changes to Proposals 
+## 1.9. Changes to Proposals
 
 By selecting either the "withdraw proposal" (a Proposal will be saved but not submitted) or "delete proposal" buttons on the Review and Submit tab of the RFP, the Proponent may withdraw its Proposal prior to the Closing Time. A Proponent may also amend its Proposal at any time prior to Closing Time by re-inputting data on any of the applicable tabs on the RFP, pressing any applicable "save" buttons and pressing the "submit" button. Upon Closing Time, all Proposals become irrevocable. The Proponent will not change any part of its Proposal after the Closing Time unless requested by the Province for purposes of clarification.
 
@@ -168,7 +168,7 @@ Neither acceptance of a Proposal nor execution of a Contract will constitute app
 The Province reserves the right in its sole discretion to:
 
 - a) disqualify a Proposal if the Province is not satisfied that the Proponent is clearly identified;
-- b) prior to entering into a Contract with a Proponent, request that the Proponent provide confirmation of the Proponent’s legal status (or in the case of a sole proprietorship, the Proponent’s legal name and identification) and certification in a form satisfactory to the Province that the Proponent has the power and capacity to enter into the Contract; 
+- b) prior to entering into a Contract with a Proponent, request that the Proponent provide confirmation of the Proponent’s legal status (or in the case of a sole proprietorship, the Proponent’s legal name and identification) and certification in a form satisfactory to the Province that the Proponent has the power and capacity to enter into the Contract;
 - c) not to enter into a Contract with a Proponent if the Proponent cannot satisfy the Province that it is the same legal entity that submitted the Proponent’s Proposal; and
 - d) require security screenings for a Proponent who is a natural person, subcontractors, and key personnel (including any Resources) before entering into a Contract and the Province may elect not to enter into a Contract with a Proponent or to approve a subcontractor or Resource that fails to pass the security screenings to the Province’s satisfaction. In this regard, Proponents should note that a criminal history check obtained through the applicable local policing agency will be required for all Resources involved in the delivery of services under the Contract, and that criminal history checks must be repeated as necessary in accordance with the Contract to ensure that at all times the most recent criminal history check for a particular Resource was completed within the previous five years.
 
@@ -210,19 +210,19 @@ Proponents are solely responsible for familiarizing themselves, and ensuring tha
 
 ## 1.27. Trade Agreements
 
-This RFP is covered by trade agreements between the Province and other jurisdictions, including the following: 
+This RFP is covered by trade agreements between the Province and other jurisdictions, including the following:
 
 - a) Trade, Investment and Labour Mobility Agreement;
-- b) New West Partnership Trade Agreement; 
+- b) New West Partnership Trade Agreement;
 - c) Canadian Free Trade Agreement;
 - d) World Trade Organization Agreement on Government Procurement;
 - e) The Canada-European Union Comprehensive Economic and Trade Agreement; and
 - f) Comprehensive and Progressive Agreement for Trans-Pacific Partnership.
 
-## 1.28. Tax Verification Letter 
+## 1.28. Tax Verification Letter
 
 - a) As a condition of Contract finalization as described in Section 1.13, the successful Proponent (or any next qualified successor to that Proponent) will be required to provide the Ministry with a valid Tax Verification Letter, unless an exception applies as described below. If a Proponent is not able to produce the required Tax Verification Letter during Contract finalization, then the Province will be entitled to terminate discussions with that Proponent and proceed as described in Section 1.13.
 - b) A Tax Verification Letter will not be required if:
-  - (i) the Contract is valued at less than CAN$100,000, including all fees, expenses and all options to extend or renew the Contract; or
-  - (ii) the Contract is in relation to a government transfer as described in Chapter 21 of the Province’s Core Policy and Procedures Manual.
+  - i) the Contract is valued at less than CAN$100,000, including all fees, expenses and all options to extend or renew the Contract; or
+  - ii) the Contract is in relation to a government transfer as described in Chapter 21 of the Province’s Core Policy and Procedures Manual.
 - c) If a Tax Verification Letter is required, the Contract will contain, in addition to all other applicable schedules, a schedule that describes the Tax Verification Letter requirements of the Contract.

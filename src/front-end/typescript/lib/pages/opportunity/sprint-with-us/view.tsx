@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, EMPTY_STRING, SWU_OPPORTUNITY_SCOPE_CONTENT_ID } from 'front-end/config';
+import { EMPTY_STRING, SWU_OPPORTUNITY_SCOPE_CONTENT_ID } from 'front-end/config';
 import { getAlertsValid, getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
@@ -18,6 +18,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React, { Fragment } from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { CONTACT_EMAIL } from 'shared/config';
 import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { DEFAULT_OPPORTUNITY_TITLE, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityPhase, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
@@ -262,23 +263,23 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       <Col xs='12'>
         <h3 className='mb-0'>Details</h3>
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='toolbox-outline' text='Skills' />
         <p className='mb-2'>To submit a proposal for this opportunity, you must possess the following skills:</p>
-        <Skills skills={opp.mandatorySkills} className='mb-3' />
+        <Skills skills={opp.mandatorySkills} />
         {opp.optionalSkills.length
           ? (<Fragment>
-              <p className='mb-2'>Additionally, possessing the following skills would be considered a bonus:</p>
+              <p className='mt-3 mb-2'>Additionally, possessing the following skills would be considered a bonus:</p>
               <Skills skills={opp.optionalSkills} />
             </Fragment>)
           : null}
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='info-circle-outline' text='Description' />
         <Markdown source={opp.description || EMPTY_STRING} smallerHeadings openLinksInNewTabs />
       </Col>
       {opp.remoteOk && opp.remoteDesc
-        ? (<Col xs='12' className='mt-4'>
+        ? (<Col xs='12' className='mt-5'>
             <InfoDetailsHeading icon='laptop-outline' text='Remote Work Options' />
             <p className='mb-0' style={{ whiteSpace: 'pre-line' }}>{opp.remoteDesc}</p>
           </Col>)
@@ -479,7 +480,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   const viewerUser = state.viewerUser;
   if ((viewerUser && !isVendor(viewerUser)) || !isSWUOpportunityAcceptingProposals(state.opportunity)) { return null; }
   return (
-    <div className='bg-blue-light-alt py-5 mt-auto'>
+    <div className='bg-c-opportunity-view-apply-bg py-5 mt-auto'>
       <Container>
         <Row>
           <Col xs='12' md='8'>
