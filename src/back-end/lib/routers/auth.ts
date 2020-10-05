@@ -287,7 +287,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   }
 
   let username = getString(claims, 'preferred_username');
-  const idpId = getString(claims, 'idp_id');
+  const idpId = getString(claims, 'idp_id') || identityProvider;
 
   // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
   if ((username.endsWith('@' + VENDOR_IDP_SUFFIX) && userType === UserType.Vendor) || (username.endsWith('@' + GOV_IDP_SUFFIX) && userType === UserType.Government)) {
