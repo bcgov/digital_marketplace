@@ -9,7 +9,6 @@ import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
-import { useTranslation } from 'react-i18next';
 
 const IMG_MAX_WIDTH = '400px';
 
@@ -41,20 +40,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
-  const { t, i18n } = useTranslation();
   return (
     <Container className='hero-component pb-7 pb-md-8 pt-sm-4 pt-md-3'>
       <Row className='justify-content-left text-left'>
         <Col md='5'>
           <h1 className='roboto' style={{lineHeight: '3.75rem'}}>
-            <p>PP: {t('welcome', 'Hello there')} 
-              <button className="btn btn-primary" onClick={() => {
-                 console.log(i18n);
-                 i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr');
-              }}>
-                Changer
-              </button>
-            </p>
             Collaborez <br/>avec le gouvernement <br/>du Québec
           </h1>
           <div className='mt-3 mb-3'>
