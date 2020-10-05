@@ -8,7 +8,7 @@ import { remove } from 'lodash';
 import { default as React, ReactElement } from 'react';
 import ReactDom from 'react-dom';
 import { ADT, adtCurried } from 'shared/lib/types';
-import 'front-end/lib/locale/i18n';
+
 export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framework/router';
 
 // Base logic.
@@ -585,7 +585,7 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
   // Render the view whenever state changes.
   const render = (state: Immutable<State>, dispatch: Dispatch<AppMsg<Msg, Route>>): void => {
     ReactDom.render(
-        <app.view state={state} dispatch={dispatch} />,
+      <app.view state={state} dispatch={dispatch} />,
       element
     );
   };
