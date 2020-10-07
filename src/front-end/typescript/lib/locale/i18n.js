@@ -4,7 +4,6 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import fr from './fr.json';
 import en from './en.json';
-const defaultLanguage = 'fr';
 const resources = {
   en: {
     translation: en
@@ -22,9 +21,7 @@ i18n
   .init({
     debug: process.env.NODE_ENV === "development",
     resources,
-    lng: defaultLanguage,
     nonExplicitWhitelist: true,
-    load: 'languageOnly', // do not try to load fr-FR or en-US
     fallbackLng: 'en',
     whitelist: ['en', 'fr'],
  
@@ -48,6 +45,7 @@ i18n
       useCookie: true,
       caches: ['localStorage', 'cookie'],
       excludeCacheFor: ['cimode'], // languages to not persist (cookie, localStorage)
+      load: 'languageOnly', // do not try to load fr-FR or en-US
     }
   });
  
