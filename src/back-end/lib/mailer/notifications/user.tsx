@@ -1,8 +1,8 @@
-import { CONTACT_EMAIL } from 'back-end/config';
 import { Emails } from 'back-end/lib/mailer';
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import React from 'react';
+import { CONTACT_EMAIL } from 'shared/config';
 import { Organization } from 'shared/lib/resources/organization';
 import { User } from 'shared/lib/resources/user';
 

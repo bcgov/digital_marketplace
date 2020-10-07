@@ -1,6 +1,7 @@
 import { count } from '@wordpress/wordcount';
 import { get, isArray, isBoolean, repeat } from 'lodash';
 import moment, { isDate, Moment } from 'moment-timezone';
+import { TIMEZONE } from 'shared/config';
 import { Comparison } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -107,8 +108,6 @@ export function parseDate(raw: string): Date | null {
     return null;
   }
 }
-
-const TIMEZONE = 'America/Toronto';
 
 export function normalizeDateTimezone(date: Date | string): Moment {
   return moment(date).tz(TIMEZONE);

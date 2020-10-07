@@ -1,13 +1,24 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import dotenv from 'dotenv';
+import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
-import { join, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
 import SendmailTransport from 'nodemailer/lib/sendmail-transport';
 
+// HARDCODED CONFIG
+// Offset for total opportunity metrics displayed on landing page
+export const TOTAL_AWARDED_COUNT_OFFSET = 62;
+
+export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
+
+export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
+
+export const MAILER_REPLY = get('MAILER_REPLY', 'noreply@digitalmarketplace.gov.bc.ca');
+
+// ENV CONFIG
 // export the root directory of the repository.
-// assumed the code is running via $ROOT/build/back-end/back-end/start.js
-export const REPOSITORY_ROOT_DIR = resolve(__dirname, '../../../');
+export const REPOSITORY_ROOT_DIR = dirname(findUp.sync('package.json') || '') || __dirname;
 
 // Load environment variables from a .env file.
 dotenv.config({
@@ -41,7 +52,11 @@ export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
 
 export const ORIGIN = get('ORIGIN', 'https://digital.gov.bc.ca/marketplace').replace(/\/*$/, '');
 
-export const CONTACT_EMAIL = get('CONTACT_EMAIL', 'digitalmarketplace@gov.bc.ca');
+export const SERVICE_TOKEN_HASH = get('SERVICE_TOKEN_HASH', '');
+
+export const SWAGGER_ENABLE = get('SWAGGER_ENABLE', '') === 'true';
+
+export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
 
 export function getPostgresUrl(): string | null {
   // *SERVICE* variables are set automatically by OpenShift.
@@ -62,16 +77,19 @@ export function getPostgresUrl(): string | null {
 
 export const POSTGRES_URL = getPostgresUrl();
 
-export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
-
 export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
 export const FRONT_END_BUILD_DIR = resolve(REPOSITORY_ROOT_DIR, 'build/front-end');
 
+const mailerPort = parseInt(get('MAILER_PORT', '25'), 10);
 const productionMailerConfigOptions = {
   host: get('MAILER_HOST', ''),
-  port: parseInt(get('MAILER_PORT', '25'), 10),
-  secure: false,
+  port: mailerPort,
+  auth: {
+    user: get('MAILER_USERNAME', ''),
+    pass: get('MAILER_PASSWORD', '')
+  },
+  secure: mailerPort === 465 ? true : false,
   connectionTimeout: 5000,
   greetingTimeout: 5000,
   ignoreTLS: false,
@@ -105,9 +123,7 @@ const developmentMailerConfigOptions: SendmailTransport.Options = {
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
 
-export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
-
-export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NOREPLY}>`);
+export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_REPLY}>`);
 
 export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
 
@@ -125,11 +141,6 @@ export const KNEX_DEBUG = get('KNEX_DEBUG', '') === 'true';
 
 // Configuration for CWU/SWU auto-update hooks
 export const UPDATE_HOOK_THROTTLE = parseInt(get('UPDATE_HOOK_THROTTLE', '60000'), 10);
-
-// Offset for total opportunity metrics displayed on landing page
-export const TOTAL_AWARDED_COUNT_OFFSET = parseInt(get('TOTAL_AWARDED_COUNT_OFFSET', '62'), 10);
-
-export const TOTAL_AWARDED_VALUE_OFFSET = parseInt(get('TOTAL_AWARDED_VALUE_OFFSET', '13782000'), 10);
 
 // Maximum image dimensions for user and organization avatars
 export const AVATAR_MAX_IMAGE_WIDTH = parseInt(get('AVATAR_MAX_IMAGE_WIDTH', '500'), 10);
@@ -220,6 +231,13 @@ export function getConfigErrors(): string[] {
     errors = errors.concat([
       'MAILER_* variables must be properly specified for production.',
       'MAILER_HOST and MAILER_PORT (positive integer) must all be specified.'
+    ]);
+  }
+
+  if (ENV === 'production' && (!!productionMailerConfigOptions.auth.user !== !!productionMailerConfigOptions.auth.pass)) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for production.',
+      'MAILER_USERNAME and MAILER_PASSWORD must be either both specified or both absent'
     ]);
   }
 /*

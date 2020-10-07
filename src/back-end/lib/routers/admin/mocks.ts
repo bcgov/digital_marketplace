@@ -1,4 +1,5 @@
 import { generateUuid } from 'back-end/lib';
+import { CWU_MAX_BUDGET, SWU_MAX_BUDGET } from 'shared/config';
 import { setDateTo4PM } from 'shared/lib';
 import { Affiliation, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
@@ -26,7 +27,8 @@ export const vendorUser: User = {
   idpUsername: 'vendor_user',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'vendor_user'
 };
 
 export const vendorUserSlim: UserSlim = {
@@ -47,7 +49,8 @@ export const govUser: User = {
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'username'
 };
 
 export const adminUser: User = {
@@ -63,7 +66,8 @@ export const adminUser: User = {
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'username'
 };
 
 export const cwuOpportunity: CWUOpportunity = {
@@ -75,7 +79,7 @@ export const cwuOpportunity: CWUOpportunity = {
   remoteOk: true,
   remoteDesc: '',
   location: 'Location',
-  reward: 70000,
+  reward: CWU_MAX_BUDGET,
   skills: ['Skill'],
   description: 'Description',
   proposalDeadline: date,
@@ -169,7 +173,7 @@ export const swuOpportunity: SWUOpportunity = {
   remoteOk: true,
   remoteDesc: '',
   location: 'Location',
-  totalMaxBudget: 2000000,
+  totalMaxBudget: SWU_MAX_BUDGET,
   minTeamMembers: 3,
   mandatorySkills: ['Mandatory Skill'],
   optionalSkills: [],

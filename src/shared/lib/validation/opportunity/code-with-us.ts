@@ -1,4 +1,5 @@
 import { uniq } from 'lodash';
+import { CWU_MAX_BUDGET } from 'shared/config';
 import { setDateTo4PM } from 'shared/lib';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityClosed, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { ArrayValidation, invalid, mapValid, optional, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
@@ -40,7 +41,7 @@ export function validateLocation(raw: string): Validation<string> {
 }
 
 export function validateReward(raw: string | number): Validation<number> {
-  return validateNumber(raw, 1, 70000, 'reward', 'a');
+  return validateNumber(raw, 1, CWU_MAX_BUDGET, 'reward', 'a');
 }
 
 export function validateSkills(raw: string[]): ArrayValidation<string> {
@@ -79,7 +80,7 @@ export function validateSubmissionInfo(raw: string): Validation<string> {
 }
 
 export function validateAcceptanceCriteria(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Acceptance Criteria', 1, 2000);
+  return validateGenericString(raw, 'Acceptance Criteria', 1, 5000);
 }
 
 export function validateEvaluationCriteria(raw: string): Validation<string> {

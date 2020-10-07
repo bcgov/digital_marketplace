@@ -40,9 +40,17 @@ export function send(params: SendParams): Promise<void> {
 
 export function makeSend<Args extends unknown[]>(makeEmails: (...args: Args) => Promise<Emails>): (...args: Args) => Promise<void> {
   return async (...args) => {
-    const emails = await makeEmails(...args);
-    for (const email of emails) {
-      await send(email);
+    try {
+      const emails = await makeEmails(...args);
+      for (const email of emails) {
+        await send(email);
+      }
+    } catch (e) {
+        logger.error('Unable to create email content', {
+          errorMessage: e.message,
+          errorStack: e.error,
+          args
+        });
     }
   };
 }

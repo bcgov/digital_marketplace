@@ -1,3 +1,4 @@
+import { CWU_PAYMENT_OPTIONS_URL } from 'front-end/config';
 import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
@@ -6,6 +7,7 @@ import HowItWorksItem from 'front-end/lib/views/how-it-works-item';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
@@ -40,7 +42,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const TitleView: View = () => {
   return (
-    <div className='bg-blue-light-alt pt-4 pb-6 pb-md-7'>
+    <div className='bg-c-learn-more-bg pt-4 pb-6 pb-md-7'>
       <Container>
         <Row>
           <Col xs='12'>
@@ -49,10 +51,10 @@ const TitleView: View = () => {
         </Row>
         <Row>
           <Col xs='12' md='8'>
-            <p className='mb-0'><em>Code With Us</em> is a procurement mechanism for public sector organizations in British Columbia to pay developers for code.</p>
+            <p className='mb-0'><em>Code With Us</em> is a procurement mechanism for public sector organizations in {COPY.region.name.long} to pay developers for code.</p>
           </Col>
           <Col md='4'>
-            <img className='d-none d-md-block position-absolute ml-6' src={prefixPath('/images/illustrations/code_with_us_learn_more.svg')} />
+            <img style={{ maxWidth: '250px' }} className='d-none d-md-block position-absolute ml-6' src={prefixPath('/images/illustrations/code_with_us_learn_more.svg')} />
           </Col>
         </Row>
       </Container>
@@ -116,42 +118,32 @@ const VendorHIW: View = () => {
       <h3 className='mb-4'>How It Works</h3>
       <HowItWorksItem
         symbol_={adt('icon', 'search' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Search'
         description='Find an opportunity that matches your skills and interest. The acceptance criteria describes what you need to deliver to get paid the fixed price.'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'comments-alt' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Connect'
         description='Speak directly with the opportunity contact to get more clarity. If you have suggestions, or think the price is too low, say so!'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'paper-plane' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Apply'
         description='Submit a proposal using the app. If you are awarded the opportunity, you will be offered the exclusive right to work on the issue for a set period of time.'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'code' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Contribute'
         description='Work collaboratively and iteratively with the opportunity contact. Commit code early and often to ensure you are on the right track.'
         className='mb-4'
       />
       <HowItWorksItem
         symbol_={adt('icon', 'sack-dollar' as const)}
-        fgColor='white'
-        bgColor='purple'
         title='Get Paid'
-        description={(<p>Once the acceptance criteria is met and your code is merged, submit your invoice and expect payment within 30 days. Read more about payment options <Link dest={adt('external', 'https://github.com/BCDevExchange/code-with-us/wiki/4.-Payment')}>here</Link>.</p>)}
+        description={(<p>Once the acceptance criteria is met and your code is merged, submit your invoice and expect payment within 30 days. Read more about payment options <Link dest={adt('external', CWU_PAYMENT_OPTIONS_URL)}>here</Link>.</p>)}
         className='mb-4'
       />
     </div>
@@ -176,7 +168,7 @@ const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
               chevronWidth={2}
               chevronHeight={2}
               open={state.isPublicSectorAccordionOpen}>
-                <div className='mb-3'>If you manage an open source digital product in the British Columbia public sector, <em>Code With Us</em> can help you access talented developers and pay for code quickly.</div>
+                <div className='mb-3'>If you manage an open source digital product in the {COPY.region.name.long} public sector, <em>Code With Us</em> can help you access talented developers and pay for code quickly.</div>
                 <div className='mb-5'>Post an opportunity, evaluate proposals, assign a developer and get to work!</div>
                 <div className='d-flex flex-row mt-5 flex-nowrap'>
                   <Link
@@ -211,7 +203,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   fullWidth: true,
-  backgroundColor: 'blue-light-alt',
+  backgroundColor: 'c-learn-more-bg',
   init,
   update,
   view,

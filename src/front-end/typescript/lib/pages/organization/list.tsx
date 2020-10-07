@@ -148,7 +148,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         button: true,
         outline: true,
         symbol_: leftPlacement(iconLinkSymbol('building')),
-        color: 'white',
+        color: 'c-nav-fg-alt',
         dest: routeDest(adt('userProfile', {
           userId: state.sessionUser.id,
           tab: 'organizations' as const

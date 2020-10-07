@@ -7,6 +7,8 @@ import { routeDest } from 'front-end/lib/views/link';
 import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Row } from 'reactstrap';
+import * as cwu from 'shared/lib/resources/opportunity/code-with-us';
+import * as swu from 'shared/lib/resources/opportunity/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -52,7 +54,7 @@ const view: ComponentView<State, Msg> = () => {
           img={prefixPath('/images/illustrations/code_with_us.svg')}
           title='Code With Us'
           className='mb-4 mb-md-0'
-          description={(<span>Use a <em>Code With Us</em> opportunity to pay a fixed price of up to $70,000 for the delivery of code that meets your acceptance criteria.</span>)}
+          description={(<span>Use a <em>Code With Us</em> opportunity to pay a fixed price of up to {cwu.FORMATTED_MAX_BUDGET} for the delivery of code that meets your acceptance criteria.</span>)}
           wideLinks
           links={[
             {
@@ -73,7 +75,7 @@ const view: ComponentView<State, Msg> = () => {
         <ProgramCard
           img={prefixPath('/images/illustrations/sprint_with_us.svg')}
           title='Sprint With Us'
-          description={(<span>Use a <em>Sprint With Us</em> opportunity to procure an Agile product development team for your digital service at a variable cost of up to $2,000,000.</span>)}
+          description={(<span>Use a <em>Sprint With Us</em> opportunity to procure an Agile product development team for your digital service at a variable cost of up to {swu.FORMATTED_MAX_BUDGET}.</span>)}
           wideLinks
           links={[
             {
@@ -97,7 +99,7 @@ const view: ComponentView<State, Msg> = () => {
 };
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
-  backgroundColor: 'blue-light-alt-2',
+  backgroundColor: 'c-opportunity-create-bg',
   //verticallyCentered: true,
   init,
   update,

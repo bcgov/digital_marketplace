@@ -17,7 +17,7 @@ export interface Props {
   className?: string;
 }
 
-export const HowItWorksItem: View<Props> = ({ symbol_, mobileSymbol, bgColor = 'purple', fgColor = 'white', title, description, className }) => {
+export const HowItWorksItem: View<Props> = ({ symbol_, mobileSymbol, bgColor = 'c-how-it-works-item-bg', fgColor = 'white', title, description, className }) => {
   mobileSymbol = mobileSymbol || symbol_;
   return (
     <Row className={className}>

@@ -771,7 +771,7 @@ const ReviewPhaseView: View<ReviewPhaseViewProps> = ({ className, title, icon, p
                     {m.user.name}
                   </Link>
                   {m.scrumMaster
-                    ? (<Badge text='Scrum Master' color='purple' className='ml-3' />)
+                    ? (<Badge text='Scrum Master' color='c-proposal-swu-form-scrum-master' className='ml-3' />)
                     : null}
                   {m.membershipStatus === MembershipStatus.Pending
                     ? (<PendingBadge className={m.scrumMaster ? 'ml-2' : 'ml-3'} />)
@@ -810,7 +810,7 @@ const ReviewTeamQuestionResponseView: View<ReviewTeamQuestionResponseViewProps> 
     <Accordion
       className={className}
       toggle={() => toggleAccordion()}
-      color='blue-dark'
+      color='c-proposal-swu-form-team-question-response-heading'
       title={`Question ${index + 1}`}
       titleClassName='h3 mb-0'
       chevronWidth={1.5}

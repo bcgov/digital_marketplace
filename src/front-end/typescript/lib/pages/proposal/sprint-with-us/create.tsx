@@ -185,7 +185,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
 
   sidebar: sidebarValid({
     size: 'large',
-    color: 'blue-light',
+    color: 'c-sidebar-instructional-bg',
     view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Create a Sprint With Us Proposal',
       getDescription: state => (
@@ -232,7 +232,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       },
       {
         children: 'Cancel',
-        color: 'white',
+        color: 'c-nav-fg-alt',
         disabled: isLoading,
         onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }

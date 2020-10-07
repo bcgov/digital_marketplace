@@ -1,12 +1,13 @@
 import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
 import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { immutable, Immutable } from 'front-end/lib/framework';
+import * as AddendaTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/addenda';
 import * as HistoryTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/history';
 import * as OpportunityTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity';
 import * as ProposalsTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/proposals';
 import * as SummaryTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab/summary';
 import { routeDest } from 'front-end/lib/views/link';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { canAddAddendumToCWUOpportunity, CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 
@@ -28,6 +29,7 @@ export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 export interface Tabs {
   summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
   opportunity: TabbedPage.Tab<Params, OpportunityTab.State, OpportunityTab.InnerMsg>;
+  addenda: TabbedPage.Tab<Params, AddendaTab.State, AddendaTab.InnerMsg>;
   proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
   history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
 }
@@ -42,6 +44,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
   switch (raw) {
     case 'summary':
     case 'opportunity':
+    case 'addenda':
     case 'proposals':
     case 'history':
       return raw;
@@ -57,6 +60,12 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
         component: OpportunityTab.component,
         icon: 'file-code',
         title: 'Opportunity'
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case 'addenda':
+      return {
+        component: AddendaTab.component,
+        icon: 'file-plus',
+        title: 'Addenda'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'proposals':
       return {
@@ -80,30 +89,36 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
   }
 }
 
-export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarLink {
+export function makeSidebarLink(tab: TabId, opportunityId: Id, activeTab: TabId): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
-  return {
+  return adt('link', {
     icon,
     text: title,
     active: activeTab === tab,
     dest: routeDest(adt('opportunityCWUEdit', { opportunityId, tab }))
-  };
+  });
 }
 
-export async function makeSidebarState(opportunityId: Id, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+export async function makeSidebarState(opportunity: CWUOpportunity, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
   return immutable(await MenuSidebar.init({
-    links: [
-      makeSidebarLink('summary', opportunityId, activeTab),
-      makeSidebarLink('opportunity', opportunityId, activeTab),
-      makeSidebarLink('proposals', opportunityId, activeTab),
-      makeSidebarLink('history', opportunityId, activeTab),
-      {
-        icon: 'external-link',
+    items: [
+      adt('heading', 'Summary'),
+      makeSidebarLink('summary', opportunity.id, activeTab),
+      adt('heading', 'Opportunity Management'),
+      makeSidebarLink('opportunity', opportunity.id, activeTab),
+      //Only show Addenda sidebar link if opportunity can have addenda.
+      ...(canAddAddendumToCWUOpportunity(opportunity) ? [makeSidebarLink('addenda', opportunity.id, activeTab)] : []),
+      makeSidebarLink('history', opportunity.id, activeTab),
+      adt('heading', 'Opportunity Evaluation'),
+      makeSidebarLink('proposals', opportunity.id, activeTab),
+      adt('heading', 'Need Help?'),
+      adt('link', {
+        icon: 'external-link-alt',
         text: 'Read Guide',
         active: false,
         newTab: true,
         dest: routeDest(adt('content', 'code-with-us-opportunity-guide'))
-      }
+      })
     ]
   }));
 }

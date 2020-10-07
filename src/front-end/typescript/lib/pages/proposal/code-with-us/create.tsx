@@ -183,7 +183,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
 
   sidebar: sidebarValid({
     size: 'large',
-    color: 'blue-light',
+    color: 'c-sidebar-instructional-bg',
     view: makeInstructionalSidebar<ValidState, Msg>({
       getTitle: () => 'Create a Code With Us Proposal',
       getDescription: state => (
@@ -210,8 +210,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             <SubmitProposalTerms.view
               opportunityType='Code With Us'
               action='submitting'
-              termsTitle='Digital Marketplace Terms & Conditions'
-              termsRoute={adt('content', 'terms-and-conditions')}
+              termsTitle='Code With Us Terms & Conditions'
+              termsRoute={adt('content', 'code-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),
@@ -288,7 +288,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       },
       {
         children: 'Cancel',
-        color: 'white',
+        color: 'c-nav-fg-alt',
         disabled: isLoading,
         onClick: () => dispatch(adt('showModal', 'cancel' as const))
       }

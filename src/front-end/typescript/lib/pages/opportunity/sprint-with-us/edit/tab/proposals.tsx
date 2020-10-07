@@ -8,11 +8,11 @@ import * as opportunityToasts from 'front-end/lib/pages/opportunity/sprint-with-
 import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
 import Badge from 'front-end/lib/views/badge';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { canSWUOpportunityBeAwarded, canViewSWUOpportunityProposals, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { canSWUOpportunityBeAwarded, canViewSWUOpportunityProposals, hasSWUOpportunityPassedCodeChallenge, isSWUOpportunityAcceptingProposals, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { canSWUProposalBeAwarded, compareSWUProposalsForPublicSector, getSWUProponentName, NUM_SCORE_DECIMALS, SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { ADT, adt, Id } from 'shared/lib/types';
 
@@ -286,13 +286,13 @@ const makeCardData = (opportunity: SWUOpportunity, proposals: SWUProposalSlim[])
     },
     {
       icon: 'star-full',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Top Score',
       value: isAwarded && highestScore ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     },
     {
       icon: 'star-half',
-      iconColor: 'yellow',
+      iconColor: 'c-report-card-icon-highlight',
       name: 'Avg. Score',
       value: isAwarded && averageScore ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING
     }
@@ -315,6 +315,16 @@ const view: ComponentView<State, Msg> = (props) => {
         <Row>
           <Col xs='12' className='d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4'>
             <h4 className='mb-0'>Proposals</h4>
+            {state.canViewProposals && hasSWUOpportunityPassedCodeChallenge(opportunity)
+              ? (<Link
+                  newTab
+                  color='info'
+                  className='mt-3 mt-md-0'
+                  symbol_={rightPlacement(iconLinkSymbol('file-export'))}
+                  dest={routeDest(adt('proposalSWUExportAll', { opportunityId: opportunity.id, anonymous: false }))}>
+                  Export All Proposals
+                </Link>)
+              : null}
           </Col>
           <Col xs='12'>
             {state.canViewProposals && state.proposals.length

@@ -279,7 +279,7 @@ export const component: Tab.Component<State, Msg> = {
           children: 'Cancel',
           disabled: isLoading,
           onClick: () => dispatch(adt('cancelEditing')),
-          color: 'white'
+          color: 'c-nav-fg-alt'
         }
       ]);
     }

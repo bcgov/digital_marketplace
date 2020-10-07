@@ -6,6 +6,7 @@ import HowItWorksItem from 'front-end/lib/views/how-it-works-item';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { COPY, VENDOR_IDP_NAME } from 'shared/config';
 import { ADT, adt } from 'shared/lib/types';
 
 export interface State {
@@ -40,7 +41,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 
 const TitleView: View = () => {
   return (
-    <div className='bg-blue-light-alt pt-4 pb-6 pb-md-7'>
+    <div className='bg-c-learn-more-bg pt-4 pb-6 pb-md-7'>
       <Container>
         <Row>
           <Col xs='12'>
@@ -49,10 +50,10 @@ const TitleView: View = () => {
         </Row>
         <Row>
           <Col xs='12' md='8'>
-            <p className='mb-0'><em>Sprint With Us</em> is a procurement mechanism that allows the Government of B.C. to procure Agile software development teams.</p>
+            <p className='mb-0'><em>Sprint With Us</em> is a procurement mechanism that allows the {COPY.gov.name.short} to procure Agile software development teams.</p>
           </Col>
           <Col md='4'>
-            <img className='d-none d-md-block position-absolute mt-n5 ml-6' src={prefixPath('/images/illustrations/sprint_with_us_learn_more.svg')} />
+            <img style={{ maxWidth: '213px' }} className='d-none d-md-block position-absolute mt-n5 ml-6' src={prefixPath('/images/illustrations/sprint_with_us_learn_more.svg')} />
           </Col>
         </Row>
       </Container>
@@ -153,18 +154,14 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
                 <HowItWorksItem
                   symbol_={adt('text', '1')}
                   mobileSymbol={adt('text', '1.')}
-                  fgColor='white'
-                  bgColor='purple'
                   title='Sign In to Your Vendor Account'
                   description={(
-                    <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using GitHub. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', {}))}>sign up</Link>, first.</div>)}
+                    <div><Link dest={routeDest(adt('signIn', {}))}>Sign in</Link> to your Digital Marketplace Vendor account using {VENDOR_IDP_NAME}. If you do not yet have an account, you must <Link dest={routeDest(adt('signUpStepOne', {}))}>sign up</Link>, first.</div>)}
                   className='mb-4'
                 />
                 <HowItWorksItem
                   symbol_={adt('text', '2')}
                   mobileSymbol={adt('text', '2.')}
-                  fgColor='white'
-                  bgColor='purple'
                   title='Register Your Organization'
                   description={(
                     <div>
@@ -177,8 +174,6 @@ export const HowToApplyView: ComponentView<State, Msg> = ({ state, dispatch }) =
                 <HowItWorksItem
                   symbol_={adt('text', '3')}
                   mobileSymbol={adt('text', '3.')}
-                  fgColor='white'
-                  bgColor='purple'
                   title='Become a Qualified Supplier'
                   description={(
                     <div>
@@ -208,7 +203,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   fullWidth: true,
-  backgroundColor: 'blue-light-alt',
+  backgroundColor: 'c-learn-more-bg',
   init,
   update,
   view,
