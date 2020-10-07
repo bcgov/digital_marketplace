@@ -7,6 +7,7 @@ import Separator from 'front-end/lib/views/separator';
 import React, { Fragment, MouseEvent } from 'react';
 import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
+import { useTranslation } from 'react-i18next';
 export type Params = null;
 
 export interface State {
@@ -333,6 +334,7 @@ const MobileMenu: View<Props> = props => {
 };
 
 const TopNavbar: View<Props> = props => {
+  const { /* t, */ i18n } = useTranslation();
   const { state, dispatch, isLoading } = props;
   return (
     <div className='main-nav-top-navbar-wrapper'>
@@ -353,7 +355,14 @@ const TopNavbar: View<Props> = props => {
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
                 <ul className='main-nav-top-navbar-list'>  
                   <li>
-                    <a href="#" lang="en"><span>English</span></a>
+                    <a href="#" lang="en"
+                      onClick={() => {
+                        console.log(i18n);
+                        i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr');
+                      }}
+                    >
+                      <span>{i18n.language === 'fr' ? 'English' : 'Français'}</span>
+                    </a>
                   </li>
                   <li>
                     <a href="#">Nous joindre</a>

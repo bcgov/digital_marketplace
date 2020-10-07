@@ -43,6 +43,7 @@ import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import { ThemeColor } from 'front-end/lib/types';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import { useTranslation } from 'react-i18next';
 import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import { default as React } from 'react';
@@ -521,15 +522,16 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
 }
 
 function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
+  const { t } = useTranslation();
   const sessionUser = state.shared.session && state.shared.session.user;
   let links: Nav.NavLink[] = [];
   const opportunitiesLink: Nav.NavLink = {
-    children: 'Opportunités',
+    children: t('links.opportunities'),
     active: state.activeRoute.tag === 'opportunities',
     dest: routeDest(adt('opportunities', null))
   };
   const organizationsLink: Nav.NavLink = {
-    children: 'Organisations',
+    children: t('links.organizations'),
     active: state.activeRoute.tag === 'orgList',
     dest: routeDest(adt('orgList', null))
   };
@@ -558,7 +560,7 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
     // User has not signed in.
     links = links.concat([
       {
-        children: 'Accueil',
+        children: t('links.home'),
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },

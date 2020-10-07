@@ -585,7 +585,7 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
   // Render the view whenever state changes.
   const render = (state: Immutable<State>, dispatch: Dispatch<AppMsg<Msg, Route>>): void => {
     ReactDom.render(
-        <app.view state={state} dispatch={dispatch} />,
+      <app.view state={state} dispatch={dispatch} />,
       element
     );
   };

@@ -8,7 +8,7 @@ import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 
 const IMG_MAX_WIDTH = '400px';
 
@@ -40,21 +40,13 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   return (
     <Container className='hero-component pb-7 pb-md-8 pt-sm-4 pt-md-3'>
       <Row className='justify-content-left text-left'>
         <Col md='5'>
           <h1 className='roboto' style={{lineHeight: '3.75rem'}}>
-            <p>PP: {t('welcome', 'Hello there')} 
-              <button className="btn btn-primary" onClick={() => {
-                 console.log(i18n);
-                 i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr');
-              }}>
-                Changer
-              </button>
-            </p>
-            Collaborez <br/>avec le gouvernement <br/>du Québec
+            <Trans i18nKey="landing.header" />
           </h1>
           <div className='mt-3 mb-3'>
           Le marché numérique gouvernemental est une nouvelle
@@ -69,14 +61,14 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
             dest={routeDest(adt('content', 'about'))}
             color='primary'
             className='mr-3'>
-            À propos
+             {t('links.about')}
           </Link>
           <Link
             button
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             dest={routeDest(adt('opportunities', null))}
             color='primary'>
-            Parcourez les opportunités
+             {t('links.browse-opportunities')}
           </Link>
         </Col>
         <Col xs='12' sm='10' md='7'>
