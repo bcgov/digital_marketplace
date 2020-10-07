@@ -75,7 +75,6 @@ export type ThemeColor
   | 'body'
   | 'light'
   | 'dark'
-  | 'qcgov-blue'
   | UtilityColor
   | Grays;
 

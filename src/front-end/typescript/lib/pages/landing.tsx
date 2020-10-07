@@ -143,7 +143,7 @@ const AppInfo: View = () => {
       </Row>
       <Row>
         <Col xs='12' className='d-flex align-items-center justify-content-center'>
-          <div className='px-1 pt-1 mt-4 bg-qcgov-blue' style={{ width: '5rem' }} />
+          <div className='px-1 pt-1 mt-4' style={{ width: '5rem' }} />
         </Col>
       </Row>
     </Container>
