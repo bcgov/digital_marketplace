@@ -2,7 +2,6 @@ import { makePageMetadata, prefixPath } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { TextColor } from 'front-end/lib/types';
 import { BulletPoint } from 'front-end/lib/views/bullet-point';
 import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import ProgramCard from 'front-end/lib/views/program-card';
@@ -109,7 +108,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreCWU', null)),
                 children: ['Plus d\'information'],
-                color: 'qcgov-blue' as TextColor,
+                color: 'primary',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -118,6 +117,7 @@ const Programs: View = () => {
           <ProgramCard
             img={prefixPath('/images/illustrations/cocreez_avec_nous.svg')}
             title='Cocréez avec nous'
+            className='mb-4 mb-md-0'
             description={
               (<div>
                 <div>Fournissez une équipe Agile pour travailler avec un gestionnaire de produit gouvernemental dans un environnement DevOps moderne.</div>
@@ -129,7 +129,7 @@ const Programs: View = () => {
                 button: true,
                 dest: routeDest(adt('learnMoreSWU', null)),
                 children: [('Plus d\'information')],
-                color: 'qcgov-blue' as TextColor,
+                color: 'primary',
                 outline: true,
                 symbol_: rightPlacement(iconLinkSymbol('arrow-right'))
               }
@@ -153,7 +153,7 @@ const AppInfo: View = () => {
       </Row>
       <Row>
         <Col xs='12' className='d-flex align-items-center justify-content-center'>
-          <div className='px-1 pt-1 mt-4 bg-qcgov-blue' style={{ width: '5rem' }} />
+          <div className='px-1 pt-1 mt-4' style={{ width: '5rem' }} />
         </Col>
       </Row>
     </Container>
@@ -165,7 +165,7 @@ const VendorRoleInfo: View = () => {
     <Container className='mt-7 mt-md-9'>
       <Row>
         <Col xs='12' className='order-2 order-md-1'>
-          <h6 className='text-qcgov-blue font-size-large'>Fournisseurs</h6>
+          <h6 className='text-c-landing-role-heading font-size-large'>Fournisseurs</h6>
         </Col>
         <Col xs='12' md='6' className='order-3 order-md-2'>
           <div className='mb-3 font-size-large font-weight-light'>Collaborez avec la fonction publique afin de créer de produits numériques innovants.</div>
@@ -200,7 +200,7 @@ const GovRoleInfo: View = () => {
         <Col cs='12' md='5'>
           <Row>
             <Col xs='12'>
-              <h6 className='text-qcgov-blue font-size-large'>Employés de la fonction publique</h6>
+              <h6 className='text-c-landing-role-heading font-size-large'>Employés de la fonction publique</h6>
             </Col>
             <Col xs='12'>
               <div className='mb-3 font-size-large font-weight-light'>Faites affaires avec des développeurs talentueux et qualifiés pour créer vos produits numériques.</div>

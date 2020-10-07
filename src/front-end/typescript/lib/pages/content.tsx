@@ -6,6 +6,7 @@ import Markdown from 'front-end/lib/views/markdown';
 import { includes } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isValid, valid, Validation } from 'shared/lib/validation';
 
@@ -19,6 +20,7 @@ export type ContentId
   | 'copyright'
   | 'code-with-us-opportunity-guide'
   | 'code-with-us-proposal-guide'
+  | 'code-with-us-terms-and-conditions'
   | 'sprint-with-us-opportunity-guide'
   | 'sprint-with-us-proposal-guide'
   | 'sprint-with-us-terms-and-conditions';
@@ -53,7 +55,7 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Disclaimer'
   },
   'privacy': {
-    title: 'B.C. Government Website Privacy Statement'
+    title: `${COPY.gov.name.long} Website Privacy Statement`
   },
   'accessibility': {
     title: 'Accessibility'
@@ -67,6 +69,9 @@ const DEFINITIONS: ContentDefinitions = {
   'code-with-us-proposal-guide': {
     title: 'Code With Us Proposal Guide'
   },
+  'code-with-us-terms-and-conditions': {
+    title: 'Code With Us Terms & Conditions'
+  },
   'sprint-with-us-opportunity-guide': {
     title: 'Sprint With Us Opportunity Guide'
   },
@@ -74,7 +79,7 @@ const DEFINITIONS: ContentDefinitions = {
     title: 'Sprint With Us Proposal Guide'
   },
   'sprint-with-us-terms-and-conditions': {
-    title: 'Sprint With Us Terms and Conditions'
+    title: 'Sprint With Us Terms & Conditions'
   }
 };
 

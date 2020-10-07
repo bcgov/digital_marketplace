@@ -167,7 +167,7 @@ export function approveJoinRequestCallToAction(user: User, affiliation: Affiliat
   return {
     text: 'Approve',
     url: templates.makeUrl(`users/${user.id}?tab=organizations&invitationAffiliationId=${affiliation.id}&invitationResponse=approve`),
-    style: { backgroundColor: '#2E8540' }
+    style: templates.styles.classes.buttonSuccess
   };
 }
 
@@ -175,6 +175,6 @@ export function rejectJoinRequestCallToAction(user: User, affiliation: Affiliati
   return {
     text: 'Reject',
     url: templates.makeUrl(`users/${user.id}?tab=organization&invitationAffiliationId=${affiliation.id}&invitationResponse=reject`),
-    style: { backgroundColor: '#D8292F' }
+    style: templates.styles.classes.buttonDanger
   };
 }

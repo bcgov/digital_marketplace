@@ -7,12 +7,12 @@ const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "digitalmarketplace@gov.bc.ca
 const PATH_PREFIX = process.env.PATH_PREFIX || "";
 const srcFrontEnd = path.resolve(__dirname, "./src/front-end");
 const srcBackEnd = path.resolve(__dirname, "./src/back-end");
+const srcScripts = path.resolve(__dirname, "./src/scripts");
 const srcShared = path.resolve(__dirname, "./src/shared");
 const buildFrontEnd = path.resolve(__dirname, "./build/front-end");
 const buildBackEnd = path.resolve(__dirname, "./build/back-end");
+const buildScripts = path.resolve(__dirname, "./build/scripts");
 const tmpFrontEnd = path.resolve(__dirname, "./tmp/grunt/front-end");
-const tmpBackEnd = path.resolve(__dirname, "./tmp/grunt/back-end");
-const tmpShared = path.resolve(__dirname, "./tmp/grunt/shared");
 global.gruntConfig = {
   helpers: {
     prefixPath: prefix(PATH_PREFIX)
@@ -45,6 +45,14 @@ global.gruntConfig = {
     },
     build: {
       dir: buildBackEnd
+    }
+  },
+  scripts: {
+    src: {
+      dir: srcScripts
+    },
+    build: {
+      dir: buildScripts
     }
   },
   shared: {
@@ -105,4 +113,13 @@ module.exports = function (grunt) {
     "shell:backEndTypeScript"
   ]);
   grunt.registerTask("back-end-build", [ `back-end-build-${NODE_ENV}` ]);
+  //scripts
+  grunt.registerTask("scripts-build-production", [
+    "clean:scriptsBuild",
+    "shell:scriptsTypeScript"
+  ]);
+  grunt.registerTask("scripts-build-development", [
+    "shell:scriptsTypeScript"
+  ]);
+  grunt.registerTask("scripts-build", [ `scripts-build-${NODE_ENV}` ]);
 };

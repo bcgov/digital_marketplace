@@ -70,7 +70,7 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
         <Col xs='12' md='4' className='mb-4 mb-md-0'>
           <ReportCard
             icon='star-full'
-            iconColor='yellow'
+            iconColor='c-report-card-icon-highlight'
             name='Winning Score'
             value={`${totalScore.toFixed(NUM_SCORE_DECIMALS)}%`} />
         </Col>

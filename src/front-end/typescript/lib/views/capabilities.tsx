@@ -31,7 +31,7 @@ const Capability: View<CapabilityProps> = ({ capability, fullTime, checked, inde
         : null}
       <div className={`py-1 font-size-small text-nowrap mr-2 ${checked || !showChecked ? 'text-body' : 'text-secondary'}`}>{capability}</div>
       {showFullOrPartTime
-        ? (<div style={{ width: '2rem', height: '1.75rem' }} className={`d-flex justify-content-center align-items-center flex-shrink-0 small ml-auto rounded font-weight-bold text-white ${fullTime ? 'bg-purple' : 'bg-purple-light'}`}>{fullTime ? 'F/T' : 'P/T'}</div>)
+        ? (<div style={{ width: '2rem', height: '1.75rem' }} className={`d-flex justify-content-center align-items-center flex-shrink-0 small ml-auto rounded font-weight-bold text-white ${fullTime ? 'bg-capability-ft-bg' : 'bg-capability-pt-bg'}`}>{fullTime ? 'F/T' : 'P/T'}</div>)
         : null}
     </div>
   );

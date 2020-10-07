@@ -95,7 +95,7 @@ interface FullTimeSwitchProps {
 
 const FullTimeSwitch: View<FullTimeSwitchProps> = ({ fullTime, disabled, index, dispatch }) => {
   const selectedClassName = (selected: boolean) => {
-    return selected ? 'bg-purple text-white' : 'text-secondary border';
+    return selected ? 'bg-c-capability-grid-switch text-white' : 'text-secondary border';
   };
   const baseSwitchClassName = 'd-flex justify-content-center align-items-center';
   const width = '2rem';

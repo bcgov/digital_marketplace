@@ -15,7 +15,7 @@ export interface Props {
 const ProgramCard: View<Props> = ({ img, title, description, links, wideLinks, className }) => {
   return (
     <Col xs='12' md='6' className={className}>
-      <div className='d-flex flex-column align-items-center bg-blue-light rounded-lg border p-4 p-sm-5 text-center h-100 shadow-hover'>
+      <div className='d-flex flex-column align-items-center bg-c-landing-programs-bg rounded-lg border p-4 p-sm-5 text-center h-100 shadow-hover'>
         <img src={img} className='w-100' style={{ maxHeight: '200px' }} alt={`${title} Image`} />
         <h2 className='roboto font-weight-normal my-4'>{title}</h2>
         <div className='mb-4 mb-sm-5'>{description}</div>

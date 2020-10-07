@@ -1,5 +1,6 @@
 import { DROPDOWN_CARET_SIZE } from 'front-end/config';
 import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 import Icon from 'front-end/lib/views/icon';
 import Link, { Dest, ExtendProps as ExtendLinkProps, iconLinkSymbol, rightPlacement } from 'front-end/lib/views/link';
 import Separator from 'front-end/lib/views/separator';
@@ -62,7 +63,7 @@ const NavLink: View<NavLinkProps> = props => {
     if (props.onClick) { return props.onClick(e); }
   };
   const linkProps = { ...props };
-  linkProps.color = linkProps.color || 'white';
+  linkProps.color = linkProps.color || 'c-nav-fg';
   return (
     <Link
       {...linkProps}
@@ -120,7 +121,7 @@ const NavAccountDropdown: View<NavAccountDropdown & { isOpen: boolean; dispatch:
             height: '2.75rem',
             objectFit: 'cover'
           }} />
-        <Icon name='caret-down' color='white' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
+        <Icon name='caret-down' color='c-nav-fg' className='ml-2' width={DROPDOWN_CARET_SIZE} height={DROPDOWN_CARET_SIZE} />
       </DropdownToggle>
       <DropdownMenu right>
         {linkGroups.map((group, i) => (
@@ -165,16 +166,17 @@ function isAccountActionButton(action: AccountAction): boolean {
 
 interface AccountActionProps {
   className?: string;
+  color?: ThemeColor;
   action: AccountAction;
   dispatch: Dispatch<Msg>;
 }
 
-const AccountAction: View<AccountActionProps> = ({ className = '', action, dispatch }) => {
+const AccountAction: View<AccountActionProps> = ({ className = '', color = 'c-nav-fg', action, dispatch }) => {
   switch (action.tag) {
     case 'text':
-      return (<div className={`${className} o-75 text-white`}>{action.value}</div>);
+      return (<div className={`${className} o-75 text-${color}`}>{action.value}</div>);
     case 'link':
-      return (<NavLink className={className} {...action.value} focusable={false} dispatch={dispatch} />);
+      return (<NavLink className={className} color={color} {...action.value} focusable={false} dispatch={dispatch} />);
   }
 };
 
@@ -216,6 +218,7 @@ const DesktopAccountMenu: View<Props> = props => {
               action={action}
               className={i !== menu.value.length - 1 ? 'mr-3' : ''}
               dispatch={dispatch}
+              color='c-nav-fg'
               key={`desktop-account-menu-action-${i}`} />
             ))}
         </Fragment>
@@ -246,6 +249,7 @@ const MobileAccountMenu: View<Props> = props => {
         return (
           <AccountAction
             action={clonedAction}
+            color='c-nav-fg-alt'
             className={`${i !== arr.length - 1 ? marginClassName : ''} ${active && !button ? 'font-weight-bold' : ''}`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`} />);
@@ -273,15 +277,16 @@ const MobileAccountMenu: View<Props> = props => {
 interface TitleProps extends Pick<Props, 'title' | 'homeDest'> {
   dispatch: Dispatch<Msg>;
   className?: string;
+  color?: ThemeColor;
 }
 
-const Title: View<TitleProps> = ({ title, homeDest, dispatch, className = '' }) => (
-  <div className={className}>
+const Title: View<TitleProps> = ({ title, homeDest, dispatch, color = 'c-nav-fg', className = '' }) => (
+  <div className={`nav-title ${className}`}>
     <NavLink
       dispatch={dispatch}
       children={title}
       focusable={false}
-      color='white'
+      color={color}
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : 'none' }}
       className='' />
@@ -297,7 +302,7 @@ const MobileMenu: View<Props> = props => {
       <Container>
         <Row>
           <Col xs='12'>
-            <Title title={props.title} homeDest={props.homeDest} dispatch={props.dispatch} className='d-inline-block mb-4' />
+            <Title title={props.title} color='c-nav-fg-alt' homeDest={props.homeDest} dispatch={props.dispatch} className='d-inline-block mb-4' />
           </Col>
         </Row>
         {appLinks.length
@@ -309,7 +314,7 @@ const MobileMenu: View<Props> = props => {
                       {...link}
                       focusable={false}
                       dispatch={props.dispatch}
-                      color='white'
+                      color='c-nav-fg-alt'
                       className={linkClassName(link, appLinks.length, i)}
                       key={`mobile-app-link-${i}`} />
                   ))}
@@ -342,7 +347,7 @@ const TopNavbar: View<Props> = props => {
                 </Link>
                 <Title title={props.title} homeDest={props.homeDest} dispatch={dispatch} className='ml-5 d-none d-md-block' />
                 {isLoading
-                  ? (<Spinner size='sm' color='blue-dark-alt' className='transition-indicator ml-3' />)
+                  ? (<Spinner size='sm' color='c-nav-bg-alt' className='transition-indicator ml-3' />)
                   : null}
               </div>
               <div className='d-none d-md-flex align-items-center flex-shrink-0'>
@@ -361,7 +366,7 @@ const TopNavbar: View<Props> = props => {
                   width={1.4}
                   height={1.4}
                   name={state.isMobileMenuOpen ? 'times' : 'bars'}
-                  color='white'
+                  color='c-nav-fg'
                   onClick={() => dispatch(adt('toggleMobileMenu'))} />
               </div>
             </Col>
@@ -383,6 +388,7 @@ const ContextualLinks: View<Props & { isOpen: boolean; toggle(): void; }> = prop
           {contextualActions.value.map((link, i, links) => {
             const linkProps = {
               ...link,
+              color: link.color || 'c-nav-fg-alt',
               size: link.button ? 'sm' : undefined,
               className: `ml-3 ${link.button ? '' : 'font-size-small'}`
             } as NavLink;
@@ -410,7 +416,7 @@ const DesktopBottomNavbar: View<Props> = props => {
                   <NavLink
                     {...link}
                     dispatch={props.dispatch}
-                    color='blue-dark-alt'
+                    color='c-nav-fg-alt'
                     className={linkClassName(link)} />
                   {i < appLinks.length - 1
                     ? (<Separator spacing='4' color='white' className='o-50'>|</Separator>)

@@ -2,7 +2,7 @@ import * as FormField from 'front-end/lib/components/form-field';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { userAvatarPath, userToKeyClockIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
+import { keyCloakIdentityProviderToTitleCase, userAvatarPath, userToKeyCloakIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
 import { AvatarFiletype } from 'front-end/lib/types';
 import FileLink from 'front-end/lib/views/file-link';
 import React from 'react';
@@ -78,7 +78,7 @@ export const init: Init<Params, State> = async ({ user }) => {
       child: {
         type: 'text',
         value: getString(user, 'idpUsername'),
-        id: 'user-profile-idir-username'
+        id: 'user-profile-idp-username'
       }
     })),
     email: immutable(await ShortText.init({
@@ -197,10 +197,8 @@ export const view: View<Props> = props => {
 
         <ShortText.view
           extraChildProps={{}}
-          help={userTypeToKeycloakIdentityProvider(state.user.type) === 'github'
-            ? 'Your unique GitHub username (or handle).'
-            : 'Your unique IDIR username.'}
-          label={userToKeyClockIdentityProviderTitleCase(state.user)}
+          help={`Your unique ${keyCloakIdentityProviderToTitleCase(userTypeToKeycloakIdentityProvider(state.user.type))} username.`}
+          label={userToKeyCloakIdentityProviderTitleCase(state.user) || undefined}
           disabled
           state={state.idpUsername}
           dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />

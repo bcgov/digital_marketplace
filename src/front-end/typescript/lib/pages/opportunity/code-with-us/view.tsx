@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, EMPTY_STRING } from 'front-end/config';
+import { EMPTY_STRING } from 'front-end/config';
 import { getAlertsValid, getContextualActionsValid, getMetadataValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, viewValid } from 'front-end/lib';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { AddendaList } from 'front-end/lib/components/addenda';
@@ -17,6 +17,7 @@ import Skills from 'front-end/lib/views/skills';
 import TabbedNav, { Tab } from 'front-end/lib/views/tabbed-nav';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
+import { CONTACT_EMAIL } from 'shared/config';
 import { formatAmount, formatDate, formatDateAtTime } from 'shared/lib';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { CWUOpportunity, DEFAULT_OPPORTUNITY_TITLE, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
@@ -238,23 +239,23 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
       <Col xs='12'>
         <h3 className='mb-0'>Details</h3>
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='toolbox-outline' text='Required Skills' />
         <p className='mb-2'>To submit a proposal for this opportunity, you must possess the following skills:</p>
         <Skills skills={opp.skills} />
       </Col>
-      <Col xs='12' className='mt-4'>
+      <Col xs='12' className='mt-5'>
         <InfoDetailsHeading icon='info-circle-outline' text='Description' />
         <Markdown source={opp.description || EMPTY_STRING} smallerHeadings openLinksInNewTabs />
       </Col>
       {opp.submissionInfo
-        ? (<Col xs='12' className='mt-4'>
+        ? (<Col xs='12' className='mt-5'>
             <InfoDetailsHeading icon='laptop-code-outline' text='Project Submission Information' />
             <p className='mb-0'>{opp.submissionInfo}</p>
           </Col>)
         : null}
       {opp.remoteOk && opp.remoteDesc
-        ? (<Col xs='12' className='mt-4'>
+        ? (<Col xs='12' className='mt-5'>
             <InfoDetailsHeading icon='laptop-outline' text='Remote Work Options' />
             <p className='mb-0' style={{ whiteSpace: 'pre-line' }}>{opp.remoteDesc}</p>
           </Col>)
@@ -391,7 +392,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   const viewerUser = state.viewerUser;
   if ((viewerUser && !isVendor(viewerUser)) || !isCWUOpportunityAcceptingProposals(state.opportunity)) { return null; }
   return (
-    <div className='bg-blue-light-alt py-5 mt-auto'>
+    <div className='bg-c-opportunity-view-apply-bg py-5 mt-auto'>
       <Container>
         <Row>
           <Col xs='12' md='8'>

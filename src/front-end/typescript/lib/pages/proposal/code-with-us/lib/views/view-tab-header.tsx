@@ -37,7 +37,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
       ? {
           name: 'Submitted By',
           children: isAdmin(viewerUser)
-            ? (<Link color='primary' dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
+            ? (<Link dest={routeDest(adt('userProfile', { userId: createdBy.id }))}>{createdBy.name}</Link>)
             : createdBy.name
         }
       : null
@@ -46,8 +46,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     <div>
       <Row>
         <Col xs='12'>
-          <div className='mb-2 font-size-small font-weight-bold text-secondary text-uppercase'>Code With Us Proposal</div>
-          <h3 className='mb-5'>Vendor Proposal</h3>
+          <h3 className='mb-5'>Code With Us: Vendor Proposal</h3>
         </Col>
       </Row>
       <Row>

@@ -29,7 +29,7 @@ const TabbedNav: View<Props> = ({ tabs, className = '' }) => {
               onClick={t.onClick}
               disabled={t.disabled}
               focusable={!t.active}
-              color={t.active ? 'body' : 'primary'}
+              color={t.active ? 'body' : undefined}
               className={`text-nowrap ${t.active ? 'active' : ''}`}>
               {t.count
                 ? (<span className='small' style={{ marginTop: '-0.1rem', marginRight: '0.35rem' }}><Badge pill color='warning' text={String(t.count)} /></span>)

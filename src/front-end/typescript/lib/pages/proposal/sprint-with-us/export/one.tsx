@@ -7,8 +7,8 @@ import ExportedProposal from 'front-end/lib/pages/proposal/sprint-with-us/lib/vi
 import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { getSWUProponentName, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
-import { User } from 'shared/lib/resources/user';
+import { getSWUProponentName, isSWUProposalInCodeChallenge, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -63,7 +63,8 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
     exportedAt={state.exportedAt}
     exportedBy={state.viewerUser}
     opportunity={state.opportunity}
-    proposal={state.proposal} />);
+    proposal={state.proposal}
+    anonymous={state.viewerUser.type !== UserType.Vendor && !isSWUProposalInCodeChallenge(state.proposal)} />);
 });
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {

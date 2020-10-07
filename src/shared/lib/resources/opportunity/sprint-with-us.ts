@@ -1,4 +1,5 @@
-import { isDateInTheFuture, isDateInThePast } from 'shared/lib';
+import { SWU_MAX_BUDGET } from 'shared/config';
+import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -17,6 +18,7 @@ export const MAX_TEAM_QUESTIONS = 100;
 export const MAX_TEAM_QUESTION_WORD_LIMIT = 3000;
 export const DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT = 300;
 export const DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE = 5;
+export const FORMATTED_MAX_BUDGET = formatAmount(SWU_MAX_BUDGET, '$');
 
 export enum SWUOpportunityPhaseType {
   Inception = 'INCEPTION',
