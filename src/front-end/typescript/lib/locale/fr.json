@@ -1,3 +1,12 @@
 {
-  "welcome": "Salut React"
+  "landing": {
+    "header": "Collaborez <br/>avec le gouvernement <br/>du Québec"
+  },
+  "links": {
+    "organizations": "Organisations",
+    "opportunities": "Opportunités",
+    "home": "Accueil",
+    "browse-opportunities": "Parcourez les opportunités",
+    "about": "À propos"
+  }
 }

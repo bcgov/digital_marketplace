@@ -69,6 +69,7 @@
     "find-up": "^5.0.0",
     "html-to-text": "^5.1.1",
     "i18next": "^19.7.0",
+    "i18next-browser-languagedetector": "^6.0.1",
     "i18next-xhr-backend": "^3.2.2",
     "immutable": "^4.0.0-rc.12",
     "jimp": "^0.16.0",
