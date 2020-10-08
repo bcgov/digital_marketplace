@@ -21,9 +21,9 @@ i18n
   .init({
     debug: process.env.NODE_ENV === "development",
     resources,
-    nonExplicitWhitelist: true,
+    nonExplicitSupportedLngs: true,
     fallbackLng: 'en',
-    whitelist: ['en', 'fr'],
+    supportedLngs: ['en', 'fr'],
  
     interpolation: {
       escapeValue: false, // not needed for react as it escapes by default
@@ -45,7 +45,6 @@ i18n
       useCookie: true,
       caches: ['localStorage', 'cookie'],
       excludeCacheFor: ['cimode'], // languages to not persist (cookie, localStorage)
-      load: 'languageOnly', // do not try to load fr-FR or en-US
     }
   });
  
