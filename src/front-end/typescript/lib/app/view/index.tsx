@@ -438,21 +438,25 @@ const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
+const navUnauthenticatedMenu = () => {
+  
+  const { t } = useTranslation();
+  return Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
-    children: 'Connexion',
+    children: t('links.sign-in'),
     button: true,
     outline: true,
     color: 'primary',
     dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
-    children: 'Créer un compte',
+    children: t('links.sign-up'),
     button: true,
     color: 'primary',
     dest: routeDest(adt('signUpStepOne', {}))
   })
-]);
+])
+};
 
 const signOutLink: Nav.NavLink = {
   children: 'Sign Out',
@@ -471,7 +475,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
   if (!sessionUser) {
-    return { mobile: navUnauthenticatedMenu, desktop: navUnauthenticatedMenu };
+    return { mobile: navUnauthenticatedMenu(), desktop: navUnauthenticatedMenu() };
   }
   // Return separate mobile and desktop authentication menus if the user is signed in.
   const userIdentifier = sessionUser.email || sessionUser.name;
