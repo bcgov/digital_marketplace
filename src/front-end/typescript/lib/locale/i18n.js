@@ -19,9 +19,9 @@ i18n
   .use(LanguageDetector)
   // for all options read: https://www.i18next.com/overview/configuration-options
   .init({
-    debug: process.env.NODE_ENV === "development",
+    debug: true,
     resources,
-    nonExplicitSupportedLngs: true,
+    nonExplicitSupportedLngs: false,
     fallbackLng: 'en',
     supportedLngs: ['en', 'fr'],
  
