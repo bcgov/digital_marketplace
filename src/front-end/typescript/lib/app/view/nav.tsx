@@ -394,7 +394,7 @@ const ContextualLinks: View<Props & { isOpen: boolean; toggle(): void; }> = prop
     case 'links':
       return (
         <div className='d-flex flex-nowrap align-items-center flex-row-reverse py-1 pr-1 mr-n1' style={{ overflowX: 'auto' }}>
-          {contextualActions.value.map((link, i, links) => {
+          {contextualActions.value.map((link, i) => {
             const linkProps = {
               ...link,
               color: link.color || 'c-nav-fg-alt',
