@@ -31,7 +31,8 @@
     "typedoc:start": "npx serve --config typedoc/serve.json typedoc",
     "docs:readme-toc": "npx markdown-toc --maxdepth 3 -i README.md",
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > docs/OPEN_SOURCE_LICENSES.txt",
-    "docs:db": "npx pg-doc --out docs/DATABASE.md --connection"
+    "docs:db": "npx pg-doc --out docs/DATABASE.md --connection",
+    "i18n:parse": "npx i18next"
   },
   "repository": {
     "type": "git",
@@ -70,6 +71,7 @@
     "html-to-text": "^5.1.1",
     "i18next": "^19.7.0",
     "i18next-browser-languagedetector": "^6.0.1",
+    "i18next-fs-backend": "^1.0.7",
     "immutable": "^4.0.0-rc.12",
     "jimp": "^0.16.0",
     "keycloak-connect": "^8.0.0",
@@ -128,6 +130,7 @@
     "grunt-sass": "^3.0.2",
     "grunt-shell": "^3.0.1",
     "grunt-terser": "^0.1.0",
+    "i18next-parser": "^3.3.0",
     "is-relative-url": "^3.0.0",
     "jquery": "^3.5.1",
     "license-checker": "^25.0.1",

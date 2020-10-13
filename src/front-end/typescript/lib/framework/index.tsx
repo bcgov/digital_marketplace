@@ -8,7 +8,7 @@ import { remove } from 'lodash';
 import { default as React, ReactElement } from 'react';
 import ReactDom from 'react-dom';
 import { ADT, adtCurried } from 'shared/lib/types';
-import 'front-end/lib/locale/i18n';
+import 'front-end/lib/i18n/i18n';
 export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framework/router';
 
 // Base logic.

@@ -1,0 +1,14 @@
+{
+  "links": {
+    "sign-in": "Sign in",
+    "sign-up": "Sign up",
+    "opportunities": "Opportunities",
+    "organizations": "Organizations",
+    "home": "Home",
+    "about": "About",
+    "browse-opportunities": "Browse opportunities"
+  },
+  "landing": {
+    "header": "Collaborate <br/>with Québec<br/>government"
+  }
+}
