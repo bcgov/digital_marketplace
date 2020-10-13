@@ -34,7 +34,7 @@ Exemple de traduction:
 ### Texte contenant des balises HTML
 
 
-Utiliser la function `t` :
+Utiliser le composant React `<Trans />` :
 
 ```jsx
 import React from 'react'
