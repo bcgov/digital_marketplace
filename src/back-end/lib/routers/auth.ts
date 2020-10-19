@@ -286,14 +286,21 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       return null;
   }
 
+  console.log(claims);
+
   let username = getString(claims, 'preferred_username');
-  const idpId = getString(claims, 'idp_id') || identityProvider;
+  
+  //Composition de l'idp, voir ligne #301
+  //const idpId = getString(claims, 'idp_id');
 
   // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
   if ((username.endsWith('@' + VENDOR_IDP_SUFFIX) && userType === UserType.Vendor) || (username.endsWith('@' + GOV_IDP_SUFFIX) && userType === UserType.Government)) {
     username = username.slice(0, username.lastIndexOf('@'));
   }
 
+  //Patch pour utiliser la config actuelle de Keycloak
+  const idpId = username + '@' + identityProvider;
+  
   if (!username || !idpId || !tokenSet.access_token || !tokenSet.refresh_token) {
     throw new Error('authentication failure - invalid claims');
   }
