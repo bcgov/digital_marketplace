@@ -43,6 +43,7 @@ import * as PageUserList from 'front-end/lib/pages/user/list';
 import * as PageUserProfile from 'front-end/lib/pages/user/profile';
 import { ThemeColor } from 'front-end/lib/types';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import { useTranslation } from 'react-i18next';
 import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import { default as React } from 'react';
@@ -437,21 +438,25 @@ const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const navUnauthenticatedMenu = Nav.unauthenticatedAccountMenu([
+const navUnauthenticatedMenu = () => {
+  
+  const { t } = useTranslation();
+  return Nav.unauthenticatedAccountMenu([
   Nav.linkAccountAction({
-    children: 'Connexion',
+    children: t('links.sign-in'),
     button: true,
     outline: true,
     color: 'primary',
     dest: routeDest(adt('signIn', {}))
   }),
   Nav.linkAccountAction({
-    children: 'Créer un compte',
+    children: t('links.sign-up'),
     button: true,
     color: 'primary',
     dest: routeDest(adt('signUpStepOne', {}))
   })
-]);
+])
+};
 
 const signOutLink: Nav.NavLink = {
   children: 'Sign Out',
@@ -470,7 +475,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
   if (!sessionUser) {
-    return { mobile: navUnauthenticatedMenu, desktop: navUnauthenticatedMenu };
+    return { mobile: navUnauthenticatedMenu(), desktop: navUnauthenticatedMenu() };
   }
   // Return separate mobile and desktop authentication menus if the user is signed in.
   const userIdentifier = sessionUser.email || sessionUser.name;
@@ -521,15 +526,16 @@ function navAccountMenus(state: Immutable<State>): Nav.Props['accountMenus'] {
 }
 
 function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
+  const { t } = useTranslation();
   const sessionUser = state.shared.session && state.shared.session.user;
   let links: Nav.NavLink[] = [];
   const opportunitiesLink: Nav.NavLink = {
-    children: 'Opportunités',
+    children: t('links.opportunities'),
     active: state.activeRoute.tag === 'opportunities',
     dest: routeDest(adt('opportunities', null))
   };
   const organizationsLink: Nav.NavLink = {
-    children: 'Organisations',
+    children: t('links.organizations'),
     active: state.activeRoute.tag === 'orgList',
     dest: routeDest(adt('orgList', null))
   };
@@ -558,7 +564,7 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
     // User has not signed in.
     links = links.concat([
       {
-        children: 'Accueil',
+        children: t('links.home'),
         active: state.activeRoute.tag === 'landing',
         dest: routeDest(adt('landing', null))
       },
