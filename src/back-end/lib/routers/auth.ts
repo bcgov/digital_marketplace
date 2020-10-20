@@ -286,8 +286,6 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       return null;
   }
 
-  console.log(claims);
-
   let username = getString(claims, 'preferred_username');
   
   //Composition de l'idp, voir ligne #301
