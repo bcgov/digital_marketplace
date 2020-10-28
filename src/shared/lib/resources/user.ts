@@ -40,7 +40,8 @@ export interface User {
   jobTitle: string;
   avatarImageFile: FileRecord | null;
   notificationsOn: Date | null;
-  acceptedTerms: Date | null;
+  acceptedTermsAt: Date | null;
+  lastAcceptedTermsAt: Date | null;
   idpUsername: string;
   deactivatedOn: Date | null;
   deactivatedBy: Id | null;

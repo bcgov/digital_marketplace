@@ -128,15 +128,29 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   return valid(await rawUserToUser(connection, result));
 });
 
-export async function userHasAcceptedTerms(connection: Connection, id: Id): Promise<boolean> {
-  const [result] = await connection<{ acceptedTerms: Date }>('users')
+export async function userHasAcceptedCurrentTerms(connection: Connection, id: Id): Promise<boolean> {
+  const [result] = await connection<{ acceptedTermsAt: Date }>('users')
     .where({ id })
-    .select('acceptedTerms');
+    .select('acceptedTermsAt');
 
   if (!result) {
-    throw new Error('unable to check terms status for user');
+    throw new Error('unable to check current terms status for user');
   }
-  if (result.acceptedTerms) {
+  if (result.acceptedTermsAt) {
+    return true;
+  }
+  return false;
+}
+
+export async function userHasAcceptedPreviousTerms(connection: Connection, id: Id): Promise<boolean> {
+  const [result] = await connection<{ acceptedTermsAt: Date }>('users')
+    .where({ id })
+    .select('lastAcceptedTermsAt');
+
+  if (!result) {
+    throw new Error('unable to check previous terms status for user');
+  }
+  if (result.acceptedTermsAt) {
     return true;
   }
   return false;

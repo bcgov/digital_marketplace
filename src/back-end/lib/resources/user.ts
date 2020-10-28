@@ -174,7 +174,7 @@ const resource: Resource = {
             if (!permissions.acceptTerms(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            if (validatedUser.value.acceptedTerms) {
+            if (validatedUser.value.acceptedTermsAt) {
               return invalid({ user: adt('acceptTerms' as const, ['You have already accepted the terms of service.']) });
             }
             return valid(adt('acceptTerms' as const));
@@ -218,7 +218,8 @@ const resource: Resource = {
               dbResult = await db.updateUser(connection, { capabilities: request.body.value, id: request.params.id });
               break;
             case 'acceptTerms':
-              dbResult = await db.updateUser(connection, { acceptedTerms: new Date(), id: request.params.id });
+              const currentDate = new Date();
+              dbResult = await db.updateUser(connection, { acceptedTermsAt: currentDate, lastAcceptedTermsAt: currentDate, id: request.params.id });
               break;
             case 'updateNotifications':
               dbResult = await db.updateUser(connection, {

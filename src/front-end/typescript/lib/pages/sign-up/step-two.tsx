@@ -37,7 +37,7 @@ export type RouteParams = null;
 const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
   async success({ shared, dispatch }) {
     const user = shared.sessionUser;
-    if (user.acceptedTerms) {
+    if (user.lastAcceptedTermsAt) {
       dispatch(replaceRoute(adt('dashboard' as const, null)));
       return invalid(null);
     }
@@ -48,7 +48,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
       acceptedTerms: immutable(await Checkbox.init({
         errors: [],
         child: {
-          value: !!user.acceptedTerms,
+          value: !!user.lastAcceptedTermsAt,
           id: 'user-sign-up-step-two-terms'
         }
       })),

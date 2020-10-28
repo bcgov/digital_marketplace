@@ -32,7 +32,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const view: ComponentView<State, Msg> = ({ state }) => {
-  const acceptedTerms = state.profileUser.acceptedTerms;
+  const acceptedTerms = state.profileUser.lastAcceptedTermsAt;
   return (
     <div>
       <Row>

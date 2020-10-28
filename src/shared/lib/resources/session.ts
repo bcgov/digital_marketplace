@@ -17,6 +17,6 @@ export interface SessionRecord {
 
 export function hasAcceptedTermsOrIsAnonymous(session?: Session): boolean {
   return session && session.user
-    ? !!session.user.acceptedTerms
+    ? !!session.user.lastAcceptedTermsAt
     : true;
 }
