@@ -16,7 +16,6 @@ export async function up(connection: Knex): Promise<void> {
   logger.info('Completed modifying users table.');
 }
 
-// tslint:disable-next-line: no-empty
 export async function down(connection: Knex): Promise<void> {
   // Revert users table
   await connection.schema.alterTable('users', table => {
