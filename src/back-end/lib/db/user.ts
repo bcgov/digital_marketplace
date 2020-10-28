@@ -143,14 +143,14 @@ export async function userHasAcceptedCurrentTerms(connection: Connection, id: Id
 }
 
 export async function userHasAcceptedPreviousTerms(connection: Connection, id: Id): Promise<boolean> {
-  const [result] = await connection<{ acceptedTermsAt: Date }>('users')
+  const [result] = await connection<{ lastAcceptedTermsAt: Date }>('users')
     .where({ id })
     .select('lastAcceptedTermsAt');
 
   if (!result) {
     throw new Error('unable to check previous terms status for user');
   }
-  if (result.acceptedTermsAt) {
+  if (result.lastAcceptedTermsAt) {
     return true;
   }
   return false;
