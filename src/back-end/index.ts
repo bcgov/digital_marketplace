@@ -9,6 +9,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import basicAuth from 'back-end/lib/map-routes/basic-auth';
 import affiliationResource from 'back-end/lib/resources/affiliation';
 import avatarResource from 'back-end/lib/resources/avatar';
+import contentResource from 'back-end/lib/resources/content';
 import counterResource from 'back-end/lib/resources/counter';
 import fileResource from 'back-end/lib/resources/file';
 import metricsResource from 'back-end/lib/resources/metrics';
@@ -70,6 +71,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     affiliationResource,
     avatarResource,
     codeWithUsOpportunityResource,
+    contentResource,
     sprintWithUsOpportunityResource,
     codeWithUsProposalResource,
     sprintWithUsProposalResource,
