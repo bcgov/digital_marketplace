@@ -1,3 +1,4 @@
+import { Content } from 'back-end/../shared/lib/resources/content';
 import * as db from 'back-end/lib/db';
 import { get, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
@@ -292,4 +293,24 @@ export async function validateSWUProposalTeam(connection: db.Connection, opportu
 
 export async function validateSWUProposalOrganization(connection: db.Connection, organization: Id | undefined, session: Session): Promise<Validation<Organization | undefined>> {
   return await optionalAsync(organization, v => validateOrganizationId(connection, v, session, false));
+}
+
+export async function validateContentId(connection: db.Connection, contentId: Id, session: AuthenticatedSession): Promise<Validation<Content>> {
+  try {
+    const validatedId = validateUUID(contentId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneContentById(connection, contentId, session);
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const content = dbResult.value;
+    if (!content) {
+      return invalid(['The specified content was not found.']);
+    }
+    return valid(content);
+  } catch (exception) {
+    return invalid(['Please select a valid content id.']);
+  }
 }

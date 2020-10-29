@@ -343,3 +343,11 @@ export function readManyContent(session: Session): boolean {
 export function createContent(session: Session): boolean {
   return isAdmin(session);
 }
+
+export function editContent(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function deleteContent(session: Session): boolean {
+  return isAdmin(session);
+}

@@ -21,8 +21,9 @@ export async function up(connection: Knex): Promise<void> {
     table.text('body');
     table.timestamp('createdAt').notNullable();
     table.uuid('createdBy').references('id').inTable('users').notNullable();
-    table.uuid('contentId').references('id').inTable('content').notNullable();
+    table.uuid('contentId').references('id').inTable('content').notNullable().onDelete('CASCADE');
     table.primary(['id', 'contentId']);
+    table.index(['createdAt']);
   });
 
   logger.info('Completed creating contentVersions table.');

@@ -1,17 +1,24 @@
-import { getString } from 'back-end/../shared/lib';
-import { allValid, getInvalidValue, invalid, isInvalid, isValid, valid, validateUUID } from 'back-end/../shared/lib/validation';
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
+import { validateContentId } from 'back-end/lib/validation';
+import { get } from 'lodash';
+import { getString } from 'shared/lib';
 import { Content, ContentSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/content';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
+import { Id } from 'shared/lib/types';
+import { allValid, getInvalidValue, invalid, isInvalid, isValid, valid, validateUUID } from 'shared/lib/validation';
 import * as contentValidation from 'shared/lib/validation/content';
 
 export type ValidatedCreateRequestBody = CreateRequestBody;
 
-export type ValidatedUpdateRequestBody = UpdateRequestBody;
+export interface ValidatedUpdateRequestBody extends UpdateRequestBody {
+  version: number;
+}
+
+export type ValidatedDeleteRequestBody = Id;
 
 type Resource = crud.Resource<
   SupportedRequestBodies,
@@ -24,7 +31,7 @@ type Resource = crud.Resource<
   UpdateRequestBody,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
-  null,
+  ValidatedDeleteRequestBody,
   DeleteValidationErrors,
   Session,
   db.Connection
@@ -86,7 +93,8 @@ const resource: Resource = {
         return {
           slug: getString(body, 'slug'),
           title: getString(body, 'title'),
-          body: getString(body, 'body')
+          body: getString(body, 'body'),
+          fixed: get(body, 'fixed')
         };
       },
       async validateRequestBody(request) {
@@ -96,13 +104,14 @@ const resource: Resource = {
           });
         }
         const session: AuthenticatedSession = request.session;
-        const { slug, title, body } = request.body;
+        const { slug, title, body, fixed } = request.body;
 
         const validatedSlug = contentValidation.validateSlug(slug);
         const validatedTitle = contentValidation.validateTitle(title);
         const validatedBody = contentValidation.validateBody(body);
+        const validatedFixed = contentValidation.validateFixed(fixed);
 
-        if (allValid([validatedSlug, validatedTitle, validatedBody])) {
+        if (allValid([validatedSlug, validatedTitle, validatedBody, validatedFixed])) {
            // Check to see if slug is available
           if (isValid(validatedSlug)) {
             const dbResult = await db.readOneContentBySlug(connection, validatedSlug.value, session);
@@ -121,7 +130,8 @@ const resource: Resource = {
             session,
             slug: validatedSlug.value,
             title: validatedTitle.value,
-            body: validatedBody.value
+            body: validatedBody.value,
+            fixed: validatedFixed.value
           } as ValidatedCreateRequestBody);
         } else {
           return invalid({
@@ -142,6 +152,102 @@ const resource: Resource = {
         invalid: (async request => {
           return basicResponse(400, request.session, makeJsonResponseBody(request.body));
         })
+      })
+    };
+  },
+  update(connection) {
+    return {
+      async parseRequestBody(request) {
+        const body = request.body.tag === 'json' ? request.body.value : {};
+        return {
+          slug: getString(body, 'slug'),
+          title: getString(body, 'title'),
+          body: getString(body, 'body')
+        };
+      },
+      async validateRequestBody(request) {
+        if (!permissions.editContent(request.session) || !permissions.isSignedIn(request.session)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+        const session: AuthenticatedSession = request.session;
+        const validatedContent = await validateContentId(connection, request.params.id, session);
+        if (isInvalid(validatedContent)) {
+          return invalid({ notFound: ['The specified conent does not exists.']});
+        }
+        const existingContent = validatedContent.value;
+        const { slug, title, body } = request.body;
+        const validatedSlug = contentValidation.validateSlug(slug);
+        const validatedTitle = contentValidation.validateTitle(title);
+        const validatedBody = contentValidation.validateBody(body);
+
+        if (allValid([validatedSlug, validatedTitle, validatedBody])) {
+          // If content is fixed, and slug is being updated, disallow
+          if (existingContent.fixed && existingContent.slug !== validatedSlug.value) {
+            return invalid({
+              fixed: ['You cannot change the slug of fixed content.']
+            });
+          }
+          return valid({
+            session,
+            slug: validatedSlug.value,
+            title: validatedTitle.value,
+            body: validatedBody.value,
+            version: existingContent.version + 1 // Increment version number
+          } as ValidatedUpdateRequestBody);
+        } else {
+          return invalid({
+            slug: getInvalidValue(validatedSlug, undefined),
+            title: getInvalidValue(validatedTitle, undefined),
+            body: getInvalidValue(validatedBody, undefined)
+          });
+        }
+      },
+      respond: wrapRespond({
+        valid: (async request => {
+          const dbResult = await db.updateContent(connection, request.params.id, request.body, request.session);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        }),
+        invalid: (async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        })
+      })
+    };
+  },
+
+  delete(connection) {
+    return {
+      async validateRequestBody(request) {
+        if (!permissions.deleteContent(request.session) || !permissions.isSignedIn(request.session)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+        const session: AuthenticatedSession = request.session;
+        const validatedContent = await validateContentId(connection, request.params.id, session);
+        if (isInvalid(validatedContent)) {
+          return invalid({ notFound: ['Content not found.']});
+        }
+        if (validatedContent.value.fixed) {
+          return invalid({ fixed: ['You cannot delete fixed content.']});
+        }
+        return valid(validatedContent.value.id);
+      },
+      respond: wrapRespond({
+        valid: async request => {
+          const dbResult = await db.deleteContent(connection, request.body, request.session);
+          if (isInvalid(dbResult)) {
+            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+          }
+          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+        },
+        invalid: async request => {
+          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        }
       })
     };
   }

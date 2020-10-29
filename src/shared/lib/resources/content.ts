@@ -21,14 +21,17 @@ export interface CreateRequestBody {
   slug: string;
   title: string;
   body: string;
+  fixed: boolean;
 }
 
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
 
-export type UpdateRequestBody = CreateRequestBody;
+export type UpdateRequestBody = Omit<CreateRequestBody, 'fixed'>;
 
 export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody>, BodyWithErrors {
-  fixed: string[];
+  fixed?: string[];
 }
 
-export type DeleteValidationErrors = BodyWithErrors;
+export interface DeleteValidationErrors extends BodyWithErrors {
+  fixed?: string[];
+}

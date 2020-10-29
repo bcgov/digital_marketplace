@@ -1,7 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, tryDb } from 'back-end/lib/db';
 import { readOneUserSlim } from 'back-end/lib/db/user';
-import { ValidatedCreateRequestBody } from 'back-end/lib/resources/content';
+import { ValidatedCreateRequestBody, ValidatedUpdateRequestBody } from 'back-end/lib/resources/content';
 import { valid } from 'shared/lib/http';
 import { Content, ContentSlim } from 'shared/lib/resources/content';
 import { Session } from 'shared/lib/resources/session';
@@ -121,7 +121,7 @@ export const readOneContentBySlug = tryDb<[string, Session], Content | null>(asy
 
 export const createContent = tryDb<[ValidatedCreateRequestBody, Session], Content>(async (connection, content, session) => {
   const now = new Date();
-  const { title, body, slug } = content;
+  const { title, body, slug, fixed } = content;
   const contentId = await connection.transaction(async trx => {
     const [rootContentRecord] = await connection<RootContentRecord>('content')
       .transacting(trx)
@@ -130,7 +130,7 @@ export const createContent = tryDb<[ValidatedCreateRequestBody, Session], Conten
         createdAt: now,
         createdBy: session?.user.id,
         slug,
-        fixed: false
+        fixed
       }, '*');
 
     if (!rootContentRecord) {
@@ -160,4 +160,64 @@ export const createContent = tryDb<[ValidatedCreateRequestBody, Session], Conten
     throw new Error('unable to create content');
   }
   return valid(dbResult.value);
+});
+
+export const updateContent = tryDb<[Id, ValidatedUpdateRequestBody, Session], Content>(async (connection, id, content, session) => {
+  const now = new Date();
+  const { title, body, slug, version } = content;
+  await connection.transaction(async trx => {
+    // Update slug on root record
+    const [rootContentRecord] = await connection<RootContentRecord>('content')
+      .transacting(trx)
+      .where({ id })
+      .update({
+        slug
+      }, '*');
+
+    if (!rootContentRecord) {
+      throw new Error('unable to update content');
+    }
+
+    const [versionContentRecord] = await connection<VersionContentRecord>('contentVersions')
+      .transacting(trx)
+      .insert({
+        id: version,
+        title,
+        body,
+        createdAt: now,
+        createdBy: session?.user.id,
+        contentId: id
+      }, '*');
+
+    if (!versionContentRecord) {
+      throw new Error('unable to update content version');
+    }
+
+    return versionContentRecord;
+  });
+
+  const dbResult = await readOneContentById(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to update opportunity');
+  }
+  return valid(dbResult.value);
+});
+
+export const deleteContent = tryDb<[Id, Session], Content>(async (connection, id, session) => {
+  const [result] = await generateContentQuery(connection, true)
+    .where({ 'content.id': id });
+
+  if (!result) {
+    throw new Error('unable to retrieve content for deletion');
+  }
+
+  const [deleteResult] = await connection('content')
+    .where({ 'content.id': id })
+    .delete('*');
+
+  if (!deleteResult) {
+    throw new Error('unable to delete content');
+  }
+
+  return valid(await rawContentToContent(connection, result));
 });
