@@ -50,7 +50,7 @@ paths:
         503:
           description: A database error occurred.
 
-  /opportunities/code-with-us/{id}:
+  /proposals/code-with-us/{id}:
     get:
       summary: Retrieve a single Code-With-Us Proposal.
       tags:

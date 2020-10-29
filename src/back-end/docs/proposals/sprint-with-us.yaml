@@ -50,7 +50,7 @@ paths:
         503:
           description: A database error occurred.
 
-  /opportunities/sprint-with-us/{id}:
+  /proposals/sprint-with-us/{id}:
     get:
       summary: Retrieve a single Sprint-With-Us Proposal.
       tags:
