@@ -104,14 +104,13 @@ const resource: Resource = {
           });
         }
         const session: AuthenticatedSession = request.session;
-        const { slug, title, body, fixed } = request.body;
+        const { slug, title, body } = request.body;
 
         const validatedSlug = contentValidation.validateSlug(slug);
         const validatedTitle = contentValidation.validateTitle(title);
         const validatedBody = contentValidation.validateBody(body);
-        const validatedFixed = contentValidation.validateFixed(fixed);
 
-        if (allValid([validatedSlug, validatedTitle, validatedBody, validatedFixed])) {
+        if (allValid([validatedSlug, validatedTitle, validatedBody])) {
            // Check to see if slug is available
           if (isValid(validatedSlug)) {
             const dbResult = await db.readOneContentBySlug(connection, validatedSlug.value, session);
@@ -130,8 +129,7 @@ const resource: Resource = {
             session,
             slug: validatedSlug.value,
             title: validatedTitle.value,
-            body: validatedBody.value,
-            fixed: validatedFixed.value
+            body: validatedBody.value
           } as ValidatedCreateRequestBody);
         } else {
           return invalid({

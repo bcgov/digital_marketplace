@@ -21,7 +21,6 @@ export interface CreateRequestBody {
   slug: string;
   title: string;
   body: string;
-  fixed: boolean;
 }
 
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;

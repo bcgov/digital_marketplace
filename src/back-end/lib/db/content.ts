@@ -121,7 +121,7 @@ export const readOneContentBySlug = tryDb<[string, Session], Content | null>(asy
 
 export const createContent = tryDb<[ValidatedCreateRequestBody, Session], Content>(async (connection, content, session) => {
   const now = new Date();
-  const { title, body, slug, fixed } = content;
+  const { title, body, slug } = content;
   const contentId = await connection.transaction(async trx => {
     const [rootContentRecord] = await connection<RootContentRecord>('content')
       .transacting(trx)
@@ -129,8 +129,7 @@ export const createContent = tryDb<[ValidatedCreateRequestBody, Session], Conten
         id: generateUuid(),
         createdAt: now,
         createdBy: session?.user.id,
-        slug,
-        fixed
+        slug
       }, '*');
 
     if (!rootContentRecord) {
