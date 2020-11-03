@@ -225,6 +225,11 @@ export async function editCWUProposal(connection: Connection, session: Session, 
     (session && await isCWUOpportunityAuthor(connection, session.user, opportunity.id) && doesCWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
 }
 
+export async function addNoteCWUProposal(connection: Connection, session: Session, opportunity: CWUOpportunity): Promise<boolean> {
+  return isAdmin(session) ||
+    (session && await isCWUOpportunityAuthor(connection, session.user, opportunity.id) && doesCWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
+}
+
 export async function submitCWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
   return session && await isCWUProposalAuthor(connection, session.user, proposalId) && await hasAcceptedCurrentTerms(connection, session) || false;
 }

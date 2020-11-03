@@ -502,6 +502,10 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');
 
+      if (!rawHistory) {
+        throw new Error('unable to read opportunity statuses');
+      }
+
       // For reach status record, fetch any attachments and add their ids to the record as an array
       await Promise.all(rawHistory.map(async raw => raw.attachments = (await connection<{ file: Id }>('swuOpportunityNoteAttachments')
         .where({ event: raw.id })

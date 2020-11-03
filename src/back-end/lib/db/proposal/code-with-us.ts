@@ -30,6 +30,11 @@ interface UpdateCWUProposalParams extends Partial<Omit<CWUProposal, 'createdBy' 
   proponent: UpdateProponentRequestBody;
 }
 
+interface UpdateCWUOpportunityWithNoteParams {
+  note: string;
+  attachments: FileRecord[];
+}
+
 interface RawCWUProposal extends Omit<CWUProposal, 'createdBy' | 'updatedBy' | 'proponent' | 'opportunity' | 'attachments'> {
   createdBy: Id;
   updatedBy: Id;
@@ -47,10 +52,11 @@ interface RawCWUProposalSlim extends Omit<CWUProposalSlim, 'createdBy' | 'update
   opportunity: Id;
 }
 
-interface RawCWUProposalHistoryRecord extends Omit<CWUProposalHistoryRecord, 'createdBy' | 'type'> {
+interface RawCWUProposalHistoryRecord extends Omit<CWUProposalHistoryRecord, 'createdBy' | 'type' | 'attachments'> {
   createdBy: Id | null;
   status?: CWUProposalStatus;
   event?: CWUProposalEvent;
+  attachments: Id[];
 }
 
 async function rawCWUProposalToCWUProposal(connection: Connection, session: Session, raw: RawCWUProposal): Promise<CWUProposal> {
@@ -147,9 +153,30 @@ async function createCWUProposalAttachments(trx: Transaction, proposalId: Id, at
   }
 }
 
+async function createCWUProposalNoteAttachments(connection: Connection, trx: Transaction, eventId: Id, attachments: FileRecord[]) {
+  for (const attachment of attachments) {
+    const [attachmentResult] = await connection('cwuProposalNoteAttachments')
+      .transacting(trx)
+      .insert({
+        event: eventId,
+        file: attachment.id
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create proposal note attachment');
+    }
+  }
+}
+
 async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection: Connection, session: Session, raw: RawCWUProposalHistoryRecord): Promise<CWUProposalHistoryRecord> {
-  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
+  const { createdBy: createdById, status, event, attachments: attachmentIds, ...restOfRaw } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), null) : null;
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error('unable to process proposal status record attachments');
+    }
+    return result;
+  }));
 
   if (!status && !event) {
     throw new Error('unable to process proposal status record');
@@ -158,7 +185,8 @@ async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection:
   return {
     ...restOfRaw,
     createdBy,
-    type: status ? adt('status', status as CWUProposalStatus) : adt('event', event as CWUProposalEvent)
+    type: status ? adt('status', status as CWUProposalStatus) : adt('event', event as CWUProposalEvent),
+    attachments
   };
 }
 
@@ -221,6 +249,15 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
       const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
         .where({ proposal: result.id })
         .orderBy('createdAt', 'desc');
+
+      if (!rawProposalStasuses) {
+        throw new Error('unable to read proposal statuses');
+      }
+
+      // For reach status record, fetch any attachments and add their ids to the record as an array
+      await Promise.all(rawProposalStasuses.map(async raw => raw.attachments = (await connection<{ file: Id }>('cwuProposalNoteAttachments')
+        .where({ event: raw.id })
+        .select('file')).map(row => row.file)));
 
       result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
     }
@@ -732,4 +769,33 @@ export const readManyCWUProposalAuthors = tryDb<[Id], User[]>(async (connection,
   }
 
   return valid(await Promise.all(result.map(async raw => await rawUserToUser(connection, raw))));
+});
+
+export const addCWUProposalNote = tryDb<[Id, UpdateCWUOpportunityWithNoteParams, AuthenticatedSession], CWUProposal>(async (connection, id, noteParams, session) => {
+  const now = new Date();
+  await connection.transaction(async trx => {
+    // Add a history record for the note addition
+    const [event] = await connection<RawCWUProposalHistoryRecord & { proposal: Id }>('cwuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: CWUProposalEvent.NoteAdded,
+        note: noteParams.note
+      }, '*');
+
+    if (!event) {
+      throw new Error('unable to create note for proposal');
+    }
+
+    await createCWUProposalNoteAttachments(connection, trx, event.id, noteParams.attachments);
+  });
+
+  const dbResult = await readOneCWUProposal(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add note');
+  }
+  return valid(dbResult.value);
 });
