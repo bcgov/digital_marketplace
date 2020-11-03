@@ -25,6 +25,11 @@ interface UpdateSWUProposalParams extends Omit<UpdateEditRequestBody, 'opportuni
   attachments: FileRecord[];
 }
 
+interface UpdateSWUProposalWithNoteParams {
+  note: string;
+  attachments: FileRecord[];
+}
+
 interface SWUProposalStatusRecord {
   id: Id;
   opportunity: Id;
@@ -53,10 +58,12 @@ interface RawSWUProposalSlim extends Omit<SWUProposalSlim, 'createdBy' | 'update
   opportunity: Id;
 }
 
-interface RawHistoryRecord extends Omit<SWUProposalHistoryRecord, 'id' | 'createdBy' | 'type'> {
+interface RawHistoryRecord extends Omit<SWUProposalHistoryRecord, 'createdBy' | 'type' | 'attachments'> {
+  id: Id;
   createdBy: Id | null;
   status?: SWUProposalStatus;
   event?: SWUProposalEvent;
+  attachments: Id[];
 }
 
 interface RawProposalPhase extends Omit<SWUProposalPhase, 'members'> {
@@ -68,8 +75,15 @@ interface RawProposalTeamMember extends Omit<SWUProposalTeamMember, 'member' | '
 }
 
 async function rawHistoryRecordToHistoryRecord(connection: Connection, raw: RawHistoryRecord): Promise<SWUProposalHistoryRecord> {
-  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
+  const { createdBy: createdById, status, event, attachments: attachmentIds, ...restOfRaw } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), null) : null;
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error('unable to process proposal status record attachments');
+    }
+    return result;
+  }));
 
   if (!status && !event) {
     throw new Error('unable to process proposal status record');
@@ -78,7 +92,8 @@ async function rawHistoryRecordToHistoryRecord(connection: Connection, raw: RawH
   return {
     ...restOfRaw,
     createdBy,
-    type: status ? adt('status', status as SWUProposalStatus) : adt('event', event as SWUProposalEvent)
+    type: status ? adt('status', status as SWUProposalStatus) : adt('event', event as SWUProposalEvent),
+    attachments
   };
 }
 
@@ -262,6 +277,20 @@ async function createSWUProposalAttachments(trx: Transaction, proposalId: Id, at
   }
 }
 
+async function createSWUProposalNoteAttachments(connection: Connection, trx: Transaction, eventId: Id, attachments: FileRecord[]) {
+  for (const attachment of attachments) {
+    const [attachmentResult] = await connection('swuProposalNoteAttachments')
+      .transacting(trx)
+      .insert({
+        event: eventId,
+        file: attachment.id
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create proposal note attachment');
+    }
+  }
+}
+
 export const readManyTeamMembersByPhaseId = tryDb<[Id], SWUProposalTeamMember[]>(async (connection, phaseId) => {
   const results = await connection<RawProposalTeamMember>('swuProposalTeamMembers as members')
     .join('users', 'users.id', '=', 'members.member')
@@ -425,8 +454,17 @@ export const readOneSWUProposal = tryDb<[Id, AuthenticatedSession], SWUProposal 
     if (await readSWUProposalHistory(connection, session, result.opportunity, result.id)) {
       const rawProposalStatuses = await connection<RawHistoryRecord>('swuProposalStatuses')
         .where({ proposal: result.id })
-        .orderBy('createdAt', 'desc')
-        .select('createdAt', 'note', 'createdBy', 'status', 'event');
+        .orderBy('createdAt', 'desc');
+
+      if (!rawProposalStatuses) {
+        throw new Error('unable to read proposal statuses');
+      }
+
+      // For reach status record, fetch any attachments and add their ids to the record as an array
+      await Promise.all(rawProposalStatuses.map(async raw => raw.attachments = (await connection<{ file: Id }>('swuProposalNoteAttachments')
+        .where({ event: raw.id })
+        .select('file')).map(row => row.file)));
+
       result.history = await Promise.all(rawProposalStatuses.map(async raw => await rawHistoryRecordToHistoryRecord(connection, raw)));
     }
 
@@ -1050,7 +1088,7 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
         .first())?.status;
 
       if (currentStatus && [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded].includes(currentStatus)) {
-        await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
+        await connection<RawHistoryRecord & { proposal: Id }>('swuProposalStatuses')
           .transacting(trx)
           .insert({
             id: generateUuid(),
@@ -1278,4 +1316,33 @@ export const readOneSWUProposalAuthor = tryDb<[Id], User | null>(async (connecti
     .first())?.createdBy || null;
 
   return authorId ? await readOneUser(connection, authorId) : valid(null);
+});
+
+export const addSWUProposalNote = tryDb<[Id, UpdateSWUProposalWithNoteParams, AuthenticatedSession], SWUProposal>(async (connection, id, noteParams, session) => {
+  const now = new Date();
+  await connection.transaction(async trx => {
+    // Add a history record for the note addition
+    const [event] = await connection<RawHistoryRecord & { proposal: Id }>('swuProposalStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        proposal: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: SWUProposalEvent.NoteAdded,
+        note: noteParams.note
+      }, '*');
+
+    if (!event) {
+      throw new Error('unable to create note for proposal');
+    }
+
+    await createSWUProposalNoteAttachments(connection, trx, event.id, noteParams.attachments);
+  });
+
+  const dbResult = await readOneSWUProposal(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add note');
+  }
+  return valid(dbResult.value);
 });

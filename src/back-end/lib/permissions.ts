@@ -325,6 +325,11 @@ export async function editSWUProposal(connection: Connection, session: Session, 
     (session && await isSWUOpportunityAuthor(connection, session.user, opportunity.id) && doesSWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
 }
 
+export async function addNoteSWUProposal(connection: Connection, session: Session, opportunity: SWUOpportunity): Promise<boolean> {
+  return isAdmin(session) ||
+    (session && await isSWUOpportunityAuthor(connection, session.user, opportunity.id) && doesSWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) || false;
+}
+
 export async function deleteSWUProposal(connection: Connection, session: Session, proposalId: string): Promise<boolean> {
   return session && await isSWUProposalAuthor(connection, session.user, proposalId) || false;
 }

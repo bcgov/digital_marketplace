@@ -51,7 +51,8 @@ export enum SWUProposalEvent {
   QuestionsScoreEntered = 'QUESTIONS_SCORE_ENTERED',
   ChallengeScoreEntered = 'CHALLENGE_SCORE_ENTERED',
   ScenarioScoreEntered = 'SCENARIO_SCORE_ENTERED',
-  PriceScoreEntered = 'PRICE_SCORE_ENTERED'
+  PriceScoreEntered = 'PRICE_SCORE_ENTERED',
+  NoteAdded = 'NOTE_ADDED'
 }
 
 export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
@@ -179,6 +180,7 @@ export interface SWUProposalHistoryRecord {
   createdBy: UserSlim | null;
   type: ADT<'status', SWUProposalStatus> | ADT<'event', SWUProposalEvent>;
   note: string;
+  attachments: FileRecord[];
 }
 
 export type SWUProposalSlim = Omit<SWUProposal, 'history' | 'attachments' | 'references' | 'teamQuestionResponses' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
@@ -267,9 +269,19 @@ export type UpdateRequestBody
   | ADT<'scoreTeamScenario', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
-  | ADT<'withdraw', string>;
+  | ADT<'withdraw', string>
+  | ADT<'addNote', UpdateWithNoteRequestBody>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
+
+export interface UpdateWithNoteRequestBody {
+  note: string;
+  attachments: Id[];
+}
+
+export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
+  attachments?: string[][];
+}
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
@@ -284,6 +296,7 @@ type UpdateADTErrors
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>
+  | ADT<'addNote', UpdateWithNoteValidationErrors>
   | ADT<'parseFailure'>;
 
 export interface UpdateTeamQuestionScoreValidationErrors {

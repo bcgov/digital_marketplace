@@ -30,7 +30,7 @@ interface UpdateCWUProposalParams extends Partial<Omit<CWUProposal, 'createdBy' 
   proponent: UpdateProponentRequestBody;
 }
 
-interface UpdateCWUOpportunityWithNoteParams {
+interface UpdateCWUProposalWithNoteParams {
   note: string;
   attachments: FileRecord[];
 }
@@ -246,20 +246,20 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(async
 
     // Include proposal history for admins/opportunity owners
     if (await readCWUProposalHistory(connection, session, result.opportunity)) {
-      const rawProposalStasuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
+      const rawProposalStatuses = await connection<RawCWUProposalHistoryRecord>('cwuProposalStatuses')
         .where({ proposal: result.id })
         .orderBy('createdAt', 'desc');
 
-      if (!rawProposalStasuses) {
+      if (!rawProposalStatuses) {
         throw new Error('unable to read proposal statuses');
       }
 
       // For reach status record, fetch any attachments and add their ids to the record as an array
-      await Promise.all(rawProposalStasuses.map(async raw => raw.attachments = (await connection<{ file: Id }>('cwuProposalNoteAttachments')
+      await Promise.all(rawProposalStatuses.map(async raw => raw.attachments = (await connection<{ file: Id }>('cwuProposalNoteAttachments')
         .where({ event: raw.id })
         .select('file')).map(row => row.file)));
 
-      result.history = await Promise.all(rawProposalStasuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
+      result.history = await Promise.all(rawProposalStatuses.map(async raw => await rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(connection, session, raw)));
     }
 
     // Fetch submittedAt date if it exists (get most recent submitted status)
@@ -771,7 +771,7 @@ export const readManyCWUProposalAuthors = tryDb<[Id], User[]>(async (connection,
   return valid(await Promise.all(result.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-export const addCWUProposalNote = tryDb<[Id, UpdateCWUOpportunityWithNoteParams, AuthenticatedSession], CWUProposal>(async (connection, id, noteParams, session) => {
+export const addCWUProposalNote = tryDb<[Id, UpdateCWUProposalWithNoteParams, AuthenticatedSession], CWUProposal>(async (connection, id, noteParams, session) => {
   const now = new Date();
   await connection.transaction(async trx => {
     // Add a history record for the note addition
