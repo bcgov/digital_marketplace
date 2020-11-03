@@ -57,7 +57,8 @@ export enum SWUOpportunityStatus {
 
 export enum SWUOpportunityEvent {
   Edited = 'EDITED',
-  AddendumAdded = 'ADDENDUM_ADDED'
+  AddendumAdded = 'ADDENDUM_ADDED',
+  NoteAdded = 'NOTE_ADDED'
 }
 
 export interface SWUOpportunityHistoryRecord {
@@ -66,6 +67,7 @@ export interface SWUOpportunityHistoryRecord {
   createdBy: UserSlim | null;
   type: ADT<'status', SWUOpportunityStatus> | ADT<'event', SWUOpportunityEvent>;
   note: string;
+  attachments: FileRecord[];
 }
 
 export function parseSWUOpportunityStatus(raw: string): SWUOpportunityStatus | null {
@@ -198,14 +200,6 @@ export function getQuestionByOrder(opp: SWUOpportunity, order: number): SWUTeamQ
 
 export type SWUOpportunitySlim = Pick<SWUOpportunity, 'id' | 'title' | 'teaser' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline' | 'totalMaxBudget' | 'location' | 'remoteOk' | 'subscribed'>;
 
-export interface SWUOpportunityHistoryRecord {
-  id: Id;
-  createdAt: Date;
-  createdBy: UserSlim | null;
-  type: ADT<'status', SWUOpportunityStatus> | ADT<'event', SWUOpportunityEvent>;
-  note: string;
-}
-
 // Create.
 
 export type CreateSWUOpportunityStatus
@@ -284,9 +278,19 @@ export type UpdateRequestBody
   | ADT<'startTeamScenario', string>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
-  | ADT<'addAddendum', string>;
+  | ADT<'addAddendum', string>
+  | ADT<'addNote', UpdateWithNoteRequestBody>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
+
+export interface UpdateWithNoteRequestBody {
+  note: string;
+  attachments: Id[];
+}
+
+export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
+  attachments?: string[][];
+}
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
@@ -297,6 +301,7 @@ type UpdateADTErrors
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
+  | ADT<'addNote', UpdateWithNoteValidationErrors>
   | ADT<'parseFailure'>;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
