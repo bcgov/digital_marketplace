@@ -91,7 +91,10 @@ const Stats: ComponentView<State, Msg> = ({ state }) => {
 const Stat: View<{ stat: string; description: string; className?: string; }> = ({ stat, description, className }) => {
   return (
     <div className={`d-flex flex-column justify-content-center align-items-center text-center ${className}`}>
-      <div className='h1 mb-3 text-c-landing-stats-stat'>{stat}</div>
+      <div className='mb-3 text-c-landing-stats-stat'>
+        <span className='d-md-none h1'>{stat}</span>
+        <span className='d-none d-md-inline display-4 font-weight-bold'>{stat}</span>
+      </div>
       <div className='overline text-c-landing-stats-description'>{description}</div>
     </div>
   );
