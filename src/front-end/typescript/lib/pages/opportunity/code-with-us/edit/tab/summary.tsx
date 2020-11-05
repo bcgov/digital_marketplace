@@ -10,6 +10,7 @@ import Skills from 'front-end/lib/views/skills';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatAmount, formatDate } from 'shared/lib';
+import { NUM_SCORE_DECIMALS } from 'shared/lib/resources/proposal/code-with-us';
 import { isAdmin } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 
@@ -46,9 +47,16 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
                 return adt('orgEdit', { orgId: successfulProponent.id.value }) as Route;
             }
           })();
+          const email = (() => {
+            if (successfulProponent.email) {
+              return (<span>(<Link dest={emailDest([successfulProponent.email])}>{successfulProponent.email}</Link>)</span>);
+            } else {
+              return null;
+            }
+          })();
           return (
             <div>
-              <Link newTab dest={routeDest(nameRoute)}>{successfulProponent.name}</Link> (<Link dest={emailDest([successfulProponent.email])}>{successfulProponent.email}</Link>)
+              <Link newTab dest={routeDest(nameRoute)}>{successfulProponent.name}</Link> {email}
             </div>
           );
         } else {
@@ -59,6 +67,7 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
     {
       name: 'Submitted By',
       children: (() => {
+        if (!successfulProponent.createdBy) { return null; }
         if (isViewerAdmin) {
           return (<Link newTab dest={routeDest(adt('userProfile', { userId: successfulProponent.createdBy.id }))}>{successfulProponent.createdBy.name}</Link>);
         } else {
@@ -80,7 +89,7 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
             icon='star-full'
             iconColor='c-report-card-icon-highlight'
             name='Winning Score'
-            value={`${successfulProponent.score !== undefined ? `${successfulProponent.score}%` : EMPTY_STRING}`} />
+            value={`${successfulProponent.score ? `${successfulProponent.score.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING}`} />
         </Col>
         <Col xs='12' md='8' className='d-flex align-items-center flex-nowrap'>
           <DescriptionList items={items} />

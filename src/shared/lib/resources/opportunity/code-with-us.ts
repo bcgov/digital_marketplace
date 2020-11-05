@@ -83,9 +83,9 @@ export interface CWUOpportunity {
 export interface CWUSuccessfulProponent {
   id: ADT<'individual', Id> | ADT<'organization', Id>;
   name: string;
-  email: string;
+  email?: string;
   score?: number;
-  createdBy: UserSlim;
+  createdBy?: UserSlim;
 }
 
 export function isCWUOpportunityPublic(o: CWUOpportunity): boolean {

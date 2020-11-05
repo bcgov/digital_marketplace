@@ -258,12 +258,15 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     if (result.status === CWUOpportunityStatus.Awarded) {
       awardedProposal = getValidValue(await readOneCWUAwardedProposal(connection, result.id, session), null);
       if (awardedProposal) {
+        // Use the score to determine if session is user is permitted to see detailed
+        // proponent information.
+        const fullPermissions = !!awardedProposal.score;
         result.successfulProponent = {
           id: getCWUProponentId(awardedProposal),
           name: getCWUProponentName(awardedProposal),
-          email: getCWUProponentEmail(awardedProposal),
+          email: fullPermissions ? getCWUProponentEmail(awardedProposal) : undefined,
           score: awardedProposal.score,
-          createdBy: awardedProposal.createdBy
+          createdBy: fullPermissions ? awardedProposal.createdBy : undefined
         };
       }
     }

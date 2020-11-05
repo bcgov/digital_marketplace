@@ -192,7 +192,12 @@ export const swuOpportunity: SWUOpportunity = {
   status: SWUOpportunityStatus.Published,
   implementationPhase: swuOpportunityImplementationPhase,
   teamQuestions: [swuOpportunityTeamQuestion],
-  successfulProponentName: 'Successful Proponent',
+  successfulProponent: {
+    id,
+    name: 'Successful Proponent',
+    email: 'noreply@gov.bc.ca',
+    createdBy: vendorUserSlim
+  },
   attachments: [],
   addenda: []
 };

@@ -4,7 +4,7 @@ import { makeCWUOpportunityInformation, viewCWUOpportunityCallToAction } from 'b
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import React from 'react';
-import { CONTACT_EMAIL } from 'shared/config';
+import { CONTACT_EMAIL, EMPTY_STRING } from 'shared/config';
 import { CWUOpportunity, isCWUOpportunityClosed } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession } from 'shared/lib/resources/session';
@@ -137,7 +137,7 @@ export async function unsuccessfulCWUProposalSubmissionT(recipient: User, opport
       descriptionLists: [makeCWUOpportunityInformation(opportunity, false)],
       body: (
         <div>
-          <p>The opportunity has been awarded to {opportunity.successfulProponent?.name}.</p>
+          <p>The opportunity has been awarded to {opportunity.successfulProponent?.name || EMPTY_STRING}.</p>
           <p>If you would like to view your total score, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
           <p>Thank you for your submission and we wish you luck on the next opportunity.</p>
         </div>
