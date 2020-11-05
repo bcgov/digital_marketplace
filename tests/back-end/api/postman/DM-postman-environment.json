@@ -1,0 +1,94 @@
+{
+	"id": "491806f0-39c3-4333-9fee-40711c0d25dd",
+	"name": "DM - Local",
+	"values": [
+		{
+			"key": "kc_url",
+			"value": "<replace with your development KeyCloak URL>",
+			"enabled": true
+		},
+		{
+			"key": "realm_name",
+			"value": "<replace with your development KeyCloak realm>",
+			"enabled": true
+		},
+		{
+			"key": "client_id",
+			"value": "<replace with your development KeyCloak client>",
+			"enabled": true
+		},
+		{
+			"key": "client_secret",
+			"value": "<replace with your development KeyCloak client secret>",
+			"enabled": true
+		},
+		{
+			"key": "api_url",
+			"value": "http://localhost:3000",
+			"enabled": true
+		},
+		{
+			"key": "test_admin_username",
+			"value": "test_admin",
+			"enabled": true
+		},
+		{
+			"key": "test_admin_password",
+			"value": "admin",
+			"enabled": true
+		},
+		{
+			"key": "test_gov_username",
+			"value": "test_gov",
+			"enabled": true
+		},
+		{
+			"key": "test_gov_password",
+			"value": "gov",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor1_username",
+			"value": "test_vendor1",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor1_password",
+			"value": "vendor",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor2_username",
+			"value": "test_vendor2",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor2_password",
+			"value": "vendor",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor3_username",
+			"value": "test_vendor3",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor3_password",
+			"value": "vendor",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor4_username",
+			"value": "test_vendor4",
+			"enabled": true
+		},
+		{
+			"key": "test_vendor4_password",
+			"value": "vendor",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2020-10-29T23:10:39.709Z",
+	"_postman_exported_using": "Postman/7.34.0"
+}
