@@ -137,7 +137,7 @@ export async function unsuccessfulCWUProposalSubmissionT(recipient: User, opport
       descriptionLists: [makeCWUOpportunityInformation(opportunity, false)],
       body: (
         <div>
-          <p>The opportunity has been awarded to {opportunity.successfulProponentName}.</p>
+          <p>The opportunity has been awarded to {opportunity.successfulProponent?.name}.</p>
           <p>If you would like to view your total score, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
           <p>Thank you for your submission and we wish you luck on the next opportunity.</p>
         </div>

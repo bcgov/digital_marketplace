@@ -89,7 +89,12 @@ export const cwuOpportunity: CWUOpportunity = {
   submissionInfo: '',
   acceptanceCriteria: '',
   evaluationCriteria: '',
-  successfulProponentName: 'Successful Proponent',
+  successfulProponent: {
+    id: adt('individual', id),
+    name: 'Successful Proponent',
+    email: 'noreply@gov.bc.ca',
+    createdBy: vendorUserSlim
+  },
   status: CWUOpportunityStatus.Published,
   attachments: [],
   addenda: []

@@ -1,9 +1,10 @@
+import { EMPTY_STRING } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import Link, { emailDest, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import Skills from 'front-end/lib/views/skills';
 import React from 'react';
@@ -29,34 +30,42 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
-  const { successfulProposal } = state.opportunity;
-  if (!successfulProposal || !successfulProposal.score) { return null; }
+  const { successfulProponent } = state.opportunity;
+  if (!successfulProponent || !successfulProponent.score) { return null; }
   const isViewerAdmin = isAdmin(state.viewerUser);
-  const vendor = successfulProposal.createdBy;
   const items = [
     {
-      name: 'Awarded Vendor',
+      name: 'Awarded Proponent',
       children: (() => {
         if (isViewerAdmin) {
-          return (<Link newTab dest={routeDest(adt('userProfile', { userId: vendor.id }))}>{vendor.name}</Link>);
+          const nameRoute: Route = (() => {
+            switch (successfulProponent.id.tag) {
+              case 'individual':
+                return adt('userProfile', { userId: successfulProponent.id.value }) as Route;
+              case 'organization':
+                return adt('orgEdit', { orgId: successfulProponent.id.value }) as Route;
+            }
+          })();
+          return (
+            <div>
+              <Link newTab dest={routeDest(nameRoute)}>{successfulProponent.name}</Link> (<Link dest={emailDest([successfulProponent.email])}>{successfulProponent.email}</Link>)
+            </div>
+          );
         } else {
-          return vendor.name;
+          return successfulProponent.name;
         }
       })()
     },
-    ...(successfulProposal.proponent.tag === 'organization'
-      ? [{
-          name: 'Affiliated Organization',
-          children: (() => {
-            const org = successfulProposal.proponent.value;
-            if (isViewerAdmin) {
-              return (<Link newTab dest={routeDest(adt('orgEdit', { orgId: org.id }))}>{org.legalName}</Link>);
-            } else {
-              return org.legalName;
-            }
-          })()
-        }]
-      : [])
+    {
+      name: 'Submitted By',
+      children: (() => {
+        if (isViewerAdmin) {
+          return (<Link newTab dest={routeDest(adt('userProfile', { userId: successfulProponent.createdBy.id }))}>{successfulProponent.createdBy.name}</Link>);
+        } else {
+          return successfulProponent.createdBy.name;
+        }
+      })()
+    }
   ];
   return (
     <div className='mt-5 pt-5 border-top'>
@@ -66,12 +75,12 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <Row>
-        <Col xs='12' md='4' className='mb-4 mb-md-0'>
+        <Col xs='12' md='4' className='mb-4 mb-md-0 d-flex d-md-block'>
           <ReportCard
             icon='star-full'
             iconColor='c-report-card-icon-highlight'
             name='Winning Score'
-            value={`${successfulProposal.score}%`} />
+            value={`${successfulProponent.score !== undefined ? `${successfulProponent.score}%` : EMPTY_STRING}`} />
         </Col>
         <Col xs='12' md='8' className='d-flex align-items-center flex-nowrap'>
           <DescriptionList items={items} />
