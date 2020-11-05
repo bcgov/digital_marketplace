@@ -58,7 +58,7 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
           The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and {COPY.region.name.short}'s public sector.
         </Col>
       </Row>
-      <Row className='mt-5 mb-6 mb-md-8'>
+      <Row className='mt-5'>
         <Col xs='12' className='d-flex justify-content-center'>
           <Link
             button
@@ -69,21 +69,31 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
           </Link>
         </Col>
       </Row>
-      <Row className='text-nowrap'>
-        <Col xs='12'>
-          <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center mr-md-6 mb-4 mb-md-0'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalCount)}</div>
-              <div className='ml-md-3 font-size-small text-secondary'>Total Opportunities Awarded</div>
-            </div>
-            <div className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
-              <div className='h4 mb-2 mb-md-0 font-weight-bold'>{formatAmount(state.totalAwarded, '$')}</div>
-              <div className='ml-md-3 font-size-small text-secondary'>Total Value of All Opportunities</div>
-            </div>
-          </div>
-        </Col>
-      </Row>
     </Container>
+  );
+};
+
+const Stats: ComponentView<State, Msg> = ({ state }) => {
+  return (
+    <div className='bg-c-landing-stats-bg py-5'>
+      <Container>
+        <Row>
+          <Col xs='12' className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
+            <Stat stat={formatAmount(state.totalCount)} description='Total Opportunities Awarded' className='mr-md-6 mb-5 mb-md-0' />
+            <Stat stat={formatAmount(state.totalAwarded, '$')} description='Total Value of All Opportunities' />
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+const Stat: View<{ stat: string; description: string; className?: string; }> = ({ stat, description, className }) => {
+  return (
+    <div className={`d-flex flex-column justify-content-center align-items-center text-center ${className}`}>
+      <div className='h1 mb-3 text-c-landing-stats-stat'>{stat}</div>
+      <div className='overline text-c-landing-stats-description'>{description}</div>
+    </div>
   );
 };
 
@@ -285,10 +295,11 @@ const BottomView: View = () => {
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: ComponentView<State, Msg> = props => {
   return (
     <div>
-      <Hero state={state} dispatch={dispatch} />
+      <Hero {...props} />
+      <Stats {...props} />
       <Programs />
       <AppInfo />
       <VendorRoleInfo />
