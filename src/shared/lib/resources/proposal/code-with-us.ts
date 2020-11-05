@@ -184,11 +184,16 @@ export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequest
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
-  | ADT<'score', number>
+  | ADT<'score', UpdateProposalScoreBody>
   | ADT<'award', string>
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>
   | ADT<'addNote', UpdateWithNoteRequestBody>;
+
+export interface UpdateProposalScoreBody {
+  score: number;
+  note: string;
+}
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
 
@@ -201,10 +206,12 @@ export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<Updat
   attachments?: string[][];
 }
 
+export type UpdateProposalScoreValidationErrors = ErrorTypeFrom<UpdateProposalScoreBody> & BodyWithErrors;
+
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
-  | ADT<'score', string[]>
+  | ADT<'score', UpdateProposalScoreValidationErrors>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>

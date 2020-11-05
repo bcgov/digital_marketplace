@@ -1,6 +1,7 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
+import { generateSQLAlterTableEnums } from 'migrations/utils';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
 
@@ -49,14 +50,6 @@ enum SWUProposalEvent {
   PriceScoreEntered = 'PRICE_SCORE_ENTERED',
   NoteAdded = 'NOTE_ADDED'
 }
-
-const generateSQLAlterTableEnums = (tableName: string, columnName: string, enums: string[]): string => {
-  const constraintName = `${tableName}_${columnName}_check`;
-  return [
-    `ALTER TABLE "${tableName}" DROP CONSTRAINT IF EXISTS "${constraintName}";`,
-    `ALTER TABLE "${tableName}" ADD CONSTRAINT "${constraintName}" CHECK ("${columnName}" = ANY (ARRAY['${enums.join("'::text, '")}'::text]));`
-  ].join('\n');
-};
 
 export async function up(connection: Knex): Promise<void> {
   // Modify constraints on status tables for opportunities and proposals to allow for new event type

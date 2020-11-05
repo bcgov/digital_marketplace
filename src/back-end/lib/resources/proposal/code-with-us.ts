@@ -1,3 +1,4 @@
+import { CWUOpportunityStatus } from 'back-end/../shared/lib/resources/opportunity/code-with-us';
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
 import * as cwuProposalNotifications from 'back-end/lib/mailer/notifications/proposal/code-with-us';
@@ -8,7 +9,7 @@ import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, v
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateProposalScoreBody, UpdateProposalScoreValidationErrors, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
@@ -35,11 +36,13 @@ interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestB
   attachments: FileRecord[];
 }
 
+type ValidatedUpdateProposalScoreBody = UpdateProposalScoreBody;
+
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submit', string>
-      | ADT<'score', number>
+      | ADT<'score', ValidatedUpdateProposalScoreBody>
       | ADT<'award', string>
       | ADT<'disqualify', string>
       | ADT<'withdraw', string>
@@ -277,7 +280,10 @@ const resource: Resource = {
           case 'submit':
             return adt('submit', getString(body, 'value', ''));
           case 'score':
-            return adt('score', getNumber<number>(body, 'value', -1, false));
+            return adt('score', {
+              note: getString(value, 'note'),
+              score: getNumber(value, 'score', -1, false)
+            });
           case 'award':
             return adt('award', getString(body, 'value', ''));
           case 'disqualify':
@@ -396,13 +402,17 @@ const resource: Resource = {
                                                               proposalDeadline)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedScore = proposalValidation.validateScore(request.body.value);
-            if (isInvalid(validatedScore)) {
-              return invalid({ proposal: adt('score' as const, getInvalidValue(validatedScore, [])) });
+            // Ensure that the opportunity is not locked before updating score
+            if (cwuOpportunity.status === CWUOpportunityStatus.ScoresLocked) {
+              return invalid({ permissions: ['Scores have been locked for this opportunity. Unable to update proposal score.'] });
+            }
+            const validatedScoreBody = proposalValidation.validateUpdateProposalScoreBody(request.body.value);
+            if (isInvalid(validatedScoreBody)) {
+              return invalid({ proposal: adt('score' as const, validatedScoreBody.value as UpdateProposalScoreValidationErrors) });
             }
             return valid({
               session: request.session,
-              body: adt('score' as const, validatedScore.value)
+              body: adt('score' as const, validatedScoreBody.value as UpdateProposalScoreBody)
             } as ValidatedUpdateRequestBody);
           case 'award':
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,

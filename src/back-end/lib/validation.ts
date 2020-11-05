@@ -4,16 +4,16 @@ import { get, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
+import { CWUOpportunity, UpdateProposalScoresBody, UpdateProposalScoresValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Organization } from 'shared/lib/resources/organization';
-import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal, UpdateProposalScoreBody, UpdateProposalScoreValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
-import { validateIndividualProponent } from 'shared/lib/validation/proposal/code-with-us';
+import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
 import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
 import { isArray } from 'util';
 
@@ -170,7 +170,7 @@ export async function validateSWUProposalId(connection: db.Connection, proposalI
 export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
     case 'individual':
-      const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
+      const validatedIndividualProponentRequestBody = proposalValidation.validateIndividualProponent(get(raw, 'value'));
       if (isValid(validatedIndividualProponentRequestBody)) {
         return adt(validatedIndividualProponentRequestBody.tag, adt('individual' as const, validatedIndividualProponentRequestBody.value));
       }
@@ -313,4 +313,36 @@ export async function validateContentId(connection: db.Connection, contentId: Id
   } catch (exception) {
     return invalid(['Please select a valid content id.']);
   }
+}
+
+// Validates a Record of proposal ids and update bodies for updating proposal scores.
+// If any property of the Record is invalid, an invalid Record type is returned with the invalid properties.
+// If all properties are valid, a Record of the valid properties is returned.
+export async function validateProposalScores(connection: db.Connection, raw: any, session: AuthenticatedSession): Promise<Validation<UpdateProposalScoresBody, UpdateProposalScoresValidationErrors>> {
+  // Validate the keys, and make sure the proposals they correspond to exist
+  const validResults: Record<Id, UpdateProposalScoreBody> = {};
+  const invalidResults: Record<Id, UpdateProposalScoreValidationErrors> = {};
+  for (const id of Object.keys(raw)) {
+    const validatedId = validateUUID(id);
+    if (isInvalid(validatedId)) {
+      invalidResults[id] = { notFound: ['Please provide a valid proposal id.'] };
+    }
+    // Ensure proposal exists for the given id
+    const dbResult = await db.readOneCWUProposal(connection, id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      invalidResults[id] = { notFound: ['Proposal not found.'] };
+    }
+
+    // Validate the update body for the proposal
+    const rawBody = raw[id];
+    const validatedUpdateProposalScoreBody = proposalValidation.validateUpdateProposalScoreBody(rawBody);
+    if (isInvalid(validatedUpdateProposalScoreBody)) {
+      invalidResults[id] = getInvalidValue(validatedUpdateProposalScoreBody, {});
+    }
+    validResults[id] = validatedUpdateProposalScoreBody.value as UpdateProposalScoreBody;
+  }
+  if (Object.keys(invalidResults).length > 0) {
+    return invalid(invalidResults);
+  }
+  return valid(validResults);
 }

@@ -4,11 +4,11 @@ import * as cwuOpportunityNotifications from 'back-end/lib/mailer/notifications/
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/validation';
+import { validateAttachments, validateCWUOpportunityId, validateProposalScores } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateProposalScoresBody, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, mapValid, valid, validateUUID, Validation } from 'shared/lib/validation';
@@ -31,6 +31,8 @@ interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestB
   attachments: FileRecord[];
 }
 
+export type ValidatedUpdateProposalScoresBody = UpdateProposalScoresBody;
+
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
@@ -39,7 +41,9 @@ interface ValidatedUpdateRequestBody {
       | ADT<'suspend', string>
       | ADT<'cancel', string>
       | ADT<'addAddendum', string>
-      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
+      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>
+      | ADT<'saveProposalScores', ValidatedUpdateProposalScoresBody>
+      | ADT<'lockProposalScores'>;
 }
 
 type ValidatedDeleteRequestBody = Id;
@@ -310,6 +314,10 @@ const resource: Resource = {
               note: getString(value, 'note'),
               attachments: getStringArray(value, 'attachments')
             });
+          case 'saveProposalScores':
+            return adt('saveProposalScores', get(body, 'value'));
+          case 'lockProposalScores':
+            return adt('lockProposalScores');
           default:
             return null;
         }
@@ -557,6 +565,32 @@ const resource: Resource = {
                 })
               });
             }
+          case 'saveProposalScores':
+            if (validatedCWUOpportunity.value.status !== CWUOpportunityStatus.Evaluation) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            const validatedProposalScores = await validateProposalScores(connection, request.body.value, request.session);
+            if (isInvalid(validatedProposalScores)) {
+              return invalid({ opportunity: adt('saveProposalScores' as const, validatedProposalScores.value) });
+            }
+            return valid({
+              session: request.session,
+              body: adt('saveProposalScores', validatedProposalScores.value)
+            } as ValidatedUpdateRequestBody);
+          case 'lockProposalScores':
+            if (validatedCWUOpportunity.value.status !== CWUOpportunityStatus.Evaluation) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            // Ensure all proposal scores have been entered
+            const scoresEntered = await db.checkAllProposalScoresEntered(connection, request.params.id, request.session);
+            if (isInvalid(scoresEntered) || !scoresEntered.value) {
+              return invalid({ permissions: ['All scores must be entered beforing locking in'] });
+            }
+            return valid({
+              session: request.session,
+              body: adt('lockProposalScores')
+            } as ValidatedUpdateRequestBody);
+
           default:
             return invalid({ opportunity: adt('parseFailure' as const) });
         }
@@ -607,6 +641,12 @@ const resource: Resource = {
               break;
             case 'addNote':
               dbResult = await db.addCWUOpportunityNote(connection, request.params.id, body.value, session);
+              break;
+            case 'saveProposalScores':
+              dbResult = await db.batchUpdateCWUProposalScores(connection, request.params.id, body.value, session);
+              break;
+            case 'lockProposalScores':
+              dbResult = await db.lockCWUProposalScores(connection, request.params.id, session);
               break;
           }
           if (isInvalid(dbResult)) {
