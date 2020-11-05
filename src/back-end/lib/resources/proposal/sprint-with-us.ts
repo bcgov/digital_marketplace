@@ -10,7 +10,7 @@ import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateTeamQuestionScoreBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateCCProposalScoreBody, UpdateEditValidationErrors, UpdateRequestBody, UpdateSingleTeamQuestionScoreBody, UpdateTQProposalScoreBody, UpdateTSProposalScoreBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
@@ -25,13 +25,13 @@ interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submit', string>
-      | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
+      | ADT<'scoreQuestions', ValidatedUpdateTQProposalScoreBody>
       | ADT<'screenInToCodeChallenge', string>
       | ADT<'screenOutFromCodeChallenge', string>
-      | ADT<'scoreCodeChallenge', number>
+      | ADT<'scoreCodeChallenge', ValidatedUpdateCCProposalScoreBody>
       | ADT<'screenInToTeamScenario', string>
       | ADT<'screenOutFromTeamScenario', string>
-      | ADT<'scoreTeamScenario', number>
+      | ADT<'scoreTeamScenario', ValidatedUpdateTSProposalScoreBody>
       | ADT<'award', string>
       | ADT<'disqualify', string>
       | ADT<'withdraw', string>
@@ -39,6 +39,12 @@ interface ValidatedUpdateRequestBody {
 }
 
 type ValidatedUpdateEditRequestBody = Omit<ValidatedCreateRequestBody, 'opportunity' | 'status' | 'session'>;
+
+type ValidatedUpdateTQProposalScoreBody = UpdateTQProposalScoreBody;
+
+type ValidatedUpdateCCProposalScoreBody = UpdateCCProposalScoreBody;
+
+type ValidatedUpdateTSProposalScoreBody = UpdateTSProposalScoreBody;
 
 interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
   attachments: FileRecord[];
@@ -332,19 +338,28 @@ const resource: Resource = {
           case 'submit':
             return adt('submit', getString(body, 'value', ''));
           case 'scoreQuestions':
-            return adt('scoreQuestions', value as UpdateTeamQuestionScoreBody[]);
+            return adt('scoreQuestions', {
+              note: getString(value, 'note'),
+              questionScores: get(value, 'questionScores') as UpdateSingleTeamQuestionScoreBody[]
+            });
           case 'screenInToCodeChallenge':
             return adt('screenInToCodeChallenge', getString(body, 'value'));
           case 'screenOutFromCodeChallenge':
             return adt('screenOutFromCodeChallenge', getString(body, 'value'));
           case 'scoreCodeChallenge':
-            return adt('scoreCodeChallenge', getNumber<number>(body, 'value', -1, false));
+            return adt('scoreCodeChallenge', {
+              note: getString(value, 'note'),
+              score: getNumber<number>(value, 'score', -1, false)
+            });
           case 'screenInToTeamScenario':
             return adt('screenInToTeamScenario', getString(body, 'value'));
           case 'screenOutFromTeamScenario':
             return adt('screenOutFromTeamScenario', getString(body, 'value'));
           case 'scoreTeamScenario':
-            return adt('scoreTeamScenario', getNumber<number>(body, 'value', -1, false));
+            return adt('scoreTeamScenario', {
+              note: getString(value, 'note'),
+              score: getNumber<number>(value, 'score', -1, false)
+            });
           case 'award':
             return adt('award', getString(body, 'value', ''));
           case 'disqualify':
@@ -632,15 +647,22 @@ const resource: Resource = {
                 permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
-            const validatedQuestionsScore = proposalValidation.validateTeamQuestionScores(request.body.value, swuOpportunity.teamQuestions);
-            if (isInvalid(validatedQuestionsScore)) {
+            const validatedTQScoreNote = proposalValidation.validateNote(request.body.value?.note || '');
+            const validatedQuestionsScores = proposalValidation.validateTeamQuestionScores(request.body.value?.questionScores || [], swuOpportunity.teamQuestions);
+            if (!allValid([validatedTQScoreNote, validatedQuestionsScores])) {
               return invalid({
-                proposal: adt('scoreQuestions' as const, getInvalidValue(validatedQuestionsScore, []))
+                proposal: adt('scoreQuestions' as const, {
+                  questionScores: getInvalidValue(validatedQuestionsScores, undefined),
+                  note: getInvalidValue(validatedTQScoreNote, undefined)
+                })
               });
             }
             return valid({
               session: request.session,
-              body: adt('scoreQuestions' as const, validatedQuestionsScore.value)
+              body: adt('scoreQuestions' as const, {
+                note: validatedTQScoreNote.value,
+                questionScores: validatedQuestionsScores.value
+              })
             } as ValidatedUpdateRequestBody);
           case 'screenInToCodeChallenge':
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewCodeChallenge, request.session.user.type, swuOpportunity.proposalDeadline)) {
@@ -698,15 +720,22 @@ const resource: Resource = {
                 permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
-            const validatedCodeChallengeScore = proposalValidation.validateCodeChallengeScore(request.body.value);
-            if (isInvalid(validatedCodeChallengeScore)) {
+            const validatedCCScoreNote = proposalValidation.validateNote(request.body.value?.note || '');
+            const validatedCodeChallengeScore = proposalValidation.validateCodeChallengeScore(request.body.value?.score || -1);
+            if (!allValid([validatedCCScoreNote, validatedCodeChallengeScore])) {
               return invalid({
-                proposal: adt('scoreCodeChallenge' as const, getInvalidValue(validatedCodeChallengeScore, []))
+                proposal: adt('scoreCodeChallenge' as const, {
+                  note: getInvalidValue(validatedCCScoreNote, undefined),
+                  score: getInvalidValue(validatedCodeChallengeScore, undefined)
+                })
               });
             }
             return valid({
               session: request.session,
-              body: adt('scoreCodeChallenge' as const, validatedCodeChallengeScore.value)
+              body: adt('scoreCodeChallenge' as const, {
+                note: validatedCCScoreNote.value,
+                score: validatedCodeChallengeScore.value
+              })
             } as ValidatedUpdateRequestBody);
           case 'screenInToTeamScenario':
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewTeamScenario, request.session.user.type, swuOpportunity.proposalDeadline)) {
@@ -764,15 +793,22 @@ const resource: Resource = {
                 permissions: ['The opportunity is not in the correct stage of evaluation to perform that action.']
               });
             }
-            const validatedTeamScenarioScore = proposalValidation.validateTeamScenarioScore(request.body.value);
-            if (isInvalid(validatedTeamScenarioScore)) {
+            const validatedTSScoreNote = proposalValidation.validateNote(request.body.value?.note || '');
+            const validatedTeamScenarioScore = proposalValidation.validateTeamScenarioScore(request.body.value?.score || -1);
+            if (!allValid([validatedTSScoreNote, validatedTeamScenarioScore])) {
               return invalid({
-                proposal: adt('scoreTeamScenario' as const, getInvalidValue(validatedTeamScenarioScore, []))
+                proposal: adt('scoreTeamScenario' as const, {
+                  note: getInvalidValue(validatedTSScoreNote, undefined),
+                  score: getInvalidValue(validatedTeamScenarioScore, undefined)
+                })
               });
             }
             return valid({
               session: request.session,
-              body: adt('scoreTeamScenario' as const, validatedTeamScenarioScore.value)
+              body: adt('scoreTeamScenario' as const, {
+                note: validatedTSScoreNote.value,
+                score: validatedTeamScenarioScore.value
+              })
             } as ValidatedUpdateRequestBody);
           case 'award':
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.Awarded, request.session.user.type, swuOpportunity.proposalDeadline)) {

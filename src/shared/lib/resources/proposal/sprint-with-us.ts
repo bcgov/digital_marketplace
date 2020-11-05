@@ -252,7 +252,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
 
 // Update.
 
-export interface UpdateTeamQuestionScoreBody {
+export interface UpdateSingleTeamQuestionScoreBody {
   order: number;
   score: number;
 }
@@ -260,13 +260,13 @@ export interface UpdateTeamQuestionScoreBody {
 export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submit', string>
-  | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
+  | ADT<'scoreQuestions', UpdateTQProposalScoreBody>
   | ADT<'screenInToCodeChallenge', string>
   | ADT<'screenOutFromCodeChallenge', string>
-  | ADT<'scoreCodeChallenge', number>
+  | ADT<'scoreCodeChallenge', UpdateCCProposalScoreBody>
   | ADT<'screenInToTeamScenario', string>
   | ADT<'screenOutFromTeamScenario', string>
-  | ADT<'scoreTeamScenario', number>
+  | ADT<'scoreTeamScenario', UpdateTSProposalScoreBody>
   | ADT<'award', string>
   | ADT<'disqualify', string>
   | ADT<'withdraw', string>
@@ -279,6 +279,21 @@ export interface UpdateWithNoteRequestBody {
   attachments: Id[];
 }
 
+export interface UpdateTQProposalScoreBody {
+  note: string;
+  questionScores: UpdateSingleTeamQuestionScoreBody[];
+}
+
+export interface UpdateCCProposalScoreBody {
+  note: string;
+  score: number;
+}
+
+export interface UpdateTSProposalScoreBody {
+  note: string;
+  score: number;
+}
+
 export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
   attachments?: string[][];
 }
@@ -286,23 +301,38 @@ export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<Updat
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submit', string[]>
-  | ADT<'scoreQuestions', UpdateTeamQuestionScoreValidationErrors[]>
+  | ADT<'scoreQuestions', UpdateTQProposalScoreValidationErrors>
   | ADT<'screenInToCodeChallenge', string[]>
   | ADT<'screenOutFromCodeChallenge', string[]>
-  | ADT<'scoreCodeChallenge', string[]>
+  | ADT<'scoreCodeChallenge', UpdateCCProposalScoreValidationErrors>
   | ADT<'screenInToTeamScenario', string[]>
   | ADT<'screenOutFromTeamScenario', string[]>
-  | ADT<'scoreTeamScenario', string[]>
+  | ADT<'scoreTeamScenario', UpdateTSProposalScoreValidationErrors>
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>
   | ADT<'addNote', UpdateWithNoteValidationErrors>
   | ADT<'parseFailure'>;
 
-export interface UpdateTeamQuestionScoreValidationErrors {
+export interface UpdateSingleTeamQuestionScoreValidationErrors {
   order?: string[];
   score?: string[];
   parseFailure?: string[];
+}
+
+export interface UpdateTQProposalScoreValidationErrors {
+  note?: string[];
+  questionScores?: UpdateSingleTeamQuestionScoreValidationErrors[];
+}
+
+export interface UpdateCCProposalScoreValidationErrors {
+  note?: string[];
+  score?: string[];
+}
+
+export interface UpdateTSProposalScoreValidationErrors {
+  note?: string[];
+  score?: string[];
 }
 
 export interface UpdateEditValidationErrors {
