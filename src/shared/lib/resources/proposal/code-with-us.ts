@@ -92,7 +92,7 @@ export interface CWUProposal {
   opportunity: CWUOpportunitySlim;
   proposalText: string;
   additionalComments: string;
-  proponent: ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
+  proponent: CWUProponent;
   score?: number;
   rank?: number;
   status: CWUProposalStatus;
@@ -107,6 +107,17 @@ export function getCWUProponentName(p: CWUProposal | CWUProposalSlim): string {
   }
 }
 
+export function getCWUProponentEmail(p: CWUProposal | CWUProposalSlim): string {
+  switch (p.proponent.tag) {
+    case 'individual': return p.proponent.value.email;
+    case 'organization': return p.proponent.value.contactEmail;
+  }
+}
+
+export function getCWUProponentId(p: CWUProposal | CWUProposalSlim): ADT<'individual', Id> | ADT<'organization', Id> {
+  return adt(p.proponent.tag, p.proponent.value.id);
+}
+
 export function getCWUProponentTypeTitleCase(p: CWUProposal | CWUProposalSlim): string {
   switch (p.proponent.tag) {
     case 'individual': return 'Individual';
@@ -115,6 +126,8 @@ export function getCWUProponentTypeTitleCase(p: CWUProposal | CWUProposalSlim): 
 }
 
 export type CWUProposalSlim = Omit<CWUProposal, 'proposalText' | 'additionalComments' | 'history' | 'attachments'>;
+
+type CWUProponent = ADT<'individual', CWUIndividualProponent> | ADT<'organization', Organization>;
 
 export interface CWUIndividualProponent {
   id: Id;

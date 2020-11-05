@@ -544,7 +544,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getAlerts: getAlertsValid(state => {
     const viewerUser = state.viewerUser;
     const existingProposal = state.existingProposal;
-    const successfulProponentName = state.opportunity.successfulProponentName;
+    const successfulProponentName = state.opportunity.successfulProponent?.name;
     const vendor = !!viewerUser && isVendor(viewerUser);
     const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
     return {

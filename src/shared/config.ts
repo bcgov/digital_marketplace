@@ -28,3 +28,5 @@ export const COPY = {
     }
   }
 };
+
+export const EMPTY_STRING = '—'; // emdash
