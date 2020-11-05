@@ -27,7 +27,8 @@ export const vendorUser: User = {
   idpUsername: 'vendor_user',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'vendor_user'
 };
 
 export const vendorUserSlim: UserSlim = {
@@ -48,7 +49,8 @@ export const govUser: User = {
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'username'
 };
 
 export const adminUser: User = {
@@ -64,7 +66,8 @@ export const adminUser: User = {
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
-  capabilities: []
+  capabilities: [],
+  idpId: 'username'
 };
 
 export const cwuOpportunity: CWUOpportunity = {
@@ -86,7 +89,12 @@ export const cwuOpportunity: CWUOpportunity = {
   submissionInfo: '',
   acceptanceCriteria: '',
   evaluationCriteria: '',
-  successfulProponentName: 'Successful Proponent',
+  successfulProponent: {
+    id: adt('individual', id),
+    name: 'Successful Proponent',
+    email: 'noreply@gov.bc.ca',
+    createdBy: vendorUserSlim
+  },
   status: CWUOpportunityStatus.Published,
   attachments: [],
   addenda: []
@@ -184,7 +192,12 @@ export const swuOpportunity: SWUOpportunity = {
   status: SWUOpportunityStatus.Published,
   implementationPhase: swuOpportunityImplementationPhase,
   teamQuestions: [swuOpportunityTeamQuestion],
-  successfulProponentName: 'Successful Proponent',
+  successfulProponent: {
+    id,
+    name: 'Successful Proponent',
+    email: 'noreply@gov.bc.ca',
+    createdBy: vendorUserSlim
+  },
   attachments: [],
   addenda: []
 };

@@ -14,7 +14,7 @@ This document describes this project's developer environment, technical architec
   * [Back-End (`src/back-end`)](#back-end-srcback-end)
   * [Shared (`src/shared`)](#shared-srcshared)
   * [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
-- [Contributing](#contributing)
+  * [Scripts (`src/scripts`)](#scripts-srcscripts)
 - [Development Environment](#development-environment)
   * [Dependencies](#dependencies)
   * [Quick Start](#quick-start)
@@ -25,6 +25,9 @@ This document describes this project's developer environment, technical architec
   * [Deployment Process](#deployment-process)
   * [Backups](#backups)
   * [High Availability Database Deployment](#high-availability-database-deployment)
+- [Community](#community)
+  * [Contributing](#contributing)
+  * [Forking this Repository](#forking-this-repository)
 - [Team](#team)
 - [Credits](#credits)
 
@@ -37,14 +40,12 @@ This project is designed, implemented and maintained by the team at Real Folk. I
 **Dhruv Dang**, Managing Director
 [dhruv@realfolk.io](mailto:dhruv@realfolk.io)
 
-This project available to use under the Apache 2.0 license (see `LICENSE.txt`).
+This project available to use under the Apache 2.0 license (see `LICENSE.txt`). Please note the `NOTICE.txt` file included with this repository and the guidelines in section 4(d) of the license.
 
 ## Project Organisation
 
 The Digital Marketplace is a full-stack TypeScript web application that uses PostgreSQL for persistence.
 It is written in a functional and declarative style with the goal of maximizing compile-time guarantees through type-safety.
-
-![Digital Marketplace Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Digital%20Marketplace%20Architecture.svg)
 
 The source code is split into five parts:
 
@@ -55,15 +56,11 @@ The front-end's build system is executed by Grunt.
 
 The front-end's state management framework (`src/front-end/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
-![Digital Marketplace Front-End Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Front-End%20Architecture.svg)
-
 ### Back-End (`src/back-end`)
 
 A TypeScript server that vends the front-end's build assets (`src/back-end/lib/routers/front-end.ts`) as well as a JSON CRUD API (`src/back-end/lib/resources/**/*.ts`) that performs business logic and persists data to a PostgreSQL database.
 
 The server framework (`src/back-end/lib/server/index.ts`) provides type-safe abstractions for API development, and is executed by Express (`src/back-end/lib/server/adapters.ts`).
-
-![Digital Marketplace Back-End Architecture](https://github.com/bcgov/digital_marketplace/blob/development/docs/Back-End%20Architecture.svg)
 
 #### Authentication
 
@@ -72,6 +69,10 @@ The server uses OpenID Connect to authenticate users with a Keycloak server (man
 #### CRUD Resources
 
 CRUD resources are created in a standardised, type-safe way in this project. CRUD abstractions are located in `src/back-end/lib/crud.ts`, and it is recommended to review this module prior to extending the API.
+
+#### Email Notifications
+
+Email notifications are all rendered server-side using React's static HTML renderer. Stub versions of all email notifications can be viewed by authenticated admin users at `{HOST}/admin/email-notification-reference` in your browser.
 
 ### Shared (`src/shared`)
 
@@ -98,16 +99,6 @@ General purpose scripts are stored in this folder. The scripts themselves are st
 ```
 npm run scripts:run -- <SCRIPT_NAME> [...args]
 ```
-
-## Contributing
-
-Features should be implemented in feature branches. Create a pull request against the `development` branch to have your work reviewed for subsequent deployment.
-
-The `development` branch contains all approved code.
-
-The `master` branch contains work that has passed the Quality Assurance process and is ready to be deployed to production.
-
-Hotfixes can be merged directly to `master` via a pull request, but should be merged back into the `development` branch as well.
 
 ## Development Environment
 
@@ -226,6 +217,8 @@ Environment variables that affect the back-end server's functionality are stored
 | `COOKIE_SECRET` | The secret used to hash cookies. |
 | `MAILER_HOST` | SMTP server host for transactional emails in production. |
 | `MAILER_PORT` | SMTP server port for transactional emails in production. |
+| `MAILER_USERNAME` | SMTP server username for authentication. If specified, `MAILER_PASSWORD` must also be provided. |
+| `MAILER_PASSWORD` | SMTP server password for authentication. If specified, `MAILER_USERNAME` must also be provided. |
 | `MAILER_GMAIL_USER` | A GMail SMTP username to test transactional emails in development. |
 | `MAILER_GMAIL_PASS` | A GMail SMTP password to test transactional emails in development. |
 | `MAILER_FROM` | The sender for transactional emails. |
@@ -241,7 +234,9 @@ Environment variables that affect the back-end server's functionality are stored
 | `AVATAR_MAX_IMAGE_HEIGHT` | The maximum image height for uploaded avatar image files. Files with a greater height will be resized. Defaults to 500 pixels. |
 | `FILE_STORAGE_DIR` | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing. |
 | `SERVICE_TOKEN_HASH` | A hashed token used to control access to service API endpoints that are only enabled in development and test environments. Defining the variable will enable service endpoints that can be used to override user accounts and sessions. |
+| `SWAGGER_ENABLE` | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.
 | `SWAGGER_UI_PATH` | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`. |
+| `TZ` | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration. |
 
 #### Front-End Environment Variables
 
@@ -311,6 +306,50 @@ oc process -f openshift/templates/patroni-deploy-config.json | oc create -f -
 ```
 
 Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/postgres-deploy-config.json` and can be run using the same OpenShift CLI command above.
+
+## Community
+
+### Contributing
+
+Features should be implemented in feature branches. Create a pull request against the `development` branch to have your work reviewed for subsequent deployment.
+
+The `development` branch contains all approved code.
+
+The `master` branch contains work that has passed the Quality Assurance process and is ready to be deployed to production.
+
+Hotfixes can be merged directly to `master` via a pull request, but should be merged back into the `development` branch as well.
+
+#### Changelog & Versioning
+
+This project introduced a Changelog and versioning system in 2020-09 to track changes made to the code. Please refer to `CHANGELOG.md` for further information. Generally, core maintainers of this project should be the only people adding to the Changelog.
+
+### Forking this Repository
+
+Please note the section above titled "Authors and Licensing" before forking this repository.
+
+#### Configuration
+
+Various aspects of this application can be configured. In addition to the environment variables described in the section titled "Environment Variables", the following files contain hard-coded configuration variables that can be overridden as needed:
+
+- `src/back-end/config.ts`
+- `src/front-end/typescript/config.ts`
+- `src/shared/config.ts`
+
+#### Theming
+
+This project has a custom Bootstrap theme, defined in `src/front-end/sass/index.scss`. If you would like to theme this project to match your own style guide, you will need to update many of the variables in that file. You will likely also need to make the following changes to ensure a consistent user experience:
+
+- Replace `logo.svg` and `logo.png` in `src/front-end/static/images`.
+- Modify the colors within `default_user_avatar.svg` and `default_organization_logo.svg` in `src/front-end/static/images`.
+- Modify the colors within the SVGs in `src/front-end/static/images/illustrations`.
+- Modify the fonts sourced in `src/front-end/sass/_font.scss`.
+- Modify the colors in `src/back-end/lib/mailer/templates.tsx` that are used for email notifications.
+
+#### Migrations
+
+When maintaining a fork of this project that has its own database migrations, special attention must be given to the `CHANGELOG.md` and source code diff whenever the root repository is merged into the fork. You will need to verify that any new migrations from the root repository do not conflict with your own database migrations and schema.
+
+**Migrations can be destructive operations, so please ensure they are monitored and executed with special care.**
 
 ## Team
 

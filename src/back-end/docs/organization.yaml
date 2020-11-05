@@ -1,0 +1,171 @@
+
+paths:
+  /organizations:
+    get:
+      summary: Retrieves all Organizations.
+      tags:
+        - Organizations
+      produces:
+        - application/json
+      description: Return all active Organizations.
+      responses:
+        200:
+          description: Receive the array of Organizations
+
+    post:
+      summary: Creates a new Organization.
+      tags:
+        - Organizations
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      description: Creates a new Organization using the provided request body and returns the new Organization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+            examples:
+              createOrganizationRequestBody:
+                $ref: '#/components/examples/createOrganizationRequestBody'
+      responses:
+        201:
+          description: Receive the created Organization
+
+  /organizations/{id}:
+    get:
+      summary: Retrieves an individual Organization.
+      tags:
+        - Organizations
+      description: Retrieves an individual Organization.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Organization to retrieve
+          type: uuid
+      responses:
+        200:
+          description: Receive the requested Organization
+
+    put:
+      summary: Updates an existing Organization.
+      tags:
+        - Organizations
+      description: Updates an existing Organization.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Organization to update
+          type: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                value:
+                  nullable: true
+                  $ref: '#/components/schemas/Organization'
+            examples:
+              acceptSWUTerms:
+                $ref: '#/components/examples/acceptSWUTerms'
+              updateProfile:
+                $ref: '#/components/examples/updateProfile'
+      responses:
+        200:
+          description: Received the updated Organization
+
+    delete:
+      summary: Deactivates an existing Organization.
+      tags:
+        - Organizations
+      description: Marks the specified Organization as 'Inactive'.
+      consumes:
+        — application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Organization to deactivate
+          type: uuid
+      responses:
+        200:
+          description: Receive back the deactivated Organization.
+
+components:
+  schemas:
+    Organization:
+      type: object
+      properties:
+        legalName:
+          type: string
+        logoImageFile:
+          type: uuid
+        websiteUrl:
+          type: string
+        streetAddress1:
+          type: string
+        streetAddress2:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+        mailCode:
+          type: string
+        country:
+          type: string
+        contactName: 
+          type: string
+        contactTitle:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+  examples:
+    createOrganizationRequestBody:
+      summary: Request body for creating an Organization
+      value:
+        legalName: My Company Inc.
+        logoImageFile: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+        websiteUrl: https://www.mycompany.io
+        streetAddress1: 123 Remote Way
+        streetAddress2: Suite 404
+        city: Victoria
+        region: BC
+        mailCode: V8Z1T8
+        country: Canada
+        contactName: John Smith
+        contactTitle: CEO
+        contactEmail: john.smith@email.com
+        contactPhone: 250-555-5555
+    acceptSWUTerms:
+      summary: Accepting SWU terms for an Organization
+      value:
+        tag: acceptSWUTerms
+    updateProfile:
+      summary: Update an Organization profile
+      value:
+        tag: updateProfile
+        value:
+          legalName: My Company Inc.
+          logoImageFile: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+          websiteUrl: https://www.mycompany.io
+          streetAddress1: 123 Remote Way
+          streetAddress2: Suite 404
+          city: Victoria
+          region: BC
+          mailCode: V8Z1T8
+          country: Canada
+          contactName: John Smith
+          contactTitle: CEO
+          contactEmail: john.smith@email.com
+          contactPhone: 250-555-5555

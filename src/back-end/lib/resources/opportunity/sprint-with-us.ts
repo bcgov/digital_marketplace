@@ -710,9 +710,9 @@ const resource: Resource = {
               opportunityValidation.validateTeamScenarioWeight(validatedSWUOpportunity.value.scenarioWeight),
               opportunityValidation.validatePriceWeight(validatedSWUOpportunity.value.priceWeight),
               opportunityValidation.validatePriceWeight(validatedSWUOpportunity.value.priceWeight),
-              opportunityValidation.validateSWUOpportunityInceptionPhase(validatedSWUOpportunity.value.inceptionPhase, validatedSWUOpportunity.value.assignmentDate),
-              opportunityValidation.validateSWUOpportunityPrototypePhase(validatedSWUOpportunity.value.prototypePhase, validatedSWUOpportunity.value.inceptionPhase?.completionDate || validatedSWUOpportunity.value.assignmentDate),
-              opportunityValidation.validateSWUOpportunityImplementationPhase(validatedSWUOpportunity.value.implementationPhase, validatedSWUOpportunity.value.prototypePhase?.completionDate || validatedSWUOpportunity.value.assignmentDate)
+              opportunityValidation.validateSWUOpportunityInceptionPhase(validatedSWUOpportunity.value.inceptionPhase, validatedSWUOpportunity.value.assignmentDate, validatedSWUOpportunity.value.totalMaxBudget),
+              opportunityValidation.validateSWUOpportunityPrototypePhase(validatedSWUOpportunity.value.prototypePhase, validatedSWUOpportunity.value.inceptionPhase?.completionDate || validatedSWUOpportunity.value.assignmentDate, validatedSWUOpportunity.value.totalMaxBudget),
+              opportunityValidation.validateSWUOpportunityImplementationPhase(validatedSWUOpportunity.value.implementationPhase, validatedSWUOpportunity.value.prototypePhase?.completionDate || validatedSWUOpportunity.value.assignmentDate, validatedSWUOpportunity.value.totalMaxBudget)
             ])) {
               return invalid({
                 opportunity: adt('submitForReview' as const, ['This opportunity could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])

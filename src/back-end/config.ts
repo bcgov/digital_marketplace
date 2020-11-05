@@ -13,7 +13,7 @@ export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
 
 export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 
-export const MAILER_NOREPLY = 'noreply@digitalmarketplace.gov.bc.ca';
+export const MAILER_REPLY = get('MAILER_REPLY', 'noreply@digitalmarketplace.gov.bc.ca');
 
 // ENV CONFIG
 // export the root directory of the repository.
@@ -53,6 +53,8 @@ export const ORIGIN = get('ORIGIN', 'https://digital.gov.bc.ca/marketplace').rep
 
 export const SERVICE_TOKEN_HASH = get('SERVICE_TOKEN_HASH', '');
 
+export const SWAGGER_ENABLE = get('SWAGGER_ENABLE', '') === 'true';
+
 export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
 
 export function getPostgresUrl(): string | null {
@@ -78,10 +80,15 @@ export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
 export const FRONT_END_BUILD_DIR = resolve(REPOSITORY_ROOT_DIR, 'build/front-end');
 
+const mailerPort = parseInt(get('MAILER_PORT', '25'), 10);
 const productionMailerConfigOptions = {
   host: get('MAILER_HOST', ''),
-  port: parseInt(get('MAILER_PORT', '25'), 10),
-  secure: false,
+  port: mailerPort,
+  auth: {
+    user: get('MAILER_USERNAME', ''),
+    pass: get('MAILER_PASSWORD', '')
+  },
+  secure: mailerPort === 465 ? true : false,
   connectionTimeout: 5000,
   greetingTimeout: 5000,
   ignoreTLS: false,
@@ -107,7 +114,7 @@ const developmentMailerConfigOptions = {
 
 export const MAILER_CONFIG = ENV === 'development' ? developmentMailerConfigOptions : productionMailerConfigOptions;
 
-export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_NOREPLY}>`);
+export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_REPLY}>`);
 
 export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
 
@@ -215,6 +222,13 @@ export function getConfigErrors(): string[] {
     errors = errors.concat([
       'MAILER_* variables must be properly specified for production.',
       'MAILER_HOST and MAILER_PORT (positive integer) must all be specified.'
+    ]);
+  }
+
+  if (ENV === 'production' && (!!productionMailerConfigOptions.auth.user !== !!productionMailerConfigOptions.auth.pass)) {
+    errors = errors.concat([
+      'MAILER_* variables must be properly specified for production.',
+      'MAILER_USERNAME and MAILER_PASSWORD must be either both specified or both absent'
     ]);
   }
 

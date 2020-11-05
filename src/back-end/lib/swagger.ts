@@ -2,7 +2,7 @@ import { ORIGIN } from 'back-end/config';
 import swaggerJSDoc from 'swagger-jsdoc';
 
 const options: swaggerJSDoc.Options = {
-  apis: ['src/back-end/docs/user-api.yaml'],
+  apis: ['src/back-end/docs/**/*.yaml'],
   swaggerDefinition: {
     servers: [
       {

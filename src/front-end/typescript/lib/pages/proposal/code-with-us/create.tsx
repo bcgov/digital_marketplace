@@ -210,8 +210,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             <SubmitProposalTerms.view
               opportunityType='Code With Us'
               action='submitting'
-              termsTitle='Digital Marketplace Terms & Conditions'
-              termsRoute={adt('content', 'terms-and-conditions')}
+              termsTitle='Code With Us Terms & Conditions'
+              termsRoute={adt('content', 'code-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),

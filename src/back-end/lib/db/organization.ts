@@ -175,6 +175,19 @@ export const readOneOrganization = tryDb<[Id, boolean?, Session?], Organization 
 });
 
 /**
+ * Read a single organization's contact email.
+ * Queries the organization by ID.
+ *
+ * This function is intended to be used internally, so
+ * it does not complete any relevant permissions checks.
+ */
+
+export const readOneOrganizationContactEmail = tryDb<[Id], string | null>(async (connection, id) => {
+  const [result] = await connection<{ contactEmail: string }>('organizations').where({ id }).select('contactEmail');
+  return valid(result?.contactEmail || null);
+});
+
+/**
  * Return all organizations from the database.
  *
  * If the user is:

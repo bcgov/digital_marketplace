@@ -1,0 +1,65 @@
+
+paths:
+  /files:
+    post:
+      summary: Creates a new File with provided metadata.
+      tags:
+        - Files
+      produces:
+        - application/json
+      description: Creates a new File with provided metadata.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                metadata:
+                  required: false
+                  type: object
+                  properties:
+                    tag:
+                      type: string
+                      enum: [any, user, userType]
+                    value:
+                      required: false
+                      type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Receive the created File record.
+
+  /files/{id}:
+    get:
+      summary: Retrieve an existing File or File record.
+      tags:
+        - Files
+      produces:
+        - application/json
+      description: Retrieves an existing File (blob) or File record.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the File to retrieve
+          type: uuid
+        - name: type
+          in: query
+          required: false
+          description: Whether to receive the File blob iself ('blob') or the File record.
+          type: string
+          enum: [blob]
+      responses:
+        200:
+          description: Receive the the File or File record.
+        404:
+          description: The specified File was not found.
+        401:
+          description: Not authorized to retrieve this File.
+        503:
+          description: A database error has occurred or the file is not retrievable.

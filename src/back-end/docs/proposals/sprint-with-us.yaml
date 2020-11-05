@@ -1,0 +1,328 @@
+
+paths:
+  /proposals/sprint-with-us:
+    get:
+      summary: Retrieve all Sprint-With-Us Proposals for a specific Opportunity or the current User.
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Retrieve all Sprint-With-Us Proposal for a specific Opportunity or the current User.
+      parameters:
+        - name: opportunity
+          in: query
+          description: Optional Sprint-With-Us Opportunity id to retrieve Proposals for.
+          type: uuid
+      responses:
+        200:
+          description: Receive the array of Proposals.
+        503:
+          description: A database error has occurred.
+        404:
+          description: The specified Opportunity does not exist.
+        401:
+          description: You do not have permissions to view Proposals for the Opportunity or are not signed in.
+
+
+    post:
+      summary: Create a new Sprint-With-Us Proposal.
+      tags:
+        - Proposals
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      description: Creates a new Sprint-With-Us Proposal using the provided request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SWUProposal'
+            examples:
+              createSWUProposal:
+                $ref: '#/components/examples/createSWUProposal'
+      responses:
+        201:
+          description: Receive the created Sprint-With-Us Proposal.
+        400:
+          description: The request body was not well-formed.
+        503:
+          description: A database error occurred.
+
+  /proposals/sprint-with-us/{id}:
+    get:
+      summary: Retrieve a single Sprint-With-Us Proposal.
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Retrieve a single Sprint-With-Us Proposal for the specified id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Sprint-With-Us Proposal to retrieve.
+          type: uuid
+      responses:
+        200:
+          description: Receive the specified Sprint-With-Us Proposal.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Sprint-With-Us Proposal for the specified ID was not found.
+    
+    put:
+      summary: Update an existing Sprint-With-Us Proposal.
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Update an existing Sprint-With-Us Proposal. The nature of the update depends on the ADT passed in the request body.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Sprint-With-Us Proposal to update.
+          type: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  enum: [edit, submit, scoreQuestions, screenInToCodeChallenge, screenOutFromCodeChallenge, scoreCodeChallenge, screenInToTeamScenario, screenOutFromTeamScenario, scoreTeamScenario, award, disqualify, withdraw]
+                value:
+                  type: object
+            examples:
+              edit:
+                $ref: '#/components/examples/editSWUProposal'
+              submit:
+                $ref: '#/components/examples/submitSWUProposal'
+              screenInToCodeChallenge:
+                $ref: '#/components/examples/screenSWUProposalIntoCodeChallenge'
+              screenOutFromCodeChallenge:
+                $ref: '#/components/examples/screenSWUProposalOutFromCodeChallenge'
+              scoreCodeChallenge:
+                $ref: '#/components/examples/scoreCodeChallengeForSWUProposal'
+              screenInToTeamScenario:
+                $ref: '#/components/examples/screenSWUProposalIntoTeamScenario'
+              screenOutFromTeamScenario:
+                $ref: '#/components/examples/screenSWUProposalOutFromTeamScenario'
+              scoreTeamScenario:
+                $ref: '#/components/examples/scoreTeamScenarioForSWUProposal'
+              award:
+                $ref: '#/components/examples/awardSWUProposal'
+              disqualify:
+                $ref: '#/components/examples/disqualifySWUProposal'
+              withdraw:
+                $ref: '#/components/examples/withdrawSWUProposal'
+      responses:
+        200:
+          description: Receive the updated Sprint-With-Us Proposal.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Sprint-With-Us Proposal for the specified ID was not found.
+        401:
+          description: You do not have permission to update this Proposal.
+    
+    delete:
+      summary: Delete a draft Sprint-With-Us Proposal (Opportunity must be in draft)
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Permanently delete a draft Sprint-With-Us Proposal. This will fail if the Proposal is not in Draft.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the draft Sprint-With-Us Proposal to delete.
+          type: uuid
+      responses:
+        200:
+          description: Receive the delete Sprint-With-Us Proposal.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Sprint-With-Us Proposal for the specified ID was not found.
+        401:
+          description: You do not have permission to delete this Proposal.
+
+
+components:
+  schemas:
+    SWUProposal:
+      type: object
+      properties:
+        opportunity:
+          type: uuid
+        organization:
+          type: uuid
+        attachments:
+          type: array
+          items:
+            type: string
+        inceptionPhase:
+          type: object
+          properties:
+            members:
+              type: array
+              items:
+                type: object
+                properties:
+                  member:
+                    type: uuid
+                  scrumMaster:
+                    type: boolean
+            proposedCost:
+              type: number
+        prototypePhase:
+          type: object
+          properties:
+            members:
+              type: array
+              items:
+                type: object
+                properties:
+                  member:
+                    type: uuid
+                  scrumMaster:
+                    type: boolean
+            proposedCost:
+              type: number
+        implementationPhase:
+          type: object
+          properties:
+            members:
+              type: array
+              items:
+                type: object
+                properties:
+                  member:
+                    type: uuid
+                  scrumMaster:
+                    type: boolean
+            proposedCost:
+              type: number
+        teamQuestionResponses:
+          type: array
+          items:
+            type: object
+            properties:
+              order:
+                type: number
+              response:
+                type: string
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED]
+
+        
+  examples:
+    createSWUProposal:
+      summary: Request body for creating a Sprint-With-Us proposal
+      value:
+        opportunity: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+        organization: 79fe0644-50e1-4939-a488-aa6cf5977d7c
+        inceptionPhase:
+          members:
+            - member: 59fe0644-50e1-4939-a488-aa6cf5977d7d
+              scrumMaster: true
+        prototypePhase:
+          members:
+            - member: 59fe0644-50e1-4939-a488-aa6cf5977d7d
+              scrumMaster: true
+            - member: 39fe0644-50e1-4939-a488-aa6cf5977d7h
+              scrumMaster: false
+        implementationPhase:
+          members:
+            - member: 59fe0644-50e1-4939-a488-aa6cf5977d7d
+              scrumMaster: true
+            - member: 39fe0644-50e1-4939-a488-aa6cf5977d7h
+              scrumMaster: false
+        status: DRAFT
+
+    editSWUProposal:
+      summary: Request body for updating a Sprint-With-Us proposal
+      value:
+        tag: edit
+        value:
+          tag: edit
+          value:
+            proposalText: We are an experienced team with 8+ years of experience including WordPress.
+            additionalComments: We are local to Victoria, and willing to work on location or remotely.
+            proponent:
+              tag: organization
+              value: 69fe0644-50e1-3919-a458-aa6cf5977d7v
+            status: DRAFT
+    
+    submitSWUProposal:
+      summary: Request body for submitting a Sprint-With-Us proposal
+      value:
+        tag: submit
+        value: Submitted
+
+    screenSWUProposalIntoCodeChallenge:
+      summary: Request body for screening a Sprint-With-Us proposal into the Code Challenge
+      value:
+        tag: screenInToCodeChallenge
+        value: Screened in to Code Challenge
+    
+    screenSWUProposalOutFromCodeChallenge:
+      summary: Request body for screening a Sprint-With-Us proposal out of the Code Challenge
+      value:
+        tag: screenOutFromCodeChallenge
+        value: Screened out of Code Challenge
+  
+    scoreCodeChallengeForSWUProposal:
+      summary: Request body for scoring the Code Challenge for a Sprint-With-Us proposal
+      value:
+        tag: scoreCodeChallenge
+        value: 89
+
+    screenSWUProposalIntoTeamScenario:
+      summary: Request body for screening a Sprint-With-Us proposal into the Team Scenario
+      value:
+        tag: screenInToTeamScenario
+        value: Screened in to Team Scenario
+    
+    screenSWUProposalOutFromTeamScenario:
+      summary: Request body for screening a Sprint-With-Us proposal out of the Team Scenario
+      value:
+        tag: screenOutFromTeamScenario
+        value: Screened out of Team Scenario
+  
+    scoreTeamScenarioForSWUProposal:
+      summary: Request body for scoring the Team Scenario for a Sprint-With-Us proposal
+      value:
+        tag: scoreTeamScenario
+        value: 76
+
+    awardSWUProposal:
+      summary: Request body for awarding a Sprint-With-Us proposal
+      value:
+        tag: award
+        value: Awarded.
+
+    disqualifySWUProposal:
+      summary: Request body for disqualifying a Sprint-With-Us proposal
+      value:
+        tag: disqualify
+        value: Disqualified for not meeting requirements
+
+    withdrawSWUProposal:
+      summary: Request body for withdrawing a Sprint-With-Us proposal
+      value:
+        tag: withdraw
+        value: Withdrawn.

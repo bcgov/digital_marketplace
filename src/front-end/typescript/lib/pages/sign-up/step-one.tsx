@@ -7,6 +7,7 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import { SignInCard } from 'front-end/lib/views/sign-in-card';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { GOV_IDP_NAME, VENDOR_IDP_NAME } from 'shared/config';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
@@ -49,15 +50,15 @@ const view: ComponentView<State, Msg> = viewValid(({ state }) => {
       </Row>
 
       <SignInCard title='Vendor'
-        description='Vendors will be required to have a GitHub account to sign up for the Digital Marketplace. Don’t have an account? Creating one only takes a minute.'
-        buttonText='Sign Up Using GitHub'
+        description={`Vendors will be required to have a ${VENDOR_IDP_NAME} account to sign up for the Digital Marketplace. Don’t have an account? Creating one only takes a minute.`}
+        buttonText={`Sign Up Using ${VENDOR_IDP_NAME}`}
         redirectOnSuccess={state.redirectOnSuccess}
         userType={UserType.Vendor}
       />
 
       <SignInCard title='Public Sector Employee'
-        description='Public sector employees will be required to use their IDIR to sign up for the Digital Marketplace.'
-        buttonText='Sign Up Using IDIR'
+        description={`Public sector employees will be required to use their ${GOV_IDP_NAME} to sign up for the Digital Marketplace.`}
+        buttonText={`Sign Up Using ${GOV_IDP_NAME}`}
         redirectOnSuccess={state.redirectOnSuccess}
         userType={UserType.Government}
       />
