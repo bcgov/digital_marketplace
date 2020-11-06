@@ -1,5 +1,7 @@
 import { prefixPath } from 'front-end/lib';
 
+export { EMPTY_STRING } from 'shared/config';
+
 // ENV CONFIG
 export const NODE_ENV = process.env.NODE_ENV || 'production';
 
@@ -23,8 +25,6 @@ export const DEFAULT_USER_AVATAR_IMAGE_PATH = prefixPath('/images/default_user_a
 export const DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH = prefixPath('/images/default_organization_logo.svg');
 
 export const TRANSITION_DURATION = 240; //ms
-
-export const EMPTY_STRING = '—'; // emdash
 
 export const DROPDOWN_CARET_SIZE = 0.8; //rem
 

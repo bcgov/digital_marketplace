@@ -2,7 +2,6 @@ import { CWU_MAX_BUDGET } from 'shared/config';
 import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CWUProposalSlim } from 'shared/lib/resources/proposal/code-with-us';
 import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -52,12 +51,9 @@ export interface CWUOpportunity {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
-
   createdBy?: UserSlim;
   updatedBy?: UserSlim;
-
-  successfulProposal?: CWUProposalSlim;
-  successfulProponentName?: string;
+  successfulProponent?: CWUSuccessfulProponent;
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -84,6 +80,14 @@ export interface CWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
+}
+
+export interface CWUSuccessfulProponent {
+  id: ADT<'individual', Id> | ADT<'organization', Id>;
+  name: string;
+  email?: string;
+  score?: number;
+  createdBy?: UserSlim;
 }
 
 export function isCWUOpportunityPublic(o: CWUOpportunity): boolean {

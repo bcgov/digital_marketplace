@@ -1,0 +1,35 @@
+
+paths:
+  /avatars:
+    post:
+      summary: Creates a new Avatar.
+      tags:
+        - Avatars
+      produces:
+        - application/json
+      description: Creates a new Avatar using the supplied image file. Compresses to the maximum image dimensions if necessary.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                metadata:
+                  required: false
+                  type: object
+                  properties:
+                    tag:
+                      type: string
+                      enum: [any]
+                    value:
+                      required: false
+                      type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Receive the created Avatar file record.

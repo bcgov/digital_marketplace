@@ -569,44 +569,6 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
         return invalid(state);
     }
   }
-  //if (action.tag === 'update' && state.opportunity && state.addenda) {
-    //const newAddenda = Addenda.getNewAddenda(state.addenda);
-    //if (newAddenda.length) {
-      //let updatedExistingAddenda: Addendum[] = state.addenda.existingAddenda;
-      //const updatedNewAddenda: Addenda.NewAddendumParam[] = [];
-      ////Persist each addendum.
-      //for (const addendum of newAddenda) {
-        //const addAddendumResult: api.ResponseValidation<SWUOpportunity, UpdateValidationErrors> = await api.opportunities.swu.update(state.opportunity.id, adt('addAddendum', addendum));
-        //switch (addAddendumResult.tag) {
-          //case 'valid':
-            //updatedExistingAddenda = addAddendumResult.value.addenda;
-            //break;
-          //case 'invalid':
-            //if (addAddendumResult.value.opportunity?.tag === 'addAddendum') {
-              //updatedNewAddenda.push({
-                //value: addendum,
-                //errors: addAddendumResult.value.opportunity.value
-              //});
-            //}
-            //break;
-          //case 'unhandled':
-            //updatedNewAddenda.push({
-              //value: addendum,
-              //errors: ['Unable to add addenda due to a system error.']
-            //});
-        //}
-      //}
-      ////Update the addenda field in state.
-      //state = state.set('addenda', immutable(await Addenda.init({
-        //existingAddenda: updatedExistingAddenda,
-        //newAddenda: updatedNewAddenda
-      //})));
-      ////Check if any addenda failed.
-      //if (updatedNewAddenda.length) {
-        //return invalid(state);
-      //}
-    //}
-  //}
   const actionResult: api.ResponseValidation<SWUOpportunity, CreateValidationErrors | UpdateEditValidationErrors> = await (async () => {
     switch (action.tag) {
         case 'create':
@@ -975,7 +937,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           label='Proposal Deadline'
           help={(<div>
             <p>Choose a cut-off date for when proposals must be submitted by. The cut-off time is fixed to 4:00PM Pacific Time.</p>
-            <p className='mb-0'>A deadline of at least five (5) days from the date that the opportunity is published is recommended.</p>
+            <p className='mb-0'>A deadline of at least ten (10) days from the date that the opportunity is published is recommended.</p>
           </div>)}
           state={state.proposalDeadline}
           disabled={disabled}
