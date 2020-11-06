@@ -1,0 +1,252 @@
+
+paths:
+  /opportunities/code-with-us:
+    get:
+      summary: Retrieve all Code-With-Us Opportunities.
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Retrieve all Code-With-Us Opportunities. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored.
+      responses:
+        200:
+          description: Receive the array of Opportunities
+        503:
+          description: A database error has occurred.
+
+    post:
+      summary: Create a new Code-With-Us Opportunity.
+      tags:
+        - Opportunities
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      description: Creates a new Code-With-Us opportunity using the provided request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CWUOpportunity'
+            examples:
+              createCWUOpportunity:
+                $ref: '#/components/examples/createCWUOpportunity'
+      responses:
+        201:
+          description: Receive the created Code-With-Us Opportunity.
+        400:
+          description: The request body was not well-formed.
+        503:
+          description: A database error occurred.
+
+  /opportunities/code-with-us/{id}:
+    get:
+      summary: Retrieve a single Code-With-Us Opportunity.
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Retrieve a single Code-With-Us Opportunity for the specified id. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored. 
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Code-With-Us Opportunity to retrieve.
+          type: uuid
+      responses:
+        200:
+          description: Receive the specified Code-With-Us Opportunity.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Opportunity for the specified ID was not found.
+    
+    put:
+      summary: Update an existing Code-With-Us Opportunity.
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Update an existing Code-With-Us Opportunity. The nature of the update depends on the ADT passed in the request body.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Code-With-Us Opportunity to update.
+          type: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  enum: [edit, publish, suspend, cancel, addAddendum]
+                value:
+                  type: object
+            examples:
+              edit:
+                $ref: '#/components/examples/editCWUOpportunity'
+              publish:
+                $ref: '#/components/examples/publishCWUOpportunity'
+              suspend:
+                $ref: '#/components/examples/suspendCWUOpportunity'
+              cancel:
+                $ref: '#/components/examples/cancelCWUOpportunity'
+              addAddendum:
+                $ref: '#/components/examples/addAddendumToCWUOpportunity'
+      responses:
+        200:
+          description: Receive the updated Code-With-Us Opportunity.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Opportunity for the specified ID was not found.
+        401:
+          description: You do not have permission to update this Opportunity.
+    
+    delete:
+      summary: Delete a draft Code-With-Us Opportunity (Opportunity must be in draft)
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Permanently delete a draft Code-With-Us Opportunity. This will fail if the Opportunity is not in Draft or has previously been published.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the draft Code-With-Us Opportunity to delete.
+          type: uuid
+      responses:
+        200:
+          description: Receive the delete Code-With-Us Opportunity.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Opportunity for the specified ID was not found.
+        401:
+          description: You do not have permission to delete this Opportunity.
+
+
+components:
+  schemas:
+    CWUOpportunity:
+      type: object
+      properties:
+        title:
+          type: string
+        teaser:
+          type: string
+        remoteOk:
+          type: boolean
+        remoteDesc:
+          type: string
+        location:
+          type: string
+        reward:
+          type: number
+        skills:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        proposalDeadline:
+          type: string
+        assignmentDate: 
+          type: string
+        startDate:
+          type: string
+        completionDate:
+          type: string
+        submissionInfo:
+          type: string
+        acceptanceCriteria:
+          type: string
+        evaluationCriteria:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED]
+
+        
+  examples:
+    createCWUOpportunity:
+      summary: Request body for creating a Code-With-Us opportunity
+      value:
+        title: An Exciting Code-With-Us opportunity
+        teaser: Develop a WordPress site for easy money
+        remoteOk: true
+        remoteDesc: Remote is okay
+        location: Victoria
+        reward: 65000
+        skills: [WordPress, HTML, CSS]
+        description: We need someone to create and maintain our WordPress for the next 4 months.
+        proposalDeadline: 2021-02-15
+        assignmentDeadline: 2021-02-22
+        startDate: 2021-02-24
+        completionDate: 2021-06-25
+        submissionInfo: Please provide a list of WordPress projects you have worked on.
+        acceptanceCriteria: You must have 5+ years of WordPress experience.
+        evaluationCriteria: Proponents will be evaluated on their level of experience and ability to meet the completion deadline.
+        attachments: [89fe0644-50e1-4939-a488-aa6cf5977d7b]
+
+    editCWUOpportunity:
+      summary: Request body for updating a Code-With-Us opportunity
+      value:
+        tag: edit
+        value:
+          title: An Exciting Code-With-Us opportunity (Updated)
+          teaser: Develop a WordPress site for easy money
+          remoteOk: true
+          remoteDesc: Remote is okay
+          location: Victoria
+          reward: 70000
+          skills: [WordPress, HTML, CSS]
+          description: We need someone to create and maintain our WordPress for the next 4 months.
+          proposalDeadline: 2021-02-15
+          assignmentDeadline: 2021-02-22
+          startDate: 2021-02-24
+          completionDate: 2021-06-25
+          submissionInfo: Please provide a list of WordPress projects you have worked on.
+          acceptanceCriteria: You must have 8+ years of WordPress experience.
+          evaluationCriteria: Proponents will be evaluated on their level of experience and ability to meet the completion deadline.
+          attachments: [89fe0644-50e1-4939-a488-aa6cf5977d7b]
+    
+    publishCWUOpportunity:
+      summary: Request body for publishing a Code-With-Us opportunity
+      value:
+        tag: publish
+        value: Published
+
+    suspendCWUOpportunity:
+      summary: Request body for suspending a Code-With-Us opportunity
+      value:
+        tag: suspend
+        value: Suspended for now
+
+    cancelCWUOpportunity:
+      summary: Request body for canceling a Code-With-Us opportunity
+      value:
+        tag: cancel
+        value: Canceled indefinitely
+
+    addAddendumToCWUOpportunity:
+      summary: Request body for adding an addendum to a Code-With-Us opportunity
+      value:
+        tag: addAddendum
+        value: The reward value has been changed to $70,000.

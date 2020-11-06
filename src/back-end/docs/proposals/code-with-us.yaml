@@ -1,0 +1,225 @@
+
+paths:
+  /proposals/code-with-us:
+    get:
+      summary: Retrieve all Code-With-Us Proposals for a specific Opportunity or the current User.
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Retrieve all Code-With-Us Proposal for a specific Opportunity or the current User.
+      parameters:
+        - name: opportunity
+          in: query
+          description: Optional Code-With-Us Opportunity id to retrieve Proposals for.
+          type: uuid
+      responses:
+        200:
+          description: Receive the array of Proposals.
+        503:
+          description: A database error has occurred.
+        404:
+          description: The specified Opportunity does not exist.
+        401:
+          description: You do not have permissions to view Proposals for the Opportunity or are not signed in.
+
+
+    post:
+      summary: Create a new Code-With-Us Proposal.
+      tags:
+        - Proposals
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      description: Creates a new Code-With-Us Proposal using the provided request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CWUProposal'
+            examples:
+              createCWUProposal:
+                $ref: '#/components/examples/createCWUProposal'
+      responses:
+        201:
+          description: Receive the created Code-With-Us Proposal.
+        400:
+          description: The request body was not well-formed.
+        503:
+          description: A database error occurred.
+
+  /proposals/code-with-us/{id}:
+    get:
+      summary: Retrieve a single Code-With-Us Proposal.
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Retrieve a single Code-With-Us Proposal for the specified id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Code-With-Us Proposal to retrieve.
+          type: uuid
+      responses:
+        200:
+          description: Receive the specified Code-With-Us Proposal.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Proposal for the specified ID was not found.
+    
+    put:
+      summary: Update an existing Code-With-Us Proposal.
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Update an existing Code-With-Us Proposal. The nature of the update depends on the ADT passed in the request body.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Code-With-Us Proposal to update.
+          type: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  enum: [edit, submit, score, award, disqualify, withdraw]
+                value:
+                  type: object
+            examples:
+              edit:
+                $ref: '#/components/examples/editCWUProposal'
+              submit:
+                $ref: '#/components/examples/submitCWUProposal'
+              score:
+                $ref: '#/components/examples/scoreCWUProposal'
+              award:
+                $ref: '#/components/examples/awardCWUProposal'
+              disqualify:
+                $ref: '#/components/examples/disqualifyCWUProposal'
+              withdraw:
+                $ref: '#/components/examples/withdrawCWUProposal'
+      responses:
+        200:
+          description: Receive the updated Code-With-Us Proposal.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Proposal for the specified ID was not found.
+        401:
+          description: You do not have permission to update this Proposal.
+    
+    delete:
+      summary: Delete a draft Code-With-Us Proposal (Opportunity must be in draft)
+      tags:
+        - Proposals
+      produces:
+        - application/json
+      description: Permanently delete a draft Code-With-Us Proposal. This will fail if the Proposal is not in Draft.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the draft Code-With-Us Proposal to delete.
+          type: uuid
+      responses:
+        200:
+          description: Receive the delete Code-With-Us Proposal.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Proposal for the specified ID was not found.
+        401:
+          description: You do not have permission to delete this Proposal.
+
+
+components:
+  schemas:
+    CWUProposal:
+      type: object
+      properties:
+        opportunity:
+          type: uuid
+        proposalText:
+          type: string
+        additionalComments:
+          type: string
+        proponent:
+          type: object
+          properties:
+            tag:
+              type: string
+              enum: [individual, organization]
+            value:
+              type: object
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED]
+
+        
+  examples:
+    createCWUProposal:
+      summary: Request body for creating a Code-With-Us proposal
+      value:
+        opportunity: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+        proposalText: We are an experienced team with 10+ years of experience including WordPress.
+        additionalComments: We are local to Victoria, and willing to work on location or remotely.
+        proponent:
+          tag: organization
+          value: 69fe0644-50e1-3919-a458-aa6cf5977d7v
+        status: DRAFT
+
+    editCWUProposal:
+      summary: Request body for updating a Code-With-Us proposal
+      value:
+        tag: edit
+        value:
+          tag: edit
+          value:
+            proposalText: We are an experienced team with 8+ years of experience including WordPress.
+            additionalComments: We are local to Victoria, and willing to work on location or remotely.
+            proponent:
+              tag: organization
+              value: 69fe0644-50e1-3919-a458-aa6cf5977d7v
+            status: DRAFT
+    
+    submitCWUProposal:
+      summary: Request body for submitting a Code-With-Us proposal
+      value:
+        tag: submit
+        value: Submitted
+
+    scoreCWUProposal:
+      summary: Request body for scoring a Code-With-Us proposal
+      value:
+        tag: score
+        value: 87
+
+    disqualifyCWUProposal:
+      summary: Request body for disqualifying a Code-With-Us proposal
+      value:
+        tag: disqualify
+        value: Disqualified for not meeting requirements
+
+    withdrawCWUProposal:
+      summary: Request body for withdrawing a Code-With-Us proposal
+      value:
+        tag: withdraw
+        value: Withdrawn.

@@ -4,7 +4,7 @@ import { makeSWUOpportunityInformation, viewSWUOpportunityCallToAction } from 'b
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import React from 'react';
-import { CONTACT_EMAIL } from 'shared/config';
+import { CONTACT_EMAIL, EMPTY_STRING } from 'shared/config';
 import { isSWUOpportunityClosed, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposal, SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession } from 'shared/lib/resources/session';
@@ -138,7 +138,7 @@ export async function unsuccessfulSWUProposalSubmissionT(recipient: User, opport
       descriptionLists: [makeSWUOpportunityInformation(opportunity, false)],
       body: (
         <div>
-          <p>The opportunity has been awarded to {opportunity.successfulProponentName}.</p>
+          <p>The opportunity has been awarded to {opportunity.successfulProponent?.name || EMPTY_STRING}.</p>
           <p>If you would like to view your scores for each stage of the opportunity, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
           <p>Thank you for your submission and we wish you luck on the next opportunity.</p>
         </div>

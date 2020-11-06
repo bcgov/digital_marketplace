@@ -50,7 +50,7 @@ paths:
         200:
           description: Receive the requested Organization
 
-    post:
+    put:
       summary: Updates an existing Organization.
       tags:
         - Organizations
