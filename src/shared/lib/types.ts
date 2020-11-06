@@ -53,3 +53,15 @@ export interface BodyWithErrors {
 }
 
 export type Comparison = -1 | 0 | 1;
+
+export interface ReadManyResponseBodyBase<T> {
+  page: number;
+  pageSize: number;
+  numPages: number;
+  items: T[];
+}
+
+export interface ReadManyResponseValidationErrors extends BodyWithErrors {
+  page?: string[];
+  pageSize?: string[];
+}

@@ -1,7 +1,9 @@
 import { FileRecord } from 'shared/lib/resources/file';
 import { UserSlim } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
+import { ADT, BodyWithErrors, Id, ReadManyResponseBodyBase } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation/index';
+
+export { ReadManyResponseValidationErrors } from 'shared/lib/types';
 
 // Properties to include on Organization and OrganizationSlim
 // for admins/owners only.
@@ -65,6 +67,8 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 }
 
 export type DeleteValidationErrors = BodyWithErrors;
+
+export type ReadManyResponseBody = ReadManyResponseBodyBase<OrganizationSlim>;
 
 export function doesOrganizationHaveAdminInfo(organization: Organization | OrganizationSlim): boolean {
   return organization.owner !== undefined;

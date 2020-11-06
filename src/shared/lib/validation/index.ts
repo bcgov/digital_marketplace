@@ -298,10 +298,10 @@ export function validateCapabilities(raw: string[], minCapabilities = 1): ArrayV
 }
 
 // Validate pagination index and size query params
-export function validatePageIndex(raw: string | number): Validation<number> {
-  return validateNumber(raw, 1);
+export function validatePageIndex(raw: string | number | undefined): Validation<number> {
+  return validateNumber(raw || 0, 1);
 }
 
-export function validatePageSize(raw: string | number): Validation<number> {
-  return validateNumber(raw, 1);
+export function validatePageSize(raw: string | number | undefined): Validation<number> {
+  return validateNumber(raw || 0, 1);
 }
