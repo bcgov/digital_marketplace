@@ -4,7 +4,7 @@ import * as cwuOpportunityNotifications from 'back-end/lib/mailer/notifications/
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateCWUOpportunityId, validateProposalScores } from 'back-end/lib/validation';
+import { validateAttachments, validateCWUOpportunityId, validateCWUProposalScores } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -569,7 +569,7 @@ const resource: Resource = {
             if (validatedCWUOpportunity.value.status !== CWUOpportunityStatus.Evaluation) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedProposalScores = await validateProposalScores(connection, request.body.value, request.session);
+            const validatedProposalScores = await validateCWUProposalScores(connection, request.body.value, request.session);
             if (isInvalid(validatedProposalScores)) {
               return invalid({ opportunity: adt('saveProposalScores' as const, validatedProposalScores.value) });
             }

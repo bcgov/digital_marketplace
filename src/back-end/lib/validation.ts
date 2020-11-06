@@ -5,16 +5,16 @@ import { getNumber, getString } from 'shared/lib';
 import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunity, UpdateProposalScoresBody, UpdateProposalScoresValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
-import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { SWUOpportunity, SWUOpportunityPhase, SWUTeamQuestion, UpdateCCProposalScoresBody, UpdateCCProposalScoresValidationErrors, UpdateTQProposalScoresBody, UpdateTQProposalScoresValidationErrors, UpdateTSProposalScoresBody, UpdateTSProposalScoresValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { Organization } from 'shared/lib/resources/organization';
 import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal, UpdateProposalScoreBody, UpdateProposalScoreValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
-import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors, SWUProposal, UpdateCCProposalScoreBody, UpdateCCProposalScoreValidationErrors, UpdateTQProposalScoreBody, UpdateTQProposalScoreValidationErrors, UpdateTSProposalScoreBody, UpdateTSProposalScoreValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
-import * as proposalValidation from 'shared/lib/validation/proposal/code-with-us';
-import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
+import * as cwuProposalValidation from 'shared/lib/validation/proposal/code-with-us';
+import * as swuProposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
 import { isArray } from 'util';
 
 export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
@@ -170,7 +170,7 @@ export async function validateSWUProposalId(connection: db.Connection, proposalI
 export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
     case 'individual':
-      const validatedIndividualProponentRequestBody = proposalValidation.validateIndividualProponent(get(raw, 'value'));
+      const validatedIndividualProponentRequestBody = cwuProposalValidation.validateIndividualProponent(get(raw, 'value'));
       if (isValid(validatedIndividualProponentRequestBody)) {
         return adt(validatedIndividualProponentRequestBody.tag, adt('individual' as const, validatedIndividualProponentRequestBody.value));
       }
@@ -222,7 +222,7 @@ export async function validateMember(connection: db.Connection, memberId: Id, or
 
 export async function validateTeamMember(connection: db.Connection, raw: any, organization: Id): Promise<Validation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
   const validatedMember = await validateMember(connection, getString(raw, 'member'), organization);
-  const validatedScrumMaster = validateSWUProposalTeamMemberScrumMaster(get(raw, 'scrumMaster'));
+  const validatedScrumMaster = swuProposalValidation.validateSWUProposalTeamMemberScrumMaster(get(raw, 'scrumMaster'));
 
   if (allValid([validatedMember, validatedScrumMaster])) {
     return valid({
@@ -268,7 +268,7 @@ export async function validateSWUProposalPhase(connection: db.Connection, raw: a
   }
 
   const validatedMembers = await validateSWUProposalTeamMembers(connection, get(raw, 'members'), organization);
-  const validatedProposedCost = validateSWUPhaseProposedCost(getNumber<number>(raw, 'proposedCost'), opportunityPhase.maxBudget);
+  const validatedProposedCost = swuProposalValidation.validateSWUPhaseProposedCost(getNumber<number>(raw, 'proposedCost'), opportunityPhase.maxBudget);
 
   if (allValid([validatedMembers, validatedProposedCost])) {
     return valid({
@@ -288,7 +288,7 @@ export async function validateSWUProposalTeam(connection: db.Connection, opportu
   const teamMemberIds = union(inceptionMemberIds, prototypeMemberIds, implementationMemberIds);
   const dbResults = (await Promise.all(teamMemberIds.map(async id => await db.readOneUser(connection, id), undefined)));
   const teamMembers = dbResults.map(v => getValidValue(v, null)).filter(v => !!v) as User[];
-  return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
+  return swuProposalValidation.validateSWUProposalTeamCapabilities(opportunity, teamMembers);
 }
 
 export async function validateSWUProposalOrganization(connection: db.Connection, organization: Id | undefined, session: Session): Promise<Validation<Organization | undefined>> {
@@ -315,10 +315,10 @@ export async function validateContentId(connection: db.Connection, contentId: Id
   }
 }
 
-// Validates a Record of proposal ids and update bodies for updating proposal scores.
+// Validates a Record of CWU proposal ids and update bodies for updating CWU proposal scores.
 // If any property of the Record is invalid, an invalid Record type is returned with the invalid properties.
 // If all properties are valid, a Record of the valid properties is returned.
-export async function validateProposalScores(connection: db.Connection, raw: any, session: AuthenticatedSession): Promise<Validation<UpdateProposalScoresBody, UpdateProposalScoresValidationErrors>> {
+export async function validateCWUProposalScores(connection: db.Connection, raw: any, session: AuthenticatedSession): Promise<Validation<UpdateProposalScoresBody, UpdateProposalScoresValidationErrors>> {
   // Validate the keys, and make sure the proposals they correspond to exist
   const validResults: Record<Id, UpdateProposalScoreBody> = {};
   const invalidResults: Record<Id, UpdateProposalScoreValidationErrors> = {};
@@ -335,11 +335,107 @@ export async function validateProposalScores(connection: db.Connection, raw: any
 
     // Validate the update body for the proposal
     const rawBody = raw[id];
-    const validatedUpdateProposalScoreBody = proposalValidation.validateUpdateProposalScoreBody(rawBody);
+    const validatedUpdateProposalScoreBody = cwuProposalValidation.validateUpdateProposalScoreBody(rawBody);
     if (isInvalid(validatedUpdateProposalScoreBody)) {
       invalidResults[id] = getInvalidValue(validatedUpdateProposalScoreBody, {});
     }
     validResults[id] = validatedUpdateProposalScoreBody.value as UpdateProposalScoreBody;
+  }
+  if (Object.keys(invalidResults).length > 0) {
+    return invalid(invalidResults);
+  }
+  return valid(validResults);
+}
+
+// Validates a Record of proposal ids and update bodies for updating SWU proposal Team Question scores.
+// If any property of the Record is invalid, an invalid Record type is returned with the invalid properties.
+// If all properties are valid, a Record of the valid properties is returned.
+export async function validateSWUProposalTQScores(connection: db.Connection, raw: any, session: AuthenticatedSession, opportunityTeamQuestions: SWUTeamQuestion[]): Promise<Validation<UpdateTQProposalScoresBody, UpdateTQProposalScoresValidationErrors>> {
+  // Validate the keys, and make sure the proposals they correspond to exist
+  const validResults: Record<Id, UpdateTQProposalScoreBody> = {};
+  const invalidResults: Record<Id, UpdateTQProposalScoreValidationErrors> = {};
+  for (const id of Object.keys(raw)) {
+    const validatedId = validateUUID(id);
+    if (isInvalid(validatedId)) {
+      invalidResults[id] = { notFound: ['Please provide a valid proposal id.'] };
+    }
+    // Ensure proposal exists for the given id
+    const dbResult = await db.readOneSWUProposal(connection, id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      invalidResults[id] = { notFound: ['Proposal not found.'] };
+    }
+
+    // Validate the update body for the proposal
+    const rawBody = raw[id];
+    const validatedUpdateProposalScoreBody = swuProposalValidation.validateUpdateProposalTQScoreBody(rawBody, opportunityTeamQuestions);
+    if (isInvalid(validatedUpdateProposalScoreBody)) {
+      invalidResults[id] = getInvalidValue(validatedUpdateProposalScoreBody, {});
+    }
+    validResults[id] = validatedUpdateProposalScoreBody.value as UpdateTQProposalScoreBody;
+  }
+  if (Object.keys(invalidResults).length > 0) {
+    return invalid(invalidResults);
+  }
+  return valid(validResults);
+}
+
+// Validates a Record of proposal ids and update bodies for updating SWU proposal code challenge scores.
+// If any property of the Record is invalid, an invalid Record type is returned with the invalid properties.
+// If all properties are valid, a Record of the valid properties is returned.
+export async function validateSWUProposalCCScores(connection: db.Connection, raw: any, session: AuthenticatedSession): Promise<Validation<UpdateCCProposalScoresBody, UpdateCCProposalScoresValidationErrors>> {
+  // Validate the keys, and make sure the proposals they correspond to exist
+  const validResults: Record<Id, UpdateCCProposalScoreBody> = {};
+  const invalidResults: Record<Id, UpdateCCProposalScoreValidationErrors> = {};
+  for (const id of Object.keys(raw)) {
+    const validatedId = validateUUID(id);
+    if (isInvalid(validatedId)) {
+      invalidResults[id] = { notFound: ['Please provide a valid proposal id.'] };
+    }
+    // Ensure proposal exists for the given id
+    const dbResult = await db.readOneSWUProposal(connection, id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      invalidResults[id] = { notFound: ['Proposal not found.'] };
+    }
+
+    // Validate the update body for the proposal
+    const rawBody = raw[id];
+    const validatedUpdateProposalScoreBody = swuProposalValidation.validateUpdateProposalCCScoreBody(rawBody);
+    if (isInvalid(validatedUpdateProposalScoreBody)) {
+      invalidResults[id] = getInvalidValue(validatedUpdateProposalScoreBody, {});
+    }
+    validResults[id] = validatedUpdateProposalScoreBody.value as UpdateCCProposalScoreBody;
+  }
+  if (Object.keys(invalidResults).length > 0) {
+    return invalid(invalidResults);
+  }
+  return valid(validResults);
+}
+
+// Validates a Record of proposal ids and update bodies for updating SWU proposal team scenario scores.
+// If any property of the Record is invalid, an invalid Record type is returned with the invalid properties.
+// If all properties are valid, a Record of the valid properties is returned.
+export async function validateSWUProposalTSScores(connection: db.Connection, raw: any, session: AuthenticatedSession): Promise<Validation<UpdateTSProposalScoresBody, UpdateTSProposalScoresValidationErrors>> {
+  // Validate the keys, and make sure the proposals they correspond to exist
+  const validResults: Record<Id, UpdateTSProposalScoreBody> = {};
+  const invalidResults: Record<Id, UpdateTSProposalScoreValidationErrors> = {};
+  for (const id of Object.keys(raw)) {
+    const validatedId = validateUUID(id);
+    if (isInvalid(validatedId)) {
+      invalidResults[id] = { notFound: ['Please provide a valid proposal id.'] };
+    }
+    // Ensure proposal exists for the given id
+    const dbResult = await db.readOneSWUProposal(connection, id, session);
+    if (isInvalid(dbResult) || !dbResult.value) {
+      invalidResults[id] = { notFound: ['Proposal not found.'] };
+    }
+
+    // Validate the update body for the proposal
+    const rawBody = raw[id];
+    const validatedUpdateProposalScoreBody = swuProposalValidation.validateUpdateProposalTSScoreBody(rawBody);
+    if (isInvalid(validatedUpdateProposalScoreBody)) {
+      invalidResults[id] = getInvalidValue(validatedUpdateProposalScoreBody, {});
+    }
+    validResults[id] = validatedUpdateProposalScoreBody.value as UpdateTSProposalScoreBody;
   }
   if (Object.keys(invalidResults).length > 0) {
     return invalid(invalidResults);

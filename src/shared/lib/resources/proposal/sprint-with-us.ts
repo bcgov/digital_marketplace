@@ -320,17 +320,17 @@ export interface UpdateSingleTeamQuestionScoreValidationErrors {
   parseFailure?: string[];
 }
 
-export interface UpdateTQProposalScoreValidationErrors {
+export interface UpdateTQProposalScoreValidationErrors extends BodyWithErrors {
   note?: string[];
   questionScores?: UpdateSingleTeamQuestionScoreValidationErrors[];
 }
 
-export interface UpdateCCProposalScoreValidationErrors {
+export interface UpdateCCProposalScoreValidationErrors extends BodyWithErrors {
   note?: string[];
   score?: string[];
 }
 
-export interface UpdateTSProposalScoreValidationErrors {
+export interface UpdateTSProposalScoreValidationErrors extends BodyWithErrors {
   note?: string[];
   score?: string[];
 }

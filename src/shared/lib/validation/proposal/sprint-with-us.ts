@@ -1,7 +1,7 @@
-import { union } from 'lodash';
+import { get, union } from 'lodash';
 import { getNumber, getString } from 'shared/lib';
 import { MAX_TEAM_QUESTION_WORD_LIMIT, SWUOpportunity, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus, UpdateSingleTeamQuestionScoreBody, UpdateSingleTeamQuestionScoreValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, parseSWUProposalStatus, SWUProposalStatus, UpdateCCProposalScoreBody, UpdateCCProposalScoreValidationErrors, UpdateSingleTeamQuestionScoreBody, UpdateSingleTeamQuestionScoreValidationErrors, UpdateTQProposalScoreBody, UpdateTQProposalScoreValidationErrors, UpdateTSProposalScoreBody, UpdateTSProposalScoreValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User, usersHaveCapability } from 'shared/lib/resources/user';
 import { allValid, ArrayValidation, getInvalidValue, invalid, isInvalid, valid, validateArrayCustom, validateEmail, validateGenericString, validateGenericStringWords, validateNumber, validateNumberWithPrecision, validatePhoneNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
@@ -201,4 +201,52 @@ export function validateCodeChallengeScore(raw: number): Validation<number> {
 
 export function validateTeamScenarioScore(raw: number): Validation<number> {
   return validateNumberWithPrecision(raw, 0, 100, 2, 'Team Scenario Score');
+}
+
+export function validateUpdateProposalTQScoreBody(raw: any, opportunityTeamQuestions: SWUTeamQuestion[]): Validation<UpdateTQProposalScoreBody, UpdateTQProposalScoreValidationErrors> {
+  const validatedNote = validateNote(getString(raw, 'note'));
+  const validatedQuestionScores = validateTeamQuestionScores(get(raw, 'questionScores'), opportunityTeamQuestions);
+  if (allValid([validatedNote, validatedQuestionScores])) {
+    return valid({
+      note: validatedNote.value,
+      questionScores: validatedQuestionScores.value
+    } as UpdateTQProposalScoreBody);
+  } else {
+    return invalid({
+      note: getInvalidValue(validatedNote, undefined),
+      questionScores: getInvalidValue(validatedQuestionScores, undefined)
+    });
+  }
+}
+
+export function validateUpdateProposalCCScoreBody(raw: any): Validation<UpdateCCProposalScoreBody, UpdateCCProposalScoreValidationErrors> {
+  const validatedNote = validateNote(getString(raw, 'note'));
+  const validatedCodeChallengeScore = validateCodeChallengeScore(getNumber(raw, 'score', -1, false));
+  if (allValid([validatedNote, validatedCodeChallengeScore])) {
+    return valid({
+      note: validatedNote.value,
+      score: validatedCodeChallengeScore.value
+    } as UpdateCCProposalScoreBody);
+  } else {
+    return invalid({
+      note: getInvalidValue(validatedNote, undefined),
+      score: getInvalidValue(validatedCodeChallengeScore, undefined)
+    });
+  }
+}
+
+export function validateUpdateProposalTSScoreBody(raw: any): Validation<UpdateTSProposalScoreBody, UpdateTSProposalScoreValidationErrors> {
+  const validatedNote = validateNote(getString(raw, 'note'));
+  const validatedTeamScenarioScore = validateTeamScenarioScore(getNumber(raw, 'score', -1, false));
+  if (allValid([validatedNote, validatedTeamScenarioScore])) {
+    return valid({
+      note: validatedNote.value,
+      score: validatedTeamScenarioScore.value
+    } as UpdateTSProposalScoreBody);
+  } else {
+    return invalid({
+      note: getInvalidValue(validatedNote, undefined),
+      score: getInvalidValue(validatedTeamScenarioScore, undefined)
+    });
+  }
 }
