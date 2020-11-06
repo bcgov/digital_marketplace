@@ -710,15 +710,23 @@ export const readSubmittedCWUProposalCount = tryDb<[Id], number>(async (connecti
   return valid(results?.length || 0);
 });
 
-export const readOneCWUAwardedProposal = tryDb<[Id, Session], CWUProposalSlim | null>(async (connection, opportunity, session) => {
+export const readOneCWUAwardedProposal = tryDb<[Id, Session], Omit<CWUProposalSlim, 'rank'> | null>(async (connection, opportunity, session) => {
   const result = await generateCWUProposalQuery(connection)
     .where({
       'proposals.opportunity': opportunity,
       'statuses.status': CWUProposalStatus.Awarded
     })
     .first();
-
-  return result ? valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result, session)) : valid(null);
+  if (!result) { return valid(null); }
+  // Check for permissions on viewing score
+  if (await readCWUProposalScore(connection, session, opportunity, result.id, result.status)) {
+    // Add score to proposal
+    result.score = (await connection<{ score: number }>('cwuProposals')
+      .where({ id: result.id })
+      .select('score')
+      .first())?.score;
+  }
+  return valid(await rawCWUProposalSlimToCWUProposalSlim(connection, result, session));
 });
 
 export const readManyCWUProposalAuthors = tryDb<[Id], User[]>(async (connection, opportunity) => {

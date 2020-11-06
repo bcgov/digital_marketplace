@@ -9,7 +9,7 @@ import { valid } from 'shared/lib/http';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { FileRecord } from 'shared/lib/resources/file';
 import { Addendum, CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityEvent, CWUOpportunityHistoryRecord, CWUOpportunitySlim, CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
-import { CWUProposalSlim, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { CWUProposalSlim, CWUProposalStatus, getCWUProponentEmail, getCWUProponentId, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -257,9 +257,18 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
     let awardedProposal: CWUProposalSlim | null;
     if (result.status === CWUOpportunityStatus.Awarded) {
       awardedProposal = getValidValue(await readOneCWUAwardedProposal(connection, result.id, session), null);
-      result.successfulProponentName = awardedProposal?.proponent.value.legalName;
-    } else {
-      awardedProposal = null;
+      if (awardedProposal) {
+        // Use the score to determine if session is user is permitted to see detailed
+        // proponent information.
+        const fullPermissions = !!awardedProposal.score;
+        result.successfulProponent = {
+          id: getCWUProponentId(awardedProposal),
+          name: getCWUProponentName(awardedProposal),
+          email: fullPermissions ? getCWUProponentEmail(awardedProposal) : undefined,
+          score: awardedProposal.score,
+          createdBy: fullPermissions ? awardedProposal.createdBy : undefined
+        };
+      }
     }
 
     // Add on subscription flag, if authenticated user
@@ -274,8 +283,6 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
         .orderBy('createdAt', 'desc');
 
       result.history = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
-
-      result.successfulProposal = awardedProposal || undefined;
 
       if (publicOpportunityStatuses.includes(result.status)) {
         // Retrieve opportunity views
