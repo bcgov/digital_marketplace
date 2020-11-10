@@ -73,7 +73,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       dispatch(replaceRoute(adt('opportunitySWUView' as const, { opportunityId })));
       return invalid(null);
     }
-    const organizationsResult = await api.organizations.readMany();
+    const organizationsResult = await api.ownedOrganizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }
     const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
     if (!api.isValid(evalContentResult)) { return fail(); }

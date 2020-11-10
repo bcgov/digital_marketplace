@@ -1,12 +1,15 @@
 import { EMPTY_STRING } from 'front-end/config';
-import { makePageMetadata } from 'front-end/lib';
+import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { pushState } from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Pagination from 'front-end/lib/views/pagination';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { DEFAULT_PAGE_SIZE } from 'shared/config';
 import { compareStrings } from 'shared/lib';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
@@ -15,19 +18,35 @@ import { ADT, adt } from 'shared/lib/types';
 type TableOrganization = OrganizationSlim;
 
 export interface State {
+  loading: number;
   table: Immutable<Table.State>;
+  page: number;
+  numPages: number;
   organizations: TableOrganization[];
   sessionUser: User | null;
 }
 
-type InnerMsg = ADT<'table', Table.Msg>;
+type InnerMsg
+  = ADT<'table', Table.Msg>
+  | ADT<'pageChange', number>
+  | ADT<'startLoading'>
+  | ADT<'stopLoading'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export type RouteParams = null;
+export interface RouteParams {
+  page?: number;
+}
+
+function updateUrl(page: number) {
+  pushState(adt('orgList', { page }));
+}
 
 async function baseState(): Promise<State> {
   return {
+    loading: 0,
+    page: 1,
+    numPages: 5,
     organizations: [],
     table: immutable(await Table.init({
       idNamespace: 'org-list-table'
@@ -36,18 +55,28 @@ async function baseState(): Promise<State> {
   };
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) => {
-  const result = await api.organizations.readMany();
+async function loadPage(page: number) {
+  return await api.organizations.readMany(page, DEFAULT_PAGE_SIZE);
+}
+
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams, shared }) => {
+  const result = await loadPage(routeParams.page && routeParams.page > 0 ? routeParams.page : 1);
   if (!api.isValid(result)) {
     return await baseState();
   }
+  const page = result.value.page;
   return {
     ...(await baseState()),
     sessionUser: shared.session && shared.session.user,
-    organizations: result.value
+    page,
+    numPages: result.value.numPages,
+    organizations: result.value.items
       .sort((a, b) => compareStrings(a.legalName, b.legalName))
   };
 };
+
+const startLoading = makeStartLoading<State>('loading');
+const stopLoading = makeStopLoading<State>('loading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -59,6 +88,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'table', value })
       });
+    case 'pageChange':
+      return [
+        startLoading(state),
+        async state => {
+          state = stopLoading(state);
+          const result = await loadPage(msg.value);
+          if (!api.isValid(result)) { return state; }
+          const page = result.value.page;
+          updateUrl(page);
+          return state.merge({
+            page,
+            numPages: result.value.numPages,
+            organizations: result.value.items
+          });
+        }
+      ];
     default:
       return [state];
   }
@@ -122,6 +167,17 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             dispatch={dispatchTable} />
         </Col>
       </Row>
+      {state.numPages === 1
+        ? null
+        : (<Row>
+            <Col xs='12' className='mt-5 d-flex justify-content-center'>
+              <Pagination
+                page={state.page}
+                numPages={state.numPages}
+                disabled={state.loading > 0}
+                onPageChange={page => dispatch(adt('pageChange', page))} />
+            </Col>
+          </Row>)}
     </div>
   );
 };

@@ -16,15 +16,15 @@ import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
   if (window.history && window.history.pushState) {
-    const path = router.routeToUrl(route);
-    window.history.pushState({ path }, '', path);
+    const url = router.routeToUrl(route);
+    window.history.pushState({ url }, '', url);
   }
 }
 
 export function replaceState(route: Route) {
   if (window.history && window.history.replaceState) {
-    const path = router.routeToUrl(route);
-    window.history.replaceState({ path }, '', path);
+    const url = router.routeToUrl(route);
+    window.history.replaceState({ url }, '', url);
   }
 }
 
@@ -253,10 +253,12 @@ const router: Router.Router<Route> = {
     },
     {
       path: prefixPath('/organizations'),
-      makeRoute() {
+      makeRoute({ query }) {
         return {
           tag: 'orgList',
-          value: null
+          value: {
+            page: parseInt(getString(query, 'page'), 10) || undefined
+          }
         };
       }
     },
@@ -464,7 +466,7 @@ const router: Router.Router<Route> = {
       case 'userList':
         return prefixPath('/users');
       case 'orgList':
-        return prefixPath('/organizations');
+        return prefixPath(`/organizations${route.value.page ? `?page=${window.encodeURIComponent(route.value.page)}` : ''}`);
       case 'orgEdit':
         return prefixPath(`/organizations/${route.value.orgId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
       case 'orgSWUTerms':

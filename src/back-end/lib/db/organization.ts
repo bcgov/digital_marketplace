@@ -98,6 +98,7 @@ function generateOrganizationQuery(connection: Connection) {
     .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
     .join('users', 'users.id', '=', 'affiliations.user')
     .where({ 'affiliations.membershipType': MembershipType.Owner })
+    .orderBy('organizations.legalName')
     .select(
       'organizations.*',
       'users.id as owner',
@@ -214,14 +215,9 @@ export const readManyOrganizations = tryDb<[Session, boolean?, number?, number?]
     }
     const [{count}] = await countQuery.count('id', {as: 'count'});
     numPages = Math.ceil(parseInt(count, 10) / pageSize);
-    //Short-circuit if requesting an invalid page.
+    //Reset page to first page if out of bounds.
     if (page > numPages) {
-      return valid({
-        page,
-        pageSize,
-        numPages,
-        items: []
-      });
+      page = 1;
     }
     //Query the page items.
     query.offset((page - 1) * pageSize).limit(pageSize);
@@ -258,6 +254,28 @@ export const readManyOrganizations = tryDb<[Session, boolean?, number?, number?]
     numPages,
     items
   });
+});
+
+export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(async (connection, session) => {
+  if (!session || !isVendor(session)) { return valid([]); }
+  const results = await generateOrganizationQuery(connection)
+    .andWhere({
+      'organizations.active': true,
+      'affiliations.user': session.user.id
+    }) as RawOrganization[] || [];
+  return valid(await Promise.all(results.map(async raw => {
+    const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms, active } = raw;
+    return await rawOrganizationSlimToOrganizationSlim(connection, {
+      id,
+      legalName,
+      logoImageFile,
+      active,
+      owner,
+      numTeamMembers,
+      possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, raw),
+      acceptedSWUTerms
+    });
+  })));
 });
 
 export const createOrganization = tryDb<[Id, CreateOrganizationParams, Session], Organization>(async (connection, user, organization, session) => {

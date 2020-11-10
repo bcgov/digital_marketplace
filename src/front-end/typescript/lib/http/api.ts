@@ -1,6 +1,6 @@
 import { prefixPath } from 'front-end/lib';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { CrudApi, CrudClientAction, CrudClientActionWithBody, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
+import { CrudApi, CrudClientAction, CrudClientActionWithBody, CrudResponse, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import { compareDates, compareNumbers, prefix } from 'shared/lib';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
@@ -730,6 +730,10 @@ function rawOrganizationSlimToOrganizationSlim(raw: RawOrganizationSlim): OrgRes
   };
 }
 
+interface RawOrganizationReadManyResponse extends Omit<OrgResource.ReadManyResponseBody, 'items'> {
+  items: RawOrganizationSlim[];
+}
+
 interface OrganizationResourceTypes {
   create: {
     request: OrgResource.CreateRequestBody;
@@ -743,9 +747,9 @@ interface OrganizationResourceTypes {
     invalidResponse: OrgResource.DeleteValidationErrors;
   };
   readMany: {
-    rawResponse: OrgResource.OrganizationSlim;
-    validResponse: OrgResource.OrganizationSlim;
-    invalidResponse: string[];
+    rawResponse: RawOrganizationReadManyResponse;
+    validResponse: OrgResource.ReadManyResponseBody;
+    invalidResponse: OrgResource.ReadManyResponseValidationErrors;
   };
   update: {
     request: OrgResource.UpdateRequestBody;
@@ -766,12 +770,48 @@ const organizationActionParams = {
   transformValid: rawOrganizationToOrganization
 };
 
-export const organizations: CrudApi<OrganizationResourceTypes> = makeCrudApi<OrganizationResourceTypes>({
-  routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE,
-  create: organizationActionParams,
-  readOne: organizationActionParams,
-  update: organizationActionParams,
-  delete: organizationActionParams,
+interface OrganizationsApi extends Omit<CrudApi<OrganizationResourceTypes>, 'readMany'> {
+  readMany(page: number, pageSize: number): Promise<CrudResponse<OrganizationResourceTypes['readMany']>>;
+}
+
+export const organizations: OrganizationsApi = {
+  ...makeCrudApi<Omit<OrganizationResourceTypes, 'readMany'> & Pick<UndefinedResourceTypes, 'readMany'>>({
+    routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE,
+    create: organizationActionParams,
+    readOne: organizationActionParams,
+    update: organizationActionParams,
+    delete: organizationActionParams,
+    readMany: undefined
+  }),
+  readMany(page, pageSize) {
+    return makeRequest<OrganizationResourceTypes['readMany'] & { request: null; }>({
+      method: ClientHttpMethod.Get,
+      url: `${ORGANIZATIONS_ROUTE_NAMESPACE}?page=${window.encodeURIComponent(page)}&pageSize=${window.encodeURIComponent(pageSize)}`,
+      body: null,
+      transformValid(raw) {
+        return {
+          ...raw,
+          items: raw.items.map(i => rawOrganizationSlimToOrganizationSlim(i))
+        };
+      }
+    });
+  }
+};
+
+// Owned Organizations
+interface OwnedOrganizationResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> {
+  readMany: {
+    rawResponse: RawOrganizationSlim;
+    validResponse: OrgResource.OrganizationSlim;
+    invalidResponse: string[];
+  };
+}
+
+const OWNED_ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace('ownedOrganizations');
+
+export const ownedOrganizations: CrudApi<OwnedOrganizationResourceTypes> = makeCrudApi({
+  ...undefinedActions,
+  routeNamespace: OWNED_ORGANIZATIONS_ROUTE_NAMESPACE,
   readMany: {
     transformValid: rawOrganizationSlimToOrganizationSlim
   }

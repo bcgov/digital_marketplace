@@ -61,6 +61,15 @@ export interface ReadManyResponseBodyBase<T> {
   items: T[];
 }
 
+export function emptyReadManyResponseBody<T>(): ReadManyResponseBodyBase<T> {
+  return {
+    page: 1,
+    pageSize: 0,
+    numPages: 1,
+    items: []
+  };
+}
+
 export interface ReadManyResponseValidationErrors extends BodyWithErrors {
   page?: string[];
   pageSize?: string[];

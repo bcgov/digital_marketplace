@@ -530,7 +530,7 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
   const organizationsLink: Nav.NavLink = {
     children: 'Organizations',
     active: state.activeRoute.tag === 'orgList',
-    dest: routeDest(adt('orgList', null))
+    dest: routeDest(adt('orgList', {}))
   };
   if (sessionUser) {
     // User has signed in.

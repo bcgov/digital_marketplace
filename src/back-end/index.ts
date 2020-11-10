@@ -15,6 +15,7 @@ import metricsResource from 'back-end/lib/resources/metrics';
 import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';
 import sprintWithUsOpportunityResource from 'back-end/lib/resources/opportunity/sprint-with-us';
 import organizationResource from 'back-end/lib/resources/organization';
+import ownedOrganizationResource from 'back-end/lib/resources/owned-organization';
 import codeWithUsProposalResource from 'back-end/lib/resources/proposal/code-with-us';
 import sprintWithUsProposalResource from 'back-end/lib/resources/proposal/sprint-with-us';
 import sessionResource from 'back-end/lib/resources/session';
@@ -78,6 +79,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     fileResource,
     counterResource,
     organizationResource,
+    ownedOrganizationResource,
     sessionResource,
     userResource,
     metricsResource
