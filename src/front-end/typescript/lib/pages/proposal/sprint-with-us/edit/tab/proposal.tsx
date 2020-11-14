@@ -65,7 +65,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 const init: Init<Tab.Params, State> = async params => {
   const { opportunity, proposal, viewerUser } = params;
-  const organizationsResult = await api.organizations.readMany();
+  const organizationsResult = await api.ownedOrganizations.readMany();
   if (!api.isValid(organizationsResult)) { return invalid(null); }
   const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
   if (!api.isValid(evalContentResult)) { return invalid(null); }
