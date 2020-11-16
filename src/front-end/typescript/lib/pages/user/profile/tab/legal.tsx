@@ -38,7 +38,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
       <Row>
         <Col xs='12'>
           <h2>Accepted Policies, Terms & Agreements</h2>
-          <p className='mb-0'>In this section, you will find all of the policies, terms and agreements that you have accepted.</p>
+          <p className='mb-0'>In this section, you will find all of the policies, terms and agreements that you have accepted as a user of the Digital Marketplace.</p>
         </Col>
       </Row>
       <Row>
@@ -46,7 +46,7 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <div className='mt-5 pt-5 border-top'>
             <p className='mb-5'>
               {acceptedTerms
-                ? `You agreed to the following on ${formatDate(acceptedTerms)} at ${formatTime(acceptedTerms, true)}.`
+                ? `You last agreed to the following on ${formatDate(acceptedTerms)} at ${formatTime(acceptedTerms, true)}.`
                 : 'You have not yet agreed to the following.'}
             </p>
             <h3>Privacy Policy</h3>

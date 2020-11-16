@@ -10,13 +10,14 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { User } from 'shared/lib/resources/user';
+import { mustAcceptTerms, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
 interface ValidState {
   completeProfileLoading: number;
   user: User;
+  mustAcceptTerms: boolean;
   profileForm: Immutable<ProfileForm.State>;
   acceptedTerms: Immutable<Checkbox.State>;
   notificationsOn: Immutable<Checkbox.State>;
@@ -44,11 +45,12 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
     return valid(immutable({
       completeProfileLoading: 0,
       user,
+      mustAcceptTerms: mustAcceptTerms(user),
       profileForm: immutable(await ProfileForm.init({ user })),
       acceptedTerms: immutable(await Checkbox.init({
         errors: [],
         child: {
-          value: !!user.lastAcceptedTermsAt,
+          value: !!user.acceptedTermsAt,
           id: 'user-sign-up-step-two-terms'
         }
       })),
@@ -103,7 +105,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await ProfileForm.persist({
             state: state.profileForm,
             userId: state.user.id,
-            acceptedTerms: FormField.getValue(state.acceptedTerms),
+            acceptedTerms: state.mustAcceptTerms && FormField.getValue(state.acceptedTerms),
             notificationsOn: FormField.getValue(state.notificationsOn)
           });
           switch (result.tag) {
@@ -124,7 +126,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
 });
 
 function isValid(state: Immutable<ValidState>): boolean {
-  return FormField.getValue(state.acceptedTerms)
+  return (!state.mustAcceptTerms || FormField.getValue(state.acceptedTerms))
       && ProfileForm.isValid(state.profileForm);
 }
 
@@ -133,15 +135,17 @@ const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({ state, disp
   return (
     <Row className='mt-4'>
       <Col xs='12'>
-        <Checkbox.view
-          extraChildProps={{
-            inlineLabel: (
-              <b>I acknowledge that I have read and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Terms and Conditions</Link> and <Link newTab dest={routeDest(adt('content', 'privacy'))}>Privacy Policy</Link>.<FormField.ViewRequiredAsterisk /></b>
-            )
-          }}
-          disabled={isDisabled}
-          state={state.acceptedTerms}
-          dispatch={mapComponentDispatch(dispatch, value => adt('acceptedTerms' as const, value))} />
+        {state.mustAcceptTerms
+          ? (<Checkbox.view
+              extraChildProps={{
+                inlineLabel: (
+                  <b>I acknowledge that I have read and agree to the <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>Terms and Conditions</Link> and <Link newTab dest={routeDest(adt('content', 'privacy'))}>Privacy Policy</Link>.<FormField.ViewRequiredAsterisk /></b>
+                )
+              }}
+              disabled={isDisabled}
+              state={state.acceptedTerms}
+              dispatch={mapComponentDispatch(dispatch, value => adt('acceptedTerms' as const, value))} />)
+          : null}
         <Checkbox.view
           extraChildProps={{ inlineLabel: 'Notify me about new opportunities.' }}
           disabled={isDisabled}
