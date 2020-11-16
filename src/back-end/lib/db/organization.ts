@@ -9,7 +9,7 @@ import CAPABILITIES from 'shared/lib/data/capabilities';
 import { valid } from 'shared/lib/http';
 import { MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
-import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
+import { Organization, OrganizationSlim, ReadManyResponseBody } from 'shared/lib/resources/organization';
 import { Session } from 'shared/lib/resources/session';
 import { User } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -98,6 +98,7 @@ function generateOrganizationQuery(connection: Connection) {
     .join('affiliations', 'organizations.id', '=', 'affiliations.organization')
     .join('users', 'users.id', '=', 'affiliations.user')
     .where({ 'affiliations.membershipType': MembershipType.Owner })
+    .orderBy('organizations.legalName')
     .select(
       'organizations.*',
       'users.id as owner',
@@ -196,17 +197,36 @@ export const readOneOrganizationContactEmail = tryDb<[Id], string | null>(async 
  * - A vendor: Include owner information only for owned organizations.
  * - Owner information includes owner id/name, swuQualification status and numTeamMembers
  */
-export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim[]>(async (connection, session, allowInactive = false) => {
+export const readManyOrganizations = tryDb<[Session, boolean?, number?, number?], ReadManyResponseBody>(async (connection, session, allowInactive = false, page, pageSize) => {
   let query = generateOrganizationQuery(connection);
 
   if (!allowInactive) {
     query = query.andWhere({ 'organizations.active': true });
   }
 
+  // Default is to only have one page because we are requesting everything.
+  let numPages = 1;
+
+  if (page && pageSize) {
+    //Count the number of pages.
+    let countQuery = connection('organizations');
+    if (!allowInactive) {
+      countQuery = countQuery.where({ active: true });
+    }
+    const [{count}] = await countQuery.count('id', {as: 'count'});
+    numPages = Math.ceil(parseInt(count, 10) / pageSize);
+    //Reset page to first page if out of bounds.
+    if (page > numPages) {
+      page = 1;
+    }
+    //Query the page items.
+    query.offset((page - 1) * pageSize).limit(pageSize);
+  }
+
   // Execute query, and the destructure results to only choose 'slim' fields that user has access to
   // Admin/owners get additional fields related to ownership/rfq status
   const results = await query as RawOrganization[] || [];
-  return valid(await Promise.all(results.map(async raw => {
+  const items = await Promise.all(results.map(async raw => {
     const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms, active } = raw;
     if (!isAdmin(session) && raw.owner !== session?.user.id) {
       return await rawOrganizationSlimToOrganizationSlim(connection, {
@@ -227,6 +247,34 @@ export const readManyOrganizations = tryDb<[Session, boolean?], OrganizationSlim
         acceptedSWUTerms
       });
     }
+  }));
+  return valid({
+    page: page || 1,
+    pageSize: pageSize || items.length,
+    numPages,
+    items
+  });
+});
+
+export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(async (connection, session) => {
+  if (!session || !isVendor(session)) { return valid([]); }
+  const results = await generateOrganizationQuery(connection)
+    .andWhere({
+      'organizations.active': true,
+      'affiliations.user': session.user.id
+    }) as RawOrganization[] || [];
+  return valid(await Promise.all(results.map(async raw => {
+    const { id, legalName, logoImageFile, owner, numTeamMembers, acceptedSWUTerms, active } = raw;
+    return await rawOrganizationSlimToOrganizationSlim(connection, {
+      id,
+      legalName,
+      logoImageFile,
+      active,
+      owner,
+      numTeamMembers,
+      possessAllCapabilities: await doesOrganizationMeetAllCapabilities(connection, raw),
+      acceptedSWUTerms
+    });
   })));
 });
 
