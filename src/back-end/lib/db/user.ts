@@ -92,10 +92,16 @@ export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection)
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-export const readManyUsersByRole = tryDb<[UserType], User[]>(async (connection, type) => {
-  const results = await connection<RawUser>('users')
+export const readManyUsersByRole = tryDb<[UserType, boolean?], User[]>(async (connection, type, includeInactive = true) => {
+  const query = connection<RawUser>('users')
     .where({ type })
     .select('*');
+
+  if (!includeInactive) {
+    query.where({ status: UserStatus.Active });
+  }
+
+  const results = await query;
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
