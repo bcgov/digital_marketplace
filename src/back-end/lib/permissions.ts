@@ -339,3 +339,9 @@ export function readAllCounters(session: Session): boolean {
 export function readManyCounters(session: Session): boolean {
   return isAdmin(session) || isGovernment(session);
 }
+
+// Email Notifications.
+
+export function updateTermsNotification(session: Session): boolean {
+  return isAdmin(session);
+}
