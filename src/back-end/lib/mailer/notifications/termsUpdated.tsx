@@ -28,7 +28,7 @@ export async function vendorTermsChangedT(recipient: User) {
       description,
       body: (
         <div>
-          <p>The updated Terms & Conditions must be reviewed and accepted prior to submitting proposal for Code-With-Us and Sprint-With-Us opportunities.</p>
+          <p>The updated Terms & Conditions must be reviewed and accepted prior to submitting proposals for Code-With-Us and Sprint-With-Us opportunities.</p>
         </div>
       ),
       callsToAction: [viewTermsAndConditionsCallToAction(recipient)]
