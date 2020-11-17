@@ -1,5 +1,5 @@
 import { makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
-import { isSignedIn } from 'front-end/lib/access-control';
+import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
@@ -10,7 +10,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { mustAcceptTerms, User } from 'shared/lib/resources/user';
+import { mustAcceptTerms, User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -35,7 +35,8 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
+const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+  userType: [UserType.Vendor],
   async success({ shared, dispatch }) {
     const user = shared.sessionUser;
     if (user.lastAcceptedTermsAt) {
@@ -63,8 +64,12 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
       }))
     }));
   },
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt('signIn' as const, {})));
+  async fail({ shared, dispatch }) {
+    if (shared.session?.user) {
+      dispatch(replaceRoute(adt('dashboard' as const, null)));
+    } else {
+      dispatch(replaceRoute(adt('signIn' as const, {})));
+    }
     return invalid(null);
   }
 });
