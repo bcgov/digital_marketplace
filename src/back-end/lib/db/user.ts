@@ -134,7 +134,7 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   return valid(await rawUserToUser(connection, result));
 });
 
-export async function unacceptTermsForAllUsers(connection: Connection): Promise<number> {
+export async function unacceptTermsForAllVendors(connection: Connection): Promise<number> {
   const results = await connection<RawUser>('users')
     .where({ type: UserType.Vendor })
     .update({
@@ -142,7 +142,7 @@ export async function unacceptTermsForAllUsers(connection: Connection): Promise<
     }, '*');
 
   if (!results) {
-    throw new Error ('unable to updated users');
+    throw new Error ('unable to update users');
   }
 
   return results.length;

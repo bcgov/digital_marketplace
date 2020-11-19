@@ -74,7 +74,7 @@ const resource: Resource = {
           const { session, body } = request.body;
           switch (body.tag) {
             case 'updateTerms':
-              await db.unacceptTermsForAllUsers(connection);
+              await db.unacceptTermsForAllVendors(connection);
               handleTermsUpdated(connection);
               break;
           }
