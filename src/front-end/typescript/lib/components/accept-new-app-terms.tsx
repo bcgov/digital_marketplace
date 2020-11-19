@@ -1,7 +1,7 @@
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { Component, ComponentView, Immutable } from 'front-end/lib/framework';
+import { Component, ComponentViewProps, Immutable, View } from 'front-end/lib/framework';
 import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { COPY } from 'shared/config';
@@ -22,7 +22,10 @@ export function getCheckbox(state: Immutable<State>): Checkbox.Value {
   return FormField.getValue(state);
 }
 
-export const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+export interface Props extends ComponentViewProps<State, Msg> {
+  disabled?: boolean;
+}
+export const view: View<Props> = ({ disabled, state, dispatch }) => {
   const termsRoute = adt('content', 'terms-and-conditions') as Route;
   return (
     <div>
@@ -31,6 +34,7 @@ export const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         extraChildProps={{
           inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <i>{COPY.appTermsTitle}</i>.</span>)
         }}
+        disabled={disabled}
         className='font-weight-bold'
         state={state}
         dispatch={dispatch} />

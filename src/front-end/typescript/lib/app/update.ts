@@ -577,6 +577,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
 
+    case '@reload':
+      return [state, async (state, dispatch) => {
+        dispatch(adt('@incomingRoute', {
+          route: state.activeRoute,
+          preserveScrollPosition: true
+        }));
+        return state;
+      }];
+
     case '@toast':
       return [state, async (state, dispatch) => {
         state = state.update('toasts', ts => ts.concat([{

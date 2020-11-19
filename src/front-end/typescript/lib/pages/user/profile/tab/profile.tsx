@@ -2,7 +2,7 @@ import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, newRoute, reload, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import { userStatusToColor, userStatusToTitleCase, userTypeToPermissions, userTypeToTitleCase } from 'front-end/lib/pages/user/lib';
 import * as ProfileForm from 'front-end/lib/pages/user/lib/components/profile-form';
@@ -111,21 +111,18 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         startSaveChangesLoading(state),
         async (state, dispatch) => {
-          state = stopSaveChangesLoading(state);
           const result = await ProfileForm.persist({
             state: state.profileForm,
             userId: state.profileUser.id
           });
           switch (result.tag) {
             case 'valid':
+              dispatch(reload());
               dispatch(toast(adt('success', toasts.updated.success)));
-              return state = state
-                .set('isEditingForm', false)
-                .set('profileUser', result.value[1])
-                .set('profileForm', result.value[0]);
+              return state;
             case 'invalid':
               dispatch(toast(adt('error', toasts.updated.error)));
-              return state.set('profileForm', result.value);
+              return stopSaveChangesLoading(state).set('profileForm', result.value);
           }
         }
       ];

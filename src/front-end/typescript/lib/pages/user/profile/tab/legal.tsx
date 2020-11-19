@@ -1,6 +1,7 @@
+import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, reload, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
@@ -16,6 +17,7 @@ type ModalId = 'acceptNewTerms';
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
+  acceptNewTermsLoading: number;
   acceptNewTerms: Immutable<AcceptNewTerms.State>;
 }
 
@@ -32,6 +34,7 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
     profileUser,
     viewerUser,
     showModal: null,
+    acceptNewTermsLoading: 0,
     acceptNewTerms: immutable(await AcceptNewTerms.init({
       errors: [],
       child: {
@@ -45,6 +48,9 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
 function hideModal(state: Immutable<State>): Immutable<State> {
   return state.set('showModal', null);
 }
+
+const startAcceptNewTermsLoading = makeStartLoading<State>('acceptNewTermsLoading');
+const stopAcceptNewTermsLoading = makeStopLoading<State>('acceptNewTermsLoading');
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -62,11 +68,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
     case 'submitAcceptNewTerms':
       return [
-        state,
-        async state => {
+        startAcceptNewTermsLoading(state),
+        async (state, dispatch) => {
           const result = await api.users.update(state.profileUser.id, adt('acceptTerms'));
-          if (!api.isValid(result)) { return state; }
-          //TODO reload
+          if (!api.isValid(result)) { return stopAcceptNewTermsLoading(state); }
+          dispatch(reload());
           return state;
         }
       ];
@@ -134,12 +140,14 @@ export const component: Tab.Component<State, Msg> = {
   getModal(state) {
     if (!state.showModal) { return null; }
     const hasAcceptedTerms = AcceptNewTerms.getCheckbox(state.acceptNewTerms);
+    const isAcceptNewTermsLoading = state.acceptNewTermsLoading > 0;
     switch (state.showModal) {
       case 'acceptNewTerms':
         return {
           title: 'Review Updated Terms and Conditions',
           body: dispatch => (
             <AcceptNewTerms.view
+              disabled={isAcceptNewTermsLoading}
               state={state.acceptNewTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('acceptNewTerms', msg) as Msg)} />
           ),
@@ -150,7 +158,8 @@ export const component: Tab.Component<State, Msg> = {
               color: 'primary',
               msg: adt('submitAcceptNewTerms'),
               button: true,
-              disabled: !hasAcceptedTerms
+              loading: isAcceptNewTermsLoading,
+              disabled: !hasAcceptedTerms || isAcceptNewTermsLoading
             },
             {
               text: 'Cancel',
