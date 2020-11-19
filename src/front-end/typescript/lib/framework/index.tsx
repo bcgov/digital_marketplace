@@ -7,7 +7,7 @@ import * as Immutable from 'immutable';
 import { remove } from 'lodash';
 import { default as React, ReactElement } from 'react';
 import ReactDom from 'react-dom';
-import { ADT, adtCurried } from 'shared/lib/types';
+import { adt, ADT, adtCurried } from 'shared/lib/types';
 
 export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framework/router';
 
@@ -139,13 +139,17 @@ type ToastMsg = ADT<'@toast', Toast>;
 
 export const toast = adtCurried<ToastMsg>('@toast');
 
-export type GlobalMsg<Route>  = Router.RouterMsg<Route> | ToastMsg;
+type ReloadMsg = ADT<'@reload'>;
+
+export const reload = () => adt('@reload') as ReloadMsg;
+
+export type GlobalMsg<Route>  = Router.RouterMsg<Route> | ToastMsg | ReloadMsg;
 
 export type GlobalComponentMsg<Msg, Route> = Msg | GlobalMsg<Route>;
 
 export function isGlobalMsg<Msg, Route>(msg: GlobalComponentMsg<Msg, Route>): msg is GlobalMsg<Route> {
   const globalMsg = msg as GlobalMsg<Route>;
-  return globalMsg.tag === '@toast' || globalMsg.tag === '@newRoute' || globalMsg.tag === '@replaceRoute' || globalMsg.tag === '@newUrl' || globalMsg.tag === '@replaceUrl';
+  return globalMsg.tag === '@toast' || globalMsg.tag === '@newRoute' || globalMsg.tag === '@replaceRoute' || globalMsg.tag === '@newUrl' || globalMsg.tag === '@replaceUrl' || globalMsg.tag === '@reload';
 }
 
 export function mapGlobalComponentMsg<MsgA, MsgB, Route>(msg: GlobalComponentMsg<MsgA, Route>, map: (msg: GlobalComponentMsg<MsgA, Route>) => GlobalComponentMsg<MsgB, Route>): GlobalComponentMsg<MsgB, Route> {
