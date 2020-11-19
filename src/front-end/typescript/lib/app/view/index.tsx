@@ -59,6 +59,7 @@ function makeViewPageProps<RouteParams, PageState, PageMsg>(
 ): ViewPageProps<RouteParams, PageState, PageMsg> {
   return {
     dispatch: props.dispatch,
+    shared: props.state.shared,
     pageState: getPageState(props.state),
     mapPageMsg,
     component: {

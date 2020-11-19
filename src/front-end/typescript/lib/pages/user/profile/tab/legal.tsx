@@ -1,7 +1,9 @@
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
+import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
-import Link, { emailDest, iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { COPY } from 'shared/config';
@@ -10,12 +12,18 @@ import { adt, ADT } from 'shared/lib/types';
 
 // Only vendors can view this tab.
 
+type ModalId = 'acceptNewTerms';
+
 export interface State extends Tab.Params {
-  empty: true;
+  showModal: ModalId | null;
+  acceptNewTerms: Immutable<AcceptNewTerms.State>;
 }
 
 export type InnerMsg
-  = ADT<'noop'>;
+  = ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'acceptNewTerms', AcceptNewTerms.Msg>
+  | ADT<'submitAcceptNewTerms'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -23,12 +31,45 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
   return {
     profileUser,
     viewerUser,
-    empty: true
+    showModal: null,
+    acceptNewTerms: immutable(await AcceptNewTerms.init({
+      errors: [],
+      child: {
+        value: !!profileUser.acceptedTermsAt,
+        id: 'profile-legal-accept-new-terms'
+      }
+    }))
   };
 };
 
+function hideModal(state: Immutable<State>): Immutable<State> {
+  return state.set('showModal', null);
+}
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal':
+      return [hideModal(state)];
+    case 'acceptNewTerms':
+      return updateComponentChild({
+        state,
+        childStatePath: ['acceptNewTerms'],
+        childUpdate: AcceptNewTerms.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('acceptNewTerms', value)
+      });
+    case 'submitAcceptNewTerms':
+      return [
+        state,
+        async state => {
+          const result = await api.users.update(state.profileUser.id, adt('acceptTerms'));
+          if (!api.isValid(result)) { return state; }
+          //TODO reload
+          return state;
+        }
+      ];
     default:
       return [state];
   }
@@ -42,7 +83,7 @@ const TermsSubtext: View<{ children: ViewElementChildren; }> = ({ children }) =>
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state }) => {
+const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   const lastAcceptedTerms = state.profileUser.lastAcceptedTermsAt;
   const acceptedTerms = state.profileUser.acceptedTermsAt;
   const hasAcceptedLatest = !!acceptedTerms;
@@ -68,10 +109,10 @@ const view: ComponentView<State, Msg> = ({ state }) => {
           <div className='mt-4'>
             <h3>Terms & Conditions</h3>
             <div className='mt-3'>
-              <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))} symbol_={hasAcceptedLatest ? undefined : rightPlacement(iconLinkSymbol('warning'))} symbolClassName='text-warning'>{COPY.appTermsTitle}</Link>
+              <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))} symbol_={hasAcceptedLatest ? undefined : leftPlacement(iconLinkSymbol('warning'))} symbolClassName='text-warning'>{COPY.appTermsTitle}</Link>
               {acceptedTerms
                 ? (<TermsSubtext>You agreed to the <i>{COPY.appTermsTitle}</i> on {formatDate(acceptedTerms)} at {formatTime(acceptedTerms, true)}.</TermsSubtext>)
-                : (<TermsSubtext>The <i>{COPY.appTermsTitle}</i> have been updated. Please review the latest version and agree to the updated terms using <Link>this link</Link>.</TermsSubtext>)}
+                : (<TermsSubtext>The <i>{COPY.appTermsTitle}</i> have been updated. Please <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>review the latest version</Link> and <Link onClick={() => dispatch(adt('showModal', 'acceptNewTerms' as const))}>agree to the updated terms</Link>.</TermsSubtext>)}
             </div>
             <div className='mt-3'>
               <Link newTab dest={routeDest(adt('content', 'code-with-us-terms-and-conditions'))}>Code With Us Terms & Conditions</Link>
@@ -89,5 +130,35 @@ const view: ComponentView<State, Msg> = ({ state }) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  getModal(state) {
+    if (!state.showModal) { return null; }
+    const hasAcceptedTerms = AcceptNewTerms.getCheckbox(state.acceptNewTerms);
+    switch (state.showModal) {
+      case 'acceptNewTerms':
+        return {
+          title: 'Review Updated Terms and Conditions',
+          body: dispatch => (
+            <AcceptNewTerms.view
+              state={state.acceptNewTerms}
+              dispatch={mapComponentDispatch(dispatch, msg => adt('acceptNewTerms', msg) as Msg)} />
+          ),
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Agree & Continue',
+              color: 'primary',
+              msg: adt('submitAcceptNewTerms'),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+    }
+  }
 };

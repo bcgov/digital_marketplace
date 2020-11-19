@@ -29,7 +29,7 @@ export const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <p>Please ensure you have reviewed the latest version of the <Link newTab dest={routeDest(termsRoute)}>{COPY.appTermsTitle}</Link>.</p>
       <Checkbox.view
         extraChildProps={{
-          inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <Link newTab dest={routeDest(termsRoute)}>{COPY.appTermsTitle}</Link>.</span>)
+          inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <i>{COPY.appTermsTitle}</i>.</span>)
         }}
         className='font-weight-bold'
         state={state}
