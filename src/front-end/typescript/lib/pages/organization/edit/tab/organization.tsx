@@ -80,7 +80,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             if (isOwner(state.viewerUser, state.organization)) {
               dispatch(replaceRoute(adt('userProfile' as const, { userId: state.viewerUser.id, tab: 'organizations' as const })));
             } else {
-              dispatch(replaceRoute(adt('orgList' as const, null)));
+              dispatch(replaceRoute(adt('orgList' as const, {})));
             }
           } else {
             dispatch(toast(adt('error', toasts.archived.error)));

@@ -15,6 +15,7 @@ export const CWU_MAX_BUDGET = 70000;
 export const SWU_MAX_BUDGET = 2000000;
 
 export const COPY = {
+  appTermsTitle: 'Digital Marketplace Terms & Conditions for E-Bidding',
   gov: {
     name: {
       short: 'B.C. Government',
@@ -30,3 +31,5 @@ export const COPY = {
 };
 
 export const EMPTY_STRING = '—'; // emdash
+
+export const DEFAULT_PAGE_SIZE = 20;

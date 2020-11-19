@@ -2,9 +2,10 @@ import { Msg, Route, SharedState } from 'front-end/lib/app/types';
 import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
 import { ThemeColor } from 'front-end/lib/types';
 import Icon from 'front-end/lib/views/icon';
-import Link from 'front-end/lib/views/link';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Alert, Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'reactstrap';
+import { COPY } from 'shared/config';
 import { adt } from 'shared/lib/types';
 
 interface ViewAlertProps<PageMsg> {
@@ -112,12 +113,30 @@ function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<
 export interface Props<RouteParams, PageState, PageMsg> {
   dispatch: Dispatch<AppMsg<Msg, Route>>;
   component: PageComponent<RouteParams, SharedState, PageState, GlobalComponentMsg<PageMsg, Route>>;
+  shared: SharedState;
   pageState?: Immutable<PageState>;
   mapPageMsg(msg: GlobalComponentMsg<PageMsg, Route>): Msg;
 }
 
+function includeUpdatedTermsAlert<Msg>(shared: SharedState, alerts: PageAlerts<Msg>): PageAlerts<Msg> {
+  if (shared.session?.user && !shared.session.user.acceptedTermsAt) {
+    return {
+      ...alerts,
+      warnings: [{
+        text: (
+          <div>
+            The <i>{COPY.appTermsTitle}</i> have been updated. Please <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>review the latest version</Link> and <Link>agree to the updated terms</Link>.
+          </div>
+        )
+      }, ...(alerts.warnings || [])]
+    };
+  } else {
+    return alerts;
+  }
+}
+
 export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, PageState, PageMsg>) {
-  const { dispatch, mapPageMsg, component, pageState } = props;
+  const { dispatch, mapPageMsg, component, shared, pageState } = props;
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
   if (!pageState) {
@@ -139,7 +158,7 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
   };
   const viewAlertsAndBreadcrumbsProps = {
     dispatchPage,
-    alerts: getAlerts(pageState),
+    alerts: includeUpdatedTermsAlert(shared, getAlerts(pageState)),
     breadcrumbs: getBreadcrumbs(pageState)
   };
   const backgroundClassName = `bg-${backgroundColor}`;

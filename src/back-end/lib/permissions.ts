@@ -118,6 +118,12 @@ export async function deleteOrganization(connection: Connection, session: Sessio
   return isAdmin(session) || await isUserOwnerOfOrg(connection, session.user, orgId);
 }
 
+// Owned Organizations.
+
+export function readManyOwnedOrganizations(session: Session): boolean {
+  return isVendor(session);
+}
+
 // Affiliations.
 
 export function readManyAffiliations(session: Session): boolean {
@@ -349,5 +355,11 @@ export function editContent(session: Session): boolean {
 }
 
 export function deleteContent(session: Session): boolean {
+  return isAdmin(session);
+}
+
+// Email Notifications.
+
+export function updateTermsNotification(session: Session): boolean {
   return isAdmin(session);
 }
