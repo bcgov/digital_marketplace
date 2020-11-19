@@ -134,6 +134,20 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   return valid(await rawUserToUser(connection, result));
 });
 
+export async function unacceptTermsForAllUsers(connection: Connection): Promise<number> {
+  const results = await connection<RawUser>('users')
+    .where({ type: UserType.Vendor })
+    .update({
+      acceptedTermsAt: null
+    }, '*');
+
+  if (!results) {
+    throw new Error ('unable to updated users');
+  }
+
+  return results.length;
+}
+
 export async function userHasAcceptedCurrentTerms(connection: Connection, id: Id): Promise<boolean> {
   const [result] = await connection<{ acceptedTermsAt: Date }>('users')
     .where({ id })
