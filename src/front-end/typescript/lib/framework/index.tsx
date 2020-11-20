@@ -369,6 +369,8 @@ export function setPageMetadata(metadata: PageMetadata): void {
 
 export type AppMsg<Msg, Route> = GlobalComponentMsg<Msg, Route> | Router.IncomingRouteMsg<Route>;
 
+export type AppGetAlerts<State, Msg> = (props: ComponentViewProps<State, Msg>) => PageAlerts<Msg>;
+
 export interface AppComponent<State, Msg, Route> extends Component<null, State, AppMsg<Msg, Route>> {
   router: Router.Router<Route>;
 }
@@ -388,10 +390,8 @@ export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams
   childRouteParams: ChildRouteParams;
   childInit: PageInit<ChildRouteParams, SharedState, ChildState, ChildMsg>;
   childGetMetadata: PageGetMetadata<ChildState>;
-  childGetModal?: PageGetModal<ChildState, ChildMsg>;
   getSharedState(state: Immutable<ParentState>): SharedState;
   mapChildMsg(msg: ChildMsg): ParentMsg;
-  setModal(state: Immutable<ParentState>, modal: PageModal<ParentMsg> | null): Immutable<ParentState>;
 }
 
 /**
@@ -408,12 +408,7 @@ export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams,
     dispatch: childDispatch
   }));
   setPageMetadata(params.childGetMetadata(childState));
-  const childModal = params.childGetModal
-    ? params.childGetModal(childState)
-    : null;
-  const parentModal = mapPageModalGlobalComponentMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<ParentMsg, Route>);
-  const parentState = params.state.setIn(params.childStatePath, childState);
-  return params.setModal(parentState, parentModal);
+  return params.state.setIn(params.childStatePath, childState);
 }
 
 /**
@@ -467,8 +462,6 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
 
 export interface UpdateChildPageParams<PS, PM, CS, CM> extends UpdateChildParams<PS, PM, CS, CM> {
   childGetMetadata: PageGetMetadata<CS>;
-  childGetModal?: PageGetModal<CS, CM>;
-  setModal(state: Immutable<PS>, modal: PageModal<PM> | null): Immutable<PS>;
 }
 
 /**
@@ -483,26 +476,16 @@ export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPag
     const metadata = params.childGetMetadata(pageState);
     setPageMetadata(metadata);
   };
-  const setModal = (parentState: Immutable<PS>): Immutable<PS>  => {
-    const pageState = parentState.getIn(params.childStatePath);
-    const childModal = params.childGetModal
-      ? params.childGetModal(pageState)
-      : null;
-    const parentModal = mapPageModalGlobalComponentMsg(childModal, msg => params.mapChildMsg(msg) as GlobalComponentMsg<PM, Route>);
-    return params.setModal(parentState, parentModal);
-  };
   setMetadata(newState);
-  const newStateWithModal = setModal(newState);
   const asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
-    state = setModal(state);
     let newState = null;
     if (newAsyncState) { newState = await newAsyncState(state, dispatch); }
     if (!newState) { return state; }
     setMetadata(newState);
-    return setModal(newState);
+    return newState;
   };
   return [
-    newStateWithModal,
+    newState,
     asyncStateUpdate
   ];
 }
@@ -604,7 +587,7 @@ export async function start<State, Msg extends ADT<any, any>, Route>(app: AppCom
   function notifyStateSubscriptions(): void {
     stateSubscriptions.forEach(fn => fn(state, dispatch));
     // tslint:disable:next-line no-console
-    if (debug) { console.log('state updated', state.toJSON()); }
+    if (debug) { console.log('state updated', state.toJS()); }
   }
   // Trigger state initialization notification.
   notifyStateSubscriptions();

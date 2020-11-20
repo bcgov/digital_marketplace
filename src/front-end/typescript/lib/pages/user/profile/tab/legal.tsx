@@ -1,8 +1,7 @@
 import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, mapComponentDispatch, reload, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
 import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
@@ -67,15 +66,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => adt('acceptNewTerms', value)
       });
     case 'submitAcceptNewTerms':
-      return [
-        startAcceptNewTermsLoading(state),
-        async (state, dispatch) => {
-          const result = await api.users.update(state.profileUser.id, adt('acceptTerms'));
-          if (!api.isValid(result)) { return stopAcceptNewTermsLoading(state); }
-          dispatch(reload());
-          return state;
-        }
-      ];
+      return AcceptNewTerms.submitAcceptNewTerms({
+        state,
+        userId: state.profileUser.id,
+        startLoading: startAcceptNewTermsLoading,
+        stopLoading: stopAcceptNewTermsLoading
+      });
     default:
       return [state];
   }
@@ -143,31 +139,14 @@ export const component: Tab.Component<State, Msg> = {
     const isAcceptNewTermsLoading = state.acceptNewTermsLoading > 0;
     switch (state.showModal) {
       case 'acceptNewTerms':
-        return {
-          title: 'Review Updated Terms and Conditions',
-          body: dispatch => (
-            <AcceptNewTerms.view
-              disabled={isAcceptNewTermsLoading}
-              state={state.acceptNewTerms}
-              dispatch={mapComponentDispatch(dispatch, msg => adt('acceptNewTerms', msg) as Msg)} />
-          ),
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Agree & Continue',
-              color: 'primary',
-              msg: adt('submitAcceptNewTerms'),
-              button: true,
-              loading: isAcceptNewTermsLoading,
-              disabled: !hasAcceptedTerms || isAcceptNewTermsLoading
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
+        return AcceptNewTerms.makeModal<Msg>({
+          loading: isAcceptNewTermsLoading,
+          disabled: !hasAcceptedTerms || isAcceptNewTermsLoading,
+          state: state.acceptNewTerms,
+          mapMsg: msg => adt('acceptNewTerms', msg) as Msg,
+          onSubmitMsg: adt('submitAcceptNewTerms'),
+          onCloseMsg: adt('hideModal')
+        });
     }
   }
 };
