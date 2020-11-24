@@ -174,9 +174,7 @@ const resource: Resource = {
             if (!permissions.acceptTerms(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            if (validatedUser.value.acceptedTermsAt) {
-              return invalid({ user: adt('acceptTerms' as const, ['You have already accepted the terms of service.']) });
-            }
+            //Allow users to accept the terms if they have already accepted them.
             return valid(adt('acceptTerms' as const));
 
           case 'updateNotifications':

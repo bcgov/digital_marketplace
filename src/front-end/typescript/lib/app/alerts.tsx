@@ -6,9 +6,8 @@ import { COPY } from 'shared/config';
 import { adt } from 'shared/lib/types';
 
 const getAlerts: AppGetAlerts<State, Msg> = ({ state, dispatch }) => {
-  if (state.shared.session?.user.acceptedTermsAt) {
-    return emptyPageAlerts();
-  } else {
+  const user = state.shared.session?.user;
+  if (user && user.lastAcceptedTermsAt && !user.acceptedTermsAt) {
     return {
       ...emptyPageAlerts(),
       warnings: [{
@@ -19,6 +18,8 @@ const getAlerts: AppGetAlerts<State, Msg> = ({ state, dispatch }) => {
         )
       }]
     };
+  } else {
+    return emptyPageAlerts();
   }
 };
 

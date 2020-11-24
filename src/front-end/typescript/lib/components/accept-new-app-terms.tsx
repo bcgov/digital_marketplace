@@ -96,7 +96,7 @@ const View: View<Props> = ({ disabled, state, dispatch }) => {
         className='font-weight-bold'
         state={state}
         dispatch={dispatch} />
-      <p className='mb-0'>Also, make sure you have saved your work before continuing — any unsaved information in forms will be lost.</p>
+      <p className='mb-0'>Also, make sure you have saved your work before continuing. Any unsaved information in forms will be lost.</p>
     </div>
   );
 };
