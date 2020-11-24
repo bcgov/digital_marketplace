@@ -17,7 +17,7 @@ import { formatAmount, formatDateAtTime } from 'shared/lib';
 import { AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
-import { User } from 'shared/lib/resources/user';
+import { isVendor, User } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
@@ -104,13 +104,22 @@ const init: Init<Tab.Params, State> = async params => {
     deleteLoading: 0,
     showModal: null,
     form: await initForm(opportunity, affiliations, proposal, params.viewerUser),
-    submitTerms: immutable(await SubmitProposalTerms.init({
-      errors: [],
-      child: {
-        value: false,
-        id: 'edit-cwu-proposal-submit-terms'
-      }
-    }))
+      submitTerms: immutable(await SubmitProposalTerms.init({
+        proposal: {
+          errors: [],
+          child: {
+            value: false,
+            id: 'edit-cwu-proposal-submit-terms-proposal'
+          }
+        },
+        app: {
+          errors: [],
+          child: {
+            value: false,
+            id: 'edit-cwu-proposal-submit-terms-app'
+          }
+        }
+      }))
   }));
 };
 
@@ -136,7 +145,8 @@ async function resetProposal(state: Immutable<ValidState>, proposal: CWUProposal
 function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
   return state
     .set('showModal', null)
-    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
+    .update('submitTerms', s => SubmitProposalTerms.setProposalCheckbox(s, false))
+    .update('submitTerms', s => SubmitProposalTerms.setAppCheckbox(s, false));
 }
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
@@ -189,10 +199,21 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startSaveChangesLoading(state),
         async (state, dispatch) => {
           state = stopSaveChangesLoading(state);
-          const result = await Form.persist(state.form, adt('update', state.proposal.id));
           const isSave = state.proposal.status === CWUProposalStatus.Draft || state.proposal.status === CWUProposalStatus.Withdrawn;
-          if (isInvalid(result)) {
+          const errorToast = () => {
             dispatch(toast(adt('error', isSave ? toasts.changesSaved.error : toasts.changesSubmitted.error)));
+          };
+          if (!isSave && isVendor(state.viewerUser)) {
+            // Accept app T&Cs if submitted.
+            const result = await api.users.update(state.viewerUser.id, adt('acceptTerms'));
+            if (api.isInvalid(result)) {
+              errorToast();
+              return state;
+            }
+          }
+          const result = await Form.persist(state.form, adt('update', state.proposal.id));
+          if (isInvalid(result)) {
+            errorToast();
             return state.set('form', result.value);
           }
           dispatch(toast(adt('success', isSave ? toasts.changesSaved.success : toasts.changesSubmitted.success)));
@@ -206,13 +227,24 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startSaveChangesAndSubmitLoading(state),
         async (state, dispatch) => {
           state = stopSaveChangesAndSubmitLoading(state);
+          const errorToast = () => {
+            dispatch(toast(adt('error', toasts.submitted.error)));
+          };
+          if (isVendor(state.viewerUser)) {
+            // Accept app T&Cs.
+            const result = await api.users.update(state.viewerUser.id, adt('acceptTerms'));
+            if (api.isInvalid(result)) {
+              errorToast();
+              return state;
+            }
+          }
           const saveResult = await Form.persist(state.form, adt('update', state.proposal.id));
           if (isInvalid(saveResult)) {
             return state.set('form', saveResult.value);
           }
           const submitResult = await api.proposals.cwu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(submitResult)) {
-            dispatch(toast(adt('error', toasts.submitted.error)));
+            errorToast();
             return state;
           }
           dispatch(toast(adt('success', toasts.submitted.success)));
@@ -226,9 +258,20 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startSubmitLoading(state),
         async (state, dispatch) => {
           state = stopSubmitLoading(state);
+          const errorToast = () => {
+            dispatch(toast(adt('error', toasts.submitted.error)));
+          };
+          if (isVendor(state.viewerUser)) {
+            // Accept app T&Cs.
+            const result = await api.users.update(state.viewerUser.id, adt('acceptTerms'));
+            if (api.isInvalid(result)) {
+              errorToast();
+              return state;
+            }
+          }
           const result = await api.proposals.cwu.update(state.proposal.id, adt('submit', ''));
           if (!api.isValid(result)) {
-            dispatch(toast(adt('error', toasts.submitted.error)));
+            errorToast();
             return state;
           }
           dispatch(toast(adt('success', toasts.submitted.success)));
@@ -333,7 +376,7 @@ export const component: Tab.Component<State, Msg> = {
   view,
 
   getModal: getModalValid<ValidState, Msg>(state => {
-    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
+    const hasAcceptedTerms = SubmitProposalTerms.getProposalCheckbox(state.submitTerms) && SubmitProposalTerms.getAppCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
       case 'saveChangesAndSubmit':

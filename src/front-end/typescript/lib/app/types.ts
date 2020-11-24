@@ -1,5 +1,6 @@
 import * as Nav from 'front-end/lib/app/view/nav';
-import { AppMsg, Immutable, PageModal, Toast } from 'front-end/lib/framework';
+import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
+import { AppMsg, Immutable, Toast } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
@@ -94,17 +95,24 @@ export interface SharedState {
   session: Session;
 }
 
+export type ModalId = 'acceptNewTerms';
+
 export interface State {
+  //App Internal State
   ready: boolean;
   transitionLoading: number;
-  toasts: Array<Toast & { timestamp: number; }>;
-  modal: {
-    open: boolean;
-    content: PageModal<Msg>;
-  };
-  shared: SharedState;
   activeRoute: Route;
+  //Toasts
+  toasts: Array<Toast & { timestamp: number; }>;
+  //Modals
+  showModal: ModalId | null;
+  acceptNewTerms: Immutable<AcceptNewTerms.State>;
+  acceptNewTermsLoading: number;
+  //Shared State
+  shared: SharedState;
+  //Layout
   nav: Immutable<Nav.State>;
+  //Pages
   pages: {
     landing?: Immutable<PageLanding.State>;
     dashboard?: Immutable<PageDashboard.State>;
@@ -149,7 +157,10 @@ type InnerMsg
   = ADT<'noop'>
   | ADT<'dismissToast',             number>
   | ADT<'dismissLapsedToasts'>
-  | ADT<'closeModal'>
+  | ADT<'showModal',                ModalId>
+  | ADT<'hideModal'>
+  | ADT<'acceptNewTerms',           AcceptNewTerms.Msg>
+  | ADT<'submitAcceptNewTerms'>
   | ADT<'nav',                      Nav.Msg>
   | ADT<'pageLanding',              PageLanding.Msg>
   | ADT<'pageDashboard',            PageDashboard.Msg>

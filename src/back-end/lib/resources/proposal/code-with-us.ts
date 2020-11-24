@@ -303,6 +303,13 @@ const resource: Resource = {
           });
         }
 
+        // Submit permissions are different from editing, and require acceptance of most recent T&C
+        if (request.body.tag === 'submit' && !await permissions.submitCWUProposal(connection, request.session, request.params.id)) {
+          return invalid({
+            permissions: [permissions.ERROR_MESSAGE]
+          });
+        }
+
         const proposalDeadline = validatedCWUProposal.value.opportunity.proposalDeadline;
         switch (request.body.tag) {
           case 'edit':

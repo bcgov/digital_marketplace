@@ -124,8 +124,7 @@ export async function makeSidebarState(profileUser: User, viewerUser: User, acti
         if (usersAreEquivalent(profileUser, viewerUser)) {
           return [
             makeSidebarLink('profile', profileUser.id, activeTab),
-            makeSidebarLink('notifications', profileUser.id, activeTab),
-            makeSidebarLink('legal', profileUser.id, activeTab)
+            makeSidebarLink('notifications', profileUser.id, activeTab)
           ];
         } else {
           return [];
@@ -133,8 +132,7 @@ export async function makeSidebarState(profileUser: User, viewerUser: User, acti
       case UserType.Government:
         return [
           makeSidebarLink('profile', profileUser.id, activeTab),
-          makeSidebarLink('notifications', profileUser.id, activeTab),
-          makeSidebarLink('legal', profileUser.id, activeTab)
+          makeSidebarLink('notifications', profileUser.id, activeTab)
         ];
       case UserType.Vendor:
         return [
