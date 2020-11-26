@@ -93,7 +93,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
     <div>
       <Row>
         <Col xs='12'>
-          <h2>Accepted Policies, Terms & Agreements</h2>
+          <h2>Policies, Terms & Agreements</h2>
           <p className='mb-0'>In this section, you will find all of the policies, terms and agreements relevant to vendors of the Digital Marketplace.</p>
         </Col>
       </Row>

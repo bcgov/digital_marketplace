@@ -1,6 +1,6 @@
 import { AsyncWithState, makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, PageContextualActions, reload, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
 import * as Form from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/form';
@@ -198,6 +198,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             state,
             state1 => updateStatus(state1, SWUOpportunityStatus.Published,
               async state2 => {
+                dispatch(reload()); //Reload to show addenda link in sidebar.
                 dispatch(toast(adt('success', toasts.published.success(state.opportunity.id))));
                 return state2;
               },
@@ -252,6 +253,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             msg.value,
             async (state1, opportunity) => {
               if (isPublish) {
+                dispatch(reload()); //Reload to show addenda link in sidebar.
                 dispatch(toast(adt('success', toasts.published.success(opportunity.id))));
               } else {
                 dispatch(toast(adt('success', toasts.statusChanged.success(opportunity.status))));
