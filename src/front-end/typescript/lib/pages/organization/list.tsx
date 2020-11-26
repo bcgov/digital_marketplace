@@ -97,6 +97,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           if (!api.isValid(result)) { return state; }
           const page = result.value.page;
           updateUrl(page);
+          window.scrollTo(0, 0);
           return state.merge({
             page,
             numPages: result.value.numPages,
