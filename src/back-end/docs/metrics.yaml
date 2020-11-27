@@ -1,0 +1,18 @@
+
+paths:
+  /metrics:
+    get:
+      summary: Retrieves metrics related to various resources (e.g. Opportunities).
+      tags:
+        - Metrics
+      produces:
+        - application/json
+      description: Returns metrics related to various resources (e.g. Opportunities).
+      responses:
+        200:
+          description: An array of metric objects
+          content:
+            application/json:
+              type: array
+              items: object
+

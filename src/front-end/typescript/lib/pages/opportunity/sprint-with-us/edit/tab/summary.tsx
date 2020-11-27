@@ -3,11 +3,12 @@ import { ComponentView, GlobalComponentMsg, Init, Update } from 'front-end/lib/f
 import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
 import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import Link, { emailDest, routeDest } from 'front-end/lib/views/link';
 import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
 import Skills from 'front-end/lib/views/skills';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { EMPTY_STRING } from 'shared/config';
 import { formatAmount, formatDate } from 'shared/lib';
 import { SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { NUM_SCORE_DECIMALS } from 'shared/lib/resources/proposal/sprint-with-us';
@@ -31,30 +32,39 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
-  const { successfulProposal } = state.opportunity;
-  const submittedBy = successfulProposal?.createdBy;
-  const org = successfulProposal?.organization;
-  const totalScore = successfulProposal?.totalScore || 0;
-  if (!successfulProposal || !submittedBy || !org) { return null; }
+  const { successfulProponent } = state.opportunity;
+  if (!successfulProponent || !successfulProponent.totalScore) { return null; }
   const isViewerAdmin = isAdmin(state.viewerUser);
   const items = [
     {
       name: 'Awarded Proponent',
       children: (() => {
         if (isViewerAdmin) {
-          return (<Link newTab dest={routeDest(adt('orgEdit', { orgId: org.id }))}>{org.legalName}</Link>);
+          const email = (() => {
+            if (successfulProponent.email) {
+              return (<span>(<Link dest={emailDest([successfulProponent.email])}>{successfulProponent.email}</Link>)</span>);
+            } else {
+              return null;
+            }
+          })();
+          return (
+            <div>
+              <Link newTab dest={routeDest(adt('orgEdit', { orgId: successfulProponent.id }))}>{successfulProponent.name}</Link> {email}
+            </div>
+          );
         } else {
-          return org.legalName;
+          return successfulProponent.name;
         }
       })()
     },
     {
       name: 'Submitted By',
       children: (() => {
+        if (!successfulProponent.createdBy) { return null; }
         if (isViewerAdmin) {
-          return (<Link newTab dest={routeDest(adt('userProfile', { userId: submittedBy.id }))}>{submittedBy.name}</Link>);
+          return (<Link newTab dest={routeDest(adt('userProfile', { userId: successfulProponent.createdBy.id }))}>{successfulProponent.createdBy.name}</Link>);
         } else {
-          return submittedBy.name;
+          return successfulProponent.createdBy.name;
         }
       })()
     }
@@ -67,12 +77,12 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
         </Col>
       </Row>
       <Row>
-        <Col xs='12' md='4' className='mb-4 mb-md-0'>
+        <Col xs='12' md='4' className='mb-4 mb-md-0 d-flex d-md-block'>
           <ReportCard
             icon='star-full'
             iconColor='c-report-card-icon-highlight'
             name='Winning Score'
-            value={`${totalScore.toFixed(NUM_SCORE_DECIMALS)}%`} />
+            value={`${successfulProponent.totalScore ? `${successfulProponent.totalScore.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING}`} />
         </Col>
         <Col xs='12' md='8' className='d-flex align-items-center flex-nowrap'>
           <DescriptionList items={items} />

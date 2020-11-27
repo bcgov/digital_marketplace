@@ -6,7 +6,7 @@ import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
 import { Immutable, immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Tab from 'front-end/lib/pages/user/profile/tab';
-import { isAdmin, isPublicSectorEmployee, User } from 'shared/lib/resources/user';
+import { isAdmin, isPublicSectorEmployee, isVendor, User } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { invalid, valid, Validation } from 'shared/lib/validation';
 
@@ -54,6 +54,9 @@ function makeInit<K extends Tab.TabId>(): PageInit<RouteParams, SharedState, Sta
           return 'profile';
         } else if (routeParams.tab === 'organizations' && isOwner && isPublicSectorEmployee(viewerUser)) {
           // Public Sector Employees do not have an organizations tab.
+          return 'profile';
+        } else if (routeParams.tab === 'legal' && !isVendor(profileUser)) {
+          // Non-vendors do not have a legal tab.
           return 'profile';
         } else {
           // Fallback to 'profile' tab.

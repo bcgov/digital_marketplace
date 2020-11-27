@@ -1,6 +1,7 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
+import { readOneOrganizationContactEmail } from 'back-end/lib/db/organization';
 import { readOneSWUAwardedProposal, readSubmittedSWUProposalCount } from 'back-end/lib/db/proposal/sprint-with-us';
 import { RawSWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/sprint-with-us';
 import { readOneUser, readOneUserSlim } from 'back-end/lib/db/user';
@@ -14,7 +15,7 @@ import { SWUProposalSlim, SWUProposalStatus } from 'shared/lib/resources/proposa
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
-import { getValidValue, isInvalid } from 'shared/lib/validation';
+import { getValidValue, isInvalid, isValid } from 'shared/lib/validation';
 
 interface CreateSWUOpportunityParams extends Omit<SWUOpportunity, 'createdBy' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'status' | 'id' | 'addenda' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions'> {
   status: CreateSWUOpportunityStatus;
@@ -458,9 +459,23 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
     let awardedProposal: SWUProposalSlim | null;
     if (result.status === SWUOpportunityStatus.Awarded) {
       awardedProposal = getValidValue(await readOneSWUAwardedProposal(connection, result.id, session), null);
-      result.successfulProponentName = awardedProposal?.organization?.legalName;
-    } else {
-      awardedProposal = null;
+      if (awardedProposal && awardedProposal.organization && awardedProposal.createdBy) {
+        // Use the score to determine if session is user is permitted to see detailed
+        // proponent information.
+        const fullPermissions = !!awardedProposal.totalScore;
+        let email: string | undefined;
+        if (fullPermissions) {
+          const result = await readOneOrganizationContactEmail(connection, awardedProposal.organization.id);
+          email = isValid(result) && result.value ? result.value : undefined;
+        }
+        result.successfulProponent = {
+          id: awardedProposal.organization.id,
+          name: awardedProposal.organization.legalName,
+          email,
+          totalScore: awardedProposal.totalScore,
+          createdBy: fullPermissions ? awardedProposal.createdBy : undefined
+        };
+      }
     }
 
     // If authenticated, add on subscription status flag
@@ -475,8 +490,6 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
         .orderBy('createdAt', 'desc');
 
       result.history = await Promise.all(rawHistory.map(async raw => await rawHistoryRecordToHistoryRecord(connection, session, raw)));
-
-      result.successfulProposal = awardedProposal || undefined;
 
       if (publicOpportunityStatuses.includes(result.status)) {
         // Retrieve opportunity views

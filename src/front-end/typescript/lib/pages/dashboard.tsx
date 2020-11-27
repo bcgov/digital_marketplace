@@ -140,7 +140,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<RoutePar
       const cwu = api.getValidValue(await api.proposals.cwu.readMany(), []);
       const swu = api.getValidValue(await api.proposals.swu.readMany(), []);
       bodyRows = makeVendorBodyRows(cwu, swu, viewerUser);
-      const orgs = api.getValidValue(await api.organizations.readMany(), []);
+      const orgs = api.getValidValue(await api.ownedOrganizations.readMany(), []);
       isQualified = orgs.reduce((acc, o) => acc || doesOrganizationMeetSWUQualification(o), false as boolean);
     } else {
       const cwu = api.getValidValue(await api.opportunities.cwu.readMany(), []);

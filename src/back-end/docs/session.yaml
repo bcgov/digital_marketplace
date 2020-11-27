@@ -1,0 +1,36 @@
+
+paths:
+  /sessions/{id}:
+    get:
+      summary: Retrieves an existing Session.
+      tags:
+        - Sessions
+      produces:
+        - application/json
+      description: Retrieves an existing Session.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Session to retrieve.
+          type: uuid
+      responses:
+        200:
+          description: Receive the updated Session.
+
+    delete:
+      summary: Deletes an existing Session (sign out).
+      tags:
+        - Sessions
+      produces:
+        - application/json
+      description: Deletes an existing Session.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Session to delete
+          type: uuid
+      responses:
+        200:
+          description: Receive the deleted Session.
