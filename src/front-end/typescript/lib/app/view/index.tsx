@@ -48,6 +48,7 @@ import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rig
 import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader, Toast, ToastBody } from 'reactstrap';
+import { SHOW_TEST_INDICATOR } from 'shared/config';
 import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
@@ -602,7 +603,7 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     state: state.nav,
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
-    logoImageUrl: prefixPath('/images/logo.svg'),
+    logoImageUrl: prefixPath(SHOW_TEST_INDICATOR ? '/images/logo_test.svg' : '/images/logo.svg'),
     title: 'Digital Marketplace',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),

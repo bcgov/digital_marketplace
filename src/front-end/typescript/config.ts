@@ -1,9 +1,6 @@
 import { prefixPath } from 'front-end/lib';
 
-export { EMPTY_STRING } from 'shared/config';
-
-// ENV CONFIG
-export const NODE_ENV = process.env.NODE_ENV || 'production';
+export { EMPTY_STRING, NODE_ENV } from 'shared/config';
 
 // Set this environment variable if behind reverse proxies at a particular path.
 // e.g. www.example.com/marketplace/*

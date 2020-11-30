@@ -4,6 +4,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { Emails } from 'back-end/lib/mailer';
 import { fromString } from 'html-to-text';
 import nodemailer from 'nodemailer';
+import { SHOW_TEST_INDICATOR } from 'shared/config';
 
 const logger = makeDomainLogger(consoleAdapter, 'mailer', ENV);
 
@@ -30,7 +31,7 @@ export function send(params: SendParams): Promise<void> {
           errorStack: error.stack,
           to: params.to,
           bcc: params.bcc,
-          subject: params.subject
+          subject: `${SHOW_TEST_INDICATOR ? '[TEST]' : ''}${params.subject}`
         });
       }
       resolve();
