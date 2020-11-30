@@ -237,7 +237,7 @@ Environment variables that affect the back-end server's functionality are stored
 | `SWAGGER_ENABLE` | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.
 | `SWAGGER_UI_PATH` | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`. |
 | `TZ` | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration. |
-| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (shows a testing variant of the logo, and prefixes email notification subject lines). Defaults to `true` if `NODE_ENV` is `development` and `SHOW_TEST_INDICATOR` is undefined or invalid. Otherwise, it defaults to `false`. |
+| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `true` if `NODE_ENV` is `development` and `SHOW_TEST_INDICATOR` is undefined or invalid. Otherwise, it defaults to `false`. |
 
 #### Front-End Environment Variables
 
@@ -248,6 +248,7 @@ Environment variables that affect the front-end's build process are stored and s
 | `NODE_ENV` | Determines whether the front-end is built for production (e.g. minification, compression, etc). Possible values include either "development" or "production". |
 | `CONTACT_EMAIL` | The Digital Marketplace team's contact email address. |
 | `PATH_PREFIX` | The URL path prefix that the Digital Marketplace is deployed to. For example, if deployed to `digital.gov.bc.ca/marketplace`, the value of this variable should be `marketplace`. |
+| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (shows a testing variant of the logo in the web app UI). Defaults to `true` if `NODE_ENV` is `development` and `SHOW_TEST_INDICATOR` is undefined or invalid. Otherwise, it defaults to `false`. |
 
 ## Deployment
 
