@@ -7,6 +7,8 @@ import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import { ThemeColor } from 'front-end/lib/types';
+import Accordion from 'front-end/lib/views/accordion';
 import Badge, { OpportunityBadge } from 'front-end/lib/views/badge';
 import { IconInfo } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
@@ -41,6 +43,9 @@ export interface State {
   searchFilter: Immutable<ShortText.State>;
   opportunities: CategorizedOpportunities;
   visibleOpportunities: CategorizedOpportunities;
+  unpublishedListOpen: boolean;
+  openListOpen: boolean;
+  closedListOpen: boolean;
 }
 
 function isLoading(state: Immutable<State>): boolean {
@@ -51,6 +56,9 @@ type InnerMsg
   = ADT<'typeFilter', Select.Msg>
   | ADT<'remoteOkFilter', Checkbox.Msg>
   | ADT<'searchFilter', ShortText.Msg>
+  | ADT<'toggleUnpublishedList'>
+  | ADT<'toggleOpenList'>
+  | ADT<'toggleClosedList'>
   | ADT<'toggleNotifications'>
   | ADT<'toggleWatch', [OpportunityCategory, Id]>
   | ADT<'search'>;
@@ -156,7 +164,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
         value: '',
         id: 'opportunity-filter-search'
       }
-    }))
+    })),
+    unpublishedListOpen: true,
+    openListOpen: true,
+    closedListOpen: true
   };
 };
 
@@ -281,6 +292,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'search':
       return [runSearch(state)];
+    case 'toggleUnpublishedList':
+      return [state.update('unpublishedListOpen', v => !v)];
+    case 'toggleOpenList':
+      return [state.update('openListOpen', v => !v)];
+    case 'toggleClosedList':
+      return [state.update('closedListOpen', v => !v)];
     default:
       return [state];
   }
@@ -447,6 +464,8 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
 
 interface OpportunityListProps {
   title: string;
+  iconColor?: ThemeColor;
+  isOpen: boolean;
   noneText: string;
   opportunities: Opportunity[];
   className?: string;
@@ -457,54 +476,64 @@ interface OpportunityListProps {
   toggleWatchLoading?: Id;
   toggleWatch(id: Id): void;
   toggleNotifications?(): void;
+  toggleAccordion(): void;
 }
 
-const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading }) => {
+const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading, toggleAccordion }) => {
+  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />) : undefined;
   return (
-    <div className={className}>
-      <Row>
-        <Col xs='12' className='d-flex flex-column flex-md-row align-items-start align-items-md-center flex-nowrap'>
-          <h4 className='mb-4 d-flex align-items-center'>
-            {title}
-            {showCount && opportunities.length
-              ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />)
-              : null}
-          </h4>
-          {viewerUser && toggleNotifications
-            ? (<div className='mb-4 ml-md-auto d-flex align-items-center flex-nowrap'>
-                {toggleNotificationsLoading
-                  ? (<Spinner size='sm' color='secondary' className='mx-2 order-2 order-md-1' />)
-                  : null}
-                <Link
-                  className='order-1 order-md-2'
+    <Row>
+      <Col className='d-flex flex-column flex-md-row align-items-start align-items-md-center flex-nowrap'>
+        {viewerUser && toggleNotifications
+          ? (<div className='mb-4 ml-md-auto d-flex align-items-center flex-nowrap'>
+              {toggleNotificationsLoading
+                ? (<Spinner size='sm' color='secondary' className='mx-2 order-2 order-md-1' />)
+                : null}
+              <Link
+                className='order-1 order-md-2'
+                disabled={disabled}
+                onClick={toggleNotifications}
+                color={viewerUser.notificationsOn ? 'secondary' : undefined}
+                symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
+                {viewerUser.notificationsOn
+                  ? 'Stop notifying me about new opportunities'
+                  : 'Notify me about new opportunities'}
+              </Link>
+            </div>)
+          : null}
+      </Col>
+      {opportunities.length
+        ? (<Col xs='12' className='mb-n4h'>
+          <Accordion
+          className={className}
+          toggle={() => toggleAccordion()}
+          color='info'
+          title={title}
+          titleClassName='h4 mb-0'
+          iconWidth={2}
+          iconHeight={2}
+          iconClassName='mr-3'
+          chevronWidth={1.5}
+          chevronHeight={1.5}
+          open={isOpen}
+          badge={badge}
+          fullWidth={false}
+          >
+            <Row>
+              {opportunities.map((o, i) => (
+                <OpportunityCard
+                  key={`opportunity-list-${i}`}
+                  opportunity={o}
+                  viewerUser={viewerUser}
+                  isWatchLoading={toggleWatchLoading === o.value.id}
                   disabled={disabled}
-                  onClick={toggleNotifications}
-                  color={viewerUser.notificationsOn ? 'secondary' : undefined}
-                  symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
-                  {viewerUser.notificationsOn
-                    ? 'Stop notifying me about new opportunities'
-                    : 'Notify me about new opportunities'}
-                </Link>
-              </div>)
-            : null}
-        </Col>
-        {opportunities.length
-          ? (<Col xs='12' className='mb-n4h'>
-              <Row>
-                {opportunities.map((o, i) => (
-                  <OpportunityCard
-                    key={`opportunity-list-${i}`}
-                    opportunity={o}
-                    viewerUser={viewerUser}
-                    isWatchLoading={toggleWatchLoading === o.value.id}
-                    disabled={disabled}
-                    toggleWatch={() => toggleWatch(o.value.id)} />
-                ))}
-              </Row>
-            </Col>)
+                  toggleWatch={() => toggleWatch(o.value.id)} />
+              ))}
+            </Row>
+          </Accordion>
+        </Col>)
           : (<Col xs='12'>{noneText}</Col>)}
       </Row>
-    </div>
   );
 };
 
@@ -536,7 +565,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
             toggleNotificationsLoading={isToggleNotificationsLoading}
             showCount
             toggleWatch={toggleWatch('unpublished')}
-            toggleNotifications={toggleNotifications} />)
+            toggleNotifications={toggleNotifications}
+            isOpen={state.unpublishedListOpen}
+            toggleAccordion={() => dispatch(adt('toggleUnpublishedList'))}/>)
         : null}
       <OpportunityList
         title='Open Opportunities'
@@ -551,7 +582,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
         toggleNotificationsLoading={isToggleNotificationsLoading}
         showCount
         toggleWatch={toggleWatch('open')}
-        toggleNotifications={hasUnpublished ? undefined : toggleNotifications} />
+        toggleNotifications={hasUnpublished ? undefined : toggleNotifications}
+        isOpen={state.openListOpen}
+        toggleAccordion={() => dispatch(adt('toggleOpenList'))}/>
       <OpportunityList
         title='Closed Opportunities'
         noneText={opps.closed.length !== state.opportunities.closed.length
@@ -561,7 +594,9 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
         viewerUser={state.viewerUser}
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('closed')}
-        toggleWatch={toggleWatch('closed')} />
+        toggleWatch={toggleWatch('closed')}
+        isOpen={state.closedListOpen}
+        toggleAccordion={() => dispatch(adt('toggleClosedList'))} />
     </div>
   );
 };
