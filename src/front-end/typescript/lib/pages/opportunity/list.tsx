@@ -7,7 +7,6 @@ import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import { ThemeColor } from 'front-end/lib/types';
 import Accordion from 'front-end/lib/views/accordion';
 import Badge, { OpportunityBadge } from 'front-end/lib/views/badge';
 import { IconInfo } from 'front-end/lib/views/icon';
@@ -517,7 +516,6 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
 
 interface OpportunityListProps {
   title: string;
-  iconColor?: ThemeColor;
   isOpen: boolean;
   noneText: string;
   opportunities: Opportunity[];
