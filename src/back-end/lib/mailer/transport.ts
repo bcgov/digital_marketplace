@@ -22,7 +22,8 @@ export function send(params: SendParams): Promise<void> {
     transport.sendMail({
       ...params,
       from: MAILER_FROM,
-      text: fromString(params.html, { wordwrap: 130 })
+      text: fromString(params.html, { wordwrap: 130 }),
+      subject: `${SHOW_TEST_INDICATOR ? '[TEST] ' : ''}${params.subject}`
     }, error => {
       if (error) {
         // Do not reject promise, only log the error.
@@ -31,7 +32,7 @@ export function send(params: SendParams): Promise<void> {
           errorStack: error.stack,
           to: params.to,
           bcc: params.bcc,
-          subject: `${SHOW_TEST_INDICATOR ? '[TEST] ' : ''}${params.subject}`
+          subject: params.subject
         });
       }
       resolve();
