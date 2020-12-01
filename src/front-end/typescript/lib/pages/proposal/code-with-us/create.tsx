@@ -11,7 +11,7 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import React from 'react';
 import { CWUOpportunity, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
 import { CreateCWUProposalStatus, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
-import { UserType } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
@@ -22,6 +22,7 @@ type ModalId
 export type State = Validation<Immutable<ValidState>, null>;
 
 export interface ValidState {
+  sessionUser: User;
   showModal: ModalId | null;
   opportunity: CWUOpportunity;
   form: Immutable<Form.State>;
@@ -74,6 +75,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     const affiliations = affiliationsResult.value;
     // Everything looks good, so state is valid.
     return valid(immutable({
+      sessionUser: shared.sessionUser,
       showModal: null,
       submitLoading: 0,
       saveDraftLoading: 0,
@@ -85,10 +87,19 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
         canRemoveExistingAttachments: true //moot
       })),
       submitTerms: immutable(await SubmitProposalTerms.init({
-        errors: [],
-        child: {
-          value: false,
-          id: 'create-cwu-proposal-submit-terms'
+        proposal: {
+          errors: [],
+          child: {
+            value: false,
+            id: 'create-cwu-proposal-submit-terms-proposal'
+          }
+        },
+        app: {
+          errors: [],
+          child: {
+            value: false,
+            id: 'create-cwu-proposal-submit-terms-app'
+          }
         }
       }))
     }));
@@ -107,7 +118,8 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
   return state
     .set('showModal', null)
-    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
+    .update('submitTerms', s => SubmitProposalTerms.setProposalCheckbox(s, false))
+    .update('submitTerms', s => SubmitProposalTerms.setAppCheckbox(s, false));
 }
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
@@ -126,9 +138,20 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         isSubmit ? startSubmitLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
           state = isSubmit ? stopSubmitLoading(state) : stopSaveDraftLoading(state);
+          const errorToast = () => {
+            dispatch(toast(adt('error', isSubmit ? toasts.submitted.error : toasts.draftCreated.error)));
+          };
+          if (isSubmit) {
+            // Accept app T&Cs if submitting.
+            const result = await api.users.update(state.sessionUser.id, adt('acceptTerms'));
+            if (api.isInvalid(result)) {
+              errorToast();
+              return state;
+            }
+          }
           const result = await Form.persist(state.form, adt('create', (isSubmit ? CWUProposalStatus.Submitted : CWUProposalStatus.Draft) as CreateCWUProposalStatus));
           if (isInvalid(result)) {
-            dispatch(toast(adt('error', isSubmit ? toasts.submitted.error : toasts.draftCreated.error)));
+            errorToast();
             return state.set('form', result.value);
           }
           dispatch(newRoute(adt('proposalCWUEdit' as const, {
@@ -201,7 +224,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   }),
 
   getModal: getModalValid<ValidState, Msg>(state => {
-    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
+    const hasAcceptedTerms = SubmitProposalTerms.getProposalCheckbox(state.submitTerms) && SubmitProposalTerms.getAppCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
         return {

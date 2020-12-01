@@ -203,7 +203,7 @@ Environment variables that affect the back-end server's functionality are stored
 | `NODE_ENV` | The back-end run-time's environment. Possible values include either "development" or "production". |
 | `SERVER_HOST` | The IPv4 address for the back-end to bind to. |
 | `SERVER_PORT` | The TCP port for the back-end to bind to. |
-| `SCHEDULED_DOWNTIME` | A boolean flag (`0` for `false`, `1` for `true`) to turn off CRUD endpoints and vend a downtime HTML page to all users when set to a non-zero number. |
+| `SCHEDULED_DOWNTIME` | A boolean flag (set to `0` for `false`, `1` for `true`) to turn off CRUD endpoints and vend a downtime HTML page to all users when set to a non-zero number. Defaults to `false` if `SCHEDULED_DOWNTIME` is undefined or invalid. |
 | `BASIC_AUTH_USERNAME` | An HTTP basic auth username to limit access to the web application. |
 | `BASIC_AUTH_PASSWORD_HASH` | A password hash to authenticate HTTP basic auth passwords to limit access to the web application. |
 | `ORIGIN` | The root URL of the web app. This is used for authentication and generating URLs in email notifications. The value must include the protocol and any path prefixes. e.g. `https://digital.gov.bc.ca/marketplace`. |
@@ -237,6 +237,7 @@ Environment variables that affect the back-end server's functionality are stored
 | `SWAGGER_ENABLE` | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.
 | `SWAGGER_UI_PATH` | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`. |
 | `TZ` | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration. |
+| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `true` if `NODE_ENV` is `development` and `SHOW_TEST_INDICATOR` is undefined or invalid. Otherwise, it defaults to `false`. |
 
 #### Front-End Environment Variables
 
@@ -247,6 +248,7 @@ Environment variables that affect the front-end's build process are stored and s
 | `NODE_ENV` | Determines whether the front-end is built for production (e.g. minification, compression, etc). Possible values include either "development" or "production". |
 | `CONTACT_EMAIL` | The Digital Marketplace team's contact email address. |
 | `PATH_PREFIX` | The URL path prefix that the Digital Marketplace is deployed to. For example, if deployed to `digital.gov.bc.ca/marketplace`, the value of this variable should be `marketplace`. |
+| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (shows a testing variant of the logo in the web app UI). Defaults to `true` if `NODE_ENV` is `development` and `SHOW_TEST_INDICATOR` is undefined or invalid. Otherwise, it defaults to `false`. |
 
 ## Deployment
 

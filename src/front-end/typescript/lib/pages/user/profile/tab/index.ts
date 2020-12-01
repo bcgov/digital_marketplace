@@ -82,7 +82,7 @@ export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition
       return {
         component: LegalTab.component,
         icon: 'balance-scale',
-        title: 'Accepted Policies, Terms & Agreements'
+        title: 'Policies, Terms & Agreements'
       } as TabbedPage.TabDefinition<Tabs, K>;
     case 'organizations':
       return {

@@ -1,21 +1,21 @@
-import { Msg, Route, SharedState } from 'front-end/lib/app/types';
-import { AppMsg, Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
+import getAppAlerts from 'front-end/lib/app/alerts';
+import { Msg, Route, SharedState, State } from 'front-end/lib/app/types';
+import { Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, mapPageAlerts, mapPageBreadcrumbsMsg, mergePageAlerts, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
 import { ThemeColor } from 'front-end/lib/types';
 import Icon from 'front-end/lib/views/icon';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import Link from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Alert, Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'reactstrap';
-import { COPY } from 'shared/config';
 import { adt } from 'shared/lib/types';
 
-interface ViewAlertProps<PageMsg> {
-  messages: Array<PageAlert<GlobalComponentMsg<PageMsg, Route>>>;
-  dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>>;
+interface ViewAlertProps {
+  messages: Array<PageAlert<Msg>>;
+  dispatch: Dispatch<Msg>;
   color: ThemeColor;
   className?: string;
 }
 
-function ViewAlert<PageMsg>({ messages, dispatchPage, color, className = '' }: ViewAlertProps<PageMsg>) {
+function ViewAlert({ messages, dispatch, color, className = '' }: ViewAlertProps) {
   if (!messages.length) { return null; }
   return (
     <Alert color={color} className={`${className} p-0`} fade={false}>
@@ -30,7 +30,7 @@ function ViewAlert<PageMsg>({ messages, dispatchPage, color, className = '' }: V
                   width={1}
                   height={1}
                   color={color}
-                  onClick={() => dispatchPage(dismissMsg)}
+                  onClick={() => dispatch(dismissMsg)}
                   className='mt-1 o-75 flex-grow-0 flex-shrink-0' />)
               : null}
           </div>
@@ -43,38 +43,38 @@ function ViewAlert<PageMsg>({ messages, dispatchPage, color, className = '' }: V
   );
 }
 
-interface ViewAlertsProps<PageMsg> {
-  alerts: PageAlerts<GlobalComponentMsg<PageMsg, Route>>;
-  dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>>;
+interface ViewAlertsProps {
+  alerts: PageAlerts<Msg>;
+  dispatch: Dispatch<Msg>;
 }
 
-function ViewAlerts<PageMsg>({ alerts, dispatchPage }: ViewAlertsProps<PageMsg>) {
+function ViewAlerts({ alerts, dispatch }: ViewAlertsProps) {
   const { info = [], warnings = [], errors = [] } = alerts;
   //Show highest priority alerts first.
   return (
     <Row>
       <Col xs='12'>
-        <ViewAlert messages={errors} dispatchPage={dispatchPage} color='danger' />
-        <ViewAlert messages={warnings} dispatchPage={dispatchPage} color='warning' />
-        <ViewAlert messages={info} dispatchPage={dispatchPage} color='primary' />
+        <ViewAlert messages={errors} dispatch={dispatch} color='danger' />
+        <ViewAlert messages={warnings} dispatch={dispatch} color='warning' />
+        <ViewAlert messages={info} dispatch={dispatch} color='primary' />
       </Col>
     </Row>
   );
 }
 
-interface ViewBreadcrumbsProps<PageMsg> {
-  breadcrumbs: PageBreadcrumbs<GlobalComponentMsg<PageMsg, Route>>;
-  dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>>;
+interface ViewBreadcrumbsProps {
+  breadcrumbs: PageBreadcrumbs<Msg>;
+  dispatch: Dispatch<Msg>;
 }
 
-function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactElement<ViewBreadcrumbsProps<PageMsg>> | null {
-  const { dispatchPage, breadcrumbs } = props;
+function ViewBreadcrumbs(props: ViewBreadcrumbsProps): ReactElement<ViewBreadcrumbsProps> | null {
+  const { dispatch, breadcrumbs } = props;
   if (!breadcrumbs.length) { return null; }
   return (
     <Breadcrumb className='d-none d-md-block' listClassName='bg-transparent p-0 mb-3'>
       {breadcrumbs.map(({ text, onClickMsg }, i) => {
         const onClick = () => {
-          if (onClickMsg) { dispatchPage(onClickMsg); }
+          if (onClickMsg) { dispatch(onClickMsg); }
         };
         return (
           <BreadcrumbItem key={`breadcrumb-${i}`} active={i === breadcrumbs.length - 1}>
@@ -86,57 +86,40 @@ function ViewBreadcrumbs<PageMsg>(props: ViewBreadcrumbsProps<PageMsg>): ReactEl
   );
 }
 
-type ViewAlertsAndBreadcrumbsProps<PageMsg> = ViewAlertsProps<PageMsg> & ViewBreadcrumbsProps<PageMsg> & { container?: boolean; className?: string; };
+type ViewAlertsAndBreadcrumbsProps = ViewAlertsProps & ViewBreadcrumbsProps & { container?: boolean; className?: string; };
 
-function ViewAlertsAndBreadcrumbs<PageMsg>(props: ViewAlertsAndBreadcrumbsProps<PageMsg>) {
-  const { dispatchPage, alerts, breadcrumbs, container = false } = props;
+function ViewAlertsAndBreadcrumbs(props: ViewAlertsAndBreadcrumbsProps) {
+  const { dispatch, alerts, breadcrumbs, container = false } = props;
   const hasAlerts = !!(alerts.info?.length || alerts.warnings?.length || alerts.errors?.length);
   const hasBreadcrumbs = !!breadcrumbs.length;
   const className = `${hasAlerts ? 'pb-5 mb-n3' : ''} ${!hasAlerts && hasBreadcrumbs ? 'pb-md-5 mb-md-n3' : ''} ${props.className || ''}`;
   if (container) {
     return (
       <Container className={className}>
-        <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
-        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
+        <ViewAlerts dispatch={dispatch} alerts={alerts} />
+        <ViewBreadcrumbs dispatch={dispatch} breadcrumbs={breadcrumbs} />
       </Container>
     );
   } else {
     return (
       <div className={className}>
-        <ViewAlerts dispatchPage={dispatchPage} alerts={alerts} />
-        <ViewBreadcrumbs dispatchPage={dispatchPage} breadcrumbs={breadcrumbs} />
+        <ViewAlerts dispatch={dispatch} alerts={alerts} />
+        <ViewBreadcrumbs dispatch={dispatch} breadcrumbs={breadcrumbs} />
       </div>
     );
   }
 }
 
 export interface Props<RouteParams, PageState, PageMsg> {
-  dispatch: Dispatch<AppMsg<Msg, Route>>;
+  state: Immutable<State>;
+  dispatch: Dispatch<Msg>;
   component: PageComponent<RouteParams, SharedState, PageState, GlobalComponentMsg<PageMsg, Route>>;
-  shared: SharedState;
   pageState?: Immutable<PageState>;
   mapPageMsg(msg: GlobalComponentMsg<PageMsg, Route>): Msg;
 }
 
-function includeUpdatedTermsAlert<Msg>(shared: SharedState, alerts: PageAlerts<Msg>): PageAlerts<Msg> {
-  if (shared.session?.user && !shared.session.user.acceptedTermsAt) {
-    return {
-      ...alerts,
-      warnings: [{
-        text: (
-          <div>
-            The <i>{COPY.appTermsTitle}</i> have been updated. Please <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>review the latest version</Link> and <Link>agree to the updated terms</Link>.
-          </div>
-        )
-      }, ...(alerts.warnings || [])]
-    };
-  } else {
-    return alerts;
-  }
-}
-
 export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, PageState, PageMsg>) {
-  const { dispatch, mapPageMsg, component, shared, pageState } = props;
+  const { state, dispatch, mapPageMsg, component, pageState } = props;
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
   if (!pageState) {
@@ -156,10 +139,12 @@ export function view<RouteParams, PageState, PageMsg>(props: Props<RouteParams, 
     dispatch: dispatchPage,
     state: pageState
   };
+  const appAlerts = getAppAlerts({ state, dispatch });
+  const pageAlerts = mapPageAlerts(getAlerts(pageState), mapPageMsg);
   const viewAlertsAndBreadcrumbsProps = {
-    dispatchPage,
-    alerts: includeUpdatedTermsAlert(shared, getAlerts(pageState)),
-    breadcrumbs: getBreadcrumbs(pageState)
+    dispatch,
+    alerts: mergePageAlerts(appAlerts, pageAlerts),
+    breadcrumbs: mapPageBreadcrumbsMsg(getBreadcrumbs(pageState), mapPageMsg)
   };
   const backgroundClassName = `bg-${backgroundColor}`;
   // Handle full width pages.

@@ -1,4 +1,4 @@
-Before you begin developing your opportunity it in important that you are aware of the following requirements and restrictions:
+Before you begin developing your opportunity it is important that you are aware of the following requirements and restrictions:
 
 - Code With Us is for opportunities up to, but not exceeding, $70,000.
 - Code With Us is for a specific deliverable. You must be able to fully explain, in your opportunity, what is expected from the vendor.
@@ -51,4 +51,4 @@ Evaluation Criteria – The Evaluation Criteria explains how the government team
 
 ## The Attachments Tab
 
-On this tab there is a “Add Attachments” button where you can include and documents (PDF, DOC, etc.) for the vendors to provide further detail regarding the project. Additional documents often include, Technical Architecture diagrams, Repository documentation or additional alternative project materials.
+On this tab there is a “Add Attachments” button where you can include any documents (PDF, DOC, etc.) for the vendors to provide further detail regarding the project. Additional documents often include, Technical Architecture diagrams, Repository documentation or additional alternative project materials.
