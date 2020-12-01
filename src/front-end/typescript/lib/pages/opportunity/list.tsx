@@ -481,11 +481,8 @@ interface OpportunityListProps {
 
 const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading, toggleAccordion }) => {
   const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />) : undefined;
-  return (
-    <Row>
-      <Col className='d-flex flex-column flex-md-row align-items-start align-items-md-center flex-nowrap'>
-        {viewerUser && toggleNotifications
-          ? (<div className='mb-4 ml-md-auto d-flex align-items-center flex-nowrap'>
+  const notificationsLink = viewerUser && toggleNotifications
+          ? (<div>
               {toggleNotificationsLoading
                 ? (<Spinner size='sm' color='secondary' className='mx-2 order-2 order-md-1' />)
                 : null}
@@ -500,8 +497,9 @@ const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleW
                   : 'Notify me about new opportunities'}
               </Link>
             </div>)
-          : null}
-      </Col>
+          : undefined;
+  return (
+    <Row>
       {opportunities.length
         ? (<Col xs='12' className='mb-n4h'>
           <Accordion
@@ -518,6 +516,7 @@ const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleW
           open={isOpen}
           badge={badge}
           fullWidth={false}
+          rightAlignedElement={notificationsLink}
           >
             <Row>
               {opportunities.map((o, i) => (
