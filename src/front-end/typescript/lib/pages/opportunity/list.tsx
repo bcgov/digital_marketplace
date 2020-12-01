@@ -39,6 +39,7 @@ export interface State {
   toggleWatchLoading: [OpportunityCategory, Id] | null;
   toggleNotificationsLoading: number;
   typeFilter: Immutable<Select.State>;
+  statusFilter: Immutable<Select.State>;
   remoteOkFilter: Immutable<Checkbox.State>;
   searchFilter: Immutable<ShortText.State>;
   opportunities: CategorizedOpportunities;
@@ -54,6 +55,7 @@ function isLoading(state: Immutable<State>): boolean {
 
 type InnerMsg
   = ADT<'typeFilter', Select.Msg>
+  | ADT<'statusFilter', Select.Msg>
   | ADT<'remoteOkFilter', Checkbox.Msg>
   | ADT<'searchFilter', ShortText.Msg>
   | ADT<'toggleUnpublishedList'>
@@ -143,10 +145,25 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
       errors: [],
       child: {
         value: null,
-        id: 'opportunity-filter-status',
+        id: 'opportunity-filter-type',
         options: adt('options', [
           { label: 'Code With Us', value: 'cwu' },
           { label: 'Sprint With Us', value: 'swu' }
+        ])
+      }
+    })),
+    statusFilter: immutable(await Select.init({
+      errors: [],
+      child: {
+        value: null,
+        id: 'opportunity-filter-status',
+        options: adt('options', [
+          { label: 'Draft', value: 'draft' },
+          { label: 'Under Review', value: 'under_Review' },
+          { label: 'Published', value: 'published' },
+          { label: 'Suspended', value: 'suspended' },
+          { label: 'Evaluation', value: 'evaluation' },
+          { label: 'Awarded', value: 'awarded' }
         ])
       }
     })),
@@ -178,24 +195,35 @@ function makeQueryRegExp(query: string): RegExp | null {
   return new RegExp(query.split(/\s+/).join('.*'), 'i');
 }
 
-function filter(opps: Opportunity[], oppType: string | undefined, remoteOk: boolean, query: string): Opportunity[] {
+function filter(opps: Opportunity[], oppType: string | undefined, oppStatus: string | undefined, remoteOk: boolean, query: string): Opportunity[] {
   const regExp = makeQueryRegExp(query);
   return opps.filter(o => {
     if (oppType && o.tag !== oppType) { return false; }
     if (remoteOk && !o.value.remoteOk) { return false; }
+    if (oppStatus && !doesOppHaveStatus(o, oppStatus)) { return false; }
     if (regExp && !o.value.title.match(regExp) && !o.value.location.match(regExp)) { return false; }
     return true;
   });
 }
 
+function doesOppHaveStatus(opp: Opportunity, oppStatus: string): boolean {
+  return ((oppStatus === 'draft' && [CWU.CWUOpportunityStatus.Draft, SWU.SWUOpportunityStatus.Draft].includes(opp.value.status)) ||
+          (oppStatus === 'under_review' && SWU.SWUOpportunityStatus.UnderReview === opp.value.status) ||
+          (oppStatus === 'published' && [CWU.CWUOpportunityStatus.Published, SWU.SWUOpportunityStatus.Published].includes(opp.value.status)) ||
+          (oppStatus === 'suspended' && [CWU.CWUOpportunityStatus.Suspended, SWU.SWUOpportunityStatus.Suspended].includes(opp.value.status)) ||
+          (oppStatus === 'evaluation' && [CWU.CWUOpportunityStatus.Evaluation, SWU.SWUOpportunityStatus.EvaluationCodeChallenge, SWU.SWUOpportunityStatus.EvaluationTeamQuestions, SWU.SWUOpportunityStatus.EvaluationTeamScenario].includes(opp.value.status)) ||
+          (oppStatus === 'awarded' && [CWU.CWUOpportunityStatus.Awarded, SWU.SWUOpportunityStatus.Awarded].includes(opp.value.status)));
+}
+
 function runSearch(state: Immutable<State>): Immutable<State> {
   const oppType = FormField.getValue(state.typeFilter)?.value;
+  const oppStatus = FormField.getValue(state.statusFilter)?.value;
   const remoteOk = FormField.getValue(state.remoteOkFilter);
   const query = FormField.getValue(state.searchFilter);
   return state.set('visibleOpportunities', {
-    unpublished: filter(state.opportunities.unpublished, oppType, remoteOk, query),
-    open: filter(state.opportunities.open, oppType, remoteOk, query),
-    closed: filter(state.opportunities.closed, oppType, remoteOk, query)
+    unpublished: filter(state.opportunities.unpublished, oppType, oppStatus, remoteOk, query),
+    open: filter(state.opportunities.open, oppType, oppStatus, remoteOk, query),
+    closed: filter(state.opportunities.closed, oppType, oppStatus, remoteOk, query)
   });
 }
 
@@ -211,6 +239,21 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Select.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('typeFilter' as const, value),
+        updateAfter: state => [
+          state,
+          async (state, dispatch) => {
+            dispatchSearch(dispatch);
+            return null;
+          }
+        ]
+      });
+    case 'statusFilter':
+      return updateComponentChild({
+        state,
+        childStatePath: ['statusFilter'],
+        childUpdate: Select.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('statusFilter' as const, value),
         updateAfter: state => [
           state,
           async (state, dispatch) => {
@@ -340,9 +383,10 @@ const Header: ComponentView<State, Msg> = () => {
 };
 
 const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const userIsGov = state.viewerUser?.type === UserType.Admin || state.viewerUser?.type === UserType.Government;
   return (
     <Row className='mt-5'>
-      <Col xs='12' md='4' className='d-flex align-items-end order-1'>
+      <Col xs='12' md='3' className='d-flex align-items-end order-1'>
         <Select.view
           extraChildProps={{}}
           label='Filter Opportunities'
@@ -352,7 +396,16 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           className='flex-grow-1'
           dispatch={mapComponentDispatch(dispatch, value => adt('typeFilter' as const, value))} />
       </Col>
-      <Col xs='12' md='3' className='d-flex align-items-end order-3 order-md-2'>
+      {userIsGov ? (<Col xs='12' md='3' className='d-flex align-items-end order-1'>
+        <Select.view
+          extraChildProps={{}}
+          placeholder='All Opportunity Statuses'
+          disabled={isLoading(state)}
+          state={state.statusFilter}
+          className='flex-grow-1'
+          dispatch={mapComponentDispatch(dispatch, value => adt('statusFilter' as const, value))} />
+      </Col>) : null}
+      <Col xs='12' md='2' className='d-flex align-items-end order-3 order-md-2'>
         <Checkbox.view
           extraChildProps={{ inlineLabel: 'Remote OK' }}
           disabled={isLoading(state)}
@@ -360,7 +413,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           className='flex-grow-1 mt-n2 mt-md-0'
           dispatch={mapComponentDispatch(dispatch, value => adt('remoteOkFilter' as const, value))} />
       </Col>
-      <Col xs='12' md='5' className='d-flex align-items-end order-2 order-md-3'>
+      <Col xs='12' md='4' className='d-flex align-items-end order-2 order-md-3 ml-auto'>
         <ShortText.view
           extraChildProps={{}}
           placeholder='Search by Title or Location'
