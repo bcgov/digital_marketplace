@@ -531,43 +531,43 @@ interface OpportunityListProps {
 }
 
 const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading, toggleAccordion }) => {
-  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />) : undefined;
-  const notificationsLink = viewerUser && toggleNotifications
-          ? (<div>
-              {toggleNotificationsLoading
-                ? (<Spinner size='sm' color='secondary' className='mx-2 order-2 order-md-1' />)
-                : null}
-              <Link
-                className='order-1 order-md-2'
-                disabled={disabled}
-                onClick={toggleNotifications}
-                color={viewerUser.notificationsOn ? 'secondary' : undefined}
-                symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
-                {viewerUser.notificationsOn
-                  ? 'Stop notifying me about new opportunities'
-                  : 'Notify me about new opportunities'}
-              </Link>
-            </div>)
-          : undefined;
+  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2 text-decoration-none' />) : undefined;
   return (
-    <Row>
+    <Row className='position-relative'>
+      {viewerUser && toggleNotifications
+        ? (<Col className='col-auto position-absolute d-md-flex d-none align-items-center flex-nowrap' style={{top: '0px', right: '0px', zIndex: 2}}>
+            {toggleNotificationsLoading
+              ? (<Spinner size='sm' color='secondary' className='mx-2' />)
+              : null}
+            <Link
+              className='order-1 order-md-2'
+              disabled={disabled}
+              onClick={toggleNotifications}
+              color={viewerUser.notificationsOn ? 'secondary' : undefined}
+              symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
+              {viewerUser.notificationsOn
+                ? 'Stop notifying me about new opportunities'
+                : 'Notify me about new opportunities'}
+            </Link>
+          </Col>)
+        : null}
       {opportunities.length
-        ? (<Col xs='12' className='mb-n4h'>
+        ? (<Col xs='12'>
           <Accordion
           className={className}
           toggle={() => toggleAccordion()}
           color='info'
-          title={title}
+          title={(<span>{title}{badge}</span>)}
           titleClassName='h4 mb-0'
           iconWidth={2}
           iconHeight={2}
           iconClassName='mr-3'
           chevronWidth={1.5}
           chevronHeight={1.5}
+          chevronClassName='ml-3'
+          linkClassName='w-auto'
           open={isOpen}
-          badge={badge}
-          fullWidth={false}
-          rightAlignedElement={notificationsLink}
+          childrenWrapperClassName={isOpen ? 'pt-2' : ''}
           >
             <Row>
               {opportunities.map((o, i) => (
@@ -609,7 +609,7 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
               : 'There are currently no unpublished opportunities.'}
             opportunities={opps.unpublished}
             viewerUser={state.viewerUser}
-            className='mb-5'
+            className={`pt-0 ${state.unpublishedListOpen ? 'pb-3' : 'pb-5'}`}
             disabled={isDisabled}
             toggleWatchLoading={getToggleWatchLoadingId('unpublished')}
             toggleNotificationsLoading={isToggleNotificationsLoading}
@@ -626,7 +626,7 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
           : 'There are currently no open opportunities. Check back soon!'}
         opportunities={opps.open}
         viewerUser={state.viewerUser}
-        className='mb-5'
+        className={`pt-0 ${state.openListOpen ? 'pb-3' : 'pb-5'}`}
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('open')}
         toggleNotificationsLoading={isToggleNotificationsLoading}
@@ -642,6 +642,7 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
           : 'There are currently no closed opportunities.'}
         opportunities={opps.closed}
         viewerUser={state.viewerUser}
+        className='pt-0 pb-0'
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('closed')}
         toggleWatch={toggleWatch('closed')}
