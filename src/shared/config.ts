@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+import findUp from 'find-up';
+import { dirname, resolve } from 'path';
+
 export function parseBooleanEnvironmentVariable(raw?: string): boolean | null {
   switch (raw) {
     case '1': return true;
@@ -5,6 +9,15 @@ export function parseBooleanEnvironmentVariable(raw?: string): boolean | null {
     default: return null;
   }
 }
+
+// export the root directory of the repository.
+export const REPOSITORY_ROOT_DIR = dirname(findUp.sync('package.json') || '') || __dirname;
+
+// Load environment variables from a .env file.
+dotenv.config({
+  debug: process.env.NODE_ENV === 'development',
+  path: resolve(REPOSITORY_ROOT_DIR, '.env')
+});
 
 export const NODE_ENV: 'development' | 'production' = (() => {
   switch (process.env.NODE_ENV) {
