@@ -1,10 +1,8 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import dotenv from 'dotenv';
-import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
-import { dirname, join, resolve } from 'path';
-import { NODE_ENV, parseBooleanEnvironmentVariable } from 'shared/config';
+import { join, resolve } from 'path';
+import { NODE_ENV, parseBooleanEnvironmentVariable, REPOSITORY_ROOT_DIR } from 'shared/config';
 
 // HARDCODED CONFIG
 // Offset for total opportunity metrics displayed on landing page
@@ -17,14 +15,6 @@ export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 export const MAILER_REPLY = get('MAILER_REPLY', 'noreply@digitalmarketplace.gov.bc.ca');
 
 // ENV CONFIG
-// export the root directory of the repository.
-export const REPOSITORY_ROOT_DIR = dirname(findUp.sync('package.json') || '') || __dirname;
-
-// Load environment variables from a .env file.
-dotenv.config({
-  debug: NODE_ENV === 'development',
-  path: resolve(REPOSITORY_ROOT_DIR, '.env')
-});
 
 function get(name: string , fallback: string): string {
   return process.env[name] || fallback;
