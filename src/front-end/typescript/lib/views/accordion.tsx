@@ -52,14 +52,16 @@ export const view: View<Props> = props => {
   return (
     <div className={`pt-2 ${open ? 'pb-4' : 'pb-2'} ${className}`}>
       <div className='d-flex flex-md-row flex-column-reverse justify-content-md-between'>
-        <Link color={color} disabled={disabled} className={linkClassName} onClick={toggle}>
-          <div className='d-flex align-items-center flex-nowrap'>
-            {icon ? (<Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />) : null}
-            <div className={titleClassName}>{title}</div>
-          </div>
+        <div className='d-flex flex-row mr-auto'>
+          <Link color={color} disabled={disabled} className={linkClassName} onClick={toggle}>
+            <div className='d-flex align-items-center flex-nowrap'>
+              {icon ? (<Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />) : null}
+              <div className={titleClassName}>{title}</div>
+            </div>
+          </Link>
           <div className='mr-2'>{badge}</div>
-          <Icon className={`ml-auto`} name={open ? 'chevron-up' : 'chevron-down'} width={chevronWidth} height={chevronHeight} />
-        </Link>
+          <Icon className='mr-2' name={open ? 'chevron-up' : 'chevron-down'} width={chevronWidth} height={chevronHeight} />
+        </div>
         {rightAlignedElement ? (<div className='align-items-right mb-2 mb-md-0'>
           {rightAlignedElement}
         </div>) : null}
