@@ -31,7 +31,7 @@ export function send(params: SendParams): Promise<void> {
           errorStack: error.stack,
           to: params.to,
           bcc: params.bcc,
-          subject: `${SHOW_TEST_INDICATOR ? '[TEST]' : ''}${params.subject}`
+          subject: `${SHOW_TEST_INDICATOR ? '[TEST] ' : ''}${params.subject}`
         });
       }
       resolve();
