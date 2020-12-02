@@ -1,6 +1,7 @@
 import { prefixPath } from 'back-end/lib';
 import { CSSProperties, default as React, Fragment, ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { SHOW_TEST_INDICATOR } from 'shared/config';
 
 // Styles.
 
@@ -202,7 +203,7 @@ export const styles: Styles = (() => {
       display: 'block'
     },
     logo: {
-      height: px(scale(2))
+      height: px(42)
     }
   };
   return {
@@ -354,7 +355,7 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
         <Container>
           <Row>
             <a href={makeUrl('')} target='_blank' style={styles.classes.logoBackground}>
-              <img src={makeUrl('images/logo.png')} alt='Digital Marketplace' style={styles.classes.logo} />
+              <img src={makeUrl(SHOW_TEST_INDICATOR ? 'images/logo_test.png' : 'images/logo.png')} alt='Digital Marketplace' style={styles.classes.logo} />
             </a>
           </Row>
           <Row style={styles.classes.title}>

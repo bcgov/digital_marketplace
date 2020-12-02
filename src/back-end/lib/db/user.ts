@@ -92,10 +92,16 @@ export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection)
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-export const readManyUsersByRole = tryDb<[UserType], User[]>(async (connection, type) => {
-  const results = await connection<RawUser>('users')
+export const readManyUsersByRole = tryDb<[UserType, boolean?], User[]>(async (connection, type, includeInactive = true) => {
+  const query = connection<RawUser>('users')
     .where({ type })
     .select('*');
+
+  if (!includeInactive) {
+    query.where({ status: UserStatus.Active });
+  }
+
+  const results = await query;
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
@@ -127,6 +133,20 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   }
   return valid(await rawUserToUser(connection, result));
 });
+
+export async function unacceptTermsForAllVendors(connection: Connection): Promise<number> {
+  const results = await connection<RawUser>('users')
+    .where({ type: UserType.Vendor })
+    .update({
+      acceptedTermsAt: null
+    }, '*');
+
+  if (!results) {
+    throw new Error ('unable to update users');
+  }
+
+  return results.length;
+}
 
 export async function userHasAcceptedCurrentTerms(connection: Connection, id: Id): Promise<boolean> {
   const [result] = await connection<{ acceptedTermsAt: Date }>('users')

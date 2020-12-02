@@ -7,6 +7,7 @@ import * as Select from 'front-end/lib/components/form-field/select';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentView, Dispatch, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import Accordion from 'front-end/lib/views/accordion';
 import Badge, { OpportunityBadge } from 'front-end/lib/views/badge';
 import { IconInfo } from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
@@ -37,10 +38,14 @@ export interface State {
   toggleWatchLoading: [OpportunityCategory, Id] | null;
   toggleNotificationsLoading: number;
   typeFilter: Immutable<Select.State>;
+  statusFilter: Immutable<Select.State>;
   remoteOkFilter: Immutable<Checkbox.State>;
   searchFilter: Immutable<ShortText.State>;
   opportunities: CategorizedOpportunities;
   visibleOpportunities: CategorizedOpportunities;
+  unpublishedListOpen: boolean;
+  openListOpen: boolean;
+  closedListOpen: boolean;
 }
 
 function isLoading(state: Immutable<State>): boolean {
@@ -49,8 +54,12 @@ function isLoading(state: Immutable<State>): boolean {
 
 type InnerMsg
   = ADT<'typeFilter', Select.Msg>
+  | ADT<'statusFilter', Select.Msg>
   | ADT<'remoteOkFilter', Checkbox.Msg>
   | ADT<'searchFilter', ShortText.Msg>
+  | ADT<'toggleUnpublishedList'>
+  | ADT<'toggleOpenList'>
+  | ADT<'toggleClosedList'>
   | ADT<'toggleNotifications'>
   | ADT<'toggleWatch', [OpportunityCategory, Id]>
   | ADT<'search'>;
@@ -135,10 +144,25 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
       errors: [],
       child: {
         value: null,
-        id: 'opportunity-filter-status',
+        id: 'opportunity-filter-type',
         options: adt('options', [
           { label: 'Code With Us', value: 'cwu' },
           { label: 'Sprint With Us', value: 'swu' }
+        ])
+      }
+    })),
+    statusFilter: immutable(await Select.init({
+      errors: [],
+      child: {
+        value: null,
+        id: 'opportunity-filter-status',
+        options: adt('options', [
+          { label: 'Draft', value: 'draft' },
+          { label: 'Under Review', value: 'under_Review' },
+          { label: 'Published', value: 'published' },
+          { label: 'Suspended', value: 'suspended' },
+          { label: 'Evaluation', value: 'evaluation' },
+          { label: 'Awarded', value: 'awarded' }
         ])
       }
     })),
@@ -156,7 +180,10 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
         value: '',
         id: 'opportunity-filter-search'
       }
-    }))
+    })),
+    unpublishedListOpen: false,
+    openListOpen: true,
+    closedListOpen: false
   };
 };
 
@@ -167,24 +194,35 @@ function makeQueryRegExp(query: string): RegExp | null {
   return new RegExp(query.split(/\s+/).join('.*'), 'i');
 }
 
-function filter(opps: Opportunity[], oppType: string | undefined, remoteOk: boolean, query: string): Opportunity[] {
+function filter(opps: Opportunity[], oppType: string | undefined, oppStatus: string | undefined, remoteOk: boolean, query: string): Opportunity[] {
   const regExp = makeQueryRegExp(query);
   return opps.filter(o => {
     if (oppType && o.tag !== oppType) { return false; }
     if (remoteOk && !o.value.remoteOk) { return false; }
+    if (oppStatus && !doesOppHaveStatus(o, oppStatus)) { return false; }
     if (regExp && !o.value.title.match(regExp) && !o.value.location.match(regExp)) { return false; }
     return true;
   });
 }
 
+function doesOppHaveStatus(opp: Opportunity, oppStatus: string): boolean {
+  return ((oppStatus === 'draft' && [CWU.CWUOpportunityStatus.Draft, SWU.SWUOpportunityStatus.Draft].includes(opp.value.status)) ||
+          (oppStatus === 'under_review' && SWU.SWUOpportunityStatus.UnderReview === opp.value.status) ||
+          (oppStatus === 'published' && [CWU.CWUOpportunityStatus.Published, SWU.SWUOpportunityStatus.Published].includes(opp.value.status)) ||
+          (oppStatus === 'suspended' && [CWU.CWUOpportunityStatus.Suspended, SWU.SWUOpportunityStatus.Suspended].includes(opp.value.status)) ||
+          (oppStatus === 'evaluation' && [CWU.CWUOpportunityStatus.Evaluation, SWU.SWUOpportunityStatus.EvaluationCodeChallenge, SWU.SWUOpportunityStatus.EvaluationTeamQuestions, SWU.SWUOpportunityStatus.EvaluationTeamScenario].includes(opp.value.status)) ||
+          (oppStatus === 'awarded' && [CWU.CWUOpportunityStatus.Awarded, SWU.SWUOpportunityStatus.Awarded].includes(opp.value.status)));
+}
+
 function runSearch(state: Immutable<State>): Immutable<State> {
   const oppType = FormField.getValue(state.typeFilter)?.value;
+  const oppStatus = FormField.getValue(state.statusFilter)?.value;
   const remoteOk = FormField.getValue(state.remoteOkFilter);
   const query = FormField.getValue(state.searchFilter);
   return state.set('visibleOpportunities', {
-    unpublished: filter(state.opportunities.unpublished, oppType, remoteOk, query),
-    open: filter(state.opportunities.open, oppType, remoteOk, query),
-    closed: filter(state.opportunities.closed, oppType, remoteOk, query)
+    unpublished: filter(state.opportunities.unpublished, oppType, oppStatus, remoteOk, query),
+    open: filter(state.opportunities.open, oppType, oppStatus, remoteOk, query),
+    closed: filter(state.opportunities.closed, oppType, oppStatus, remoteOk, query)
   });
 }
 
@@ -200,6 +238,21 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Select.update,
         childMsg: msg.value,
         mapChildMsg: value => adt('typeFilter' as const, value),
+        updateAfter: state => [
+          state,
+          async (state, dispatch) => {
+            dispatchSearch(dispatch);
+            return null;
+          }
+        ]
+      });
+    case 'statusFilter':
+      return updateComponentChild({
+        state,
+        childStatePath: ['statusFilter'],
+        childUpdate: Select.update,
+        childMsg: msg.value,
+        mapChildMsg: value => adt('statusFilter' as const, value),
         updateAfter: state => [
           state,
           async (state, dispatch) => {
@@ -281,6 +334,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       ];
     case 'search':
       return [runSearch(state)];
+    case 'toggleUnpublishedList':
+      return [state.update('unpublishedListOpen', v => !v)];
+    case 'toggleOpenList':
+      return [state.update('openListOpen', v => !v)];
+    case 'toggleClosedList':
+      return [state.update('closedListOpen', v => !v)];
     default:
       return [state];
   }
@@ -323,9 +382,10 @@ const Header: ComponentView<State, Msg> = () => {
 };
 
 const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  const userIsGov = state.viewerUser?.type === UserType.Admin || state.viewerUser?.type === UserType.Government;
   return (
     <Row className='mt-5'>
-      <Col xs='12' md='4' className='d-flex align-items-end order-1'>
+      <Col xs='12' md='3' className='d-flex align-items-end order-1'>
         <Select.view
           extraChildProps={{}}
           label='Filter Opportunities'
@@ -335,7 +395,16 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           className='flex-grow-1'
           dispatch={mapComponentDispatch(dispatch, value => adt('typeFilter' as const, value))} />
       </Col>
-      <Col xs='12' md='3' className='d-flex align-items-end order-3 order-md-2'>
+      {userIsGov ? (<Col xs='12' md='3' className='d-flex align-items-end order-1'>
+        <Select.view
+          extraChildProps={{}}
+          placeholder='All Opportunity Statuses'
+          disabled={isLoading(state)}
+          state={state.statusFilter}
+          className='flex-grow-1'
+          dispatch={mapComponentDispatch(dispatch, value => adt('statusFilter' as const, value))} />
+      </Col>) : null}
+      <Col xs='12' md='2' className='d-flex align-items-end order-3 order-md-2'>
         <Checkbox.view
           extraChildProps={{ inlineLabel: 'Remote OK' }}
           disabled={isLoading(state)}
@@ -343,7 +412,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           className='flex-grow-1 mt-n2 mt-md-0'
           dispatch={mapComponentDispatch(dispatch, value => adt('remoteOkFilter' as const, value))} />
       </Col>
-      <Col xs='12' md='5' className='d-flex align-items-end order-2 order-md-3'>
+      <Col xs='12' md='4' className='d-flex align-items-end order-2 order-md-3 ml-auto'>
         <ShortText.view
           extraChildProps={{}}
           placeholder='Search by Title or Location'
@@ -447,6 +516,7 @@ const OpportunityCard: View<OpportunityCardProps> = ({ opportunity, viewerUser, 
 
 interface OpportunityListProps {
   title: string;
+  isOpen: boolean;
   noneText: string;
   opportunities: Opportunity[];
   className?: string;
@@ -457,54 +527,63 @@ interface OpportunityListProps {
   toggleWatchLoading?: Id;
   toggleWatch(id: Id): void;
   toggleNotifications?(): void;
+  toggleAccordion(): void;
 }
 
-const OpportunityList: View<OpportunityListProps> = ({ disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading }) => {
+const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading, toggleAccordion }) => {
+  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />) : undefined;
   return (
-    <div className={className}>
-      <Row>
-        <Col xs='12' className='d-flex flex-column flex-md-row align-items-start align-items-md-center flex-nowrap'>
-          <h4 className='mb-4 d-flex align-items-center'>
-            {title}
-            {showCount && opportunities.length
-              ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />)
+    <Row className='position-relative'>
+      {viewerUser && toggleNotifications
+        ? (<Col className='col-auto position-absolute d-md-flex d-none align-items-center flex-nowrap' style={{top: '0px', right: '0px', zIndex: 2}}>
+            {toggleNotificationsLoading
+              ? (<Spinner size='sm' color='secondary' className='mx-2' />)
               : null}
-          </h4>
-          {viewerUser && toggleNotifications
-            ? (<div className='mb-4 ml-md-auto d-flex align-items-center flex-nowrap'>
-                {toggleNotificationsLoading
-                  ? (<Spinner size='sm' color='secondary' className='mx-2 order-2 order-md-1' />)
-                  : null}
-                <Link
-                  className='order-1 order-md-2'
-                  disabled={disabled}
-                  onClick={toggleNotifications}
-                  color={viewerUser.notificationsOn ? 'secondary' : undefined}
-                  symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
-                  {viewerUser.notificationsOn
-                    ? 'Stop notifying me about new opportunities'
-                    : 'Notify me about new opportunities'}
-                </Link>
-              </div>)
-            : null}
+            <Link
+              className='order-1 order-md-2'
+              disabled={disabled}
+              onClick={toggleNotifications}
+              color={viewerUser.notificationsOn ? 'secondary' : undefined}
+              symbol_={leftPlacement(iconLinkSymbol(viewerUser.notificationsOn ? 'bell-slash-outline' : 'bell-outline'))}>
+              {viewerUser.notificationsOn
+                ? 'Stop notifying me about new opportunities'
+                : 'Notify me about new opportunities'}
+            </Link>
+          </Col>)
+        : null}
+      <Col xs='12'>
+        <Accordion
+          className={className}
+          toggle={() => toggleAccordion()}
+          color='info'
+          title={(<div className='d-flex align-items-center flex-nowrap'>{title}{badge}</div>)}
+          titleClassName='h4 mb-0'
+          iconWidth={2}
+          iconHeight={2}
+          iconClassName='mr-3'
+          chevronWidth={1.5}
+          chevronHeight={1.5}
+          chevronClassName='ml-3'
+          linkClassName='w-auto'
+          open={isOpen}
+          childrenWrapperClassName={isOpen ? 'pt-2' : ''}
+          >
+            {opportunities.length
+              ? (<Row>
+                  {opportunities.map((o, i) => (
+                    <OpportunityCard
+                      key={`opportunity-list-${i}`}
+                      opportunity={o}
+                      viewerUser={viewerUser}
+                      isWatchLoading={toggleWatchLoading === o.value.id}
+                      disabled={disabled}
+                      toggleWatch={() => toggleWatch(o.value.id)} />
+                  ))}
+                </Row>)
+              : noneText}
+          </Accordion>
         </Col>
-        {opportunities.length
-          ? (<Col xs='12' className='mb-n4h'>
-              <Row>
-                {opportunities.map((o, i) => (
-                  <OpportunityCard
-                    key={`opportunity-list-${i}`}
-                    opportunity={o}
-                    viewerUser={viewerUser}
-                    isWatchLoading={toggleWatchLoading === o.value.id}
-                    disabled={disabled}
-                    toggleWatch={() => toggleWatch(o.value.id)} />
-                ))}
-              </Row>
-            </Col>)
-          : (<Col xs='12'>{noneText}</Col>)}
       </Row>
-    </div>
   );
 };
 
@@ -530,13 +609,15 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
               : 'There are currently no unpublished opportunities.'}
             opportunities={opps.unpublished}
             viewerUser={state.viewerUser}
-            className='mb-5'
+            className={`pt-0 ${state.unpublishedListOpen ? 'pb-3' : 'pb-5'}`}
             disabled={isDisabled}
             toggleWatchLoading={getToggleWatchLoadingId('unpublished')}
             toggleNotificationsLoading={isToggleNotificationsLoading}
             showCount
             toggleWatch={toggleWatch('unpublished')}
-            toggleNotifications={toggleNotifications} />)
+            toggleNotifications={toggleNotifications}
+            isOpen={state.unpublishedListOpen}
+            toggleAccordion={() => dispatch(adt('toggleUnpublishedList'))}/>)
         : null}
       <OpportunityList
         title='Open Opportunities'
@@ -545,13 +626,15 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
           : 'There are currently no open opportunities. Check back soon!'}
         opportunities={opps.open}
         viewerUser={state.viewerUser}
-        className='mb-5'
+        className={`pt-0 ${state.openListOpen ? 'pb-3' : 'pb-5'}`}
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('open')}
         toggleNotificationsLoading={isToggleNotificationsLoading}
         showCount
         toggleWatch={toggleWatch('open')}
-        toggleNotifications={hasUnpublished ? undefined : toggleNotifications} />
+        toggleNotifications={hasUnpublished ? undefined : toggleNotifications}
+        isOpen={state.openListOpen}
+        toggleAccordion={() => dispatch(adt('toggleOpenList'))}/>
       <OpportunityList
         title='Closed Opportunities'
         noneText={opps.closed.length !== state.opportunities.closed.length
@@ -559,9 +642,12 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
           : 'There are currently no closed opportunities.'}
         opportunities={opps.closed}
         viewerUser={state.viewerUser}
+        className='pt-0 pb-0'
         disabled={isDisabled}
         toggleWatchLoading={getToggleWatchLoadingId('closed')}
-        toggleWatch={toggleWatch('closed')} />
+        toggleWatch={toggleWatch('closed')}
+        isOpen={state.closedListOpen}
+        toggleAccordion={() => dispatch(adt('toggleClosedList'))} />
     </div>
   );
 };

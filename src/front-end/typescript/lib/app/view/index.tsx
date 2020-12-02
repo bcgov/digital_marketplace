@@ -1,10 +1,11 @@
 import { DEFAULT_USER_AVATAR_IMAGE_PATH, PROCUREMENT_CONCIERGE_URL } from 'front-end/config';
 import { fileBlobPath, prefixPath } from 'front-end/lib';
+import getAppModal from 'front-end/lib/app/modal';
 import { isAllowedRouteForUsersWithUnacceptedTerms, Msg, Route, State } from 'front-end/lib/app/types';
 import Footer from 'front-end/lib/app/view/footer';
 import * as Nav from 'front-end/lib/app/view/nav';
 import ViewPage, { Props as ViewPageProps } from 'front-end/lib/app/view/page';
-import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, Toast as FrameworkToast, View } from 'front-end/lib/framework';
+import { AppMsg, ComponentView, ComponentViewProps, Dispatch, Immutable, mapAppDispatch, mapComponentDispatch, mapPageModalMsg, PageModal, Toast as FrameworkToast, View } from 'front-end/lib/framework';
 import * as PageContent from 'front-end/lib/pages/content';
 import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
@@ -47,6 +48,7 @@ import Link, { externalDest, iconLinkSymbol, imageLinkSymbol, leftPlacement, rig
 import { compact } from 'lodash';
 import { default as React } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader, Toast, ToastBody } from 'reactstrap';
+import { SHOW_TEST_INDICATOR } from 'shared/config';
 import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
@@ -58,6 +60,7 @@ function makeViewPageProps<RouteParams, PageState, PageMsg>(
   mapPageMsg: ViewPageProps<RouteParams, PageState, PageMsg>['mapPageMsg']
 ): ViewPageProps<RouteParams, PageState, PageMsg> {
   return {
+    state: props.state,
     dispatch: props.dispatch,
     pageState: getPageState(props.state),
     mapPageMsg,
@@ -361,21 +364,37 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
 }
 
 interface ViewModalProps {
-  modal: State['modal'];
   dispatch: Dispatch<AppMsg<Msg, Route>>;
+  pageModal: PageModal<Msg> | null;
+  appModal: PageModal<Msg> | null;
 }
 
-const ViewModal: View<ViewModalProps> = ({ dispatch, modal }) => {
-  const { open, content } = modal;
-  const closeModal = () => dispatch({ tag: 'closeModal', value: undefined });
+const ViewModal: View<ViewModalProps> = ({ dispatch, pageModal, appModal }) => {
+  const modal = appModal || pageModal;
+  // Return empty modal if none to display to support transitions
+  if (!modal) {
+    return (
+      <Modal isOpen={false}>
+        <ModalHeader className='align-items-center' close={(<Icon hover name='times' color='secondary' />)}>&nbsp;</ModalHeader>
+        <ModalBody>&nbsp;</ModalBody>
+      </Modal>
+    );
+  }
+  const closeModal = () => {
+    if (appModal) {
+      dispatch(adt('hideModal'));
+    } else if (pageModal) {
+      dispatch(pageModal.onCloseMsg);
+    }
+  };
   return (
-    <Modal isOpen={open} toggle={closeModal}>
-      <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{content.title}</ModalHeader>
-      <ModalBody>{content.body(dispatch)}</ModalBody>
-      {content.actions.length
+    <Modal isOpen={true} toggle={closeModal}>
+      <ModalHeader className='align-items-center' toggle={closeModal} close={(<Icon hover name='times' color='secondary' onClick={closeModal} />)}>{modal.title}</ModalHeader>
+      <ModalBody>{modal.body(dispatch)}</ModalBody>
+      {modal.actions.length
         ? (<ModalFooter className='p-0' style={{ overflowX: 'auto', justifyContent: 'normal' }}>
             <div className='p-3 d-flex flex-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1'>
-              {content.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
+              {modal.actions.map(({ loading, disabled, icon, button, text, color, msg }, i) => {
                 const props = {
                   key: `modal-action-${i}`,
                   symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
@@ -530,7 +549,7 @@ function navAppLinks(state: Immutable<State>): Nav.Props['appLinks'] {
   const organizationsLink: Nav.NavLink = {
     children: 'Organizations',
     active: state.activeRoute.tag === 'orgList',
-    dest: routeDest(adt('orgList', null))
+    dest: routeDest(adt('orgList', {}))
   };
   if (sessionUser) {
     // User has signed in.
@@ -584,7 +603,7 @@ function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
     state: state.nav,
     dispatch: dispatchNav,
     isLoading: state.transitionLoading > 0,
-    logoImageUrl: prefixPath('/images/logo.svg'),
+    logoImageUrl: prefixPath(SHOW_TEST_INDICATOR ? '/images/logo_test.svg' : '/images/logo.svg'),
     title: 'Digital Marketplace',
     homeDest: routeDest(adt('landing', null)),
     accountMenus: navAccountMenus(state),
@@ -632,13 +651,17 @@ const view: ComponentView<State, Msg> = props => {
     const navProps = viewPageProps.component.simpleNav
       ? simpleNavProps(props)
       : regularNavProps(props);
+    const pageModal = viewPageProps.component.getModal && viewPageProps.pageState
+      ? mapPageModalMsg(viewPageProps.component.getModal(viewPageProps.pageState), viewPageProps.mapPageMsg)
+      : null;
+    const appModal = getAppModal(state);
     return (
       <div className={`route-${state.activeRoute.tag} ${state.transitionLoading > 0 ? 'in-transition' : ''} ${navProps.contextualActions ? 'contextual-actions-visible' : ''} app d-flex flex-column`} style={{ minHeight: '100vh' }}>
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : (<Footer />)}
         <ViewToasts {...props} />
-        <ViewModal dispatch={dispatch} modal={state.modal} />
+        <ViewModal dispatch={dispatch} pageModal={pageModal} appModal={appModal} />
       </div>
     );
   }

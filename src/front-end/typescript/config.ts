@@ -2,12 +2,12 @@ import { prefixPath } from 'front-end/lib';
 
 export { EMPTY_STRING } from 'shared/config';
 
-// ENV CONFIG
-export const NODE_ENV = process.env.NODE_ENV || 'production';
-
 // Set this environment variable if behind reverse proxies at a particular path.
 // e.g. www.example.com/marketplace/*
 export const PATH_PREFIX = process.env.PATH_PREFIX || '';
+
+// ENV config
+export const NODE_ENV = process.env.NODE_ENV || 'production';
 
 // HARDCODED CONFIG
 export const SOURCE_CODE_URL = 'https://github.com/bcgov/digital_marketplace/';
