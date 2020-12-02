@@ -531,7 +531,7 @@ interface OpportunityListProps {
 }
 
 const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading, toggleAccordion }) => {
-  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2 text-decoration-none' />) : undefined;
+  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2 d-inline-block text-decoration-none' />) : undefined;
   return (
     <Row className='position-relative'>
       {viewerUser && toggleNotifications
