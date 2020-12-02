@@ -48,7 +48,7 @@ export const view: View<Props> = props => {
   } = props;
   return (
     <div className={`pt-2 ${open ? 'pb-4' : 'pb-2'} ${className}`}>
-      <Link color={color} disabled={disabled} className={`align-items-center flex-nowrap w-100 ${linkClassName}`} onClick={toggle}>
+      <Link color={color} disabled={disabled} className={`align-items-center flex-nowrap w-100 text-decoration-none ${linkClassName}`} onClick={toggle}>
         <div className='d-flex align-items-center flex-nowrap'>
           {icon ? (<Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />) : null}
           <div className={titleClassName}>{title}</div>

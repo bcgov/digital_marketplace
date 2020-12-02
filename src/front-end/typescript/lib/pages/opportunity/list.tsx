@@ -531,7 +531,7 @@ interface OpportunityListProps {
 }
 
 const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleWatchLoading, className, title, noneText, opportunities, showCount, toggleWatch, toggleNotifications, viewerUser, toggleNotificationsLoading, toggleAccordion }) => {
-  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2 d-inline-block text-decoration-none' />) : undefined;
+  const badge = showCount && opportunities.length ? (<Badge pill color='success' text={String(opportunities.length)} className='font-size-small ml-2' />) : undefined;
   return (
     <Row className='position-relative'>
       {viewerUser && toggleNotifications
@@ -551,13 +551,12 @@ const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleW
             </Link>
           </Col>)
         : null}
-      {opportunities.length
-        ? (<Col xs='12'>
-          <Accordion
+      <Col xs='12'>
+        <Accordion
           className={className}
           toggle={() => toggleAccordion()}
           color='info'
-          title={(<span>{title}{badge}</span>)}
+          title={(<div className='d-flex align-items-center flex-nowrap'>{title}{badge}</div>)}
           titleClassName='h4 mb-0'
           iconWidth={2}
           iconHeight={2}
@@ -569,20 +568,21 @@ const OpportunityList: View<OpportunityListProps> = ({ isOpen, disabled, toggleW
           open={isOpen}
           childrenWrapperClassName={isOpen ? 'pt-2' : ''}
           >
-            <Row>
-              {opportunities.map((o, i) => (
-                <OpportunityCard
-                  key={`opportunity-list-${i}`}
-                  opportunity={o}
-                  viewerUser={viewerUser}
-                  isWatchLoading={toggleWatchLoading === o.value.id}
-                  disabled={disabled}
-                  toggleWatch={() => toggleWatch(o.value.id)} />
-              ))}
-            </Row>
+            {opportunities.length
+              ? (<Row>
+                  {opportunities.map((o, i) => (
+                    <OpportunityCard
+                      key={`opportunity-list-${i}`}
+                      opportunity={o}
+                      viewerUser={viewerUser}
+                      isWatchLoading={toggleWatchLoading === o.value.id}
+                      disabled={disabled}
+                      toggleWatch={() => toggleWatch(o.value.id)} />
+                  ))}
+                </Row>)
+              : noneText}
           </Accordion>
-        </Col>)
-          : (<Col xs='12'>{noneText}</Col>)}
+        </Col>
       </Row>
   );
 };
