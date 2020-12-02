@@ -6,8 +6,8 @@ export interface Content {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
-  createdBy?: UserSlim;
-  updatedBy?: UserSlim;
+  createdBy?: UserSlim | null;
+  updatedBy?: UserSlim | null;
   slug: string;
   fixed: boolean;
   version: number;

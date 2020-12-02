@@ -10,8 +10,8 @@ import { Id } from 'shared/lib/types';
 import { getValidValue, isInvalid } from 'shared/lib/validation';
 
 interface RawContent extends Omit<Content, 'createdBy' | 'updatedBy'> {
-  createdBy: Id;
-  updatedBy: Id;
+  createdBy: Id | null;
+  updatedBy: Id | null;
 }
 
 type RawContentSlim = ContentSlim;
@@ -19,7 +19,7 @@ type RawContentSlim = ContentSlim;
 interface RootContentRecord {
   id: Id;
   createdAt: Date;
-  createdBy: Id;
+  createdBy: Id | null;
   slug: string;
   fixed: boolean;
 }
@@ -27,7 +27,7 @@ interface RootContentRecord {
 interface VersionContentRecord {
   id: number;
   createdAt: Date;
-  createdBy: Id;
+  createdBy: Id | null;
   title: string;
   body: string;
   contentId: Id;
