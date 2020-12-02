@@ -181,9 +181,9 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ shared }) 
         id: 'opportunity-filter-search'
       }
     })),
-    unpublishedListOpen: true,
+    unpublishedListOpen: false,
     openListOpen: true,
-    closedListOpen: true
+    closedListOpen: false
   };
 };
 
