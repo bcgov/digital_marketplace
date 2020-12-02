@@ -1,5 +1,6 @@
 import { State } from 'front-end/lib/app/types';
 import * as Nav from 'front-end/lib/app/view/nav';
+import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
 import { immutable, Init } from 'front-end/lib/framework';
 
 const init: Init<null, State> = async () => {
@@ -7,15 +8,15 @@ const init: Init<null, State> = async () => {
     ready: false,
     transitionLoading: 0,
     toasts: [],
-    modal: {
-      open: false,
-      content: {
-        title: '',
-        body: () => '',
-        onCloseMsg: { tag: 'noop', value: undefined },
-        actions: []
+    showModal: null,
+    acceptNewTerms: immutable(await AcceptNewTerms.init({
+      errors: [],
+      child: {
+        value: false,
+        id: 'global-accept-new-terms'
       }
-    },
+    })),
+    acceptNewTermsLoading: 0,
     shared: {
       session: null
     },

@@ -12,7 +12,7 @@ import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional'
 import React from 'react';
 import { isSWUOpportunityAcceptingProposals, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { CreateSWUProposalStatus, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
-import { UserType } from 'shared/lib/resources/user';
+import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 
@@ -21,6 +21,7 @@ type ModalId
   | 'cancel';
 
 interface ValidState {
+  sessionUser: User;
   showModal: ModalId | null;
   submitLoading: number;
   saveDraftLoading: number;
@@ -73,11 +74,12 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
       dispatch(replaceRoute(adt('opportunitySWUView' as const, { opportunityId })));
       return invalid(null);
     }
-    const organizationsResult = await api.organizations.readMany();
+    const organizationsResult = await api.ownedOrganizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }
     const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
     if (!api.isValid(evalContentResult)) { return fail(); }
     return valid(immutable({
+      sessionUser: shared.sessionUser,
       showModal: null,
       submitLoading: 0,
       saveDraftLoading: 0,
@@ -89,10 +91,19 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
         evaluationContent: evalContentResult.value
       })),
       submitTerms: immutable(await SubmitProposalTerms.init({
-        errors: [],
-        child: {
-          value: false,
-          id: 'create-swu-proposal-submit-terms'
+        proposal: {
+          errors: [],
+          child: {
+            value: false,
+            id: 'create-swu-proposal-submit-terms-proposal'
+          }
+        },
+        app: {
+          errors: [],
+          child: {
+            value: false,
+            id: 'create-swu-proposal-submit-terms-app'
+          }
         }
       }))
     }));
@@ -114,7 +125,8 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>('saveDraftLoading');
 function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
   return state
     .set('showModal', null)
-    .update('submitTerms', s => SubmitProposalTerms.setCheckbox(s, false));
+    .update('submitTerms', s => SubmitProposalTerms.setProposalCheckbox(s, false))
+    .update('submitTerms', s => SubmitProposalTerms.setAppCheckbox(s, false));
 }
 
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
@@ -127,9 +139,20 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         isSubmit ? startSubmitLoading(state) : startSaveDraftLoading(state),
         async (state, dispatch) => {
           state = isSubmit ? stopSubmitLoading(state) : stopSaveDraftLoading(state);
+          const errorToast = () => {
+            dispatch(toast(adt('error', isSubmit ? toasts.submitted.error : toasts.draftCreated.error)));
+          };
+          if (isSubmit) {
+            // Accept app T&Cs if submitting.
+            const result = await api.users.update(state.sessionUser.id, adt('acceptTerms'));
+            if (api.isInvalid(result)) {
+              errorToast();
+              return state;
+            }
+          }
           const result = await Form.persist(state.form, adt('create', (isSubmit ? SWUProposalStatus.Submitted : SWUProposalStatus.Draft) as CreateSWUProposalStatus));
           if (isInvalid(result)) {
-            dispatch(toast(adt('error', isSubmit ? toasts.submitted.error : toasts.draftCreated.error)));
+            errorToast();
             return state.set('form', result.value);
           }
           dispatch(newRoute(adt('proposalSWUEdit' as const, {
@@ -242,7 +265,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getModal: getModalValid(state => {
     const formModal = mapPageModalMsg(Form.getModal(state.form), msg => adt('form', msg) as Msg);
     if (formModal !== null) { return formModal; }
-    const hasAcceptedTerms = SubmitProposalTerms.getCheckbox(state.submitTerms);
+    const hasAcceptedTerms = SubmitProposalTerms.getProposalCheckbox(state.submitTerms) && SubmitProposalTerms.getAppCheckbox(state.submitTerms);
     switch (state.showModal) {
       case 'submit':
         return {

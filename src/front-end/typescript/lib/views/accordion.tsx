@@ -1,4 +1,4 @@
-import { View, ViewElementChildren } from 'front-end/lib/framework';
+import { View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
 import { ThemeColor } from 'front-end/lib/types';
 import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import Link from 'front-end/lib/views/link';
@@ -8,7 +8,7 @@ export interface Props {
   open: boolean;
   disabled?: boolean;
   color: ThemeColor;
-  title: string;
+  title: string | ViewElement;
   titleClassName?: string;
   icon?: AvailableIcons;
   iconWidth?: number;
@@ -17,6 +17,8 @@ export interface Props {
   iconColor?: ThemeColor;
   chevronWidth?: number;
   chevronHeight?: number;
+  chevronClassName?: string;
+  linkClassName?: string;
   className?: string;
   children: ViewElementChildren;
   childrenWrapperClassName?: string;
@@ -40,16 +42,20 @@ export const view: View<Props> = props => {
     className = '',
     children,
     childrenWrapperClassName = '',
+    chevronClassName = '',
+    linkClassName = '',
     toggle
   } = props;
   return (
     <div className={`pt-2 ${open ? 'pb-4' : 'pb-2'} ${className}`}>
-      <Link color={color} disabled={disabled} className='align-items-center flex-nowrap w-100' onClick={toggle}>
+      <Link color={color} disabled={disabled} className={`align-items-center flex-nowrap w-100 text-decoration-none ${linkClassName}`} onClick={toggle}>
         <div className='d-flex align-items-center flex-nowrap'>
           {icon ? (<Icon name={icon} color={iconColor} className={`mr-2 ${iconClassName}`} width={iconWidth} height={iconHeight} />) : null}
           <div className={titleClassName}>{title}</div>
         </div>
-        <Icon className={`ml-auto`} name={open ? 'chevron-up' : 'chevron-down'} width={chevronWidth} height={chevronHeight} />
+        <div className='ml-auto'>
+          <Icon className={chevronClassName} name={open ? 'chevron-up' : 'chevron-down'} width={chevronWidth} height={chevronHeight} />
+        </div>
       </Link>
       <div className={`${childrenWrapperClassName} ${open ? 'mt-4' : 'd-none'}`}>
         {children}
