@@ -9,7 +9,7 @@ import { valid } from 'shared/lib/http';
 import { FileRecord } from 'shared/lib/resources/file';
 import { CWUOpportunityStatus, privateOpportunitiesStatuses, publicOpportunityStatuses } from 'shared/lib/resources/opportunity/code-with-us';
 import { Organization } from 'shared/lib/resources/organization';
-import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment, isRankableCWUProposalStatus, UpdateProponentRequestBody } from 'shared/lib/resources/proposal/code-with-us';
+import { CreateCWUProposalStatus, CreateIndividualProponentRequestBody, CWUIndividualProponent, CWUProposal, CWUProposalEvent, CWUProposalHistoryRecord, CWUProposalSlim, CWUProposalStatus, isCWUProposalStatusVisibleToGovernment, isRankableCWUProposalStatus, UpdateProponentRequestBody, UpdateProposalScoreBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt, Id } from 'shared/lib/types';
@@ -587,7 +587,7 @@ export const updateCWUProposalStatus = tryDb<[Id, CWUProposalStatus, string, Aut
   }));
 });
 
-export const updateCWUProposalScore = tryDb<[Id, number, AuthenticatedSession], CWUProposal>(async (connection, proposalId, score, session) => {
+export const updateCWUProposalScore = tryDb<[Id, UpdateProposalScoreBody, AuthenticatedSession], CWUProposal>(async (connection, proposalId, updateBody, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
 
@@ -618,7 +618,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, AuthenticatedSession], 
       .transacting(trx)
       .where({ id: proposalId })
       .update({
-        score,
+        score: updateBody.score,
         updatedAt: now,
         updatedBy: session.user.id
       });
@@ -632,7 +632,7 @@ export const updateCWUProposalScore = tryDb<[Id, number, AuthenticatedSession], 
         createdAt: now,
         createdBy: session.user.id,
         event: CWUProposalEvent.ScoreEntered,
-        note: `A score of "${score}%" was entered.`
+        note: updateBody.note || `A score of ${updateBody.score} was entered.`
       }, '*');
 
     if (!result) {

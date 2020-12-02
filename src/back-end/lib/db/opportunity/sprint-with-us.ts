@@ -2,10 +2,11 @@ import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
 import { readOneOrganizationContactEmail } from 'back-end/lib/db/organization';
-import { readOneSWUAwardedProposal, readSubmittedSWUProposalCount } from 'back-end/lib/db/proposal/sprint-with-us';
+import { readOneSWUAwardedProposal, readSubmittedSWUProposalCount, updateSWUProposalCodeChallengeScore, updateSWUProposalScenarioAndPriceScores, updateSWUProposalTeamQuestionScores } from 'back-end/lib/db/proposal/sprint-with-us';
 import { RawSWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/sprint-with-us';
 import { readOneUser, readOneUserSlim } from 'back-end/lib/db/user';
 import * as swuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
+import { ValidatedUpdateCCProposalScoresBody, ValidatedUpdateTQProposalScoresBody, ValidatedUpdateTSProposalScoresBody } from 'back-end/lib/resources/opportunity/sprint-with-us';
 import { valid } from 'shared/lib/http';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { getSWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
@@ -974,6 +975,81 @@ export const addSWUOpportunityNote = tryDb<[Id, UpdateSWUOpportunityWithNotePara
   const dbResult = await readOneSWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error('unable to add note');
+  }
+  return valid(dbResult.value);
+});
+
+export const batchUpdateSWUProposalTQScores = tryDb<[Id, ValidatedUpdateTQProposalScoresBody, AuthenticatedSession], SWUOpportunity>(async (connection, oppId, proposalScoresRecord, session) => {
+  const outcome = await connection.transaction(async trx => {
+    // Iterate through the update record, and update each proposal.
+    // If any fail, abort the transaction.
+    const results = [];
+    for (const id of Object.keys(proposalScoresRecord)) {
+      const updateBody = proposalScoresRecord[id];
+      const dbResult = await updateSWUProposalTeamQuestionScores(trx, id, updateBody, session);
+      if (isInvalid(dbResult) || !dbResult) {
+        throw new Error('unable to update proposal team question scores');
+      }
+      results.push(dbResult.value);
+    }
+    return results;
+  });
+  if (!outcome) {
+    throw new Error('unable to update proposal team question scores for opportunity');
+  }
+  const dbResult = await readOneSWUOpportunity(connection, oppId, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read updated opportunity');
+  }
+  return valid(dbResult.value);
+});
+
+export const batchUpdateSWUProposalCCScores = tryDb<[Id, ValidatedUpdateCCProposalScoresBody, AuthenticatedSession], SWUOpportunity>(async (connection, oppId, proposalScoresRecord, session) => {
+  const outcome = await connection.transaction(async trx => {
+    // Iterate through the update record, and update each proposal.
+    // If any fail, abort the transaction.
+    const results = [];
+    for (const id of Object.keys(proposalScoresRecord)) {
+      const updateBody = proposalScoresRecord[id];
+      const dbResult = await updateSWUProposalCodeChallengeScore(trx, id, updateBody, session);
+      if (isInvalid(dbResult) || !dbResult) {
+        throw new Error('unable to update proposal code challenge score');
+      }
+      results.push(dbResult.value);
+    }
+    return results;
+  });
+  if (!outcome) {
+    throw new Error('unable to update proposal code challenge scores for opportunity');
+  }
+  const dbResult = await readOneSWUOpportunity(connection, oppId, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read updated opportunity');
+  }
+  return valid(dbResult.value);
+});
+
+export const batchUpdateSWUProposalTSScores = tryDb<[Id, ValidatedUpdateTSProposalScoresBody, AuthenticatedSession], SWUOpportunity>(async (connection, oppId, proposalScoresRecord, session) => {
+  const outcome = await connection.transaction(async trx => {
+    // Iterate through the update record, and update each proposal.
+    // If any fail, abort the transaction.
+    const results = [];
+    for (const id of Object.keys(proposalScoresRecord)) {
+      const updateBody = proposalScoresRecord[id];
+      const dbResult = await updateSWUProposalScenarioAndPriceScores(trx, id, updateBody, session);
+      if (isInvalid(dbResult) || !dbResult) {
+        throw new Error('unable to update proposal team scenario/price score');
+      }
+      results.push(dbResult.value);
+    }
+    return results;
+  });
+  if (!outcome) {
+    throw new Error('unable to update proposal team scenario/price scores for opportunity');
+  }
+  const dbResult = await readOneSWUOpportunity(connection, oppId, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read updated opportunity');
   }
   return valid(dbResult.value);
 });

@@ -1,5 +1,5 @@
-import { getString } from 'shared/lib';
-import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors, CWUProposalStatus, parseCWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
+import { getNumber, getString } from 'shared/lib';
+import { CreateIndividualProponentRequestBody, CreateIndividualProponentValidationErrors, CWUProposalStatus, parseCWUProposalStatus, UpdateProposalScoreBody, UpdateProposalScoreValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { allValid, getInvalidValue, invalid, mapValid, optional, valid, validateEmail, validateGenericString, validateNumberWithPrecision, validatePhoneNumber, Validation } from 'shared/lib/validation';
 
 export function validateCWUProposalStatus(raw: string, isOneOf: CWUProposalStatus[]): Validation<CWUProposalStatus> {
@@ -111,6 +111,22 @@ export function validateIndividualProponent(raw: any): Validation<CreateIndividu
       region: getInvalidValue(validatedRegion, undefined),
       mailCode: getInvalidValue(validatedMailCode, undefined),
       country: getInvalidValue(validatedCountry, undefined)
+    });
+  }
+}
+
+export function validateUpdateProposalScoreBody(raw: any): Validation<UpdateProposalScoreBody, UpdateProposalScoreValidationErrors> {
+  const validatedNote = validateNote(getString(raw, 'note'));
+  const validatedScore = validateScore(getNumber(raw, 'score', -1, false));
+  if (allValid([validatedNote, validatedScore])) {
+    return valid({
+      note: validatedNote.value,
+      score: validatedScore.value
+    } as UpdateProposalScoreBody);
+  } else {
+    return invalid({
+      note: getInvalidValue(validatedNote, undefined),
+      score: getInvalidValue(validatedScore, undefined)
     });
   }
 }

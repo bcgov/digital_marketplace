@@ -1,10 +1,11 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, Transaction, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
-import { readOneCWUAwardedProposal, readSubmittedCWUProposalCount } from 'back-end/lib/db/proposal/code-with-us';
+import { readManyCWUProposals, readOneCWUAwardedProposal, readSubmittedCWUProposalCount, updateCWUProposalScore } from 'back-end/lib/db/proposal/code-with-us';
 import { RawCWUOpportunitySubscriber } from 'back-end/lib/db/subscribers/code-with-us';
 import { readOneUser, readOneUserSlim } from 'back-end/lib/db/user';
 import * as cwuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
+import { ValidatedUpdateProposalScoresBody } from 'back-end/lib/resources/opportunity/code-with-us';
 import { valid } from 'shared/lib/http';
 import { getCWUOpportunityViewsCounterName } from 'shared/lib/resources/counter';
 import { FileRecord } from 'shared/lib/resources/file';
@@ -677,6 +678,61 @@ export const addCWUOpportunityNote = tryDb<[Id, UpdateCWUOpportunityWithNotePara
   const dbResult = await readOneCWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error('unable to add note');
+  }
+  return valid(dbResult.value);
+});
+
+export const batchUpdateCWUProposalScores = tryDb<[Id, ValidatedUpdateProposalScoresBody, AuthenticatedSession], CWUOpportunity>(async (connection, oppId, proposalScoresRecord, session) => {
+  const outcome = await connection.transaction(async trx => {
+    // Iterate through the update record, and update each proposal.
+    // If any fail, abort the transaction.
+    const results = [];
+    for (const id of Object.keys(proposalScoresRecord)) {
+      const updateBody = proposalScoresRecord[id];
+      const dbResult = await updateCWUProposalScore(trx, id, updateBody, session);
+      if (isInvalid(dbResult) || !dbResult) {
+        throw new Error('unable to update proposal score');
+      }
+      results.push(dbResult.value);
+    }
+    return results;
+  });
+  if (!outcome) {
+    throw new Error('unable to update proposal scores for opportunity');
+  }
+  const dbResult = await readOneCWUOpportunity(connection, oppId, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read updated opportunity');
+  }
+  return valid(dbResult.value);
+});
+
+export const checkAllProposalScoresEntered = tryDb<[Id, AuthenticatedSession], boolean>(async (connection, id, session) => {
+  const proposals = await readManyCWUProposals(connection, session, id);
+  if (isInvalid(proposals) || !proposals.value) {
+    throw new Error('unable to read proposal scores');
+  }
+  return valid(proposals.value?.every(proposal => !!proposal.score));
+});
+
+export const lockCWUProposalScores = tryDb<[Id, AuthenticatedSession], CWUOpportunity>(async (connection, id, session) => {
+  // Set the opportunity to SCORES_LOCKED status
+  const now = new Date();
+  const [result] = await connection('cwuOpportunityStatuses')
+    .insert({
+      id: generateUuid(),
+      createdAt: now,
+      createdBy: session.user.id,
+      opportunity: id,
+      status: CWUOpportunityStatus.ScoresLocked,
+      note: 'Proposal scores locked in.'
+    }, '*');
+  if (!result) {
+    throw new Error('unable to lock scores for opportunity');
+  }
+  const dbResult = await readOneCWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to read updated opportunity');
   }
   return valid(dbResult.value);
 });

@@ -1,6 +1,7 @@
 import { makeDomainLogger } from 'back-end/lib/logger';
 import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import Knex from 'knex';
+import { generateSQLAlterTableEnums } from 'migrations/utils';
 
 const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
 
@@ -49,14 +50,6 @@ enum SWUProposalEvent {
   PriceScoreEntered = 'PRICE_SCORE_ENTERED',
   NoteAdded = 'NOTE_ADDED'
 }
-
-const generateSQLAlterTableEnums = (tableName: string, columnName: string, enums: string[]): string => {
-  const constraintName = `${tableName}_${columnName}_check`;
-  return [
-    `ALTER TABLE "${tableName}" DROP CONSTRAINT IF EXISTS "${constraintName}";`,
-    `ALTER TABLE "${tableName}" ADD CONSTRAINT "${constraintName}" CHECK ("${columnName}" = ANY (ARRAY['${enums.join("'::text, '")}'::text]));`
-  ].join('\n');
-};
 
 export async function up(connection: Knex): Promise<void> {
   // Modify constraints on status tables for opportunities and proposals to allow for new event type
@@ -117,15 +110,20 @@ export async function down(connection: Knex): Promise<void> {
   logger.info('Dropped table swuProposalNoteAttachments.');
 
   // Revert modifications to opportunity and proposal status tables.
+  // Warning - destructive operation.  This will remove any rows that use non-existant enums.
+  await connection('cwuOpportunityStatuses').delete().whereNotIn('event', Object.values(OldCWUOpportunityEvent));
   await connection.schema.raw(generateSQLAlterTableEnums('cwuOpportunityStatuses', 'event', Object.values(OldCWUOpportunityEvent)));
   logger.info('Completed reverting cwuOpportunityStatuses table.');
 
+  await connection('cwuProposalStatuses').delete().whereNotIn('event', Object.values(OldCWUProposalEvent));
   await connection.schema.raw(generateSQLAlterTableEnums('cwuProposalStatuses', 'event', Object.values(OldCWUProposalEvent)));
   logger.info('Completed reverting cwuProposalStatuses table.');
 
+  await connection('swuOpportunityStatuses').delete().whereNotIn('event', Object.values(OldSWUOpportunityEvent));
   await connection.schema.raw(generateSQLAlterTableEnums('swuOpportunityStatuses', 'event', Object.values(OldSWUOpportunityEvent)));
   logger.info('Completed reverting swuOpportunityStatuses table.');
 
+  await connection('swuProposalStatuses').delete().whereNotIn('event', Object.values(OldSWUProposalEvent));
   await connection.schema.raw(generateSQLAlterTableEnums('swuProposalStatuses', 'event', Object.values(OldSWUProposalEvent)));
   logger.info('Completed reverting swuProposalStatuses table.');
 }

@@ -2,6 +2,7 @@ import { CWU_MAX_BUDGET } from 'shared/config';
 import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
+import { UpdateProposalScoreBody, UpdateProposalScoreValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
 import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -15,6 +16,7 @@ export enum CWUOpportunityStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
   Evaluation = 'EVALUATION',
+  ScoresLocked = 'SCORES_LOCKED',
   Awarded = 'AWARDED',
   Suspended = 'SUSPENDED',
   Canceled = 'CANCELED'
@@ -157,7 +159,9 @@ export type UpdateRequestBody
   | ADT<'suspend', string>
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>
-  | ADT<'addNote', UpdateWithNoteRequestBody>;
+  | ADT<'addNote', UpdateWithNoteRequestBody>
+  | ADT<'saveProposalScores', UpdateProposalScoresBody>
+  | ADT<'lockProposalScores'>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
 
@@ -166,9 +170,13 @@ export interface UpdateWithNoteRequestBody {
   attachments: Id[];
 }
 
+export type UpdateProposalScoresBody = Record<Id, UpdateProposalScoreBody>;
+
 export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
   attachments?: string[][];
 }
+
+export type UpdateProposalScoresValidationErrors = Record<Id, UpdateProposalScoreValidationErrors>;
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
@@ -177,7 +185,9 @@ type UpdateADTErrors
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
   | ADT<'parseFailure'>
-  | ADT<'addNote', UpdateWithNoteValidationErrors>;
+  | ADT<'addNote', UpdateWithNoteValidationErrors>
+  | ADT<'saveProposalScores', UpdateProposalScoresValidationErrors>
+  | ADT<'lockProposalScores', string[]>;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
@@ -226,7 +236,7 @@ export function canCWUOpportunityDetailsBeEdited(o: CWUOpportunity): boolean {
   }
 }
 
-export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
+export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.ScoresLocked, CWUOpportunityStatus.Awarded];
 
 export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
 

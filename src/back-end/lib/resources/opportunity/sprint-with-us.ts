@@ -5,11 +5,11 @@ import * as swuOpportunityNotifications from 'back-end/lib/mailer/notifications/
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateSWUOpportunityId } from 'back-end/lib/validation';
+import { validateAttachments, validateSWUOpportunityId, validateSWUProposalCCScores, validateSWUProposalTQScores, validateSWUProposalTSScores } from 'back-end/lib/validation';
 import { get, omit } from 'lodash';
 import { addDays, getBoolean, getNumber, getString, getStringArray } from 'shared/lib';
 import { invalid } from 'shared/lib/http';
-import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateCCProposalScoresBody, UpdateRequestBody, UpdateTQProposalScoresBody, UpdateTSProposalScoresBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, isInvalid, isValid, optional, valid, validateUUID, Validation } from 'shared/lib/validation';
@@ -29,13 +29,22 @@ interface ValidatedCreateRequestBody extends Omit<SWUOpportunity, 'createdAt' | 
   teamQuestions: CreateSWUTeamQuestionBody[];
 }
 
+export type ValidatedUpdateTQProposalScoresBody = UpdateTQProposalScoresBody;
+
+export type ValidatedUpdateCCProposalScoresBody = UpdateCCProposalScoresBody;
+
+export type ValidatedUpdateTSProposalScoresBody = UpdateTSProposalScoresBody;
+
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
       | ADT<'submitForReview', string>
       | ADT<'publish', string>
+      | ADT<'scoreTeamQuestions', ValidatedUpdateTQProposalScoresBody>
       | ADT<'startCodeChallenge', string>
+      | ADT<'scoreCodeChallenge', ValidatedUpdateCCProposalScoresBody>
       | ADT<'startTeamScenario', string>
+      | ADT<'scoreTeamScenario', ValidatedUpdateTSProposalScoresBody>
       | ADT<'suspend', string>
       | ADT<'cancel', string>
       | ADT<'addAddendum', string>
@@ -428,10 +437,16 @@ const resource: Resource = {
             return adt('submitForReview', getString(body, 'value'));
           case 'publish':
             return adt('publish', getString(body, 'value'));
+          case 'scoreTeamQuestions':
+            return adt('scoreTeamQuestions', get(body, 'value'));
           case 'startCodeChallenge':
             return adt('startCodeChallenge', getString(body, 'value'));
+          case 'scoreCodeChallenge':
+            return adt('scoreCodeChallenge', get(body, 'value'));
           case 'startTeamScenario':
             return adt('startTeamScenario', getString(body, 'value'));
+          case 'scoreTeamScenario':
+            return adt('scoreTeamScenario', get(body, 'value'));
           case 'suspend':
             return adt('suspend', getString(body, 'value'));
           case 'cancel':
@@ -755,6 +770,18 @@ const resource: Resource = {
               session: request.session,
               body: adt('publish', validatedPublishNote.value)
             });
+          case 'scoreTeamQuestions':
+            if (validatedSWUOpportunity.value.status !== SWUOpportunityStatus.EvaluationTeamQuestions) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            const validatedProposalTQScores = await validateSWUProposalTQScores(connection, request.body.value, request.session, swuOpportunity.teamQuestions);
+            if (isInvalid(validatedProposalTQScores)) {
+              return invalid({ opportunity: adt('scoreTeamQuestions' as const, validatedProposalTQScores.value) });
+            }
+            return valid({
+              session: request.session,
+              body: adt('scoreTeamQuestions', validatedProposalTQScores.value)
+            } as ValidatedUpdateRequestBody);
           case 'startCodeChallenge':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationCodeChallenge)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -772,6 +799,18 @@ const resource: Resource = {
               session: request.session,
               body: adt('startCodeChallenge', validatedEvaluationCodeChallengeNote.value)
             });
+          case 'scoreCodeChallenge':
+            if (validatedSWUOpportunity.value.status !== SWUOpportunityStatus.EvaluationCodeChallenge) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            const validatedProposalCCScores = await validateSWUProposalCCScores(connection, request.body.value, request.session);
+            if (isInvalid(validatedProposalCCScores)) {
+              return invalid({ opportunity: adt('scoreCodeChallenge' as const, validatedProposalCCScores.value) });
+            }
+            return valid({
+              session: request.session,
+              body: adt('scoreCodeChallenge', validatedProposalCCScores.value)
+            } as ValidatedUpdateRequestBody);
           case 'startTeamScenario':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationTeamScenario)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -789,6 +828,18 @@ const resource: Resource = {
               session: request.session,
               body: adt('startTeamScenario', validatedEvaluationTeamScenarioNote.value)
             });
+          case 'scoreTeamScenario':
+            if (validatedSWUOpportunity.value.status !== SWUOpportunityStatus.EvaluationTeamScenario) {
+              return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+            }
+            const validatedProposalTSScores = await validateSWUProposalTSScores(connection, request.body.value, request.session);
+            if (isInvalid(validatedProposalTSScores)) {
+              return invalid({ opportunity: adt('scoreTeamScenario' as const, validatedProposalTSScores.value) });
+            }
+            return valid({
+              session: request.session,
+              body: adt('scoreTeamScenario', validatedProposalTSScores.value)
+            } as ValidatedUpdateRequestBody);
           case 'suspend':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Suspended) || !permissions.suspendSWUOpportunity(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -875,11 +926,20 @@ const resource: Resource = {
                 swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value, existingOpportunity?.status === SWUOpportunityStatus.Suspended);
               }
               break;
+            case 'scoreTeamQuestions':
+              dbResult = await db.batchUpdateSWUProposalTQScores(connection, request.params.id, body.value, session);
+              break;
             case 'startCodeChallenge':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.EvaluationCodeChallenge, body.value, session);
               break;
+            case 'scoreCodeChallenge':
+              dbResult = await db.batchUpdateSWUProposalCCScores(connection, request.params.id, body.value, session);
+              break;
             case 'startTeamScenario':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.EvaluationTeamScenario, body.value, session);
+              break;
+            case 'scoreTeamScenario':
+              dbResult = await db.batchUpdateSWUProposalTSScores(connection, request.params.id, body.value, session);
               break;
             case 'suspend':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.Suspended, body.value, session);

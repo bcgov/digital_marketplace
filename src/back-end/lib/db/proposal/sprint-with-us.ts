@@ -9,7 +9,7 @@ import { compareNumbers } from 'shared/lib';
 import { MembershipStatus } from 'shared/lib/resources/affiliation';
 import { FileRecord } from 'shared/lib/resources/file';
 import { doesSWUOpportunityStatusAllowGovToViewFullProposal, privateOpportunityStatuses, publicOpportunityStatuses, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { calculateProposalTeamQuestionScore, CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateEditRequestBody, UpdateTeamQuestionScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
+import { calculateProposalTeamQuestionScore, CreateRequestBody, CreateSWUProposalPhaseBody, CreateSWUProposalReferenceBody, CreateSWUProposalStatus, CreateSWUProposalTeamQuestionResponseBody, isSWUProposalStatusVisibleToGovernment, rankableSWUProposalStatuses, SWUProposal, SWUProposalEvent, SWUProposalHistoryRecord, SWUProposalPhase, SWUProposalPhaseType, SWUProposalReference, SWUProposalSlim, SWUProposalStatus, SWUProposalTeamMember, SWUProposalTeamQuestionResponse, UpdateCCProposalScoreBody, UpdateEditRequestBody, UpdateTQProposalScoreBody, UpdateTSProposalScoreBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { User, userToUserSlim, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
@@ -770,7 +770,7 @@ export const updateSWUProposalStatus = tryDb<[Id, SWUProposalStatus, string, Aut
   }));
 });
 
-export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestionScoreBody[], AuthenticatedSession], SWUProposal>(async (connection, proposalId, scores, session) => {
+export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTQProposalScoreBody, AuthenticatedSession], SWUProposal>(async (connection, proposalId, scoreWithNote, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
 
@@ -788,7 +788,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestion
     }
 
     // Update the score on each question in the proposal
-    for (const score of scores) {
+    for (const score of scoreWithNote.questionScores) {
       const [result] = await connection('swuTeamQuestionResponses')
         .transacting(trx)
         .where({
@@ -804,7 +804,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestion
       }
     }
 
-    scores = scores.sort((a, b) => compareNumbers(a.order, b.order));
+    const questionScores = scoreWithNote.questionScores.sort((a, b) => compareNumbers(a.order, b.order));
 
     // Create a history record for the score entry
     const [result] = await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
@@ -815,7 +815,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestion
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.QuestionsScoreEntered,
-        note: `Team question scores were entered. ${scores.map((s, i) => `Q${i + 1}: ${s.score}`).join('; ')}.`
+        note: scoreWithNote.note || `Team question scores were entered. ${questionScores.map((s, i) => `Q${i + 1}: ${s.score}`).join('; ')}.`
       }, '*');
 
     if (!result) {
@@ -847,7 +847,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<[Id, UpdateTeamQuestion
   }));
 });
 
-export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, AuthenticatedSession], SWUProposal>(async (connection, proposalId, score, session) => {
+export const updateSWUProposalCodeChallengeScore = tryDb<[Id, UpdateCCProposalScoreBody, AuthenticatedSession], SWUProposal>(async (connection, proposalId, scoreWithNote, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
 
@@ -856,7 +856,7 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
       .transacting(trx)
       .where({ id: proposalId })
       .update({
-        challengeScore: score,
+        challengeScore: scoreWithNote.score,
         updatedAt: now,
         updatedBy: session.user.id
       });
@@ -874,7 +874,7 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.ChallengeScoreEntered,
-        note: `A code challenge score of "${score}" was entered.`
+        note: scoreWithNote.note || `A code challenge score of "${scoreWithNote.score}" was entered.`
       }, '*');
 
     if (!result) {
@@ -906,7 +906,7 @@ export const updateSWUProposalCodeChallengeScore = tryDb<[Id, number, Authentica
   }));
 });
 
-export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, AuthenticatedSession], SWUProposal>(async (connection, proposalId, scenarioScore, session) => {
+export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, UpdateTSProposalScoreBody, AuthenticatedSession], SWUProposal>(async (connection, proposalId, scoreWithNote, session) => {
   const now = new Date();
   return valid(await connection.transaction(async trx => {
 
@@ -918,7 +918,7 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
       .transacting(trx)
       .where({ id: proposalId })
       .update({
-        scenarioScore,
+        scenarioScore: scoreWithNote.score,
         priceScore,
         updatedAt: now,
         updatedBy: session.user.id
@@ -937,7 +937,7 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<[Id, number, Authen
         createdAt: now,
         createdBy: session.user.id,
         event: SWUProposalEvent.ScenarioScoreEntered,
-        note: `A team scenario score of "${scenarioScore}" was entered.`
+        note: scoreWithNote.note || `A team scenario score of "${scoreWithNote.score}" was entered.`
       }, '*');
 
     if (!scenarioScoreResult) {

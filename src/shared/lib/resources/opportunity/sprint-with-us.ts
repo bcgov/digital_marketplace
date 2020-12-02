@@ -2,6 +2,7 @@ import { SWU_MAX_BUDGET } from 'shared/config';
 import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
+import { UpdateCCProposalScoreBody, UpdateCCProposalScoreValidationErrors, UpdateTQProposalScoreBody, UpdateTQProposalScoreValidationErrors, UpdateTSProposalScoreBody, UpdateTSProposalScoreValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -278,14 +279,23 @@ export type UpdateRequestBody
   = ADT<'edit', UpdateEditRequestBody>
   | ADT<'submitForReview', string>
   | ADT<'publish', string>
+  | ADT<'scoreTeamQuestions', UpdateTQProposalScoresBody>
   | ADT<'startCodeChallenge', string>
+  | ADT<'scoreCodeChallenge', UpdateCCProposalScoresBody>
   | ADT<'startTeamScenario', string>
+  | ADT<'scoreTeamScenario', UpdateTSProposalScoresBody>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
   | ADT<'addAddendum', string>
   | ADT<'addNote', UpdateWithNoteRequestBody>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
+
+export type UpdateTQProposalScoresBody = Record<Id, UpdateTQProposalScoreBody>;
+
+export type UpdateCCProposalScoresBody = Record<Id, UpdateCCProposalScoreBody>;
+
+export type UpdateTSProposalScoresBody = Record<Id, UpdateTSProposalScoreBody>;
 
 export interface UpdateWithNoteRequestBody {
   note: string;
@@ -300,8 +310,11 @@ type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
   | ADT<'submitForReview', string[]>
   | ADT<'publish', string[]>
+  | ADT<'scoreTeamQuestions', UpdateTQProposalScoresValidationErrors>
   | ADT<'startCodeChallenge', string[]>
+  | ADT<'scoreCodeChallenge', UpdateCCProposalScoresValidationErrors>
   | ADT<'startTeamScenario', string[]>
+  | ADT<'scoreTeamScenario', UpdateTSProposalScoresValidationErrors>
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
@@ -323,6 +336,12 @@ export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEdi
   scoreWeights?: string[];
   phases?: string[];
 }
+
+export type UpdateTQProposalScoresValidationErrors = Record<Id, UpdateTQProposalScoreValidationErrors>;
+
+export type UpdateCCProposalScoresValidationErrors = Record<Id, UpdateCCProposalScoreValidationErrors>;
+
+export type UpdateTSProposalScoresValidationErrors = Record<Id, UpdateTSProposalScoreValidationErrors>;
 
 // Delete.
 
