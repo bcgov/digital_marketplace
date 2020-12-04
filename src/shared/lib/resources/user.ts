@@ -36,7 +36,7 @@ export interface User {
   type: UserType;
   status: UserStatus;
   name: string;
-  email: string;
+  email: string | null;
   jobTitle: string;
   avatarImageFile: FileRecord | null;
   notificationsOn: Date | null;
