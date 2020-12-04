@@ -21,7 +21,7 @@ export async function vendorTermsChangedT(recipient: User) {
   const description = 'The Digital Marketplace Terms & Conditions for vendors have been updated.';
   return [{
     summary: 'Vendor Terms & Conditions are updated; notify active vendors to re-accept',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,

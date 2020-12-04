@@ -94,7 +94,7 @@ export async function newSWUOpportunityPublishedT(recipients: User[], opportunit
     emails.push({
       summary: `${repost ? 'SWU opportunity re-published after suspension' : 'New SWU opportunity published'}; sent to user with notifications turned on.`,
       to: MAILER_REPLY,
-      bcc: batch.map(r => r.email),
+      bcc: batch.map(r => r.email || ''),
       subject: title,
       html: templates.simple({
         title,
@@ -122,7 +122,7 @@ export async function updatedSWUOpportunityT(recipients: User[], opportunity: SW
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
       to: MAILER_REPLY,
-      bcc: batch.map(r => r.email),
+      bcc: batch.map(r => r.email || ''),
       subject: title,
       html: templates.simple({
         title,
@@ -142,7 +142,7 @@ export async function newSWUOpportunitySubmittedForReviewT(recipient: User, oppo
   const description = 'The following Digital Marketplace opportunity has been submitted for review:';
   return [{
     summary: 'SWU opportunity submitted for review; sent to all administrators for the system.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -166,7 +166,7 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(recipient: User
   const description = 'You have submitted the following Digital Marketplace opportunity for review:';
   return[{
     summary: 'SWU opportunity submitted for review; sent to the submitting government user.',
-    to: recipient.email,
+    to: recipient.email || '',
     subject: title,
     html: templates.simple({
       title,
@@ -190,7 +190,7 @@ export async function successfulSWUPublicationT(recipient: User, opportunity: SW
   const description = `You have successfully ${repost ? 're-posted' : 'posted'} the following Digital Marketplace opportunity`;
   return[{
     summary: `SWU successfully ${repost ? 're-published' : 'published'}; sent to publishing government user.`,
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -216,7 +216,7 @@ export async function cancelledSWUOpportunitySubscribedT(recipient: User, opport
   const description = 'The following Digital Marketplace opportunity has been cancelled:';
   return [{
     summary: 'SWU opportunity cancelled; sent to subscribed users and vendors with proposals.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -238,7 +238,7 @@ export async function cancelledSWUOpportunityActionedT(recipient: User, opportun
   const description = 'You have cancelled the following opportunity on the Digital Marketplace:';
   return [{
     summary: 'SWU opportunity cancelled; sent to the administrator who actioned.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -255,7 +255,7 @@ export async function suspendedSWUOpportunitySubscribedT(recipient: User, opport
   const description = 'The following Digital Marketplace opportunity has been suspended:';
   return [{
     summary: 'SWU opportunity suspended; sent to subscribed users and vendors with proposals.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -278,7 +278,7 @@ export async function suspendedSWUOpportunityActionedT(recipient: User, opportun
   const description = 'You have suspended the following opportunity on the Digital Marketplace:';
   return [{
     summary: 'SWU opportunity suspended; sent to the administrator who actioned.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -295,7 +295,7 @@ export async function readyForEvalSWUOpportunityT(recipient: User, opportunity: 
   const description = 'Your Digital Marketplace opportunity has reached its proposal deadline.';
   return [{
     summary: 'SWU opportunity proposal deadline reached; sent to government author.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
