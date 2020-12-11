@@ -17,7 +17,7 @@
 								"id": "bc826688-3218-4542-8fba-fa40d2eb3449",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('admin_sid', value);",
 									"});"
 								],
@@ -78,9 +78,6 @@
 							}
 						}
 					],
-					"protocolProfileBehavior": {
-						"disableCookies": false
-					},
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -164,7 +161,7 @@
 								"id": "60c8f3ed-59e8-4610-a6f0-7598705778c3",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('gov_sid', value);",
 									"});"
 								],
@@ -310,7 +307,7 @@
 								"id": "60c8f3ed-59e8-4610-a6f0-7598705778c3",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('vendor1_sid', value);",
 									"});"
 								],
@@ -468,7 +465,7 @@
 								"id": "60c8f3ed-59e8-4610-a6f0-7598705778c3",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('vendor2_sid', value);",
 									"});"
 								],
@@ -611,7 +608,7 @@
 								"id": "60c8f3ed-59e8-4610-a6f0-7598705778c3",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('vendor3_sid', value);",
 									"});"
 								],
@@ -754,7 +751,7 @@
 								"id": "60c8f3ed-59e8-4610-a6f0-7598705778c3",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('vendor4_sid', value);",
 									"});"
 								],
@@ -827,13 +824,19 @@
 							}
 						},
 						"url": {
-							"raw": "{{api_url}}/auth/service",
+							"raw": "{{api_url}}/auth/service?token=foobar",
 							"host": [
 								"{{api_url}}"
 							],
 							"path": [
 								"auth",
 								"service"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "foobar"
+								}
 							]
 						}
 					},
@@ -891,7 +894,7 @@
 								"id": "2738e875-7114-4fb8-b7bc-66543280cd81",
 								"exec": [
 									"const jar = pm.cookies.jar();",
-									"jar.get('localhost', 'sid', function (error, value) {",
+									"jar.get(pm.environment.get('api_url'), 'sid', function (error, value) {",
 									"    pm.environment.set('gov_sid', value);",
 									"});"
 								],
@@ -1342,6 +1345,58 @@
 							"response": []
 						},
 						{
+							"name": "Admin - Update CWU Opportunity - Add Note",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c5fe7681-6169-476a-ab3e-b996f7ade58b",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "88cb107f-3fce-43e8-a1b9-078f363d23cb",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('admin_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"addNote\",\n    \"value\": {\n        \"note\": \"This is a sample note with attachments\",\n        \"attachments\": [\"{{file_id}}\", \"{{file2_id}}\"]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/opportunities/code-with-us/{{cwu_opp_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"opportunities",
+										"code-with-us",
+										"{{cwu_opp_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "(ALT) Admin - Delete CWU Opportunity",
 							"event": [
 								{
@@ -1446,49 +1501,6 @@
 					"name": "First Proposal (VENDOR)",
 					"item": [
 						{
-							"name": "Vendor 1 - Get Opportunity",
-							"event": [
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "c760c0a7-890c-4690-9250-1be262e5aaa5",
-										"exec": [
-											"const jar = pm.cookies.jar();",
-											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('vendor1_sid'));"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "test",
-									"script": {
-										"id": "0241da88-fcea-4ffc-ab7f-1a4a59f70f75",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{api_url}}/api/opportunities/code-with-us/{{cwu_opp_id}}",
-									"host": [
-										"{{api_url}}"
-									],
-									"path": [
-										"api",
-										"opportunities",
-										"code-with-us",
-										"{{cwu_opp_id}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
 							"name": "Vendor 1 - Get Current Session/Profile",
 							"event": [
 								{
@@ -1532,6 +1544,90 @@
 							"response": []
 						},
 						{
+							"name": "Vendor 1 - Accept Terms",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "7062c94b-0c55-4d47-a001-c61efbdbec80",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('vendor1_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"acceptTerms\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/users/{{vendor1_user_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"users",
+										"{{vendor1_user_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Vendor 1 - Get Opportunity",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "c760c0a7-890c-4690-9250-1be262e5aaa5",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('vendor1_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "0241da88-fcea-4ffc-ab7f-1a4a59f70f75",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/api/opportunities/code-with-us/{{cwu_opp_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"opportunities",
+										"code-with-us",
+										"{{cwu_opp_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Vendor 1 - Read Many Proposals on Opp (Check for Existing)",
 							"event": [
 								{
@@ -1550,8 +1646,7 @@
 									"script": {
 										"id": "0241da88-fcea-4ffc-ab7f-1a4a59f70f75",
 										"exec": [
-											"var jsonData = JSON.parse(responseBody);",
-											"postman.setEnvironmentVariable(\"vendor1_user_id\", jsonData.user.id);"
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -1612,7 +1707,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"opportunity\": \"{{cwu_opp_id}}\",\n    \"proposalText\": \"You should hire me\",\n    \"additionalComments\": \"please\",\n    \"proponent\": {\n        \"tag\": \"individual\",\n        \"value\": {\n            \"legalName\": \"Andrew S\",\n            \"email\": \"foo@bar.com\",\n            \"phone\": \"222-222-2222\",\n            \"street1\": \"foo\",\n            \"city\": \"Saskatoon\",\n            \"region\": \"SK\",\n            \"mailCode\": \"V8Z1T8\",\n            \"country\": \"Canada\"\n        }\n    },\n    \"attachments\": [\n        \"{{file_id}}\"\n    ],\n    \"status\": \"DRAFT\"\n}",
+									"raw": "{\n    \"opportunity\": \"{{cwu_opp_id}}\",\n    \"proposalText\": \"You should hire me\",\n    \"additionalComments\": \"please\",\n    \"proponent\": {\n        \"tag\": \"individual\",\n        \"value\": {\n            \"legalName\": \"Andrew S\",\n            \"email\": \"foo@bar.com\",\n            \"phone\": \"222-222-2222\",\n            \"street1\": \"foo\",\n            \"city\": \"Saskatoon\",\n            \"region\": \"SK\",\n            \"mailCode\": \"V8Z1T8\",\n            \"country\": \"Canada\"\n        }\n    },\n    \"attachments\": [],\n    \"status\": \"DRAFT\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1904,6 +1999,47 @@
 							"response": []
 						},
 						{
+							"name": "Vendor 2 - Accept Terms",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "dfdcd067-31dc-4b0b-afbd-02fe318921b9",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('vendor2_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"acceptTerms\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/users/{{vendor2_user_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"users",
+										"{{vendor2_user_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Vendor 2 - Create CWU Proposal (Submit Immediately)",
 							"event": [
 								{
@@ -1934,7 +2070,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"opportunity\": \"{{cwu_opp_id}}\",\n    \"proposalText\": \"You should pay me lots of $$$ to work for you.  Definitely.\",\n    \"additionalComments\": \"think about it\",\n    \"proponent\": {\n        \"tag\": \"individual\",\n        \"value\": {\n            \"legalName\": \"Andrew S\",\n            \"email\": \"foo@bar.com\",\n            \"street1\": \"foo\",\n            \"city\": \"Saskatoon\",\n            \"region\": \"SK\",\n            \"mailCode\": \"V8Z1T8\",\n            \"country\": \"Canada\"\n        }\n    },\n    \"attachments\": [\n        \"{{file_id}}\"\n    ],\n    \"status\": \"SUBMITTED\"\n}",
+									"raw": "{\n    \"opportunity\": \"{{cwu_opp_id}}\",\n    \"proposalText\": \"You should pay me lots of $$$ to work for you.  Definitely.\",\n    \"additionalComments\": \"think about it\",\n    \"proponent\": {\n        \"tag\": \"individual\",\n        \"value\": {\n            \"legalName\": \"Andrew S\",\n            \"email\": \"foo@bar.com\",\n            \"street1\": \"foo\",\n            \"city\": \"Saskatoon\",\n            \"region\": \"SK\",\n            \"mailCode\": \"V8Z1T8\",\n            \"country\": \"Canada\"\n        }\n    },\n    \"attachments\": [],\n    \"status\": \"SUBMITTED\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2203,7 +2339,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"score\",\n    \"value\": 89.55\n}",
+									"raw": "{\n    \"tag\": \"score\",\n    \"value\": {\n        \"note\": \"Score of 88\",\n        \"score\": 88\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2245,7 +2381,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"score\",\n    \"value\": 75\n}",
+									"raw": "{\n    \"tag\": \"score\",\n    \"value\": {\n        \"note\": \"Score of 79.5\",\n        \"score\": 79.5\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2262,6 +2398,90 @@
 										"proposals",
 										"code-with-us",
 										"{{cwu_proposal2_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "(ALT) Gov - Batch score Proposals 1 & 2",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "374f49e4-b152-4003-9a96-9c8f9be02808",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('gov_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"saveProposalScores\",\n    \"value\": {\n        \"{{cwu_proposal1_id}}\": {\n            \"note\": \"Score of 65\",\n            \"score\": 65\n        },\n        \"{{cwu_proposal2_id}}\": {\n            \"note\": \"Score of 95.9\",\n            \"score\": 95.9\n        }\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/opportunities/code-with-us/{{cwu_opp_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"opportunities",
+										"code-with-us",
+										"{{cwu_opp_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Gov - Lock In Proposal Scores",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "0c9effb7-5fba-44a4-8304-ab7258da44e4",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('gov_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"lockProposalScores\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/opportunities/code-with-us/{{cwu_opp_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"opportunities",
+										"code-with-us",
+										"{{cwu_opp_id}}"
 									]
 								}
 							},
@@ -2529,6 +2749,58 @@
 							"request": {
 								"method": "GET",
 								"header": [],
+								"url": {
+									"raw": "{{api_url}}/api/proposals/code-with-us/{{cwu_proposal1_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"proposals",
+										"code-with-us",
+										"{{cwu_proposal1_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Gov - Update CWU Proposal 1 - Add Note",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "29bb5f14-8185-496e-8e8c-2e9e59055d49",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "2c1986ce-278a-4e1c-b231-8385676fcd35",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('gov_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"addNote\",\n    \"value\": {\n        \"note\": \"This is a sample note with attachments\",\n        \"attachments\": [\"{{file_id}}\", \"{{file2_id}}\"]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
 								"url": {
 									"raw": "{{api_url}}/api/proposals/code-with-us/{{cwu_proposal1_id}}",
 									"host": [
@@ -2823,7 +3095,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"title\": \"SWU via POSTMAN\",\n    \"teaser\": \"Sample Teaser\",\n    \"remoteOk\": false,\n    \"remoteDesc\": \"Need you here\",\n    \"location\": \"Victoria\",\n    \"totalMaxBudget\": 5,\n    \"minTeamMembers\": 2,\n    \"mandatorySkills\": [\n        \"foo\",\n        \"bar\"\n    ],\n    \"optionalSkills\": \"yam\",\n    \"description\": \"Sample Description Lorem Ipsum\",\n    \"proposalDeadline\": \"2021-02-15\",\n    \"assignmentDate\": \"2021-02-15\",\n    \"questionsWeight\": 20,\n    \"codeChallengeWeight\": 20,\n    \"scenarioWeight\": 40,\n    \"priceWeight\": 20,\n    \"status\": \"DRAFT\",\n    \"prototypePhase\": {\n    \t\"startDate\": \"2021-02-28\",\n    \t\"maxBudget\": 200000,\n    \t\"requiredCapabilities\": [\n    \t\t{\n    \t\t\t\"capability\": \"Agile Coaching\",\n    \t\t\t\"fullTime\": false\n    \t\t}\n    \t]\n    },\n    \"implementationPhase\": {\n        \"startDate\": \"2021-03-11\",\n        \"maxBudget\": 500000,\n        \"requiredCapabilities\": [\n            {\n                \"capability\": \"Agile Coaching\",\n                \"fullTime\": false\n            }\n        ]\n    },\n    \"teamQuestions\": [\n        {\n            \"question\": \"foo\",\n            \"guideline\": \"bar\",\n            \"score\": 5,\n            \"wordLimit\": 300,\n            \"order\": 1\n        }\n    ],\n    \"attachments\": [\"{{file_id}}\"]\n}",
+									"raw": "{\n    \"title\": \"SWU via POSTMAN\",\n    \"teaser\": \"Sample Teaser\",\n    \"remoteOk\": false,\n    \"remoteDesc\": \"Need you here\",\n    \"location\": \"Victoria\",\n    \"totalMaxBudget\": 500000,\n    \"minTeamMembers\": 2,\n    \"mandatorySkills\": [\n        \"foo\",\n        \"bar\"\n    ],\n    \"optionalSkills\": \"yam\",\n    \"description\": \"Sample Description Lorem Ipsum\",\n    \"proposalDeadline\": \"2021-02-15\",\n    \"assignmentDate\": \"2021-02-15\",\n    \"questionsWeight\": 20,\n    \"codeChallengeWeight\": 20,\n    \"scenarioWeight\": 40,\n    \"priceWeight\": 20,\n    \"status\": \"DRAFT\",\n    \"prototypePhase\": {\n    \t\"startDate\": \"2021-02-28\",\n    \t\"maxBudget\": 200000,\n    \t\"requiredCapabilities\": [\n    \t\t{\n    \t\t\t\"capability\": \"Agile Coaching\",\n    \t\t\t\"fullTime\": false\n    \t\t}\n    \t]\n    },\n    \"implementationPhase\": {\n        \"startDate\": \"2021-03-11\",\n        \"maxBudget\": 500000,\n        \"requiredCapabilities\": [\n            {\n                \"capability\": \"Agile Coaching\",\n                \"fullTime\": false\n            }\n        ]\n    },\n    \"teamQuestions\": [\n        {\n            \"question\": \"foo\",\n            \"guideline\": \"bar\",\n            \"score\": 5,\n            \"wordLimit\": 300,\n            \"order\": 1\n        }\n    ],\n    \"attachments\": [\"{{file_id}}\"]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -3240,6 +3512,58 @@
 								"body": {
 									"mode": "raw",
 									"raw": "{\n    \"tag\": \"addAddendum\",\n    \"value\": \"Sample Addendum 1\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/opportunities/sprint-with-us/{{swu_opp_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"opportunities",
+										"sprint-with-us",
+										"{{swu_opp_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Admin - Update SWU Opportunity - Add Note",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "daf3478e-4d25-42af-85eb-677f42e1429c",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "e4544bf1-0390-4a2f-9851-7e141f96a91e",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('admin_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"addNote\",\n    \"value\": {\n        \"note\": \"This is a sample note with attachments\",\n        \"attachments\": [\"{{file_id}}\", \"{{file2_id}}\"]\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5127,7 +5451,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"scoreQuestions\",\n    \"value\": [\n    \t{\n    \t\t\"order\": 1,\n    \t\t\"score\": 4.55\n    \t}\n    ]\n}",
+									"raw": "{\n    \"tag\": \"scoreQuestions\",\n    \"value\": {\n        \"note\": \"Submitting Vendor 1 team question scores\",\n        \"questionScores\": [\n            {\n                \"order\": 1,\n                \"score\": 4.55\n            }\n        ]\n    }\n}\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5169,7 +5493,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"scoreQuestions\",\n    \"value\": [\n    \t{\n    \t\t\"order\": 1,\n    \t\t\"score\": 3\n    \t}\n    ]\n}",
+									"raw": "{\n    \"tag\": \"scoreQuestions\",\n    \"value\": {\n        \"note\": \"Submitting Vendor 2 team question scores\",\n        \"questionScores\": [\n            {\n                \"order\": 1,\n                \"score\": 3\n            }\n        ]\n    }\n}\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5186,6 +5510,48 @@
 										"proposals",
 										"sprint-with-us",
 										"{{swu_proposal2_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "(ALT) Gov - Batch Update Proposal 1 & 2 (Questions Score)",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "e8dec6d9-49ff-4e22-bf2a-44e359fad0fd",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('gov_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"scoreTeamQuestions\",\n    \"value\": {\n        \"{{swu_proposal1_id}}\": {\n            \"note\": \"Submitting Vendor 2 team question scores\",\n            \"questionScores\": [\n                {\n                    \"order\": 1,\n                    \"score\": 3\n                }\n            ]\n        },\n        \"{{swu_proposal2_id}}\": {\n            \"note\": \"Submitting Vendor 1 team question scores\",\n            \"questionScores\": [\n                {\n                    \"order\": 1,\n                    \"score\": 4.55\n                }\n            ]\n        }\n        \n    }\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/opportunities/sprint-with-us/{{swu_opp_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"opportunities",
+										"sprint-with-us",
+										"{{swu_opp_id}}"
 									]
 								}
 							},
@@ -5270,6 +5636,58 @@
 										"proposals",
 										"sprint-with-us",
 										"{{swu_proposal2_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Gov - Update CWU Proposal 1 - Add Note Copy",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "965ab64f-9372-454f-9ccc-7cb76daec182",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "edf4935b-6fc8-422a-846a-b208e749c175",
+										"exec": [
+											"const jar = pm.cookies.jar();",
+											"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('gov_sid'));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tag\": \"addNote\",\n    \"value\": {\n        \"note\": \"This is a sample note with attachments\",\n        \"attachments\": [\"{{file_id}}\", \"{{file2_id}}\"]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/api/proposals/code-with-us/{{cwu_proposal1_id}}",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"api",
+										"proposals",
+										"code-with-us",
+										"{{cwu_proposal1_id}}"
 									]
 								}
 							},
@@ -5420,7 +5838,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"scoreCodeChallenge\",\n    \"value\": 75.44\n}",
+									"raw": "{\n    \"tag\": \"scoreCodeChallenge\",\n    \"value\": {\n        \"note\": \"Updating CC score for Vendor 1\",\n        \"score\": 75.44\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5462,7 +5880,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"scoreCodeChallenge\",\n    \"value\": 73\n}",
+									"raw": "{\n    \"tag\": \"scoreCodeChallenge\",\n    \"value\": {\n        \"note\": \"Updating CC score for Vendor 2\",\n        \"score\": 73\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5671,7 +6089,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"scoreTeamScenario\",\n    \"value\": 35\n}",
+									"raw": "{\n    \"tag\": \"scoreTeamScenario\",\n    \"value\": {\n        \"note\": \"Updating TS score for Vendor 1\",\n        \"score\": 35\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5713,7 +6131,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tag\": \"scoreTeamScenario\",\n    \"value\": 30\n}",
+									"raw": "{\n    \"tag\": \"scoreTeamScenario\",\n    \"value\": {\n        \"note\": \"Updating TS score for Vendor 2\",\n        \"score\": 30\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6420,7 +6838,7 @@
 					"response": []
 				},
 				{
-					"name": "Admin - Create Content (Not Fixed)",
+					"name": "Admin - Create Content",
 					"event": [
 						{
 							"listen": "test",
@@ -6440,48 +6858,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"My Test Content\",\n    \"body\": \"Lorem Ipsum\",\n    \"slug\": \"my-test-content\",\n    \"fixed\": false\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{api_url}}/api/content",
-							"host": [
-								"{{api_url}}"
-							],
-							"path": [
-								"api",
-								"content"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Admin - Create Content (Fixed)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "3ba8d774-0ebf-4087-8542-c421bfa9fe21",
-								"exec": [
-									"var jsonData = JSON.parse(responseBody)",
-									"postman.setEnvironmentVariable(\"content_slug\", jsonData.slug)",
-									"postman.setEnvironmentVariable(\"content_id\", jsonData.id)"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"My Test Content\",\n    \"body\": \"Lorem Ipsum\",\n    \"slug\": \"my-test-content8\",\n    \"fixed\": true\n}",
+							"raw": "{\n    \"title\": \"My Test Content\",\n    \"body\": \"Lorem Ipsum\",\n    \"slug\": \"my-test-content3\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -6523,48 +6900,6 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"title\": \"My Test Content - Updated Title\",\n    \"body\": \"Lorem Ipsum - Updated Body\",\n    \"slug\": \"{{content_slug}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{api_url}}/api/content/{{content_id}}",
-							"host": [
-								"{{api_url}}"
-							],
-							"path": [
-								"api",
-								"content",
-								"{{content_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Admin - Update Content (Failure)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "306ca969-68e8-433b-b7aa-92074a37c934",
-								"exec": [
-									"var jsonData = JSON.parse(responseBody)",
-									"postman.setEnvironmentVariable(\"content_slug\", jsonData.slug)",
-									"postman.setEnvironmentVariable(\"content_id\", jsonData.id)"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"My Test Content - Updated Title\",\n    \"body\": \"Lorem Ipsum - Updated Body\",\n    \"slug\": \"attemp-to-change-slug\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -6667,6 +7002,33 @@
 								"api",
 								"content",
 								"{{content_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Send Notification for Updated Terms",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tag\": \"updateTerms\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{api_url}}/api/email-notifications",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"api",
+								"email-notifications"
 							]
 						}
 					},
@@ -7270,7 +7632,7 @@
 					"response": []
 				},
 				{
-					"name": "Vendor 1 - Get all organizations",
+					"name": "Vendor 1 - Get owned organizations",
 					"event": [
 						{
 							"listen": "prerequest",
@@ -7288,7 +7650,38 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{api_url}}/api/organizations?page=1&pageSize=20",
+							"raw": "{{api_url}}/api/ownedOrganizations",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"api",
+								"ownedOrganizations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vendor 1 - Get all organizations (paged)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "0ed807b7-74a9-4f5d-801e-a6a817a6c72b",
+								"exec": [
+									"const jar = pm.cookies.jar();",
+									"jar.set(pm.environment.get('api_url'), 'sid', pm.environment.get('vendor1_sid'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/api/organizations?page=1&pageSize=2",
 							"host": [
 								"{{api_url}}"
 							],
@@ -7303,7 +7696,7 @@
 								},
 								{
 									"key": "pageSize",
-									"value": "20"
+									"value": "2"
 								}
 							]
 						}

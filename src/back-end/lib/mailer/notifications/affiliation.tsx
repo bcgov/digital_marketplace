@@ -47,7 +47,7 @@ export async function addedToTeamT(affiliation: Affiliation): Promise<Emails> {
   const recipient = affiliation.user;
   const title = `${organization.legalName} Has Sent You a Team Request`;
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -71,7 +71,7 @@ export async function approvedRequestToJoinT(recipient: User, affiliation: Affil
   const organizationName = affiliation.organization.legalName;
   const title = `${memberName} Has Approved Your Team Request`;
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -93,7 +93,7 @@ export async function rejectRequestToJoinT(recipient: User, affiliation: Affilia
   const organizationName = affiliation.organization.legalName;
   const title = `${memberName} Has Rejected Your Team Request`;
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -113,7 +113,7 @@ export async function membershipCompleteT(affiliation: Affiliation): Promise<Ema
   const organizationName = affiliation.organization.legalName;
   const title = `You Have Joined ${organizationName}'s Team`;
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -135,7 +135,7 @@ export async function memberLeavesT(recipient: User, affiliation: Affiliation): 
   const memberName = affiliation.user.name;
   const title = `${memberName} Has Left ${organizationName}'s Team`;
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,

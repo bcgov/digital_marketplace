@@ -20,7 +20,7 @@ export const organizationArchived = makeSend(organizationArchivedT);
 export async function organizationArchivedT(recipient: User, organization: Organization): Promise<Emails> {
   const title = 'Your Organization Has Been Archived';
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,

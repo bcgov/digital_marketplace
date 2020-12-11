@@ -83,7 +83,7 @@ export async function newCWUOpportunityPublishedT(recipients: User[], opportunit
     emails.push({
       summary: `${repost ? 'CWU opportunity re-published after suspension' : 'New CWU opportunity published'}; sent to user with notifications turned on.`,
       to: MAILER_REPLY,
-      bcc: batch.map(r => r.email),
+      bcc: batch.map(r => r.email || ''),
       subject: title,
       html: templates.simple({
         title,
@@ -103,7 +103,7 @@ export async function successfulCWUPublicationT(recipient: User, opportunity: CW
   const description = `You have successfully ${repost ? 're-posted' : 'posted'} the following Digital Marketplace opportunity`;
   return [{
     summary: `CWU successfully ${repost ? 're-published' : 'published'}; sent to publishing government user.`,
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -133,7 +133,7 @@ export async function updatedCWUOpportunityT(recipients: User[], opportunity: CW
     emails.push({
       to: MAILER_REPLY,
       subject: title,
-      bcc: batch.map(r => r.email),
+      bcc: batch.map(r => r.email || ''),
       html: templates.simple({
         title,
         description,
@@ -152,7 +152,7 @@ export async function cancelledCWUOpportunitySubscribedT(recipient: User, opport
   const description = 'The following Digital Marketplace opportunity has been cancelled:';
   return [{
     summary: 'CWU opportunity cancelled; sent to subscribed users and vendors with proposals.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -174,7 +174,7 @@ export async function cancelledCWUOpportunityActionedT(recipient: User, opportun
   const description = 'You have cancelled the following opportunity on the Digital Marketplace:';
   return[{
     summary: 'CWU opportunity cancelled; sent to the administrator who actioned.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -191,7 +191,7 @@ export async function suspendedCWUOpportunitySubscribedT(recipient: User, opport
   const description = 'The following Digital Marketplace opportunity has been suspended:';
   return [{
     summary: 'CWU opportunity suspended; sent to subscribed users and vendors with proposals.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -214,7 +214,7 @@ export async function suspendedCWUOpportunityActionedT(recipient: User, opportun
   const description = 'You have suspended the following opportunity on the Digital Marketplace:';
   return[{
     summary: 'CWU opportunity suspended; sent to the administrator who actioned.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -230,7 +230,7 @@ export async function readyForEvalCWUOpportunityT(recipient: User, opportunity: 
   const title = 'Your Code With Us Opportunity is Ready to Be Evaluated';
   const description = 'Your Digital Marketplace opportunity has reached its proposal deadline.';
   return[{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
