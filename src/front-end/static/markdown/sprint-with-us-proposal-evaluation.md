@@ -33,7 +33,7 @@ Shortlisted Proponents will be notified of the details and applicable deadline o
   3. code quality; and
   4. code organization.
 
-For further details, Proponents should download the code challenge instructions located here.
+Proponents will be provided the Code Challenge instructions at the time the Code Challenge for the opportunity begins.
 
 Only those Shortlisted Proponents that have met the minimum score for step 4 will be eligible to participate in the in-person scenario described in step 5 below.
 
