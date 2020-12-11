@@ -1,25 +1,25 @@
 {
-	"id": "491806f0-39c3-4333-9fee-40711c0d25dd",
-	"name": "DM - Local",
+	"id": "3bd81de4-8bae-4e6a-87f6-7e402ac9f882",
+	"name": "DM - Environment",
 	"values": [
 		{
 			"key": "kc_url",
-			"value": "<replace with your development KeyCloak URL>",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "realm_name",
-			"value": "<replace with your development KeyCloak realm>",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "client_id",
-			"value": "<replace with your development KeyCloak client>",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "client_secret",
-			"value": "<replace with your development KeyCloak client secret>",
+			"value": "",
 			"enabled": true
 		},
 		{
@@ -28,53 +28,143 @@
 			"enabled": true
 		},
 		{
+			"key": "file_id",
+			"value": "7dd69568-0879-40ab-8f32-ce766cfb6f1d",
+			"enabled": true
+		},
+		{
+			"key": "swu_opp_id",
+			"value": "b215e22c-5ee8-4012-9092-ef23c49fecda",
+			"enabled": true
+		},
+		{
+			"key": "gov_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "admin_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
 			"key": "test_admin_username",
-			"value": "test_admin",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_admin_password",
-			"value": "admin",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_gov_username",
-			"value": "test_gov",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_gov_password",
-			"value": "gov",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_vendor1_username",
-			"value": "test_vendor1",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_vendor1_password",
-			"value": "vendor",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_vendor2_username",
-			"value": "test_vendor2",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_vendor2_password",
-			"value": "vendor",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_vendor3_username",
-			"value": "test_vendor3",
+			"value": "",
 			"enabled": true
 		},
 		{
 			"key": "test_vendor3_password",
-			"value": "vendor",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "admin_sid",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "gov_sid",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor1_sid",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor1_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor2_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor2_sid",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "org_id",
+			"value": "5126b02d-efde-4ea7-bb29-0da4075d3349",
+			"enabled": true
+		},
+		{
+			"key": "affiliation_id",
+			"value": "a7e742e3-48c9-4361-a3f3-b836e0202cdb",
+			"enabled": true
+		},
+		{
+			"key": "vendor2_user_id",
+			"value": "2a9afae9-977d-421c-b6be-ae7aa377e2eb",
+			"enabled": true
+		},
+		{
+			"key": "vendor1_user_id",
+			"value": "944bc692-7d8f-4304-9e34-8425ac0e86ae",
+			"enabled": true
+		},
+		{
+			"key": "swu_proposal1_id",
+			"value": "e2e70de2-24b2-489c-901c-967f07ec1344",
+			"enabled": true
+		},
+		{
+			"key": "vendor3_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor3_sid",
+			"value": "",
 			"enabled": true
 		},
 		{
@@ -86,9 +176,94 @@
 			"key": "test_vendor4_password",
 			"value": "vendor",
 			"enabled": true
+		},
+		{
+			"key": "vendor4_token_set",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor4_sid",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "vendor3_user_id",
+			"value": "3aa33c15-8471-4e34-b1d6-9de5e7d58178",
+			"enabled": true
+		},
+		{
+			"key": "org2_id",
+			"value": "8c3dd78d-eab4-474b-be65-6c4bc83760a9",
+			"enabled": true
+		},
+		{
+			"key": "affiliation2_id",
+			"value": "66a6e6f7-d028-42ec-9ae6-91bda453095e",
+			"enabled": true
+		},
+		{
+			"key": "vendor4_user_id",
+			"value": "3b9a619a-cafe-4318-882f-581587a6fb3c",
+			"enabled": true
+		},
+		{
+			"key": "swu_proposal2_id",
+			"value": "8b351d99-006e-4626-a2b4-0eb398bd3690",
+			"enabled": true
+		},
+		{
+			"key": "cwu_opp_id",
+			"value": "fc6feefb-1738-491b-9f1a-1b02f76741c2",
+			"enabled": true
+		},
+		{
+			"key": "cwu_proposal1_id",
+			"value": null,
+			"enabled": true
+		},
+		{
+			"key": "cwu_proposal2_id",
+			"value": "9ba36ab7-de0d-4ef0-b729-415ae41d414c",
+			"enabled": true
+		},
+		{
+			"key": "vendor1_avatar_id",
+			"value": "ae35bdec-b18b-4ce6-9a7b-9676e2faea5d",
+			"enabled": true
+		},
+		{
+			"key": "gov_user_id",
+			"value": "c2eecc25-f117-41d1-8fb5-c047c4247b77",
+			"enabled": true
+		},
+		{
+			"key": "file2_id",
+			"value": "d2b39ced-328a-4da1-8eec-8ef119c3f67e",
+			"enabled": true
+		},
+		{
+			"key": "admin_user_id",
+			"value": "3163fa50-db51-4568-a5f8-e9ead8d3ddc9",
+			"enabled": true
+		},
+		{
+			"key": "public_file_id",
+			"value": "ecdb11ec-696c-4384-b67d-f31927675aa4",
+			"enabled": true
+		},
+		{
+			"key": "content_id",
+			"value": "09b39e2b-2209-4a18-b17a-eaff48161b22",
+			"enabled": true
+		},
+		{
+			"key": "content_slug",
+			"value": "my-test-content3",
+			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2020-10-29T23:10:39.709Z",
-	"_postman_exported_using": "Postman/7.34.0"
+	"_postman_exported_at": "2020-12-02T20:09:26.616Z",
+	"_postman_exported_using": "Postman/7.36.0"
 }

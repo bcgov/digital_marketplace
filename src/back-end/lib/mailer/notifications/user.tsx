@@ -12,7 +12,7 @@ export async function userAccountRegisteredT(recipient: User): Promise<Emails> {
   const title = 'Welcome to the Digital Marketplace';
   const description = 'Thank you for creating an account for the Digital Marketplace web application.';
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -48,7 +48,7 @@ export async function accountDeactivatedSelfT(user: User): Promise<Emails> {
   const title = 'Your Account Has Been Deactivated';
   return [{
     summary: 'User account has been deactivated by the user.',
-    to: user.email,
+    to: user.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -69,7 +69,7 @@ export async function accountDeactivatedAdminT(user: User): Promise<Emails> {
   const title = 'Your Account Has Been Deactivated';
   return [{
     summary: 'User account has been deactivated by an administrator.',
-    to: user.email,
+    to: user.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -91,7 +91,7 @@ export async function accountReactivatedSelfT(user: User): Promise<Emails> {
   const description = 'You have successfully reactivated your Digital Marketplace account.';
   return [{
     summary: 'User account has been reactivated by the user.',
-    to: user.email,
+    to: user.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -107,7 +107,7 @@ export async function accountReactivatedAdminT(user: User): Promise<Emails> {
   const title = 'Your Account Has Been Reactivated';
   return [{
     summary: 'User account has been reactivated by an administrator.',
-    to: user.email,
+    to: user.email || [],
     subject: title,
     html: templates.simple({
       title,

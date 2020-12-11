@@ -310,7 +310,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       type: userType,
       status: UserStatus.Active,
       name: claims.name || '',
-      email: claims.email || '',
+      email: claims.email || null,
       jobTitle: '',
       idpUsername: username
     }), null);
