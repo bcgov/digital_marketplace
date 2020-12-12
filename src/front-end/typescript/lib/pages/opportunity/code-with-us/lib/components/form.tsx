@@ -18,7 +18,7 @@ import { Col, Row } from 'reactstrap';
 import { COPY } from 'shared/config';
 import SKILLS from 'shared/lib/data/skills';
 import { FileUploadMetadata } from 'shared/lib/resources/file';
-import { FORMATTED_MAX_BUDGET, canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { canCWUOpportunityDetailsBeEdited, CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunityStatus, FORMATTED_MAX_BUDGET, UpdateEditValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, ADT } from 'shared/lib/types';
 import { invalid, mapInvalid, mapValid, valid, Validation } from 'shared/lib/validation';
 import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
