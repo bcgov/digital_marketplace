@@ -1,0 +1,348 @@
+
+paths:
+  /opportunities/sprint-with-us:
+    get:
+      summary: Retrieve all Sprint-With-Us Opportunities.
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Retrieve all Sprint-With-Us Opportunities. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored.
+      responses:
+        200:
+          description: Receive the array of Opportunities
+        503:
+          description: A database error has occurred.
+
+    post:
+      summary: Create a new Sprint-With-Us Opportunity.
+      tags:
+        - Opportunities
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      description: Creates a new Sprint-With-Us opportunity using the provided request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SWUOpportunity'
+            examples:
+              createSWUOpportunity:
+                $ref: '#/components/examples/createSWUOpportunity'
+      responses:
+        201:
+          description: Receive the created Sprint-With-Us Opportunity.
+        400:
+          description: The request body was not well-formed.
+        503:
+          description: A database error occurred.
+
+  /opportunities/sprint-with-us/{id}:
+    get:
+      summary: Retrieve a single Sprint-With-Us Opportunity.
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Retrieve a single Sprint-With-Us Opportunity for the specified id. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored. 
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Sprint-With-Us Opportunity to retrieve.
+          type: uuid
+      responses:
+        200:
+          description: Receive the specified Sprint-With-Us Opportunity.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Sprint-With-Us Opportunity for the specified ID was not found.
+    
+    put:
+      summary: Update an existing Sprint-With-Us Opportunity.
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Update an existing Sprint-With-Us Opportunity. The nature of the update depends on the ADT passed in the request body.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Sprint-With-Us Opportunity to update.
+          type: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  enum: [edit, submitForReview, publish, startCodeChallenge, startTeamScenario, suspend, cancel, addAddendum]
+                value:
+                  type: object
+            examples:
+              edit:
+                $ref: '#/components/examples/editSWUOpportunity'
+              publish:
+                $ref: '#/components/examples/publishSWUOpportunity'
+              startCodeChallenge:
+                $ref: '#/components/examples/startCodeChallengeForSWUOpportunity'
+              startTeamScenario:
+                $ref: '#/components/examples/startTeamScenarioForSWUOpportunity'
+              suspend:
+                $ref: '#/components/examples/suspendSWUOpportunity'
+              cancel:
+                $ref: '#/components/examples/cancelSWUOpportunity'
+              addAddendum:
+                $ref: '#/components/examples/addAddendumToSWUOpportunity'
+      responses:
+        200:
+          description: Receive the updated Code-With-Us Opportunity.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Opportunity for the specified ID was not found.
+        401:
+          description: You do not have permission to update this Opportunity.
+    
+    delete:
+      summary: Delete a draft Sprint-With-Us Opportunity (Opportunity must be in draft)
+      tags:
+        - Opportunities
+      produces:
+        - application/json
+      description: Permanently delete a draft Sprint-With-Us Opportunity. This will fail if the Opportunity is not in Draft or has previously been published.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the draft Sprint-With-Us Opportunity to delete.
+          type: uuid
+      responses:
+        200:
+          description: Receive the delete Sprint-With-Us Opportunity.
+        400:
+          description: The request was not well-formed.
+        503:
+          description: A database error occurred.
+        404:
+          description: A Code-With-Us Opportunity for the specified ID was not found.
+        401:
+          description: You do not have permission to delete this Opportunity.
+
+
+components:
+  schemas:
+    SWUOpportunity:
+      type: object
+      properties:
+        title:
+          type: string
+        teaser:
+          type: string
+        remoteOk:
+          type: boolean
+        remoteDesc:
+          type: string
+        location:
+          type: string
+        totalMaxBudget:
+          type: number
+        minTeamMembers:
+          type: number
+        mandatorySkills:
+          type: array
+          items:
+            type: string
+        optionalSkills:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        proposalDeadline:
+          type: string
+        assignmentDate: 
+          type: string
+        questionsWeight:
+          type: number
+        codeChallengeWeight:
+          type: number
+        scenarioWeight:
+          type: number
+        priceWeight:
+          type: number
+        attachments:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT, UNDER_REVIEW, PUBLISHED]
+        inceptionPhase:
+          type: object
+          properties:
+            maxBudget:
+              type: number
+            startDate:
+              type: string
+            completionDate:
+              type: string
+            requiredCapabilities:
+              type: array
+              items:
+                type: string
+        prototypePhase:
+          type: object
+          properties:
+            maxBudget:
+              type: number
+            startDate:
+              type: string
+            completionDate:
+              type: string
+            requiredCapabilities:
+              type: array
+              items:
+                type: string
+        implementationPhase:
+          type: object
+          properties:
+            maxBudget:
+              type: number
+            startDate:
+              type: string
+            completionDate:
+              type: string
+            requiredCapabilities:
+              type: array
+              items:
+                type: string
+
+  examples:
+    createSWUOpportunity:
+      summary: Request body for creating a Sprint-With-Us opportunity
+      value:
+        title: An Exciting Sprint-With-Us opportunity
+        teaser: Develop a WordPress site for easy money
+        remoteOk: true
+        remoteDesc: Remote is okay
+        location: Victoria
+        reward: 1500000
+        mandatorySkills: [Agile Coaching, Front-end Development]
+        optionalSkills: [JavaScript, React]
+        description: We need someone to create and maintain our WordPress for the next 8 months.
+        proposalDeadline: 2021-02-15
+        assignmentDeadline: 2021-02-22
+        questionsWeight: 20
+        codeChallengeWeight: 20
+        scenarioWeight: 40
+        priceWeight: 20
+        attachments: [89fe0644-50e1-4939-a488-aa6cf5977d7b]
+        status: DRAFT
+        inceptionPhase:
+          maxBudget: 50000
+          startDate: 2021-02-26
+          completionDate: 2021-03-15
+          requiredCapabilities: [Agile Coaching]
+        prototypePhase:
+          maxBudget: 200000
+          startDate: 2021-03-16
+          completionDate: 2021-04-16
+          requiredCapabilities: [JavaScript]
+        implementationPhase:
+          maxBudget: 1000000
+          startDate: 2021-04-20
+          completionDate: 2021-06-27
+          requiredCapabilities: [React]
+
+    editSWUOpportunity:
+      summary: Request body for updating a Sprint-With-Us opportunity
+      value:
+        tag: edit
+        value:
+          title: An Exciting Sprint-With-Us opportunity
+          teaser: Develop a WordPress site for easy money - Updated
+          remoteOk: true
+          remoteDesc: Remote is okay
+          location: Victoria
+          reward: 2000000
+          mandatorySkills: [Agile Coaching, Front-end Development]
+          optionalSkills: [JavaScript, React]
+          description: We need someone to create and maintain our WordPress for the next 8 months.
+          proposalDeadline: 2021-02-15
+          assignmentDeadline: 2021-02-22
+          questionsWeight: 20
+          codeChallengeWeight: 20
+          scenarioWeight: 40
+          priceWeight: 20
+          attachments: [89fe0644-50e1-4939-a488-aa6cf5977d7b]
+          status: DRAFT
+          inceptionPhase:
+            maxBudget: 50000
+            startDate: 2021-02-26
+            completionDate: 2021-03-15
+            requiredCapabilities: [Agile Coaching]
+          prototypePhase:
+            maxBudget: 200000
+            startDate: 2021-03-16
+            completionDate: 2021-04-16
+            requiredCapabilities: [JavaScript]
+          implementationPhase:
+            maxBudget: 1500000
+            startDate: 2021-04-20
+            completionDate: 2021-06-27
+            requiredCapabilities: [React]
+
+    submitSWUOpportunityForReview:
+      summary: Request body for submitting a Sprint-With-Us opportunity for review
+      value:
+        tag: submitForReview
+        value: Submitted for review
+    
+    publishSWUOpportunity:
+      summary: Request body for publishing a Sprint-With-Us opportunity
+      value:
+        tag: publish
+        value: Published
+
+    startCodeChallengeForSWUOpportunity:
+      summary: Request body for starting a code challenge for a Sprint-With-Us opportunity
+      value:
+        tag: startCodeChallenge
+        value: Code challenge started
+
+    startTeamScenarioForSWUOpportunity:
+      summary: Request body for starting a team scenario for a Sprint-With-Us opportunity
+      value:
+        tag: startTeamScenario
+        value: Team scenario started
+
+    suspendSWUOpportunity:
+      summary: Request body for suspending a Sprint-With-Us opportunity
+      value:
+        tag: suspend
+        value: Suspended for now
+
+    cancelSWUOpportunity:
+      summary: Request body for canceling a Sprint-With-Us opportunity
+      value:
+        tag: cancel
+        value: Canceled indefinitely
+
+    addAddendumToSWUOpportunity:
+      summary: Request body for adding an addendum to a Sprint-With-Us opportunity
+      value:
+        tag: addAddendum
+        value: The reward value has been changed to $2,000,000

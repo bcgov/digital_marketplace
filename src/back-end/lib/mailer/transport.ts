@@ -4,6 +4,7 @@ import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { Emails } from 'back-end/lib/mailer';
 import { fromString } from 'html-to-text';
 import nodemailer from 'nodemailer';
+import { SHOW_TEST_INDICATOR } from 'shared/config';
 
 const logger = makeDomainLogger(consoleAdapter, 'mailer', ENV);
 
@@ -21,7 +22,8 @@ export function send(params: SendParams): Promise<void> {
     transport.sendMail({
       ...params,
       from: MAILER_FROM,
-      text: fromString(params.html, { wordwrap: 130 })
+      text: fromString(params.html, { wordwrap: 130 }),
+      subject: `${SHOW_TEST_INDICATOR ? '[TEST] ' : ''}${params.subject}`
     }, error => {
       if (error) {
         // Do not reject promise, only log the error.

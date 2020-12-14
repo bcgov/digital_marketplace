@@ -50,7 +50,7 @@ paths:
         200:
           description: Receive the requested Organization
 
-    post:
+    put:
       summary: Updates an existing Organization.
       tags:
         - Organizations
@@ -169,39 +169,3 @@ components:
           contactTitle: CEO
           contactEmail: john.smith@email.com
           contactPhone: 250-555-5555
-
-  # examples:
-  #   updateProfile:
-  #     summary: Updating a user profile
-  #     value:
-  #       tag: updateProfile
-  #       value:
-  #         name: John Smith
-  #         email: john.smith@email.com
-  #         jobTitle: Analyst
-  #         avatarImageFile: 89fe0644-50e1-4939-a488-aa6cf5977d7b
-  #   updateCapabilities:
-  #     summary: Updating user capabilities
-  #     value:
-  #       tag: updateCapabilities
-  #       value:
-  #         - Agile Coaching
-  #         - Backend Development
-  #   acceptTerms:
-  #     summary: Accepting the application terms
-  #     value:
-  #       tag: acceptTerms
-  #   updateNotifications:
-  #     summary: Updating a user's notification settings
-  #     value:
-  #       tag: updateNotifications
-  #       value: true
-  #   reactivateUser:
-  #     summary: Reactivate an inactive user
-  #     value:
-  #       tag: reactivateUser
-  #   updateAdminPermissions:
-  #     summary: Add/revoke admininstrator permissions
-  #     value:
-  #       tag: updateAdminPermissions
-  #       value: true # True sets to admin, false reverts to government user

@@ -36,11 +36,12 @@ export interface User {
   type: UserType;
   status: UserStatus;
   name: string;
-  email: string;
+  email: string | null;
   jobTitle: string;
   avatarImageFile: FileRecord | null;
   notificationsOn: Date | null;
-  acceptedTerms: Date | null;
+  acceptedTermsAt: Date | null;
+  lastAcceptedTermsAt: Date | null;
   idpUsername: string;
   deactivatedOn: Date | null;
   deactivatedBy: Id | null;
@@ -84,6 +85,10 @@ export function isVendor(user: Pick<User, 'type'>): boolean {
 
 export function isPublicSectorUserType(userType: UserType): boolean {
   return isPublicSectorEmployee({ type: userType });
+}
+
+export function mustAcceptTerms(user: Pick<User, 'type'>): boolean {
+  return isVendor(user);
 }
 
 export function usersHaveCapability(users: Array<Pick<User, 'capabilities'>>, capability: string): boolean {

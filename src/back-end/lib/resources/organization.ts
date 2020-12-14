@@ -7,10 +7,10 @@ import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/ty
 import { validateFileRecord, validateOrganizationId } from 'back-end/lib/validation';
 import { get } from 'lodash';
 import { getString } from 'shared/lib';
-import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, OrganizationSlim, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, Organization, ReadManyResponseBody, ReadManyResponseValidationErrors, UpdateProfileRequestBody, UpdateRequestBody as SharedUpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/organization';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateUUID, Validation } from 'shared/lib/validation';
+import { allValid, getInvalidValue, invalid, isInvalid, isValid, optionalAsync, valid, validatePageIndex, validatePageSize, validateUUID, Validation } from 'shared/lib/validation';
 import * as orgValidation from 'shared/lib/validation/organization';
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
@@ -52,12 +52,20 @@ const resource: Resource = {
   routeNamespace: 'organizations',
 
   readMany(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<OrganizationSlim[] | string[]>, Session>(async request => {
-      const respond = (code: number, body: OrganizationSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    return nullRequestBodyHandler<JsonResponseBody<ReadManyResponseBody | ReadManyResponseValidationErrors>, Session>(async request => {
+      const respond = (code: number, body: ReadManyResponseBody | ReadManyResponseValidationErrors) => basicResponse(code, request.session, makeJsonResponseBody(body));
+      const validatedPageIndex = validatePageIndex(request.query.page);
+      if (isInvalid(validatedPageIndex)) {
+        return respond(400, { page: validatedPageIndex.value });
+      }
+      const validatedPageSize = validatePageSize(request.query.pageSize);
+      if (isInvalid(validatedPageSize)) {
+        return respond(400, { pageSize: validatedPageSize.value });
+      }
       // Pass session in so we can add owner name, swuQualified status for admin/owner only
-      const dbResult = await db.readManyOrganizations(connection, request.session);
+      const dbResult = await db.readManyOrganizations(connection, request.session, false, validatedPageIndex.value, validatedPageSize.value);
       if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
+        return respond(503, { database: [db.ERROR_MESSAGE] });
       }
       return respond(200, dbResult.value);
     });

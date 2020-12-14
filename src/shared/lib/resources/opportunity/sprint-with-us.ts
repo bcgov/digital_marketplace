@@ -2,7 +2,6 @@ import { SWU_MAX_BUDGET } from 'shared/config';
 import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
 import { Addendum } from 'shared/lib/resources/addendum';
 import { FileRecord } from 'shared/lib/resources/file';
-import { SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserSlim } from 'shared/lib/resources/user';
 import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
 import { ErrorTypeFrom } from 'shared/lib/validation';
@@ -121,12 +120,9 @@ export interface SWUOpportunity {
   id: Id;
   createdAt: Date;
   updatedAt: Date;
-
   createdBy?: UserSlim;
   updatedBy?: UserSlim;
-
-  successfulProposal?: SWUProposalSlim;
-  successfulProponentName?: string;
+  successfulProponent?: SWUSuccessfulProponent;
   title: string;
   teaser: string;
   remoteOk: boolean;
@@ -158,6 +154,14 @@ export interface SWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
+}
+
+export interface SWUSuccessfulProponent {
+  id: Id; // Organization ID
+  name: string; // Organization Legal Name
+  email?: string; // Organization Contact Email
+  totalScore?: number;
+  createdBy?: UserSlim;
 }
 
 export interface SWUOpportunityPhaseRequiredCapability {

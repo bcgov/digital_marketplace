@@ -5,8 +5,8 @@ let
   realfolk = import (systemPkgs.fetchFromGitHub {
     owner = "realfolk";
     repo = "nix";
-    rev = "a3b366208534596705f1c0faff6b9d96584109a8";
-    sha256 = "0i5v2r8r7vazdm1ywzl85xnakddg53rq4cjmk1vznay4d8z4m5sh";
+    rev = "ae94da08076e12ed51bec9c0dbc80c5923d33f94";
+    sha256 = "0l1binfjhyn711nmrb80j5z1vah08vsd1wxm2lczc1q9f1wzzzli";
   });
 
   pkgs = realfolk.config.pkgSet;

@@ -79,6 +79,35 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
   );
 };
 
+/*
+const Stats: ComponentView<State, Msg> = ({ state }) => {
+  return (
+    <div className='bg-c-landing-stats-bg py-5'>
+      <Container>
+        <Row>
+          <Col xs='12' className='d-flex flex-column flex-md-row justify-content-center align-items-center'>
+            <Stat stat={formatAmount(state.totalCount)} description='Total Opportunities Awarded' className='mr-md-6 mb-5 mb-md-0' />
+            <Stat stat={formatAmount(state.totalAwarded, '$')} description='Total Value of All Opportunities' />
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+const Stat: View<{ stat: string; description: string; className?: string; }> = ({ stat, description, className }) => {
+  return (
+    <div className={`d-flex flex-column justify-content-center align-items-center text-center ${className}`}>
+      <div className='mb-3 text-c-landing-stats-stat'>
+        <span className='d-md-none h1'>{stat}</span>
+        <span className='d-none d-md-inline display-4 font-weight-bold'>{stat}</span>
+      </div>
+      <div className='overline text-c-landing-stats-description'>{description}</div>
+    </div>
+  );
+};
+*/
+
 const Programs: View = () => {
   return (
     <div className='py-7'>
@@ -235,10 +264,11 @@ const BottomView: View = () => {
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: ComponentView<State, Msg> = props => {
   return (
     <div>
-      <Hero state={state} dispatch={dispatch} />
+      <Hero {...props} />
+
       <Programs />
       <AppInfo />
       <GovRoleInfo />

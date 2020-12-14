@@ -5,6 +5,7 @@ import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import SendmailTransport from 'nodemailer/lib/sendmail-transport';
+import { parseBooleanEnvironmentVariable } from 'shared/config';
 
 // HARDCODED CONFIG
 // Offset for total opportunity metrics displayed on landing page
@@ -17,6 +18,11 @@ export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 export const MAILER_REPLY = get('MAILER_REPLY', 'noreply@digitalmarketplace.gov.bc.ca');
 
 // ENV CONFIG
+
+function get(name: string , fallback: string): string {
+  return process.env[name] || fallback;
+}
+
 // export the root directory of the repository.
 export const REPOSITORY_ROOT_DIR = dirname(findUp.sync('package.json') || '') || __dirname;
 
@@ -26,17 +32,15 @@ dotenv.config({
   path: resolve(REPOSITORY_ROOT_DIR, '.env')
 });
 
-function get(name: string , fallback: string): string {
-  return process.env[name] || fallback;
-}
-
-export const ENV: 'development' | 'production' = (() => {
-  switch (get('NODE_ENV', 'production')) {
+export const NODE_ENV: 'development' | 'production' = (() => {
+  switch (process.env.NODE_ENV) {
     case 'development': return 'development';
     case 'production': return 'production';
     default: return 'production';
   }
 })();
+
+export const ENV = NODE_ENV;
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config', ENV);
 
@@ -44,7 +48,7 @@ export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
 
 export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
-export const SCHEDULED_DOWNTIME = get('SCHEDULED_DOWNTIME', '') === '1';
+export const SCHEDULED_DOWNTIME = parseBooleanEnvironmentVariable(get('SCHEDULED_DOWNTIME', '0')) || false;
 
 export const BASIC_AUTH_USERNAME = get('BASIC_AUTH_USERNAME', '');
 

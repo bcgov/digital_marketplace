@@ -1,0 +1,94 @@
+
+paths:
+  /affiliations:
+    get:
+      summary: Retrieves multiple Affiliations.
+      tags:
+        - Affiliations
+      produces:
+        - application/json
+      description: Return all Affiliations for the given Organization or User.
+      parameters:
+        - name: organization
+          in: query
+          description: Optional Organization id to retrieve affiliations for.
+          type: uuid
+      responses:
+        200:
+          description: Receive the array of Affiliations
+
+
+    post:
+      summary: Creates a new Affiliation.
+      tags:
+        - Affiliations
+      produces:
+        - application/json
+      description: Creates a new Affiliation for the given User email and Organization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAffiliationRequestBody'
+            examples:
+              createAffiliationRequestBody:
+                $ref: '#/components/examples/createAffiliationRequestBody'
+      responses:
+        201:
+          descriptions: Receive the created Affiliation
+
+  /affiliations/{id}:
+    post:
+      summary: Updates an existing Affiliation.
+      tags:
+        - Affiliations
+      produces:
+        - application/json
+      description: Updates a pending Affiliation to be active.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Affiliation to update
+          type: uuid
+      responses:
+        200:
+          description: Receive the updated Affiliation
+
+    delete:
+      summary: Deactivates an existing Affiliation.
+      tags:
+        - Affiliations
+      produces:
+        - application/json
+      description: Deactivates an existing Affiliation.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Affiliation to deactivate
+          type: uuid
+      responses:
+        200:
+          description: Receive the deactivated Affiliation.
+
+components:
+  schemas:
+    CreateAffiliationRequestBody:
+      type: object
+      properties:
+        userEmail:
+          type: string
+        organization:
+          type: uuid
+        membershipType:
+          type: string
+          enum: [MEMBER, OWNER]
+  examples:
+    createAffiliationRequestBody:
+      summary: Request body for creating an Affiliation
+      value:
+        userEmail: john.smith@email.com
+        organization: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+        membershipType: 'MEMBER'

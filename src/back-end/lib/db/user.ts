@@ -92,10 +92,16 @@ export const readManyUsersNotificationsOn = tryDb<[], User[]>(async (connection)
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
-export const readManyUsersByRole = tryDb<[UserType], User[]>(async (connection, type) => {
-  const results = await connection<RawUser>('users')
+export const readManyUsersByRole = tryDb<[UserType, boolean?], User[]>(async (connection, type, includeInactive = true) => {
+  const query = connection<RawUser>('users')
     .where({ type })
     .select('*');
+
+  if (!includeInactive) {
+    query.where({ status: UserStatus.Active });
+  }
+
+  const results = await query;
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
@@ -128,15 +134,43 @@ export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, use
   return valid(await rawUserToUser(connection, result));
 });
 
-export async function userHasAcceptedTerms(connection: Connection, id: Id): Promise<boolean> {
-  const [result] = await connection<{ acceptedTerms: Date }>('users')
+export async function unacceptTermsForAllVendors(connection: Connection): Promise<number> {
+  const results = await connection<RawUser>('users')
+    .where({ type: UserType.Vendor })
+    .update({
+      acceptedTermsAt: null
+    }, '*');
+
+  if (!results) {
+    throw new Error ('unable to update users');
+  }
+
+  return results.length;
+}
+
+export async function userHasAcceptedCurrentTerms(connection: Connection, id: Id): Promise<boolean> {
+  const [result] = await connection<{ acceptedTermsAt: Date }>('users')
     .where({ id })
-    .select('acceptedTerms');
+    .select('acceptedTermsAt');
 
   if (!result) {
-    throw new Error('unable to check terms status for user');
+    throw new Error('unable to check current terms status for user');
   }
-  if (result.acceptedTerms) {
+  if (result.acceptedTermsAt) {
+    return true;
+  }
+  return false;
+}
+
+export async function userHasAcceptedPreviousTerms(connection: Connection, id: Id): Promise<boolean> {
+  const [result] = await connection<{ lastAcceptedTermsAt: Date }>('users')
+    .where({ id })
+    .select('lastAcceptedTermsAt');
+
+  if (!result) {
+    throw new Error('unable to check previous terms status for user');
+  }
+  if (result.lastAcceptedTermsAt) {
     return true;
   }
   return false;

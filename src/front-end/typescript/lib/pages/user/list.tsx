@@ -1,3 +1,4 @@
+import { EMPTY_STRING } from 'front-end/config';
 import { makePageMetadata } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import router from 'front-end/lib/app/router';
@@ -135,7 +136,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         className: 'text-nowrap'
       },
       {
-        children: (<Link dest={routeDest( adt('userProfile', { userId: user.id }) )}>{user.name}</Link>)
+        children: (<Link dest={routeDest( adt('userProfile', { userId: user.id }) )}>{user.name || EMPTY_STRING}</Link>)
       },
       {
         children: isAdmin(user) ? (<Icon name='check' color='secondary' />) : null,

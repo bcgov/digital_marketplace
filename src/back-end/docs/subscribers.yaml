@@ -1,0 +1,109 @@
+
+paths:
+  /subscribers/code-with-us:
+
+    post:
+      summary: Creates a new Subscription to a Code-With-Us opportunity.
+      tags:
+        - Subscribers
+      produces:
+        - application/json
+      description: Creates a new Subscription for the specified Opportunity and current User.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                opportunity:
+                  type: uuid
+            example:
+              opportunity: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+      responses:
+        201:
+          descriptions: Receive the created Subscription
+        400:
+          description: An invalid opportunity was provided
+        401:
+          description: Invalid permissions provided
+        503:
+          description: A database error has occurred
+
+  /subscribers/code-with-us/{id}:
+    delete:
+      summary: Deletes an existing Subscription to a Code-With-Us opportunity.
+      tags:
+        - Subscribers
+      produces:
+        - application/json
+      description: Deletes an existing Subscription to a Code-With-Us opportunity.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Subscription to delete
+          type: uuid
+      responses:
+        200:
+          description: Receive the deleted Subscription.
+        400:
+          description: An invalid Subscription id was provided.
+        401:
+          description: Invalid permissions provided
+        503:
+          description: A database error has occurred or the Subscription could not be deleted.
+
+  /subscribers/sprint-with-us:
+
+    post:
+      summary: Creates a new Subscription to a Sprint-With-Us opportunity.
+      tags:
+        - Subscribers
+      produces:
+        - application/json
+      description: Creates a new Subscription for the specified Opportunity and current User.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                opportunity:
+                  type: uuid
+            example:
+              opportunity: 89fe0644-50e1-4939-a488-aa6cf5977d7b
+      responses:
+        201:
+          descriptions: Receive the created Subscription
+        400:
+          description: An invalid opportunity was provided
+        401:
+          description: Invalid permissions provided
+        503:
+          description: A database error has occurred
+
+  /subscribers/sprint-with-us/{id}:
+    delete:
+      summary: Deletes an existing Subscription to a Sprint-With-Us opportunity.
+      tags:
+        - Subscribers
+      produces:
+        - application/json
+      description: Deletes an existing Subscription to a Sprint-With-Us opportunity.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the Subscription to delete
+          type: uuid
+      responses:
+        200:
+          description: Receive the deleted Subscription.
+        400:
+          description: An invalid Subscription id was provided.
+        401:
+          description: Invalid permissions provided
+        503:
+          description: A database error has occurred or the Subscription could not be deleted.

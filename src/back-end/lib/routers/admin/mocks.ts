@@ -23,7 +23,8 @@ export const vendorUser: User = {
   jobTitle: '',
   avatarImageFile: null,
   notificationsOn: null,
-  acceptedTerms: null,
+  acceptedTermsAt: null,
+  lastAcceptedTermsAt: null,
   idpUsername: 'vendor_user',
   deactivatedOn: null,
   deactivatedBy: null,
@@ -45,7 +46,8 @@ export const govUser: User = {
   jobTitle: 'Job Title',
   avatarImageFile: null,
   notificationsOn: null,
-  acceptedTerms: null,
+  acceptedTermsAt: null,
+  lastAcceptedTermsAt: null,
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
@@ -62,7 +64,8 @@ export const adminUser: User = {
   jobTitle: 'Job Title',
   avatarImageFile: null,
   notificationsOn: null,
-  acceptedTerms: null,
+  acceptedTermsAt: null,
+  lastAcceptedTermsAt: null,
   idpUsername: 'username',
   deactivatedOn: null,
   deactivatedBy: null,
@@ -89,7 +92,12 @@ export const cwuOpportunity: CWUOpportunity = {
   submissionInfo: '',
   acceptanceCriteria: '',
   evaluationCriteria: '',
-  successfulProponentName: 'Successful Proponent',
+  successfulProponent: {
+    id: adt('individual', id),
+    name: 'Successful Proponent',
+    email: 'noreply@gov.bc.ca',
+    createdBy: vendorUserSlim
+  },
   status: CWUOpportunityStatus.Published,
   attachments: [],
   addenda: []
@@ -187,7 +195,12 @@ export const swuOpportunity: SWUOpportunity = {
   status: SWUOpportunityStatus.Published,
   implementationPhase: swuOpportunityImplementationPhase,
   teamQuestions: [swuOpportunityTeamQuestion],
-  successfulProponentName: 'Successful Proponent',
+  successfulProponent: {
+    id,
+    name: 'Successful Proponent',
+    email: 'noreply@gov.bc.ca',
+    createdBy: vendorUserSlim
+  },
   attachments: [],
   addenda: []
 };

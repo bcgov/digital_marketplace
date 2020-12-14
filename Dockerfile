@@ -1,4 +1,4 @@
-FROM node:10-jessie
+FROM docker.io/node:10-jessie
 RUN apt-get update
 RUN apt-get -y install sendmail
 COPY . /usr/app

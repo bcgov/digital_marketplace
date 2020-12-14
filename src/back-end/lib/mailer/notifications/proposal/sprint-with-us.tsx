@@ -4,7 +4,7 @@ import { makeSWUOpportunityInformation, viewSWUOpportunityCallToAction } from 'b
 import * as templates from 'back-end/lib/mailer/templates';
 import { makeSend } from 'back-end/lib/mailer/transport';
 import React from 'react';
-import { CONTACT_EMAIL } from 'shared/config';
+import { CONTACT_EMAIL, EMPTY_STRING } from 'shared/config';
 import { isSWUOpportunityClosed, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposal, SWUProposalSlim } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession } from 'shared/lib/resources/session';
@@ -79,7 +79,7 @@ export async function successfulSWUProposalSubmissionT(recipient: User, opportun
   const title = 'Your Sprint With Us Opportunity Proposal Has Been Submitted';
   const description = 'You have successfully submitted a proposal for the following Digital Marketplace opportunity:';
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -105,7 +105,7 @@ export async function awardedSWUProposalSubmissionT(recipient: User, opportunity
   const description = 'Congratulations!  You have been awarded the following Digital Marketplace opportunity:';
   return [{
     summary: 'SWU opportunity awarded; sent to successful proponent.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -130,7 +130,7 @@ export async function unsuccessfulSWUProposalSubmissionT(recipient: User, opport
   const description = 'The following Digital Marketplace opportunity that you submitted a proposal to has closed:';
   return [{
     summary: 'SWU opportunity awarded; sent to unsuccessful proponents.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -138,7 +138,7 @@ export async function unsuccessfulSWUProposalSubmissionT(recipient: User, opport
       descriptionLists: [makeSWUOpportunityInformation(opportunity, false)],
       body: (
         <div>
-          <p>The opportunity has been awarded to {opportunity.successfulProponentName}.</p>
+          <p>The opportunity has been awarded to {opportunity.successfulProponent?.name || EMPTY_STRING}.</p>
           <p>If you would like to view your scores for each stage of the opportunity, <templates.Link text='sign in' url={templates.makeUrl('sign-in')} /> and access your proposal via your dashboard.</p>
           <p>Thank you for your submission and we wish you luck on the next opportunity.</p>
         </div>
@@ -154,7 +154,7 @@ export async function disqualifiedSWUProposalSubmissionT(recipient: User, opport
   const title = 'Your Sprint With Us Proposal Has Been Disqualified';
   const description = 'The proposal that you submitted for the following Digital Marketplace opportunity has been disqualified:';
   return [{
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -177,7 +177,7 @@ export async function withdrawnSWUProposalSubmissionProposalAuthorT(recipient: U
   const description = 'Your proposal for the following Digital Marketplace opportunity has been withdrawn:';
   return [{
     summary: 'SWU proposal withdrawn; sent to proponent who has withdrawn.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,
@@ -200,7 +200,7 @@ export async function withdrawnSWUProposalSubmissionT(recipient: User, withdrawn
   const description = `${withdrawnProponent.name} has withdrawn their proposal for the following Digital Marketplace opportunity:`;
   return [{
     summary: 'SWU proposal withdrawn; sent to the opportunity author.',
-    to: recipient.email,
+    to: recipient.email || [],
     subject: title,
     html: templates.simple({
       title,

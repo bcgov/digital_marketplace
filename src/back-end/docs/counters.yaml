@@ -1,0 +1,51 @@
+
+paths:
+  /counters:
+    get:
+      summary: Retrieves Counters for multiple resources.
+      tags:
+        - Counters
+      produces:
+        - application/json
+      description: Return Counters for the specified resources.
+      parameters:
+        - name: counters
+          in: query
+          description: List of Counter names to retrieve. Counter names are of the form '<resource-type>.<resource-sub-type>.<resource-id>.<counter-type>'
+          type: array
+          items:
+            type: string
+          example: [opportunity.code-with-us.5e4fba77-2697-4502-ae85-2cec29127f50.views]
+      responses:
+        200:
+          description: Receive the array of Counters.
+        400:
+          description: Invalid Counter names provided.
+        401:
+          description: Insufficient permissions provided.
+        503:
+          description: A database error has occurred or the Counter(s) are not retrievable.
+
+  /counters/{id}:
+    post:
+      summary: Updates an existing Counter.
+      tags:
+        - Counters
+      produces:
+        - application/json
+      description: Increment an existing Counter.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Name of the Counter to increment
+          type: string
+      responses:
+        200:
+          description: Receive the incremented Counter
+        400:
+          description: An invalid Counter name was provided
+        503:
+          description: A database error has occurred or the Counter is not updatable.
+
+   

@@ -18,7 +18,7 @@ Throughout the Process Terms the following definitions apply:
 
 "**Contribution**" means the work, such as source code, delivered by the Contractor to the Issuer with regard to an Opportunity;
 
-"**Digital Marketplace**" means the Digital Marketplace website located at https://digital.gov/marketplace where Opportunities will be posted by the Issuer;
+"**Digital Marketplace**" means the Digital Marketplace website located at https://digital.gov.bc.ca/marketplace where Opportunities will be posted by the Issuer;
 
 "**Evaluation Criteria**" means the criteria set out in the Opportunity on which Proposals will be evaluated to be considered for selection to work on the Opportunity;
 
