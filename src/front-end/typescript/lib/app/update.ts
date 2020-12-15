@@ -6,10 +6,10 @@ import * as Nav from 'front-end/lib/app/view/nav';
 import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
 import { Dispatch, immutable, Immutable, initAppChildPage, newRoute, Update, updateAppChildPage, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import * as PageContentView from 'front-end/lib/pages/content';
 import * as PageContentCreate from 'front-end/lib/pages/content/create';
 import * as PageContentEdit from 'front-end/lib/pages/content/edit';
 import * as PageContentList from 'front-end/lib/pages/content/list';
+import * as PageContentView from 'front-end/lib/pages/content/view';
 import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
@@ -414,7 +414,7 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
     case 'contentView':
       return await initAppChildPage({
         ...defaultPageInitParams,
-        childStatePath: ['pages', 'content'],
+        childStatePath: ['pages', 'contentView'],
         childRouteParams: route.value,
         childInit: PageContentView.component.init,
         childGetMetadata: PageContentView.component.getMetadata,

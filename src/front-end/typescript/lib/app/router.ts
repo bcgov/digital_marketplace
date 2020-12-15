@@ -1,7 +1,6 @@
 import { prefixPath } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as Router from 'front-end/lib/framework/router';
-import * as PageContentView from 'front-end/lib/pages/content';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import * as SWUOpportunityEditTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
@@ -386,7 +385,7 @@ const router: Router.Router<Route> = {
     {
       path: prefixPath('/content/:contentId'),
       makeRoute({ params }) {
-        return adt('contentView', PageContentView.parseContentId(params.contentId));
+        return adt('contentView', getString(params, 'contentId'));
       }
     },
     {

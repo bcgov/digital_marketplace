@@ -1,10 +1,10 @@
 import * as Nav from 'front-end/lib/app/view/nav';
 import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
 import { AppMsg, Immutable, Toast } from 'front-end/lib/framework';
-import * as PageContentView from 'front-end/lib/pages/content';
 import * as PageContentCreate from 'front-end/lib/pages/content/create';
 import * as PageContentEdit from 'front-end/lib/pages/content/edit';
 import * as PageContentList from 'front-end/lib/pages/content/list';
+import * as PageContentView from 'front-end/lib/pages/content/view';
 import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';

@@ -106,7 +106,7 @@ function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
           <div>
             <Link dest={routeDest(adt('contentEdit', c.slug))}>{c.title}</Link>
             <br />
-            <Link className='small text-uppercase' color='secondary' newTab dest={routeDest(adt('contentView', c.slug) as Route)} iconSymbolSize={0.75} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.slugPath}</Link>
+            <Link className='small text-uppercase' color='secondary' newTab dest={routeDest(adt('contentView', c.slug))} iconSymbolSize={0.75} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.slugPath}</Link>
           </div>
         )
       },
