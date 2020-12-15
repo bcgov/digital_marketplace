@@ -127,7 +127,7 @@ export const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) =
     <div>
       <Row>
         <Col xs='12'>
-          <h1 className='mb-5'>Content Manager</h1>
+          <h1 className='mb-5'>Content Management</h1>
           <h2 className='mb-4'>Pages</h2>
           <Table.view
             headCells={tableHeadCells(state)}
