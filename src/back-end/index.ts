@@ -11,7 +11,7 @@ import affiliationResource from 'back-end/lib/resources/affiliation';
 import avatarResource from 'back-end/lib/resources/avatar';
 import contentResource from 'back-end/lib/resources/content';
 import counterResource from 'back-end/lib/resources/counter';
-import emailNotificationsResource from 'back-end/lib/resources/emailNotifications';
+import emailNotificationsResource from 'back-end/lib/resources/email-notifications';
 import fileResource from 'back-end/lib/resources/file';
 import metricsResource from 'back-end/lib/resources/metrics';
 import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';

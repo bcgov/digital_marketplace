@@ -1,3 +1,4 @@
+import { APP_TERMS_CONTENT_ID } from 'front-end/config';
 import { Msg, State } from 'front-end/lib/app/types';
 import { AppGetAlerts, emptyPageAlerts } from 'front-end/lib/framework';
 import Link, { routeDest } from 'front-end/lib/views/link';
@@ -13,7 +14,7 @@ const getAlerts: AppGetAlerts<State, Msg> = ({ state, dispatch }) => {
       warnings: [{
         text: (
           <div>
-            The <i>{COPY.appTermsTitle}</i> have been updated. Please save what you are working on, <Link newTab dest={routeDest(adt('contentView', 'terms-and-conditions'))}>review the latest version</Link> and <Link onClick={() => dispatch(adt('showModal', 'acceptNewTerms' as const))}> agree to the updated terms</Link>.
+            The <i>{COPY.appTermsTitle}</i> have been updated. Please save what you are working on, <Link newTab dest={routeDest(adt('contentView', APP_TERMS_CONTENT_ID))}>review the latest version</Link> and <Link onClick={() => dispatch(adt('showModal', 'acceptNewTerms' as const))}> agree to the updated terms</Link>.
           </div>
         )
       }]

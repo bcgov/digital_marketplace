@@ -1,3 +1,4 @@
+import { APP_TERMS_CONTENT_ID } from 'front-end/config';
 import { makePageMetadata, makeStartLoading, makeStopLoading, sidebarValid, updateValid, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
@@ -144,7 +145,7 @@ const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({ state, disp
           ? (<Checkbox.view
               extraChildProps={{
                 inlineLabel: (
-                  <b>I acknowledge that I have read and agree to the <Link newTab dest={routeDest(adt('contentView', 'terms-and-conditions'))}>Terms and Conditions</Link> and <Link newTab dest={routeDest(adt('contentView', 'privacy'))}>Privacy Policy</Link>.<FormField.ViewRequiredAsterisk /></b>
+                  <b>I acknowledge that I have read and agree to the <Link newTab dest={routeDest(adt('contentView', APP_TERMS_CONTENT_ID))}>Terms and Conditions</Link> and <Link newTab dest={routeDest(adt('contentView', 'privacy'))}>Privacy Policy</Link>.<FormField.ViewRequiredAsterisk /></b>
                 )
               }}
               disabled={isDisabled}

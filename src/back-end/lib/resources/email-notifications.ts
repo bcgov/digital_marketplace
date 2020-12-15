@@ -1,12 +1,12 @@
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
-import { handleTermsUpdated } from 'back-end/lib/mailer/notifications/termsUpdated';
+import { handleTermsUpdated } from 'back-end/lib/mailer/notifications/terms-updated';
 import * as permissions from 'back-end/lib/permissions';
 import { basicResponse, makeJsonResponseBody, wrapRespond } from 'back-end/lib/server';
 import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import { getString } from 'shared/lib';
 import { invalid, valid } from 'shared/lib/http';
-import { CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/emailNotifications';
+import { CreateRequestBody as SharedCreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/email-notifications';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt } from 'shared/lib/types';
 

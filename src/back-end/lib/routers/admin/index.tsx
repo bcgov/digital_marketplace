@@ -5,7 +5,7 @@ import { cancelledSWUOpportunityActionedT, cancelledSWUOpportunitySubscribedT, n
 import { organizationArchivedT } from 'back-end/lib/mailer/notifications/organization';
 import { awardedCWUProposalSubmissionT, disqualifiedCWUProposalSubmissionT, successfulCWUProposalSubmissionT, unsuccessfulCWUProposalSubmissionT, withdrawnCWUProposalSubmissionProposalAuthorT, withdrawnCWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/code-with-us';
 import { awardedSWUProposalSubmissionT, disqualifiedSWUProposalSubmissionT, successfulSWUProposalSubmissionT, unsuccessfulSWUProposalSubmissionT, withdrawnSWUProposalSubmissionProposalAuthorT, withdrawnSWUProposalSubmissionT } from 'back-end/lib/mailer/notifications/proposal/sprint-with-us';
-import { vendorTermsChangedT } from 'back-end/lib/mailer/notifications/termsUpdated';
+import { vendorTermsChangedT } from 'back-end/lib/mailer/notifications/terms-updated';
 import { accountDeactivatedAdminT, accountDeactivatedSelfT, accountReactivatedAdminT, accountReactivatedSelfT, inviteToRegisterT, userAccountRegisteredT } from 'back-end/lib/mailer/notifications/user';
 import { styles, View } from 'back-end/lib/mailer/templates';
 import * as permissions from 'back-end/lib/permissions';

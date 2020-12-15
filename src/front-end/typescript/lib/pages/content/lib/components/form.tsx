@@ -6,7 +6,7 @@ import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, U
 import * as api from 'front-end/lib/http/api';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { Content, CreateRequestBody } from 'shared/lib/resources/content';
+import { Content, CreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/content';
 import { adt, ADT } from 'shared/lib/types';
 import * as contentValidation from 'shared/lib/validation/content';
 
@@ -38,6 +38,15 @@ export function getValues(state: Immutable<State>): Values {
     slug: FormField.getValue(state.slug),
     body: FormField.getValue(state.body)
   };
+}
+
+export type Errors = CreateValidationErrors;
+
+export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
+  return state
+    .update('title', s => FormField.setErrors(s, errors.title || []))
+    .update('slug', s => FormField.setErrors(s, errors.slug || []))
+    .update('body', s => FormField.setErrors(s, errors.body || []));
 }
 
 export const init: Init<Params, State> = async ({ content = null }) => {
@@ -106,8 +115,6 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-const DEFAULT_SLUG = 'example-slug';
-
 export function slugPath(slug: string): string {
   return prefixPath(`content/${slug}`);
 }
@@ -133,7 +140,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
           <ShortText.view
             extraChildProps={{}}
             label='Slug'
-            placeholder={DEFAULT_SLUG}
+            placeholder='Slug, e.g. an-example-slug-123'
             help={`A page slug determines the URL that people will use to access the page. A valid slug must start with a lowercase character or number, and can subsequently contain lowercase characters, numbers or hyphens (i.e. "-"). For example, "this-is-a-valid-slug123".`}
             hint={slug ? (<span>This page {state.content?.slug !== slug ? 'will be' : 'is'} available at <b>{slugPath(slug)}</b>.</span>) : undefined}
             required
@@ -152,7 +159,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
               style: { height: '60vh', minHeight: '400px' }
             }}
             required
-            disabled={disabled || !!state.content?.fixed}
+            disabled={disabled}
             state={state.body}
             dispatch={mapComponentDispatch(dispatch, value => adt('body' as const, value))} />
         </Col>

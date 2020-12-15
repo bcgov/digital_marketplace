@@ -7,6 +7,7 @@ import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
 import * as ContentResource from 'shared/lib/resources/content';
 import * as CounterResource from 'shared/lib/resources/counter';
+import * as EmailNotificationsResource from 'shared/lib/resources/email-notifications';
 import * as FileResource from 'shared/lib/resources/file';
 import * as MetricsResource from 'shared/lib/resources/metrics';
 import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
@@ -120,6 +121,32 @@ interface ContentSimpleResourceTypesParams {
 type ContentResourceTypes = SimpleResourceTypes<ContentSimpleResourceTypesParams>;
 
 export const content: CrudApi<ContentResourceTypes> = makeSimpleCrudApi<ContentSimpleResourceTypesParams>(apiNamespace('content'));
+
+// EmailNotifications
+
+interface EmailNotificationsSimpleResourceTypesParams {
+  record: null;
+  create: {
+    request: EmailNotificationsResource.CreateRequestBody;
+    invalidResponse: EmailNotificationsResource.CreateValidationErrors;
+  };
+  update: {
+    request: null;
+    invalidResponse: null;
+  };
+}
+
+type EmailNotificationsSimpleResourceTypes = SimpleResourceTypes<EmailNotificationsSimpleResourceTypesParams>;
+
+type EmailNotificationsResourceTypes = PickCrudApi<EmailNotificationsSimpleResourceTypes, 'create'>;
+
+export const emailNotifications: CrudApi<EmailNotificationsResourceTypes> = {
+  ...makeSimpleCrudApi<EmailNotificationsSimpleResourceTypesParams>(apiNamespace('emailNotifications')),
+  readMany: undefined,
+  readOne: undefined,
+  update: undefined,
+  delete: undefined
+};
 
 // Sessions
 

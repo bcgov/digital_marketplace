@@ -172,7 +172,7 @@ const resource: Resource = {
         const session: AuthenticatedSession = request.session;
         const validatedContent = await validateContentId(connection, request.params.id, session);
         if (isInvalid(validatedContent)) {
-          return invalid({ notFound: ['The specified conent does not exists.']});
+          return invalid({ notFound: ['The specified content does not exists.']});
         }
         const existingContent = validatedContent.value;
         const { slug, title, body } = request.body;

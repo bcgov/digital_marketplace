@@ -73,8 +73,10 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.content.create(values);
           if (api.isValid(result)) {
             dispatch(newRoute(adt('contentEdit', result.value.slug) as Route));
+            //TODO toast
             return state;
           } else {
+            //TODO toast
             return stopLoading(state);
           }
         }

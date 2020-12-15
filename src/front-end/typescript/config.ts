@@ -30,6 +30,8 @@ export const DROPDOWN_CARET_SIZE = 0.8; //rem
 
 export const TOAST_AUTO_DISMISS_DURATION = 20000; //ms
 
+export const APP_TERMS_CONTENT_ID = 'terms-and-conditions';
+
 export const SWU_PROPOSAL_EVALUATION_CONTENT_ID = 'sprint-with-us-proposal-evaluation';
 
 export const SWU_OPPORTUNITY_SCOPE_CONTENT_ID = 'sprint-with-us-opportunity-scope';

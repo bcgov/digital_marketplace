@@ -53,5 +53,5 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   view,
   getMetadata: getMetadataValid(state => {
     return makePageMetadata(state.content.title);
-  }, makePageMetadata('Loading'))
+  }, makePageMetadata())
 };

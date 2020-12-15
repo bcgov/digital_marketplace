@@ -1,3 +1,4 @@
+import { APP_TERMS_CONTENT_ID } from 'front-end/config';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
@@ -75,7 +76,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
 export const view: View<Props> = ({ opportunityType, action, termsTitle, termsRoute, state, dispatch }) => {
   return (
     <div>
-      <p>Please ensure you have reviewed the <Link newTab dest={routeDest(termsRoute)}>{termsTitle}</Link> and <Link newTab dest={routeDest(adt('contentView', 'terms-and-conditions'))}>{COPY.appTermsTitle}</Link> prior to {action} your proposal for this {opportunityType} opportunity.</p>
+      <p>Please ensure you have reviewed the <Link newTab dest={routeDest(termsRoute)}>{termsTitle}</Link> and <Link newTab dest={routeDest(adt('contentView', APP_TERMS_CONTENT_ID))}>{COPY.appTermsTitle}</Link> prior to {action} your proposal for this {opportunityType} opportunity.</p>
       <Checkbox.view
         extraChildProps={{
           inlineLabel: (<span>I acknowledge that I have read, fully understand and agree to the <i>{termsTitle}</i>.</span>)

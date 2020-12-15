@@ -1,3 +1,4 @@
+import { APP_TERMS_CONTENT_ID } from 'front-end/config';
 import { AsyncWithState, WithState } from 'front-end/lib';
 import { Route } from 'front-end/lib/app/types';
 import * as FormField from 'front-end/lib/components/form-field';
@@ -84,7 +85,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 const View: View<Props> = ({ disabled, state, dispatch }) => {
-  const termsRoute = adt('contentView', 'terms-and-conditions') as Route;
+  const termsRoute = adt('contentView', APP_TERMS_CONTENT_ID) as Route;
   return (
     <div>
       <p>Please ensure you have reviewed the latest version of the <Link newTab dest={routeDest(termsRoute)}>{COPY.appTermsTitle}</Link>.</p>
