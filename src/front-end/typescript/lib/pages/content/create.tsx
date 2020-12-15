@@ -72,7 +72,7 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const values = Form.getValues(state.form);
           const result = await api.content.create(values);
           if (api.isValid(result)) {
-            dispatch(newRoute(adt('contentEdit', result.value.slug)));
+            dispatch(newRoute(adt('contentEdit', result.value.slug) as Route));
             return state;
           } else {
             return stopLoading(state);

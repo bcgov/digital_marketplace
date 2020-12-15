@@ -1,31 +1,32 @@
-import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, ValidatedState, viewValid } from 'front-end/lib';
+import { getContextualActionsValid, makePageMetadata, updateValid, ValidatedState, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
+import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/content/lib/components/form';
-import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import { compareStrings, formatDate } from 'shared/lib';
+import { Content } from 'shared/lib/resources/content';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 import { invalid, valid } from 'shared/lib/validation';
 
-type ModalId = 'publish';
+interface TableContent extends Content {
+  slugPath: string;
+}
 
 interface ValidState {
-  loading: number;
-  showModal: ModalId | null;
-  form: Immutable<Form.State>;
+  table: Immutable<Table.State>;
+  content: TableContent[];
 }
 
 export type State = ValidatedState<ValidState>;
 
 type InnerMsg
-  = ADT<'form', Form.Msg>
-  | ADT<'showModal', ModalId>
-  | ADT<'hideModal'>
-  | ADT<'publish'>;
+  = ADT<'table', Table.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -34,10 +35,21 @@ export type RouteParams = null;
 export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RouteParams, State, Msg>({
   userType: [UserType.Admin],
   async success({ routeParams, shared }) {
+    let content: TableContent[] = [];
+    const result = await api.content.readMany();
+    if (api.isValid(result)) {
+      content = result.value
+        .map(c => ({
+          ...c,
+          slugPath: Form.slugPath(c.slug)
+        }))
+        .sort((a, b) => compareStrings(a.title, b.title));
+    }
     return valid(immutable({
-      loading: 0,
-      showModal: null,
-      form: immutable(await Form.init({}))
+      content,
+      table: immutable(await Table.init({
+        idNamespace: 'content-list'
+      }))
     }));
   },
   async fail({ dispatch, routePath }) {
@@ -48,52 +60,94 @@ export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<R
   }
 });
 
-const startLoading = makeStartLoading<ValidState>('loading');
-const stopLoading = makeStopLoading<ValidState>('loading');
-
 export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
-    case 'form':
+    case 'table':
       return updateComponentChild({
         state,
-        childStatePath: ['form'],
-        childUpdate: Form.update,
+        childStatePath: ['table'],
+        childUpdate: Table.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('form', value)
+        mapChildMsg: value => adt('table', value)
       });
-    case 'showModal':
-      return [state.set('showModal', msg.value)];
-    case 'hideModal':
-      return [state.set('showModal', null)];
-    case 'publish':
-      return [
-        startLoading(state).set('showModal', null),
-        async (state, dispatch) => {
-          const values = Form.getValues(state.form);
-          const result = await api.content.create(values);
-          if (api.isValid(result)) {
-            //TODO navigate to edit content page
-            window.alert('OK!');
-            return state;
-          } else {
-            return stopLoading(state);
-          }
-        }
-      ];
     default:
       return [state];
   }
 });
+
+function tableHeadCells(state: Immutable<ValidState>): Table.HeadCells {
+  return [
+    {
+      children: 'Title',
+      className: 'text-nowrap',
+      style: {
+        width: '100%',
+        minWidth: '200px'
+      }
+    },
+    {
+      children: 'Created',
+      className: 'text-nowrap',
+      style: { width: '0px' }
+    },
+    {
+      children: 'Updated',
+      className: 'text-nowrap',
+      style: { width: '0px' }
+    }
+  ];
+}
+
+function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
+  return state.content.map(c => {
+    return [
+      {
+        children: (
+          <div>
+            <Link dest={routeDest(adt('contentEdit', c.slug))}>{c.title}</Link>
+            <br />
+            <Link className='small text-uppercase' color='secondary' newTab dest={routeDest(adt('contentView', c.slug) as Route)} iconSymbolSize={0.75} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.slugPath}</Link>
+          </div>
+        )
+      },
+      {
+        children: (
+          <div>
+            <div className='text-nowrap'>{formatDate(c.createdAt)}</div>
+            {c.createdBy
+              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.createdBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.createdBy.name}</Link>)
+              : (<div className='small text-uppercase text-secondary'>System</div>)}
+          </div>
+        )
+      },
+      {
+        children: (
+          <div>
+            <div className='text-nowrap'>{formatDate(c.updatedAt)}</div>
+            {c.updatedBy
+              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.updatedBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.updatedBy.name}</Link>)
+              : (<div className='small text-uppercase text-secondary'>System</div>)}
+          </div>
+        )
+      }
+    ];
+  });
+}
 
 export const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
   return (
     <div>
       <Row>
         <Col xs='12'>
-          <h1 className='mb-5'>Create a New Page</h1>
+          <h1 className='mb-5'>Content Manager</h1>
+          <h2 className='mb-4'>Pages</h2>
+          <Table.view
+            headCells={tableHeadCells(state)}
+            bodyRows={tableBodyRows(state)}
+            state={state.table}
+            dispatch={mapComponentDispatch(dispatch, msg => adt('table' as const, msg))} />
         </Col>
       </Row>
-      <Form.view state={state.form} dispatch={mapComponentDispatch(dispatch, msg => adt('form' as const, msg))} />
     </div>
   );
 });
@@ -103,56 +157,17 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Create a New Page');
+    return makePageMetadata('Content');
   },
   getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
-    const loading = state.loading > 0;
-    const isValid = Form.isValid(state.form);
     return adt('links', [
       {
-        children: 'Publish',
-        onClick: () => dispatch(adt('showModal', 'publish') as Msg),
+        children: 'Create Page',
         button: true,
-        loading,
-        disabled: !isValid || loading,
-        symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
-        color: 'primary'
-      },
-      {
-        children: 'Cancel',
-        color: 'c-nav-fg-alt'
-        //TODO
-        //dest: routeDest(adt('userProfile', {
-          //userId: state.user.id,
-          //tab: 'organizations' as const
-        //}))
+        symbol_: leftPlacement(iconLinkSymbol('file-plus')),
+        color: 'primary',
+        dest: routeDest(adt('contentCreate', null))
       }
     ]);
-  }),
-  getModal: getModalValid<ValidState, Msg>(state => {
-    switch (state.showModal) {
-      case 'publish':
-        return {
-          title: 'Publish Page?',
-          body: () => 'Are you sure you want to publish this page? Once published, all users will be able to access it by navigating to its URL.',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Publish Page',
-              icon: 'bullhorn',
-              color: 'primary',
-              msg: adt('publish'),
-              button: true
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
-      case null:
-        return null;
-    }
   })
 };

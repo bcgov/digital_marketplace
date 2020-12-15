@@ -108,6 +108,10 @@ export interface Props extends ComponentViewProps<State, Msg> {
 
 const DEFAULT_SLUG = 'example-slug';
 
+export function slugPath(slug: string): string {
+  return prefixPath(`content/${slug}`);
+}
+
 export const view: View<Props> = ({ state, dispatch, disabled }) => {
   const slug = FormField.getValue(state.slug);
   return (
@@ -131,7 +135,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             label='Slug'
             placeholder={DEFAULT_SLUG}
             help={`A page slug determines the URL that people will use to access the page. A valid slug must start with a lowercase character or number, and can subsequently contain lowercase characters, numbers or hyphens (i.e. "-"). For example, "this-is-a-valid-slug123".`}
-            hint={slug ? (<span>This page {state.content?.slug !== slug ? 'will be' : 'is'} available at <b>{prefixPath(`content/${slug}`)}</b>.</span>) : undefined}
+            hint={slug ? (<span>This page {state.content?.slug !== slug ? 'will be' : 'is'} available at <b>{slugPath(slug)}</b>.</span>) : undefined}
             required
             disabled={disabled || !!state.content?.fixed}
             state={state.slug}
