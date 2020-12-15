@@ -30,7 +30,7 @@ const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
     {
       tag: 'date' as const,
       date: opportunity.updatedAt,
-      label: 'Last updated'
+      label: 'Updated'
     }
   ];
   const items = [

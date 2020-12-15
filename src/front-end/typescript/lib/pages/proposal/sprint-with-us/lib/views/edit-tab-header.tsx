@@ -28,7 +28,7 @@ const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
     {
       tag: 'date' as const,
       date: proposal.updatedAt,
-      label: 'Last updated'
+      label: 'Updated'
     }
   ];
   const items = [
