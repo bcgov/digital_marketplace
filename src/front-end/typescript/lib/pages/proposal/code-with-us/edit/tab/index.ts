@@ -74,7 +74,7 @@ export async function makeSidebarState(proposalId: Id, opportunityId: Id, active
         text: 'Read Guide',
         active: false,
         newTab: true,
-        dest: routeDest(adt('content', 'code-with-us-proposal-guide'))
+        dest: routeDest(adt('contentView', 'code-with-us-proposal-guide'))
       })
     ]
   }));

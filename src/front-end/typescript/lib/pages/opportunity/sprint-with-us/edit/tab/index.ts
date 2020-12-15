@@ -147,7 +147,7 @@ export async function makeSidebarState(opportunity: SWUOpportunity, activeTab: T
         text: 'Read Guide',
         active: false,
         newTab: true,
-        dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide'))
+        dest: routeDest(adt('contentView', 'sprint-with-us-opportunity-guide'))
       })
     ]
   }));

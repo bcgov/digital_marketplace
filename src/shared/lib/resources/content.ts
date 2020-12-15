@@ -25,7 +25,7 @@ export interface CreateRequestBody {
 
 export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
 
-export type UpdateRequestBody = Omit<CreateRequestBody, 'fixed'>;
+export type UpdateRequestBody = CreateRequestBody;
 
 export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody>, BodyWithErrors {
   fixed?: string[];

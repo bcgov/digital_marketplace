@@ -1,10 +1,12 @@
+import { prefixPath } from 'front-end/lib';
+import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { Content } from 'shared/lib/resources/content';
+import { Content, CreateRequestBody } from 'shared/lib/resources/content';
 import { adt, ADT } from 'shared/lib/types';
 import * as contentValidation from 'shared/lib/validation/content';
 
@@ -22,6 +24,20 @@ export type Msg
 
 export interface Params {
   content?: Content;
+}
+
+export function isValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.title) && FormField.isValid(state.slug) && FormField.isValid(state.body);
+}
+
+export type Values = CreateRequestBody;
+
+export function getValues(state: Immutable<State>): Values {
+  return {
+    title: FormField.getValue(state.title),
+    slug: FormField.getValue(state.slug),
+    body: FormField.getValue(state.body)
+  };
 }
 
 export const init: Init<Params, State> = async ({ content = null }) => {
@@ -90,15 +106,18 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
+const DEFAULT_SLUG = 'example-slug';
+
 export const view: View<Props> = ({ state, dispatch, disabled }) => {
+  const slug = FormField.getValue(state.slug);
   return (
     <div>
       <Row>
         <Col xs='12' md='9' lg='8'>
           <ShortText.view
             extraChildProps={{}}
-            label='Page Title'
-            placeholder='Page Title'
+            label='Title'
+            placeholder='Title'
             required
             disabled={disabled}
             state={state.title}
@@ -110,7 +129,9 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
           <ShortText.view
             extraChildProps={{}}
             label='Slug'
-            placeholder='example-slug'
+            placeholder={DEFAULT_SLUG}
+            help={`A page slug determines the URL that people will use to access the page. A valid slug must start with a lowercase character or number, and can subsequently contain lowercase characters, numbers or hyphens (i.e. "-"). For example, "this-is-a-valid-slug123".`}
+            hint={slug ? (<span>This page {state.content?.slug !== slug ? 'will be' : 'is'} available at <b>{prefixPath(`content/${slug}`)}</b>.</span>) : undefined}
             required
             disabled={disabled || !!state.content?.fixed}
             state={state.slug}
@@ -120,10 +141,12 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
       <Row>
         <Col xs='12' md='9' lg='8'>
           <RichMarkdownEditor.view
-            extraChildProps={{}}
-            label='Page Body'
+            label='Body'
             placeholder={`Enter the page's body here.`}
             help={`Please enter the page's body in the provided text area. It can be formatted using Markdown.`}
+            extraChildProps={{
+              style: { height: '60vh', minHeight: '400px' }
+            }}
             required
             disabled={disabled || !!state.content?.fixed}
             state={state.body}

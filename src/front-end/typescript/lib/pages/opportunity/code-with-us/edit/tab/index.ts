@@ -117,7 +117,7 @@ export async function makeSidebarState(opportunity: CWUOpportunity, activeTab: T
         text: 'Read Guide',
         active: false,
         newTab: true,
-        dest: routeDest(adt('content', 'code-with-us-opportunity-guide'))
+        dest: routeDest(adt('contentView', 'code-with-us-opportunity-guide'))
       })
     ]
   }));

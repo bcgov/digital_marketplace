@@ -84,7 +84,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 const View: View<Props> = ({ disabled, state, dispatch }) => {
-  const termsRoute = adt('content', 'terms-and-conditions') as Route;
+  const termsRoute = adt('contentView', 'terms-and-conditions') as Route;
   return (
     <div>
       <p>Please ensure you have reviewed the latest version of the <Link newTab dest={routeDest(termsRoute)}>{COPY.appTermsTitle}</Link>.</p>

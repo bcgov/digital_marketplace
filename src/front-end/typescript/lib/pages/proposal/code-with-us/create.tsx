@@ -217,7 +217,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       ),
       getFooter: () => (
         <span>
-          Need help? <Link dest={routeDest(adt('content', 'code-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Code With Us</em> proposal.
+          Need help? <Link dest={routeDest(adt('contentView', 'code-with-us-proposal-guide'))}>Read the guide</Link> to learn how to create and manage a <em>Code With Us</em> proposal.
         </span>
       )
     })
@@ -234,7 +234,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               opportunityType='Code With Us'
               action='submitting'
               termsTitle='Code With Us Terms & Conditions'
-              termsRoute={adt('content', 'code-with-us-terms-and-conditions')}
+              termsRoute={adt('contentView', 'code-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),

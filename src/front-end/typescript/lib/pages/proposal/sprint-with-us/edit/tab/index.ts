@@ -91,7 +91,7 @@ export async function makeSidebarState(proposal: SWUProposal, activeTab: TabId):
         text: 'Read Guide',
         active: false,
         newTab: true,
-        dest: routeDest(adt('content', 'sprint-with-us-proposal-guide'))
+        dest: routeDest(adt('contentView', 'sprint-with-us-proposal-guide'))
       })
     ]
   }));

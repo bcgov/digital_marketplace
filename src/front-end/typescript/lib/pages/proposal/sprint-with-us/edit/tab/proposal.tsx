@@ -379,7 +379,7 @@ export const component: Tab.Component<State, Msg> = {
               opportunityType='Sprint With Us'
               action='submitting'
               termsTitle='Sprint With Us Terms & Conditions'
-              termsRoute={adt('content', 'sprint-with-us-terms-and-conditions')}
+              termsRoute={adt('contentView', 'sprint-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),
@@ -408,7 +408,7 @@ export const component: Tab.Component<State, Msg> = {
               opportunityType='Sprint With Us'
               action='submitting changes to'
               termsTitle='Sprint With Us Terms & Conditions'
-              termsRoute={adt('content', 'sprint-with-us-terms-and-conditions')}
+              termsRoute={adt('contentView', 'sprint-with-us-terms-and-conditions')}
               state={state.submitTerms}
               dispatch={mapComponentDispatch(dispatch, msg => adt('submitTerms', msg) as Msg)} />
           ),

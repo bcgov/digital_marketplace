@@ -1,7 +1,10 @@
 import * as Nav from 'front-end/lib/app/view/nav';
 import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
 import { AppMsg, Immutable, Toast } from 'front-end/lib/framework';
-import * as PageContent from 'front-end/lib/pages/content';
+import * as PageContentView from 'front-end/lib/pages/content';
+import * as PageContentCreate from 'front-end/lib/pages/content/create';
+import * as PageContentEdit from 'front-end/lib/pages/content/edit';
+import * as PageContentList from 'front-end/lib/pages/content/list';
 import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
@@ -48,7 +51,10 @@ export type Route
   | ADT<'opportunityCreate',    PageOpportunityCreate.RouteParams>
   | ADT<'learnMoreCWU',         PageLearnMoreCWU.RouteParams>
   | ADT<'learnMoreSWU',         PageLearnMoreSWU.RouteParams>
-  | ADT<'content',              PageContent.RouteParams>
+  | ADT<'contentView',          PageContentView.RouteParams>
+  | ADT<'contentCreate',        PageContentCreate.RouteParams>
+  | ADT<'contentEdit',          PageContentEdit.RouteParams>
+  | ADT<'contentList',          PageContentList.RouteParams>
   | ADT<'signOut',              PageSignOut.RouteParams>
   | ADT<'signIn',               PageSignIn.RouteParams>
   | ADT<'signUpStepOne',        PageSignUpStepOne.RouteParams>
@@ -81,7 +87,7 @@ export type Route
 
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route['tag']> = [
   'signUpStepTwo',
-  'content',
+  'contentView',
   'learnMoreCWU',
   'learnMoreSWU',
   'signOut'
@@ -120,7 +126,10 @@ export interface State {
     opportunityCreate?: Immutable<PageOpportunityCreate.State>;
     learnMoreCWU?: Immutable<PageLearnMoreCWU.State>;
     learnMoreSWU?: Immutable<PageLearnMoreSWU.State>;
-    content?: Immutable<PageContent.State>;
+    contentView?: Immutable<PageContentView.State>;
+    contentCreate?: Immutable<PageContentCreate.State>;
+    contentEdit?: Immutable<PageContentEdit.State>;
+    contentList?: Immutable<PageContentList.State>;
     signOut?: Immutable<PageSignOut.State>;
     signUpStepOne?: Immutable<PageSignUpStepOne.State>;
     signUpStepTwo?: Immutable<PageSignUpStepTwo.State>;
@@ -168,7 +177,10 @@ type InnerMsg
   | ADT<'pageOpportunityCreate',    PageOpportunityCreate.Msg>
   | ADT<'pageLearnMoreCWU',         PageLearnMoreCWU.Msg>
   | ADT<'pageLearnMoreSWU',         PageLearnMoreSWU.Msg>
-  | ADT<'pageContent',              PageContent.Msg>
+  | ADT<'pageContentView',          PageContentView.Msg>
+  | ADT<'pageContentCreate',        PageContentCreate.Msg>
+  | ADT<'pageContentEdit',          PageContentEdit.Msg>
+  | ADT<'pageContentList',          PageContentList.Msg>
   | ADT<'pageSignIn',               PageSignIn.Msg>
   | ADT<'pageSignOut',              PageSignOut.Msg>
   | ADT<'pageSignUpStepOne',        PageSignUpStepOne.Msg>

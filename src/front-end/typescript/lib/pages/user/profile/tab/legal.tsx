@@ -111,16 +111,16 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <div className='mt-4'>
             <h3>Terms & Conditions</h3>
             <div className='mt-3'>
-              <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))} symbol_={hasAcceptedLatest ? undefined : leftPlacement(iconLinkSymbol('warning'))} symbolClassName='text-warning'>{COPY.appTermsTitle}</Link>
+              <Link newTab dest={routeDest(adt('contentView', 'terms-and-conditions'))} symbol_={hasAcceptedLatest ? undefined : leftPlacement(iconLinkSymbol('warning'))} symbolClassName='text-warning'>{COPY.appTermsTitle}</Link>
               {acceptedTerms
                 ? (<TermsSubtext>You agreed to the <i>{COPY.appTermsTitle}</i> on {formatDate(acceptedTerms)} at {formatTime(acceptedTerms, true)}.</TermsSubtext>)
-                : (<TermsSubtext>The <i>{COPY.appTermsTitle}</i> have been updated. Please <Link newTab dest={routeDest(adt('content', 'terms-and-conditions'))}>review the latest version</Link> and <Link onClick={() => dispatch(adt('showModal', 'acceptNewTerms' as const))}>agree to the updated terms</Link>.</TermsSubtext>)}
+                : (<TermsSubtext>The <i>{COPY.appTermsTitle}</i> have been updated. Please <Link newTab dest={routeDest(adt('contentView', 'terms-and-conditions'))}>review the latest version</Link> and <Link onClick={() => dispatch(adt('showModal', 'acceptNewTerms' as const))}>agree to the updated terms</Link>.</TermsSubtext>)}
             </div>
             <div className='mt-3'>
-              <Link newTab dest={routeDest(adt('content', 'code-with-us-terms-and-conditions'))}>Code With Us Terms & Conditions</Link>
+              <Link newTab dest={routeDest(adt('contentView', 'code-with-us-terms-and-conditions'))}>Code With Us Terms & Conditions</Link>
             </div>
             <div className='mt-3'>
-              <Link newTab dest={routeDest(adt('content', 'sprint-with-us-terms-and-conditions'))}>Sprint With Us Terms & Conditions</Link>
+              <Link newTab dest={routeDest(adt('contentView', 'sprint-with-us-terms-and-conditions'))}>Sprint With Us Terms & Conditions</Link>
             </div>
           </div>
         </Col>

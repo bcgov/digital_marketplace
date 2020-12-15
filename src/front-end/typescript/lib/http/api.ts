@@ -5,6 +5,7 @@ import { compareDates, compareNumbers, prefix } from 'shared/lib';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';
 import * as AffiliationResource from 'shared/lib/resources/affiliation';
+import * as ContentResource from 'shared/lib/resources/content';
 import * as CounterResource from 'shared/lib/resources/counter';
 import * as FileResource from 'shared/lib/resources/file';
 import * as MetricsResource from 'shared/lib/resources/metrics';
@@ -101,6 +102,24 @@ export const counters: CountersCrudApi = {
   }
 
 };
+
+// Content
+
+interface ContentSimpleResourceTypesParams {
+  record: ContentResource.Content;
+  create: {
+    request: ContentResource.CreateRequestBody;
+    invalidResponse: ContentResource.CreateValidationErrors;
+  };
+  update: {
+    request: ContentResource.UpdateRequestBody;
+    invalidResponse: ContentResource.UpdateValidationErrors;
+  };
+}
+
+type ContentResourceTypes = SimpleResourceTypes<ContentSimpleResourceTypesParams>;
+
+export const content: CrudApi<ContentResourceTypes> = makeSimpleCrudApi<ContentSimpleResourceTypesParams>(apiNamespace('content'));
 
 // Sessions
 

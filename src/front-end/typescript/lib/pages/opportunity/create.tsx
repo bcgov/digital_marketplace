@@ -59,7 +59,7 @@ const view: ComponentView<State, Msg> = () => {
           links={[
             {
               button: true,
-              dest: routeDest(adt('content', 'code-with-us-opportunity-guide')),
+              dest: routeDest(adt('contentView', 'code-with-us-opportunity-guide')),
               children: ['Read Guide'],
               color: 'info' as TextColor,
               outline: true
@@ -80,7 +80,7 @@ const view: ComponentView<State, Msg> = () => {
           links={[
             {
               button: true,
-              dest: routeDest(adt('content', 'sprint-with-us-opportunity-guide')),
+              dest: routeDest(adt('contentView', 'sprint-with-us-opportunity-guide')),
               children: ['Read Guide'],
               color: 'info' as TextColor,
               outline: true

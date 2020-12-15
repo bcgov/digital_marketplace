@@ -1,11 +1,11 @@
 import { invalid, valid, validateGenericString, Validation } from 'shared/lib/validation';
 
 export function validateTitle(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Title', 1);
+  return validateGenericString(raw, 'Title', 1, 100);
 }
 
 export function validateBody(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Body', 1);
+  return validateGenericString(raw, 'Body', 1, 50000);
 }
 
 export function validateSlug(raw: string): Validation<string> {

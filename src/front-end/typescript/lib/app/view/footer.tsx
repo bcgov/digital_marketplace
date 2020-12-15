@@ -14,23 +14,23 @@ const links: AnchorProps[] = [
   },
   {
     children: 'About',
-    dest: routeDest(adt('content', 'about'))
+    dest: routeDest(adt('contentView', 'about'))
   },
   {
     children: 'Disclaimer',
-    dest: routeDest(adt('content', 'disclaimer'))
+    dest: routeDest(adt('contentView', 'disclaimer'))
   },
   {
     children: 'Privacy',
-    dest: routeDest(adt('content', 'privacy'))
+    dest: routeDest(adt('contentView', 'privacy'))
   },
   {
     children: 'Accessibility',
-    dest: routeDest(adt('content', 'accessibility'))
+    dest: routeDest(adt('contentView', 'accessibility'))
   },
   {
     children: 'Copyright',
-    dest: routeDest(adt('content', 'copyright'))
+    dest: routeDest(adt('contentView', 'copyright'))
   },
   {
     children: 'Contact Us',

@@ -86,7 +86,7 @@ const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 <div className='d-flex flex-column flex-sm-row mt-5 flex-nowrap align-items-start align-items-sm-center'>
                   <Link
                     button
-                    dest={routeDest(adt('content', 'code-with-us-proposal-guide'))}
+                    dest={routeDest(adt('contentView', 'code-with-us-proposal-guide'))}
                     color='info'
                     outline
                     symbol_={leftPlacement(iconLinkSymbol('book-user'))}
@@ -173,7 +173,7 @@ const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 <div className='d-flex flex-row mt-5 flex-nowrap'>
                   <Link
                     button
-                    dest={routeDest(adt('content', 'code-with-us-opportunity-guide'))}
+                    dest={routeDest(adt('contentView', 'code-with-us-opportunity-guide'))}
                     color='info'
                     outline
                     symbol_={leftPlacement(iconLinkSymbol('book-user'))}
