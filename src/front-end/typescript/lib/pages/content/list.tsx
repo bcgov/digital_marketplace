@@ -5,6 +5,7 @@ import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/content/lib/components/form';
+import Icon from 'front-end/lib/views/icon';
 import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -86,12 +87,12 @@ function tableHeadCells(state: Immutable<ValidState>): Table.HeadCells {
       }
     },
     {
-      children: 'Created',
+      children: 'Updated',
       className: 'text-nowrap',
       style: { width: '0px' }
     },
     {
-      children: 'Updated',
+      children: 'Created',
       className: 'text-nowrap',
       style: { width: '0px' }
     }
@@ -113,9 +114,9 @@ function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
       {
         children: (
           <div>
-            <div className='text-nowrap'>{formatDate(c.createdAt)}</div>
-            {c.createdBy
-              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.createdBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.createdBy.name}</Link>)
+            <div className='text-nowrap'>{formatDate(c.updatedAt)}</div>
+            {c.updatedBy
+              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.updatedBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.updatedBy.name}</Link>)
               : (<div className='small text-uppercase text-secondary'>System</div>)}
           </div>
         )
@@ -123,9 +124,9 @@ function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
       {
         children: (
           <div>
-            <div className='text-nowrap'>{formatDate(c.updatedAt)}</div>
-            {c.updatedBy
-              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.updatedBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.updatedBy.name}</Link>)
+            <div className='text-nowrap'>{formatDate(c.createdAt)}</div>
+            {c.createdBy
+              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.createdBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.createdBy.name}</Link>)
               : (<div className='small text-uppercase text-secondary'>System</div>)}
           </div>
         )
