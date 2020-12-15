@@ -111,24 +111,12 @@ function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
         )
       },
       {
-        children: (
-          <div>
-            <div className='text-nowrap'>{formatDate(c.updatedAt)}</div>
-            {c.updatedBy
-              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.updatedBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.updatedBy.name}</Link>)
-              : (<div className='small text-uppercase text-secondary'>System</div>)}
-          </div>
-        )
+        className: 'text-nowrap',
+        children: formatDate(c.updatedAt)
       },
       {
-        children: (
-          <div>
-            <div className='text-nowrap'>{formatDate(c.createdAt)}</div>
-            {c.createdBy
-              ? (<Link className='small text-uppercase' color='primary' dest={routeDest(adt('userProfile', { userId: c.createdBy.id }))} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.createdBy.name}</Link>)
-              : (<div className='small text-uppercase text-secondary'>System</div>)}
-          </div>
-        )
+        className: 'text-nowrap',
+        children: formatDate(c.createdAt)
       }
     ];
   });
