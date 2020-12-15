@@ -35,7 +35,7 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'email-notifications',
+  routeNamespace: 'emailNotifications',
 
   create(connection) {
     return {
