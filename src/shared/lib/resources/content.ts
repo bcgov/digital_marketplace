@@ -15,7 +15,7 @@ export interface Content {
   body: string;
 }
 
-export type ContentSlim = Pick<Content, 'id' | 'title' | 'slug'>;
+export type ContentSlim = Pick<Content, 'id' | 'title' | 'slug' | 'fixed'>;
 
 export interface CreateRequestBody {
   slug: string;

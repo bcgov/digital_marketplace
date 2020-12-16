@@ -58,6 +58,7 @@ export function generateContentQuery(connection: Connection, full = false) {
       .select<RawContent[]>(
         'content.id',
         'content.slug',
+        'content.fixed',
         'version.title'
       );
 
@@ -66,7 +67,6 @@ export function generateContentQuery(connection: Connection, full = false) {
         'content.id',
         'content.createdAt',
         'content.createdBy',
-        'content.fixed',
         'version.id as version',
         'version.body',
         'version.createdAt as updatedAt',
