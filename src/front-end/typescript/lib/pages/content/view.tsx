@@ -2,6 +2,7 @@ import { getMetadataValid, makePageMetadata, ValidatedState, viewValid } from 'f
 import { Route, SharedState } from 'front-end/lib/app/types';
 import { ComponentView, GlobalComponentMsg, immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import DateMetadata from 'front-end/lib/views/date-metadata';
 import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -37,10 +38,24 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const view: ComponentView<State, Msg> = viewValid(({ state }) => {
+  const content = state.content;
+  const dates = [
+    {
+      tag: 'dateAndTime' as const,
+      date: content.createdAt,
+      label: 'Published'
+    },
+    {
+      tag: 'dateAndTime' as const,
+      date: content.updatedAt,
+      label: 'Updated'
+    }
+  ];
   return (
     <Row className={`content-${state.content.slug}`}>
       <Col xs='12'>
-        <h1 className='mb-5'>{state.content.title}</h1>
+        <h1>{state.content.title}</h1>
+        <DateMetadata dates={dates} className='mb-5' />
         <Markdown source={state.content.body} openLinksInNewTabs escapeHtml={false} />
       </Col>
     </Row>

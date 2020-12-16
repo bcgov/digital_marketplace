@@ -1,9 +1,10 @@
 import { getContextualActionsValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, ValidatedState, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, newRoute, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/content/lib/components/form';
+import * as toasts from 'front-end/lib/pages/content/lib/toasts';
 import { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
@@ -73,10 +74,10 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.content.create(values);
           if (api.isValid(result)) {
             dispatch(newRoute(adt('contentEdit', result.value.slug) as Route));
-            //TODO toast
+            dispatch(toast(adt('success', toasts.published.success(result.value))));
             return state;
           } else {
-            //TODO toast
+            dispatch(toast(adt('error', toasts.published.error)));
             return stopLoading(state);
           }
         }

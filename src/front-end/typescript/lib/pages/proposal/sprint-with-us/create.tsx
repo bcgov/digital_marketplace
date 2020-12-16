@@ -76,7 +76,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
     }
     const organizationsResult = await api.ownedOrganizations.readMany();
     if (!api.isValid(organizationsResult)) { return fail(); }
-    const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
+    const evalContentResult = await api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
     if (!api.isValid(evalContentResult)) { return fail(); }
     return valid(immutable({
       sessionUser: shared.sessionUser,
@@ -88,7 +88,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RoutePar
         viewerUser: shared.sessionUser,
         opportunity,
         organizations: organizationsResult.value,
-        evaluationContent: evalContentResult.value
+        evaluationContent: evalContentResult.value.body
       })),
       submitTerms: immutable(await SubmitProposalTerms.init({
         proposal: {

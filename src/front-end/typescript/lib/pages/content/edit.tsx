@@ -1,11 +1,12 @@
 import { APP_TERMS_CONTENT_ID } from 'front-end/config';
-import { getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, ValidatedState, viewValid } from 'front-end/lib';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, ValidatedState, viewValid } from 'front-end/lib';
 import { isUserType } from 'front-end/lib/access-control';
 import * as router from 'front-end/lib/app/router';
 import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
 import * as Form from 'front-end/lib/pages/content/lib/components/form';
+import * as toasts from 'front-end/lib/pages/content/lib/toasts';
 import DateMetadata from 'front-end/lib/views/date-metadata';
 import DescriptionList from 'front-end/lib/views/description-list';
 import Link, { iconLinkSymbol, leftPlacement, Props as LinkProps, routeDest } from 'front-end/lib/views/link';
@@ -119,6 +120,8 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           if (api.isValid(result)) {
             state = await resetForm(state, result.value);
             state = state.set('isEditing', true);
+          } else {
+            dispatch(toast(adt('error', toasts.startedEditing.error)));
           }
           return state;
         }
@@ -143,11 +146,11 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.content.update(state.content.id, values);
           switch (result.tag) {
             case 'valid':
-              //TODO toast
+              dispatch(toast(adt('success', toasts.changesPublished.success(result.value))));
               router.replaceState(adt('contentEdit', result.value.slug));
               return (await resetForm(state, result.value)).set('isEditing', false);
             case 'invalid':
-              //TODO toast
+              dispatch(toast(adt('error', toasts.changesPublished.error)));
               return state.update('form', f => Form.setErrors(f, result.value));
             case 'unhandled':
               return state;
@@ -161,9 +164,9 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           state = stopNotifyNewUsersLoading(state);
           const result = await api.emailNotifications.create(adt('updateTerms'));
           if (api.isValid(result)) {
-            //TODO toast
+            dispatch(toast(adt('success', toasts.notifiedNewTerms.success)));
           } else {
-            //TODO toast
+            dispatch(toast(adt('error', toasts.notifiedNewTerms.error)));
           }
           return state;
         }
@@ -175,10 +178,10 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.content.delete(state.content.id);
           if (api.isValid(result)) {
             dispatch(replaceRoute(adt('contentList', null) as Route));
-            //TODO toast
+            dispatch(toast(adt('success', toasts.deleted.success(result.value.title))));
             return state;
           } else {
-            //TODO toast
+            dispatch(toast(adt('error', toasts.deleted.error)));
             return stopDeleteLoading(state);
           }
         }
@@ -219,7 +222,7 @@ export const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) =
     <div>
       <Row>
         <Col xs='12' className='mb-5'>
-          <Link className='h1 mb-4' newTab dest={routeDest(adt('contentView', state.content.slug))}>{state.content.title}</Link>
+          <Link className='h1' newTab dest={routeDest(adt('contentView', state.content.slug))}>{state.content.title}</Link>
           <DateMetadata dates={dates} />
         </Col>
       </Row>
@@ -242,6 +245,18 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getMetadata: getMetadataValid(state => {
     return makePageMetadata(state.content.title);
   }, makePageMetadata()),
+  getAlerts: getAlertsValid(state => {
+    if (!state.content.fixed) {
+      return emptyPageAlerts();
+    } else {
+      return {
+        ...emptyPageAlerts(),
+        warnings: [{
+          text: 'This is a "fixed" page, which means this web app needs it to exist at a specific slug in order to function correctly. Consequently, this page cannot be deleted and its slug cannot be changed.'
+        }]
+      };
+    }
+  }),
   getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
     const content = state.content;
     if (state.isEditing) {

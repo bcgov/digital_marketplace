@@ -51,13 +51,13 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
     };
     const orgResult = await api.organizations.readOne(routeParams.orgId);
     if (!api.isValid(orgResult)) { return fail(); }
-    const markdownResult = await api.getMarkdownFile(SWU_QUALIFICATION_TERMS_ID);
+    const markdownResult = await api.content.readOne(SWU_QUALIFICATION_TERMS_ID);
     if (!api.isValid(markdownResult)) { return fail(); }
     return valid(immutable({
       acceptLoading: 0,
       organization: orgResult.value,
       viewerUser: shared.sessionUser,
-      body: markdownResult.value
+      body: markdownResult.value.body
     }));
   },
 

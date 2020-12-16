@@ -68,10 +68,10 @@ const init: Init<Tab.Params, State> = async params => {
   const { opportunity, proposal, viewerUser } = params;
   const organizationsResult = await api.ownedOrganizations.readMany();
   if (!api.isValid(organizationsResult)) { return invalid(null); }
-  const evalContentResult = await api.getMarkdownFile(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
+  const evalContentResult = await api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID);
   if (!api.isValid(evalContentResult)) { return invalid(null); }
   const organizations = organizationsResult.value;
-  const evaluationContent = evalContentResult.value;
+  const evaluationContent = evalContentResult.value.body;
   return valid(immutable({
     ...params,
     organizations,

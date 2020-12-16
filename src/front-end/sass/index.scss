@@ -136,6 +136,8 @@ $c-skills-bg: $purple;
 $c-multi-select-item-bg: $purple;
 $c-multi-select-item-remove: $purple-light;
 $c-form-field-required: $yellow;
+$c-table-icon-check: $gray-700;
+$c-table-icon-times: $gray-500;
 // Static HTML Pages
 $c-static-html-bg: $blue-dark;
 $c-static-html-fg: $white;
@@ -194,6 +196,8 @@ $app-utility-colors: (
   'c-multi-select-item-bg': $c-multi-select-item-bg,
   'c-multi-select-item-remove': $c-multi-select-item-remove,
   'c-form-field-required': $c-form-field-required,
+  'c-table-icon-check': $c-table-icon-check,
+  'c-table-icon-times': $c-table-icon-times,
   // Static HTML Pages
   'c-static-html-bg': $c-static-html-bg,
   'c-static-html-fg': $c-static-html-fg

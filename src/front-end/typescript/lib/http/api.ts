@@ -25,21 +25,6 @@ export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidatio
 
 export const apiNamespace = (p: string) => `/${prefix(prefixPath('api'))(p)}`;
 
-// Markdown files.
-
-interface GetMarkdownFileActionTypes {
-  request: undefined;
-  rawResponse: never;
-  validResponse: string;
-  invalidResponse: null;
-}
-
-export const getMarkdownFile = (id: string) => makeRequest<GetMarkdownFileActionTypes>({
-  method: ClientHttpMethod.Get,
-  url: prefixPath(`/markdown/${id}.md`),
-  body: undefined
-});
-
 // Metrics
 
 interface MetricsResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> {

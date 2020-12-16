@@ -61,7 +61,9 @@ export type UtilityColor
   | 'c-skills-bg'
   | 'c-multi-select-item-bg'
   | 'c-multi-select-item-remove'
-  | 'c-form-field-required';
+  | 'c-form-field-required'
+  | 'c-table-icon-check'
+  | 'c-table-icon-times';
 
 export type ThemeColor
   = 'white'

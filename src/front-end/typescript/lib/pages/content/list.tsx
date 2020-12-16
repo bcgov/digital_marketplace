@@ -4,8 +4,8 @@ import { Route, SharedState } from 'front-end/lib/app/types';
 import * as Table from 'front-end/lib/components/table';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, Update, updateComponentChild } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
-import * as Form from 'front-end/lib/pages/content/lib/components/form';
-import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import { slugPath } from 'front-end/lib/pages/content/lib';
+import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { compareStrings, formatDate } from 'shared/lib';
@@ -41,7 +41,7 @@ export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<R
       content = result.value
         .map(c => ({
           ...c,
-          slugPath: Form.slugPath(c.slug)
+          slugPath: slugPath(c.slug)
         }))
         .sort((a, b) => compareStrings(a.title, b.title));
     }
@@ -86,6 +86,11 @@ function tableHeadCells(state: Immutable<ValidState>): Table.HeadCells {
       }
     },
     {
+      children: 'Fixed?',
+      className: 'text-center',
+      style: { width: '0px' }
+    },
+    {
       children: 'Updated',
       className: 'text-nowrap',
       style: { width: '0px' }
@@ -106,17 +111,21 @@ function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
           <div>
             <Link dest={routeDest(adt('contentEdit', c.slug))}>{c.title}</Link>
             <br />
-            <Link className='small text-uppercase' color='secondary' newTab dest={routeDest(adt('contentView', c.slug))} iconSymbolSize={0.75} symbol_={rightPlacement(iconLinkSymbol('external-link'))}>{c.slugPath}</Link>
+            <Link className='small text-uppercase' color='secondary' newTab dest={routeDest(adt('contentView', c.slug))} iconSymbolSize={0.75}>{c.slugPath}</Link>
           </div>
         )
       },
       {
-        className: 'text-nowrap',
-        children: formatDate(c.updatedAt)
+        children: (<Table.Check checked={c.fixed} />),
+        className: 'text-center'
       },
       {
-        className: 'text-nowrap',
-        children: formatDate(c.createdAt)
+        children: formatDate(c.updatedAt),
+        className: 'text-nowrap'
+      },
+      {
+        children: formatDate(c.createdAt),
+        className: 'text-nowrap'
       }
     ];
   });

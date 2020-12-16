@@ -1,9 +1,9 @@
-import { prefixPath } from 'front-end/lib';
 import * as FormField from 'front-end/lib/components/form-field';
 import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as api from 'front-end/lib/http/api';
+import { slugPath } from 'front-end/lib/pages/content/lib';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { Content, CreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/content';
@@ -115,10 +115,6 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export function slugPath(slug: string): string {
-  return prefixPath(`content/${slug}`);
-}
-
 export const view: View<Props> = ({ state, dispatch, disabled }) => {
   const slug = FormField.getValue(state.slug);
   return (
@@ -143,7 +139,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             placeholder='Slug, e.g. an-example-slug-123'
             help={`A page slug determines the URL that people will use to access the page. A valid slug must start with a lowercase character or number, and can subsequently contain lowercase characters, numbers or hyphens (i.e. "-"). For example, "this-is-a-valid-slug123".`}
             hint={slug ? (<span>This page {state.content?.slug !== slug ? 'will be' : 'is'} available at <b>{slugPath(slug)}</b>.</span>) : undefined}
-            required
+            required={!state.content?.fixed}
             disabled={disabled || !!state.content?.fixed}
             state={state.slug}
             dispatch={mapComponentDispatch(dispatch, value => adt('slug' as const, value))} />

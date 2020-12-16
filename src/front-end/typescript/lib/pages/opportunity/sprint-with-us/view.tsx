@@ -74,7 +74,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
   const viewerUser = shared.session?.user;
   const oppR = await api.opportunities.swu.readOne(opportunityId);
   if (!api.isValid(oppR)) { return fail(); }
-  const scopeContentResult = await api.getMarkdownFile(SWU_OPPORTUNITY_SCOPE_CONTENT_ID);
+  const scopeContentResult = await api.content.readOne(SWU_OPPORTUNITY_SCOPE_CONTENT_ID);
   if (!api.isValid(scopeContentResult)) { return fail(); }
   await api.counters.update(getSWUOpportunityViewsCounterName(opportunityId), null);
   let existingProposal: SWUProposalSlim | undefined;
@@ -92,7 +92,7 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
     existingProposal,
     activeInfoTab: 'details',
     routePath,
-    scopeContent: scopeContentResult.value
+    scopeContent: scopeContentResult.value.body
   }));
 };
 
