@@ -121,7 +121,7 @@ const resource: Resource = {
             }
             if (isValid(dbResult) && dbResult.value) {
               return invalid({
-                conflict: ['This slug is already in use.']
+                slug: ['This slug is already in use.']
               });
             }
           }
@@ -186,6 +186,20 @@ const resource: Resource = {
             return invalid({
               fixed: ['You cannot change the slug of fixed content.']
             });
+          }
+          // If slug name is being updated, check to see if new slug name is available
+          if (isValid(validatedSlug) && existingContent.slug !== validatedSlug.value) {
+            const dbResult = await db.readOneContentBySlug(connection, validatedSlug.value, session);
+            if (isInvalid(dbResult)) {
+              return invalid({
+                database: [db.ERROR_MESSAGE]
+              });
+            }
+            if (isValid(dbResult) && dbResult.value) {
+              return invalid({
+                slug: ['This slug is already in use.']
+              });
+            }
           }
           return valid({
             session,
