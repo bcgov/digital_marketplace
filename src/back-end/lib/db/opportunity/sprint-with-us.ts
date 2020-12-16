@@ -29,6 +29,11 @@ interface UpdateSWUOpportunityParams extends Omit<CreateSWUOpportunityParams, 's
   id: Id;
 }
 
+interface UpdateSWUOpportunityWithNoteParams {
+  note: string;
+  attachments: FileRecord[];
+}
+
 interface CreateSWUOpportunityPhaseParams extends Omit<CreateSWUOpportunityPhaseBody, 'startDate' | 'completionDate'> {
   startDate: Date;
   completionDate: Date;
@@ -91,10 +96,11 @@ interface RawTeamQuestion extends Omit<SWUTeamQuestion, 'createdBy'> {
   createdBy?: Id;
 }
 
-interface RawSWUOpportunityHistoryRecord extends Omit<SWUOpportunityHistoryRecord, 'createdBy' | 'type'> {
+interface RawSWUOpportunityHistoryRecord extends Omit<SWUOpportunityHistoryRecord, 'createdBy' | 'type' | 'attachments'> {
   createdBy: Id | null;
   status?: SWUOpportunityStatus;
   event?: SWUOpportunityEvent;
+  attachments: Id[];
 }
 
 async function rawSWUOpportunityToSWUOpportunity(connection: Connection, raw: RawSWUOpportunity): Promise<SWUOpportunity> {
@@ -216,8 +222,15 @@ async function rawTeamQuestionToTeamQuestion(connection: Connection, raw: RawTea
 }
 
 async function rawHistoryRecordToHistoryRecord(connection: Connection, session: Session, raw: RawSWUOpportunityHistoryRecord): Promise<SWUOpportunityHistoryRecord> {
-  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
+  const { createdBy: createdById, status, event, attachments: attachmentIds, ...restOfRaw } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), null) : null;
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error('unable to process opportunity status record attachments');
+    }
+    return result;
+  }));
 
   if (!status && !event) {
     throw new Error('unable to process opportunity status record');
@@ -226,7 +239,8 @@ async function rawHistoryRecordToHistoryRecord(connection: Connection, session: 
   return {
     ...restOfRaw,
     createdBy,
-    type: status ? adt('status', status as SWUOpportunityStatus) : adt('event', event as SWUOpportunityEvent)
+    type: status ? adt('status', status as SWUOpportunityStatus) : adt('event', event as SWUOpportunityEvent),
+    attachments
   };
 }
 
@@ -280,6 +294,20 @@ export function generateSWUOpportunityQuery(connection: Connection, full = false
   }
 
   return query;
+}
+
+async function createSWUOpportunityNoteAttachments(connection: Connection, trx: Transaction, eventId: Id, attachments: FileRecord[]) {
+  for (const attachment of attachments) {
+    const [attachmentResult] = await connection('swuOpportunityNoteAttachments')
+      .transacting(trx)
+      .insert({
+        event: eventId,
+        file: attachment.id
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create opportunity attachment');
+    }
+  }
 }
 
 export async function isSWUOpportunityAuthor(connection: Connection, user: User, id: Id): Promise<boolean> {
@@ -488,6 +516,15 @@ export const readOneSWUOpportunity = tryDb<[Id, Session], SWUOpportunity | null>
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>('swuOpportunityStatuses')
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');
+
+      if (!rawHistory) {
+        throw new Error('unable to read opportunity statuses');
+      }
+
+      // For reach status record, fetch any attachments and add their ids to the record as an array
+      await Promise.all(rawHistory.map(async raw => raw.attachments = (await connection<{ file: Id }>('swuOpportunityNoteAttachments')
+        .where({ event: raw.id })
+        .select('file')).map(row => row.file)));
 
       result.history = await Promise.all(rawHistory.map(async raw => await rawHistoryRecordToHistoryRecord(connection, session, raw)));
 
@@ -910,4 +947,33 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(async (conne
     .first())?.createdBy || null;
 
   return authorId ? await readOneUser(connection, authorId) : valid(null);
+});
+
+export const addSWUOpportunityNote = tryDb<[Id, UpdateSWUOpportunityWithNoteParams, AuthenticatedSession], SWUOpportunity>(async (connection, id, noteParams, session) => {
+  const now = new Date();
+  await connection.transaction(async trx => {
+    // Add a history record for the note addition
+    const [event] = await connection<RawSWUOpportunityHistoryRecord & { opportunity: Id }>('swuOpportunityStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: SWUOpportunityEvent.NoteAdded,
+        note: noteParams.note
+      }, '*');
+
+    if (!event) {
+      throw new Error('unable to create note for opportunity');
+    }
+
+    await createSWUOpportunityNoteAttachments(connection, trx, event.id, noteParams.attachments);
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add note');
+  }
+  return valid(dbResult.value);
 });

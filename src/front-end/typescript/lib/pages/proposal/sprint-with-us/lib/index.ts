@@ -42,6 +42,7 @@ export function swuProposalEventToTitleCase(e: SWUProposalEvent): string {
     case SWUProposalEvent.ChallengeScoreEntered: return 'Code Challenge Score Entered';
     case SWUProposalEvent.ScenarioScoreEntered:  return 'Team Scenario Score Entered';
     case SWUProposalEvent.PriceScoreEntered:     return 'Price Score Entered';
+    case SWUProposalEvent.NoteAdded:             return 'Note Added';
   }
 }
 

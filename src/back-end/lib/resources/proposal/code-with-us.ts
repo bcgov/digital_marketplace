@@ -8,7 +8,7 @@ import { validateAttachments, validateCWUOpportunityId, validateCWUProposalId, v
 import { get, omit } from 'lodash';
 import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/code-with-us';
+import { createBlankIndividualProponent, CreateCWUProposalStatus, CreateProponentRequestBody, CreateRequestBody, CreateValidationErrors, CWUProposal, CWUProposalSlim, CWUProposalStatus, DeleteValidationErrors, isValidStatusChange, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/proposal/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
@@ -31,6 +31,10 @@ interface ValidatedUpdateEditRequestBody {
   attachments: FileRecord[];
 }
 
+interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
+  attachments: FileRecord[];
+}
+
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
@@ -38,7 +42,8 @@ interface ValidatedUpdateRequestBody {
       | ADT<'score', number>
       | ADT<'award', string>
       | ADT<'disqualify', string>
-      | ADT<'withdraw', string>;
+      | ADT<'withdraw', string>
+      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
 }
 
 type ValidatedDeleteRequestBody = Id;
@@ -279,6 +284,11 @@ const resource: Resource = {
             return adt('disqualify', getString(body, 'value', ''));
           case 'withdraw':
             return adt('withdraw', getString(body, 'value', ''));
+          case 'addNote':
+            return adt('addNote', {
+              note: getString(value, 'note'),
+              attachments: getStringArray(value, 'attachments')
+            });
           default:
             return null;
         }
@@ -443,6 +453,31 @@ const resource: Resource = {
               session: request.session,
               body: adt('withdraw' as const, validatedWithdrawalNote.value)
             } as ValidatedUpdateRequestBody);
+          case 'addNote':
+            if (!await permissions.addNoteCWUProposal(connection, request.session, cwuOpportunity)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+
+            const { note, attachments : noteAttachments } = request.body.value;
+            const validatedNote = proposalValidation.validateNote(note);
+            const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
+            if (allValid([validatedNote, validatedNoteAttachments])) {
+              return valid({
+                session: request.session,
+                body: adt('addNote', {
+                  note: validatedNote.value,
+                  attachments: validatedNoteAttachments.value
+                })
+              } as ValidatedUpdateRequestBody);
+            } else {
+              return invalid({ proposal: adt('addNote' as const, {
+                  note: getInvalidValue(validatedNote, undefined),
+                  attachments: getInvalidValue(validatedNoteAttachments, undefined)
+                })
+              });
+            }
           default:
             return invalid({ proposal: adt('parseFailure' as const) });
         }
@@ -478,7 +513,10 @@ const resource: Resource = {
               // Notify opportunity author of the withdrawal, if the opportunity is closed
               cwuProposalNotifications.handleCWUProposalWithdrawn(connection, request.params.id, session);
               break;
-          }
+            case 'addNote':
+              dbResult = await db.addCWUProposalNote(connection, request.params.id, body.value, session);
+              break;
+        }
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }

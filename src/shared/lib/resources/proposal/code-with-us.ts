@@ -21,7 +21,8 @@ export enum CWUProposalStatus {
 }
 
 export enum CWUProposalEvent {
-  ScoreEntered = 'SCORE_ENTERED'
+  ScoreEntered = 'SCORE_ENTERED',
+  NoteAdded = 'NOTE_ADDED'
 }
 
 export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
@@ -80,6 +81,7 @@ export interface CWUProposalHistoryRecord {
   createdBy: UserSlim | null;
   type: ADT<'status', CWUProposalStatus> | ADT<'event', CWUProposalEvent>;
   note: string;
+  attachments: FileRecord[];
 }
 
 export interface CWUProposal {
@@ -198,9 +200,19 @@ export type UpdateRequestBody
   | ADT<'score', number>
   | ADT<'award', string>
   | ADT<'disqualify', string>
-  | ADT<'withdraw', string>;
+  | ADT<'withdraw', string>
+  | ADT<'addNote', UpdateWithNoteRequestBody>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
+
+export interface UpdateWithNoteRequestBody {
+  note: string;
+  attachments: Id[];
+}
+
+export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
+  attachments?: string[][];
+}
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
@@ -209,6 +221,7 @@ type UpdateADTErrors
   | ADT<'award', string[]>
   | ADT<'disqualify', string[]>
   | ADT<'withdraw', string[]>
+  | ADT<'addNote', UpdateWithNoteValidationErrors>
   | ADT<'parseFailure'>;
 
 export interface UpdateEditValidationErrors extends ErrorTypeFrom<Omit<UpdateEditRequestBody, 'proponent' | 'attachments'>> {

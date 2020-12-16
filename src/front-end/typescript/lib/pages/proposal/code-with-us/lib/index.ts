@@ -31,6 +31,7 @@ export function cwuProposalStatusToTitleCase(s: CWUProposalStatus, viewerUserTyp
 export function cwuProposalEventToTitleCase(e: CWUProposalEvent): string {
   switch (e) {
     case CWUProposalEvent.ScoreEntered  : return 'Score Entered';
+    case CWUProposalEvent.NoteAdded     : return 'Note Added';
   }
 }
 

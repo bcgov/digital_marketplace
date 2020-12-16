@@ -8,7 +8,7 @@ import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/vali
 import { get, omit } from 'lodash';
 import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/code-with-us';
+import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/code-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, mapValid, valid, validateUUID, Validation } from 'shared/lib/validation';
@@ -27,6 +27,10 @@ interface ValidatedUpdateEditRequestBody extends Omit<UpdateEditRequestBody, 'pr
   attachments: FileRecord[];
 }
 
+interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
+  attachments: FileRecord[];
+}
+
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body: ADT<'edit', ValidatedUpdateEditRequestBody>
@@ -34,7 +38,8 @@ interface ValidatedUpdateRequestBody {
       | ADT<'startEvaluation', string>
       | ADT<'suspend', string>
       | ADT<'cancel', string>
-      | ADT<'addAddendum', string>;
+      | ADT<'addAddendum', string>
+      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
 }
 
 type ValidatedDeleteRequestBody = Id;
@@ -300,6 +305,11 @@ const resource: Resource = {
             return adt('cancel', getString(body, 'value', ''));
           case 'addAddendum':
             return adt('addAddendum', getString(body, 'value', ''));
+          case 'addNote':
+            return adt('addNote', {
+              note: getString(value, 'note'),
+              attachments: getStringArray(value, 'attachments')
+            });
           default:
             return null;
         }
@@ -528,6 +538,25 @@ const resource: Resource = {
               session: request.session,
               body: adt('addAddendum', validatedAddendumText.value)
             } as ValidatedUpdateRequestBody);
+          case 'addNote':
+            const { note, attachments : noteAttachments } = request.body.value;
+            const validatedNote = opportunityValidation.validateNote(note);
+            const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
+            if (allValid([validatedNote, validatedNoteAttachments])) {
+              return valid({
+                session: request.session,
+                body: adt('addNote', {
+                  note: validatedNote.value,
+                  attachments: validatedNoteAttachments.value
+                })
+              } as ValidatedUpdateRequestBody);
+            } else {
+              return invalid({ opportunity: adt('addNote' as const, {
+                  note: getInvalidValue(validatedNote, undefined),
+                  attachments: getInvalidValue(validatedNoteAttachments, undefined)
+                })
+              });
+            }
           default:
             return invalid({ opportunity: adt('parseFailure' as const) });
         }
@@ -575,6 +604,9 @@ const resource: Resource = {
               if (isValid(dbResult)) {
                 cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
               }
+              break;
+            case 'addNote':
+              dbResult = await db.addCWUOpportunityNote(connection, request.params.id, body.value, session);
               break;
           }
           if (isInvalid(dbResult)) {

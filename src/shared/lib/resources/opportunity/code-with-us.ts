@@ -22,7 +22,8 @@ export enum CWUOpportunityStatus {
 
 export enum CWUOpportunityEvent {
   Edited = 'EDITED',
-  AddendumAdded = 'ADDENDUM_ADDED'
+  AddendumAdded = 'ADDENDUM_ADDED',
+  NoteAdded = 'NOTE_ADDED'
 }
 
 export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
@@ -43,6 +44,7 @@ export interface CWUOpportunityHistoryRecord {
   createdBy: UserSlim | null;
   type: ADT<'status', CWUOpportunityStatus> | ADT<'event', CWUOpportunityEvent>;
   note: string;
+  attachments: FileRecord[];
 }
 
 export interface CWUOpportunity {
@@ -154,9 +156,19 @@ export type UpdateRequestBody
   | ADT<'publish', string>
   | ADT<'suspend', string>
   | ADT<'cancel', string>
-  | ADT<'addAddendum', string>;
+  | ADT<'addAddendum', string>
+  | ADT<'addNote', UpdateWithNoteRequestBody>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
+
+export interface UpdateWithNoteRequestBody {
+  note: string;
+  attachments: Id[];
+}
+
+export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
+  attachments?: string[][];
+}
 
 type UpdateADTErrors
   = ADT<'edit', UpdateEditValidationErrors>
@@ -164,7 +176,8 @@ type UpdateADTErrors
   | ADT<'suspend', string[]>
   | ADT<'cancel', string[]>
   | ADT<'addAddendum', string[]>
-  | ADT<'parseFailure'>;
+  | ADT<'parseFailure'>
+  | ADT<'addNote', UpdateWithNoteValidationErrors>;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;

@@ -10,7 +10,7 @@ import { getNumber, getString, getStringArray } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateTeamQuestionScoreBody, UpdateValidationErrors } from 'shared/lib/resources/proposal/sprint-with-us';
+import { CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, isValidStatusChange, SWUProposal, SWUProposalSlim, SWUProposalStatus, UpdateEditValidationErrors, UpdateRequestBody, UpdateTeamQuestionScoreBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/proposal/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, Validation } from 'shared/lib/validation';
@@ -34,10 +34,15 @@ interface ValidatedUpdateRequestBody {
       | ADT<'scoreTeamScenario', number>
       | ADT<'award', string>
       | ADT<'disqualify', string>
-      | ADT<'withdraw', string>;
+      | ADT<'withdraw', string>
+      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<ValidatedCreateRequestBody, 'opportunity' | 'status' | 'session'>;
+
+interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
+  attachments: FileRecord[];
+}
 
 interface ValidatedDeleteRequestBody {
   proposal: Id;
@@ -346,6 +351,11 @@ const resource: Resource = {
             return adt('disqualify', getString(body, 'value', ''));
           case 'withdraw':
             return adt('withdraw', getString(body, 'value', ''));
+          case 'addNote':
+            return adt('addNote', {
+              note: getString(value, 'note'),
+              attachments: getStringArray(value, 'attachments')
+            });
           default:
             return null;
         }
@@ -818,6 +828,31 @@ const resource: Resource = {
               session: request.session,
               body: adt('withdraw' as const, validatedWithdrawnNote.value)
             } as ValidatedUpdateRequestBody);
+          case 'addNote':
+            if (!await permissions.addNoteSWUProposal(connection, request.session, swuOpportunity)) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+
+            const { note, attachments : noteAttachments } = request.body.value;
+            const validatedNote = proposalValidation.validateNote(note);
+            const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
+            if (allValid([validatedNote, validatedNoteAttachments])) {
+              return valid({
+                session: request.session,
+                body: adt('addNote', {
+                  note: validatedNote.value,
+                  attachments: validatedNoteAttachments.value
+                })
+              } as ValidatedUpdateRequestBody);
+            } else {
+              return invalid({ proposal: adt('addNote' as const, {
+                  note: getInvalidValue(validatedNote, undefined),
+                  attachments: getInvalidValue(validatedNoteAttachments, undefined)
+                })
+              });
+            }
           default:
             return invalid({ proposal: adt('parseFailure' as const) });
         }
@@ -877,6 +912,9 @@ const resource: Resource = {
               if (isValid(dbResult)) {
                 swuProposalNotifications.handleSWUProposalWithdrawn(connection, request.params.id, request.body.session);
               }
+              break;
+            case 'addNote':
+              dbResult = await db.addSWUProposalNote(connection, request.params.id, body.value, session);
               break;
           }
           if (isInvalid(dbResult)) {
