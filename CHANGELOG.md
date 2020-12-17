@@ -37,10 +37,10 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
-### TBD
+### 2020.12.17
 
 - Version Number: 1.4
-- Commit Hash: TBD
+- Commit Hash: c09be91d64315f28adc32977226413069b878541
 
 #### Changes
 
@@ -56,6 +56,7 @@ Note that each log must include a version number that has either an incremented 
 - The `SHOW_TEST_INDICATOR` environment variable has been introduced to configure whether an environment's UI and email notifications should indicate that a specific environment is to be used for testing.
 - Include successful proponent email address on awarded opportunities' "Summary" pages.
 - Support theming colors in static HTML pages (`downtime.ejs`, `unsupported-browser.ejs`).
+- Improve how the front-end uses the browser's History API to manage Y scroll positions when transitioning between routes.
 - Improvements to API documentation.
 - Improvements to Postman back-end tests.
 - Various minor UI and copy improvements.
