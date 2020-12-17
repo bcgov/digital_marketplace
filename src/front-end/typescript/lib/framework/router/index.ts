@@ -1,13 +1,16 @@
 import { Dispatch } from 'front-end/lib/framework';
 import clickHandler from 'front-end/lib/framework/router/click-handler';
+import { debounce } from 'lodash';
 import { match, MatchFunction } from 'path-to-regexp';
 import qs from 'querystring';
 import { adt, ADT } from 'shared/lib/types';
 import url from 'url';
 
+const ROUTER_SCROLL_STATE_UPDATE_DEBOUNCE_DURATION = 1500;
+
 export interface IncomingRoute<Route> {
   route: Route;
-  preserveScrollPosition: boolean;
+  routeScrollY: number;
 }
 
 export type IncomingRouteMsg<Route> = ADT<'@incomingRoute', IncomingRoute<Route>>;
@@ -88,24 +91,30 @@ export interface Router<Route> {
   //}
 //}
 
-export function pushState(url: string): void {
+export function pushState(url: string, routeScrollY?: number): void {
   if (window.history && window.history.pushState) {
-    window.history.pushState({ url }, '', url);
+    window.history.pushState({ url, routeScrollY }, '', url);
   }
 }
 
-export function replaceState(url: string): void {
+export function replaceState(url: string, routeScrollY?: number): void {
   if (window.history && window.history.replaceState) {
-    window.history.replaceState({ url }, '', url);
+    window.history.replaceState({ url, routeScrollY }, '', url);
   }
 }
 
-function handleRoute<Route>(router: Router<Route>, route: Route, replace?: boolean): void {
+function resetCurrentStateScrollY(): void {
+  if (window.history && window.history.state) {
+    replaceState(window.history.state.url, window.scrollY);
+  }
+}
+
+function handleRoute<Route>(router: Router<Route>, route: Route, routeScrollY?: number, replace?: boolean): void {
   const url = router.routeToUrl(route);
   if (replace) {
-    replaceState(url);
+    replaceState(url, routeScrollY);
   } else {
-    pushState(url);
+    pushState(url, routeScrollY);
   }
 }
 
@@ -123,8 +132,8 @@ export function parseUrl(s: string): Url {
 }
 
 interface RouteManager<Route> {
-  dispatchRoute(route: Route, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void;
-  dispatchUrl(url: Url, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void;
+  dispatchRoute(route: Route, routeScrollY?: number, replace?: boolean, skipHandle?: boolean): void;
+  dispatchUrl(url: Url, routeScrollY?: number, replace?: boolean, skipHandle?: boolean): void;
   handleRouterMsg(msg: RouterMsg<Route>): boolean;
 }
 
@@ -135,6 +144,10 @@ interface ProcessedRouteDefinition<Route> extends RouteDefinition<Route> {
 type ProcessedRouter<Route> = Array<ProcessedRouteDefinition<Route>>;
 
 export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispatch: Dispatch<IncomingRouteMsg<Route>>): RouteManager<Route> {
+  // Manually handle scroll position when going "back".
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
   const routes: ProcessedRouter<Route> = router.routes.map(definition => ({
     ...definition,
     match: match(definition.path)
@@ -153,28 +166,29 @@ export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispa
     }
     return null;
   }
-  function dispatchRoute(route: Route, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void {
-    if (!skipHandle) { handleRoute(router, route, replace); }
-    dispatch(adt('@incomingRoute', { route, preserveScrollPosition }));
+  function dispatchRoute(route: Route, routeScrollY: number, replace?: boolean, skipHandle?: boolean): void {
+    if (!skipHandle) { handleRoute(router, route, routeScrollY, replace); }
+    dispatch(adt('@incomingRoute', { route, routeScrollY }));
   }
-  function dispatchUrl(url: Url, preserveScrollPosition: boolean, replace?: boolean, skipHandle?: boolean): void {
+  function dispatchUrl(url: Url, routeScrollY: number, replace?: boolean, skipHandle?: boolean): void {
     const route = urlToRoute(url);
-    if (route) { dispatchRoute(route, preserveScrollPosition, replace, skipHandle); }
+    if (route) { dispatchRoute(route, routeScrollY, replace, skipHandle); }
   }
   function handleRouterMsg(msg: RouterMsg<Route>): boolean {
-    const preserveScrollPosition = false;
+    // New navigation should reset routeScrollY to zero.
+    const routeScrollY = 0;
     switch (msg.tag) {
       case '@newUrl':
-        dispatchUrl(parseUrl(msg.value), preserveScrollPosition, false);
+        dispatchUrl(parseUrl(msg.value), routeScrollY, false);
         return true;
       case '@replaceUrl':
-        dispatchUrl(parseUrl(msg.value), preserveScrollPosition, true);
+        dispatchUrl(parseUrl(msg.value), routeScrollY, true);
         return true;
       case '@newRoute':
-        dispatchRoute(msg.value, preserveScrollPosition, false);
+        dispatchRoute(msg.value, routeScrollY, false);
         return true;
       case '@replaceRoute':
-        dispatchRoute(msg.value, preserveScrollPosition, true);
+        dispatchRoute(msg.value, routeScrollY, true);
         return true;
     }
     return false;
@@ -184,16 +198,18 @@ export function makeRouteManager<State, Msg, Route>(router: Router<Route>, dispa
 
 export function start<Route>(routeManager: RouteManager<Route>): void {
   // Intercept link clicks.
-  window.document.body.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, false, false)), false);
+  window.document.body.addEventListener('click', clickHandler(url => routeManager.dispatchUrl(url, 0, false)), false);
+  // Update current page state scrollY on scroll.
+  window.addEventListener('scroll', debounce(() => resetCurrentStateScrollY(), ROUTER_SCROLL_STATE_UPDATE_DEBOUNCE_DURATION));
   // Handle popstate events.
   window.addEventListener('popstate', e => {
     if (e.state && e.state.url) {
-      routeManager.dispatchUrl(parseUrl(e.state.url), true, false, true);
+      routeManager.dispatchUrl(parseUrl(e.state.url), e.state.routeScrollY || 0, false, true);
     }
   });
   // Kick-start the router.
   routeManager.dispatchUrl({
     pathname: window.location.pathname,
     search: window.location.search
-  }, true, true);
+  }, 0, true);
 }

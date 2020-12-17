@@ -14,17 +14,11 @@ import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
 
 export function pushState(route: Route) {
-  if (window.history && window.history.pushState) {
-    const url = router.routeToUrl(route);
-    window.history.pushState({ url }, '', url);
-  }
+  Router.pushState(router.routeToUrl(route), 0);
 }
 
 export function replaceState(route: Route) {
-  if (window.history && window.history.replaceState) {
-    const url = router.routeToUrl(route);
-    window.history.replaceState({ url }, '', url);
-  }
+  Router.replaceState(router.routeToUrl(route), 0);
 }
 
 export function redirect(path: string) {
