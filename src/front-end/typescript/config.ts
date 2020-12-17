@@ -14,9 +14,9 @@ export const SOURCE_CODE_URL = 'https://github.com/bcgov/digital_marketplace/';
 
 export const DEFAULT_LOCATION = 'Victoria';
 
-export const FORM_FIELD_DEBOUNCE_DURATION = 500;
+export const FORM_FIELD_DEBOUNCE_DURATION = 500; //ms
 
-export const SEARCH_DEBOUNCE_DURATION = 200;
+export const SEARCH_DEBOUNCE_DURATION = 200; //ms
 
 export const PROCUREMENT_CONCIERGE_URL = 'https://procurementconcierge.gov.bc.ca';
 

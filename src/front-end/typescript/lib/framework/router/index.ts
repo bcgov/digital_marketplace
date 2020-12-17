@@ -6,7 +6,7 @@ import qs from 'querystring';
 import { adt, ADT } from 'shared/lib/types';
 import url from 'url';
 
-const ROUTER_SCROLL_STATE_UPDATE_DEBOUNCE_DURATION = 1500;
+const ROUTER_SCROLL_STATE_UPDATE_DEBOUNCE_DURATION = 750; //ms
 
 export interface IncomingRoute<Route> {
   route: Route;
