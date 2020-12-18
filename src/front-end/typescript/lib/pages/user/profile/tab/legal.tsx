@@ -87,7 +87,6 @@ const TermsSubtext: View<{ children: ViewElementChildren; }> = ({ children }) =>
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const lastAcceptedTerms = state.profileUser.lastAcceptedTermsAt;
   const acceptedTerms = state.profileUser.acceptedTermsAt;
   const hasAcceptedLatest = !!acceptedTerms;
   return (
