@@ -40,7 +40,7 @@ Note that each log must include a version number that has either an incremented 
 ### 2020.12.18
 
 - Version Number: 1.5
-- Commit Hash: 2844a6b8775ebdbc9b92f742886f468b79289b62
+- Commit Hash: e20b656b0a5ae1347cc9b5ca6f95303343e0e15e
 
 #### Changes
 
