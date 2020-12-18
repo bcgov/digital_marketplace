@@ -282,37 +282,27 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     } else if (!state.isEditing && state.showNotifyNewTerms) {
       const isStartEditingLoading = state.startEditingLoading > 0;
       const isNotifyNewUsersLoading = state.notifyNewUsersLoading > 0;
-      const isDeleteLoading = state.deleteLoading > 0;
-      const isLoading = isStartEditingLoading || isNotifyNewUsersLoading || isDeleteLoading;
-      return adt('dropdown', {
-        text: 'Actions',
-        loading: isLoading,
-        linkGroups: [
-          {
-            links: [
-              {
-                children: 'Edit',
-                onClick: () => dispatch(adt('startEditing')),
-                symbol_: leftPlacement(iconLinkSymbol('edit'))
-              },
-              {
-                children: 'Notify Vendors',
-                onClick: () => dispatch(adt('showModal', 'notifyNewTerms') as Msg),
-                symbol_: leftPlacement(iconLinkSymbol('bell'))
-              }
-            ]
-          },
-          ...(content.fixed
-            ? []
-            : [{
-                links: [{
-                  children: 'Delete',
-                  symbol_: leftPlacement(iconLinkSymbol('trash')),
-                  onClick: () => dispatch(adt('showModal', 'delete') as Msg)
-                }]
-              }])
-        ]
-      });
+      const disabled = isStartEditingLoading || isNotifyNewUsersLoading;
+      return adt('links', [
+        {
+          children: 'Edit',
+          onClick: () => dispatch(adt('startEditing')),
+          button: true,
+          loading: isStartEditingLoading,
+          disabled,
+          symbol_: leftPlacement(iconLinkSymbol('edit')),
+          color: 'primary'
+        },
+        {
+          children: 'Notify Vendors',
+          onClick: () => dispatch(adt('showModal', 'notifyNewTerms') as Msg),
+          symbol_: leftPlacement(iconLinkSymbol('bell')),
+          loading: isNotifyNewUsersLoading,
+          button: true,
+          disabled,
+          color: 'success'
+        }
+      ]);
     } else { //!state.isEditing && !state.showNotifyNewTerms
       const isStartEditingLoading = state.startEditingLoading > 0;
       const isDeleteLoading = state.deleteLoading > 0;
@@ -373,7 +363,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             {
               text: 'Notify Vendors',
               icon: 'bell',
-              color: 'warning',
+              color: 'success',
               msg: adt('notifyNewTerms'),
               button: true
             },
