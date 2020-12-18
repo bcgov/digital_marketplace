@@ -37,6 +37,16 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2020.12.18
+
+- Version Number: 1.5
+- Commit Hash: 2844a6b8775ebdbc9b92f742886f468b79289b62
+
+#### Changes
+
+- Ensure placeholder in React Select fields does not wrap.
+- Fix copy indicating when Vendors accepted the Privacy Policy in their profiles.
+
 ### 2020.12.17
 
 - Version Number: 1.4
