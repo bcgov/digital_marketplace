@@ -104,7 +104,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             <h3>Privacy Policy</h3>
             <div>Your personal information is being collected by the Ministry of Citizens’ Services under s.26(c) of the Freedom of Information and Protection of Privacy Act (FOIPPA). The collection, use and disclosure of your personal information is for the purpose of notifying, applying and awarding opportunities on the Digital Marketplace. If you have any questions, please contact: Zachary Woodward, Senior Director, Procurement, Ministry of Citizens’ Services, <Link dest={emailDest(['procurementadvisory@gov.bc.ca'])}>procurementadvisory@gov.bc.ca</Link>.</div>
             {lastAcceptedTerms
-              ? (<TermsSubtext>You agreed to the Digital Marketplace <i>Privacy Policy</i> on {formatDate(lastAcceptedTerms)} at {formatTime(lastAcceptedTerms, true)}.</TermsSubtext>)
+              ? (<TermsSubtext>You agreed to the Digital Marketplace <i>Privacy Policy</i> when you created your Digital Marketplace account.</TermsSubtext>)
               : null}
           </div>
         </Col>

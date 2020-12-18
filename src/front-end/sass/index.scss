@@ -863,6 +863,7 @@ nav.navbar .nav-link:hover {
 
     &__placeholder {
       color: $input-placeholder-color;
+      white-space: nowrap;
     }
 
     &__option {
