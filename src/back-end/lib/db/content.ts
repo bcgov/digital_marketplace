@@ -14,8 +14,6 @@ interface RawContent extends Omit<Content, 'createdBy' | 'updatedBy'> {
   updatedBy: Id | null;
 }
 
-type RawContentSlim = ContentSlim;
-
 interface RootContentRecord {
   id: Id;
   createdAt: Date;
@@ -45,41 +43,48 @@ async function rawContentToContent(connection: Connection, raw: RawContent): Pro
   };
 }
 
-export function generateContentQuery(connection: Connection, full = false) {
-    const query = connection<RawContent>('content')
-      // Join on latest content version
-      .join<RawContent>('contentVersions as version', function() {
-        this
-          .on('content.id', '=', 'version.contentId')
-          .andOn('version.id', '=',
-            connection.raw('(select max("id") from "contentVersions" as version2 where \
-              version2."contentId" = content.id)'));
-      })
-      .select<RawContent[]>(
-        'content.id',
-        'content.slug',
-        'content.fixed',
-        'version.title'
-      );
+function rawContentToContentSlim(raw: RawContent): ContentSlim {
+  return {
+    id: raw.id,
+    title: raw.title,
+    slug: raw.slug,
+    fixed: raw.fixed,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt
+  };
+}
 
-    if (full) {
-      query.select(
-        'content.id',
-        'content.createdAt',
-        'content.createdBy',
-        'version.id as version',
-        'version.body',
-        'version.createdAt as updatedAt',
-        'version.createdBy as updatedBy'
-
-      );
-    }
-
-    return query;
+export function generateContentQuery(connection: Connection, session?: Session) {
+  const query = connection<RawContent>('content')
+    // Join on latest content version
+    .join<RawContent>('contentVersions as version', function() {
+      this
+        .on('content.id', '=', 'version.contentId')
+        .andOn('version.id', '=',
+          connection.raw('(select max("id") from "contentVersions" as version2 where \
+            version2."contentId" = content.id)'));
+    })
+    .select<RawContent[]>(
+      'content.id',
+      'content.slug',
+      'content.fixed',
+      'content.createdAt',
+      'version.id as version',
+      'version.title',
+      'version.body',
+      'version.createdAt as updatedAt'
+    );
+  if (session?.user.type === UserType.Admin) {
+    query.select(
+      'content.createdBy',
+      'version.createdBy as updatedBy'
+    );
+  }
+  return query;
 }
 
 export const readManyContent = tryDb<[], ContentSlim[]>(async (connection) => {
-  const results: RawContentSlim[] = await generateContentQuery(connection, false);
+  const results = (await generateContentQuery(connection)).map(raw => rawContentToContentSlim(raw));
   if (!results) {
     throw new Error('unable to read content');
   }
@@ -88,34 +93,16 @@ export const readManyContent = tryDb<[], ContentSlim[]>(async (connection) => {
 });
 
 export const readOneContentById = tryDb<[Id, Session], Content | null>(async (connection, id, session) => {
-  const result = await generateContentQuery(connection, true)
+  const result = await generateContentQuery(connection, session)
     .where({ 'content.id': id })
     .first();
-
-  // If not an admin, then remove createdBy, updatedBy fields
-  if (result) {
-    if (!session || session.user.type !== UserType.Admin) {
-      delete result.createdBy;
-      delete result.updatedBy;
-    }
-  }
-
   return valid(result ? await rawContentToContent(connection, result) : null);
 });
 
 export const readOneContentBySlug = tryDb<[string, Session], Content | null>(async (connection, slug, session) => {
-  const result = await generateContentQuery(connection, true)
+  const result = await generateContentQuery(connection, session)
     .where({ 'content.slug': slug })
     .first();
-
-  // If not an admin, then remove createdBy, updatedBy fields
-  if (result) {
-    if (!session || session.user.type !== UserType.Admin) {
-      delete result.createdBy;
-      delete result.updatedBy;
-    }
-  }
-
   return valid(result ? await rawContentToContent(connection, result) : null);
 });
 
@@ -203,7 +190,7 @@ export const updateContent = tryDb<[Id, ValidatedUpdateRequestBody, Session], Co
 });
 
 export const deleteContent = tryDb<[Id, Session], Content>(async (connection, id, session) => {
-  const [result] = await generateContentQuery(connection, true)
+  const [result] = await generateContentQuery(connection, session)
     .where({ 'content.id': id });
 
   if (!result) {
