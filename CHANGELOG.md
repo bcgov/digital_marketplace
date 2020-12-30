@@ -37,6 +37,16 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2020.12.29
+
+- Version Number: 1.6
+- Commit Hash: 19d9a6e3bd982e31354cc5197f5d8f8003e23403
+
+#### Changes
+
+- Update default back-end/config values for awarded opportunity count and value offsets (relevant to British Columbia only, may result in a conflict for forks).
+- Fix bug in the content listing page that showed incorrect created and updated dates.
+
 ### 2020.12.18
 
 - Version Number: 1.5
