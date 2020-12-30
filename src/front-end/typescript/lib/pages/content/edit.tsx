@@ -153,6 +153,7 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               dispatch(toast(adt('error', toasts.changesPublished.error)));
               return state.update('form', f => Form.setErrors(f, result.value));
             case 'unhandled':
+              dispatch(toast(adt('error', toasts.changesPublished.error)));
               return state;
           }
         }

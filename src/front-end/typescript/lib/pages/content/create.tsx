@@ -72,13 +72,18 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         async (state, dispatch) => {
           const values = Form.getValues(state.form);
           const result = await api.content.create(values);
-          if (api.isValid(result)) {
-            dispatch(newRoute(adt('contentEdit', result.value.slug) as Route));
-            dispatch(toast(adt('success', toasts.published.success(result.value))));
-            return state;
-          } else {
-            dispatch(toast(adt('error', toasts.published.error)));
-            return stopLoading(state);
+          switch (result.tag) {
+            case 'valid':
+              dispatch(newRoute(adt('contentEdit', result.value.slug) as Route));
+              dispatch(toast(adt('success', toasts.published.success(result.value))));
+              return state;
+            case 'invalid':
+              dispatch(toast(adt('error', toasts.published.error)));
+              state = state.update('form', s => Form.setErrors(s, result.value));
+              return stopLoading(state);
+            case 'unhandled':
+              dispatch(toast(adt('error', toasts.published.error)));
+              return stopLoading(state);
           }
         }
       ];
