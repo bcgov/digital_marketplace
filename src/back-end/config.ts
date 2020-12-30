@@ -8,9 +8,9 @@ import { parseBooleanEnvironmentVariable } from 'shared/config';
 
 // HARDCODED CONFIG
 // Offset for total opportunity metrics displayed on landing page
-export const TOTAL_AWARDED_COUNT_OFFSET = 62;
+export const TOTAL_AWARDED_COUNT_OFFSET = 94;
 
-export const TOTAL_AWARDED_VALUE_OFFSET = 13782000;
+export const TOTAL_AWARDED_VALUE_OFFSET = 13211500;
 
 export const DB_MIGRATIONS_TABLE_NAME = 'migrations';
 
