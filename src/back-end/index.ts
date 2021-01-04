@@ -152,7 +152,10 @@ async function start() {
   let router: AppRouter = await (SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter)(connection);
   // Add the status router.
   // This should not be behind basic auth.
-  router = [...statusRouter as AppRouter, ...router];
+  // Also, run the CWU and SWU hooks with the status router.
+  // i.e. The status route effectively acts as an action triggered by a CRON job.
+  const statusRouterWithHooks = addHooks([codeWithUsHook(connection), sprintWithUsHook(connection)])(statusRouter as AppRouter);
+  router = [...statusRouterWithHooks, ...router];
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
   const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata | null> = express();
