@@ -37,6 +37,15 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### In-progress
+
+- Version Number: 1.7
+- Commit Hash: TODO
+
+#### Changes
+
+- Run CWU and SWU hooks on every request to the `/status` endpoint to ensure they are run with some regularity in case no requests are made to the web app when an opportunity is scheduled to close.
+
 ### 2020.12.29
 
 - Version Number: 1.6
