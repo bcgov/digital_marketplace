@@ -305,15 +305,20 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   let user = dbResult.value as User | null;
   const existingUser = !!user;
   if (!user) {
-    user = getValidValue(await createUser(connection, {
-      idpId,
-      type: userType,
-      status: UserStatus.Active,
-      name: claims.name || '',
-      email: claims.email || null,
-      jobTitle: '',
-      idpUsername: username
-    }), null);
+    try {
+      user = getValidValue(await createUser(connection, {
+        idpId,
+        type: userType,
+        status: UserStatus.Active,
+        name: claims.name || '',
+        email: claims.email || null,
+        jobTitle: '',
+        idpUsername: username
+      }), null);
+    } catch (err) {
+      request.logger.error(`Unable to create new ${userType} account with email: ${JSON.stringify(claims.email)}`);
+      throw err;
+    }
 
     // If email present, notify of successful account creation
     if (user && user.email) {
