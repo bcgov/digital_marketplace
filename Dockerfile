@@ -1,4 +1,4 @@
-FROM docker.io/node:10-jessie
+FROM docker.io/node:10-buster
 COPY . /usr/app
 WORKDIR /usr/app
 RUN npm install
