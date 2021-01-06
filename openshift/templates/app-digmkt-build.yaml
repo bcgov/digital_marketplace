@@ -29,7 +29,9 @@ objects:
     strategy:
       type: Source
       dockerStrategy:
-        noCache: false
+        from:
+          kind: ${SOURCE_IMAGE_KIND}
+          name: ${SOURCE_IMAGE_NAME_SPACE}/${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}
     resources:
       limits:
         cpu: 2
@@ -72,23 +74,23 @@ parameters:
 - name: SOURCE_IMAGE_KIND
   displayName: Source Image Kind
   required: true
-  value: ImageStreamTag
+  value: DockerImage
 
 - name: SOURCE_IMAGE_NAME_SPACE
   displayName: Source Image Name Space
   required: true
-  value: openshift
+  value: docker.io
 
 - name: SOURCE_IMAGE_NAME
   displayName: Source Image Name
   required: true
-  value: nodejs
+  value: node
 
 - name: SOURCE_IMAGE_TAG
   displayName: Source Image Tag
   required: true
   description: The tag of the source image.
-  value: '10'
+  value: 10-jessie
 
 - name: OUTPUT_IMAGE_TAG
   displayName: Output Image Tag
