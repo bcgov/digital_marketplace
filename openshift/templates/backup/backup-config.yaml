@@ -1,0 +1,31 @@
+---
+kind: Template
+apiVersion: v1
+metadata:
+  name: "${NAME}-config-template"
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: backup-conf
+  data:
+    backup.conf: |-
+      postgres=${DATABASE_SERVICE_NAME}:${DATABASE_PORT}/${DATABASE_NAME}
+      
+      0 */6 * * * default ./backup.sh -s
+
+parameters:
+- name: DATABASE_SERVICE_NAME
+  displayName: Name of database to connect to for backups.
+  required: true
+  value: patroni-digmkt-prod
+
+- name: DATABASE_PORT
+  displayName: Port for the database to backup.
+  required: true
+  value: '5432'
+
+- name: DATABASE_NAME
+  displayName: Name of the database to backup.
+  required: true
+  value: digmkt
