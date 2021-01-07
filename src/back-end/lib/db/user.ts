@@ -1,6 +1,8 @@
 import { generateUuid } from 'back-end/lib';
 import { Connection, tryDb } from 'back-end/lib/db';
 import { readOneFileById } from 'back-end/lib/db/file';
+import { makeDomainLogger } from 'back-end/lib/logger';
+import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
 import { valid } from 'shared/lib/http';
 import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
 import { Id } from 'shared/lib/types';
@@ -105,19 +107,27 @@ export const readManyUsersByRole = tryDb<[UserType, boolean?], User[]>(async (co
   return valid(await Promise.all(results.map(async raw => await rawUserToUser(connection, raw))));
 });
 
+const tempLogger = makeDomainLogger(consoleAdapter, 'create-user-debug', 'development');
 export const createUser = tryDb<[CreateUserParams], User>(async (connection, user) => {
   const now = new Date();
-  const [result] = await connection<RawUser>('users')
-    .insert({
-      ...user,
-      id: generateUuid(),
-      createdAt: now,
-      updatedAt: now
-    } as CreateUserParams, '*');
-  if (!result) {
-    throw new Error('unable to create user');
+  try {
+    const [result] = await connection<RawUser>('users')
+      .insert({
+        ...user,
+        id: generateUuid(),
+        createdAt: now,
+        updatedAt: now
+      } as CreateUserParams, '*');
+    if (!result) {
+      throw new Error('unable to create user');
+    }
+    return valid(await rawUserToUser(connection, result));
+  } catch (e) {
+    const err = new Error('user creation failed');
+    tempLogger.error(`user creation failed with; email: ${user.email}; type: ${user.type}`);
+    tempLogger.error(err.stack || 'error stack');
+    throw e;
   }
-  return valid(await rawUserToUser(connection, result));
 });
 
 export const updateUser = tryDb<[UpdateUserParams], User>(async (connection, user) => {
