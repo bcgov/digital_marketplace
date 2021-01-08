@@ -1,8 +1,8 @@
-## Notes for Backup Container setup - Digital Marketplace PostgreSQL and Patroni-PostgreSQL
+## Instructions for Backup Container building and deployment - Digital Marketplace PostgreSQL and Patroni-PostgreSQL
 
 -----
 
-To create the backup-container image, run the following commands in the tools namespace:
+To build the backup-container image, run the following commands in the tools namespace:
 
 ```
 oc process -f templates/backup/backup-build.yaml | oc create -f -
