@@ -9,7 +9,9 @@ For instructions on deploying the Backup Container for each environment please r
 To create default network security policies, run this command in each namespace, replacing <namespace> with the name of the target namespace:
 
 ```
-oc process -f https://raw.githubusercontent.com/BCDevOps/platform-services/master/security/aporeto/docs/sample/quickstart-nsp.yaml -p NAMESPACE=<namespace> | oc create -f -
+oc process -f \
+https://raw.githubusercontent.com/BCDevOps/platform-services/master/security/aporeto/docs/sample/quickstart-nsp.yaml \
+-p NAMESPACE=<namespace> | oc create -f -
 ```
 
 -----
