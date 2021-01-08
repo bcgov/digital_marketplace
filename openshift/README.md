@@ -6,7 +6,7 @@ For instructions on deploying the Backup Container for each environment please r
 
 -----
 
-To create default network security policies, run this command in each namespace, replacing <namespace> with the name of the target namespace:
+To create default network security policies, run this command in each namespace, replacing `<namespace>` with the name of the target namespace:
 
 ```
 oc process -f \
@@ -16,7 +16,7 @@ https://raw.githubusercontent.com/BCDevOps/platform-services/master/security/apo
 
 -----
 
-To create permissions for image pulls between namespaces, run this in the tools namespace, replacing <yyyy> with the name of the namespace that is pulling images (e.g. ccc866-dev):
+To create permissions for image pulls between namespaces, run this in the tools namespace, replacing `<yyyy>` with the name of the namespace that is pulling images (e.g. ccc866-dev):
 
 ```
 oc policy add-role-to-user system:image-puller system:serviceaccount:<yyyy>:default --namespace=ccc866-tools
@@ -62,21 +62,21 @@ oc process -f templates/database/postgresql-digmkt-deploy.yaml -p TAG_NAME=test 
 To deploy a highly available Patroni-PostgreSQL stateful set (for use in PROD), run the following:
 
 ```
-oc project ccc866-prod # switch to prod namespace
-oc process -f templates/database/patroni-prereq-create.yaml | oc create -f - # deploy pre-reqs (including service account)
+oc project ccc866-prod
+oc process -f templates/database/patroni-prereq-create.yaml | oc create -f -
 
-oc project ccc866-tools # switch to tools namespace 
-oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-prod:patroni-digmkt-prod --namespace=ccc866-tools # grant access to service account for image pulls
+oc project ccc866-tools
+oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-prod:patroni-digmkt-prod --namespace=ccc866-tools
 
-oc project ccc866-prod # switch back to prod namespace
-oc process -f templates/database/patroni-digmkt-deploy.yaml | oc apply -f - # deploy the Patroni stateful set
+oc project ccc866-prod
+oc process -f templates/database/patroni-digmkt-deploy.yaml | oc apply -f -
 ```
 
 ------
 
 To deploy the Digital Marketplace app, run these commands in each namespace (dev/test/prod).
-Replace <secret> with the KeyCloak client secret for the target environment.
-Replace <username> and <hashed_password> with the basic auth credentials desired.
+Replace `<secret>` with the KeyCloak client secret for the target environment.
+Replace `<username>` and `<hashed_password>` with the basic auth credentials desired.
 
 ```
 oc process -f templates/app/app-digmkt-deploy.yaml \
