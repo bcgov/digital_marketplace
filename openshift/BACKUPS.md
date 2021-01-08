@@ -28,8 +28,7 @@ oc process -f templates/backup/backup-config.yaml \
 oc process -f templates/backup/backup-deploy.yaml \
 -p DATABASE_DEPLOYMENT_NAME=patroni-digmkt-prod \
 -p TAG_NAME=prod \
--p BACKUP_VOLUME_SIZE=10Gi \
--p VERIFICATION_VOLUME_SIZE=10Gi | oc create -f -
+-p BACKUP_VOLUME_SIZE=10Gi | oc create -f -
 ```
 
 TEST:
@@ -45,8 +44,7 @@ oc process -f templates/backup/backup-config.yaml \
 oc process -f templates/backup/backup-deploy.yaml \
 -p DATABASE_DEPLOYMENT_NAME=postgresql-digmkt-test \
 -p TAG_NAME=test \
--p BACKUP_VOLUME_SIZE=2Gi \
--p VERIFICATION_VOLUME_SIZE=2Gi | oc create -f -
+-p BACKUP_VOLUME_SIZE=2Gi | oc create -f -
 ```
 
 DEV:
@@ -62,6 +60,5 @@ oc process -f templates/backup/backup-config.yaml \
 oc process -f templates/backup/backup-deploy.yaml \
 -p DATABASE_DEPLOYMENT_NAME=postgresql-digmkt-dev \
 -p TAG_NAME=dev \
--p BACKUP_VOLUME_SIZE=2Gi \
--p VERIFICATION_VOLUME_SIZE=2Gi | oc create -f -
+-p BACKUP_VOLUME_SIZE=2Gi | oc create -f -
 ```
