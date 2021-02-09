@@ -214,7 +214,7 @@ export async function withdrawnSWUProposalSubmissionT(recipient: User, withdrawn
 export function viewSWUProposalCallToAction(proposal: SWUProposal | SWUProposalSlim) {
   return {
     text: 'View Proposal',
-    url: templates.makeUrl(`/proposals/sprint-with-us/${proposal.id}`),
+    url: templates.makeUrl(`/opportunities/sprint-with-us/${proposal.opportunity.id}/proposals/${proposal.id}/edit`),
     style: templates.styles.classes.buttonInfo
   };
 }

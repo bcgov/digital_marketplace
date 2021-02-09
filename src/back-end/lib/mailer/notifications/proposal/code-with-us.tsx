@@ -213,7 +213,7 @@ export async function withdrawnCWUProposalSubmissionT(recipient: User, withdrawn
 export function viewCWUProposalCallToAction(proposal: CWUProposal | CWUProposalSlim) {
   return {
     text: 'View Proposal',
-    url: templates.makeUrl(`/proposals/code-with-us/${proposal.id}`),
+    url: templates.makeUrl(`/opportunities/code-with-us/${proposal.opportunity.id}/proposals/${proposal.id}/edit`),
     style: templates.styles.classes.buttonInfo
   };
 }
