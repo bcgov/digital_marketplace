@@ -71,7 +71,7 @@
     "jimp": "^0.16.0",
     "keycloak-connect": "^8.0.0",
     "knex": "^0.19.3",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
     "module-alias": "^2.2.2",
     "moment": "^2.24.0",
