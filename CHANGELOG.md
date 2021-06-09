@@ -40,7 +40,7 @@ Note that each log must include a version number that has either an incremented 
 ### 2021.06.09
 
 - Version Number: 1.7
-- Commit Hash: TODO
+- Commit Hash: 1cfbdd492c581609d69598e2202186906b41cc13
 
 #### Changes
 
