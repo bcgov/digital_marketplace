@@ -37,7 +37,7 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
-### In-progress
+### 2021.06.09
 
 - Version Number: 1.7
 - Commit Hash: TODO
@@ -45,6 +45,12 @@ Note that each log must include a version number that has either an incremented 
 #### Changes
 
 - Run CWU and SWU hooks on every request to the `/status` endpoint to ensure they are run with some regularity in case no requests are made to the web app when an opportunity is scheduled to close.
+- Add more detailed logging for failed user account creation to assist with debugging.
+- Rehaul B.C. OpenShift build/deployment configs for app/database/backup containers for upgrade from OpenShift v3 to v4.
+- Fix "View Proposal" link in CWU and SWU notification emails.
+- Fix F/T and P/T badge background color when viewing capabilities in SWU opportunity phases.
+- `npm audit fix`.
+- Update README.
 
 ### 2020.12.29
 
