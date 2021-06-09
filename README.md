@@ -38,7 +38,7 @@ This document describes this project's developer environment, technical architec
 This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
 
 **Dhruv Dang**, Managing Director
-[dhruv@realfolk.io](mailto:dhruv@realfolk.io)
+[dhruv@realfolk.com](mailto:dhruv@realfolk.com)
 
 This project available to use under the Apache 2.0 license (see `LICENSE.txt`). Please note the `NOTICE.txt` file included with this repository and the guidelines in section 4(d) of the license.
 
@@ -278,7 +278,7 @@ To deploy to the Test environment, start a build for "app-digmkt-test", and Open
 
 To deploy to the Production environment, start a build for "app-digmkt-prod", and OpenShift will build HEAD from the `master` branch. You will need to manually deploy the build to the Production environment listed above once it completes by deploying the "app-digmkt-prod" deployment in the "ccc866-prod" project.
 
-For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [openshift/README.md](./openshift/README.md).  
+For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [openshift/README.md](./openshift/README.md).
 
 #### Running Database Migrations
 
@@ -360,7 +360,7 @@ The Digital Marketplace is currently operated by the Procurement Services Branch
 This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
 
 **Dhruv Dang**, Managing Director
-[dhruv@realfolk.io](mailto:dhruv@realfolk.io)
+[dhruv@realfolk.com](mailto:dhruv@realfolk.com)
 
 ## Credits
 
