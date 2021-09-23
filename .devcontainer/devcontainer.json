@@ -29,7 +29,6 @@
 		"dbaeumer.vscode-eslint",
 		"mtxr.sqltools",
 		"mtxr.sqltools-driver-pg",
-		"ms-azuretools.vscode-docker",
 		"esbenp.prettier-vscode"
 	],
 
