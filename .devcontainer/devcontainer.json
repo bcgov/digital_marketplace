@@ -58,7 +58,7 @@
 		"editor.formatOnSave": true,
 		"eslint.alwaysShowStatus": true,
 		"eslint.format.enable": true,
-		"window.zoomLevel": 2,
+		"window.zoomLevel": 1,
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
