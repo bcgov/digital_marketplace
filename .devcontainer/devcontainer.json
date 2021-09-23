@@ -53,7 +53,12 @@
 			"database": "digitalmarketplace",
 			"username": "digitalmarketplace",
 			"password": "digitalmarketplace"
-		}]
+		}],
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true,
+		"eslint.alwaysShowStatus": true,
+		"eslint.format.enable": true,
+		"window.zoomLevel": 2,
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
@@ -61,7 +66,8 @@
 		"dbaeumer.vscode-eslint",
 		"mtxr.sqltools",
 		"mtxr.sqltools-driver-pg",
-		"ms-azuretools.vscode-docker"
+		"ms-azuretools.vscode-docker",
+		"esbenp.prettier-vscode"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
