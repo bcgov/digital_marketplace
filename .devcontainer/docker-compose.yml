@@ -31,7 +31,7 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+ # need to use host because Codespaces currently forces host networking mode for the main container (https://github.community/t/cant-connect-to-postgres/142655)
     network_mode: host
 
     # Uncomment the next line to use a non-root user for all processes.
