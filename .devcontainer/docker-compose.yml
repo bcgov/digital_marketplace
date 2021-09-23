@@ -23,6 +23,9 @@ services:
         # Use -bullseye variants on local arm64/Apple Silicon.
         VARIANT: 12-bullseye
 
+    depends_on:
+      - db
+      
     init: true
 
     volumes:
@@ -45,6 +48,8 @@ services:
     restart: always
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+     - "5432:5432"
     environment:
       POSTGRES_PASSWORD: digitalmarketplace
       POSTGRES_USER: digitalmarketplace
