@@ -10,24 +10,24 @@ This document describes this project's developer environment, technical architec
 
 - [Authors and Licensing](#authors-and-licensing)
 - [Project Organisation](#project-organisation)
-  * [Front-End (`src/front-end`)](#front-end-srcfront-end)
-  * [Back-End (`src/back-end`)](#back-end-srcback-end)
-  * [Shared (`src/shared`)](#shared-srcshared)
-  * [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
-  * [Scripts (`src/scripts`)](#scripts-srcscripts)
+  - [Front-End (`src/front-end`)](#front-end-srcfront-end)
+  - [Back-End (`src/back-end`)](#back-end-srcback-end)
+  - [Shared (`src/shared`)](#shared-srcshared)
+  - [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
+  - [Scripts (`src/scripts`)](#scripts-srcscripts)
 - [Development Environment](#development-environment)
-  * [Dependencies](#dependencies)
-  * [Quick Start](#quick-start)
-  * [NPM Scripts](#npm-scripts)
-  * [Environment Variables](#environment-variables)
+  - [Dependencies](#dependencies)
+  - [Quick Start](#quick-start)
+  - [NPM Scripts](#npm-scripts)
+  - [Environment Variables](#environment-variables)
 - [Deployment](#deployment)
-  * [Environments](#environments)
-  * [Deployment Process](#deployment-process)
-  * [Backups](#backups)
-  * [High Availability Database Deployment](#high-availability-database-deployment)
+  - [Environments](#environments)
+  - [Deployment Process](#deployment-process)
+  - [Backups](#backups)
+  - [High Availability Database Deployment](#high-availability-database-deployment)
 - [Community](#community)
-  * [Contributing](#contributing)
-  * [Forking this Repository](#forking-this-repository)
+  - [Contributing](#contributing)
+  - [Forking this Repository](#forking-this-repository)
 - [Team](#team)
 - [Credits](#credits)
 
@@ -157,35 +157,35 @@ It is recommended that developers use the following scripts defined in `package.
 npm run <SCRIPT_NAME>
 ```
 
-| Script Name | Description |
-|---|---|
-| `start` | Runs the back-end server. |
-| `front-end:lint` | Lints the front-end source code using tslint. |
-| `front-end:typecheck` | Typechecks the front-end source code using tsc. |
-| `front-end:test` | Runs unit tests for the front-end source code. |
-| `front-end:build` | Builds the front-end using grunt. |
-| `front-end:watch` | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes. |
-| `front-end:typedoc` | Builds TypeDoc API documentation for the front-end source code. |
-| `back-end:lint` | Lints the back-end source code using tslint. |
-| `back-end:typecheck` | Typechecks the back-end source code using tsc. |
-| `back-end:test` | Runs unit tests for the back-end source code. |
-| `back-end:start` | Starts the back-end server (assumes it has already been built by grunt). |
-| `back-end:build` | Builds the back-end server using grunt. |
-| `back-end:watch` | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes. |
-| `back-end:typedoc` | Builds TypeDoc API documentation for the back-end source code. |
-| `shared:typedoc` | Builds TypeDoc API documentation for the shared source code. |
-| `migrations:helper` | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below. |
-| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`. |
-| `migrations:latest` | Runs all migrations forward using their exported `up` functions. |
-| `migrations:rollback` | Rolls all migrations back using their exported `down` functions. |
-| `migrations:up` | Runs one migration `up`. |
-| `migrations:down` | Runs one migration `down`. |
-| `scripts:run` | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed. |
-| `typedoc:build` | Builds all TypeDoc API documentation. |
-| `typedoc:start` | Serves TypeDoc documentation on a local server. |
-| `docs:readme-toc` | Generate and insert a table of contents for `README.md`. |
-| `docs:licenses` | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`. |
-| `docs:db -- <POSTGRESQL_URL>` | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url. |
+| Script Name                             | Description                                                                                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start`                                 | Runs the back-end server.                                                                                                                                     |
+| `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                 |
+| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                               |
+| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                |
+| `front-end:build`                       | Builds the front-end using grunt.                                                                                                                             |
+| `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                         |
+| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                               |
+| `back-end:lint`                         | Lints the back-end source code using tslint.                                                                                                                  |
+| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                |
+| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                 |
+| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                      |
+| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                       |
+| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.               |
+| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                |
+| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                  |
+| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below. |
+| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                           |
+| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                              |
+| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                              |
+| `migrations:up`                         | Runs one migration `up`.                                                                                                                                      |
+| `migrations:down`                       | Runs one migration `down`.                                                                                                                                    |
+| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.          |
+| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                         |
+| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                               |
+| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                      |
+| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                        |
+| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                               |
 
 ### Environment Variables
 
@@ -198,71 +198,71 @@ As a convenience, developers can refer to `sample.env` as a guide.
 
 Environment variables that affect the back-end server's functionality are stored and sanitized in `src/back-end/config.ts`.
 
-| Name | Description |
-|---|---|
-| `NODE_ENV` | The back-end run-time's environment. Possible values include either "development" or "production". |
-| `SERVER_HOST` | The IPv4 address for the back-end to bind to. |
-| `SERVER_PORT` | The TCP port for the back-end to bind to. |
-| `SCHEDULED_DOWNTIME` | A boolean flag (set to `0` for `false`, `1` for `true`) to turn off CRUD endpoints and vend a downtime HTML page to all users when set to a non-zero number. Defaults to `false` if `SCHEDULED_DOWNTIME` is undefined or invalid. |
-| `BASIC_AUTH_USERNAME` | An HTTP basic auth username to limit access to the web application. |
-| `BASIC_AUTH_PASSWORD_HASH` | A password hash to authenticate HTTP basic auth passwords to limit access to the web application. |
-| `ORIGIN` | The root URL of the web app. This is used for authentication and generating URLs in email notifications. The value must include the protocol and any path prefixes. e.g. `https://digital.gov.bc.ca/marketplace`. |
-| `POSTGRES_URL` | The PostgreSQL database to connect to (you only need to use this variable in development, not the other `DATABASE_*` variables defined below). |
-| `DATABASE_SERVICE_NAME` | Auto-generated in OpenShift. |
-| `${DATABASE_SERVICE_NAME}_SERVICE_HOST` | The PostgreSQL host to connect to in OpenShift. |
-| `${DATABASE_SERVICE_NAME}_SERVICE_PORT` | The PostgreSQL port to connect to in OpenShift. |
-| `DATABASE_USERNAME` | The PostgreSQL user to connect with in OpenShift. |
-| `DATABASE_PASSWORD` | The PostgreSQL password to connect with in OpenShift. |
-| `DATABASE_NAME` | The PostgreSQL database name to connect to in OpenShift. |
-| `COOKIE_SECRET` | The secret used to hash cookies. |
-| `MAILER_HOST` | SMTP server host for transactional emails in production. |
-| `MAILER_PORT` | SMTP server port for transactional emails in production. |
-| `MAILER_USERNAME` | SMTP server username for authentication. If specified, `MAILER_PASSWORD` must also be provided. |
-| `MAILER_PASSWORD` | SMTP server password for authentication. If specified, `MAILER_USERNAME` must also be provided. |
-| `MAILER_GMAIL_USER` | A GMail SMTP username to test transactional emails in development. |
-| `MAILER_GMAIL_PASS` | A GMail SMTP password to test transactional emails in development. |
-| `MAILER_FROM` | The sender for transactional emails. |
-| `MAILER_BATCH_SIZE` | The maximum number of email addresses to include in batch notification emails. Defaults to `50`. |
-| `MAILER_MAX_CONNECTIONS` | The maximum number of simultaneous SMTP connections to use for the mailer. Defaults to `5`. |
-| `KEYCLOAK_URL` | The URL of the Keycloak server to use for authentication. |
-| `KEYCLOAK_REALM` | The Keycloak realm. Please contact a team member to retrieve this credential. |
-| `KEYCLOAK_CLIENT_ID` | The Keycloak client ID. Please contact a team member to retrieve this credential. |
-| `KEYCLOAK_CLIENT_SECRET` | The Keycloak client secret. Please contact a team member to retrieve this credential. |
-| `KNEX_DEBUG` | Set this to `true` to debug `knex` operations. |
-| `UPDATE_HOOK_THROTTLE` | The number of milliseconds used to throttle per-request jobs (e.g. automatically closing opportunities). Defaults to `60000`ms. |
-| `AVATAR_MAX_IMAGE_WIDTH` | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. Defaults to 500 pixels. |
-| `AVATAR_MAX_IMAGE_HEIGHT` | The maximum image height for uploaded avatar image files. Files with a greater height will be resized. Defaults to 500 pixels. |
-| `FILE_STORAGE_DIR` | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing. |
-| `SERVICE_TOKEN_HASH` | A hashed token used to control access to service API endpoints that are only enabled in development and test environments. Defining the variable will enable service endpoints that can be used to override user accounts and sessions. |
-| `SWAGGER_ENABLE` | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.
-| `SWAGGER_UI_PATH` | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`. |
-| `TZ` | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration. |
-| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `false`. |
+| Name                                    | Description                                                                                                                                                                                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                              | The back-end run-time's environment. Possible values include either "development" or "production".                                                                                                                                       |
+| `SERVER_HOST`                           | The IPv4 address for the back-end to bind to.                                                                                                                                                                                            |
+| `SERVER_PORT`                           | The TCP port for the back-end to bind to.                                                                                                                                                                                                |
+| `SCHEDULED_DOWNTIME`                    | A boolean flag (set to `0` for `false`, `1` for `true`) to turn off CRUD endpoints and vend a downtime HTML page to all users when set to a non-zero number. Defaults to `false` if `SCHEDULED_DOWNTIME` is undefined or invalid.        |
+| `BASIC_AUTH_USERNAME`                   | An HTTP basic auth username to limit access to the web application.                                                                                                                                                                      |
+| `BASIC_AUTH_PASSWORD_HASH`              | A password hash to authenticate HTTP basic auth passwords to limit access to the web application.                                                                                                                                        |
+| `ORIGIN`                                | The root URL of the web app. This is used for authentication and generating URLs in email notifications. The value must include the protocol and any path prefixes. e.g. `https://digital.gov.bc.ca/marketplace`.                        |
+| `POSTGRES_URL`                          | The PostgreSQL database to connect to (you only need to use this variable in development, not the other `DATABASE_*` variables defined below).                                                                                           |
+| `DATABASE_SERVICE_NAME`                 | Auto-generated in OpenShift.                                                                                                                                                                                                             |
+| `${DATABASE_SERVICE_NAME}_SERVICE_HOST` | The PostgreSQL host to connect to in OpenShift.                                                                                                                                                                                          |
+| `${DATABASE_SERVICE_NAME}_SERVICE_PORT` | The PostgreSQL port to connect to in OpenShift.                                                                                                                                                                                          |
+| `DATABASE_USERNAME`                     | The PostgreSQL user to connect with in OpenShift.                                                                                                                                                                                        |
+| `DATABASE_PASSWORD`                     | The PostgreSQL password to connect with in OpenShift.                                                                                                                                                                                    |
+| `DATABASE_NAME`                         | The PostgreSQL database name to connect to in OpenShift.                                                                                                                                                                                 |
+| `COOKIE_SECRET`                         | The secret used to hash cookies.                                                                                                                                                                                                         |
+| `MAILER_HOST`                           | SMTP server host for transactional emails in production.                                                                                                                                                                                 |
+| `MAILER_PORT`                           | SMTP server port for transactional emails in production.                                                                                                                                                                                 |
+| `MAILER_USERNAME`                       | SMTP server username for authentication. If specified, `MAILER_PASSWORD` must also be provided.                                                                                                                                          |
+| `MAILER_PASSWORD`                       | SMTP server password for authentication. If specified, `MAILER_USERNAME` must also be provided.                                                                                                                                          |
+| `MAILER_GMAIL_USER`                     | A GMail SMTP username to test transactional emails in development.                                                                                                                                                                       |
+| `MAILER_GMAIL_PASS`                     | A GMail SMTP password to test transactional emails in development.                                                                                                                                                                       |
+| `MAILER_FROM`                           | The sender for transactional emails.                                                                                                                                                                                                     |
+| `MAILER_BATCH_SIZE`                     | The maximum number of email addresses to include in batch notification emails. Defaults to `50`.                                                                                                                                         |
+| `MAILER_MAX_CONNECTIONS`                | The maximum number of simultaneous SMTP connections to use for the mailer. Defaults to `5`.                                                                                                                                              |
+| `KEYCLOAK_URL`                          | The URL of the Keycloak server to use for authentication.                                                                                                                                                                                |
+| `KEYCLOAK_REALM`                        | The Keycloak realm. Please contact a team member to retrieve this credential.                                                                                                                                                            |
+| `KEYCLOAK_CLIENT_ID`                    | The Keycloak client ID. Please contact a team member to retrieve this credential.                                                                                                                                                        |
+| `KEYCLOAK_CLIENT_SECRET`                | The Keycloak client secret. Please contact a team member to retrieve this credential.                                                                                                                                                    |
+| `KNEX_DEBUG`                            | Set this to `true` to debug `knex` operations.                                                                                                                                                                                           |
+| `UPDATE_HOOK_THROTTLE`                  | The number of milliseconds used to throttle per-request jobs (e.g. automatically closing opportunities). Defaults to `60000`ms.                                                                                                          |
+| `AVATAR_MAX_IMAGE_WIDTH`                | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. Defaults to 500 pixels.                                                                                                             |
+| `AVATAR_MAX_IMAGE_HEIGHT`               | The maximum image height for uploaded avatar image files. Files with a greater height will be resized. Defaults to 500 pixels.                                                                                                           |
+| `FILE_STORAGE_DIR`                      | The location to store uploaded files. This is typically used by the server to temporarily store files uploaded by multipart requests for processing.                                                                                     |
+| `SERVICE_TOKEN_HASH`                    | A hashed token used to control access to service API endpoints that are only enabled in development and test environments. Defining the variable will enable service endpoints that can be used to override user accounts and sessions.  |
+| `SWAGGER_ENABLE`                        | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.                                                                                                                                          |
+| `SWAGGER_UI_PATH`                       | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`.                                                                                                                                     |
+| `TZ`                                    | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration.                                                                                                           |
+| `SHOW_TEST_INDICATOR`                   | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `false`. |
 
 #### Front-End Environment Variables
 
 Environment variables that affect the front-end's build process are stored and sanitized in `src/front-end/config.ts`, and referenced to in `gruntfile.js`.
 
-| Name | Description |
-|---|---|
-| `NODE_ENV` | Determines whether the front-end is built for production (e.g. minification, compression, etc). Possible values include either "development" or "production". |
-| `CONTACT_EMAIL` | The Digital Marketplace team's contact email address. |
-| `PATH_PREFIX` | The URL path prefix that the Digital Marketplace is deployed to. For example, if deployed to `digital.gov.bc.ca/marketplace`, the value of this variable should be `marketplace`. |
+| Name                  | Description                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NODE_ENV`            | Determines whether the front-end is built for production (e.g. minification, compression, etc). Possible values include either "development" or "production".                                          |
+| `CONTACT_EMAIL`       | The Digital Marketplace team's contact email address.                                                                                                                                                  |
+| `PATH_PREFIX`         | The URL path prefix that the Digital Marketplace is deployed to. For example, if deployed to `digital.gov.bc.ca/marketplace`, the value of this variable should be `marketplace`.                      |
 | `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (shows a testing variant of the logo in the web app UI). Defaults to `false`. |
 
 ## Deployment
 
-This project is deployed to the Government of British Columbia's own OpenShift infrastructure.  *NOTE* The instructions below apply to deployment to the OpenShift 4 (OCP4) environment, and no longer apply to deployment to OCP3 environments.
+This project is deployed to the Government of British Columbia's own OpenShift infrastructure. _NOTE_ The instructions below apply to deployment to the OpenShift 4 (OCP4) environment, and no longer apply to deployment to OCP3 environments.
 
 ### Environments
 
 We have four environments:
 
-| OpenShift Project | Name | URL |
-|---|---|---|
-| ccc866-dev | Development | https://app-digmkt-dev.apps.silver.devops.gov.bc.ca |
-| ccc866-test | Test | https://app-digmkt-test.apps.silver.devops.gov.bc.ca |
-| ccc866-prod | Production | https://app-digmkt-prod.apps.silver.devops.gov.bc.ca |
+| OpenShift Project | Name        | URL                                                  |
+| ----------------- | ----------- | ---------------------------------------------------- |
+| ccc866-dev        | Development | https://app-digmkt-dev.apps.silver.devops.gov.bc.ca  |
+| ccc866-test       | Test        | https://app-digmkt-test.apps.silver.devops.gov.bc.ca |
+| ccc866-prod       | Production  | https://app-digmkt-prod.apps.silver.devops.gov.bc.ca |
 
 Each environment has its own database instance.
 
@@ -288,10 +288,10 @@ Using an environment's deployment shell, run `npm run migrations:latest` in the 
 
 Automated backups of the PostgreSQL database are performed with the BC Government Backup Container. Full documentation for this tool can be found here: https://github.com/BCDevOps/backup-container. The schedule for automated backups is as follows:
 
-* Every 6 hours with a retention of 4 backups
-* Every 24 hours with a retention of 1 backup (daily)
-* Every week with a retention of 4 backups (weekly)
-* Every month with a retention of 1 backup (monthly)
+- Every 6 hours with a retention of 4 backups
+- Every 24 hours with a retention of 1 backup (daily)
+- Every week with a retention of 4 backups (weekly)
+- Every month with a retention of 1 backup (monthly)
 
 A manual backup can be immediately performed by connecting to the backup container pod in OpenShift and running `backup.sh -1`.
 
@@ -301,11 +301,11 @@ You can find instructions for building and deploying the Backup Container images
 
 #### Restoring from Backup
 
-In the unfortunate event that you need to restore your data from a backup archive, the `backup.sh` script can  be used to restore from the last backup file. Refer to https://github.com/BCDevOps/backup-container#restore for details on how to use this script.
+In the unfortunate event that you need to restore your data from a backup archive, the `backup.sh` script can be used to restore from the last backup file. Refer to https://github.com/BCDevOps/backup-container#restore for details on how to use this script.
 
 ### High Availability Database Deployment
 
-The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments.  Instructions for building and deploying can be viewed [here](./openshift/BACKUPS.md).
+The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](./openshift/BACKUPS.md).
 
 Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/database`.
 
@@ -365,3 +365,24 @@ This project is designed, implemented and maintained by the team at Real Folk. I
 ## Credits
 
 This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used by the Procurement Concierge Program's web app are documented in `docs/OPEN_SOURCE_LICENSES.txt`.
+
+## TypeScript Backgrounder
+
+If you haven't worked with TypeScript before, you might find the following resources helpful:
+
+Follow-along TypeScript tutorials with an in-browser editor:
+
+- [Scrimba](https://scrimba.com/learn/typescript)
+- [Codecademy](https://www.codecademy.com/learn/learn-typescript)
+
+Cheatsheets and documentation for reading/writing TypeScript:
+
+- General TypeScript [cheatsheets](https://www.codecademy.com/learn/learn-typescript/modules/learn-typescript-types/cheatsheet)
+- More detail and examples for [generics](https://www.tutorialsteacher.com/typescript/typescript-generic-interface) (the repo uses a lot of generics; look for the angle bracket syntax)
+- [React Props Types](https://www.youtube.com/watch?v=V9A-zHJvXtk&list=PLG-Mk4wQm9_LyKE5EwoZz2_GGXR-zJ5Ml&index=2)
+- [React Hook Types](https://www.freecodecamp.org/news/react-typescript-how-to-set-up-types-on-hooks/)
+
+TypeScript configuration documentation:
+
+- `tsconfig.json` files contain compiler options as well as options for type-checking behavior. For a list of all the available options, see the [TypeScript docs](https://www.typescriptlang.org/tsconfig).
+- The Digital Marketplace uses strict type checking, which includes [these behaviors](https://www.typescriptlang.org/tsconfig#strict)
