@@ -34,7 +34,7 @@ oc process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=ma
 
 If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
 
-`oc start-build app-digmkt-dev` 
+`oc start-build <buildconfig_name>` 
 
 to trigger the build.
 
@@ -86,7 +86,7 @@ Replace `<secret>` with the KeyCloak client secret for the target environment.
 Replace `<username>` and `<hashed_password>` with the basic auth credentials desired.
 
 ```
-oc process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
@@ -111,3 +111,21 @@ oc process -f templates/app/app-digmkt-deploy.yaml \
 -p SHOW_TEST_INDICATOR=0 \
 -p DATABASE_SERVICE_NAME=patroni | oc create -f -
 ```
+
+When there is an existing deployment config in the namespace these commands must be modified:
+
+In the dev namespace, updating the dc is done using apply:
+
+oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
+-p TAG_NAME=dev \
+-p KEYCLOAK_CLIENT_SECRET=<secret> \
+-p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
+-p SHOW_TEST_INDICATOR=1 \
+-p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
+```
+
+Note, when `apply` is used the deployment will not be automatically triggered.  That is done with the command:
+
+`oc -n ccc866-dev rollout latest dc/app-digmkt-dev`
+
+If the `KEYCLOAK_CLIENT_SECRET` has changed, the previous one will need to be deleted before generating the new one.
