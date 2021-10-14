@@ -111,7 +111,6 @@ If you are not using Nix, please ensure the following packages have been install
 
 - Node.js 10.x
 - SASS
-- PostgreSQL 10.0.x
 - Docker
 - Docker Compose 3.x
 
@@ -134,7 +133,7 @@ Finally, open three terminals and run the following commands:
 
 ```bash
 # Terminal 1
-docker-compose up -d # Start a local PostgreSQL server in the background.
+docker-compose up -d # Start a local PostgreSQL server in a container in the background.
 npm run migrations:latest # Run all database migrations.
 
 # Terminal 2
@@ -146,7 +145,7 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.
 
-You can stop (and wipe) the local PostgreSQL server by running `docker-compose down`.
+You can stop the local PostgreSQL container server by running `docker-compose down`.
 
 ### NPM Scripts
 
