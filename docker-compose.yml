@@ -2,6 +2,8 @@ version: "3"
 services:
   db:
     image: postgres:10
+    volumes:
+      - dm-vol:/var/lib/postgresql/data
     restart: always
     ports:
       - "5432:5432"
@@ -9,3 +11,5 @@ services:
       POSTGRES_USER: digitalmarketplace
       POSTGRES_PASSWORD: digitalmarketplace
       POSTGRES_DB: digitalmarketplace
+volumes:
+  dm-vol:
