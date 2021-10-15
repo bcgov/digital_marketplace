@@ -1,5 +1,14 @@
 version: "3"
 services:
+  app:
+    build:
+      context: .
+      dockerfile: devDockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      POSTGRES_URL: postgresql://digitalmarketplace:digitalmarketplace@db:5432/digitalmarketplace
+
   db:
     image: postgres:10
     volumes:
@@ -11,5 +20,6 @@ services:
       POSTGRES_USER: digitalmarketplace
       POSTGRES_PASSWORD: digitalmarketplace
       POSTGRES_DB: digitalmarketplace
+
 volumes:
   dm-vol:
