@@ -11,6 +11,7 @@ To create default network security policies, run this command in each namespace,
 ```
 oc process -f \
 https://raw.githubusercontent.com/BCDevOps/platform-services/master/security/aporeto/docs/sample/quickstart-nsp.yaml \
+
 -p NAMESPACE=<namespace> | oc create -f -
 ```
 
@@ -27,10 +28,17 @@ oc policy add-role-to-user system:image-puller system:serviceaccount:<yyyy>:defa
 To create build configs for the application images, run these commands in the tools namespace:
 
 ```
-oc process -f templates/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
-oc process -f templates/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
-oc process -f templates/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
+oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
 ```
+
+If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
+
+`oc start-build <buildconfig_name>` 
+
+to trigger the build.
+
 
 ------
 
@@ -79,7 +87,7 @@ Replace `<secret>` with the KeyCloak client secret for the target environment.
 Replace `<username>` and `<hashed_password>` with the basic auth credentials desired.
 
 ```
-oc process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
@@ -104,3 +112,40 @@ oc process -f templates/app/app-digmkt-deploy.yaml \
 -p SHOW_TEST_INDICATOR=0 \
 -p DATABASE_SERVICE_NAME=patroni | oc create -f -
 ```
+
+When there is an existing deployment config in the namespace these commands must be modified:
+
+In the dev namespace, updating the dc is done using apply:
+
+```
+oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
+-p TAG_NAME=dev \
+-p KEYCLOAK_CLIENT_SECRET=<secret> \
+-p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
+-p SHOW_TEST_INDICATOR=1 \
+-p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
+```
+```
+oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
+-p TAG_NAME=test \
+-p KEYCLOAK_CLIENT_SECRET=<secret> \
+-p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
+-p SHOW_TEST_INDICATOR=1 \
+-p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
+```
+
+```
+oc -n ccc866-prod process -f templates/app/app-digmkt-deploy.yaml \
+-p TAG_NAME=prod \
+-p KEYCLOAK_CLIENT_SECRET=<secret> \
+-p KEYCLOAK_URL=https://oidc.gov.bc.ca \
+-p SHOW_TEST_INDICATOR=0 \
+-p DATABASE_SERVICE_NAME=patroni | oc apply -f -
+```
+
+Note 1: When `apply` is used the deployment will not be automatically triggered.  That is done with the command:
+
+`oc -n ccc866-dev rollout latest dc/<deploymentconfig_name>`
+
+Note 2: the `apply` command will not override an existing `KEYCLOAK_CLIENT_SECRET` stored in the OCP namespace.  
+If the `KEYCLOAK_CLIENT_SECRET` needs to be changed, the previous one will need to be deleted (in the namespace) before generating the new one.
