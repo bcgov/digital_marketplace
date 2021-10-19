@@ -11,6 +11,7 @@ To create default network security policies, run this command in each namespace,
 ```
 oc process -f \
 https://raw.githubusercontent.com/BCDevOps/platform-services/master/security/aporeto/docs/sample/quickstart-nsp.yaml \
+
 -p NAMESPACE=<namespace> | oc create -f -
 ```
 
@@ -116,6 +117,7 @@ When there is an existing deployment config in the namespace these commands must
 
 In the dev namespace, updating the dc is done using apply:
 
+```
 oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
@@ -123,9 +125,27 @@ oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p SHOW_TEST_INDICATOR=1 \
 -p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
 ```
+```
+oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
+-p TAG_NAME=test \
+-p KEYCLOAK_CLIENT_SECRET=<secret> \
+-p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
+-p SHOW_TEST_INDICATOR=1 \
+-p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
+```
 
-Note, when `apply` is used the deployment will not be automatically triggered.  That is done with the command:
+```
+oc -n ccc866-prod process -f templates/app/app-digmkt-deploy.yaml \
+-p TAG_NAME=prod \
+-p KEYCLOAK_CLIENT_SECRET=<secret> \
+-p KEYCLOAK_URL=https://oidc.gov.bc.ca \
+-p SHOW_TEST_INDICATOR=0 \
+-p DATABASE_SERVICE_NAME=patroni | oc apply -f -
+```
 
-`oc -n ccc866-dev rollout latest dc/app-digmkt-dev`
+Note 1: When `apply` is used the deployment will not be automatically triggered.  That is done with the command:
 
-If the `KEYCLOAK_CLIENT_SECRET` has changed, the previous one will need to be deleted before generating the new one.
+`oc -n ccc866-dev rollout latest dc/<deploymentconfig_name>`
+
+Note 2: the `apply` command will not override an existing `KEYCLOAK_CLIENT_SECRET` stored in the OCP namespace.  
+If the `KEYCLOAK_CLIENT_SECRET` needs to be changed, the previous one will need to be deleted (in the namespace) before generating the new one.
