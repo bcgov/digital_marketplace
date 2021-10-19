@@ -1,6 +1,7 @@
 FROM docker.io/node:10-jessie
 COPY . /usr/app
 WORKDIR /usr/app
+RUN git config core.filemode false
 # added to fix node-sass version error
 RUN npm rebuild node-sass
 RUN npm install
@@ -10,4 +11,4 @@ RUN npm run back-end:build
 RUN chmod -R 775 /usr/app
 RUN chown -R node:root /usr/app
 EXPOSE 3000
-CMD npm start
+CMD npm run back-end:watch & npm run front-end:watch
