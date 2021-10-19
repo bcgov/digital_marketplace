@@ -27,9 +27,9 @@ oc policy add-role-to-user system:image-puller system:serviceaccount:<yyyy>:defa
 To create build configs for the application images, run these commands in the tools namespace:
 
 ```
-oc process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
-oc process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
-oc process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
+oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
 ```
 
 If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
