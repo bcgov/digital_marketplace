@@ -93,8 +93,8 @@ oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=1 \
--p BASIC_AUTH_USERNAME=<username>\
--p BASIC_AUTH_PASSWORD_HASH=<hashed_password>
+-p BASIC_AUTH_USERNAME=<username> \
+-p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p DATABASE_SERVICE_NAME=postgresql | oc create -f -
 ```
 
