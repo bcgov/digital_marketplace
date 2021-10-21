@@ -84,7 +84,8 @@ oc process -f templates/database/patroni-digmkt-deploy.yaml | oc apply -f -
 
 To deploy the Digital Marketplace app, run these commands in each namespace (dev/test/prod).
 Replace `<secret>` with the KeyCloak client secret for the target environment.
-Replace `<username>` and `<hashed_password>` with the basic auth credentials desired.
+
+To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
 
 ```
 oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
@@ -92,11 +93,13 @@ oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=1 \
+-p BASIC_AUTH_USERNAME=<username> \
+-p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p DATABASE_SERVICE_NAME=postgresql | oc create -f -
 ```
 
 ```
-oc process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=test \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
@@ -105,7 +108,7 @@ oc process -f templates/app/app-digmkt-deploy.yaml \
 ```
 
 ```
-oc process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-prod process -f templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=prod \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://oidc.gov.bc.ca \
