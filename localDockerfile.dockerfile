@@ -1,4 +1,4 @@
-FROM docker.io/node:10-jessie
+FROM --platform=linux/amd64 docker.io/node:10-jessie
 COPY . /usr/app
 WORKDIR /usr/app
 # to avoid git picking up file permission changes when attaching to Docker container via VS Code
