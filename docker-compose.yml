@@ -4,8 +4,8 @@ services:
     image: dm_app_image
     container_name: dm_app
     build:
-      context: .
-      dockerfile: localDockerfile.dockerfile
+      context: ././
+      dockerfile: src/front-end/Dockerfile
     ports:
       - "3000:3000"
     environment:
