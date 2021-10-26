@@ -1,6 +1,8 @@
 version: "3"
 services:
   app:
+    image: dm_app_image
+    container_name: dm_app
     build:
       context: .
       dockerfile: localDockerfile.dockerfile
@@ -8,8 +10,11 @@ services:
       - "3000:3000"
     environment:
       POSTGRES_URL: postgresql://digitalmarketplace:digitalmarketplace@db:5432/digitalmarketplace
+    depends_on:
+      - db
 
   db:
+    container_name: dm_db
     image: postgres:10
     volumes:
       - dm-vol:/var/lib/postgresql/data
