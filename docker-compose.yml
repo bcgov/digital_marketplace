@@ -10,6 +10,7 @@ services:
       - "3000:3000"
     environment:
       POSTGRES_URL: postgresql://digitalmarketplace:digitalmarketplace@db:5432/digitalmarketplace
+      NODE_ENV: ${NODE_ENV}
     depends_on:
       - db
 
