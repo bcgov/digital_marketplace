@@ -317,7 +317,7 @@ const DescriptionList: View<DescriptionListProps> = ({ title, items }) => {
 type Template<Props> = (props: Props) => string;
 
 function makeTemplate<Props>(Template: View<Props>): Template<Props> {
-  return props => renderToStaticMarkup((<Template {...props} />));
+  return props => renderToStaticMarkup(<Template {...props} />);
 }
 
 const Container: View<WithChildren> = ({ children }) => {
