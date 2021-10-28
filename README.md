@@ -102,7 +102,22 @@ npm run scripts:run -- <SCRIPT_NAME> [...args]
 
 ## Development Environment
 
-### Dependencies
+First, create a `.env` file and replace the placeholder values with your credentials. Refer to the [Environment Variables](#environment-variables) section below for further information.
+
+```bash
+cp sample.env .env
+# Open and edit .env in your text editor.
+```
+
+### Setup Options
+
+Use [Localhost](#localhost) setup if you want to install and run the development environment on your own machine.
+
+Use [Containerized](#containerized) setup if you want to develop within Docker containers using VS Code.
+
+#### Localhost
+
+##### Dependencies
 
 If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
 and drop you in a shell with them accessible in your `$PATH`.
@@ -120,16 +135,9 @@ Once installed, `cd` into this repository's root directory and proceed to instal
 npm install
 ```
 
-### Quick Start
+##### Quick Start
 
-Once you have installed all necessary dependencies, create a `.env` file and replace the placeholder values with your credentials. Refer to the "Environment Variables" section below for further information.
-
-```bash
-cp sample.env .env
-# Open and edit .env in your text editor.
-```
-
-Finally, open three terminals and run the following commands:
+Open three terminals and run the following commands:
 
 ```bash
 # Terminal 1
@@ -146,6 +154,42 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 Then, visit the URL logged to your terminal to view the now locally-running web application.
 
 You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
+
+#### Containerized
+
+##### Dependencies
+
+Ensure the following have been installed on your local machine:
+
+- Docker
+- Docker Compose
+- VS Code Docker extension
+
+To start the local development environment for the first time, run `docker-compose up` (this builds the containers, starts the database, runs the migrations, and starts the front- and back-ends in watch mode).
+
+The app will be available at localhost:3000 once you've seen the following among the terminal output:
+
+- `app_1 | Batch 1 run: 49 migrations`
+- `app_1 | [back-end] server started port="3000" host="0.0.0.0"`
+- `app_1 | Running "watch:frontEndStatic" (watch) task` (this is usually the last one to complete, so once you see it, you should be good to go)
+
+To start working within the development environment, open the VS Code Docker extension.
+
+To access the containerized app:
+
+- Right-click on `dm_app_image` and click "Attach Visual Studio Code." A new VS Code window will open and from here you can edit the files and run commands in the terminal. (If VS Code doesn't take you directly to the app files, find them at `/usr/app`.)
+- Note: There's a bit of a delay in between making a change and seeing it at localhost. Front-end changes require a refresh. If you ever make a change and it doesn't show up, confirm you made the change within the container, not on your local machine.
+
+To access the containerized database:
+
+- Right-click on `postgres:10` and click "Attach Shell." Once the shell opens, run `psql -U digitalmarketplace digitalmarketplace` to get into the database
+
+To shut down the environment, `Cmd/Ctrl + C`.
+
+To restart the environment after you've created it for the first time:
+- If you've made a change to the Dockerfile, you must run `docker-compose up --build` to rebuild the containers to incorporate the changes.
+- If you haven't changed the Dockerfile, you can continue to use `docker-compose up`.
+
 
 ### NPM Scripts
 
