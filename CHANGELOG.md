@@ -37,6 +37,17 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2021.11.03
+
+- Version Number: 1.8
+- Commit Hash: TODO
+
+#### Changes
+- moving towards dev/prod parity
+- [fix] update noreply email address
+- update readme instructions
+- minor cosmetic changes to code
+
 ### 2021.06.09
 
 - Version Number: 1.7
