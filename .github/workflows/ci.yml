@@ -1,0 +1,37 @@
+name: CI
+on: 
+  push:
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '10'
+      - run: npm ci
+      - run: npm run front-end:test
+      - run: npm run back-end:test
+  lint: 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '10'
+      - run: npm ci
+      - run: npm run front-end:lint
+      - run: npm run back-end:lint
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '10'
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
