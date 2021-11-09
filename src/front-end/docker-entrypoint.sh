@@ -1,7 +1,6 @@
 #!/bin/bash
-
-chown -R node:root /usr/app
 npm install
+chown -R node:root /usr/app
 
 if [ "${NODE_ENV}" != "development" ]
     then
@@ -14,4 +13,3 @@ if [ "${NODE_ENV}" != "development" ]
         git config core.filemode false
         npm run migrations:latest && npm run front-end:watch & npm run back-end:watch
 fi
-
