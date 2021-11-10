@@ -1,1 +1,18 @@
+# local build artifacts
 node_modules
+tmp
+build
+
+# Sonarqube
+.scannerwork
+sonar-project.properties
+
+# Github
+.github
+
+# macOS 
+.DS_Store
+
+# IDE 
+.vscode
+.idea
