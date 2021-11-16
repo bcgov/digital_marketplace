@@ -37,10 +37,29 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2021.11.15
+
+- Version Number: 1.8.1
+- Commit Hash: TODO
+
+#### Changes
+- moving towards dev/prod parity
+- create admin readme
+- create initial CI workflow
+
+### 2021.11.04
+
+- Version Number: 1.8.0
+- Commit Hash: 19880bc0ffebffc6f5ee48a1752405903b16845a
+
+#### Changes
+- change version numbering to semver specification
+
+
 ### 2021.11.03
 
 - Version Number: 1.8
-- Commit Hash: TODO
+- Commit Hash: a5b80e9ad9d1a1656b340077b3da9819e9e39c43
 
 #### Changes
 - moving towards dev/prod parity
