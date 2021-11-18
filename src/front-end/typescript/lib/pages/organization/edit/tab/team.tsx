@@ -17,7 +17,7 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
-import { isVendor } from 'shared/lib/resources/user';
+import { isAdmin, isVendor } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { validateUserEmail } from 'shared/lib/validation/affiliation';
 
@@ -273,20 +273,21 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
       },
       {
         showOnHover: !isMemberLoading,
-        children: memberIsOwner(m) || !isVendor(state.viewerUser)
+        //TODO FIX THIS LOGIC BRO!!!!
+        children: (memberIsOwner(m) || !isVendor(state.viewerUser)) && !isAdmin(state.viewerUser)
           ? null
           : (
-              <Link
-                button
-                disabled={isLoading}
-                loading={isMemberLoading}
-                size='sm'
-                symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-                onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}
-                color='danger'>
-                Remove
-              </Link>
-            ),
+            <Link
+              button
+              disabled={isLoading}
+              loading={isMemberLoading}
+              size='sm'
+              symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+              onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}
+              color='danger'>
+              Remove
+            </Link>
+          ),
         className: 'text-right align-middle'
       }
     ];
@@ -306,10 +307,10 @@ const view: ComponentView<State, Msg> = props => {
           <p className='mb-4'>Add team members to your organization by clicking on the "Add Team Member(s)" button above. Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization.</p>
           {state.affiliations.length
             ? (<Table.view
-                headCells={membersTableHeadCells(state)}
-                bodyRows={membersTableBodyRows(props)}
-                state={state.membersTable}
-                dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />)
+              headCells={membersTableHeadCells(state)}
+              bodyRows={membersTableBodyRows(props)}
+              state={state.membersTable}
+              dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />)
             : null}
         </Col>
       </Row>
@@ -378,13 +379,13 @@ export const component: Tab.Component<State, Msg> = {
                           {state.addTeamMembersEmails.length === 1
                             ? null
                             : (<Icon
-                                hover
-                                name='trash'
-                                color='info'
-                                className='ml-2'
-                                width={0.9}
-                                height={0.9}
-                                onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
+                              hover
+                              name='trash'
+                              color='info'
+                              className='ml-2'
+                              width={0.9}
+                              height={0.9}
+                              onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
                           <Icon
                             hover={isLast}
                             name='plus'
@@ -444,7 +445,7 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getContextualActions: ({ state, dispatch }) => {
-    if (!isVendor(state.viewerUser)) { return null; }
+    if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) { return null; }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
