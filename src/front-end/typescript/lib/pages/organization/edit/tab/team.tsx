@@ -16,7 +16,7 @@ import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
-import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
+import { AffiliationSlim, AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
 import { isAdmin, isVendor } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { validateUserEmail } from 'shared/lib/validation/affiliation';
@@ -24,12 +24,15 @@ import { validateUserEmail } from 'shared/lib/validation/affiliation';
 type ModalId
   = ADT<'addTeamMembers'>
   | ADT<'viewTeamMember', AffiliationMember>
-  | ADT<'removeTeamMember', AffiliationMember>;
+  | ADT<'removeTeamMember', AffiliationMember>
+  | ADT<'approveAffiliation', AffiliationSlim>;
+
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
   addTeamMembersLoading: number;
   removeTeamMemberLoading: Id | null; //Id of affiliation, not user
+  approveAffiliationLoading: Id | null; //Id of affiliation, not user
   membersTable: Immutable<Table.State>;
   capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
@@ -38,6 +41,7 @@ export interface State extends Tab.Params {
 export type InnerMsg
   = ADT<'addTeamMembers'>
   | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
+  | ADT<'approveAffiliation', AffiliationSlim>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
   | ADT<'membersTable', Table.Msg>
@@ -82,6 +86,7 @@ const init: Init<Tab.Params, State> = async params => {
     showModal: null,
     addTeamMembersLoading: 0,
     removeTeamMemberLoading: null,
+    approveAffiliationLoading: null,
     capabilities: determineCapabilities(params.affiliations),
     membersTable: immutable(await Table.init({
       idNamespace: 'organization-members'
@@ -159,6 +164,26 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     }
+
+    case 'approveAffiliation':
+      return [
+        state
+          .set('approveAffiliationLoading', msg.value.id)
+          .set('showModal', null),
+        async (state, dispatch) => {
+          state = state.set('approveAffiliationLoading', null);
+          const result = await api.affiliations.update(msg.value.id, null);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.approvedOrganizationRequest.error(msg.value))));
+            return state;
+          }
+          dispatch(toast(adt('success', toasts.approvedOrganizationRequest.success(msg.value))));
+          return immutable(await init({
+            profileUser: state.profileUser,
+            viewerUser: state.viewerUser
+          }));
+        }
+      ];
 
     case 'removeTeamMember':
       state = state.set('showModal', null);
@@ -245,9 +270,16 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
   const { state, dispatch } = props;
   const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
   const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
-  const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+  const isApproveAffiliationLoading = !!state.approveAffiliationLoading;
+
+  const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading || isApproveAffiliationLoading;
+  // const isDisabled = isDeleteLoading || isApproveLoading || isRejectLoading;
+  //TODO CHANGE 'm' TO 'affiliation' maybe.... 
   return state.affiliations.map(m => {
     const isMemberLoading = state.removeTeamMemberLoading === m.id;
+    //TODO:this may be wrong (member id vs affiliation id)
+    const isApproveLoading = state.approveAffiliationLoading === m.id;
+
     return [
       {
         children: (
@@ -272,22 +304,38 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
         className: 'text-center align-middle'
       },
       {
-        showOnHover: !isMemberLoading,
+        showOnHover: !(isMemberLoading || isApproveLoading),
         //TODO FIX THIS LOGIC BRO!!!!
-        children: (memberIsOwner(m) || !isVendor(state.viewerUser)) && !isAdmin(state.viewerUser)
-          ? null
-          : (
-            <Link
-              button
-              disabled={isLoading}
-              loading={isMemberLoading}
-              size='sm'
-              symbol_={leftPlacement(iconLinkSymbol('user-times'))}
-              onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}
-              color='danger'>
-              Remove
-            </Link>
-          ),
+        // The approve function comes from: src/front-end/typescript/lib/pages/user/profile/tab/organizations.tsx
+        children:
+          <div className='d-flex align-items-center flex-nowrap'>
+            {/* add the proper conditionals */}
+            {isAdmin(state.viewerUser) &&
+              <Link
+                button
+                disabled={isLoading}
+                loading={isApproveLoading}
+                size='sm'
+                color='success'
+                className='mr-2'
+                symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+                onClick={() => dispatch(adt('showModal', adt('approveAffiliation', m)) as Msg)}>
+                Approve
+              </Link>
+            }
+            {(!(memberIsOwner(m) || !isVendor(state.viewerUser)) || isAdmin(state.viewerUser)) &&
+              <Link
+                button
+                disabled={isLoading}
+                loading={isMemberLoading}
+                size='sm'
+                symbol_={leftPlacement(iconLinkSymbol('user-times'))}
+                onClick={() => dispatch(adt('showModal', adt('removeTeamMember', m)) as Msg)}
+                color='danger'>
+                Remove
+              </Link>
+            }
+          </div>,
         className: 'text-right align-middle'
       }
     ];
