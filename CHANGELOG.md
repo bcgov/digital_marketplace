@@ -37,10 +37,16 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2021.11.18
+
+- Version Number: 1.8.2
+- hotfix for email issues
+- Commit Hash: TBD
+
 ### 2021.11.15
 
 - Version Number: 1.8.1
-- Commit Hash: TODO
+- Commit Hash: 8e6ddc6c380940d44d3bc276c63bed356b2844bb
 
 #### Changes
 - moving towards dev/prod parity
