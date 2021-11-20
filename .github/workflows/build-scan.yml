@@ -15,6 +15,6 @@ jobs:
       with:
         image: dm-app-image
         containerfiles: |
-          ../src/front-end/Dockerfile
+          ./src/front-end/Dockerfile
 
     
