@@ -1,0 +1,19 @@
+name: build-scan
+on: 
+  # Since branch protection prevents pushing to development, pushes only happen when merging PRs, so this runs only on merges (there's no way to set GitHub Actions to run on merges)
+  push:
+    branches:
+      - development
+
+jobs:
+  build-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: redhat-actions/buildah-build@v2
+      with:
+        image: dm-app-image
+        containerfiles: |
+          ../src/front-end/Dockerfile
+
+    
