@@ -2,9 +2,8 @@ name: build-scan
 on: 
   # Since branch protection prevents pushing to development, pushes only happen when merging PRs, so this runs only on merges (there's no way to set GitHub Actions to run on merges)
   push:
-  # temporarily turning off restrictions to test action on github
-    # branches:
-    #   - development
+    branches:
+      - development
 
 jobs:
   build-scan:
