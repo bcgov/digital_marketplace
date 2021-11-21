@@ -53,6 +53,7 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export function determineCapabilities(members: AffiliationMember[]): Capability[] {
   //Don't include pending members in capability calculation.
+  //TODO THIS PURPOSELY SKIPS THE PENDING MEMBERS
   members = members.filter(m => !memberIsPending(m));
   return CAPABILITIES.map(capability => ({
     capability,
@@ -166,22 +167,33 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     }
 
     case 'approveAffiliation':
+      // console.log('the state is')
+      // console.log(state)
       return [
         state
           .set('approveAffiliationLoading', msg.value.id)
           .set('showModal', null),
         async (state, dispatch) => {
           state = state.set('approveAffiliationLoading', null);
+          // console.log("The msg.value.id is:")
+          // console.log(msg.value.id)
           const result = await api.affiliations.update(msg.value.id, null);
           if (!api.isValid(result)) {
             dispatch(toast(adt('error', toasts.approvedOrganizationRequest.error(msg.value))));
             return state;
           }
+          const params = await Tab.initParams(state.organization.id, state.viewerUser);
+          // console.log('the params are')
+          // console.log(params)
+          if (params) {
+            state = state
+              .set('organization', params.organization)
+              .set('affiliations', params.affiliations)
+              .set('viewerUser', params.viewerUser)
+              .set('swuQualified', params.swuQualified);
+          }
           dispatch(toast(adt('success', toasts.approvedOrganizationRequest.success(msg.value))));
-          return immutable(await init({
-            profileUser: state.profileUser,
-            viewerUser: state.viewerUser
-          }));
+          return resetCapabilities(state);
         }
       ];
 
@@ -279,7 +291,8 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
     const isMemberLoading = state.removeTeamMemberLoading === m.id;
     //TODO:this may be wrong (member id vs affiliation id)
     const isApproveLoading = state.approveAffiliationLoading === m.id;
-
+    // console.log(m)
+    // console.log(` is pending ${memberIsPending(m)}`)
     return [
       {
         children: (
@@ -310,7 +323,7 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
         children:
           <div className='d-flex align-items-center flex-nowrap'>
             {/* add the proper conditionals */}
-            {isAdmin(state.viewerUser) &&
+            {(isAdmin(state.viewerUser) && memberIsPending(m)) &&
               <Link
                 button
                 disabled={isLoading}
@@ -394,6 +407,27 @@ export const component: Tab.Component<State, Msg> = {
           member: state.showModal.value,
           onCloseMsg: adt('hideModal')
         });
+
+      case 'approveAffiliation':
+        return {
+          title: 'Approve Request?',
+          body: () => 'Approving this request will allow this company to put you forward as a team member on proposals for opportunities.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Approve Request',
+              icon: 'user-check',
+              color: 'success',
+              msg: adt('approveAffiliation', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
 
       case 'addTeamMembers': {
         const isValid = isAddTeamMembersEmailsValid(state);
