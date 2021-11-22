@@ -53,7 +53,6 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export function determineCapabilities(members: AffiliationMember[]): Capability[] {
   //Don't include pending members in capability calculation.
-  //TODO THIS PURPOSELY SKIPS THE PENDING MEMBERS
   members = members.filter(m => !memberIsPending(m));
   return CAPABILITIES.map(capability => ({
     capability,
@@ -167,24 +166,18 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     }
 
     case 'approveAffiliation':
-      // console.log('the state is')
-      // console.log(state)
       return [
         state
           .set('approveAffiliationLoading', msg.value.id)
           .set('showModal', null),
         async (state, dispatch) => {
           state = state.set('approveAffiliationLoading', null);
-          // console.log("The msg.value.id is:")
-          // console.log(msg.value.id)
           const result = await api.affiliations.update(msg.value.id, null);
           if (!api.isValid(result)) {
             dispatch(toast(adt('error', toasts.approvedTeamMember.error(msg.value))));
             return state;
           }
           const params = await Tab.initParams(state.organization.id, state.viewerUser);
-          // console.log('the params are')
-          // console.log(params?.organization)
           if (params) {
             state = state
               .set('organization', params.organization)
@@ -192,8 +185,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               .set('viewerUser', params.viewerUser)
               .set('swuQualified', params.swuQualified);
           }
-          console.log(`the message value is: ${msg.value}`)
-          console.log(msg.value)
 
           dispatch(toast(adt('success', toasts.approvedTeamMember.success(msg.value))));
           return resetCapabilities(state);
@@ -219,8 +210,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               .set('viewerUser', params.viewerUser)
               .set('swuQualified', params.swuQualified);
           }
-          console.log(`the message value is: ${msg.value}`)
-          console.log(msg.value)
           dispatch(toast(adt('success', toasts.removedTeamMember.success(msg.value))));
           return resetCapabilities(state);
         }
@@ -290,14 +279,9 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
   const isApproveAffiliationLoading = !!state.approveAffiliationLoading;
 
   const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading || isApproveAffiliationLoading;
-  // const isDisabled = isDeleteLoading || isApproveLoading || isRejectLoading;
-  //TODO CHANGE 'm' TO 'affiliation' maybe.... 
   return state.affiliations.map(m => {
     const isMemberLoading = state.removeTeamMemberLoading === m.id;
-    //TODO:this may be wrong (member id vs affiliation id)
     const isApproveLoading = state.approveAffiliationLoading === m.id;
-    // console.log(m)
-    // console.log(` is pending ${memberIsPending(m)}`)
     return [
       {
         children: (
@@ -323,11 +307,9 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
       },
       {
         showOnHover: !(isMemberLoading || isApproveLoading),
-        //TODO FIX THIS LOGIC BRO!!!!
-        // The approve function comes from: src/front-end/typescript/lib/pages/user/profile/tab/organizations.tsx
         children:
           <div className='d-flex align-items-center flex-nowrap'>
-            {/* add the proper conditionals */}
+            {/* Button only visible for admin on pending team members */}
             {(isAdmin(state.viewerUser) && memberIsPending(m)) &&
               <Link
                 button
@@ -362,13 +344,10 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
 
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
-  // console.log("The legal name is")
-  // console.log(state.organization)
-  // console.log(state.organization.legalName)
   return (
     <div>
       <EditTabHeader
-        legalName={state.organization?.legalName}
+        legalName={state.organization.legalName}
         swuQualified={state.swuQualified} />
       <Row className='mt-5'>
         <Col xs='12'>
