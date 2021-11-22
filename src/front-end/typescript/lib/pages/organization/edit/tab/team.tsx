@@ -16,7 +16,7 @@ import Link, { iconLinkSymbol, imageLinkSymbol, leftPlacement } from 'front-end/
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
-import { AffiliationSlim, AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
+import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
 import { isAdmin, isVendor } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { validateUserEmail } from 'shared/lib/validation/affiliation';
@@ -25,7 +25,7 @@ type ModalId
   = ADT<'addTeamMembers'>
   | ADT<'viewTeamMember', AffiliationMember>
   | ADT<'removeTeamMember', AffiliationMember>
-  | ADT<'approveAffiliation', AffiliationSlim>;
+  | ADT<'approveAffiliation', AffiliationMember>;
 
 
 export interface State extends Tab.Params {
@@ -41,7 +41,7 @@ export interface State extends Tab.Params {
 export type InnerMsg
   = ADT<'addTeamMembers'>
   | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
-  | ADT<'approveAffiliation', AffiliationSlim>
+  | ADT<'approveAffiliation', AffiliationMember>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
   | ADT<'membersTable', Table.Msg>
@@ -179,12 +179,12 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // console.log(msg.value.id)
           const result = await api.affiliations.update(msg.value.id, null);
           if (!api.isValid(result)) {
-            dispatch(toast(adt('error', toasts.approvedOrganizationRequest.error(msg.value))));
+            dispatch(toast(adt('error', toasts.approvedTeamMember.error(msg.value))));
             return state;
           }
           const params = await Tab.initParams(state.organization.id, state.viewerUser);
           // console.log('the params are')
-          // console.log(params)
+          // console.log(params?.organization)
           if (params) {
             state = state
               .set('organization', params.organization)
@@ -192,7 +192,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               .set('viewerUser', params.viewerUser)
               .set('swuQualified', params.swuQualified);
           }
-          dispatch(toast(adt('success', toasts.approvedOrganizationRequest.success(msg.value))));
+          console.log(`the message value is: ${msg.value}`)
+          console.log(msg.value)
+
+          dispatch(toast(adt('success', toasts.approvedTeamMember.success(msg.value))));
           return resetCapabilities(state);
         }
       ];
@@ -216,6 +219,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
               .set('viewerUser', params.viewerUser)
               .set('swuQualified', params.swuQualified);
           }
+          console.log(`the message value is: ${msg.value}`)
+          console.log(msg.value)
           dispatch(toast(adt('success', toasts.removedTeamMember.success(msg.value))));
           return resetCapabilities(state);
         }
@@ -357,10 +362,13 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
 
 const view: ComponentView<State, Msg> = props => {
   const { state, dispatch } = props;
+  // console.log("The legal name is")
+  // console.log(state.organization)
+  // console.log(state.organization.legalName)
   return (
     <div>
       <EditTabHeader
-        legalName={state.organization.legalName}
+        legalName={state.organization?.legalName}
         swuQualified={state.swuQualified} />
       <Row className='mt-5'>
         <Col xs='12'>

@@ -89,6 +89,17 @@ export const removedTeamMember = {
   })
 };
 
+export const approvedTeamMember = {
+  success: (aff: AffiliationMember) => ({
+    title: 'Approved Team Member',
+    body: `You have successfully approved ${aff.user.name} for this organization.`
+  }),
+  error: (aff: AffiliationMember) => ({
+    title: 'Unable to Approve Team Member',
+    body: `${aff.user.name} could not be approved for this organization.`
+  })
+};
+
 export const acceptedSWUTerms = {
   success: (organization: Organization) => ({
     title: 'Accepted Terms & Conditions',
