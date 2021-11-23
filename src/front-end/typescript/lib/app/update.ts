@@ -76,7 +76,6 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
   };
 
   switch (route.tag) {
-
     case 'orgEdit':
       return await initAppChildPage({
         ...defaultPageInitParams,
@@ -983,6 +982,16 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case 'pageLearnMoreSWU':
+      return updateAppChildPage({
+        ...defaultPageUpdateParams,
+        mapChildMsg: value => ({ tag: 'pageLearnMoreSWU', value }),
+        childStatePath: ['pages', 'learnMoreSWU'],
+        childUpdate: PageLearnMoreSWU.component.update,
+        childGetMetadata: PageLearnMoreSWU.component.getMetadata,
+        childMsg: msg.value
+      });
+    
+    case 'pageLearnMoreNP':
       return updateAppChildPage({
         ...defaultPageUpdateParams,
         mapChildMsg: value => ({ tag: 'pageLearnMoreSWU', value }),
