@@ -14,6 +14,7 @@ import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
 import * as PageLearnMoreSWU from 'front-end/lib/pages/learn-more/sprint-with-us';
+import * as PageLearnMoreNP from 'front-end/lib/pages/learn-more/new-product';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -408,6 +409,18 @@ async function initPage(state: Immutable<State>, dispatch: Dispatch<Msg>, route:
         childGetMetadata: PageLearnMoreSWU.component.getMetadata,
         mapChildMsg(value) {
           return { tag: 'pageLearnMoreSWU' as const, value };
+        }
+      });
+
+    case 'learnMoreNP':
+      return await initAppChildPage({
+        ...defaultPageInitParams,
+        childStatePath: ['pages', 'learnMoreNP'],
+        childRouteParams: route.value,
+        childInit: PageLearnMoreNP.component.init,
+        childGetMetadata: PageLearnMoreNP.component.getMetadata,
+        mapChildMsg(value) {
+          return { tag: 'pageLearnMoreNP' as const, value };
         }
       });
 
