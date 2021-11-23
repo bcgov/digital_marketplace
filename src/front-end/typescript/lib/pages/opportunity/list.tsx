@@ -351,7 +351,7 @@ const Header: ComponentView<State, Msg> = () => {
       <Col xs='12'>
         <h1 className='mb-4'>Welcome to the Digital Marketplace</h1>
       </Col>
-      <Col xs='12' md='6' className='mb-4 mb-md-0'>
+      <Col xs='12' md='4' className='mb-4 mb-md-0'>
         <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <ProgramType type_='cwu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Code With Us</em> opportunities pay a fixed price for meeting acceptance criteria.</p>
@@ -365,7 +365,7 @@ const Header: ComponentView<State, Msg> = () => {
         </div>
       </Col>
 
-      <Col xs='12' md='6' className='mb-4 mb-md-0'>
+      <Col xs='12' md='4' className='mb-4 mb-md-0'>
         <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <ProgramType type_='new' className='mb-2' />
           <p className='mb-3 font-size-small'><em>New Product</em> opportunities are still being scoped out.</p>
@@ -379,7 +379,7 @@ const Header: ComponentView<State, Msg> = () => {
         </div>
       </Col>
 
-      <Col xs='12' md='6'>
+      <Col xs='12' md='4'>
         <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <ProgramType type_='swu' className='mb-2' />
           <p className='mb-3 font-size-small'><em>Sprint With Us</em> opportunities are for registered organizations that can supply teams.</p>
