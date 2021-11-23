@@ -364,6 +364,21 @@ const Header: ComponentView<State, Msg> = () => {
           </Link>
         </div>
       </Col>
+
+      <Col xs='12' md='6' className='mb-4 mb-md-0'>
+        <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
+          <ProgramType type_='new' className='mb-2' />
+          <p className='mb-3 font-size-small'><em>New Product</em> opportunities are still being scoped out.</p>
+          <Link
+            className='font-size-small mt-auto'
+            symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
+            iconSymbolSize={0.9}
+            dest={routeDest(adt('learnMoreSWU', null))}>
+            Learn More
+          </Link>
+        </div>
+      </Col>
+
       <Col xs='12' md='6'>
         <div className='rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap'>
           <ProgramType type_='swu' className='mb-2' />
