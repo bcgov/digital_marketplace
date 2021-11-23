@@ -87,6 +87,8 @@ Replace `<secret>` with the KeyCloak client secret for the target environment.
 
 To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
 
+The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app. 
+
 ```
 oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
