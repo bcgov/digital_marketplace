@@ -9,6 +9,7 @@ import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
 import * as PageLearnMoreSWU from 'front-end/lib/pages/learn-more/sprint-with-us';
+import * as PageLearnMoreNP from 'front-end/lib/pages/learn-more/new-product';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -51,6 +52,7 @@ export type Route
   | ADT<'opportunityCreate',    PageOpportunityCreate.RouteParams>
   | ADT<'learnMoreCWU',         PageLearnMoreCWU.RouteParams>
   | ADT<'learnMoreSWU',         PageLearnMoreSWU.RouteParams>
+  | ADT<'learnMoreNP',          PageLearnMoreNP.RouteParams>
   | ADT<'contentView',          PageContentView.RouteParams>
   | ADT<'contentCreate',        PageContentCreate.RouteParams>
   | ADT<'contentEdit',          PageContentEdit.RouteParams>
@@ -126,6 +128,7 @@ export interface State {
     opportunityCreate?: Immutable<PageOpportunityCreate.State>;
     learnMoreCWU?: Immutable<PageLearnMoreCWU.State>;
     learnMoreSWU?: Immutable<PageLearnMoreSWU.State>;
+    learnMoreNP?: Immutable<PageLearnMoreNP.State>;
     contentView?: Immutable<PageContentView.State>;
     contentCreate?: Immutable<PageContentCreate.State>;
     contentEdit?: Immutable<PageContentEdit.State>;
@@ -178,6 +181,7 @@ type InnerMsg
   | ADT<'pageOpportunityCreate',    PageOpportunityCreate.Msg>
   | ADT<'pageLearnMoreCWU',         PageLearnMoreCWU.Msg>
   | ADT<'pageLearnMoreSWU',         PageLearnMoreSWU.Msg>
+  | ADT<'pageLearnMoreNP',          PageLearnMoreNP.Msg>
   | ADT<'pageContentView',          PageContentView.Msg>
   | ADT<'pageContentCreate',        PageContentCreate.Msg>
   | ADT<'pageContentEdit',          PageContentEdit.Msg>
