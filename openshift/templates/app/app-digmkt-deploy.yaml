@@ -259,3 +259,4 @@ parameters:
 - name: ORIGIN
   displayName: The vanity url for the deployment
   value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+  required: true
