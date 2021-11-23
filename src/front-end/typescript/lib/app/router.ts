@@ -350,6 +350,15 @@ const router: Router.Router<Route> = {
       }
     },
     {
+      path: prefixPath('/learn-more/new-product'),
+      makeRoute() {
+        return {
+          tag: 'learnMoreNP',
+          value: null
+        };
+      }
+    },
+    {
       path: prefixPath('/opportunities'),
       makeRoute() {
         return {
