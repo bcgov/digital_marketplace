@@ -1,5 +1,16 @@
 {
   "name": "bcgov-digital-marketplace",
+  "jest": {
+    "verbose":true,
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+  ],
+    "moduleNameMapper": {
+      "front-end/(.*)": "<rootDir>/src/front-end/typescript/$1",
+      "shared/(.*)": "<rootDir>/src/shared/$1"
+  }
+  },
   "version": "1.8.2",
   "description": "Digital Marketplace",
   "main": "index.js",
