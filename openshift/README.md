@@ -97,6 +97,7 @@ oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p SHOW_TEST_INDICATOR=1 \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
+-p ORIGIN=https://app-digmkt-dev.apps.silver.devops.gov.bc.ca \
 -p DATABASE_SERVICE_NAME=postgresql | oc create -f -
 ```
 
