@@ -6,6 +6,7 @@ module.exports = {
   frontEndTS: {
     files: [
       `${gruntConfig.frontEnd.src.ts}/**`,
+      `${gruntConfig.frontEnd.src.tsx}/**`,
       `${gruntConfig.shared.src.dir}/**`
     ],
     tasks: [

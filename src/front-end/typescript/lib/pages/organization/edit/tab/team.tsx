@@ -17,19 +17,22 @@ import React from 'react';
 import { Col, Row } from 'reactstrap';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { AffiliationMember, memberIsOwner, memberIsPending, membersHaveCapability, MembershipType } from 'shared/lib/resources/affiliation';
-import { isVendor } from 'shared/lib/resources/user';
+import { isAdmin, isVendor } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';
 import { validateUserEmail } from 'shared/lib/validation/affiliation';
 
 type ModalId
   = ADT<'addTeamMembers'>
   | ADT<'viewTeamMember', AffiliationMember>
-  | ADT<'removeTeamMember', AffiliationMember>;
+  | ADT<'removeTeamMember', AffiliationMember>
+  | ADT<'approveAffiliation', AffiliationMember>;
+
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
   addTeamMembersLoading: number;
   removeTeamMemberLoading: Id | null; //Id of affiliation, not user
+  approveAffiliationLoading: Id | null; //Id of affiliation, not user
   membersTable: Immutable<Table.State>;
   capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
@@ -38,6 +41,7 @@ export interface State extends Tab.Params {
 export type InnerMsg
   = ADT<'addTeamMembers'>
   | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
+  | ADT<'approveAffiliation', AffiliationMember>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
   | ADT<'membersTable', Table.Msg>
@@ -82,6 +86,7 @@ const init: Init<Tab.Params, State> = async params => {
     showModal: null,
     addTeamMembersLoading: 0,
     removeTeamMemberLoading: null,
+    approveAffiliationLoading: null,
     capabilities: determineCapabilities(params.affiliations),
     membersTable: immutable(await Table.init({
       idNamespace: 'organization-members'
@@ -159,6 +164,32 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         }
       ];
     }
+
+    case 'approveAffiliation':
+      return [
+        state
+          .set('approveAffiliationLoading', msg.value.id)
+          .set('showModal', null),
+        async (state, dispatch) => {
+          state = state.set('approveAffiliationLoading', null);
+          const result = await api.affiliations.update(msg.value.id, null);
+          if (!api.isValid(result)) {
+            dispatch(toast(adt('error', toasts.approvedTeamMember.error(msg.value))));
+            return state;
+          }
+          const params = await Tab.initParams(state.organization.id, state.viewerUser);
+          if (params) {
+            state = state
+              .set('organization', params.organization)
+              .set('affiliations', params.affiliations)
+              .set('viewerUser', params.viewerUser)
+              .set('swuQualified', params.swuQualified);
+          }
+
+          dispatch(toast(adt('success', toasts.approvedTeamMember.success(msg.value))));
+          return resetCapabilities(state);
+        }
+      ];
 
     case 'removeTeamMember':
       state = state.set('showModal', null);
@@ -245,9 +276,12 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
   const { state, dispatch } = props;
   const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
   const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
-  const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+  const isApproveAffiliationLoading = !!state.approveAffiliationLoading;
+
+  const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading || isApproveAffiliationLoading;
   return state.affiliations.map(m => {
     const isMemberLoading = state.removeTeamMemberLoading === m.id;
+    const isApproveLoading = state.approveAffiliationLoading === m.id;
     return [
       {
         children: (
@@ -272,10 +306,24 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
         className: 'text-center align-middle'
       },
       {
-        showOnHover: !isMemberLoading,
-        children: memberIsOwner(m) || !isVendor(state.viewerUser)
-          ? null
-          : (
+        showOnHover: !(isMemberLoading || isApproveLoading),
+        children:
+          <div className='d-flex align-items-center flex-nowrap'>
+            {/* Button only visible for admin on pending team members */}
+            {(isAdmin(state.viewerUser) && memberIsPending(m)) &&
+              <Link
+                button
+                disabled={isLoading}
+                loading={isApproveLoading}
+                size='sm'
+                color='success'
+                className='mr-2'
+                symbol_={leftPlacement(iconLinkSymbol('user-check'))}
+                onClick={() => dispatch(adt('showModal', adt('approveAffiliation', m)) as Msg)}>
+                Approve
+              </Link>
+            }
+            {(!(memberIsOwner(m) || !isVendor(state.viewerUser)) || isAdmin(state.viewerUser)) &&
               <Link
                 button
                 disabled={isLoading}
@@ -286,7 +334,8 @@ function membersTableBodyRows(props: ComponentViewProps<State, Msg>): Table.Body
                 color='danger'>
                 Remove
               </Link>
-            ),
+            }
+          </div>,
         className: 'text-right align-middle'
       }
     ];
@@ -306,10 +355,10 @@ const view: ComponentView<State, Msg> = props => {
           <p className='mb-4'>Add team members to your organization by clicking on the "Add Team Member(s)" button above. Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization.</p>
           {state.affiliations.length
             ? (<Table.view
-                headCells={membersTableHeadCells(state)}
-                bodyRows={membersTableBodyRows(props)}
-                state={state.membersTable}
-                dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />)
+              headCells={membersTableHeadCells(state)}
+              bodyRows={membersTableBodyRows(props)}
+              state={state.membersTable}
+              dispatch={mapComponentDispatch(dispatch, v => adt('membersTable' as const, v))} />)
             : null}
         </Col>
       </Row>
@@ -346,6 +395,27 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt('hideModal')
         });
 
+      case 'approveAffiliation':
+        return {
+          title: 'Approve Request?',
+          body: () => 'Approving this request will allow this company to put you forward as a team member on proposals for opportunities.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Approve Request',
+              icon: 'user-check',
+              color: 'success',
+              msg: adt('approveAffiliation', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+
       case 'addTeamMembers': {
         const isValid = isAddTeamMembersEmailsValid(state);
         return {
@@ -378,13 +448,13 @@ export const component: Tab.Component<State, Msg> = {
                           {state.addTeamMembersEmails.length === 1
                             ? null
                             : (<Icon
-                                hover
-                                name='trash'
-                                color='info'
-                                className='ml-2'
-                                width={0.9}
-                                height={0.9}
-                                onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
+                              hover
+                              name='trash'
+                              color='info'
+                              className='ml-2'
+                              width={0.9}
+                              height={0.9}
+                              onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
                           <Icon
                             hover={isLast}
                             name='plus'
@@ -444,7 +514,7 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getContextualActions: ({ state, dispatch }) => {
-    if (!isVendor(state.viewerUser)) { return null; }
+    if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) { return null; }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
