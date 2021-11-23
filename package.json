@@ -7,7 +7,7 @@
     "start": "npm run back-end:start",
     "front-end:lint": "npx tslint -c tslint.json src/front-end/*.ts src/front-end/**/*.ts && echo Lint Successful\n",
     "front-end:typecheck": "npx tsc --project src/front-end/typescript --noEmit && echo Typecheck Successful\n",
-    "front-end:test": "node tests/front-end/index.js",
+    "front-end:test": "jest",
     "front-end:build": "npx grunt front-end-build",
     "front-end:watch": "npx grunt front-end-watch-development",
     "front-end:typedoc": "npx typedoc --name 'Digital Marketplace Front-End' --tsconfig src/front-end/typescript/tsconfig.json --out typedoc/front-end src/front-end/typescript",
@@ -43,6 +43,8 @@
     "node": ">=10.9 <10.10"
   },
   "dependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.4",
     "@types/bcrypt": "^3.0.0",
     "@types/cookie-parser": "^1.4.1",
     "@types/dotenv": "^6.1.0",
@@ -57,6 +59,7 @@
     "@types/uuid": "^3.4.5",
     "@types/yargs": "^15.0.5",
     "@wordpress/wordcount": "^2.7.0",
+    "babel-jest": "^27.3.1",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.18.3",
     "bowser": "^2.9.0",
