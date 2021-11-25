@@ -1,8 +1,8 @@
-const SassString = require('node-sass').types.String;
+const SassString = require('sass').types.String;
 
 module.exports = {
   options: {
-    implementation: require("node-sass"),
+    implementation: require("sass"),
     sourceMap: false,
     functions: {
       'prefix-path($path)': path => new SassString(gruntConfig.helpers.prefixPath(path.getValue()))
