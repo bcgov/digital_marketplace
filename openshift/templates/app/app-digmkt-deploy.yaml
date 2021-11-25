@@ -18,7 +18,7 @@ objects:
     SERVER_PORT: '3000'
     DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
     FILE_STORAGE_DIR: "/usr/app"
-    ORIGIN: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+    ORIGIN: ${ORIGIN}
     KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
     KEYCLOAK_URL: ${KEYCLOAK_URL}
     KEYCLOAK_REALM: ${KEYCLOAK_REALM}
@@ -255,3 +255,8 @@ parameters:
 - name: BASIC_AUTH_USERNAME
   displayName: The username for basic auth protection on test environments.
   required: false
+
+- name: ORIGIN
+  displayName: The vanity url for the deployment
+  value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+  required: true
