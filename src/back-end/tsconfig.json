@@ -4,6 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "jsx": "react",
+    "skipLibCheck": true, //this skips type checking of declaration files (prevents app from crashing when there are type errors in node_modules)
     "allowJs": true,
     "strict": true,
     "noImplicitReturns": true,
@@ -26,5 +27,5 @@
     "**/*.tsx",
     "**/*.json",
     "**/*.js"
-  ]
+  ],
 }
