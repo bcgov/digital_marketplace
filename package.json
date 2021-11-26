@@ -91,6 +91,10 @@
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^15.0.0",
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.4",
+    "@babel/preset-react": "^7.16.0",
+    "@babel/preset-typescript": "^7.16.0",
     "@types/cors": "^2.8.7",
     "@types/html-to-text": "^1.4.31",
     "@types/keycloak-connect": "^4.5.1",
@@ -108,6 +112,7 @@
     "@typescript-eslint/parser": "^5.5.0",
     "autoprefixer": "^9.4.4",
     "axios": "^0.21.1",
+    "babel-jest": "^27.3.1",
     "bootstrap": "4.4.1",
     "cssnano": "^4.1.10",
     "envify": "^4.1.0",
