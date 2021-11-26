@@ -129,6 +129,7 @@
     "grunt-shell": "^3.0.1",
     "grunt-terser": "^0.1.0",
     "is-relative-url": "^3.0.0",
+    "jest": "^27.3.1",
     "jquery": "^3.5.1",
     "license-checker": "^25.0.1",
     "load-grunt-tasks": "^4.0.0",
