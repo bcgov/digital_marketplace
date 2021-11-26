@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2018",
     "moduleResolution": "node",
+    "jsx": "react",
     "noErrorTruncation": true,
     "allowJs": true,
     "noEmit": true,
