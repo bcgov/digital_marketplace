@@ -19,7 +19,7 @@
       "front-end/*": ["../../src/front-end/*"],
       "shared/*": ["../../src/shared/*"]
     },
-    "types": ["node", "mocha"]
+    "types": ["node", "jest"]
   },
   "include": [
     "**/*.ts"
