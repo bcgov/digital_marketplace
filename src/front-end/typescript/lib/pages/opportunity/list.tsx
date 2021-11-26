@@ -373,7 +373,7 @@ const Header: ComponentView<State, Msg> = () => {
             className='font-size-small mt-auto'
             symbol_={rightPlacement(iconLinkSymbol('arrow-right'))}
             iconSymbolSize={0.9}
-            dest={routeDest(adt('learnMoreSWU', null))}>
+            dest={routeDest(adt('learnMoreNP', null))}>
             Learn More
           </Link>
         </div>
