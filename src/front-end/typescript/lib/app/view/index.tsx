@@ -14,6 +14,7 @@ import * as PageDashboard from 'front-end/lib/pages/dashboard';
 import * as PageLanding from 'front-end/lib/pages/landing';
 import * as PageLearnMoreCWU from 'front-end/lib/pages/learn-more/code-with-us';
 import * as PageLearnMoreSWU from 'front-end/lib/pages/learn-more/sprint-with-us';
+import * as PageLearnMoreNP from 'front-end/lib/pages/learn-more/new-product';
 import * as PageNotFound from 'front-end/lib/pages/not-found';
 import * as PageNotice from 'front-end/lib/pages/notice';
 import * as PageOpportunityCWUCreate from 'front-end/lib/pages/opportunity/code-with-us/create';
@@ -123,6 +124,14 @@ function pageToViewPageProps(props: ComponentViewProps<State, Msg>): ViewPagePro
         state => state.pages.learnMoreSWU,
         value => ({ tag: 'pageLearnMoreSWU', value })
       );
+    
+    case 'learnMoreNP':
+      return makeViewPageProps(
+        props,
+        PageLearnMoreNP.component,
+        state => state.pages.learnMoreNP,
+        value => ({ tag: 'pageLearnMoreNP', value })
+      )
 
     case 'contentView':
       return makeViewPageProps(

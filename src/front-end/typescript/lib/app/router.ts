@@ -350,6 +350,15 @@ const router: Router.Router<Route> = {
       }
     },
     {
+      path: prefixPath('/learn-more/new-product'),
+      makeRoute() {
+        return {
+          tag: 'learnMoreNP',
+          value: null
+        };
+      }
+    },
+    {
       path: prefixPath('/opportunities'),
       makeRoute() {
         return {
@@ -448,6 +457,8 @@ const router: Router.Router<Route> = {
         return prefixPath('/learn-more/code-with-us');
       case 'learnMoreSWU':
         return prefixPath('/learn-more/sprint-with-us');
+      case 'learnMoreNP':
+        return prefixPath('learn-more/new-product');
       case 'contentList':
         return prefixPath('/content');
       case 'contentCreate':
