@@ -97,6 +97,7 @@
     "@babel/preset-typescript": "^7.16.0",
     "@types/cors": "^2.8.7",
     "@types/html-to-text": "^1.4.31",
+    "@types/jest": "^27.0.3",
     "@types/keycloak-connect": "^4.5.1",
     "@types/mocha": "^7.0.2",
     "@types/moment-timezone": "^0.5.10",
@@ -151,6 +152,7 @@
     "reactstrap": "^8.4.0",
     "require-dir": "^1.2.0",
     "serve": "^11.3.2",
+    "ts-jest": "^27.0.7",
     "tslint": "^5.12.1",
     "typedoc": "^0.15.0"
   }
