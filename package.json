@@ -95,6 +95,7 @@
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-react": "^7.16.0",
     "@babel/preset-typescript": "^7.16.0",
+    "@testing-library/react": "^12.1.2",
     "@types/cors": "^2.8.7",
     "@types/html-to-text": "^1.4.31",
     "@types/jest": "^27.0.3",
