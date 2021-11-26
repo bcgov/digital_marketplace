@@ -2,6 +2,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
+  // this maps to the paths in the front-end tsconfig file so that the tests can find imports in front-end files
   moduleNameMapper: {
     "front-end/(.*)": "<rootDir>/src/front-end/typescript/$1",
     "shared/(.*)": "<rootDir>/src/shared/$1"
