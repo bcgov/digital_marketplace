@@ -1,12 +1,13 @@
 {
   "extends": "../../tsconfig",
   "compilerOptions": {
-    "target": "es2018"
+    "target": "es2018",
+    "skipLibCheck": true, //this skips type checking of declaration files (prevents app from crashing when there are type errors in node_modules)
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     "**/*.json",
     "**/*.js"
-  ]
+  ],
 }
