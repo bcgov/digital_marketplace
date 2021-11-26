@@ -2,7 +2,8 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     "target": "es2018",
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node", "jest"]
   },
   "include": [
     "**/*.ts"
