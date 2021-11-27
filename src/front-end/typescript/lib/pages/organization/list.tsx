@@ -9,6 +9,7 @@ import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/vi
 import Pagination from 'front-end/lib/views/pagination';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
+import Icon from 'front-end/lib/views/icon';
 import { DEFAULT_PAGE_SIZE } from 'shared/config';
 import { compareStrings } from 'shared/lib';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
@@ -144,7 +145,9 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
+  
   return state.organizations.map(org => {
+    console.log('org is',org)
     const owner = {
       className: 'text-nowrap',
       children: org.owner
@@ -157,7 +160,12 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
           ? (<Link dest={routeDest(adt('orgEdit', { orgId: org.id })) }>{org.legalName}</Link>)
           : org.legalName
       },
-      ...(showOwnerColumn(state) ? [owner] : [])
+      ...(showOwnerColumn(state) ? [owner] : []),
+      {
+        children: org.acceptedSWUTerms && org.numTeamMembers && org.numTeamMembers >= 2 && org.possessAllCapabilities
+          ? <Icon name={'check'}/>
+          : ""
+      },
     ];
   });
 }
