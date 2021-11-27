@@ -131,7 +131,15 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
         minWidth: '240px'
       }
     },
-    ...(showOwnerColumn(state) ? [owner] : [])
+    ...(showOwnerColumn(state) ? [owner] : []),
+    {
+      children: 'SWU Qualified?',
+      className: 'text-nowrap',
+      style: {
+        width: '100%',
+        minWidth: '240px'
+      }
+    },
   ];
 }
 
@@ -210,7 +218,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
           userId: state.sessionUser.id,
           tab: 'organizations' as const
         }))
-      }
+      },
+      
     ]);
   }
 };
