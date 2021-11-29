@@ -146,7 +146,6 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 export function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  console.log('state is',state)
   
   return state.organizations.map(org => {
     const owner = {
