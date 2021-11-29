@@ -15,6 +15,7 @@ import { compareStrings } from 'shared/lib';
 import { OrganizationSlim } from 'shared/lib/resources/organization';
 import { isVendor, User, UserType } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
+import { doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';
 
 type TableOrganization = OrganizationSlim;
 
@@ -144,10 +145,10 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-function tableBodyRows(state: Immutable<State>): Table.BodyRows {
+export function tableBodyRows(state: Immutable<State>): Table.BodyRows {
+  console.log('state is',state)
   
   return state.organizations.map(org => {
-    console.log('org is',org)
     const owner = {
       className: 'text-nowrap',
       children: org.owner
@@ -162,15 +163,18 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
       },
       ...(showOwnerColumn(state) ? [owner] : []),
       {
-        children: org.acceptedSWUTerms && org.numTeamMembers && org.numTeamMembers >= 2 && org.possessAllCapabilities
-          ? <Icon name={'check'}/>
-          : ""
-      },
+        children: (
+          <Icon
+            name={doesOrganizationMeetSWUQualification(org) ? 'check' : 'times'}
+            color={doesOrganizationMeetSWUQualification(org) ? 'success' : 'body'} />
+        )
+      }
     ];
   });
 }
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  console.log('tableBodyRows(state)',tableBodyRows(state))
   const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
   return (
     <div>
