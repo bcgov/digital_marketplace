@@ -113,7 +113,7 @@ cp sample.env .env
 
 Use [Localhost](#localhost) setup if you want to install and run the development environment on your own machine.
 
-Use [Containerized](#containerized) setup if you want to develop within Docker containers using VS Code.
+Use [Containerized](#containerized) setup if you want to develop within Docker containers.
 
 #### Localhost
 
@@ -163,7 +163,7 @@ Ensure the following have been installed on your local machine:
 
 - Docker
 - Docker Compose
-- VS Code Docker extension
+- Optional: VS Code Docker extension
 
 To start the local development environment for the first time, run `docker-compose up` (this builds the containers, starts the database, runs the migrations, and starts the front- and back-ends in watch mode).
 
@@ -173,14 +173,24 @@ The app will be available at localhost:3000 once you've seen the following among
 - `app_1 | [back-end] server started port="3000" host="0.0.0.0"`
 - `app_1 | Running "watch:frontEndStatic" (watch) task` (this is usually the last one to complete, so once you see it, you should be good to go)
 
-To start working within the development environment, open the VS Code Docker extension.
-
 To access the containerized app:
+
+Via the command line:
+
+`docker exec -it <containerId> /bin/bash`
+
+Via the VS Code Docker extension:
 
 - Right-click on `dm_app_image` and click "Attach Visual Studio Code." A new VS Code window will open and from here you can edit the files and run commands in the terminal. (If VS Code doesn't take you directly to the app files, find them at `/usr/app`.)
 - Note: There's a bit of a delay in between making a change and seeing it at localhost. Front-end changes require a refresh. If you ever make a change and it doesn't show up, confirm you made the change within the container, not on your local machine.
 
 To access the containerized database:
+
+Via the command line:
+
+`docker exec -it <containerId> psql -U digitalmarketplace digitalmarketplace`
+
+Via the VS Code Docker extension:
 
 - Right-click on `postgres:10` and click "Attach Shell." Once the shell opens, run `psql -U digitalmarketplace digitalmarketplace` to get into the database
 
@@ -189,7 +199,6 @@ To shut down the environment, `Cmd/Ctrl + C`.
 To restart the environment after you've created it for the first time:
 - If you've made a change to the Dockerfile, you must run `docker-compose up --build` to rebuild the containers to incorporate the changes.
 - If you haven't changed the Dockerfile, you can continue to use `docker-compose up`.
-
 
 ### NPM Scripts
 
