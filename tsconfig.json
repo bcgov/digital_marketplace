@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "skipLibCheck": true, // may not need this once typescript version is updated
-        "target": "es2018",
         "module": "commonjs",
         "moduleResolution": "node",
         "jsx": "react",
@@ -19,7 +18,9 @@
         "paths": {
             "back-end/*": ["./src/back-end/*"],
             "migrations/*": ["./src/migrations/*"],
-            "shared/*": ["./src/shared/*"]
+            "shared/*": ["./src/shared/*"],
+            "scripts/*": ["./src/scripts/*"],
+            "front-end/*": ["./src/front-end/*"],
         }
     },
     "include": [
