@@ -17,7 +17,7 @@
         "baseUrl": ".",
         "incremental": true,
         "paths": {
-            "back-end/*": ["./src/back-end*"],
+            "back-end/*": ["./src/back-end/*"],
             "migrations/*": ["./src/migrations/*"],
             "shared/*": ["./src/shared/*"]
         }
