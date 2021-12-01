@@ -36,7 +36,7 @@ export type Msg
 
 export type Params = Pick<State, 'canRemoveExistingAttachments' | 'existingAttachments' | 'newAttachmentMetadata'>;
 
-export function validate(state: Immutable<State>): Immutable<State> {
+export function validate(state: Immutable<State> | any): Immutable<State> {
   return state.newAttachments.reduce((acc, a, i) => {
     return acc.updateIn(['newAttachments', i], newAttachment => {
       const errors = getInvalidValue(validateNewName(newAttachment.newName), []);

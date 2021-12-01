@@ -13,7 +13,7 @@ const extraPageLinks = 2; // On either side of the active page.
 
 const PaginationView: View<Props> = ({ page, numPages, disabled, onPageChange }) => {
   const onClick = (newPage: number) => disabled ? undefined : (() => onPageChange(newPage));
-  const pages = [];
+  const pages: any = [];
   const startingPageLink = Math.max(1, Math.min(numPages - extraPageLinks * 2, page - extraPageLinks));
   const endingPageLink = Math.min(numPages, Math.max(1 + extraPageLinks * 2, page + extraPageLinks));
   for (let i = startingPageLink; i <= endingPageLink; i++) {

@@ -41,4 +41,4 @@ export type SupportedResponseBodies
   | HtmlResponseBody
   | ErrorResponseBody;
 
-export type FileUploadMetadata = Array<FilePermissions<Id, UserType>> | null;
+export type FileUploadMetadata = (FilePermissions<Id, UserType>)[] | null;

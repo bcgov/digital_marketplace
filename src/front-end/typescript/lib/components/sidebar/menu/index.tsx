@@ -97,7 +97,7 @@ interface SidebarItemProps {
 
 const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
   switch (item.tag) {
-    case 'link':
+    case 'link': {
       const caret = (() => {
         switch (isOpen) {
           case true: return 'up';
@@ -106,6 +106,7 @@ const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
         }
       })();
       return (<SidebarLink {...item.value} className='mb-3' caret={caret} />);
+    }
     case 'heading':
       return (<SidebarHeading text={item.value} className={isFirst ? 'mb-3' : 'mb-3 mt-n3 pt-5'} />);
   }

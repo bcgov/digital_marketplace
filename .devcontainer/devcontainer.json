@@ -1,0 +1,32 @@
+{
+	"name": "Node.js & PostgreSQL",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
+	"settings": {
+		"sqltools.connections": [{
+			"name": "Container database",
+			"driver": "PostgreSQL",
+			"previewLimit": 50,
+			"server": "localhost",
+			"port": 5432,
+			"database": "digitalmarketplace",
+			"username": "digitalmarketplace",
+			"password": "digitalmarketplace"
+		}],
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true,
+		"eslint.alwaysShowStatus": true,
+		"eslint.format.enable": true,
+		"window.zoomLevel": 1
+	},
+	"extensions": [
+		"dbaeumer.vscode-eslint",
+		"mtxr.sqltools",
+		"mtxr.sqltools-driver-pg",
+		"esbenp.prettier-vscode"
+	],
+	"forwardPorts": [3000, 5432, 8080],
+	"postCreateCommand": "npm install && npm run migrations:latest && node ./.devcontainer/scripts/keycloak-local.js",
+	"remoteUser": "node"
+}

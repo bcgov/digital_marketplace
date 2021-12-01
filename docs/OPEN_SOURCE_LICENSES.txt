@@ -710,9 +710,8 @@
 │  ├─ url: https://github.com/jonschlinkert
 ├─ bcgov-digital-marketplace@1.0.0
 │  ├─ licenses: Apache-2.0
-│  ├─ repository: 
-│  ├─ publisher: Real Folk Inc.
-│  └─ noticeFile: /home/dd/src/bcgov/digital_marketplace/NOTICE.txt
+│  ├─ repository:
+│  ├─ publisher: Procurement Services Branch within the Government of British Columbia's Ministry of Citizen's Services
 ├─ bcrypt-pbkdf@1.0.2
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/joyent/node-bcrypt-pbkdf
@@ -6490,4 +6489,3 @@
    ├─ repository: https://github.com/archiverjs/node-zip-stream
    ├─ publisher: Chris Talkington
    ├─ url: http://christalkington.com/
-

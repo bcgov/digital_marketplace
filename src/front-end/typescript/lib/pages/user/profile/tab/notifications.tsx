@@ -35,12 +35,12 @@ const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
   };
 };
 
-const startNewOpportunitiesLoading = makeStartLoading<State>('newOpportunitiesLoading');
+const startNewOpportunitiesLoading: any = makeStartLoading<State>('newOpportunitiesLoading');
 const stopNewOpportunitiesLoading = makeStopLoading<State>('newOpportunitiesLoading');
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: Update<State, Msg> | any = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'newOpportunities':
+    case 'newOpportunities':{
       const valueChanged = msg.value.tag === 'child' && msg.value.value.tag === 'onChange';
       const newOppResult = updateComponentChild({
         state,
@@ -74,6 +74,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
         }
       ];
+    }
     default:
       return [state];
   }

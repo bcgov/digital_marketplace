@@ -4,7 +4,7 @@ import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 
-interface Params<State, Msg> {
+interface Params<State extends object, Msg> {
   showBackLink?: boolean;
   showOnMobile?: boolean;
   getFooter: ComponentView<State, Msg>;
@@ -12,9 +12,9 @@ interface Params<State, Msg> {
   getDescription(state: State): ViewElementChildren;
 }
 
-function makeSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>>(params: Params<State, Msg>): View<Props> {
+function makeSidebar<State extends object, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>>(params: Params<State, Msg>): View<Props> {
   const { showBackLink = false, showOnMobile = true, getFooter, getTitle, getDescription } = params;
-  return props => {
+  return function StickyWrapper (props) {
     const { state } = props;
     const footer = getFooter(props);
     return (

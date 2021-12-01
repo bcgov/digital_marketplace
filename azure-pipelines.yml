@@ -12,7 +12,7 @@ variables:
 stages:
 - stage: Build
   displayName: Build image
-  jobs:  
+  jobs:
   - job: Build
     displayName: Build
     pool:

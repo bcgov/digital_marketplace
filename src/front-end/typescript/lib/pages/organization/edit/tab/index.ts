@@ -26,7 +26,7 @@ export interface Params {
   viewerUser: User;
 }
 
-export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
+export type Component<State extends object, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 
 export interface Tabs {
   organization: TabbedPage.Tab<Params, OrganizationTab.State, OrganizationTab.InnerMsg>;

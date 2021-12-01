@@ -135,7 +135,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       const setSessionId = (id: string) => expressRes.cookie(SESSION_COOKIE_NAME, id, {
         signed: true,
         httpOnly: true,
-        sameSite: 'Lax',
+        sameSite: 'lax',
         expires: addDays(new Date(), 2) //Expire cookie if not re-used within 2 days.
       });
       const sessionId = sessionToSessionId(response.session);
@@ -147,7 +147,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         case 'json':
           expressRes.json(response.body.value);
           break;
-        case 'file':
+        case 'file':{
           const file = response.body.value;
           expressRes.set('Content-Type', file.contentType);
           if (file.contentEncoding) {
@@ -158,6 +158,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           }
           expressRes.send(response.body.value.buffer);
           break;
+        }
         case 'text':
           expressRes
             .set('Content-Type', 'text/plain')

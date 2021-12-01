@@ -44,7 +44,7 @@ node('maven') {
     }
 }
 
-stage('Deploy to Prod') {	
+stage('Deploy to Prod') {
   timeout(time: 1, unit: 'DAYS') {
 	  input message: "Deploy to prod?", submitter: 'dhruvio-admin,sutherlanda-admin'
   }

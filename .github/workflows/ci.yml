@@ -1,10 +1,7 @@
 name: CI
-on: 
+on:
   push:
-  pull_request:
-    branches:
-      - development
-
+    branches: [development, master]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -12,26 +9,44 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '10'
-      - run: npm ci
+          node-version: '16'
+          cache: 'yarn'
+      - run: yarn
       - run: npm run front-end:test
       - run: npm run back-end:test
-  lint: 
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '10'
-      - run: npm ci
+          node-version: '16'
+          cache: 'yarn'
+      - run: yarn
       - run: npm run front-end:lint
       - run: npm run back-end:lint
-  audit:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '10'
-      - run: npm ci
-      - run: npm audit --audit-level=moderate
+          node-version: '16'
+          cache: 'yarn'
+      - run: yarn
+      - run: npm run front-end:build
+      - run: npm run back-end:build
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files -v
+  commitlint:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v2

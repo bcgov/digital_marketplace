@@ -66,10 +66,9 @@ parameters:
     'Dockerfile' for Postgres builds or 'Dockerfile_Mongo' for MongoDB builds.
   required: false
   value: Dockerfile
-  
+
 - name: OUTPUT_IMAGE_TAG
   displayName: Output Image Tag
   description: The tag given to the built image.
   required: true
   value: latest
-

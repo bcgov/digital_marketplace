@@ -22,7 +22,7 @@ const GotQuestions: View<Props> = ({ title, className = '', disabled }) => {
         style={{ top: '-2rem', right: '-2rem', opacity: '0.12' }}
         color='c-opportunity-view-got-questions-icon' />
         <h5 className='mb-3'>Got Questions?</h5>
-        <p className='mb-4'>If you have questions about this opportunity, send an email to the Procurement team by clicking the "Contact" button below.</p>
+        <p className='mb-4'>If you have questions about this opportunity, send an email to the Procurement team by clicking the {'"'}Contact{'"'} button below.</p>
         <Link
           disabled={disabled}
           dest={emailDest([CONTACT_EMAIL, title])}

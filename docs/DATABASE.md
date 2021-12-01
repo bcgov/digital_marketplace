@@ -1,11 +1,11 @@
 # Database Documentation
-## Tables 
+## Tables
 [A](#A) \| [C](#C) \| [F](#F) \| [M](#M) \| [O](#O) \| [S](#S) \| [U](#U) \| [V](#V)
-### A 
+### A
 |# |Table Name| Description|
 |--:|----------|------------|
 |1| [affiliations](#affiliations) |  |
-### C 
+### C
 |# |Table Name| Description|
 |--:|----------|------------|
 |2| [cwuOpportunities](#cwuOpportunities) |  |
@@ -18,7 +18,7 @@
 |9| [cwuProposalAttachments](#cwuProposalAttachments) |  |
 |10| [cwuProposalStatuses](#cwuProposalStatuses) |  |
 |11| [cwuProposals](#cwuProposals) |  |
-### F 
+### F
 |# |Table Name| Description|
 |--:|----------|------------|
 |12| [fileBlobs](#fileBlobs) |  |
@@ -26,16 +26,16 @@
 |14| [filePermissionsUser](#filePermissionsUser) |  |
 |15| [filePermissionsUserType](#filePermissionsUserType) |  |
 |16| [files](#files) |  |
-### M 
+### M
 |# |Table Name| Description|
 |--:|----------|------------|
 |17| [migrations](#migrations) |  |
 |18| [migrations_lock](#migrations_lock) |  |
-### O 
+### O
 |# |Table Name| Description|
 |--:|----------|------------|
 |19| [organizations](#organizations) |  |
-### S 
+### S
 |# |Table Name| Description|
 |--:|----------|------------|
 |20| [sessions](#sessions) |  |
@@ -55,15 +55,15 @@
 |34| [swuProposals](#swuProposals) |  |
 |35| [swuTeamQuestionResponses](#swuTeamQuestionResponses) |  |
 |36| [swuTeamQuestions](#swuTeamQuestions) |  |
-### U 
+### U
 |# |Table Name| Description|
 |--:|----------|------------|
 |37| [users](#users) |  |
-### V 
+### V
 |# |Table Name| Description|
 |--:|----------|------------|
 |38| [viewCounters](#viewCounters) |  |
-## Details 
+## Details
 ### affiliations
 
 
