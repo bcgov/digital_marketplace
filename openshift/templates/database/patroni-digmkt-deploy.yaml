@@ -15,7 +15,7 @@ labels:
   phase: deploy
   app.kubernetes.io/instance: ${NAME}-${APP_GROUP}-${TAG_NAME}
   app.kubernetes.io/component: database
-  app.kubernetes.io/name: patroni  
+  app.kubernetes.io/name: patroni
   app.kubernetes.io/managed-by: template
 
 objects:
@@ -71,7 +71,7 @@ objects:
                 matchExpressions:
                 - key: statefulset
                   operator: In
-                  values: 
+                  values:
                   - ${NAME}-${APP_GROUP}-${TAG_NAME}
               topologyKey: "kubernetes.io/hostname"
         containers:
