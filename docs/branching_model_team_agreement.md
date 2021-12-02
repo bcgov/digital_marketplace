@@ -15,4 +15,4 @@ This document lists the agreed upon practices the team will be using. As they ar
 - Reviews can be done by the first person who gets to it. If the code needs explaining, request the author to walk you through it
 - Follow peer review best practices by suggesting opportunities to improve code during peer review, merging as soon as the code is better than the code in the target branch and release ready
 - Treat any opportunity for improvement feedback identified during peer review but not implemented in the PR where it was raised as technical debt worthy of a new issue referencing the PR where the comments first came up
-- Branch naming policy is as follows: dm-issue#-brief-description
+- Branch naming policy is as follows: issue#-brief-description
