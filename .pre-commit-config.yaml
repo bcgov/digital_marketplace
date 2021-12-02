@@ -7,6 +7,7 @@
     - id: check-json
     - id: check-vcs-permalinks
     - id: check-yaml
+      args: [--allow-multiple-documents]
     - id: end-of-file-fixer
     - id: trailing-whitespace
 - repo: https://github.com/pre-commit/mirrors-eslint
