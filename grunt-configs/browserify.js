@@ -14,7 +14,7 @@ module.exports = {
           "pathmodify",
           {
             mods: [
-              pathmodify.mod.dir("front-end", `${gruntConfig.frontEnd.tmp.dir}/front-end/typescript`),
+              pathmodify.mod.dir("front-end", `${gruntConfig.frontEnd.tmp.dir}/front-end`),
               pathmodify.mod.dir("shared", `${gruntConfig.frontEnd.tmp.dir}/shared`)
             ]
           }
