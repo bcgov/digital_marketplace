@@ -2,26 +2,6 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     "target": "es2018",
-    // "module": "commonjs",
-    // "moduleResolution": "node",
-    // "jsx": "react",
-    // "allowJs": true,
-    // "strict": true,
-    // "noImplicitReturns": true,
-    // "forceConsistentCasingInFileNames": true,
-    // "noUnusedLocals": true,
-    // "esModuleInterop": true,
-    // "allowSyntheticDefaultImports": true,
-    // "resolveJsonModule": true,
-    // "noErrorTruncation": true,
-    // "baseUrl": ".",
-    // "incremental": true,
-    // "paths": {
-    //   "scripts/*": ["./*"],
-    //   "back-end/*": ["../back-end/*"],
-    //   "migrations/*": ["../migrations/*"],
-    //   "shared/*": ["../shared/*"]
-    // }
   },
   "include": [
     "**/*.ts",
