@@ -1,15 +1,15 @@
-import { prefixPath } from 'front-end/lib';
-import { Route } from 'front-end/lib/app/types';
-import * as Router from 'front-end/lib/framework/router';
-import * as PageNotice from 'front-end/lib/pages/notice';
-import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import * as SWUOpportunityEditTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
-import * as OrganizationEditTab from 'front-end/lib/pages/organization/edit/tab';
-import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
-import * as SWUProposalEditTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
-import * as SWUProposalViewTab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
-import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
+import { prefixPath } from 'front-end/typescript/lib';
+import { Route } from 'front-end/typescript/lib/app/types';
+import * as Router from 'front-end/typescript/lib/framework/router';
+import * as PageNotice from 'front-end/typescript/lib/pages/notice';
+import * as CWUOpportunityEditTab from 'front-end/typescript/lib/pages/opportunity/code-with-us/edit/tab';
+import * as SWUOpportunityEditTab from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/edit/tab';
+import * as OrganizationEditTab from 'front-end/typescript/lib/pages/organization/edit/tab';
+import * as CWUProposalEditTab from 'front-end/typescript/lib/pages/proposal/code-with-us/edit/tab';
+import * as CWUProposalViewTab from 'front-end/typescript/lib/pages/proposal/code-with-us/view/tab';
+import * as SWUProposalEditTab from 'front-end/typescript/lib/pages/proposal/sprint-with-us/edit/tab';
+import * as SWUProposalViewTab from 'front-end/typescript/lib/pages/proposal/sprint-with-us/view/tab';
+import * as UserProfileTab from 'front-end/typescript/lib/pages/user/profile/tab';
 import { getString } from 'shared/lib';
 import { adt } from 'shared/lib/types';
 

@@ -1,7 +1,7 @@
-import { getSignInUrl } from 'front-end/lib';
-import { View } from 'front-end/lib/framework';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { externalDest } from 'front-end/lib/views/link';
+import { getSignInUrl } from 'front-end/typescript/lib';
+import { View } from 'front-end/typescript/lib/framework';
+import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
+import Link, { externalDest } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { isVendor, UserType } from 'shared/lib/resources/user';

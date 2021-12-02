@@ -1,9 +1,9 @@
-import { makeStartLoading, makeStopLoading } from 'front-end/lib';
-import * as FormField from 'front-end/lib/components/form-field';
-import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/lib/framework';
-import FileLink from 'front-end/lib/views/file-link';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import { makeStartLoading, makeStopLoading } from 'front-end/typescript/lib';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import { Immutable, UpdateReturnValue, View, ViewElement } from 'front-end/typescript/lib/framework';
+import FileLink from 'front-end/typescript/lib/views/file-link';
+import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
+import Link, { routeDest } from 'front-end/typescript/lib/views/link';
 import React, { CSSProperties, Fragment } from 'react';
 import { FormText, Spinner } from 'reactstrap';
 import { countWords } from 'shared/lib';

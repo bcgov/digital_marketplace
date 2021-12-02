@@ -1,9 +1,9 @@
-import { View } from 'front-end/lib/framework';
-import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
-import Badge from 'front-end/lib/views/badge';
-import DescriptionList from 'front-end/lib/views/description-list';
-import Icon from 'front-end/lib/views/icon';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import { View } from 'front-end/typescript/lib/framework';
+import { swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/typescript/lib/pages/proposal/sprint-with-us/lib';
+import Badge from 'front-end/typescript/lib/views/badge';
+import DescriptionList from 'front-end/typescript/lib/views/description-list';
+import Icon from 'front-end/typescript/lib/views/icon';
+import Link, { routeDest } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { doesOrganizationHaveAdminInfo, doesOrganizationMeetSWUQualification } from 'shared/lib/resources/organization';

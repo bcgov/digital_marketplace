@@ -1,5 +1,5 @@
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageGetModal, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as Phase from 'front-end/lib/pages/proposal/sprint-with-us/lib/components/phase';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, mapPageModalMsg, PageGetModal, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
+import * as Phase from 'front-end/typescript/lib/pages/proposal/sprint-with-us/lib/components/phase';
 import React from 'react';
 import { AffiliationMember } from 'shared/lib/resources/affiliation';
 import { SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';

@@ -1,7 +1,7 @@
-import * as router from 'front-end/lib/app/router';
-import { ComponentView, ComponentViewProps, View, ViewElementChildren } from 'front-end/lib/framework';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import Sticky from 'front-end/lib/views/sidebar/sticky';
+import * as router from 'front-end/typescript/lib/app/router';
+import { ComponentView, ComponentViewProps, View, ViewElementChildren } from 'front-end/typescript/lib/framework';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
+import Sticky from 'front-end/typescript/lib/views/sidebar/sticky';
 import React from 'react';
 
 interface Params<State, Msg> {

@@ -1,6 +1,6 @@
-import { View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import Link, { emailDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import { View } from 'front-end/typescript/lib/framework';
+import Icon from 'front-end/typescript/lib/views/icon';
+import Link, { emailDest, iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { CONTACT_EMAIL } from 'shared/config';
 

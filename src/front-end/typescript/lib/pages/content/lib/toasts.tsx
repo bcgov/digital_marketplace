@@ -1,4 +1,4 @@
-import { ContentLink } from 'front-end/lib/pages/content/lib';
+import { ContentLink } from 'front-end/typescript/lib/pages/content/lib';
 import React from 'react';
 import { COPY } from 'shared/config';
 import { Content } from 'shared/lib/resources/content';

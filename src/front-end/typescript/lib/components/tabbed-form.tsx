@@ -1,7 +1,7 @@
-import { DROPDOWN_CARET_SIZE } from 'front-end/config';
-import { Component, ComponentViewProps, Immutable, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import Link, { emptyIconLinkSymbol, iconLinkSymbol, leftPlacement, rightPlacement } from 'front-end/lib/views/link';
+import { DROPDOWN_CARET_SIZE } from 'front-end/typescript/config';
+import { Component, ComponentViewProps, Immutable, Init, Update, View, ViewElementChildren } from 'front-end/typescript/lib/framework';
+import Icon from 'front-end/typescript/lib/views/icon';
+import Link, { emptyIconLinkSymbol, iconLinkSymbol, leftPlacement, rightPlacement } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { Dropdown, DropdownMenu, DropdownToggle, Nav } from 'reactstrap';
 import { ADT, adt } from 'shared/lib/types';

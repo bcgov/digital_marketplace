@@ -1,8 +1,8 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import * as LongText from 'front-end/lib/components/form-field/long-text';
-import * as NumberField from 'front-end/lib/components/form-field/number';
-import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import * as LongText from 'front-end/typescript/lib/components/form-field/long-text';
+import * as NumberField from 'front-end/typescript/lib/components/form-field/number';
+import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE, DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';

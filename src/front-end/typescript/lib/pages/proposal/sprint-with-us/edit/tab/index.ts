@@ -1,9 +1,9 @@
-import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { immutable, Immutable } from 'front-end/lib/framework';
-import * as ProposalTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab/proposal';
-import * as ScoresheetTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab/scoresheet';
-import { routeDest } from 'front-end/lib/views/link';
+import * as MenuSidebar from 'front-end/typescript/lib/components/sidebar/menu';
+import * as TabbedPage from 'front-end/typescript/lib/components/sidebar/menu/tabbed-page';
+import { immutable, Immutable } from 'front-end/typescript/lib/framework';
+import * as ProposalTab from 'front-end/typescript/lib/pages/proposal/sprint-with-us/edit/tab/proposal';
+import * as ScoresheetTab from 'front-end/typescript/lib/pages/proposal/sprint-with-us/edit/tab/scoresheet';
+import { routeDest } from 'front-end/typescript/lib/views/link';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
 import { User } from 'shared/lib/resources/user';

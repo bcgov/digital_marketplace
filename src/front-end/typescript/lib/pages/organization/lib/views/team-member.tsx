@@ -1,7 +1,7 @@
-import { PageModal, View } from 'front-end/lib/framework';
-import { userAvatarPath } from 'front-end/lib/pages/user/lib';
-import Badge from 'front-end/lib/views/badge';
-import Capabilities from 'front-end/lib/views/capabilities';
+import { PageModal, View } from 'front-end/typescript/lib/framework';
+import { userAvatarPath } from 'front-end/typescript/lib/pages/user/lib';
+import Badge from 'front-end/typescript/lib/views/badge';
+import Capabilities from 'front-end/typescript/lib/views/capabilities';
 import React from 'react';
 import { AffiliationMember } from 'shared/lib/resources/affiliation';
 

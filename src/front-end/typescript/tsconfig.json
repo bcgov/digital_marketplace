@@ -14,12 +14,12 @@
     // "allowSyntheticDefaultImports": true,
     // "resolveJsonModule": true,
     // "noErrorTruncation": true,
-    "baseUrl": ".",
-    // "incremental": true,
-    "paths": {
-      "front-end/*": ["./*"],
-      "shared/*": ["../../shared/*"]
-    }
+    // "baseUrl": ".",
+    // // "incremental": true,
+    // "paths": {
+    //   "front-end/*": ["./*"],
+    //   "shared/*": ["../../shared/*"]
+    // }
   },
   "include": [
     "**/*.ts",

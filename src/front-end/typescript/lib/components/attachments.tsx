@@ -1,9 +1,9 @@
-import { fileBlobPath } from 'front-end/lib';
-import { ComponentViewProps, Immutable, Init, Update, View } from 'front-end/lib/framework';
-import { CreateFileRequestBody } from 'front-end/lib/http/api';
-import FileLink from 'front-end/lib/views/file-link';
-import Icon from 'front-end/lib/views/icon';
-import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
+import { fileBlobPath } from 'front-end/typescript/lib';
+import { ComponentViewProps, Immutable, Init, Update, View } from 'front-end/typescript/lib/framework';
+import { CreateFileRequestBody } from 'front-end/typescript/lib/http/api';
+import FileLink from 'front-end/typescript/lib/views/file-link';
+import Icon from 'front-end/typescript/lib/views/icon';
+import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { FormText } from 'reactstrap';
 import { CreateValidationErrors, enforceExtension, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';

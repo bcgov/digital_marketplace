@@ -1,9 +1,9 @@
-import { View } from 'front-end/lib/framework';
-import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
-import Badge from 'front-end/lib/views/badge';
-import DateMetadata from 'front-end/lib/views/date-metadata';
-import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
+import { View } from 'front-end/typescript/lib/framework';
+import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/typescript/lib/pages/proposal/code-with-us/lib';
+import Badge from 'front-end/typescript/lib/views/badge';
+import DateMetadata from 'front-end/typescript/lib/views/date-metadata';
+import DescriptionList from 'front-end/typescript/lib/views/description-list';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';

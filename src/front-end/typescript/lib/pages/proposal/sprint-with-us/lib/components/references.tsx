@@ -1,6 +1,6 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import * as ShortText from 'front-end/typescript/lib/components/form-field/short-text';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CreateSWUProposalReferenceBody, CreateSWUProposalReferenceValidationErrors, SWUProposalReference } from 'shared/lib/resources/proposal/sprint-with-us';

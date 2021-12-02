@@ -1,5 +1,5 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import Icon from 'front-end/lib/views/icon';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import Icon from 'front-end/typescript/lib/views/icon';
 import React from 'react';
 import { adt, ADT } from 'shared/lib/types';
 

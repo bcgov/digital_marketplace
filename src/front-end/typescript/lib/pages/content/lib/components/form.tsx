@@ -1,9 +1,9 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
-import { slugPath } from 'front-end/lib/pages/content/lib';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import * as RichMarkdownEditor from 'front-end/typescript/lib/components/form-field/rich-markdown-editor';
+import * as ShortText from 'front-end/typescript/lib/components/form-field/short-text';
+import { ComponentViewProps, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
+import * as api from 'front-end/typescript/lib/http/api';
+import { slugPath } from 'front-end/typescript/lib/pages/content/lib';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { Content, CreateRequestBody, CreateValidationErrors } from 'shared/lib/resources/content';

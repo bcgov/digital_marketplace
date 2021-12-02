@@ -1,5 +1,5 @@
-import { View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
+import { View } from 'front-end/typescript/lib/framework';
+import Icon from 'front-end/typescript/lib/views/icon';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 

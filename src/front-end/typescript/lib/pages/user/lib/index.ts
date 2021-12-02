@@ -1,6 +1,6 @@
-import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/config';
-import { fileBlobPath } from 'front-end/lib';
-import { ThemeColor } from 'front-end/lib/types';
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from 'front-end/typescript/config';
+import { fileBlobPath } from 'front-end/typescript/lib';
+import { ThemeColor } from 'front-end/typescript/lib/types';
 import { GOV_IDP_NAME, GOV_IDP_SUFFIX, VENDOR_IDP_NAME, VENDOR_IDP_SUFFIX } from 'shared/config';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
 

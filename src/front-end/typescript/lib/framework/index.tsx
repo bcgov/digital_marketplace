@@ -1,15 +1,15 @@
-import { NODE_ENV } from 'front-end/config';
-import * as Router from 'front-end/lib/framework/router';
-import { ThemeColor } from 'front-end/lib/types';
-import { AvailableIcons } from 'front-end/lib/views/icon';
-import * as Link from 'front-end/lib/views/link';
+import { NODE_ENV } from 'front-end/typescript/config';
+import * as Router from 'front-end/typescript/lib/framework/router';
+import { ThemeColor } from 'front-end/typescript/lib/types';
+import { AvailableIcons } from 'front-end/typescript/lib/views/icon';
+import * as Link from 'front-end/typescript/lib/views/link';
 import * as Immutable from 'immutable';
 import { remove } from 'lodash';
 import { default as React, ReactElement } from 'react';
 import ReactDom from 'react-dom';
 import { adt, ADT, adtCurried } from 'shared/lib/types';
 
-export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framework/router';
+export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/typescript/lib/framework/router';
 
 // Base logic.
 

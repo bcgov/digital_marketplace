@@ -1,4 +1,4 @@
-import { ThemeColor } from 'front-end/lib/types';
+import { ThemeColor } from 'front-end/typescript/lib/types';
 import { CWUProposalEvent, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 import { UserType } from 'shared/lib/resources/user';
 

@@ -1,8 +1,8 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import Accordion from 'front-end/lib/views/accordion';
-import Separator from 'front-end/lib/views/separator';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import * as RichMarkdownEditor from 'front-end/typescript/lib/components/form-field/rich-markdown-editor';
+import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
+import Accordion from 'front-end/typescript/lib/views/accordion';
+import Separator from 'front-end/typescript/lib/views/separator';
 import { find } from 'lodash';
 import React from 'react';
 import { Alert, Col, Row } from 'reactstrap';

@@ -1,10 +1,10 @@
-import { APP_TERMS_CONTENT_ID } from 'front-end/config';
-import { makeStartLoading, makeStopLoading } from 'front-end/lib';
-import { Route } from 'front-end/lib/app/types';
-import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/lib/framework';
-import * as Tab from 'front-end/lib/pages/user/profile/tab';
-import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import { APP_TERMS_CONTENT_ID } from 'front-end/typescript/config';
+import { makeStartLoading, makeStopLoading } from 'front-end/typescript/lib';
+import { Route } from 'front-end/typescript/lib/app/types';
+import * as AcceptNewTerms from 'front-end/typescript/lib/components/accept-new-app-terms';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, Init, Update, updateComponentChild, View, ViewElementChildren } from 'front-end/typescript/lib/framework';
+import * as Tab from 'front-end/typescript/lib/pages/user/profile/tab';
+import Link, { emailDest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { COPY } from 'shared/config';

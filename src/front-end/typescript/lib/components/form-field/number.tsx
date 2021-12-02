@@ -1,4 +1,4 @@
-import * as FormField from 'front-end/lib/components/form-field';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
 import React from 'react';
 import { InputGroup, InputGroupAddon, InputGroupText } from 'reactstrap';
 import { ADT } from 'shared/lib/types';

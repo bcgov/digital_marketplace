@@ -1,5 +1,5 @@
-import * as opportunityToasts from 'front-end/lib/pages/opportunity/sprint-with-us/lib/toasts';
-import { swuProposalStatusToPastTenseVerb, swuProposalStatusToPresentTenseVerb } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
+import * as opportunityToasts from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/lib/toasts';
+import { swuProposalStatusToPastTenseVerb, swuProposalStatusToPresentTenseVerb } from 'front-end/typescript/lib/pages/proposal/sprint-with-us/lib';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 

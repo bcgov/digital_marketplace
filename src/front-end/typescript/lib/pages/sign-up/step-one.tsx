@@ -1,10 +1,10 @@
-import { makePageMetadata, sidebarValid, viewValid } from 'front-end/lib';
-import { isSignedOut } from 'front-end/lib/access-control';
-import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, PageComponent, PageInit, replaceRoute, replaceUrl, Update } from 'front-end/lib/framework';
-import Link, { routeDest } from 'front-end/lib/views/link';
-import makeInstructionalSidebar from 'front-end/lib/views/sidebar/instructional';
-import { SignInCard } from 'front-end/lib/views/sign-in-card';
+import { makePageMetadata, sidebarValid, viewValid } from 'front-end/typescript/lib';
+import { isSignedOut } from 'front-end/typescript/lib/access-control';
+import { Route, SharedState } from 'front-end/typescript/lib/app/types';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, PageComponent, PageInit, replaceRoute, replaceUrl, Update } from 'front-end/typescript/lib/framework';
+import Link, { routeDest } from 'front-end/typescript/lib/views/link';
+import makeInstructionalSidebar from 'front-end/typescript/lib/views/sidebar/instructional';
+import { SignInCard } from 'front-end/typescript/lib/views/sign-in-card';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { GOV_IDP_NAME, VENDOR_IDP_NAME } from 'shared/config';

@@ -1,5 +1,5 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import { Immutable } from 'front-end/lib/framework';
+import * as FormField from 'front-end/typescript/lib/components/form-field';
+import { Immutable } from 'front-end/typescript/lib/framework';
 import { padStart } from 'lodash';
 import React from 'react';
 import { parseDate } from 'shared/lib';

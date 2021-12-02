@@ -1,5 +1,5 @@
-import * as History from 'front-end/lib/components/table/history';
-import { ThemeColor } from 'front-end/lib/types';
+import * as History from 'front-end/typescript/lib/components/table/history';
+import { ThemeColor } from 'front-end/typescript/lib/types';
 import { isOpen, SWUOpportunity, SWUOpportunityEvent, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { isAdmin, User } from 'shared/lib/resources/user';
 

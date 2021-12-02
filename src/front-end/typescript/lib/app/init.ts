@@ -1,7 +1,7 @@
-import { State } from 'front-end/lib/app/types';
-import * as Nav from 'front-end/lib/app/view/nav';
-import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
-import { immutable, Init } from 'front-end/lib/framework';
+import { State } from 'front-end/typescript/lib/app/types';
+import * as Nav from 'front-end/typescript/lib/app/view/nav';
+import * as AcceptNewTerms from 'front-end/typescript/lib/components/accept-new-app-terms';
+import { immutable, Init } from 'front-end/typescript/lib/framework';
 
 const init: Init<null, State> = async () => {
   return {

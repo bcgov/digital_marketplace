@@ -1,6 +1,6 @@
-import { makePageMetadata } from 'front-end/lib';
-import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import { makePageMetadata } from 'front-end/typescript/lib';
+import { Route, SharedState } from 'front-end/typescript/lib/app/types';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/typescript/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT } from 'shared/lib/types';

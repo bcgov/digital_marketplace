@@ -1,9 +1,9 @@
-import { EMPTY_STRING } from 'front-end/config';
-import * as Table from 'front-end/lib/components/table';
-import { Component, ComponentView, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-import { ThemeColor } from 'front-end/lib/types';
-import Badge from 'front-end/lib/views/badge';
-import Link, { routeDest } from 'front-end/lib/views/link';
+import { EMPTY_STRING } from 'front-end/typescript/config';
+import * as Table from 'front-end/typescript/lib/components/table';
+import { Component, ComponentView, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/typescript/lib/framework';
+import { ThemeColor } from 'front-end/typescript/lib/types';
+import Badge from 'front-end/typescript/lib/views/badge';
+import Link, { routeDest } from 'front-end/typescript/lib/views/link';
 import React from 'react';
 import { formatDate, formatTime } from 'shared/lib';
 import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';

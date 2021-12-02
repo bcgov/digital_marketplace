@@ -1,4 +1,4 @@
-import { prefixPath } from 'front-end/lib';
+import { prefixPath } from 'front-end/typescript/lib';
 
 export { EMPTY_STRING } from 'shared/config';
 

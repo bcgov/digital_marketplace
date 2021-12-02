@@ -1,4 +1,4 @@
-import { View, ViewElementChildren } from 'front-end/lib/framework';
+import { View, ViewElementChildren } from 'front-end/typescript/lib/framework';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 

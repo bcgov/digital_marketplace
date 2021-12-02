@@ -1,10 +1,10 @@
-import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/lib';
-import { isUserType } from 'front-end/lib/access-control';
-import { SharedState } from 'front-end/lib/app/types';
-import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
-import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
+import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, sidebarValid, updateValid, viewValid } from 'front-end/typescript/lib';
+import { isUserType } from 'front-end/typescript/lib/access-control';
+import { SharedState } from 'front-end/typescript/lib/app/types';
+import * as TabbedPage from 'front-end/typescript/lib/components/sidebar/menu/tabbed-page';
+import { immutable, Immutable, PageComponent, PageInit, replaceRoute } from 'front-end/typescript/lib/framework';
+import * as api from 'front-end/typescript/lib/http/api';
+import * as Tab from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/edit/tab';
 import { DEFAULT_OPPORTUNITY_TITLE, SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 import { adt, ADT, Id } from 'shared/lib/types';

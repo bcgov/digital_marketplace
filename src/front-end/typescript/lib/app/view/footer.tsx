@@ -1,7 +1,7 @@
-import { PROCUREMENT_CONCIERGE_URL, SOURCE_CODE_URL } from 'front-end/config';
-import { View } from 'front-end/lib/framework';
-import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import Separator from 'front-end/lib/views/separator';
+import { PROCUREMENT_CONCIERGE_URL, SOURCE_CODE_URL } from 'front-end/typescript/config';
+import { View } from 'front-end/typescript/lib/framework';
+import Link, { AnchorProps, emailDest, externalDest, iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/typescript/lib/views/link';
+import Separator from 'front-end/typescript/lib/views/separator';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { CONTACT_EMAIL, COPY } from 'shared/config';

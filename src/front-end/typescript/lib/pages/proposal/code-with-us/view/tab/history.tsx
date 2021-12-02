@@ -1,9 +1,9 @@
-import { Route } from 'front-end/lib/app/types';
-import * as History from 'front-end/lib/components/table/history';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as Tab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-import { cwuProposalEventToTitleCase, cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
-import ViewTabHeader from 'front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header';
+import { Route } from 'front-end/typescript/lib/app/types';
+import * as History from 'front-end/typescript/lib/components/table/history';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/typescript/lib/framework';
+import * as Tab from 'front-end/typescript/lib/pages/proposal/code-with-us/edit/tab';
+import { cwuProposalEventToTitleCase, cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/typescript/lib/pages/proposal/code-with-us/lib';
+import ViewTabHeader from 'front-end/typescript/lib/pages/proposal/code-with-us/lib/views/view-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CWUProposal } from 'shared/lib/resources/proposal/code-with-us';

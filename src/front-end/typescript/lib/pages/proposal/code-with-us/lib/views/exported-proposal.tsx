@@ -1,8 +1,8 @@
-import { fileBlobPath } from 'front-end/lib';
-import { View } from 'front-end/lib/framework';
-import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import { ProposalMarkdown } from 'front-end/lib/views/markdown';
+import { fileBlobPath } from 'front-end/typescript/lib';
+import { View } from 'front-end/typescript/lib/framework';
+import DescriptionList from 'front-end/typescript/lib/views/description-list';
+import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
+import { ProposalMarkdown } from 'front-end/typescript/lib/views/markdown';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { formatDateAndTime } from 'shared/lib';

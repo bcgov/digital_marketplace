@@ -1,8 +1,8 @@
-import router from 'front-end/lib/app/router';
-import { Route } from 'front-end/lib/app/types';
-import { View, ViewElementChildren } from 'front-end/lib/framework';
-import { ButtonColor, TextColor } from 'front-end/lib/types';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import router from 'front-end/typescript/lib/app/router';
+import { Route } from 'front-end/typescript/lib/app/types';
+import { View, ViewElementChildren } from 'front-end/typescript/lib/framework';
+import { ButtonColor, TextColor } from 'front-end/typescript/lib/types';
+import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
 import React, { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import { Spinner } from 'reactstrap';
 import { adt, ADT, adtCurried } from 'shared/lib/types';
