@@ -1,3 +1,4 @@
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/button-inc/digital_marketplace/main.svg)](https://results.pre-commit.ci/latest/github/button-inc/digital_marketplace/main)
 # Digital Marketplace
 
 The Digital Marketplace is a web application that administers British Columbia's Code With Us and Sprint With Us procurement programs. It enables (1) public sector employees to create and publish procurement opportunities, and (2) vendors to submit proposals to these opportunities.

@@ -8,23 +8,13 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
+    // "prettier",
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true,
     },
-    "extends": [
-      "eslint:recommended",
-      "plugin:react/recommended",
-      "plugin:@typescript-eslint/recommended",
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaFeatures": {
-        "jsx": true,
-      },
       "ecmaVersion": 13,
       "sourceType": "module",
     },
@@ -48,6 +38,5 @@ module.exports = {
       "react/jsx-key": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "react/jsx-no-target-blank": "off",
-    },
   },
 };
