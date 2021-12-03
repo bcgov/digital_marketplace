@@ -11,14 +11,19 @@
     - id: end-of-file-fixer
     - id: trailing-whitespace
 - repo: https://github.com/pre-commit/mirrors-eslint
-  rev: v8.3.0  # Use the sha / tag you want to point at
+  rev: v8.3.0
   hooks:
-  - id: eslint
-    files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
-    types: [file]
+    - id: eslint
+      files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
+      types: [file]
+# - repo: https://github.com/pre-commit/mirrors-prettier
+#   rev: v2.5.0
+#   hooks:
+#     - id: prettier
 - repo: git@github.com:Yelp/detect-secrets
   rev: v1.1.0
   hooks:
-  - id: detect-secrets
-    args: ['--baseline', '.secrets.baseline']
-    exclude: .*/tests/.*
+    - id: detect-secrets
+      args: ["--baseline", ".secrets.baseline"]
+      exclude: .*/tests/.*
+
