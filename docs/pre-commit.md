@@ -2,9 +2,12 @@
 
 ### Install and setup pre-commit
 - Install:
+  - Using pip: `pip install pre-commit`
+  - Using Homebrew: `brew install pre-commit`
   - see docs [Click](https://pre-commit.com/#install)
 
 - Setup
+  - run `pre-commit install` to set up the git hook script
   - see docs [Click](https://pre-commit.com/#install)
 
 ### Things to keep in mind regarding the git authoring lifecycle (HEAD, Staged, Unstaged) and pre-commit hooks
@@ -17,7 +20,11 @@ Always stage the the changes you intend to commit before committing and with the
 
 ### Running the pre-commit hook directly from the .git folder
 
-- run `bash .git/hooks/pre-commit` to execute pre-commit hook without committing
+- run `bash .git/hooks/pre-commit` to execute pre-commit hook on staged files without committing
+
+### Running the pre-commit on all files
+
+- to run `pre-commit` on all files **regardless of staging** run `pre-commit --all-files`
 
 ### How to respond to failed pre-commit hooks
 
