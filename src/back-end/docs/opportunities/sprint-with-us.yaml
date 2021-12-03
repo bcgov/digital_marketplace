@@ -47,7 +47,7 @@ paths:
         - Opportunities
       produces:
         - application/json
-      description: Retrieve a single Sprint-With-Us Opportunity for the specified id. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored. 
+      description: Retrieve a single Sprint-With-Us Opportunity for the specified id. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored.
       parameters:
         - name: id
           in: path
@@ -63,7 +63,7 @@ paths:
           description: A database error occurred.
         404:
           description: A Sprint-With-Us Opportunity for the specified ID was not found.
-    
+
     put:
       summary: Update an existing Sprint-With-Us Opportunity.
       tags:
@@ -115,7 +115,7 @@ paths:
           description: A Code-With-Us Opportunity for the specified ID was not found.
         401:
           description: You do not have permission to update this Opportunity.
-    
+
     delete:
       summary: Delete a draft Sprint-With-Us Opportunity (Opportunity must be in draft)
       tags:
@@ -173,7 +173,7 @@ components:
           type: string
         proposalDeadline:
           type: string
-        assignmentDate: 
+        assignmentDate:
           type: string
         questionsWeight:
           type: number
@@ -310,7 +310,7 @@ components:
       value:
         tag: submitForReview
         value: Submitted for review
-    
+
     publishSWUOpportunity:
       summary: Request body for publishing a Sprint-With-Us opportunity
       value:

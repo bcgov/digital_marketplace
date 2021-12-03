@@ -19,7 +19,7 @@ ChangeLog
 - Combined NotoSans font with NotoSansCanadianAboriginal font into single font file
 - Renamed Noto Sans to BC Sans
 - Fixed combining position of "combining lowline" (U+0332) for dz and ts combinations
-- Added right spacing to the "combining comma above right" (U+0315) 
+- Added right spacing to the "combining comma above right" (U+0315)
 - Added syllabic variant positioning for the Dakelh syllabics
 
 Acknowledgements

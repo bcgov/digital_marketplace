@@ -122,7 +122,7 @@ components:
           type: string
         country:
           type: string
-        contactName: 
+        contactName:
           type: string
         contactTitle:
           type: string

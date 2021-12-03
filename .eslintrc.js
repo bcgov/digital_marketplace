@@ -30,7 +30,7 @@ module.exports = {
     },
     "plugins": ["react", "@typescript-eslint"],
     "rules": {
-      // TODO remove rule overrides that affect code quality
+        // TODO remove rule overrides that affect code quality
       "@typescript-eslint/no-explicit-any": "off",
       "react/prop-types": "off",
       "@typescript-eslint/no-unused-vars": "off",

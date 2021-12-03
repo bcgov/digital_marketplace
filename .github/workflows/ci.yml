@@ -1,5 +1,5 @@
 name: CI
-on: 
+on:
   push:
     branches:
       - main
@@ -16,7 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run front-end:test
       - run: npm run back-end:test
-  lint: 
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

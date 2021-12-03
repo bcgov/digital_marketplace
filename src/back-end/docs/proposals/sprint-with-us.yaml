@@ -73,7 +73,7 @@ paths:
           description: A database error occurred.
         404:
           description: A Sprint-With-Us Proposal for the specified ID was not found.
-    
+
     put:
       summary: Update an existing Sprint-With-Us Proposal.
       tags:
@@ -133,7 +133,7 @@ paths:
           description: A Sprint-With-Us Proposal for the specified ID was not found.
         401:
           description: You do not have permission to update this Proposal.
-    
+
     delete:
       summary: Delete a draft Sprint-With-Us Proposal (Opportunity must be in draft)
       tags:
@@ -228,7 +228,7 @@ components:
           type: string
           enum: [DRAFT, PUBLISHED]
 
-        
+
   examples:
     createSWUProposal:
       summary: Request body for creating a Sprint-With-Us proposal
@@ -266,7 +266,7 @@ components:
               tag: organization
               value: 69fe0644-50e1-3919-a458-aa6cf5977d7v
             status: DRAFT
-    
+
     submitSWUProposal:
       summary: Request body for submitting a Sprint-With-Us proposal
       value:
@@ -278,13 +278,13 @@ components:
       value:
         tag: screenInToCodeChallenge
         value: Screened in to Code Challenge
-    
+
     screenSWUProposalOutFromCodeChallenge:
       summary: Request body for screening a Sprint-With-Us proposal out of the Code Challenge
       value:
         tag: screenOutFromCodeChallenge
         value: Screened out of Code Challenge
-  
+
     scoreCodeChallengeForSWUProposal:
       summary: Request body for scoring the Code Challenge for a Sprint-With-Us proposal
       value:
@@ -296,13 +296,13 @@ components:
       value:
         tag: screenInToTeamScenario
         value: Screened in to Team Scenario
-    
+
     screenSWUProposalOutFromTeamScenario:
       summary: Request body for screening a Sprint-With-Us proposal out of the Team Scenario
       value:
         tag: screenOutFromTeamScenario
         value: Screened out of Team Scenario
-  
+
     scoreTeamScenarioForSWUProposal:
       summary: Request body for scoring the Team Scenario for a Sprint-With-Us proposal
       value:
