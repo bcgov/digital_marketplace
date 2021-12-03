@@ -12,7 +12,7 @@
 
 ### Things to keep in mind regarding the git authoring lifecycle (HEAD, Staged, Unstaged) and pre-commit hooks
 
-Running hooks on unstaged changes can lead to both false-positives and false-negatives during committing. pre-commit only runs on the staged contents of files by temporarily saving the contents of your files at commit time and stashing the unstaged changes while running hooks.
+Running hooks on unstaged changes can lead to both false-positives and false-negatives during committing, so to avoid this, pre-commit only runs on the staged contents of files by temporarily saving the contents of your files at commit time and stashing the unstaged changes while running hooks.
 
 > pre-commit itself will never touch the staging area. These are good ways to silently break commits. In my mind this is one of the worst things that lint-staged does and suggests -- hooks are very frequently not perfect and magically changing what's being committed should not be taken lightly. [Link](https://github.com/pre-commit/pre-commit/issues/747#issuecomment-386782080)
 
