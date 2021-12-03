@@ -347,6 +347,7 @@ const resource: Resource = {
               }
               return valid({ session: request.session, body: adt('acceptSWUTerms' as const) });
             }
+            return invalid({ organization: adt('parseFailure' as const) });
           default:
             return invalid({ organization: adt('parseFailure' as const) });
         }
