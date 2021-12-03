@@ -16,7 +16,7 @@ Running hooks on unstaged changes can lead to both false-positives and false-neg
 
 > pre-commit itself will never touch the staging area. These are good ways to silently break commits. In my mind this is one of the worst things that lint-staged does and suggests -- hooks are very frequently not perfect and magically changing what's being committed should not be taken lightly. [Link](https://github.com/pre-commit/pre-commit/issues/747#issuecomment-386782080)
 
-Always stage the the changes you intend to commit before committing and with the `pre-commit` hook set up or running `pre-commit` explicitly. If a hook changes our code and fails you will need to manually stage the changes made by `pre-commit`, viewing them one by one with `git add -p` or your preferred git GUI.
+Always stage the changes you intend to commit before committing and with the `pre-commit` hook set up or running `pre-commit` explicitly. If a hook changes our code and fails you will need to manually stage the changes made by `pre-commit`, viewing them one by one with `git add -p` or your preferred git GUI.
 
 ### Running the pre-commit hook directly from the .git folder
 
