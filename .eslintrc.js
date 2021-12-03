@@ -34,7 +34,7 @@ module.exports = {
       "@typescript-eslint/ban-types": "off",
       "react/display-name": "off",
       "react/no-children-prop": "off",
-      "no-duplicate-case": "off",
+      "no-duplicate-case": "error",
       "react/jsx-key": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "react/jsx-no-target-blank": "off",
