@@ -2,12 +2,14 @@ module.exports = {
   "env": {
     "browser": true,
     "es2021": true,
-    "node": true
+    "node": true,
+
   },
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:mocha/recommended"
     // "prettier",
   ],
   "parser": "@typescript-eslint/parser",
@@ -18,7 +20,7 @@ module.exports = {
       "ecmaVersion": 13,
       "sourceType": "module",
     },
-    "plugins": ["react", "@typescript-eslint"],
+    "plugins": ["react", "@typescript-eslint", "mocha"],
     "rules": {
         // TODO remove rule overrides that affect code quality
       "@typescript-eslint/no-explicit-any": "off",
