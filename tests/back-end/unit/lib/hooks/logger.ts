@@ -35,13 +35,13 @@ function makeStubRequest(onLog: (kind: LogFunctionKind, msg: string, data?: obje
   };
 }
 
-describe('loggerHook', () => {
+describe('loggerHook', function() {
 
-  describe('before', () => {
+  describe('before', function() {
 
-    describe('when provided a request', () => {
+    describe('when provided a request', function() {
 
-      it('calls any function on the logger', async () => {
+      it('calls any function on the logger', async function() {
         let called = false;
         const request = makeStubRequest(k => {
           called = true;
@@ -50,7 +50,7 @@ describe('loggerHook', () => {
         assert(called, 'request.logger.* was called');
       });
 
-      it('logs the appropriate information', async () => {
+      it('logs the appropriate information', async function() {
         let msg = '';
         let data: any = {};
         const request = makeStubRequest((k, m, d) => {
@@ -63,7 +63,7 @@ describe('loggerHook', () => {
         assert(data.sessionId === request.session?.id, 'contains the session ID');
       });
 
-      it('returns the current epoch time', async () => {
+      it('returns the current epoch time', async function() {
         const request = makeStubRequest(noop);
         const timestamp = await loggerHook.before(request);
         assert(typeof timestamp === 'number', 'the return value is a number');
