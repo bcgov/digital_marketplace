@@ -1,9 +1,9 @@
 import assert from 'assert';
 
-describe('Example', () => {
-  describe('action', () => {
-    describe('when condition', () => {
-      it('outcome', () => {
+describe('Example', function() {
+  describe('action', function() {
+    describe('when condition', function() {
+      it('outcome', function() {
         assert(true, 'The example is working!');
       });
     });
