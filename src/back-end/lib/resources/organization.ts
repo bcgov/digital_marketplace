@@ -255,7 +255,7 @@ const resource: Resource = {
         }
         const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         switch (request.body.tag) {
-          case 'updateProfile':
+          case 'updateProfile': {
             const {
               legalName,
               logoImageFile,
@@ -340,6 +340,7 @@ const resource: Resource = {
                 })
               });
             }
+          }
           case 'acceptSWUTerms':
             if (isValid(validatedOrganization)) {
               if (validatedOrganization.value.acceptedSWUTerms) {
