@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "skipLibCheck": true, // may not need this once typescript version is updated
+        "skipLibCheck": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "jsx": "react",
@@ -20,7 +20,7 @@
             "migrations/*": ["./src/migrations/*"],
             "shared/*": ["./src/shared/*"],
             "scripts/*": ["./src/scripts/*"],
-            "front-end/*": ["./src/front-end/*"],
+            "front-end/*": ["./src/front-end/*"]
         }
     },
     "include": [
@@ -33,4 +33,3 @@
         "node_modules"
     ]
   }
-  
