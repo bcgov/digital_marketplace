@@ -26,7 +26,7 @@ module.exports = {
       "@typescript-eslint/no-unused-vars": "off",
       "no-useless-escape": "off",
       "react/no-unescaped-entities": "off",
-      "no-case-declarations": "off",
+      "no-case-declarations": "error",
       "no-undef": "warn",
       "no-fallthrough": "error",
       "@typescript-eslint/no-var-requires": "off",
