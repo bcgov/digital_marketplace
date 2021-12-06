@@ -26,3 +26,13 @@ jobs:
       - run: npm ci
       - run: npm run front-end:lint
       - run: npm run back-end:lint
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: npm ci
+      - run: npm run front-end:build
+      - run: npm run back-end:build
