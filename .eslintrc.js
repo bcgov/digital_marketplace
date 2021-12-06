@@ -5,6 +5,9 @@ module.exports = {
     "node": true,
 
   },
+  "globals": {
+    "gruntConfig": "readonly"
+  },
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
