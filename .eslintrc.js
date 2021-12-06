@@ -33,7 +33,7 @@ module.exports = {
       "react/no-unescaped-entities": "off",
       "no-case-declarations": "off",
       "no-undef": "error",
-      "no-fallthrough": "off",
+      "no-fallthrough": "error",
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/ban-types": "off",
