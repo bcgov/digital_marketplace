@@ -42,13 +42,14 @@ export function validateFilePermission(raw: any): Validation<FilePermissions<Id,
         return mapValid(validateUUID(raw.value), v => adt('user', v));
       }
       return invalid(['Invalid file permission provided.']);
-    case 'userType':
+    case 'userType':{
       const userType = parseUserType(raw.value);
       if (userType) {
         return valid<FilePermissions<Id, UserType>>(adt('userType', userType));
       } else {
         return invalid(['Not a valid user type.']);
       }
+    }
     default:
       return invalid(['Invalid file permission provided.']);
   }

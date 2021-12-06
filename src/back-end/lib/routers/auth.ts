@@ -269,7 +269,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   let userType: UserType;
   const identityProvider = getString(claims, 'loginSource');
   switch (identityProvider) {
-    case GOV_IDP_SUFFIX.toUpperCase():
+    case GOV_IDP_SUFFIX.toUpperCase(): {
       const roles = getStringArray(claims, 'roles');
       if (roles.includes('dm_admin')) {
         userType = UserType.Admin;
@@ -277,6 +277,7 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
         userType = UserType.Government;
       }
       break;
+    }
     case VENDOR_IDP_SUFFIX.toUpperCase():
       userType = UserType.Vendor;
       break;

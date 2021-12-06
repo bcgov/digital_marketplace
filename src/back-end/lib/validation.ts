@@ -169,18 +169,20 @@ export async function validateSWUProposalId(connection: db.Connection, proposalI
 
 export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
-    case 'individual':
+    case 'individual':{
       const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
       if (isValid(validatedIndividualProponentRequestBody)) {
         return adt(validatedIndividualProponentRequestBody.tag, adt('individual' as const, validatedIndividualProponentRequestBody.value));
       }
       return invalid(adt('individual', validatedIndividualProponentRequestBody.value));
-    case 'organization':
+    }
+    case 'organization': {
       const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), session, false);
       if (isValid(validatedOrganization)) {
         return valid(adt('organization', validatedOrganization.value.id));
       }
       return invalid(adt('organization', validatedOrganization.value));
+    }
     default:
       return invalid(adt('parseFailure' as const, ['Invalid proponent provided.']));
   }

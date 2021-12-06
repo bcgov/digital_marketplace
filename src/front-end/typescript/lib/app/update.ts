@@ -542,7 +542,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'noop':
       return [state];
 
-    case '@incomingRoute':
+    case '@incomingRoute': {
       const incomingRoute = msg.value.route;
       return [
         startTransition(state),
@@ -573,7 +573,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           return state;
         }
       ];
-
+    }
     case 'scrollTo':
       return [
         state,
