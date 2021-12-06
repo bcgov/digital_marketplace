@@ -32,7 +32,7 @@ module.exports = {
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/ban-types": "off",
-      "react/display-name": "off",
+      "react/display-name": "error",
       "react/no-children-prop": "off",
       "no-duplicate-case": "error",
       "react/jsx-key": "off",
