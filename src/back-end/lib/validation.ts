@@ -169,7 +169,7 @@ export async function validateSWUProposalId(connection: db.Connection, proposalI
 
 export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
   switch (get(raw, 'tag')) {
-    case 'individual':{
+    case 'individual': {
       const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
       if (isValid(validatedIndividualProponentRequestBody)) {
         return adt(validatedIndividualProponentRequestBody.tag, adt('individual' as const, validatedIndividualProponentRequestBody.value));
