@@ -57,7 +57,7 @@ function makeChildUpdate<T>(): ChildComponent<T>['update'] {
 }
 
 function makeChildView<T>(): ChildComponent<T>['view'] {
-  return props => {
+  return function CustomInputWrapper(props) {
     const { state, dispatch, className = '', validityClassName, disabled = false, inline = false } = props;
     return (
       <div className={`${className} mb-n3 d-flex flex-column ${inline ? 'flex-sm-row flex-sm-wrap align-items-sm-center' : ''}`}>

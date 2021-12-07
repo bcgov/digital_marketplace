@@ -196,7 +196,7 @@ export function makeParentView<
   ExtraState,
   InnerMsg
   >(idToDefinition: IdToDefinitionWithState<T, K, ExtraState>): ComponentView<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
-  return ({ state, dispatch }) => {
+  return function TabWrapper ({ state, dispatch })  {
     const [tabId, tabState] = state.tab;
     const definition = idToDefinition(state)(tabId);
     return (
