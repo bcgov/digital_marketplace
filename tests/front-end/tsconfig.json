@@ -2,13 +2,7 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     "target": "es2018",
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "front-end/*": ["../../src/front-end/*"],
-      "shared/*": ["../../src/shared/*"]
-    },
-    "types": ["node", "mocha"]
+    "noEmit": true
   },
   "include": [
     "**/*.ts"
