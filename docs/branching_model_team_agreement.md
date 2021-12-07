@@ -18,3 +18,4 @@ The following guardrails are in place to ensure we keep a clean working tree, wh
 - Reviews can be done by the first person who gets to it. If the code needs explaining, request the author to walk you through it.
 - Follow peer review best practices by suggesting opportunities to improve code during peer review, merging as soon as the code is better than the code in the target branch and release ready.
 - Treat any opportunity for improvement feedback identified during peer review but not implemented in the PR where it was raised as technical debt worthy of a new issue referencing the PR where the comments first came up.
+- When necessary, use git rebase to sync a feature branch with main. This keeps a tidier history in git, however can be destructive, so do so cautiously.
