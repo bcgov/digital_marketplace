@@ -170,7 +170,7 @@ const Participants: View<Pick<State, 'proposal'>> = ({ proposal }) => {
             {participants.map((p, i) => {
               const username = p.idpUsername;
               return (
-                <tr>
+                <tr key={`participant-${i}`}>
                   <td>{p.member.name}</td>
                   <td className='text-nowrap'>
                     {username
