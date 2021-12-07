@@ -2,12 +2,17 @@ module.exports = {
   "env": {
     "browser": true,
     "es2021": true,
-    "node": true
+    "node": true,
+
+  },
+  "globals": {
+    "gruntConfig": "readonly"
   },
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:mocha/recommended"
     // "prettier",
   ],
   "parser": "@typescript-eslint/parser",
@@ -18,7 +23,7 @@ module.exports = {
       "ecmaVersion": 13,
       "sourceType": "module",
     },
-    "plugins": ["react", "@typescript-eslint"],
+    "plugins": ["react", "@typescript-eslint", "mocha"],
     "rules": {
         // TODO remove rule overrides that affect code quality
       "@typescript-eslint/no-explicit-any": "off",
@@ -27,7 +32,7 @@ module.exports = {
       "no-useless-escape": "error",
       "react/no-unescaped-entities": "off",
       "no-case-declarations": "off",
-      "no-undef": "warn",
+      "no-undef": "error",
       "no-fallthrough": "error",
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-empty-function": "off",
