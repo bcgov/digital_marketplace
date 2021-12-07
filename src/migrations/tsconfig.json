@@ -2,24 +2,7 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     "target": "esnext",
-    // "module": "commonjs",
-    // "moduleResolution": "node",
-    // "allowJs": true,
     "noEmit": true,
-    // "strict": true,
-    // "noImplicitReturns": true,
-    // "forceConsistentCasingInFileNames": true,
-    // "noUnusedLocals": true,
-    // "esModuleInterop": true,
-    // "allowSyntheticDefaultImports": true,
-    // "resolveJsonModule": true,
-    // "incremental": true,
-    // "baseUrl": ".",
-    // "paths": {
-    //   "migrations/*": ["./*"],
-    //   "back-end/*": ["../back-end/*"],
-    //   "shared/*": ["../shared/*"]
-    // },
     "types": [
       "node"
     ]
