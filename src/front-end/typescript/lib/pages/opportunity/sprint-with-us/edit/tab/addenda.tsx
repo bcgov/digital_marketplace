@@ -1,9 +1,9 @@
-import { Route } from 'front-end/typescript/lib/app/types';
-import * as Addenda from 'front-end/typescript/lib/components/addenda';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalGlobalComponentMsg, Update, updateGlobalComponentChild } from 'front-end/typescript/lib/framework';
-import * as api from 'front-end/typescript/lib/http/api';
-import * as Tab from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/edit/tab';
-import EditTabHeader from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
+import { Route } from 'front-end/lib/app/types';
+import * as Addenda from 'front-end/lib/components/addenda';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, mapPageModalGlobalComponentMsg, Update, updateGlobalComponentChild } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import * as Tab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
+import EditTabHeader from 'front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { Addendum } from 'shared/lib/resources/opportunity/sprint-with-us';

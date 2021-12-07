@@ -1,5 +1,5 @@
-import { View } from 'front-end/typescript/lib/framework';
-import Link, { ExtendAndOmitProps as LinkProps } from 'front-end/typescript/lib/views/link';
+import { View } from 'front-end/lib/framework';
+import Link, { ExtendAndOmitProps as LinkProps } from 'front-end/lib/views/link';
 import React, { Fragment } from 'react';
 
 interface ExtraProps {

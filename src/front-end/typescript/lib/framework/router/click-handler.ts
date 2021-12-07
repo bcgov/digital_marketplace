@@ -5,7 +5,7 @@
  * https://github.com/visionmedia/page.js/blob/master/index.js
  */
 
-import { parseUrl, Url } from 'front-end/typescript/lib/framework/router';
+import { parseUrl, Url } from 'front-end/lib/framework/router';
 import url from 'url';
 
 export default function clickHandler(dispatchUrl: (url: Url) => void): (e: MouseEvent) => false | void {

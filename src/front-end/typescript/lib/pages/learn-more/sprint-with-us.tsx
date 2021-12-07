@@ -1,9 +1,9 @@
-import { makePageMetadata, prefixPath } from 'front-end/typescript/lib';
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/typescript/lib/framework';
-import Accordion from 'front-end/typescript/lib/views/accordion';
-import HowItWorksItem from 'front-end/typescript/lib/views/how-it-works-item';
-import Link, { routeDest } from 'front-end/typescript/lib/views/link';
+import { makePageMetadata, prefixPath } from 'front-end/lib';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update, View } from 'front-end/lib/framework';
+import Accordion from 'front-end/lib/views/accordion';
+import HowItWorksItem from 'front-end/lib/views/how-it-works-item';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { COPY, VENDOR_IDP_NAME } from 'shared/config';

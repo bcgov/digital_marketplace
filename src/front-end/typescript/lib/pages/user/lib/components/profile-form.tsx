@@ -1,10 +1,10 @@
-import * as FormField from 'front-end/typescript/lib/components/form-field';
-import * as ShortText from 'front-end/typescript/lib/components/form-field/short-text';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
-import * as api from 'front-end/typescript/lib/http/api';
-import { keyCloakIdentityProviderToTitleCase, userAvatarPath, userToKeyCloakIdentityProviderTitleCase } from 'front-end/typescript/lib/pages/user/lib';
-import { AvatarFiletype } from 'front-end/typescript/lib/types';
-import FileLink from 'front-end/typescript/lib/views/file-link';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import { keyCloakIdentityProviderToTitleCase, userAvatarPath, userToKeyCloakIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
+import { AvatarFiletype } from 'front-end/lib/types';
+import FileLink from 'front-end/lib/views/file-link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { getString} from 'shared/lib';

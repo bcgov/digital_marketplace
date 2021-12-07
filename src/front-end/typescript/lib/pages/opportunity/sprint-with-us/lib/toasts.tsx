@@ -1,5 +1,5 @@
-import { swuOpportunityStatusToPastTenseVerb, swuOpportunityStatusToPresentTenseVerb } from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/lib';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/typescript/lib/views/link';
+import { swuOpportunityStatusToPastTenseVerb, swuOpportunityStatusToPresentTenseVerb } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, Id } from 'shared/lib/types';

@@ -1,5 +1,5 @@
-import * as opportunityToasts from 'front-end/typescript/lib/pages/opportunity/code-with-us/lib/toasts';
-import { cwuProposalStatusToPastTenseVerb, cwuProposalStatusToPresentTenseVerb } from 'front-end/typescript/lib/pages/proposal/code-with-us/lib';
+import * as opportunityToasts from 'front-end/lib/pages/opportunity/code-with-us/lib/toasts';
+import { cwuProposalStatusToPastTenseVerb, cwuProposalStatusToPresentTenseVerb } from 'front-end/lib/pages/proposal/code-with-us/lib';
 import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
 

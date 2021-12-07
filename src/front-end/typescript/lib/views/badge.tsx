@@ -1,7 +1,7 @@
-import { View } from 'front-end/typescript/lib/framework';
-import { cwuOpportunityToPublicColor, cwuOpportunityToPublicStatus } from 'front-end/typescript/lib/pages/opportunity/code-with-us/lib';
-import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/lib';
-import { ThemeColor } from 'front-end/typescript/lib/types';
+import { View } from 'front-end/lib/framework';
+import { cwuOpportunityToPublicColor, cwuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/code-with-us/lib';
+import { swuOpportunityToPublicColor, swuOpportunityToPublicStatus } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
+import { ThemeColor } from 'front-end/lib/types';
 import React from 'react';
 import * as reactstrap from 'reactstrap';
 import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';

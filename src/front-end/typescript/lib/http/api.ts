@@ -1,6 +1,6 @@
-import { prefixPath } from 'front-end/typescript/lib';
-import * as RichMarkdownEditor from 'front-end/typescript/lib/components/form-field/rich-markdown-editor';
-import { CrudApi, CrudClientAction, CrudClientActionWithBody, CrudResponse, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/typescript/lib/http/crud';
+import { prefixPath } from 'front-end/lib';
+import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
+import { CrudApi, CrudClientAction, CrudClientActionWithBody, CrudResponse, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
 import { compareDates, compareNumbers, prefix } from 'shared/lib';
 import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
 import * as AddendumResource from 'shared/lib/resources/addendum';

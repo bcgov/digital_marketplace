@@ -1,8 +1,8 @@
-import { Route } from 'front-end/typescript/lib/app/types';
-import { ComponentView, Init, Update, View } from 'front-end/typescript/lib/framework';
-import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
-import Link, { Dest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/typescript/lib/views/link';
-import Sticky from 'front-end/typescript/lib/views/sidebar/sticky';
+import { Route } from 'front-end/lib/app/types';
+import { ComponentView, Init, Update, View } from 'front-end/lib/framework';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import Link, { Dest, iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
+import Sticky from 'front-end/lib/views/sidebar/sticky';
 import React from 'react';
 import { ADT, adt } from 'shared/lib/types';
 

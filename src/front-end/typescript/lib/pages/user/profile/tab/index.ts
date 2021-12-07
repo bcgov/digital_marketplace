@@ -1,12 +1,12 @@
-import * as MenuSidebar from 'front-end/typescript/lib/components/sidebar/menu';
-import * as TabbedPage from 'front-end/typescript/lib/components/sidebar/menu/tabbed-page';
-import { immutable, Immutable } from 'front-end/typescript/lib/framework';
-import * as CapabilitiesTab from 'front-end/typescript/lib/pages/user/profile/tab/capabilities';
-import * as LegalTab from 'front-end/typescript/lib/pages/user/profile/tab/legal';
-import * as NotificationsTab from 'front-end/typescript/lib/pages/user/profile/tab/notifications';
-import * as OrganizationsTab from 'front-end/typescript/lib/pages/user/profile/tab/organizations';
-import * as ProfileTab from 'front-end/typescript/lib/pages/user/profile/tab/profile';
-import { routeDest } from 'front-end/typescript/lib/views/link';
+import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
+import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
+import { immutable, Immutable } from 'front-end/lib/framework';
+import * as CapabilitiesTab from 'front-end/lib/pages/user/profile/tab/capabilities';
+import * as LegalTab from 'front-end/lib/pages/user/profile/tab/legal';
+import * as NotificationsTab from 'front-end/lib/pages/user/profile/tab/notifications';
+import * as OrganizationsTab from 'front-end/lib/pages/user/profile/tab/organizations';
+import * as ProfileTab from 'front-end/lib/pages/user/profile/tab/profile';
+import { routeDest } from 'front-end/lib/views/link';
 import { User, usersAreEquivalent, UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 

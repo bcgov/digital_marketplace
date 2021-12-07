@@ -1,6 +1,6 @@
-import { View } from 'front-end/typescript/lib/framework';
-import { ThemeColor } from 'front-end/typescript/lib/types';
-import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
+import { View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import React from 'react';
 
 export interface ReportCard {

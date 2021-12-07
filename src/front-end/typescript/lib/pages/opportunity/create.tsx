@@ -1,10 +1,10 @@
-import { makePageMetadata, prefixPath } from 'front-end/typescript/lib';
-import { isUserType } from 'front-end/typescript/lib/access-control';
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { ComponentView, GlobalComponentMsg, newRoute, PageComponent, PageInit, replaceRoute, Update } from 'front-end/typescript/lib/framework';
-import { TextColor } from 'front-end/typescript/lib/types';
-import { routeDest } from 'front-end/typescript/lib/views/link';
-import ProgramCard from 'front-end/typescript/lib/views/program-card';
+import { makePageMetadata, prefixPath } from 'front-end/lib';
+import { isUserType } from 'front-end/lib/access-control';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, newRoute, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
+import { TextColor } from 'front-end/lib/types';
+import { routeDest } from 'front-end/lib/views/link';
+import ProgramCard from 'front-end/lib/views/program-card';
 import React from 'react';
 import { Row } from 'reactstrap';
 import * as cwu from 'shared/lib/resources/opportunity/code-with-us';

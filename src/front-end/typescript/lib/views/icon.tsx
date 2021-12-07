@@ -1,5 +1,5 @@
-import { View } from 'front-end/typescript/lib/framework';
-import { ThemeColor } from 'front-end/typescript/lib/types';
+import { View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
 import { CSSProperties, default as React, MouseEventHandler, ReactElement } from 'react';
 
 export const DEFAULT_ICON_WIDTH = 1;

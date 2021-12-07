@@ -1,5 +1,5 @@
-import { Dispatch } from 'front-end/typescript/lib/framework';
-import clickHandler from 'front-end/typescript/lib/framework/router/click-handler';
+import { Dispatch } from 'front-end/lib/framework';
+import clickHandler from 'front-end/lib/framework/router/click-handler';
 import { debounce } from 'lodash';
 import { match, MatchFunction } from 'path-to-regexp';
 import qs from 'querystring';

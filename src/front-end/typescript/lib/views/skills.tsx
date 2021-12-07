@@ -1,6 +1,6 @@
-import { EMPTY_STRING } from 'front-end/typescript/config';
-import { View } from 'front-end/typescript/lib/framework';
-import Badge from 'front-end/typescript/lib/views/badge';
+import { EMPTY_STRING } from 'front-end/config';
+import { View } from 'front-end/lib/framework';
+import Badge from 'front-end/lib/views/badge';
 import React from 'react';
 
 export interface Props {

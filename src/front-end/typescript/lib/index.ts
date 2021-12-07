@@ -1,5 +1,5 @@
-import { PATH_PREFIX } from 'front-end/typescript/config';
-import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, Immutable, PageGetAlerts, PageGetBreadcrumbs, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/typescript/lib/framework';
+import { PATH_PREFIX } from 'front-end/config';
+import { ComponentView, emptyPageAlerts, emptyPageBreadcrumbs, Immutable, PageGetAlerts, PageGetBreadcrumbs, PageGetContextualActions, PageGetMetadata, PageGetModal, PageMetadata, PageSidebar, Update } from 'front-end/lib/framework';
 import { COPY } from 'shared/config';
 import { prefix } from 'shared/lib';
 import { FileRecord } from 'shared/lib/resources/file';

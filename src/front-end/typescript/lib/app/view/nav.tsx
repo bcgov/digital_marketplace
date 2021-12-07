@@ -1,9 +1,9 @@
-import { DROPDOWN_CARET_SIZE } from 'front-end/typescript/config';
-import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/typescript/lib/framework';
-import { ThemeColor } from 'front-end/typescript/lib/types';
-import Icon from 'front-end/typescript/lib/views/icon';
-import Link, { Dest, ExtendProps as ExtendLinkProps, iconLinkSymbol, rightPlacement } from 'front-end/typescript/lib/views/link';
-import Separator from 'front-end/typescript/lib/views/separator';
+import { DROPDOWN_CARET_SIZE } from 'front-end/config';
+import { ComponentViewProps, Dispatch, Init, PageContextualActions, PageContextualDropdown, Update, View } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
+import Icon from 'front-end/lib/views/icon';
+import Link, { Dest, ExtendProps as ExtendLinkProps, iconLinkSymbol, rightPlacement } from 'front-end/lib/views/link';
+import Separator from 'front-end/lib/views/separator';
 import React, { Fragment, MouseEvent } from 'react';
 import { ButtonDropdown, Col, Container, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Row, Spinner } from 'reactstrap';
 import { ADT, adt, adtCurried } from 'shared/lib/types';

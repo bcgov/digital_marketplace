@@ -1,10 +1,10 @@
-import { getMetadataValid, makePageMetadata, TITLE_SEPARATOR, viewValid } from 'front-end/typescript/lib';
-import { isSignedIn } from 'front-end/typescript/lib/access-control';
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/typescript/lib/framework';
-import * as api from 'front-end/typescript/lib/http/api';
-import ExportedProposal from 'front-end/typescript/lib/pages/proposal/sprint-with-us/lib/views/exported-proposal';
-import { iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
+import { getMetadataValid, makePageMetadata, TITLE_SEPARATOR, viewValid } from 'front-end/lib';
+import { isSignedIn } from 'front-end/lib/access-control';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, immutable, Immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import ExportedProposal from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/exported-proposal';
+import { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { SWUOpportunity } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { getSWUProponentName, isSWUProposalInCodeChallenge, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';

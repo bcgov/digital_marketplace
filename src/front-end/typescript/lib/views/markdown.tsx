@@ -1,5 +1,5 @@
-import { fileBlobPath, prefixPath } from 'front-end/typescript/lib';
-import { View } from 'front-end/typescript/lib/framework';
+import { fileBlobPath, prefixPath } from 'front-end/lib';
+import { View } from 'front-end/lib/framework';
 import isRelativeUrl from 'is-relative-url';
 import React from 'react';
 import ReactMarkdown, { Renderers } from 'react-markdown';

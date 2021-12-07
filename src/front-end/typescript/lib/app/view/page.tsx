@@ -1,9 +1,9 @@
-import getAppAlerts from 'front-end/typescript/lib/app/alerts';
-import { Msg, Route, SharedState, State } from 'front-end/typescript/lib/app/types';
-import { Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, mapPageAlerts, mapPageBreadcrumbsMsg, mergePageAlerts, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/typescript/lib/framework';
-import { ThemeColor } from 'front-end/typescript/lib/types';
-import Icon from 'front-end/typescript/lib/views/icon';
-import Link from 'front-end/typescript/lib/views/link';
+import getAppAlerts from 'front-end/lib/app/alerts';
+import { Msg, Route, SharedState, State } from 'front-end/lib/app/types';
+import { Dispatch, emptyPageAlerts, emptyPageBreadcrumbs, GlobalComponentMsg, Immutable, mapAppDispatch, mapPageAlerts, mapPageBreadcrumbsMsg, mergePageAlerts, newRoute, PageAlert, PageAlerts, PageBreadcrumbs, PageComponent } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
+import Icon from 'front-end/lib/views/icon';
+import Link from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Alert, Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'reactstrap';
 import { adt } from 'shared/lib/types';

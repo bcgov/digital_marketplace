@@ -1,7 +1,7 @@
-import { FORM_FIELD_DEBOUNCE_DURATION } from 'front-end/typescript/config';
-import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, View, ViewElement, ViewElementChildren } from 'front-end/typescript/lib/framework';
-import * as framework from 'front-end/typescript/lib/framework';
-import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
+import { FORM_FIELD_DEBOUNCE_DURATION } from 'front-end/config';
+import { ComponentViewProps, Dispatch, immutable, Immutable, mapComponentDispatch, updateComponentChild, View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
+import * as framework from 'front-end/lib/framework';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
 import { debounce, get } from 'lodash';
 import React, { CSSProperties } from 'react';
 import { Alert, FormGroup, FormText, Label } from 'reactstrap';

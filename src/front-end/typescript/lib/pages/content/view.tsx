@@ -1,9 +1,9 @@
-import { getMetadataValid, makePageMetadata, ValidatedState, viewValid } from 'front-end/typescript/lib';
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { ComponentView, GlobalComponentMsg, immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/typescript/lib/framework';
-import * as api from 'front-end/typescript/lib/http/api';
-import DateMetadata from 'front-end/typescript/lib/views/date-metadata';
-import Markdown from 'front-end/typescript/lib/views/markdown';
+import { getMetadataValid, makePageMetadata, ValidatedState, viewValid } from 'front-end/lib';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, immutable, PageComponent, PageInit, replaceRoute, Update } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
+import DateMetadata from 'front-end/lib/views/date-metadata';
+import Markdown from 'front-end/lib/views/markdown';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { Content } from 'shared/lib/resources/content';

@@ -1,5 +1,5 @@
-import { Component, ComponentViewProps, Dispatch, Init, Update, View, ViewElementChildren } from 'front-end/typescript/lib/framework';
-import Icon from 'front-end/typescript/lib/views/icon';
+import { Component, ComponentViewProps, Dispatch, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
+import Icon from 'front-end/lib/views/icon';
 import React, { CSSProperties, ReactElement } from 'react';
 import { Table, Tooltip } from 'reactstrap';
 import { ADT } from 'shared/lib/types';

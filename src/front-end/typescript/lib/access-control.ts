@@ -1,5 +1,5 @@
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { GlobalComponentMsg, PageInit } from 'front-end/typescript/lib/framework';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { GlobalComponentMsg, PageInit } from 'front-end/lib/framework';
 import { includes } from 'lodash';
 import { User, UserType } from 'shared/lib/resources/user';
 

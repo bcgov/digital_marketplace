@@ -1,4 +1,4 @@
-import { TITLE as SWU_TERMS_TITLE } from 'front-end/typescript/lib/pages/organization/sprint-with-us-terms';
+import { TITLE as SWU_TERMS_TITLE } from 'front-end/lib/pages/organization/sprint-with-us-terms';
 import React from 'react';
 import { AffiliationMember, AffiliationSlim } from 'shared/lib/resources/affiliation';
 import { Organization } from 'shared/lib/resources/organization';

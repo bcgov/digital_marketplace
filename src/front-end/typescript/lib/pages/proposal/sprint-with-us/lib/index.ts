@@ -1,4 +1,4 @@
-import { ThemeColor } from 'front-end/typescript/lib/types';
+import { ThemeColor } from 'front-end/lib/types';
 import { SWUProposalEvent, SWUProposalStatus } from 'shared/lib/resources/proposal/sprint-with-us';
 import { UserType } from 'shared/lib/resources/user';
 

@@ -1,6 +1,6 @@
-import { Msg, State } from 'front-end/typescript/lib/app/types';
-import * as AcceptNewTerms from 'front-end/typescript/lib/components/accept-new-app-terms';
-import { PageGetModal } from 'front-end/typescript/lib/framework';
+import { Msg, State } from 'front-end/lib/app/types';
+import * as AcceptNewTerms from 'front-end/lib/components/accept-new-app-terms';
+import { PageGetModal } from 'front-end/lib/framework';
 import { adt } from 'shared/lib/types';
 
 const getModal: PageGetModal<State, Msg> = state => {

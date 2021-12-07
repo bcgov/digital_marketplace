@@ -1,9 +1,9 @@
-import { Route } from 'front-end/typescript/lib/app/types';
-import * as History from 'front-end/typescript/lib/components/table/history';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/typescript/lib/framework';
-import { swuProposalEventToTitleCase, swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/typescript/lib/pages/proposal/sprint-with-us/lib';
-import ViewTabHeader from 'front-end/typescript/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
-import * as Tab from 'front-end/typescript/lib/pages/proposal/sprint-with-us/view/tab';
+import { Route } from 'front-end/lib/app/types';
+import * as History from 'front-end/lib/components/table/history';
+import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { swuProposalEventToTitleCase, swuProposalStatusToColor, swuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/sprint-with-us/lib';
+import ViewTabHeader from 'front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header';
+import * as Tab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { hasSWUOpportunityPassedCodeChallenge } from 'shared/lib/resources/opportunity/sprint-with-us';

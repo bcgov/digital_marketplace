@@ -1,5 +1,5 @@
-import { View } from 'front-end/typescript/lib/framework';
-import Separator from 'front-end/typescript/lib/views/separator';
+import { View } from 'front-end/lib/framework';
+import Separator from 'front-end/lib/views/separator';
 import React, { Fragment } from 'react';
 import { formatDate, formatDateAndTime, formatTime } from 'shared/lib';
 

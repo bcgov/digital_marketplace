@@ -1,7 +1,7 @@
-import { makePageMetadata } from 'front-end/typescript/lib';
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/typescript/lib/framework';
-import * as api from 'front-end/typescript/lib/http/api';
+import { makePageMetadata } from 'front-end/lib';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import * as api from 'front-end/lib/http/api';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { CURRENT_SESSION_ID } from 'shared/lib/resources/session';

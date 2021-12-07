@@ -1,6 +1,6 @@
-import { View } from 'front-end/typescript/lib/framework';
-import Badge from 'front-end/typescript/lib/views/badge';
-import Link from 'front-end/typescript/lib/views/link';
+import { View } from 'front-end/lib/framework';
+import Badge from 'front-end/lib/views/badge';
+import Link from 'front-end/lib/views/link';
 import React from 'react';
 import { Nav, NavItem } from 'reactstrap';
 

@@ -4,11 +4,11 @@
  * components (referred to as "tabs").
  */
 
-import { makePageMetadata } from 'front-end/typescript/lib';
-import { Route } from 'front-end/typescript/lib/app/types';
-import * as MenuSidebar from 'front-end/typescript/lib/components/sidebar/menu';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, Init, mapComponentDispatch, mapPageAlerts, mapPageModalGlobalComponentMsg, PageComponent, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageSidebar, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/typescript/lib/framework';
-import { AvailableIcons } from 'front-end/typescript/lib/views/icon';
+import { makePageMetadata } from 'front-end/lib';
+import { Route } from 'front-end/lib/app/types';
+import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
+import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, Init, mapComponentDispatch, mapPageAlerts, mapPageModalGlobalComponentMsg, PageComponent, PageGetAlerts, PageGetContextualActions, PageGetMetadata, PageGetModal, PageSidebar, Update, updateComponentChild, updateGlobalComponentChild } from 'front-end/lib/framework';
+import { AvailableIcons } from 'front-end/lib/views/icon';
 import React from 'react';
 import { adt, ADT } from 'shared/lib/types';
 

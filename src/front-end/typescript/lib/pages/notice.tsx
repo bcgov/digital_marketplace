@@ -1,7 +1,7 @@
-import { makePageMetadata } from 'front-end/typescript/lib';
-import { Route, SharedState } from 'front-end/typescript/lib/app/types';
-import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/typescript/lib/framework';
-import Link, { routeDest } from 'front-end/typescript/lib/views/link';
+import { makePageMetadata } from 'front-end/lib';
+import { Route, SharedState } from 'front-end/lib/app/types';
+import { ComponentView, GlobalComponentMsg, PageComponent, PageInit, Update } from 'front-end/lib/framework';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React, { ReactElement } from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';

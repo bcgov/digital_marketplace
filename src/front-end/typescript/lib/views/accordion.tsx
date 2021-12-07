@@ -1,7 +1,7 @@
-import { View, ViewElement, ViewElementChildren } from 'front-end/typescript/lib/framework';
-import { ThemeColor } from 'front-end/typescript/lib/types';
-import Icon, { AvailableIcons } from 'front-end/typescript/lib/views/icon';
-import Link from 'front-end/typescript/lib/views/link';
+import { View, ViewElement, ViewElementChildren } from 'front-end/lib/framework';
+import { ThemeColor } from 'front-end/lib/types';
+import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
+import Link from 'front-end/lib/views/link';
 import React from 'react';
 
 export interface Props {

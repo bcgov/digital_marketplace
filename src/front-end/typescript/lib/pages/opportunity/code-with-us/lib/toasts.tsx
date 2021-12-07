@@ -1,5 +1,5 @@
-import { cwuOpportunityStatusToPastTenseVerb, cwuOpportunityStatusToPresentTenseVerb } from 'front-end/typescript/lib/pages/opportunity/code-with-us/lib';
-import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/typescript/lib/views/link';
+import { cwuOpportunityStatusToPastTenseVerb, cwuOpportunityStatusToPresentTenseVerb } from 'front-end/lib/pages/opportunity/code-with-us/lib';
+import Link, { iconLinkSymbol, rightPlacement, routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { adt, Id } from 'shared/lib/types';

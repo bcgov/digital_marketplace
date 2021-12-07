@@ -1,9 +1,9 @@
-import { View } from 'front-end/typescript/lib/framework';
-import { swuOpportunityStatusToColor, swuOpportunityStatusToTitleCase } from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/lib';
-import Badge from 'front-end/typescript/lib/views/badge';
-import DateMetadata from 'front-end/typescript/lib/views/date-metadata';
-import DescriptionList from 'front-end/typescript/lib/views/description-list';
-import Link, { routeDest } from 'front-end/typescript/lib/views/link';
+import { View } from 'front-end/lib/framework';
+import { swuOpportunityStatusToColor, swuOpportunityStatusToTitleCase } from 'front-end/lib/pages/opportunity/sprint-with-us/lib';
+import Badge from 'front-end/lib/views/badge';
+import DateMetadata from 'front-end/lib/views/date-metadata';
+import DescriptionList from 'front-end/lib/views/description-list';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import { compact } from 'lodash';
 import React from 'react';
 import { Col, Row } from 'reactstrap';

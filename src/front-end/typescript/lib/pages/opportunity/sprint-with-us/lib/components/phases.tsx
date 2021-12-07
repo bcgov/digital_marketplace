@@ -1,6 +1,6 @@
-import * as DateField from 'front-end/typescript/lib/components/form-field/date';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
-import * as Phase from 'front-end/typescript/lib/pages/opportunity/sprint-with-us/lib/components/phase';
+import * as DateField from 'front-end/lib/components/form-field/date';
+import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import * as Phase from 'front-end/lib/pages/opportunity/sprint-with-us/lib/components/phase';
 import React from 'react';
 import { CreateRequestBody, CreateValidationErrors, SWUOpportunity, SWUOpportunityPhaseType, swuOpportunityPhaseTypeToTitleCase } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { adt, ADT } from 'shared/lib/types';

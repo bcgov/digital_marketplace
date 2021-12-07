@@ -1,5 +1,5 @@
-import { View, ViewElement } from 'front-end/typescript/lib/framework';
-import Link, { ButtonProps } from 'front-end/typescript/lib/views/link';
+import { View, ViewElement } from 'front-end/lib/framework';
+import Link, { ButtonProps } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col } from 'reactstrap';
 

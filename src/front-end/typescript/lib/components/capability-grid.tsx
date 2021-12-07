@@ -1,5 +1,5 @@
-import { ComponentViewProps, Dispatch, Immutable, Init, Update, View } from 'front-end/typescript/lib/framework';
-import Link, { iconLinkSymbol, leftPlacement } from 'front-end/typescript/lib/views/link';
+import { ComponentViewProps, Dispatch, Immutable, Init, Update, View } from 'front-end/lib/framework';
+import Link, { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { ADT, adt } from 'shared/lib/types';

@@ -1,6 +1,6 @@
-import { prefixPath } from 'front-end/typescript/lib';
-import { View } from 'front-end/typescript/lib/framework';
-import Link, { routeDest } from 'front-end/typescript/lib/views/link';
+import { prefixPath } from 'front-end/lib';
+import { View } from 'front-end/lib/framework';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { Content } from 'shared/lib/resources/content';
 import { adt } from 'shared/lib/types';

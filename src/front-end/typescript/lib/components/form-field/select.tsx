@@ -1,11 +1,11 @@
-import * as FormField from 'front-end/typescript/lib/components/form-field';
-import Select, { coalesceOptions, Option, Options, SingleProps, SingleValue } from 'front-end/typescript/lib/components/form-field/lib/select';
-import { Immutable } from 'front-end/typescript/lib/framework';
+import * as FormField from 'front-end/lib/components/form-field';
+import Select, { coalesceOptions, Option, Options, SingleProps, SingleValue } from 'front-end/lib/components/form-field/lib/select';
+import { Immutable } from 'front-end/lib/framework';
 import { find } from 'lodash';
 import React from 'react';
 import { ADT } from 'shared/lib/types';
 
-export { stringsToOptions, Options, OptionGroup, Option } from 'front-end/typescript/lib/components/form-field/lib/select';
+export { stringsToOptions, Options, OptionGroup, Option } from 'front-end/lib/components/form-field/lib/select';
 
 export type Value = SingleValue;
 

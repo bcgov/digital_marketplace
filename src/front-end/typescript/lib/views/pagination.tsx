@@ -1,4 +1,4 @@
-import { View } from 'front-end/typescript/lib/framework';
+import { View } from 'front-end/lib/framework';
 import React, { Fragment } from 'react';
 import { Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 

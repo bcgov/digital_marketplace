@@ -1,9 +1,9 @@
-import { APP_TERMS_CONTENT_ID } from 'front-end/typescript/config';
-import { Route } from 'front-end/typescript/lib/app/types';
-import * as FormField from 'front-end/typescript/lib/components/form-field';
-import * as Checkbox from 'front-end/typescript/lib/components/form-field/checkbox';
-import { Component, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/typescript/lib/framework';
-import Link, { routeDest } from 'front-end/typescript/lib/views/link';
+import { APP_TERMS_CONTENT_ID } from 'front-end/config';
+import { Route } from 'front-end/lib/app/types';
+import * as FormField from 'front-end/lib/components/form-field';
+import * as Checkbox from 'front-end/lib/components/form-field/checkbox';
+import { Component, ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import Link, { routeDest } from 'front-end/lib/views/link';
 import React from 'react';
 import { COPY } from 'shared/config';
 import { ADT, adt } from 'shared/lib/types';
