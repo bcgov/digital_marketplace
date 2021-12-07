@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-describe('example to-do app', function() {
+describe('example Digital Marketplace test', function() {
     beforeEach(function() {
       cy.visit('localhost:3000')
     })
