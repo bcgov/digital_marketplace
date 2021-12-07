@@ -43,7 +43,6 @@
     "node": ">=16.13.1"
   },
   "dependencies": {
-    "@types/bcrypt": "^3.0.0",
     "@types/cookie-parser": "^1.4.1",
     "@types/dotenv": "^6.1.0",
     "@types/express": "^4.16.1",
@@ -57,7 +56,6 @@
     "@types/uuid": "^3.4.5",
     "@types/yargs": "^15.0.5",
     "@wordpress/wordcount": "^2.7.0",
-    "bcrypt": "^5.0.0",
     "body-parser": "^1.18.3",
     "bowser": "^2.9.0",
     "chalk": "^2.4.2",
@@ -78,7 +76,7 @@
     "multiparty": "^4.2.1",
     "nodemailer": "^6.6.1",
     "openid-client": "^3.15.9",
-    "pg": "^7.12.1",
+    "pg": "8.7.x",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "sha.js": "^2.4.11",
@@ -135,7 +133,7 @@
     "markdown-toc": "^1.2.0",
     "mocha": "^7.1.1",
     "moment-timezone": "^0.5.23",
-    "node-sass": "^7.0.0",
+    "node-sass": "7.0.x",
     "nodemon": "^2.0.4",
     "path-to-regexp": "^6.1.0",
     "pathmodify": "^0.5.0",
