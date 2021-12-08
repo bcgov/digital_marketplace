@@ -252,7 +252,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             {show
               ? (
                   <div>
-                    <h3 className='mb-4'>Team Questions' Responses</h3>
+                    <h3 className='mb-4'>Team Questions{'\''} Responses</h3>
                     {state.proposal.teamQuestionResponses.map((r, i, rs) => (
                       <TeamQuestionResponseView
                         key={`swu-proposal-team-question-response-${i}`}

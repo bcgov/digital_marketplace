@@ -34,7 +34,7 @@ export async function inviteToRegisterT(email: string, organization: Organizatio
       body: (
         <div>
           <p>{organization.legalName} has requested that you join their team on the Digital Marketplace.</p>
-          <p>In order to join the organization's team you must first <templates.Link text='sign up' url={templates.makeUrl('sign-up')} /> for a Digital Marketplace account. Once you have signed up, you can join their team and be included in proposals to Sprint With Us opportunities.</p>
+          <p>In order to join the organization{'\''}s team you must first <templates.Link text='sign up' url={templates.makeUrl('sign-up')} /> for a Digital Marketplace account. Once you have signed up, you can join their team and be included in proposals to Sprint With Us opportunities.</p>
         </div>
       ),
       callsToAction: [signUpCallToAction()]

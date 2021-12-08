@@ -352,7 +352,7 @@ const view: ComponentView<State, Msg> = props => {
       <Row className='mt-5'>
         <Col xs='12'>
           <h3>Team Members</h3>
-          <p className='mb-4'>Add team members to your organization by clicking on the "Add Team Member(s)" button above. Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization.</p>
+          <p className='mb-4'>Add team members to your organization by clicking on the {'"'}Add Team Member(s){'"'} button above. Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization.</p>
           {state.affiliations.length
             ? (<Table.view
               headCells={membersTableHeadCells(state)}
@@ -366,7 +366,7 @@ const view: ComponentView<State, Msg> = props => {
         <Row>
           <Col xs='12'>
             <h3>Team Capabilities</h3>
-            <p className='mb-4'>This is a summary of the capabilities your organization's team possesses as whole, only including the capabilities of confirmed (non-pending) members. Team members can claim capabilities in their user profiles in the "Capabilities" section.</p>
+            <p className='mb-4'>This is a summary of the capabilities your organization{'\''}s team possesses as whole, only including the capabilities of confirmed (non-pending) members. Team members can claim capabilities in their user profiles in the {'"'}Capabilities{'"'} section.</p>
             <Capabilities grid capabilities={state.capabilities} />
           </Col>
         </Row>
