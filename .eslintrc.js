@@ -35,7 +35,5 @@ module.exports = {
       "@typescript-eslint/ban-types": "off",
       "react/no-children-prop": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
-      "react/jsx-no-target-blank": "off",
-      "no-empty-description": "off"
   },
 };
