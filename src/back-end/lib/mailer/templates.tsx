@@ -247,7 +247,7 @@ export interface LinkProps {
 
 export const Link: View<LinkProps> = ({ text, url }) => {
   return (
-    <a href={url} target='_blank' style={styles.classes.link}>
+    <a href={url} target='_blank' rel="noreferrer" style={styles.classes.link}>
       {text}
     </a>
   );
@@ -256,7 +256,7 @@ export const Link: View<LinkProps> = ({ text, url }) => {
 const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style = {} }) => {
   return (
     <Fragment>
-      <a href={url} target='_blank' style={{ ...styles.classes.buttonPrimary, ...style, marginLeft: '1em', marginRight: '1em' }}>
+      <a href={url} target='_blank' rel="noreferrer" style={{ ...styles.classes.buttonPrimary, ...style, marginLeft: '1em', marginRight: '1em' }}>
         {text}
       </a>
     </Fragment>
@@ -354,7 +354,7 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
       <body style={styles.classes.body}>
         <Container>
           <Row>
-            <a href={makeUrl('')} target='_blank' style={styles.classes.logoBackground}>
+            <a href={makeUrl('')} target='_blank' rel="noreferrer" style={styles.classes.logoBackground}>
               <img src={makeUrl(SHOW_TEST_INDICATOR ? 'images/logo_test.png' : 'images/logo.png')} alt='Digital Marketplace' style={styles.classes.logo} />
             </a>
           </Row>
