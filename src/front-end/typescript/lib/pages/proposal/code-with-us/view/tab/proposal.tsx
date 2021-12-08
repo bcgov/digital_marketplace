@@ -314,7 +314,7 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: dispatch => (
             <div>
-              <p>Provide a total score for the Vendor's Code With Us proposal.</p>
+              <p>Provide a total score for the Vendor{'\''}s Code With Us proposal.</p>
               <NumberField.view
                 extraChildProps={{ suffix: '%' }}
                 required
