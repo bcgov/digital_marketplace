@@ -49,7 +49,7 @@ export type ViewElement<Props = any> = null | ReactElement<Props>;
 
 export type ViewElementChildren<Props = any> = ViewElement<Props> | string | Array<ReactElement<Props> | null | string>;
 
-export type View<Props = {}, ReturnValue = ViewElement> = (props: Props) => ReturnValue;
+export type View<Props = Record<string, never>, ReturnValue = ViewElement> = (props: Props) => ReturnValue;
 
 export interface ComponentViewProps<State, Msg> {
   state: Immutable<State>;
