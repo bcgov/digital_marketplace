@@ -42,6 +42,6 @@ module.exports = {
       "no-duplicate-case": "error",
       "react/jsx-key": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
-      "react/jsx-no-target-blank": "off",
+      "react/jsx-no-target-blank": "error",
   },
 };
