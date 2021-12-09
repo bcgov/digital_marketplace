@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
+          cache: 'npm'
       - run: npm ci
       - run: npm run front-end:test
       - run: npm run back-end:test
@@ -23,6 +24,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
+          cache: 'npm'
       - run: npm ci
       - run: npm run front-end:lint
       - run: npm run back-end:lint
@@ -33,6 +35,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
+          cache: 'npm'
       - run: npm ci
       - run: npm run front-end:build
       - run: npm run back-end:build
