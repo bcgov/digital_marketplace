@@ -1,5 +1,8 @@
 const path = require('path');
-const compilerOptions = require('../../tsconfig.json').compilerOptions;
+const compilerOptionsRoot = require('../../tsconfig.json').compilerOptions;
+const compilerOptionsChild = require('./tsconfig.json').compilerOptions
+
+const compilerOptions = {...compilerOptionsRoot, ...compilerOptionsChild}
 
 process.chdir(__dirname);
 
