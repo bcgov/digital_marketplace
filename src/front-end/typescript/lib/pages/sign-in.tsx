@@ -76,7 +76,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       getDescription: () => 'Please sign in to access your Digital Marketplace account.',
       getFooter: ({ state }) => (
         <span>
-          Don't have an account?&nbsp;
+          Don{'\''}t have an account?&nbsp;
           <Link dest={routeDest(adt('signUpStepOne', { redirectOnSuccess: state.redirectOnSuccess }))}>Sign up</Link>.
         </span>
       )

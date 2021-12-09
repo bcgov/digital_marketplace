@@ -218,7 +218,7 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
       emails: await organizationArchivedT(mocks.vendorUser, mocks.organization)
     }
   ];
-  return () => {
+  return function EmailNotificationWrapper() {
     return (
       <html>
         <head>

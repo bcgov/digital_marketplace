@@ -119,7 +119,7 @@ const NotAvailable: View<Pick<State, 'proposal'>> = ({ proposal }) => {
       return (<div>Scoresheets are not available for {withdrawn} or {disqualified} proposals.</div>);
     }
     default:
-      return (<div>This proposal's scoresheet will be available once the opportunity has been awarded.</div>);
+      return (<div>This proposal{'\''}s scoresheet will be available once the opportunity has been awarded.</div>);
   }
 };
 

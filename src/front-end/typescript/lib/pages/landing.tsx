@@ -55,7 +55,7 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
       </Row>
       <Row className='justify-content-center text-center'>
         <Col xs='12' sm='10' md='6' className='mt-3'>
-          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and {COPY.region.name.short}'s public sector.
+          The Digital Marketplace is a new platform that will help build an ecosystem of innovation and collaboration between tech entrepreneurs and {COPY.region.name.short}{'\''}s public sector.
         </Col>
       </Row>
       <Row className='mt-5'>

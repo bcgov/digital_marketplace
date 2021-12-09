@@ -404,7 +404,7 @@ const Budget: ComponentView<ValidState, Msg> = ({ state }) => {
         <Row>
           <Col xs='12'>
             <h3 className='mb-4'>Budget</h3>
-            <p className='mb-0'>The Total Proponent Cost set out in the Proponent's Proposal must not exceed {totalMaxBudget ? formatAmount(totalMaxBudget, '$') : EMPTY_STRING} (inclusive of all expenses, but exclusive of applicable taxes). This RFP system will not permit a Proponent to submit a Proposal unless this mandatory requirement is satisfied.</p>
+            <p className='mb-0'>The Total Proponent Cost set out in the Proponent{'\''}s Proposal must not exceed {totalMaxBudget ? formatAmount(totalMaxBudget, '$') : EMPTY_STRING} (inclusive of all expenses, but exclusive of applicable taxes). This RFP system will not permit a Proponent to submit a Proposal unless this mandatory requirement is satisfied.</p>
           </Col>
         </Row>
       </div>
@@ -491,7 +491,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
                 ? (<span>If you already have a vendor account, please <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>sign in</Link>.</span>)
                 : null}
             </p>
-            <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
+            <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity{'\''}s proposal deadline has passed.</p>
             {canVendorStartProposal(state)
               ? (<Link
                   disabled={state.toggleWatchLoading > 0}

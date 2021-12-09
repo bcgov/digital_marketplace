@@ -217,7 +217,7 @@ const view: ComponentView<State, Msg> = viewValid(props => {
                   state={state.form}
                   dispatch={mapComponentDispatch(dispatch, v => adt('form' as const, v))} />
               )
-            : <div className='pt-5 border-top'>This proposal's details will be available once the opportunity reaches the Code Challenge.</div>}
+            : <div className='pt-5 border-top'>This proposal{'\''}s details will be available once the opportunity reaches the Code Challenge.</div>}
         </Col>
       </Row>
     </div>

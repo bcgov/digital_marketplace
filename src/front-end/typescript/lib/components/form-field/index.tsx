@@ -202,7 +202,7 @@ function ConditionalErrors<Value, ChildState extends ChildStateBase<Value>, Inne
 
 function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(ChildView: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['view'] {
   const debouncedValidate = debounce((dispatch: Dispatch<Msg<InnerChildMsg>>) => dispatch(adt('validate')), FORM_FIELD_DEBOUNCE_DURATION);
-  return props => {
+  return function FormWrapper (props) {
     const { state, dispatch, style, extraChildProps } = props;
     const invalid = !!state.errors.length;
     const childClassName = 'flex-grow-1 align-self-stretch';

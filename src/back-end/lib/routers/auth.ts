@@ -1,9 +1,8 @@
-import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL, SERVICE_TOKEN_HASH } from 'back-end/config';
+import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL } from 'back-end/config';
 import { prefixPath } from 'back-end/lib';
-import { Connection, createSession, createUser, deleteSession, findOneUserByTypeAndIdp, findOneUserByTypeAndUsername, readOneSession, updateUser } from 'back-end/lib/db';
+import { Connection, createSession, createUser, findOneUserByTypeAndIdp, updateUser } from 'back-end/lib/db';
 import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
-import { authenticatePassword } from 'back-end/lib/security';
-import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, passThroughRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
+import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
 import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
@@ -138,127 +137,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       })
     }
   ];
-
-  // Routes that are added only if the service token environment variable is defined
-  // Requests to these routes much include the correct service token in order to be processed.
-  if (SERVICE_TOKEN_HASH) {
-
-    // The /auth/service endpoint is for creating user accounts for testing purposes.
-    // The test users must already exist in KeyCloak with the appropriate attributes and claims.
-    router.push({
-      method: ServerHttpMethod.Post,
-      path: '/auth/service',
-      handler: passThroughRequestBodyHandler(async request => {
-        try {
-          // Retrieve service token from query paramters and validate
-          const serviceToken = request.query.token;
-          if (!serviceToken || !await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH)) {
-            return {
-              code: 401,
-              headers: {},
-              session: request.session,
-              body: makeTextResponseBody('Not authorized')
-            };
-          }
-          // Extract claims and create/update user
-          const validRequestBody = getValidValue(request.body, undefined);
-          if (!validRequestBody) {
-            throw new Error('no request body provided');
-          }
-
-          const body: unknown = validRequestBody.tag === 'json' ? validRequestBody.value : {};
-          const tokens = new TokenSet(body as TokenSetParameters);
-          const { session } = await establishSessionWithClaims(connection, request, tokens) || {};
-          if (!session) {
-            throw new Error('unable to establish session');
-          }
-          return {
-            code: 200,
-            headers: {},
-            session,
-            body: makeTextResponseBody('')
-          };
-        } catch (error) {
-          return {
-            code: 400,
-            headers: {},
-            session: request.session,
-            body: makeTextResponseBody('')
-          };
-        }
-      })
-    });
-
-    // The /auth/override-session endpoint is for overriding an existing session with a new user account.
-    // For instance, a session attached to a government account, could be overridden to use a vendor account instead.
-    // This should be used only for testing and QA purposes, and is not meant for use in production.
-    router.push({
-      method: ServerHttpMethod.Get,
-      path: '/auth/override-session/:type/:username',
-      handler: nullRequestBodyHandler(async request => {
-        try {
-          // Retrieve service token from query paramters and validate.
-          // Also check that current session is authenticated.
-          const serviceToken = request.query.token;
-          if (!await authenticatePassword(serviceToken, SERVICE_TOKEN_HASH) || !request.session.user) {
-            return {
-              code: 401,
-              headers: {},
-              session: request.session,
-              body: makeTextResponseBody('Not authorized')
-            };
-          }
-
-          // Validate the given user username and type for overriding, and modify the session with the returned id
-          const overrideUserName = request.params.username;
-          let overrideAccountType;
-          switch (request.params.type.toLowerCase()) {
-            case 'vendor':
-              overrideAccountType = UserType.Vendor;
-              break;
-            case 'gov':
-              overrideAccountType = UserType.Government;
-              break;
-            case 'admin':
-              overrideAccountType = UserType.Admin;
-              break;
-            default:
-              return {
-                code: 400,
-                headers: {},
-                session: request.session,
-                body: makeTextResponseBody('')
-              };
-          }
-          const overrideUser = getValidValue(await findOneUserByTypeAndUsername(connection, overrideAccountType, overrideUserName), undefined);
-          const currentSession = getValidValue(await readOneSession(connection, request.session.id), undefined);
-          if (overrideUser && currentSession) {
-            const newSession = getValidValue(await createSession(connection, { accessToken: currentSession.accessToken, user: overrideUser.id }), currentSession);
-            await deleteSession(connection, currentSession.id);
-            return {
-              code: 200,
-              headers: {},
-              session: newSession,
-              body: makeTextResponseBody('OK')
-            };
-          }
-          return {
-            code: 400,
-            headers: {},
-            session: request.session,
-            body: makeTextResponseBody('')
-          };
-        } catch (error) {
-          return {
-            code: 400,
-            headers: {},
-            session: request.session,
-            body: makeTextResponseBody('')
-          };
-        }
-      })
-    });
-  }
   return router;
 }
 
