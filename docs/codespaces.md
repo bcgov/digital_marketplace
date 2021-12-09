@@ -1,6 +1,6 @@
 # Codespaces
 
-For near-instant access to a working development environment without the need to install or run anything on your local machine, try using our remote devcontainer on GitHub Codespaces. This remote container has all dependencies installed and has run the latest migrations.
+For near-instant access to a working development environment without the need to install or run anything on your local machine, try using our remote devcontainer on GitHub Codespaces. This remote container has all dependencies installed and runs the latest migrations (it runs `npm i` and `npm run migrations:latest` every time it starts up).
 
 ## Accessing the Codespace
 
@@ -25,9 +25,14 @@ cp sample.env .env
 ```
 - Add environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README)
 
+### Run Migrations
+- You only need to do this step if you change any database-related environment variables (you'll likely only change them the first time you use the codespace, when you create the `.env` file for the first time)
+- Run `npm run migrations: latest`
+
 ### Quick-Start the App
 - Run `npm run back-end:watch` to start the back-end server (restarts on source changes)
 - In a second terminal, run `npm run front-end:watch` to build the front-end source code (rebuilds on source changes)
+- A toast will pop up with a link to see the app running in the browser
 
 ### Access the Database
 - Click on the connect icon on the bottom bar
