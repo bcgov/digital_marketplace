@@ -16,7 +16,7 @@ type InnerChildMsg
   | ADT<'add', { onChange: FormField.OnChange<Value>; }>
   | ADT<'remove', { index: number; onChange: FormField.OnChange<Value>; }>;
 
-type ExtraChildProps = {};
+type ExtraChildProps = Record<string, never>;
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 

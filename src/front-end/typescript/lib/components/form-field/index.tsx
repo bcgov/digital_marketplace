@@ -30,7 +30,7 @@ export interface ChildProps<Value, ChildState extends ChildStateBase<Value>, Inn
   onChange: OnChange<Value>;
 }
 
-export type ChildComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<ChildParams, ChildState, ChildMsg<InnerChildMsg>, ChildProps<Value, ChildState, InnerChildMsg> & ExtraChildProps>;
+export type ChildComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = Record<string, never>> = framework.Component<ChildParams, ChildState, ChildMsg<InnerChildMsg>, ChildProps<Value, ChildState, InnerChildMsg> & ExtraChildProps>;
 
 export type Validate<Value> = (value: Value) => Validation<Value>;
 
@@ -52,7 +52,7 @@ export type Msg<InnerChildMsg>
   | ADT<'validate'>
   | ADT<'child', ChildMsg<InnerChildMsg>>;
 
-export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> extends ComponentViewProps<State<Value, ChildState>, Msg<InnerChildMsg>> {
+export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = Record<string, never>> extends ComponentViewProps<State<Value, ChildState>, Msg<InnerChildMsg>> {
   extraChildProps: ExtraChildProps;
   className?: string;
   labelClassName?: string;
@@ -69,7 +69,7 @@ export interface ViewProps<Value, ChildState extends ChildStateBase<Value>, Inne
   };
 }
 
-export type Component<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}> = framework.Component<Params<Value, ChildParams>, State<Value, ChildState>, Msg<InnerChildMsg>, ViewProps<Value, ChildState, InnerChildMsg, ExtraChildProps>>;
+export type Component<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = Record<string, never>> = framework.Component<Params<Value, ChildParams>, State<Value, ChildState>, Msg<InnerChildMsg>, ViewProps<Value, ChildState, InnerChildMsg, ExtraChildProps>>;
 
 function makeInit<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps>(childInit: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['init']): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>['init'] {
   return async params => ({
@@ -132,7 +132,7 @@ function ConditionalHelpToggle<Value, ChildState extends ChildStateBase<Value>, 
   }
 }
 
-export const ViewRequiredAsterisk: View<{}> = () => {
+export const ViewRequiredAsterisk: View<Record<string, never>> = () => {
   return (<span className='font-weight-bold text-c-form-field-required ml-1'>*</span>);
 };
 
@@ -227,7 +227,7 @@ function makeView<Value, ChildParams extends ChildParamsBase<Value>, ChildState 
   };
 }
 
-export function makeComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = {}>(params: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps> {
+export function makeComponent<Value, ChildParams extends ChildParamsBase<Value>, ChildState extends ChildStateBase<Value>, InnerChildMsg, ExtraChildProps = Record<string, never>>(params: ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>): Component<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps> {
   return {
     init: makeInit(params.init),
     update: makeUpdate(params.update),
