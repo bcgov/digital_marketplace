@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
       args:
@@ -13,12 +13,12 @@ services:
 
     depends_on:
       - db
-      
+
     init: true
 
     volumes:
       - ..:/workspace:cached
-      
+
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
@@ -28,7 +28,7 @@ services:
     # Uncomment the next line to use a non-root user for all processes.
     # user: node
 
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   db:

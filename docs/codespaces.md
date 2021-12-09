@@ -19,7 +19,7 @@ You can create and access a codespace either via the browser or by connecting di
 Run commands from within the remote container (use the browser terminal or the VS Code terminal). Use `git`, etc., as you would normally.
 
 ### Add Environment Variables
-- Copy the `sample.env` 
+- Copy the `sample.env`
 ```bash
 cp sample.env .env
 ```
