@@ -4,7 +4,7 @@
 - Install:
   - Using pip: `pip install pre-commit`
   - Using Homebrew: `brew install pre-commit`
-  - see docs [Click](https://pre-commit.com/#install)
+  - [see docs](https://pre-commit.com/#install)
 
 - Setup
   - run `pre-commit install` to set up the git hook script ([see docs](https://pre-commit.com/#install))
@@ -38,3 +38,27 @@ Always stage the changes you intend to commit before committing and with the `pr
 - **Recomend** on the first commit of a branch, make a commit message body that refs the issue your branch is related to. When opening a pull-request this will automatically link your PR to the issue on GitHub. This can be accomplished by creating the commit message in an editor and adding new line at the end of the message and writing `ref #<issue>`
 
 [Click](https://pre-commit.com/#install) here for more information on `pre-commit`
+
+### commitlint - proper commit messages
+
+- To pass the `commitlint` check you must format you commit message as follows:
+```
+type: brief description
+```
+Common types according to [commitlint-config-conventional (based on the Angular convention)](https://github.com/conventional-changelog/commitlint/tree/master/@commitlint/config-conventional#type-enum) can be:
+  - build
+  - chore
+  - ci
+  - docs
+  - feat
+  - fix
+  - perf
+  - refactor
+  - revert
+  - style
+  - test
+
+### Failed commitlint check
+
+- If you fail the `commitlint` check your commit will be aborted and you will be given an error message that will indicate the problem
+- You will then need to run `git commit` once again and input a properly formatted commit message
