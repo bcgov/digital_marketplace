@@ -4,7 +4,7 @@
 - Install:
   - Using pip: `pip install pre-commit`
   - Using Homebrew: `brew install pre-commit`
-  - see docs [Click](https://pre-commit.com/#install)
+  - [see docs](https://pre-commit.com/#install)
 
 - Setup
   - run `pre-commit install` to set up the git hook script ([see docs](https://pre-commit.com/#install))
