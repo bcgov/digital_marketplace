@@ -132,7 +132,7 @@ function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
 const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
     case 'saveDraft':
-    case 'submit':
+    case 'submit':{
       state = hideModal(state);
       const isSubmit = msg.tag === 'submit';
       return [
@@ -163,6 +163,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           return state.set('form', result.value[0]);
         }
       ];
+    }
 
     case 'showModal':
       return [state.set('showModal', msg.value)];

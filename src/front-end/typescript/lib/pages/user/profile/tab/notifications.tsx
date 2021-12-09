@@ -40,7 +40,7 @@ const stopNewOpportunitiesLoading = makeStopLoading<State>('newOpportunitiesLoad
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'newOpportunities':
+    case 'newOpportunities':{
       const valueChanged = msg.value.tag === 'child' && msg.value.value.tag === 'onChange';
       const newOppResult = updateComponentChild({
         state,
@@ -74,6 +74,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           }
         }
       ];
+    }
     default:
       return [state];
   }

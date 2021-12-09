@@ -163,7 +163,7 @@ export function makeParentUpdate<
   >(params: MakeParentUpdateParams<T, K, ExtraState, InnerMsg>): Update<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
   return ({ state, msg }) => {
     switch (msg.tag) {
-      case 'tab':
+      case 'tab':{
         const tabId = state.tab[0];
         const definition = params.idToDefinition(state)(tabId);
         return updateGlobalComponentChild({
@@ -173,6 +173,7 @@ export function makeParentUpdate<
           childMsg: msg.value,
           mapChildMsg: value => adt('tab' as const, value as TabMsg<T, K>)
         });
+      }
       case 'sidebar':
         return updateComponentChild({
           state,

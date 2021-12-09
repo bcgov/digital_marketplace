@@ -75,13 +75,14 @@ async function parseProponentRequestBody(raw: any, connection: db.Connection, se
         mailCode: getString(value, 'mailCode'),
         country: getString(value, 'country')
       });
-    case 'organization':
+    case 'organization': {
       // Validate the org id provided.  If not valid, default to blank individual proponent
       const validatedOrganizationProponent = await validateOrganizationId(connection, value, session);
       if (isInvalid(validatedOrganizationProponent)) {
         return createBlankIndividualProponent();
       }
       return adt('organization', validatedOrganizationProponent.value.id);
+    }
     default:
       return createBlankIndividualProponent();
   }
@@ -312,7 +313,7 @@ const resource: Resource = {
 
         const proposalDeadline = validatedCWUProposal.value.opportunity.proposalDeadline;
         switch (request.body.tag) {
-          case 'edit':
+          case 'edit': {
             const { proposalText,
                     additionalComments,
                     proponent,
@@ -364,7 +365,8 @@ const resource: Resource = {
                 })
               });
             }
-          case 'submit':
+          }
+          case 'submit': {
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Submitted,
                                                               request.session.user.type,
@@ -379,7 +381,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('submit' as const, validatedSubmissionNote.value)
             } as ValidatedUpdateRequestBody);
-          case 'score':
+          }
+          case 'score': {
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Evaluated,
                                                               request.session.user.type,
@@ -394,7 +397,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('score' as const, validatedScore.value)
             } as ValidatedUpdateRequestBody);
-          case 'award':
+          }
+          case 'award': {
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Awarded,
                                                               request.session.user.type,
@@ -409,7 +413,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('award' as const, validatedAwardNote.value)
             } as ValidatedUpdateRequestBody);
-          case 'disqualify':
+          }
+          case 'disqualify': {
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Disqualified,
                                                               request.session.user.type,
@@ -426,7 +431,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('disqualify' as const, validatedDisqualifyNote.value)
             } as ValidatedUpdateRequestBody);
-          case 'withdraw':
+          }
+          case 'withdraw': {
             if (!request.session.user || !isValidStatusChange(validatedCWUProposal.value.status,
                                                               CWUProposalStatus.Withdrawn,
                                                               request.session.user.type,
@@ -443,6 +449,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('withdraw' as const, validatedWithdrawalNote.value)
             } as ValidatedUpdateRequestBody);
+          }
           default:
             return invalid({ proposal: adt('parseFailure' as const) });
         }

@@ -113,10 +113,11 @@ const Rank: ComponentView<State, Msg> = ({ state }) => {
 const NotAvailable: View<Pick<State, 'proposal'>> = ({ proposal }) => {
   switch (proposal.status) {
     case SWUProposalStatus.Disqualified:
-    case SWUProposalStatus.Withdrawn:
+    case SWUProposalStatus.Withdrawn: {
       const withdrawn = swuProposalStatusToTitleCase(SWUProposalStatus.Withdrawn, UserType.Vendor);
       const disqualified = swuProposalStatusToTitleCase(SWUProposalStatus.Disqualified, UserType.Vendor);
       return (<div>Scoresheets are not available for {withdrawn} or {disqualified} proposals.</div>);
+    }
     default:
       return (<div>This proposal{'\''}s scoresheet will be available once the opportunity has been awarded.</div>);
   }

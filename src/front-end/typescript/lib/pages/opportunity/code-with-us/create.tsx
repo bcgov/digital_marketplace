@@ -69,7 +69,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
     case 'hideModal':
       return [state.set('showModal', null)];
     case 'publish':
-    case 'saveDraft':
+    case 'saveDraft': {
       const isPublish = msg.tag === 'publish';
       state = state.set('showModal', null);
       return [
@@ -77,7 +77,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         async (state, dispatch) => {
           const result = await Form.persist(state.form, adt('create', isPublish ? CWUOpportunityStatus.Published as const : CWUOpportunityStatus.Draft as const));
           switch (result.tag) {
-            case 'valid':
+            case 'valid': {
               const opportunityId = result.value[1].id;
               dispatch(newRoute(adt('opportunityCWUEdit' as const, {
                 opportunityId,
@@ -85,6 +85,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
               })));
               dispatch(toast(adt('success', isPublish ? toasts.published.success(opportunityId) : toasts.draftCreated.success)));
               return state.set('form', result.value[0]);
+            }
             case 'invalid':
               dispatch(toast(adt('error', isPublish ? toasts.published.error : toasts.draftCreated.error)));
               state = isPublish ? stopPublishLoading(state) : stopSaveDraftLoading(state);
@@ -94,6 +95,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           }
         }
       ];
+    }
 
     case 'form':
       return updateComponentChild({

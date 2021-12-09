@@ -82,7 +82,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await Form.persist(state.form, adt('create', msg.value));
           const isPublish = msg.value === SWUOpportunityStatus.Published;
           switch (result.tag) {
-            case 'valid':
+            case 'valid':{
               const opportunityId = result.value[1].id;
               dispatch(newRoute(adt('opportunitySWUEdit', {
                 opportunityId,
@@ -94,6 +94,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
                 dispatch(toast(adt('success', toasts.statusChanged.success(msg.value))));
               }
               return state.set('form', result.value[0]);
+            }
             case 'invalid':
               if (isPublish) {
                 dispatch(toast(adt('error', toasts.published.error)));
