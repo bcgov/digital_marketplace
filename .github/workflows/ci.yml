@@ -36,3 +36,17 @@ jobs:
       - run: npm ci
       - run: npm run front-end:build
       - run: npm run back-end:build
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files
+  commitlint:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v2
