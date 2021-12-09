@@ -6,7 +6,6 @@ import React from 'react';
 import { Col, Container, Row } from 'reactstrap';
 import { CONTACT_EMAIL, COPY } from 'shared/config';
 import { adt } from 'shared/lib/types';
-import { string } from 'yargs';
 
 const links: AnchorProps[] = [
   {
