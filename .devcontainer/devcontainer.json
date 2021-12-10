@@ -26,7 +26,7 @@
 		"mtxr.sqltools-driver-pg",
 		"esbenp.prettier-vscode"
 	],
-	"forwardPorts": [3000, 5432],
-	"postCreateCommand": "npm install | npm run migrations:latest",
+	"forwardPorts": [3000, 5432, 8080],
+	"postCreateCommand": "npm install | npm run migrations:latest && node ./.devcontainer/scripts/keycloak-local.js",
 	"remoteUser": "node"
 }
