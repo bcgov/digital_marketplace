@@ -8,6 +8,7 @@ You can create and access a codespace either via the browser or by connecting di
 
 ### Browser
 - [Follow these instructions](https://docs.github.com/en/codespaces/developing-in-codespaces/creating-a-codespace#creating-a-codespace) to create and access a new codespace from the repository homepage
+- **This codespace in the browser does not currently support login with either GitHub or IDIR.**
 
 ### VS Code Editor
 
@@ -15,8 +16,8 @@ You can create and access a codespace either via the browser or by connecting di
 - [Follow these instructions](https://docs.github.com/en/codespaces/developing-in-codespaces/using-codespaces-in-visual-studio-code) to use the Remote Explorer to sign in, create a codespace and connect to it from your editor.
 
 ## First-Time Codespace Set-Up
-
-You only need to do the following the first time you set up the codespace.
+- On first opening the codespace the build will fail.
+- You only need to do the following the first time you set up the codespace.
 
 ### Add Environment Variables
 - Copy the `codespaces.sample.env` (run commands from within the remote container, i.e. browser or VS Code terminal)
@@ -26,6 +27,7 @@ cp codespaces.sample.env .env
 - Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README). At minimum, to be able to start the app, you need to add `MAILER_GMAIL_USER` and `MAILER_GMAIL_PASS`.
 
 ### Keycloak setup
+
 - Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
 ```bash
 Name: digital_marketplace # GitHub 0Auth Values
@@ -41,9 +43,6 @@ Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace
 Shift + cmd (ctrl) + p
 Select: Rebuild Container
 ```
-
-### Run Migrations
-- Run `npm run migrations: latest`
 
 ## Using the Codespace
 
