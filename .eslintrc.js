@@ -28,13 +28,10 @@ module.exports = {
         // TODO remove rule overrides that affect code quality
       "@typescript-eslint/no-explicit-any": "off",
       "react/prop-types": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "no-case-declarations": "off",
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/ban-types": "off",
       "react/no-children-prop": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
   },
   overrides: [
     {
