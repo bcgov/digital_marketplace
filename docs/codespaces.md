@@ -23,7 +23,6 @@ You only need to do the following the first time you set up the codespace.
 ```bash
 cp codespaces.sample.env .env
 ```
-- Add `POSTGRES_URL="postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"` to the `.env` file.
 - Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README)
 
 ### Keycloak setup
