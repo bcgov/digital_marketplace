@@ -35,12 +35,7 @@ This document describes this project's developer environment, technical architec
 
 <!-- tocstop -->
 
-## Authors and Licensing
-
-This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
-
-**Dhruv Dang**, Managing Director
-[dhruv@realfolk.com](mailto:dhruv@realfolk.com)
+## Licensing
 
 This project available to use under the Apache 2.0 license (see `LICENSE.txt`). Please note the `NOTICE.txt` file included with this repository and the guidelines in section 4(d) of the license.
 
@@ -360,11 +355,6 @@ When maintaining a fork of this project that has its own database migrations, sp
 ## Team
 
 The Digital Marketplace is currently operated by the Procurement Services Branch within the Government of British Columbia's Ministry of Citizen's Services.
-
-This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
-
-**Dhruv Dang**, Managing Director
-[dhruv@realfolk.com](mailto:dhruv@realfolk.com)
 
 ## Credits
 
