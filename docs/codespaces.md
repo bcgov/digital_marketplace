@@ -19,12 +19,29 @@ You can create and access a codespace either via the browser or by connecting di
 You only need to do the following the first time you set up the codespace.
 
 ### Add Environment Variables
-- Copy the `sample.env` (run commands from within the remote container, i.e. browser or VS Code terminal)
+- Copy the `codespaces.sample.env` (run commands from within the remote container, i.e. browser or VS Code terminal)
 ```bash
-cp sample.env .env
+cp codespaces.sample.env .env
 ```
 - Add `POSTGRES_URL="postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"` to the `.env` file.
 - Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README)
+
+### Keycloak setup
+- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
+```bash
+Name: digital_marketplace # GitHub 0Auth Values
+
+Homepage URL: https://localhost:3000 # Default back-end server address
+
+Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
+```
+- Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
+- Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
+- Rebuild container
+```bash
+Shift + cmd (ctrl) + p
+Select: Rebuild Container
+```
 
 ### Run Migrations
 - Run `npm run migrations: latest`
