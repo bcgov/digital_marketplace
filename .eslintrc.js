@@ -36,4 +36,13 @@ module.exports = {
       "react/no-children-prop": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
   },
+  overrides: [
+    {
+      // enable the rule specifically for TypeScript files
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@typescript-eslint/no-var-requires": "error"
+      }
+    }
+  ]
 };
