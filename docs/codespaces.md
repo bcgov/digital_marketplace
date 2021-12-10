@@ -23,7 +23,7 @@ You only need to do the following the first time you set up the codespace.
 ```bash
 cp codespaces.sample.env .env
 ```
-- Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README)
+- Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README). At minimum, to be able to start the app, you need to add `MAILER_GMAIL_USER` and `MAILER_GMAIL_PASS`.
 
 ### Keycloak setup
 - Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
