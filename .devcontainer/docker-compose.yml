@@ -13,12 +13,11 @@ services:
 
     depends_on:
       - db
-
+      - keycloak
     init: true
 
     volumes:
       - ..:/workspace:cached
-
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
@@ -45,6 +44,10 @@ services:
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
-
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    ports:
+      - "8080:8080"
+    env_file: ../.env
 volumes:
   postgres-data:

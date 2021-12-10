@@ -8,6 +8,7 @@ You can create and access a codespace either via the browser or by connecting di
 
 ### Browser
 - [Follow these instructions](https://docs.github.com/en/codespaces/developing-in-codespaces/creating-a-codespace#creating-a-codespace) to create and access a new codespace from the repository homepage
+- **This codespace in the browser does not currently support login with either GitHub or IDIR.**
 
 ### VS Code Editor
 
@@ -15,19 +16,33 @@ You can create and access a codespace either via the browser or by connecting di
 - [Follow these instructions](https://docs.github.com/en/codespaces/developing-in-codespaces/using-codespaces-in-visual-studio-code) to use the Remote Explorer to sign in, create a codespace and connect to it from your editor.
 
 ## First-Time Codespace Set-Up
-
-You only need to do the following the first time you set up the codespace.
+- On first opening the codespace the build will fail.
+- You only need to do the following the first time you set up the codespace.
 
 ### Add Environment Variables
-- Copy the `sample.env` (run commands from within the remote container, i.e. browser or VS Code terminal)
+- Copy the `codespaces.sample.env` (run commands from within the remote container, i.e. browser or VS Code terminal)
 ```bash
-cp sample.env .env
+cp codespaces.sample.env .env
 ```
-- Add `POSTGRES_URL="postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"` to the `.env` file.
-- Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README)
+- Add additional desired environment variables to the `.env` file (refer to the [Environment Variables](https://github.com/button-inc/digital_marketplace/blob/main/README.md#environment-variables) section in the README). At minimum, to be able to start the app, you need to add `MAILER_GMAIL_USER` and `MAILER_GMAIL_PASS`.
 
-### Run Migrations
-- Run `npm run migrations: latest`
+### Keycloak setup
+
+- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
+```bash
+Name: digital_marketplace # GitHub 0Auth Values
+
+Homepage URL: https://localhost:3000 # Default back-end server address
+
+Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
+```
+- Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
+- Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
+- Rebuild container
+```bash
+Shift + cmd (ctrl) + p
+Select: Rebuild Container
+```
 
 ## Using the Codespace
 
