@@ -18,7 +18,7 @@ This document describes this project's developer environment, technical architec
   - [Scripts (`src/scripts`)](#scripts-srcscripts)
 - [Development Environment](#development-environment)
   - [Dependencies](#dependencies)
-  - [Containerized Quick Start](#containerized-quick-start)
+  - [Quick Start](#quick-start)
   - [Local Development Environment](#local-development-environment)
   - [NPM Scripts](#npm-scripts)
   - [Environment Variables](#environment-variables)
@@ -99,12 +99,41 @@ npm run scripts:run -- <SCRIPT_NAME> [...args]
 
 ## Set Up
 
+### `.env` File
+
 First, create a `.env` file and replace the placeholder values with your credentials. Refer to the [Environment Variables](#environment-variables) section below for further information.
 
 ```bash
 cp sample.env .env
 # Open and edit .env in your text editor.
 ```
+#### Keycloak Set Up
+
+If you don't have access the BC Government's keycloak and you want to be able to log in to the app, you'll need to
+set up a local instance of keycloak. To do this, update the following environment variables in the `.env` file:
+- `KEYCLOAK_CLIENT_ID="login"`
+- `KEYCLOAK_CLIENT_SECRET="abc-123"`
+- `KEYCLOAK_URL="http://localhost:8080"`
+- `KEYCLOAK_REALM="digitalmarketplace"`
+
+Additionally, add:
+- `KEYCLOAK_USER="admin"`
+- `KEYCLOAK_PASSWORD="password"`
+- `ID_PROVIDER="github"`
+
+- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
+```bash
+Name: digital_marketplace # GitHub 0Auth Values
+
+Homepage URL: https://localhost:3000 # Default back-end server address
+
+Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
+```
+- Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
+- Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
+
+
+### Install Dependencies
 
 If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
 and drop you in a shell with them accessible in your `$PATH`.
@@ -123,11 +152,7 @@ Once installed, `cd` into this repository's root directory and proceed to instal
 yarn
 ```
 
-### Containerized Quick Start
-
-If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
-
-### Local Development Environment
+### Quick Start
 
 Open three terminals and run the following commands:
 
@@ -136,7 +161,6 @@ Open three terminals and run the following commands:
 # If you don't need to be able to sign into the app or already have keycloak:
 docker-compose up -d # Start a local PostgreSQL server in the background.
 npm run migrations:latest # Run all database migrations.
-docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
 
 # If you need to sign in to the app and don't already have keycloak:
 docker-compose -f docker-compose.keycloak.yml up # Start local postgres and keycloak servers
