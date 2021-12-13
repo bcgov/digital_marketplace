@@ -6,6 +6,6 @@
     "types": ["node", "jest"]
   },
   "include": [
-    "**/*.ts"
-  ]
+    "**/*.ts",
+    "**/*.tsx"  ]
 }
