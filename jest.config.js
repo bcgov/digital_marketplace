@@ -14,6 +14,6 @@ module.exports = {
       // turn off type-checking as part of jest tests
       diagnostics: false
     }
-  }
-
+  },
+  testPathIgnorePatterns: ["<rootDir>/cypress/"]
 };
