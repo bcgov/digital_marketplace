@@ -167,11 +167,6 @@ docker-compose -f docker-compose.keycloak.yml up # Start local postgres and keyc
 npm run migrations:latest # Run all database migrations.
 node .devcontainer/scripts/keycloak-local.js # Set up keycloak server
 
-# If you need to sign in to the app and don't already have keycloak:
-docker-compose -f docker-compose.keycloak.yml up # Start local postgres and keycloak servers
-npm run migrations:latest # Run all database migrations.
-node .devcontainer/scripts/keycloak-local.js # Set up keycloak server
-
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
 
