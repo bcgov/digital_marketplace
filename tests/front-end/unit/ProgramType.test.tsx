@@ -1,8 +1,6 @@
 import React from 'react';
 import {render} from '@testing-library/react'
-// "front-end" means the path "front-end/typescript" per the front-end tsconfig, so have to use the same alias here. IDE might show a TS error but test should run.
-import ProgramType from '../../src/front-end/lib/views/program-type'
-
+import ProgramType from 'front-end/lib/views/program-type'
 
 
 jest.mock('front-end/lib/framework')
