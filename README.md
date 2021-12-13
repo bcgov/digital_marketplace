@@ -111,7 +111,7 @@ and drop you in a shell with them accessible in your `$PATH`.
 
 If you are not using Nix, please ensure the following packages have been installed:
 
-- Node.js 10.x
+- Node.js 16.x (if you use asdf, `asdf install` then `asdf reshim` to set the correct node version)
 - SASS
 - Docker
 - Docker Compose 3.x
