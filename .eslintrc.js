@@ -31,7 +31,6 @@ module.exports = {
       "react/prop-types": "off",
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-empty-function": "off",
-      "@typescript-eslint/ban-types": "off",
       "react/no-children-prop": "off",
   },
   overrides: [

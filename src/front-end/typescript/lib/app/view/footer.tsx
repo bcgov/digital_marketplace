@@ -50,7 +50,7 @@ const links: AnchorProps[] = [
   }
 ];
 
-const Footer: View<{}> = () => {
+const Footer: View<Record<string, never>> = () => {
   return (
     <footer className='w-100 bg-c-footer-bg text-light d-print-none'>
       <Container>

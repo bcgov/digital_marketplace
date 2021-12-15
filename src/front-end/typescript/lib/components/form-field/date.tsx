@@ -63,7 +63,7 @@ type ChildParams = FormField.ChildParamsBase<Value> & Pick<ChildState, 'min' | '
 type InnerChildMsg
   = ADT<'onChange', Value>;
 
-type ExtraChildProps = {};
+type ExtraChildProps = Record<string, unknown>;
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
 
