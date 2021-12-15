@@ -12,7 +12,8 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:mocha/recommended"
+    "plugin:mocha/recommended",
+    "plugin:cypress/recommended"
     // "prettier",
   ],
   "parser": "@typescript-eslint/parser",
@@ -23,7 +24,7 @@ module.exports = {
       "ecmaVersion": 13,
       "sourceType": "module",
     },
-    "plugins": ["react", "@typescript-eslint", "mocha"],
+    "plugins": ["react", "@typescript-eslint", "mocha","cypress"],
     "rules": {
         // TODO remove rule overrides that affect code quality
       "@typescript-eslint/no-explicit-any": "off",
