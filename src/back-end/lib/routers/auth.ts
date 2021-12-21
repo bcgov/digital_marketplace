@@ -186,7 +186,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       })
     }] : []),
   ];
-  console.log('router is',router)
   return router;
 }
 
@@ -195,8 +194,6 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
 async function establishSessionWithClaims(connection: Connection, request: Request<any, Session>, tokenSet: TokenSet) {
   const claims = tokenSet.claims();
   let userType: UserType;
-  // if server started with cypress env variable, fetch the loginsource from the request cookies instead of getting from keycloak
-  // or request test IDIR/github dummy account
   const identityProvider = getString(claims, 'loginSource');
   switch (identityProvider) {
     case GOV_IDP_SUFFIX.toUpperCase(): {

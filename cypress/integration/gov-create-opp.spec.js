@@ -20,7 +20,7 @@ describe('As a user authenticated via IDIR', function() {
         // 1. Overview tab
         cy.get('#cwu-opportunity-title').type('Cypress Opp')
         cy.get('#cwu-opportunity-teaser').type('Teaser text')
-        cy.get('#cwu-opportunity-remote-ok-0').check({force:true}) // is force OK?
+        cy.get('#cwu-opportunity-remote-ok-0').check({force:true})
         cy.get('#cwu-opportunity-remote-desc').type('Remote description text')
         cy.get('#cwu-opportunity-location').clear().type('Vancouver')
         cy.get('#cwu-opportunity-reward').type('5000')
