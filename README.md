@@ -115,6 +115,7 @@ If you are not using Nix, please ensure the following packages have been install
 - SASS
 - Docker
 - Docker Compose 3.x
+- Postgres
 
 Once installed, `cd` into this repository's root directory and proceed to install NPM dependencies:
 
@@ -124,28 +125,38 @@ npm install
 
 ### Containerized Quick Start
 
-If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
+If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and PostgreSQL database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
+
+You can stop the PostgreSQL container by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
 ### Local Development Environment
 
-Open three terminals and run the following commands:
+#### First-Time Set Up
+
+To create the database, start postgres on port 5432 (`pg_ctl start`) and run the following commands:
+```bash
+createdb digitalmarketplace # Create a local database
+psql digitalmarketplace # Enter the psql shell
+create user digitalmarketplace with password 'digitalmarketplace'; # Create a user and password for the database
+```
+
+Exit the psql shell and run `npm run migrations:latest`
+
+#### Running the App
+
+Start postgres on port 5432 if it isn't already running: `pg_ctl start`
+
+Open two terminals and run the following commands:
 
 ```bash
 # Terminal 1
-docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
-npm run migrations:latest # Run all database migrations.
-docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
-
-# Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
 
-# Terminal 3
+# Terminal 2
 npm run front-end:watch # Build the front-end source code, rebuild on source changes.
 ```
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.
-
-You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
 ### NPM Scripts
 
@@ -156,36 +167,37 @@ It is recommended that developers use the following scripts defined in `package.
 npm run <SCRIPT_NAME>
 ```
 
-| Script Name                             | Description                                                                                                                                                   |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `build`                                 | Builds the back- and front-ends.                                                                                                                                    |
-| `start`                                 | Runs the back-end server.                                                                                                                                     |
-| `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                 |
-| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                               |
-| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                |
-| `front-end:build`                       | Builds the front-end using grunt.                                                                                                                             |
-| `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                         |
-| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                               |
-| `back-end:lint`                         | Lints the back-end source code using tslint.                                                                                                                  |
-| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                |
-| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                 |
-| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                      |
-| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                       |
-| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.               |
-| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                |
-| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                  |
-| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below. |
-| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                           |
-| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                              |
-| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                              |
-| `migrations:up`                         | Runs one migration `up`.                                                                                                                                      |
-| `migrations:down`                       | Runs one migration `down`.                                                                                                                                    |
-| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.          |
-| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                         |
-| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                               |
-| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                      |
-| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                        |
-| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                               |
+| Script Name                             | Description                                                                                                                                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cypress:test`                          | Runs the Cypress tests. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.                      |
+| `cypress:open`                          | Opens the interactive Cypress test runner. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.   |
+| `start`                                 | Runs the back-end server.                                                                                                                                                                                          |
+| `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                                                                      |
+| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                    |
+| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                     |
+| `front-end:build`                       | Builds the front-end using grunt.                                                                                                                                                                                  |
+| `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                              |
+| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                    |
+| `back-end:lint`                         | Lints the back-end source code using tslint.                                                                                                                                                                       |
+| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                     |
+| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                      |
+| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                           |
+| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                            |
+| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                    |
+| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                     |
+| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                                                                       |
+| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below.                                                      |
+| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                                                                                |
+| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                                                                                   |
+| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                                                                                   |
+| `migrations:up`                         | Runs one migration `up`.                                                                                                                                                                                           |
+| `migrations:down`                       | Runs one migration `down`.                                                                                                                                                                                         |
+| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.                                                               |
+| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                                                                              |
+| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                                                                                    |
+| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                           |
+| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                                                                             |
+| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                                                                                    |
 
 ### Environment Variables
 
