@@ -1,0 +1,44 @@
+name: e2e
+on: [push]
+jobs:
+  cypress:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_URL: "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
+      COOKIE_SECRET: "foobar"
+      MAILER_HOST: "foobar"
+      MAILER_PORT: "321"
+    # prevent a hanging process from using all the CI minutes
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        # Docker Hub image
+        image: postgres
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_USER: digitalmarketplace
+          POSTGRES_PASSWORD: digitalmarketplace
+          POSTGRES_DB: digitalmarketplace
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+        # Install NPM dependencies, cache them correctly
+      # and run all Cypress tests
+      - name: Cypress run
+        uses: cypress-io/github-action@v2
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+        with:
+          build: npm run build
+          start: npm run migrations:latest,npm run start
+          wait-on: 'http://localhost:3000'
