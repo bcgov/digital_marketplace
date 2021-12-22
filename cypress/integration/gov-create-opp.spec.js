@@ -4,9 +4,9 @@ describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         // clean up db
         // cy.exec('dropdb -f --if-exists digitalmarketplace')
-        cy.exec('psql -c "DROP TABLE IF EXISTS digitalmarketplace"')
+        cy.exec('psql -c "DROP DATABASE IF EXISTS digitalmarketplace"')
         // set up db
-        cy.exec('createdb digitalmarketplace')
+        cy.exec('psql -c "CREATE DATABASE digitalmarketplace')
         cy.exec('npm run migrations:latest;')
         cy.exec('psql digitalmarketplace -f ./cypress/fixtures/users.sql')
         cy.visit('auth/createsession')
