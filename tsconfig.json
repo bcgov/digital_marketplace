@@ -15,7 +15,6 @@
         "noErrorTruncation": true,
         "baseUrl": ".",
         "incremental": true,
-        "types": ["cypress", "@testing-library/cypress"],
         "paths": {
             "back-end/*": ["./src/back-end/*"],
             "migrations/*": ["./src/migrations/*"],
