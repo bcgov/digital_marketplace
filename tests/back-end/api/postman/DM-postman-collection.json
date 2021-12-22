@@ -3843,7 +3843,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"legalName\": \"Real Folk\",\n    \"websiteUrl\": \"https://www.google.ca\",\n    \"streetAddress1\": \"934 Hampshire\",\n    \"city\": \"Victoria\",\n    \"region\": \"BC\",\n    \"mailCode\": \"V8Z 1T8\",\n    \"country\": \"Canada\",\n    \"contactName\": \"Andrew Sutherland\",\n    \"contactEmail\": \"sutherlanda@gmail.com\"\n}",
+									"raw": "{\n    \"legalName\": \"Company Name\",\n    \"websiteUrl\": \"https://www.google.ca\",\n    \"streetAddress1\": \"934 Hampshire\",\n    \"city\": \"Victoria\",\n    \"region\": \"BC\",\n    \"mailCode\": \"V8Z 1T8\",\n    \"country\": \"Canada\",\n    \"contactName\": \"First Last\",\n    \"contactEmail\": \"digitalmarketplace@gov.bc.ca\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -4905,7 +4905,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"legalName\": \"Rubber Duck Software\",\n    \"websiteUrl\": \"https://www.google.ca\",\n    \"streetAddress1\": \"290 Cadillac Avenue\",\n    \"city\": \"Victoria\",\n    \"region\": \"BC\",\n    \"mailCode\": \"V8Z 1T8\",\n    \"country\": \"Canada\",\n    \"contactName\": \"Andrew Sutherland\",\n    \"contactEmail\": \"sutherlanda@gmail.com\"\n}",
+									"raw": "{\n    \"legalName\": \"Rubber Duck Software\",\n    \"websiteUrl\": \"https://www.google.ca\",\n    \"streetAddress1\": \"290 Cadillac Avenue\",\n    \"city\": \"Victoria\",\n    \"region\": \"BC\",\n    \"mailCode\": \"V8Z 1T8\",\n    \"country\": \"Canada\",\n    \"contactName\": \"First Last\",\n    \"contactEmail\": \"sutherlanda@gmail.com\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
