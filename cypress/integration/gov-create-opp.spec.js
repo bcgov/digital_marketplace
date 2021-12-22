@@ -3,7 +3,8 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         // clean up db
-        cy.exec('dropdb -f --if-exists digitalmarketplace')
+        // cy.exec('dropdb -f --if-exists digitalmarketplace')
+        cy.exec('psql -c "DROP TABLE IF EXISTS digitalmarketplace"')
         // set up db
         cy.exec('createdb digitalmarketplace')
         cy.exec('npm run migrations:latest;')
