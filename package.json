@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "cypress:test": "npm run back-end:build && npm run back-end:start & wait-on --timeout 60000 http://localhost:3000 & ./node_modules/.bin/cypress run",
+    "build": "npm run back-end:build && npm run front-end:build",
     "start": "npm run back-end:start",
     "front-end:lint": "npx tslint -c tslint.json src/front-end/*.ts src/front-end/**/*.ts && echo Lint Successful\n",
     "front-end:typecheck": "npx tsc --project src/front-end/typescript --noEmit && echo Typecheck Successful\n",
