@@ -158,6 +158,7 @@ npm run <SCRIPT_NAME>
 
 | Script Name                             | Description                                                                                                                                                   |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `build`                                 | Builds the back- and front-ends.                                                                                                                                    |
 | `start`                                 | Runs the back-end server.                                                                                                                                     |
 | `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                 |
 | `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                               |
