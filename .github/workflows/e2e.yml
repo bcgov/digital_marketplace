@@ -15,6 +15,7 @@ jobs:
       postgres:
         # Docker Hub image
         image: postgres
+        container_name: db
         ports:
           - "5432:5432"
         env:
