@@ -5,7 +5,7 @@ describe('As a user authenticated via IDIR', function() {
         // clean up db
         // cy.exec('dropdb -f --if-exists digitalmarketplace')
         cy.exec('docker ps')
-        cy.exec('docker exec -it db dropdb -f --if-exists digitalmarketplace')
+        cy.exec('docker exec db dropdb -f --if-exists digitalmarketplace')
         // set up db
         cy.exec('psql -c "CREATE DATABASE digitalmarketplace')
         cy.exec('npm run migrations:latest;')
