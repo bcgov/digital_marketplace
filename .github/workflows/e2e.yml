@@ -44,9 +44,3 @@ jobs:
           start: npm run migrations:latest,npm run start
           # start: npm run start
           wait-on: 'http://localhost:3000'
-      - name: Upload screenshots
-        uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-            name: cypress-snapshots
-            path: /home/runner/work/digital_marketplace/digital_marketplace/cypress/screenshots/

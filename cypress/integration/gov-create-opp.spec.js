@@ -3,7 +3,8 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         // clean up db
-        cy.exec('dropdb -f --if-exists digitalmarketplace', { env: { PGHOST: Cypress.env('PGHOST') } })
+        // cy.exec('dropdb -f --if-exists digitalmarketplace', { env: { PGHOST: Cypress.env('PGHOST') } })
+        cy.exec('dropdb -f --if-exists digitalmarketplace -p 5432 -h localhost')
         // cy.exec('docker ps')
         // cy.exec('docker exec db dropdb -f --if-exists digitalmarketplace')
         // set up db
