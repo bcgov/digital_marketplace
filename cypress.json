@@ -2,5 +2,14 @@
     "baseUrl": "http://localhost:3000",
     "video": false,
     "viewportWidth": 1200,
-    "viewportHeight": 870
+    "viewportHeight": 870,
+    "env":{
+        "DB": {
+            "user": "digitalmarketplace",
+            "host": "http://localhost:5432",
+            "database": "digitalmarketplace",
+            "password": "digitalmarketplace",
+            "port": 5432
+        }
+      }
 }
