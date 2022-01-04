@@ -30,7 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
         # Install NPM dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
