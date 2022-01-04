@@ -7,12 +7,12 @@
         "POSTGRES_USER": "digitalmarketplace",
         "POSTGRES_PASSWORD": "digitalmarketplace",
         "POSTGRES_DB": "digitalmarketplace",
-        "POSTGRES_HOST": "http://localhost:5432",
+        "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "PGUSER": "digitalmarketplace",
         "PGPASSWORD": "digitalmarketplace",
         "PGDB": "digitalmarketplace",
-        "PGHOST": "http://localhost:5432",
+        "PGHOST": "localhost",
         "PGPORT": "5432",
         "POSTGRES_URL": "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
       }

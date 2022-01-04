@@ -36,8 +36,9 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v2
         env:
-          POSTGRES_HOST: postgres
+          POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
+          PGHOST: localhost
         with:
           build: npm run build
           start: npm run migrations:latest,npm run start
