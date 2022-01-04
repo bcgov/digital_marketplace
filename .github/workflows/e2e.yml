@@ -41,6 +41,6 @@ jobs:
           POSTGRES_PORT: 5432
         with:
           build: npm run build
-          start: npm run migrations:latest,npm run start
-          # start: npm run start
+          # start: npm run migrations:latest,npm run start
+          start: npm run start
           wait-on: 'http://localhost:3000'
