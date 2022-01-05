@@ -17,7 +17,8 @@ describe('As a user authenticated via IDIR', function() {
     it('creates and saves a draft of a new CWU opportunity', function() {
 
         cy.visit("/opportunities/create")
-        cy.contains('Get Started').first().click()
+        cy.get('a[href="/opportunities/code-with-us/create"]').should('be.visible')
+        cy.contains('Get Started').first().click({force: true})
 
         // 1. Overview tab
         cy.get('#cwu-opportunity-title').type('Cypress Opp')
