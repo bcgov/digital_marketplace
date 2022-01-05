@@ -13,7 +13,7 @@
         "PGUSER": "digitalmarketplace",
         "PGPASSWORD": "digitalmarketplace",
         "PGDB": "digitalmarketplace",
-        "PGHOST": "iamabadvars",
+        "PGHOST": "localhost",
         "PGPORT": "5432",
         "POSTGRES_URL": "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
       }
