@@ -127,36 +127,27 @@ npm install
 
 If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and PostgreSQL database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
 
-You can stop the PostgreSQL container by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
-
 ### Local Development Environment
 
-#### First-Time Set Up
-
-To create the database, start postgres on port 5432 (`pg_ctl start`) and run the following commands:
-```bash
-createdb digitalmarketplace # Create a local database
-psql digitalmarketplace # Enter the psql shell
-create user digitalmarketplace with password 'digitalmarketplace'; # Create a user and password for the database
-```
-
-Exit the psql shell and run `npm run migrations:latest`
-
-#### Running the App
-
-Start postgres on port 5432 if it isn't already running: `pg_ctl start`
-
-Open two terminals and run the following commands:
+Open three terminals and run the following commands:
 
 ```bash
 # Terminal 1
-npm run back-end:watch # Start the back-end server, restart on source changes.
+docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
+npm run migrations:latest # Run all database migrations.
+docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
 
 # Terminal 2
+npm run back-end:watch # Start the back-end server, restart on source changes.
+
+# Terminal 3
 npm run front-end:watch # Build the front-end source code, rebuild on source changes.
 ```
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.
+
+You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
+
 
 ### NPM Scripts
 
