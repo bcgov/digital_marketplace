@@ -3,7 +3,6 @@
     "video": false,
     "viewportWidth": 1200,
     "viewportHeight": 870,
-    "execTimeout":300000,
     "env":{
         "POSTGRES_USER": "digitalmarketplace",
         "POSTGRES_PASSWORD": "digitalmarketplace",

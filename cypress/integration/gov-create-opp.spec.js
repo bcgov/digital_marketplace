@@ -3,13 +3,13 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         // clean up db
-        cy.exec('dropdb -f --if-exists digitalmarketplace', { env: { PGHOST: Cypress.env('PGHOST') } })
+        cy.exec('docker exec db dropdb -f -U digitalmarketplace --if-exists digitalmarketplace', { env: { PGPASSWORD: Cypress.env('PGHOST') } })
         // cy.exec('docker exec db dropdb -f --if-exists digitalmarketplace')
         // set up db
         // // cy.exec('psql -c "CREATE DATABASE digitalmarketplace"')
-        cy.exec('createdb digitalmarketplace')
+        cy.exec('docker exec db createdb -U digitalmarketplace digitalmarketplace')
         cy.exec('npm run migrations:latest;')
-        cy.exec('psql digitalmarketplace -f ./cypress/fixtures/users.sql')
+        cy.exec('docker exec db psql -U digitalmarketplace digitalmarketplace -f ./cypress/fixtures/users.sql')
         cy.visit('auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
     })
