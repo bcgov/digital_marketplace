@@ -19,6 +19,7 @@ services:
     image: postgres
     volumes:
       - dm-vol:/var/lib/postgresql/data
+      - ./:/workspace
     restart: always
     ports:
       - "5432:5432"
@@ -29,3 +30,4 @@ services:
 
 volumes:
   dm-vol:
+  cypress-vol:
