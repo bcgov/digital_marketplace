@@ -3,11 +3,11 @@ on: [push]
 jobs:
   cypress:
     runs-on: ubuntu-latest
-    env:
-      POSTGRES_URL: "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
-      COOKIE_SECRET: "foobar"
-      MAILER_HOST: "foobar"
-      MAILER_PORT: "321"
+    # env:
+    #   POSTGRES_URL: "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
+
+    #   MAILER_HOST: "foobar"
+    #   MAILER_PORT: "321"
     # prevent a hanging process from using all the CI minutes
     timeout-minutes: 10
 
@@ -46,9 +46,13 @@ jobs:
           CYPRESS_RECORD_KEY: ${{secrets.CYPRESS_RECORD_KEY}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           NODE_ENV: "development"
+          POSTGRES_URL: "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
+          MAILER_GMAIL_USER: "fake@gmail.com"
+          MAILER_GMAIL_PASS: "password"
+          COOKIE_SECRET: "foobar"
         with:
           build: npm run build
           # start: npm run migrations:latest,npm run start
           start: npm run start
-          wait-on: 'http://localhost:3000'
+          wait-on: 'http://localhost:3000,http://localhost:5432'
           record: true

@@ -26,3 +26,13 @@
 
 import 'cypress-file-upload';
 import '@testing-library/cypress/add-commands';
+
+Cypress.Commands.add('cleanDB', () => {
+    cy.exec('docker exec dm_db dropdb -f -U digitalmarketplace --if-exists digitalmarketplace', { env: { PGPASSWORD: Cypress.env('PGHOST') } })
+    cy.exec('docker exec dm_db createdb -U digitalmarketplace digitalmarketplace')
+    cy.exec('npm run migrations:latest;')
+  })
+Cypress.Commands.add('seedDB',(seedFile)=>{
+
+    cy.exec(`docker exec dm_db psql -U digitalmarketplace digitalmarketplace -f ${seedFile}`)
+})
