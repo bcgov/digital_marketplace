@@ -10,7 +10,9 @@ describe('As a user authenticated via IDIR', function() {
         cy.exec('docker exec dm_db createdb -U digitalmarketplace digitalmarketplace')
         cy.exec('npm run migrations:latest;')
         cy.exec('docker exec dm_db psql -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/users.sql')
+        cy.screenshot()
         cy.visit('auth/createsession')
+        cy.screenshot()
         Cypress.Cookies.preserveOnce("sid")
     })
 
