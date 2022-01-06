@@ -43,8 +43,11 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           PGHOST: localhost
+          CYPRESS_RECORD_KEY: ${{secrets.CYPRESS_RECORD_KEY}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           build: npm run build
           # start: npm run migrations:latest,npm run start
           start: npm run start
           wait-on: 'http://localhost:3000'
+          record: true

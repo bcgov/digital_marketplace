@@ -1,20 +1,21 @@
 {
-    "baseUrl": "http://localhost:3000",
-    "video": false,
-    "viewportWidth": 1200,
-    "viewportHeight": 870,
-    "defaultCommandTimeout":20000,
-    "env":{
-        "POSTGRES_USER": "digitalmarketplace",
-        "POSTGRES_PASSWORD": "digitalmarketplace",
-        "POSTGRES_DB": "digitalmarketplace",
-        "POSTGRES_HOST": "localhost",
-        "POSTGRES_PORT": "5432",
-        "PGUSER": "digitalmarketplace",
-        "PGPASSWORD": "digitalmarketplace",
-        "PGDB": "digitalmarketplace",
-        "PGHOST": "localhost",
-        "PGPORT": "5432",
-        "POSTGRES_URL": "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
-      }
+  "baseUrl": "http://localhost:3000",
+  "video": false,
+  "viewportWidth": 1200,
+  "viewportHeight": 870,
+  "defaultCommandTimeout": 20000,
+  "env": {
+    "POSTGRES_USER": "digitalmarketplace",
+    "POSTGRES_PASSWORD": "digitalmarketplace",
+    "POSTGRES_DB": "digitalmarketplace",
+    "POSTGRES_HOST": "localhost",
+    "POSTGRES_PORT": "5432",
+    "PGUSER": "digitalmarketplace",
+    "PGPASSWORD": "digitalmarketplace",
+    "PGDB": "digitalmarketplace",
+    "PGHOST": "localhost",
+    "PGPORT": "5432",
+    "POSTGRES_URL": "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
+  },
+  "projectId": "c35aj7"
 }
