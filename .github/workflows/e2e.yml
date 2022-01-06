@@ -54,5 +54,5 @@ jobs:
           build: npm run build
           # start: npm run migrations:latest,npm run start
           start: npm run start
-          wait-on: 'http://localhost:3000,http://localhost:5432'
+          wait-on: 'http://localhost:3000'
           record: true
