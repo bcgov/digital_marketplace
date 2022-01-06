@@ -45,6 +45,7 @@ jobs:
           PGHOST: localhost
           CYPRESS_RECORD_KEY: ${{secrets.CYPRESS_RECORD_KEY}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          NODE_ENV: "development"
         with:
           build: npm run build
           # start: npm run migrations:latest,npm run start
