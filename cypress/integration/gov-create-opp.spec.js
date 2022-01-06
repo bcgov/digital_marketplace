@@ -18,7 +18,7 @@ describe('As a user authenticated via IDIR', function() {
 
         cy.visit("/opportunities/create")
         cy.get('a[href="/opportunities/code-with-us/create"]').should('be.visible')
-        cy.get('a[href="/opportunities/code-with-us/create"]').click({force: true})
+        cy.get('a[href="/opportunities/code-with-us/create"]').click()
 
         // 1. Overview tab
         cy.get('#cwu-opportunity-title').should('be.visible').type('Cypress Opp')
