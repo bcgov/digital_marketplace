@@ -42,6 +42,11 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-submission-info').type('github repo')
         cy.get('#cwu-opportunity-acceptance-criteria').type('Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').type('Some evaluation criteria')
+        cy.contains('Save Draft').click({force: true});
+        cy.screenshot()
+        cy.contains('Next').click()
+        cy.contains('Previous').click()
+        cy.screenshot()
         cy.contains('Next').click()
         // 4. Attachments tab
         const fixtureFile = 'Screenshot.png';
