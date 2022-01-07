@@ -4,13 +4,16 @@ describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.seedDB('/workspace/cypress/fixtures/dbReset.sql')
         cy.seedDB('/workspace/cypress/fixtures/users.sql')
-        cy.visit('auth/createsession')
+        cy.visit('/auth/createsession')
+        cy.url().then(url => {
+            cy.log(url)
+          });
         Cypress.Cookies.preserveOnce("sid")
-        cy.getCookie('sid').should('exist');
+        // cy.getCookie('sid').should('exist');
     })
 
     it('creates and saves a draft of a new CWU opportunity', function() {
-        cy.getCookie('sid').should('exist');
+        // cy.getCookie('sid').should('exist');
         cy.visit("/opportunities/create")
         cy.get('a[href="/opportunities/code-with-us/create"]').should('be.visible')
         cy.get('a[href="/opportunities/code-with-us/create"]').click()
