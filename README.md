@@ -115,7 +115,6 @@ If you are not using Nix, please ensure the following packages have been install
 - SASS
 - Docker
 - Docker Compose 3.x
-- Postgres
 
 Once installed, `cd` into this repository's root directory and proceed to install NPM dependencies:
 
@@ -125,7 +124,7 @@ npm install
 
 ### Containerized Quick Start
 
-If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and PostgreSQL database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
+If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
 
 ### Local Development Environment
 
@@ -147,7 +146,6 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 Then, visit the URL logged to your terminal to view the now locally-running web application.
 
 You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
-
 
 ### NPM Scripts
 
