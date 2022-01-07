@@ -1,11 +1,3 @@
--- begin;
-
--- truncate table cif.project cascade;
--- truncate table cif.operator cascade;
--- truncate table cif.user cascade;
-
--- commit;
-
 CREATE OR REPLACE FUNCTION truncate_tables(username IN VARCHAR) RETURNS void AS $$
 DECLARE
     statements CURSOR FOR

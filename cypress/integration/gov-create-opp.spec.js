@@ -5,15 +5,11 @@ describe('As a user authenticated via IDIR', function() {
         cy.seedDB('/workspace/cypress/fixtures/dbReset.sql')
         cy.seedDB('/workspace/cypress/fixtures/users.sql')
         cy.visit('/auth/createsession')
-        cy.url().then(url => {
-            cy.log(url)
-          });
         Cypress.Cookies.preserveOnce("sid")
         cy.getCookie('sid').should('exist');
     })
 
     it('creates and saves a draft of a new CWU opportunity', function() {
-        // cy.getCookie('sid').should('exist');
         cy.visit("/opportunities/create")
         cy.get('a[href="/opportunities/code-with-us/create"]').should('be.visible')
         cy.get('a[href="/opportunities/code-with-us/create"]').click()
@@ -38,12 +34,9 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-assignment-date').type('2030-01-31')
         cy.get('#cwu-opportunity-start-date').type('2030-02-15')
         cy.get('#cwu-opportunity-completion-date').type('2030-02-28')
-        cy.screenshot()
         cy.get('#cwu-opportunity-submission-info').type('github repo')
         cy.get('#cwu-opportunity-acceptance-criteria').type('Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').type('Some evaluation criteria')
-        // cy.contains('Save Draft').click({force: true});
-        cy.screenshot()
         cy.contains('Next').click()
 
         // 4. Attachments tab
@@ -79,6 +72,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-acceptance-criteria').should('have.value','Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').should('have.value','Some evaluation criteria')
         cy.contains('Next').click()
+
         // 4. Attachments tab
         cy.get('[type=text]').should('have.value','Screenshot.png')
     })
