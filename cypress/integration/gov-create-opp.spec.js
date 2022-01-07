@@ -2,7 +2,7 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        cy.cleanDB()
+        cy.seedDB('/workspace/cypress/fixtures/dbReset.sql')
         cy.seedDB('/workspace/cypress/fixtures/users.sql')
         cy.visit('auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
