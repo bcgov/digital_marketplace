@@ -27,20 +27,6 @@
 import 'cypress-file-upload';
 import '@testing-library/cypress/add-commands';
 
-Cypress.Commands.add('cleanDB', () => {
-    cy.exec('docker exec dm_db dropdb -f -U digitalmarketplace --if-exists digitalmarketplace', { env: { PGPASSWORD: Cypress.env('PGHOST') } })
-    cy.exec('docker exec dm_db createdb -U digitalmarketplace digitalmarketplace')
-    cy.exec('npm run migrations:latest;')
-  })
-Cypress.Commands.add('seedDB',(seedFile)=>{
-
-    cy.exec(`docker exec dm_db psql -U digitalmarketplace digitalmarketplace -f ${seedFile}`)
+Cypress.Commands.add('sqlFixture',(sqlFilename)=>{
+    cy.exec(`docker exec dm_db psql -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/${sqlFilename}`) //need /workspace/ because that's the file structure in the db container
 })
-
-Cypress.Commands.add("sqlFixture", (fixtureName) => {
-  cy.fixture(`${fixtureName}.sql`).then((fixture) =>
-  cy.exec(`docker exec dm_db psql -U digitalmarketplace -d digital_marketplace<< EOF
- ${fixture}
- EOF`)
-  );
- });

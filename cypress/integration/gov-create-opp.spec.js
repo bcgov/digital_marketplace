@@ -2,8 +2,8 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        cy.seedDB('/workspace/cypress/fixtures/dbReset.sql')
-        cy.seedDB('/workspace/cypress/fixtures/users.sql')
+        cy.sqlFixture('dbReset.sql')
+        cy.sqlFixture('users.sql')
         cy.visit('/auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
         cy.getCookie('sid').should('exist');
@@ -75,6 +75,7 @@ describe('As a user authenticated via IDIR', function() {
 
         // 4. Attachments tab
         cy.get('[type=text]').should('have.value','Screenshot.png')
+
     })
 
 
