@@ -27,6 +27,7 @@ services:
       POSTGRES_USER: digitalmarketplace
       POSTGRES_PASSWORD: digitalmarketplace
       POSTGRES_DB: digitalmarketplace
+    command: ["postgres", "-c", "log_statement=all"]
 
 volumes:
   dm-vol:
