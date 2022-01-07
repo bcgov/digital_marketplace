@@ -34,10 +34,11 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Next').click()
 
         // 3. Details tab
-        cy.get('#cwu-opportunity-proposal-deadline').type('2030-01-31')
-        cy.get('#cwu-opportunity-assignment-date').type('2030-02-28')
-        cy.get('#cwu-opportunity-start-date').type('2030-03-31')
-        cy.get('#cwu-opportunity-completion-date').type('2030-04-30')
+        cy.get('#cwu-opportunity-proposal-deadline').type('2025-01-31')
+        cy.get('#cwu-opportunity-assignment-date').type('2025-02-28')
+        cy.get('#cwu-opportunity-start-date').type('2025-03-31')
+        cy.get('#cwu-opportunity-completion-date').type('2025-04-30')
+        cy.screenshot()
         cy.get('#cwu-opportunity-submission-info').type('github repo')
         cy.get('#cwu-opportunity-acceptance-criteria').type('Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').type('Some evaluation criteria')
@@ -67,10 +68,10 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Next').click()
 
         // 3. Details tab
-        cy.get('#cwu-opportunity-proposal-deadline').should('have.value','2030-01-31')
-        cy.get('#cwu-opportunity-assignment-date').should('have.value','2030-02-28')
-        cy.get('#cwu-opportunity-start-date').should('have.value','2030-03-31')
-        cy.get('#cwu-opportunity-completion-date').should('have.value','2030-04-30')
+        cy.get('#cwu-opportunity-proposal-deadline').should('have.value','2025-01-31')
+        cy.get('#cwu-opportunity-assignment-date').should('have.value','2025-02-28')
+        cy.get('#cwu-opportunity-start-date').should('have.value','2025-03-31')
+        cy.get('#cwu-opportunity-completion-date').should('have.value','2025-04-30')
         cy.get('#cwu-opportunity-submission-info').should('have.value','github repo')
         cy.get('#cwu-opportunity-acceptance-criteria').should('have.value','Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').should('have.value','Some evaluation criteria')
