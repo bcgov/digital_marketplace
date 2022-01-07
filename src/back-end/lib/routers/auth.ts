@@ -164,6 +164,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           if (isInvalid(result)) {
             // @ts-ignore
             makeAuthErrorRedirect(request);
+            console.log('Error: Unsuccessful login')
             return null;
           }
 
@@ -180,6 +181,7 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           };
         } catch (error) {
           request.logger.error('authentication failed', makeErrorResponseBody(error));
+          console.log('Error: Unsuccessful login')
           // @ts-ignore
           return makeAuthErrorRedirect(request);
         }

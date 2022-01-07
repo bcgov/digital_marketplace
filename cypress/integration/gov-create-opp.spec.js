@@ -9,7 +9,7 @@ describe('As a user authenticated via IDIR', function() {
             cy.log(url)
           });
         Cypress.Cookies.preserveOnce("sid")
-        // cy.getCookie('sid').should('exist');
+        cy.getCookie('sid').should('exist');
     })
 
     it('creates and saves a draft of a new CWU opportunity', function() {
