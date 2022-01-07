@@ -36,3 +36,11 @@ Cypress.Commands.add('seedDB',(seedFile)=>{
 
     cy.exec(`docker exec dm_db psql -U digitalmarketplace digitalmarketplace -f ${seedFile}`)
 })
+
+Cypress.Commands.add("sqlFixture", (fixtureName) => {
+  cy.fixture(`${fixtureName}.sql`).then((fixture) =>
+  cy.exec(`docker exec dm_db psql -U digitalmarketplace -d digital_marketplace<< EOF
+ ${fixture}
+ EOF`)
+  );
+ });
