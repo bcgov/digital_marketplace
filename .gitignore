@@ -16,6 +16,7 @@ node_modules/
 /.rpt2_cache/
 .vscode/
 /cypress/screenshots/
+/cypress/videos/
 
 Session.vim
 tags
