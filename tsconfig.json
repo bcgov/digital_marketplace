@@ -7,6 +7,7 @@
         "allowJs": true,
         "strict": true,
         "noImplicitReturns": true,
+        "noImplicitAny": false,
         "forceConsistentCasingInFileNames": true,
         "noUnusedLocals": true,
         "esModuleInterop": true,
@@ -27,7 +28,7 @@
       "**/*.ts",
       "**/*.tsx",
       "**/*.json",
-      "**/*.js"
+      "**/*.js", "tserrors"
     ],
     "exclude": [
         "node_modules"
