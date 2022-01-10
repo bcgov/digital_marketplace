@@ -473,6 +473,7 @@ export function isProponentTabValid(state: State): boolean {
     case 'organization':
       return FormField.isValid(state.organization);
   }
+  return false;
 }
 
 export function isProposalTabValid(state: State): boolean {

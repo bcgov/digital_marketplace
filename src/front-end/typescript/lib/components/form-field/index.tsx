@@ -236,7 +236,7 @@ export function makeComponent<Value, ChildParams extends ChildParamsBase<Value>,
   };
 }
 
-export function getValue<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Value {
+export function getValue<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Value | any{
   return state.child.value;
 }
 
@@ -249,7 +249,7 @@ export function updateValue<Value, ChildState extends ChildStateBase<Value>>(sta
   return setValue(state, fn(value));
 }
 
-export function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>>): Immutable<State<Value, ChildState>> {
+export function validate<Value, ChildState extends ChildStateBase<Value>>(state: Immutable<State<Value, ChildState>> | any): Immutable<State<Value, ChildState>> {
   return state.validate
     ? validateAndSetValue(state, getValue(state), state.validate)
     : state;

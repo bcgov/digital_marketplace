@@ -459,7 +459,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const successfulProponentName = state.opportunity.successfulProponent?.name;
     return {
       info: (() => {
-        const alerts = [];
+        const alerts: any = [];
         if (viewerUser && isVendor(viewerUser) && existingProposal?.submittedAt) {
           alerts.push({
             text: `You submitted a proposal to this opportunity on ${formatDateAtTime(existingProposal.submittedAt, true)}.`

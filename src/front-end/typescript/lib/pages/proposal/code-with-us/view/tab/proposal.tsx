@@ -150,7 +150,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startScoreLoading(state),
         async (state, dispatch) => {
           state = stopScoreLoading(state);
-          const score = FormField.getValue(state.score);
+          const score: any = FormField.getValue(state.score);
           if (score === null) { return state; }
           const result = await api.proposals.cwu.update(state.proposal.id, adt('score', score));
           switch (result.tag) {
@@ -177,7 +177,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startDisqualifyLoading(state),
         async (state, dispatch) => {
           state = stopDisqualifyLoading(state);
-          const reason = FormField.getValue(state.disqualificationReason);
+          const reason: any = FormField.getValue(state.disqualificationReason);
           const result = await api.proposals.cwu.update(state.proposal.id, adt('disqualify', reason));
           switch (result.tag) {
             case 'valid':

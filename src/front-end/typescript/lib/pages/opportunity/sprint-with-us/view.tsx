@@ -549,7 +549,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const isAcceptingProposals = isSWUOpportunityAcceptingProposals(state.opportunity);
     return {
       info: (() => {
-        const alerts = [];
+        const alerts: any = [];
         if (vendor && existingProposal?.submittedAt) {
           alerts.push({
             text: `You submitted a proposal to this opportunity on ${formatDateAtTime(existingProposal.submittedAt, true)}.`
