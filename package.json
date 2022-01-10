@@ -46,18 +46,7 @@
   },
   "dependencies": {
     "@keycloak/keycloak-admin-client": "^15.0.2",
-    "@types/cookie-parser": "^1.4.1",
-    "@types/dotenv": "^6.1.0",
-    "@types/express": "^4.16.1",
-    "@types/immutable": "^3.8.7",
-    "@types/lodash": "^4.14.175",
-    "@types/mime-types": "^2.1.0",
-    "@types/moment": "^2.13.0",
-    "@types/node": "^14.6.0",
-    "@types/react": "^16.8.19",
-    "@types/react-dom": "^16.8.4",
-    "@types/uuid": "^3.4.5",
-    "@types/yargs": "^15.0.5",
+   
     "@wordpress/wordcount": "^2.7.0",
     "body-parser": "^1.18.3",
     "bowser": "^2.9.0",
@@ -96,26 +85,9 @@
     "@babel/core": "^7.16.0",
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-react": "^7.16.0",
-    "@babel/preset-typescript": "^7.16.0",
-    "@commitlint/config-conventional": "^15.0.0",
-    "@testing-library/cypress": "^8.0.2",
+   
     "@testing-library/react": "^12.1.2",
-    "@types/cors": "^2.8.7",
-    "@types/html-to-text": "^1.4.31",
-    "@types/jest": "^25.1.5",
-    "@types/keycloak-connect": "^4.5.1",
-    "@types/mocha": "^7.0.2",
-    "@types/moment-timezone": "^0.5.10",
-    "@types/multiparty": "0.0.32",
-    "@types/nodemailer": "^6.2.1",
-    "@types/react-select": "^3.0.5",
-    "@types/reactstrap": "^8.4.1",
-    "@types/sha.js": "^2.4.0",
-    "@types/swagger-jsdoc": "^3.0.2",
-    "@types/swagger-ui-express": "^4.1.2",
-    "@types/wordpress__wordcount": "^2.4.0",
-    "@typescript-eslint/eslint-plugin": "^5.5.0",
-    "@typescript-eslint/parser": "^5.5.0",
+   
     "autoprefixer": "^9.4.4",
     "axios": "^0.21.1",
     "babel-jest": "^27.3.1",
@@ -160,8 +132,7 @@
     "reactstrap": "^8.4.0",
     "require-dir": "^1.2.0",
     "serve": "^11.3.2",
-    "ts-jest": "^27.0.7",
-    "tslint": "^5.12.1",
+    
     "typedoc": "^0.15.0"
   }
 }
