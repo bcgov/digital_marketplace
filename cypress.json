@@ -1,4 +1,7 @@
 {
-    "baseUrl": "http://localhost:3000",
-    "video": false
+  "baseUrl": "http://localhost:3000",
+  "video": false,
+  "viewportWidth": 1200,
+  "viewportHeight": 870,
+  "projectId": "c35aj7"
 }
