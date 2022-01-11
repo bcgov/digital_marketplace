@@ -47,6 +47,7 @@
   "dependencies": {
     "@babel/preset-typescript": "^7.16.7",
     "@keycloak/keycloak-admin-client": "^15.0.2",
+    "@testing-library/cypress": "^8.0.2",
     "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.12",
     "@types/dotenv": "^8.2.0",
