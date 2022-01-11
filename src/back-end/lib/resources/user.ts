@@ -35,7 +35,7 @@ type Resource = crud.Resource<
   null,
   null,
   null,
-  UpdateRequestBody,
+  UpdateRequestBody | any,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
   DeleteValidatedReqBody,
