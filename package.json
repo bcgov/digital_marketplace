@@ -89,7 +89,7 @@
     "jest-diff": "^25.5.0",
     "jimp": "^0.16.0",
     "keycloak-connect": "^8.0.0",
-    "knex": "^0.19.3",
+    "knex": "0.19.5",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
     "module-alias": "^2.2.2",
@@ -118,9 +118,9 @@
     "@commitlint/config-conventional": "^15.0.0",
     "@testing-library/react": "^12.1.2",
     "autoprefixer": "^9.4.4",
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "babel-jest": "^27.3.1",
-    "bootstrap": "4.4.1",
+    "bootstrap": "^4.6.1",
     "cssnano": "^4.1.10",
     "cypress": "^9.2.0",
     "cypress-file-upload": "^5.0.8",
@@ -161,6 +161,6 @@
     "reactstrap": "^8.4.0",
     "require-dir": "^1.2.0",
     "serve": "^11.3.2",
-    "typedoc": "^0.15.0"
+    "typedoc": "^0.22.10"
   }
 }
