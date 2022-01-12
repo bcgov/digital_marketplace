@@ -2,7 +2,7 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        // cy.sqlFixture('dbReset.sql')
+        cy.sqlFixture('dbReset.sql')
         cy.sqlFixture('users.sql')
         cy.visit('/auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
@@ -89,7 +89,7 @@ describe('As a user authenticated via IDIR', function() {
 
 
     it('updates and existing CWU opportunity', function() {
-
+        cy.sqlFixture('cwuOpportunity.sql')
         cy.visit("/dashboard")
         cy.contains('Cypress Opp').click()
         cy.get('a[href*="tab=opportunity"]').first().click()
