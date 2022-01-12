@@ -20,7 +20,7 @@ export interface Params {
   viewerUser: User;
 }
 
-export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
+export type Component<State extends object, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 
 export interface Tabs {
   proposal: TabbedPage.Tab<Params, ProposalTab.State, ProposalTab.InnerMsg>;

@@ -61,7 +61,7 @@ export function makeModal<ParentMsg>(params: MakeModalParams<ParentMsg>): PageMo
   };
 }
 
-export interface SubmitAcceptNewTermsParams<ParentState, ParentInnerMsg> {
+export interface SubmitAcceptNewTermsParams<ParentState extends object, ParentInnerMsg> {
   state: Immutable<ParentState>;
   userId: Id;
   startLoading: WithState<ParentState>;
@@ -69,7 +69,7 @@ export interface SubmitAcceptNewTermsParams<ParentState, ParentInnerMsg> {
   onSuccess?: AsyncWithState<ParentState>;
 }
 
-export function submitAcceptNewTerms<ParentState, ParentInnerMsg>(params: SubmitAcceptNewTermsParams<ParentState, ParentInnerMsg>): UpdateReturnValue<ParentState, GlobalComponentMsg<ParentInnerMsg, Route>> {
+export function submitAcceptNewTerms<ParentState extends object, ParentInnerMsg>(params: SubmitAcceptNewTermsParams<ParentState, ParentInnerMsg>): UpdateReturnValue<ParentState, GlobalComponentMsg<ParentInnerMsg, Route>> {
   return [
     params.startLoading(params.state),
     async (state, dispatch) => {

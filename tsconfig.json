@@ -7,6 +7,7 @@
         "allowJs": true,
         "strict": true,
         "noImplicitReturns": true,
+        "noImplicitAny": false,
         "forceConsistentCasingInFileNames": true,
         "noUnusedLocals": true,
         "esModuleInterop": true,

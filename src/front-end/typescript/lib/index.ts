@@ -10,11 +10,11 @@ export function prefixPath(path: string): string {
   return `/${prefix(PATH_PREFIX)(path)}`;
 }
 
-export type WithState<State, OtherArgs extends unknown[] = [], Result = Immutable<State>> = (state: Immutable<State>, ...otherArgs: OtherArgs) => Result;
+export type WithState<State extends object, OtherArgs extends unknown[] = [], Result = Immutable<State>> = (state: Immutable<State>, ...otherArgs: OtherArgs) => Result;
 
-export type AsyncWithState<State, OtherArgs extends unknown[] = [], Result = Immutable<State>> = WithState<State, OtherArgs, Promise<Result>>;
+export type AsyncWithState<State extends object, OtherArgs extends unknown[] = [], Result = Immutable<State>> = WithState<State, OtherArgs, Promise<Result>>;
 
-export function makeStartLoading<State>(key: keyof State): WithState<State> {
+export function makeStartLoading<State extends object>(key: keyof State): WithState<State> {
   return state => {
     const value = state.get(key);
     if (typeof value === 'number') {
@@ -27,7 +27,7 @@ export function makeStartLoading<State>(key: keyof State): WithState<State> {
   };
 }
 
-export function makeStopLoading<State>(key: keyof State): WithState<State> {
+export function makeStopLoading<State  extends object>(key: keyof State): WithState<State> {
   return state => {
     const value = state.get(key);
     if (typeof value === 'number') {
@@ -40,13 +40,13 @@ export function makeStopLoading<State>(key: keyof State): WithState<State> {
   };
 }
 
-export type ValidatedState<ValidState> = Validation<Immutable<ValidState>, null>;
+export type ValidatedState<ValidState  extends object> = Validation<Immutable<ValidState>, null>;
 
-export function withValid<ValidState, Result>(fn: WithState<ValidState, [], Result>, defaultResult: Result): WithState<ValidatedState<ValidState>, [], Result> {
+export function withValid<ValidState  extends object, Result>(fn: WithState<ValidState, [], Result>, defaultResult: Result): WithState<ValidatedState<ValidState>, [], Result> {
   return state => getValidValue(mapValid(state, fn), defaultResult);
 }
-
-export function updateValid<ValidState, Msg>(update: Update<ValidState, Msg>): Update<ValidatedState<ValidState>, Msg> {
+//
+export function updateValid<ValidState extends object, Msg>(update: Update<ValidState, Msg> | any): Update<ValidatedState<ValidState>, Msg> | any{
   return ({ state, msg }) => {
     if (isInvalid(state)) { return [state]; }
     const result = update({
@@ -64,7 +64,7 @@ export function updateValid<ValidState, Msg>(update: Update<ValidState, Msg>): U
   };
 }
 
-export function viewValid<ValidState, Msg>(view: ComponentView<ValidState, Msg>): ComponentView<ValidatedState<ValidState>, Msg> {
+export function viewValid<ValidState  extends object, Msg>(view: ComponentView<ValidState, Msg>): ComponentView<ValidatedState<ValidState>, Msg> {
   return ({ state, dispatch }) => {
     if (isInvalid(state)) { return null; }
     return view({
@@ -74,7 +74,7 @@ export function viewValid<ValidState, Msg>(view: ComponentView<ValidState, Msg>)
   };
 }
 
-export function sidebarValid<ValidState, Msg>(sidebar: PageSidebar<ValidState, Msg>): PageSidebar<ValidatedState<ValidState>, Msg> {
+export function sidebarValid<ValidState  extends object, Msg>(sidebar: PageSidebar<ValidState, Msg>): PageSidebar<ValidatedState<ValidState>, Msg> {
   return {
     ...sidebar,
     isEmptyOnMobile: sidebar.isEmptyOnMobile !== undefined ? withValid(sidebar.isEmptyOnMobile, false) : undefined,
@@ -82,23 +82,23 @@ export function sidebarValid<ValidState, Msg>(sidebar: PageSidebar<ValidState, M
   };
 }
 
-export function getMetadataValid<ValidState>(getMetadata: PageGetMetadata<ValidState>, defaultMetadata: PageMetadata): PageGetMetadata<ValidatedState<ValidState>> {
+export function getMetadataValid<ValidState  extends object>(getMetadata: PageGetMetadata<ValidState>, defaultMetadata: PageMetadata): PageGetMetadata<ValidatedState<ValidState>> {
   return withValid(getMetadata, defaultMetadata);
 }
 
-export function getBreadcrumbsValid<ValidState, Msg>(getBreadcrumbs: PageGetBreadcrumbs<ValidState, Msg>): PageGetBreadcrumbs<ValidatedState<ValidState>, Msg> {
+export function getBreadcrumbsValid<ValidState  extends object, Msg>(getBreadcrumbs: PageGetBreadcrumbs<ValidState, Msg>): PageGetBreadcrumbs<ValidatedState<ValidState>, Msg> {
   return withValid(getBreadcrumbs, emptyPageBreadcrumbs());
 }
 
-export function getAlertsValid<ValidState, Msg>(getAlerts: PageGetAlerts<ValidState, Msg>): PageGetAlerts<ValidatedState<ValidState>, Msg> {
+export function getAlertsValid<ValidState extends object, Msg>(getAlerts: PageGetAlerts<ValidState, Msg>): PageGetAlerts<ValidatedState<ValidState>, Msg> {
   return withValid(getAlerts, emptyPageAlerts());
 }
 
-export function getModalValid<ValidState, Msg>(getModal: PageGetModal<ValidState, Msg>): PageGetModal<ValidatedState<ValidState>, Msg> {
+export function getModalValid<ValidState  extends object, Msg>(getModal: PageGetModal<ValidState, Msg>): PageGetModal<ValidatedState<ValidState>, Msg> {
   return withValid(getModal, null);
 }
 
-export function getContextualActionsValid<ValidState, Msg>(getContextualActions: PageGetContextualActions<ValidState, Msg>): PageGetContextualActions<ValidatedState<ValidState>, Msg> {
+export function getContextualActionsValid<ValidState  extends object, Msg>(getContextualActions: PageGetContextualActions<ValidState, Msg>): PageGetContextualActions<ValidatedState<ValidState>, Msg> {
   return ({ state, dispatch }) => {
     if (isInvalid(state)) { return null; }
     return getContextualActions({

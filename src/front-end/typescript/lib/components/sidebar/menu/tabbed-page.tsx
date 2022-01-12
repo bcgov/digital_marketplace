@@ -14,17 +14,17 @@ import { adt, ADT } from 'shared/lib/types';
 
 // Types & functions to assist with constructing TabComponents inside a PageComponent.
 
-export interface TabComponent<Params, State, Msg> extends Omit<PageComponent<never, never, State, Msg>, 'init' | 'getMetadata'> {
+export interface TabComponent<Params, State extends object, Msg> extends Omit<PageComponent<never, never, State, Msg>, 'init' | 'getMetadata'> {
   init: Init<Params, State>;
 }
 
-export interface Tab<Params, State, InnerMsg> {
+export interface Tab<Params, State extends object, InnerMsg> {
   params: Params;
   state: State;
   innerMsg: InnerMsg;
 }
 
-type TabsRecord<T> = Record<keyof T, Tab<unknown, unknown, unknown>>;
+type TabsRecord<T> = Record<keyof T, Tab<unknown, any, unknown>>;
 
 type Tabs<T extends TabsRecord<T>> = T;
 

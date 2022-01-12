@@ -60,8 +60,8 @@ const globalHooks = [
   loggerHook
 ];
 
-const addHooks: (hooks: Array<RouteHook<unknown, unknown, unknown, unknown, any, Session>>) => (_: BasicRoute[]) => BasicRoute[]
-  = (hooks: Array<RouteHook<unknown, unknown, unknown, unknown, any, Session>>) => map((route: BasicRoute) => addHooksToRoute(hooks, route));
+const addHooks: (hooks: (RouteHook<unknown, unknown, unknown, unknown, any, Session>)[]) => (_: BasicRoute[]) => BasicRoute[]
+  = (hooks: (RouteHook<unknown, unknown, unknown, unknown, any, Session>)[]) => map((route: BasicRoute) => addHooksToRoute(hooks, route));
 
 // We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.
 const flippedConcat = flipCurried(concat);
