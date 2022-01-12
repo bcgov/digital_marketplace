@@ -9,7 +9,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.getCookie('sid').should('exist');
     })
 
-    it('creates, publishes, and reads new CWU opportunity', function() {
+    it('create, publish, and read new CWU opportunity', function() {
         cy.visit("/opportunities/create")
         cy.get('a[href="/opportunities/code-with-us/create"]').should('be.visible')
         cy.get('a[href="/opportunities/code-with-us/create"]').click()
@@ -49,6 +49,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Publish').click();
         cy.contains('Publish Opportunity').click();
         cy.contains('Code With Us opportunity has been published.')
+        cy.get('span[class*="badge').contains('Published')
 
 
         // Confirm form saved
@@ -88,7 +89,7 @@ describe('As a user authenticated via IDIR', function() {
     })
 
 
-    it('updates and existing CWU opportunity', function() {
+    it('update an existing CWU opportunity', function() {
         cy.sqlFixture('cwuOpportunity.sql')
         cy.visit("/dashboard")
         cy.contains('Fixture CWU Opportunity Title').click()
@@ -130,6 +131,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Publish Changes').click();
         cy.get('div[class*="modal-footer"]').children().contains('Publish Changes').click();
         cy.contains('Your changes to this Code With Us opportunity have been published.')
+        cy.get('span[class*="badge').contains('Published')
 
         // Confirm updates saved
         cy.visit("/dashboard")
@@ -165,6 +167,30 @@ describe('As a user authenticated via IDIR', function() {
         // 4. Attachments tab
         cy.get('[type=text]').should('not.exist')
 
+    })
+
+    it('suspend an existing CWU opportunity', function() {
+        cy.sqlFixture('cwuOpportunity.sql')
+        cy.visit("/dashboard")
+        cy.contains('Fixture CWU Opportunity Title').click()
+        cy.get('a[href*="tab=opportunity"]').first().click()
+        cy.contains('Actions').click()
+        cy.contains('Suspend').click()
+        cy.get('div[class*="modal-footer"]').children().contains('Suspend Opportunity').click();
+        cy.contains('Code With Us opportunity has been suspended.')
+        cy.get('span[class*="badge').contains('Suspended')
+    })
+
+    it('archive an existing CWU opportunity', function() {
+        cy.sqlFixture('cwuOpportunity.sql')
+        cy.visit("/dashboard")
+        cy.contains('Fixture CWU Opportunity Title').click()
+        cy.get('a[href*="tab=opportunity"]').first().click()
+        cy.contains('Actions').click()
+        cy.contains('Cancel').click()
+        cy.get('div[class*="modal-footer"]').children().contains('Cancel Opportunity').click();
+        cy.contains('Code With Us opportunity has been cancelled.')
+        cy.get('span[class*="badge').contains('Cancelled')
     })
 
 });
