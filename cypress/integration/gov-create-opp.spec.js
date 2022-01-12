@@ -2,7 +2,7 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        cy.sqlFixture('dbReset.sql')
+        // cy.sqlFixture('dbReset.sql')
         cy.sqlFixture('users.sql')
         cy.visit('/auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
@@ -42,10 +42,11 @@ describe('As a user authenticated via IDIR', function() {
         // 4. Attachments tab
         const fixtureFile = 'Screenshot.png';
         cy.get('[type=file]').attachFile(fixtureFile);
-        cy.contains('Save Draft').click({force: true});
+        cy.contains('Publish').click({force: true});
 
         // After opportunity has been created
         cy.contains('Draft Opportunity Saved').should('be.visible')
+        cy.pause()
 
         //Confirm entered data exists
         // 1. Overview tab
@@ -78,6 +79,9 @@ describe('As a user authenticated via IDIR', function() {
 
     })
 
-
+it('updates an existing CWU opportunity',function() {
+    cy.sqlFixture('cwuOppportunity.sql')
+    cy.visit("/opportunities")
+})
 
 });
