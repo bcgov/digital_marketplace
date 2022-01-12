@@ -91,7 +91,7 @@ describe('As a user authenticated via IDIR', function() {
     it('updates and existing CWU opportunity', function() {
         cy.sqlFixture('cwuOpportunity.sql')
         cy.visit("/dashboard")
-        cy.contains('Cypress Opp').click()
+        cy.contains('Fixture CWU Opportunity Title').click()
         cy.get('a[href*="tab=opportunity"]').first().click()
         cy.contains('Actions').click()
         cy.contains('Edit').click()
