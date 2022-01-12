@@ -8,4 +8,4 @@ INSERT INTO "cwuOpportunityVersions" (id, "createdAt", "createdBy", opportunity,
 
 INSERT INTO "cwuOpportunityAttachments" ("opportunityVersion", file) VALUES ('d43118d9-6e45-492a-9903-625b34afdea4', 'd4baf629-ff00-4318-bc4a-71996d8a220f');
 
-INSERT INTO "cwuOpportunityStatuses" (id, "createdAt", "createdBy", opportunity, status, note, event) VALUES ('524bb892-7da8-4fc4-9f8f-403343f93df9', '2022-01-12 21:50:23.583+00', '39b86e99-9a39-49ae-8962-c7d815e56125', '1ebfa422-83cf-4e7f-8b74-f31a557bbe8e', 'PUBLISHED', '', 'null');
+INSERT INTO "cwuOpportunityStatuses" (id, "createdAt", "createdBy", opportunity, status, note, event) VALUES ('524bb892-7da8-4fc4-9f8f-403343f93df9', '2022-01-12 21:50:23.583+00', '39b86e99-9a39-49ae-8962-c7d815e56125', '1ebfa422-83cf-4e7f-8b74-f31a557bbe8e', 'PUBLISHED', '', null);
