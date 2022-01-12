@@ -56,7 +56,7 @@ interface Response<Data> {
 
 export type RequestFunction = <Data>(method: ClientHttpMethod, path: string, data?: object | string, headers?: object) => Promise<Response<Data>>;
 
-export const request: RequestFunction = async (method, url, data, headers) => {
+export const request: RequestFunction = async (method: any, url: any, data: any, headers: any) => {
   try {
     const axiosResponse = await axios({
       method,
