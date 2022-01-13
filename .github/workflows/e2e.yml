@@ -28,8 +28,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
         # Install NPM dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
@@ -51,3 +49,5 @@ jobs:
           start: npm run migrations:latest,npm run start
           wait-on: 'http://localhost:3000'
           record: true
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
