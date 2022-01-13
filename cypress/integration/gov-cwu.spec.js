@@ -169,7 +169,7 @@ describe('As a user authenticated via IDIR', function() {
 
     })
 
-    it('suspend an existing CWU opportunity', function() {
+    it.skip('suspend an existing CWU opportunity', function() {
         cy.sqlFixture('cwuOpportunity.sql')
         cy.visit("/dashboard")
         cy.contains('Fixture CWU Opportunity Title').click()
@@ -181,7 +181,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('span[class*="badge"]').should('have.value', 'Suspended')
     })
 
-    it('archive an existing CWU opportunity', function() {
+    it.skip('archive an existing CWU opportunity', function() {
         cy.sqlFixture('cwuOpportunity.sql')
         cy.visit("/dashboard")
         cy.contains('Fixture CWU Opportunity Title').click()
