@@ -48,8 +48,8 @@ describe('As a user authenticated via IDIR', function() {
         // Publish
         cy.contains('Publish').click();
         cy.contains('Publish Opportunity').click();
-        cy.contains('Code With Us opportunity has been published.')
-        cy.get('span[class*="badge').contains('Published')
+        cy.contains('Code With Us opportunity has been published.').should('exist');
+        cy.get('span[class*="badge"]').should('have.value', 'Published')
 
 
         // Confirm form saved
@@ -130,8 +130,8 @@ describe('As a user authenticated via IDIR', function() {
         // Publish changes
         cy.contains('Publish Changes').click();
         cy.get('div[class*="modal-footer"]').children().contains('Publish Changes').click();
-        cy.contains('Your changes to this Code With Us opportunity have been published.')
-        cy.get('span[class*="badge').contains('Published')
+        cy.contains('Your changes to this Code With Us opportunity have been published.').should('exist');
+        cy.get('span[class*="badge"]').should('have.value', 'Published')
 
         // Confirm updates saved
         cy.visit("/dashboard")
@@ -177,8 +177,8 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Actions').click()
         cy.contains('Suspend').click()
         cy.get('div[class*="modal-footer"]').children().contains('Suspend Opportunity').click();
-        cy.contains('Code With Us opportunity has been suspended.')
-        cy.get('span[class*="badge').contains('Suspended')
+        cy.contains('Code With Us opportunity has been suspended.').should('exist');
+        cy.get('span[class*="badge"]').should('have.value', 'Suspended')
     })
 
     it('archive an existing CWU opportunity', function() {
@@ -189,8 +189,8 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Actions').click()
         cy.contains('Cancel').click()
         cy.get('div[class*="modal-footer"]').children().contains('Cancel Opportunity').click();
-        cy.contains('Code With Us opportunity has been cancelled.')
-        cy.get('span[class*="badge').contains('Cancelled')
+        cy.contains('Code With Us opportunity has been cancelled.').should('exist');
+        cy.get('span[class*="badge"]').should('have.value', 'Cancelled')
     })
 
 });
