@@ -49,5 +49,3 @@ jobs:
           start: npm run migrations:latest,npm run start
           wait-on: 'http://localhost:3000'
           record: true
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
