@@ -2,7 +2,7 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        // cy.sqlFixture('dbReset.sql')
+        cy.sqlFixture('dbReset.sql')
         cy.sqlFixture('users.sql')
         cy.visit('/auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
@@ -155,7 +155,6 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('div[class="pt-2 pb-4 "]').contains('Backend Development').should('include.text','Backend Development')
 
         cy.get('a').contains('Next').click()
-        cy.pause()
 
         // 4. Team questions
         cy.get('[id*=team-questions-question]').should('have.value','SWU cy question') // would need to change this selector if entering multiple questions
