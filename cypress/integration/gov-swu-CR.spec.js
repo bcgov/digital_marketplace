@@ -2,14 +2,14 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        cy.sqlFixture('dbReset.sql')
+        // cy.sqlFixture('dbReset.sql')
         cy.sqlFixture('users.sql')
         cy.visit('/auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
         cy.getCookie('sid').should('exist');
     })
 
-    it('create, publish, and read new CWU opportunity', function() {
+    it('create and submit SWU for review, read opportunity', function() {
         cy.visit("/opportunities/create")
         cy.get('a[href="/opportunities/sprint-with-us/create"]').should('be.visible')
         cy.get('a[href="/opportunities/sprint-with-us/create"]').click()
@@ -23,84 +23,159 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#swu-opportunity-remote-desc').type('SWU cy remote desc')
         cy.get('#swu-opportunity-location').clear().type('Sechelt')
         cy.get('#swu-opportunity-proposal-deadline').clear().type('2030-01-15')
-        cy.get('#swu-opportunity-assignment-date').clear().type('2031-01-15')
+        cy.get('#swu-opportunity-assignment-date').clear().type('2030-01-31')
         cy.get('#swu-opportunity-total-max-budget').clear().type('1000000')
         cy.get('#swu-opportunity-min-team-members').clear().type('2')
-        cy.get('#swu-opportunity-mandatory-skills').click()
-        cy.contains('Agile').click({force: true})
-        cy.get('#swu-opportunity-optional-skills').click()
-        cy.contains('Back-End Development').click({force: true})
-        cy.contains('Next').click()
+        cy.get('#swu-opportunity-mandatory-skills').type('Back-End Development{enter}')
+        cy.get('#swu-opportunity-mandatory-skills').type('Front-End Development{enter}')
+        cy.get('#swu-opportunity-optional-skills').type('Adobe Creative Cloud{enter}')
+        cy.get('a').contains('Next').click()
 
         // 2. Description tab
         cy.get('#swu-opportunity-description').type('SWU cy description')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 3. Phases tab
         cy.get('#swu-opportunity-starting-phase').click()
-        cy.contains('Inception').click({force: true})
         cy.get('#swu-opportunity-starting-phase').type('Inception{enter}')
-        cy.get('div[class="h3 mb-0"]').contains('Inception').click() // either this or below works for click, but won't stay open
-        // cy.get('path[d="M441.9 167.3l-19.8-19.8c-4.7-4.7-12.3-4.7-17 0L224 328.2 42.9 147.5c-4.7-4.7-12.3-4.7-17 0L6.1 167.3c-4.7 4.7-4.7 12.3 0 17l209.4 209.4c4.7 4.7 12.3 4.7 17 0l209.4-209.4c4.7-4.7 4.7-12.3 0-17z"]').first().click({force: true}) // covered by other element (svg)
+        // eslint-disable-next-line
+        cy.wait(1000) // Without this, something in the app resets the state and closes the drop-down, so can't fill out the fields
+        cy.get('div[class="h3 mb-0"]').contains('Inception').click()
+        cy.contains("During the Inception phase").should('be.visible')
 
 
-        // cy.contains("During the Inception phase").should('exist')
+        cy.get('[id*=start-date]').first().type('2030-02-01')
+        cy.get('[id*=completion-date]').first().type('2030-02-28')
+        cy.get('[id*=max-budget]').first().type('200000')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('Delivery Management').click()
+        cy.contains('P/T').click()
+        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('User Research').click()
 
-        // cy.get('#swu-opportunity-phase-0.03365219189988733-start-date').type('2030-01-15')
-        // cy.get('#swu-opportunity-phase-0.03365219189988733-completion-date').type('2030-01-31')
-        // cy.contains('Delivery Management').click()
-        // cy.contains('P/T').click()
-        // cy.contains('User Research').click()
+        cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
+        cy.contains("During the Proof of Concept phase").should('be.visible')
+        cy.get('[id*=start-date]').eq(1).type('2030-03-01')
+        cy.get('[id*=completion-date]').eq(1).type('2030-03-31')
+        cy.get('[id*=max-budget]').eq(1).type('200000')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Frontend Development').click()
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Technical Architecture').click()
 
-        cy.contains('Next').click({force: true}) //mystery one
+        cy.get('div[class="h3 mb-0"]').contains('Implementation').click()
+        cy.contains("As you reach the Implementation phase").should('be.visible')
+        cy.get('[id*=start-date]').eq(2).type('2030-04-01')
+        cy.get('[id*=completion-date]').eq(2).type('2030-04-30')
+        cy.get('[id*=max-budget]').eq(2).type('400000')
+        cy.get('div[class="pt-2 pb-4 "]').contains('Security Engineering').click()
+        cy.get('div[class="pt-2 pb-4 "]').contains('Backend Development').click()
+
+        cy.get('a').contains('Next').click()
 
         // 4. Team questions
         cy.contains('Add Question').click()
-        cy.get('#0.5550434831506583-team-questions-question').type('SWU cy question')
-        cy.get('#0.5550434831506583-team-questions-response-guidelines').type('SWU cy response')
-        cy.get('#0.5550434831506583-team-questions-word-limit').clear().type('500')
-        cy.get('#0.5550434831506583-team-questions-score').clear().type('10')
-cy.pause()
-        // Publish
-        cy.contains('Publish').click();
-        cy.contains('Publish Opportunity').click();
-        cy.contains('Code With Us opportunity has been published.').should('exist');
-        cy.get('span[class*="badge-success"]').should('exist')
+        cy.get('[id*=team-questions-question]').type('SWU cy question') // would need to change this selector if entering multiple questions
+        cy.get('[id*="team-questions-response-guidelines"]').type('SWU cy response')
+        cy.get('[id*="team-questions-word-limit"]').clear().type('600')
+        cy.get('[id*="team-questions-score"]').clear().type('10')
+        cy.get('a').contains('Next').click()
+
+        // 5. Scoring
+        cy.get('#swu-opportunity-questions-weight').clear().type('20')
+        cy.get('#swu-opportunity-code-challenge-weight').clear().type('20')
+        cy.get('#swu-opportunity-scenario-weight').clear().type('20')
+        cy.get('#swu-opportunity-price-weight').clear().type('40')
+        cy.get('a').contains('Next').click()
+
+        // 6. Attachments
+        const fixtureFile = 'Screenshot.png';
+        cy.get('[type=file]').attachFile(fixtureFile);
+
+        // Submit for review
+        cy.get('a').contains('Submit for Review').click()
+        cy.get('div[class*="modal-footer"]').children().contains('Submit for Review').click();
+        cy.contains('Sprint With Us opportunity has been submitted.').should('be.visible');
+        cy.contains('Under Review').should('be.visible')
+
 
 
         // Confirm form saved
         cy.visit("/dashboard")
-        cy.contains('Cypress Opp').click()
+        cy.contains('SWU cy title').click()
         cy.get('a[href*="tab=opportunity"]').first().click()
 
 
         // 1. Overview tab
-        cy.get('#cwu-opportunity-title').should('have.value', 'Cypress Opp')
-        cy.get('#cwu-opportunity-teaser').should('have.value','Teaser text')
-        cy.get('#cwu-opportunity-remote-ok-0').should('be.checked')
-        cy.get('#cwu-opportunity-remote-ok-1').should('not.be.checked')
-        cy.get('#cwu-opportunity-remote-desc').should('have.value','Remote description text')
-        cy.get('#cwu-opportunity-location').should('have.value','Vancouver')
-        cy.get('#cwu-opportunity-reward').should('have.value','5000')
-        cy.get('#cwu-opportunity-skills').contains('Agile').should('have.text', 'Agile')
-        cy.contains('Next').click()
+        cy.get('#swu-opportunity-title').should('have.value','SWU cy title')
+
+        cy.get('#swu-opportunity-teaser').should('have.value','SWU cy teaser')
+        cy.get('#swu-opportunity-remote-ok-0').should('be.checked')
+        cy.get('#swu-opportunity-remote-ok-1').should('not.be.checked')
+        cy.get('#swu-opportunity-remote-desc').should('have.value','SWU cy remote desc')
+        cy.get('#swu-opportunity-location').should('have.value','Sechelt')
+        cy.get('#swu-opportunity-proposal-deadline').should('have.value','2030-01-15')
+        cy.get('#swu-opportunity-assignment-date').should('have.value','2030-01-31')
+        cy.get('#swu-opportunity-total-max-budget').should('have.value','1000000')
+        cy.get('#swu-opportunity-min-team-members').should('have.value','2')
+        cy.get('#swu-opportunity-mandatory-skills').contains('Back-End Development').should('have.text', 'Back-End Development')
+        cy.get('#swu-opportunity-mandatory-skills').contains('Front-End Development').should('have.text', 'Front-End Development')
+        cy.get('#swu-opportunity-optional-skills').contains('Adobe Creative Cloud').should('have.text', 'Adobe Creative Cloud')
+        cy.get('a').contains('Next').click()
 
         // 2. Description tab
-        cy.get('#cwu-opportunity-description').should('have.value','Opp description')
-        cy.contains('Next').click()
+        cy.get('#swu-opportunity-description').should('have.value','SWU cy description')
+        cy.get('a').contains('Next').click()
 
-        // 3. Details tab
-        cy.get('#cwu-opportunity-proposal-deadline').should('have.value','2030-01-15')
-        cy.get('#cwu-opportunity-assignment-date').should('have.value','2030-01-31')
-        cy.get('#cwu-opportunity-start-date').should('have.value','2030-02-15')
-        cy.get('#cwu-opportunity-completion-date').should('have.value','2030-02-28')
-        cy.get('#cwu-opportunity-submission-info').should('have.value','github repo')
-        cy.get('#cwu-opportunity-acceptance-criteria').should('have.value','Some acceptance criteria')
-        cy.get('#cwu-opportunity-evaluation-criteria').should('have.value','Some evaluation criteria')
-        cy.contains('Next').click()
+        // 3. Phases tab
+        cy.get('#swu-opportunity-starting-phase').should('have.text','Inception')
+        // eslint-disable-next-line
+        cy.wait(1000) // Without this, something in the app resets the state and closes the drop-down, so can't fill out the fields
+        cy.get('div[class="h3 mb-0"]').contains('Inception').click()
+        cy.contains("During the Inception phase").should('be.visible')
 
-        // 4. Attachments tab
+        cy.get('[id*=start-date]').first().should('have.value','2030-02-01')
+        cy.get('[id*=completion-date]').first().should('have.value','2030-02-28')
+        cy.get('[id*=max-budget]').first().should('have.value','200000')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('Delivery Management').should('include.text','Delivery Management')
+        cy.contains('P/T').should('have.text','P/T')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('User Research').should('include.text','User Research')
+
+
+        cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
+        cy.contains("During the Proof of Concept phase").should('be.visible')
+        cy.get('[id*=start-date]').eq(1).should('have.value','2030-03-01')
+        cy.get('[id*=completion-date]').eq(1).should('have.value','2030-03-31')
+        cy.get('[id*=max-budget]').eq(1).should('have.value','200000')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Frontend Development').should('include.text','Frontend Development')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Technical Architecture').should('include.text','Technical Architecture')
+
+        cy.get('div[class="h3 mb-0"]').contains('Implementation').click()
+        cy.contains("As you reach the Implementation phase").should('be.visible')
+        cy.get('[id*=start-date]').eq(2).should('have.value','2030-04-01')
+        cy.get('[id*=completion-date]').eq(2).should('have.value','2030-04-30')
+        cy.get('[id*=max-budget]').eq(2).should('have.value','400000')
+        cy.get('div[class="pt-2 pb-4 "]').contains('Security Engineering').should('include.text','Security Engineering')
+        cy.get('div[class="pt-2 pb-4 "]').contains('Backend Development').should('include.text','Backend Development')
+
+        cy.get('a').contains('Next').click()
+        cy.pause()
+
+        // 4. Team questions
+        cy.get('[id*=team-questions-question]').should('have.value','SWU cy question') // would need to change this selector if entering multiple questions
+        cy.get('[id*="team-questions-response-guidelines"]').should('have.value','SWU cy response')
+        cy.get('[id*="team-questions-word-limit"]').should('have.value','600')
+        cy.get('[id*="team-questions-score"]').should('have.value','10')
+        cy.get('a').contains('Next').click()
+
+        // 5. Scoring
+        cy.get('#swu-opportunity-questions-weight').should('have.value','20')
+        cy.get('#swu-opportunity-code-challenge-weight').should('have.value','20')
+        cy.get('#swu-opportunity-scenario-weight').should('have.value','20')
+        cy.get('#swu-opportunity-price-weight').should('have.value','40')
+        cy.get('a').contains('Next').click()
+
+        // 6. Attachments
         cy.get('[type=text]').should('have.value','Screenshot.png')
+
+        // Submit for review
+
 
     })
 
