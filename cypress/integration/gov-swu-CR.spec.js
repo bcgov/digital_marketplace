@@ -130,12 +130,12 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('div[class="h3 mb-0"]').contains('Inception').click()
         cy.contains("During the Inception phase").should('be.visible')
 
-        cy.get('[id*=start-date]').first().should('have.value','2030-02-01')
-        cy.get('[id*=completion-date]').first().should('have.value','2030-02-28')
-        cy.get('[id*=max-budget]').first().should('have.value','200000')
-        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('Delivery Management').should('include.text','Delivery Management')
+        cy.get('[id*=start-date]').eq(0).should('have.value','2030-02-01')
+        cy.get('[id*=completion-date]').eq(0).should('have.value','2030-02-28')
+        cy.get('[id*=max-budget]').eq(0).should('have.value','200000')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(0).contains('Delivery Management').should('include.text','Delivery Management')
         cy.contains('P/T').should('have.text','P/T')
-        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('User Research').should('include.text','User Research')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(0).contains('User Research').should('include.text','User Research')
 
 
         cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
@@ -173,7 +173,6 @@ describe('As a user authenticated via IDIR', function() {
         // 6. Attachments
         cy.get('[type=text]').should('have.value','Screenshot.png')
 
-        // Submit for review
 
 
     })
