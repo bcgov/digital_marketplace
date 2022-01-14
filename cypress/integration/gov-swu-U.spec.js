@@ -95,8 +95,6 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('new title').click()
         cy.get('a[href*="tab=opportunity"]').first().click()
 
-        ////need to click through all the tabs!
-
 
         // 1. Overview tab
         cy.get('#swu-opportunity-title').should('have.value','new title')
