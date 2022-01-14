@@ -101,7 +101,7 @@ npm run scripts:run -- <SCRIPT_NAME> [...args]
 
 ### `.env` File
 
-First, create a `.env` file and replace the placeholder values with your credentials. Refer to the [Environment Variables](#environment-variables) section below for further information.
+First, create a `.env` file and replace the placeholder values with your credentials (refer to the [Environment Variables](#environment-variables) section below for further information):
 
 ```bash
 cp sample.env .env
@@ -121,14 +121,13 @@ Additionally, add:
 - `KEYCLOAK_PASSWORD="password"`
 - `ID_PROVIDER="github"`
 
-- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
-```bash
-Name: digital_marketplace # GitHub 0Auth Values
+- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app) and fill out the following fields:
 
-Homepage URL: https://localhost:3000 # Default back-end server address
+- Name: digital_marketplace
+- Homepage URL: https://localhost:3000 # Default back-end server address
+- Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
 
-Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
-```
+Then:
 - Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
 - Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
 
@@ -163,7 +162,7 @@ docker-compose up -d # Start a local PostgreSQL server in the background.
 npm run migrations:latest # Run all database migrations.
 
 # If you need to sign in to the app and don't already have keycloak:
-docker-compose -f docker-compose.keycloak.yml up # Start local postgres and keycloak servers
+docker-compose -f docker-compose.keycloak.yml up -d # Start local postgres and keycloak servers
 npm run migrations:latest # Run all database migrations.
 node .devcontainer/scripts/keycloak-local.js # Set up keycloak server
 
@@ -176,7 +175,7 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.
 
-You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
+You can stop the local PostgreSQL container server (and the keycloak server, if you're running it) by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
 ### NPM Scripts
 
