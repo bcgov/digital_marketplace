@@ -3,10 +3,7 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
-        cy.sqlFixture('users.sql')
-        cy.visit('/auth/createsession')
-        Cypress.Cookies.preserveOnce("sid")
-        cy.getCookie('sid').should('exist');
+        cy.login()
     })
 
     it('create, publish, and read new CWU opportunity', function() {
@@ -23,13 +20,12 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-remote-desc').type('Remote description text')
         cy.get('#cwu-opportunity-location').clear().type('Vancouver')
         cy.get('#cwu-opportunity-reward').type('5000')
-        cy.get('#cwu-opportunity-skills').click()
-        cy.contains('Agile').click({force: true})
-        cy.contains('Next').click()
+        cy.get('#cwu-opportunity-skills').type('Agile{enter}')
+        cy.get('a').contains('Next').click()
 
         // 2. Description tab
         cy.get('#cwu-opportunity-description').type('Opp description')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 3. Details tab
         cy.get('#cwu-opportunity-proposal-deadline').type('2030-01-15')
@@ -39,7 +35,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-submission-info').type('github repo')
         cy.get('#cwu-opportunity-acceptance-criteria').type('Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').type('Some evaluation criteria')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
         const fixtureFile = 'Screenshot.png';
@@ -52,11 +48,28 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('span[class*="badge-success"]').should('exist')
 
 
-        // Confirm form saved
+        // Read and confirm form saved
         cy.visit("/dashboard")
         cy.contains('Cypress Opp').click()
-        cy.get('a[href*="tab=opportunity"]').first().click()
 
+        // Summary page
+
+        cy.get('h4[class="mb-4"]').should('contain.text','Details')
+
+        // Addenda page
+        cy.get('a[href*="tab=addenda"]').first().click()
+        cy.get('h3[class="mb-4"]').should('contain.text','Addenda')
+
+        // History page
+        cy.get('a[href*="tab=history"]').first().click()
+        cy.get('h3[class="mb-4"]').should('contain.text','History')
+
+        // Proposals page
+        cy.get('a[href*="tab=proposals"]').first().click()
+        cy.get('h4[class="mb-0"]').should('contain.text','Proposals')
+
+        // Opportunity page
+        cy.get('a[href*="tab=opportunity"]').first().click()
 
         // 1. Overview tab
         cy.get('#cwu-opportunity-title').should('have.value', 'Cypress Opp')
@@ -67,11 +80,11 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-location').should('have.value','Vancouver')
         cy.get('#cwu-opportunity-reward').should('have.value','5000')
         cy.get('#cwu-opportunity-skills').contains('Agile').should('have.text', 'Agile')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 2. Description tab
         cy.get('#cwu-opportunity-description').should('have.value','Opp description')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 3. Details tab
         cy.get('#cwu-opportunity-proposal-deadline').should('have.value','2030-01-15')
@@ -81,7 +94,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-submission-info').should('have.value','github repo')
         cy.get('#cwu-opportunity-acceptance-criteria').should('have.value','Some acceptance criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').should('have.value','Some evaluation criteria')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
         cy.get('[type=text]').should('have.value','Screenshot.png')

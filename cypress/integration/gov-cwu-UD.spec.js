@@ -3,11 +3,8 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
-        cy.sqlFixture('users.sql')
+        cy.login()
         cy.sqlFixture('cwuOpportunity.sql')
-        cy.visit('/auth/createsession')
-        Cypress.Cookies.preserveOnce("sid")
-        cy.getCookie('sid').should('exist');
     })
 
     it('update an existing CWU opportunity', function() {
@@ -27,12 +24,12 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-reward').clear().type('567')
         cy.get('#cwu-opportunity-skills').click()
         cy.contains('Angular').click({force: true})
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
 
         // 2. Description tab
         cy.get('#cwu-opportunity-description').clear().type('new desc')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 3. Details tab
         cy.get('#cwu-opportunity-proposal-deadline').clear().type('2029-01-15')
@@ -42,7 +39,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-submission-info').clear().type('new repo')
         cy.get('#cwu-opportunity-acceptance-criteria').clear().type('new criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').clear().type('new criteria')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
         cy.get('path[d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"]').click({force: true})
@@ -68,11 +65,11 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-reward').should('have.value','567')
         cy.get('#cwu-opportunity-skills').contains('Agile').should('have.text', 'Agile')
         cy.get('#cwu-opportunity-skills').contains('Angular').should('have.text', 'Angular')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 2. Description tab
         cy.get('#cwu-opportunity-description').should('have.value','new desc')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 3. Details tab
         cy.get('#cwu-opportunity-proposal-deadline').should('have.value','2029-01-15')
@@ -82,7 +79,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('#cwu-opportunity-submission-info').should('have.value','new repo')
         cy.get('#cwu-opportunity-acceptance-criteria').should('have.value','new criteria')
         cy.get('#cwu-opportunity-evaluation-criteria').should('have.value','new criteria')
-        cy.contains('Next').click()
+        cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
         cy.get('[type=text]').should('not.exist')
