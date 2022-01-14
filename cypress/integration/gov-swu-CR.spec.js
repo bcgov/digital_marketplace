@@ -53,8 +53,8 @@ describe('As a user authenticated via IDIR', function() {
 
         cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
         cy.contains("During the Proof of Concept phase").should('be.visible')
-        cy.get('[id*=start-date]').eq(1).type('2030-01-16')
-        cy.get('[id*=completion-date]').eq(1).type('2030-01-31')
+        cy.get('[id*=start-date]').eq(1).type('2030-01-17')
+        cy.get('[id*=completion-date]').eq(1).type('2030-01-30')
         cy.get('[id*=max-budget]').eq(1).type('200000')
         cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Frontend Development').click()
         cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Technical Architecture').click()
@@ -167,8 +167,8 @@ describe('As a user authenticated via IDIR', function() {
 
         cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
         cy.contains("During the Proof of Concept phase").should('be.visible')
-        cy.get('[id*=start-date]').eq(1).should('have.value','2030-01-16')
-        cy.get('[id*=completion-date]').eq(1).should('have.value','2030-01-31')
+        cy.get('[id*=start-date]').eq(1).should('have.value','2030-01-17')
+        cy.get('[id*=completion-date]').eq(1).should('have.value','2030-01-30')
         cy.get('[id*=max-budget]').eq(1).should('have.value','200000')
         cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Frontend Development').should('include.text','Frontend Development')
         cy.get('div[class="pt-2 pb-4 mb-4"]').eq(1).contains('Technical Architecture').should('include.text','Technical Architecture')
