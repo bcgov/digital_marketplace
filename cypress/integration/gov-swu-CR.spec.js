@@ -2,7 +2,7 @@
 
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
-        cy.sqlFixture('dbReset.sql')
+        // cy.sqlFixture('dbReset.sql')
         cy.sqlFixture('users.sql')
         cy.visit('/auth/createsession')
         Cypress.Cookies.preserveOnce("sid")
@@ -44,12 +44,12 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains("During the Inception phase").should('be.visible')
 
 
-        cy.get('[id*=start-date]').first().type('2030-02-01')
-        cy.get('[id*=completion-date]').first().type('2030-02-28')
-        cy.get('[id*=max-budget]').first().type('200000')
-        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('Delivery Management').click()
+        cy.get('[id*=start-date]').eq(0).type('2030-02-01')
+        cy.get('[id*=completion-date]').eq(0).type('2030-02-28')
+        cy.get('[id*=max-budget]').eq(0).type('200000')
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(0).contains('Delivery Management').click()
         cy.contains('P/T').click()
-        cy.get('div[class="pt-2 pb-4 mb-4"]').first().contains('User Research').click()
+        cy.get('div[class="pt-2 pb-4 mb-4"]').eq(0).contains('User Research').click()
 
         cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
         cy.contains("During the Proof of Concept phase").should('be.visible')
@@ -99,6 +99,33 @@ describe('As a user authenticated via IDIR', function() {
         // Confirm form saved
         cy.visit("/dashboard")
         cy.contains('SWU cy title').click()
+
+        // Summary page
+
+        cy.get('h4[class="mb-4"]').should('contain.text','Details')
+
+        // History page
+        cy.get('a[href*="tab=history"]').first().click()
+        cy.get('h3[class="mb-4"]').should('contain.text','History')
+
+        // Proposals page
+        cy.get('a[href*="tab=proposals"]').first().click()
+        cy.get('h4[class="mb-0"]').should('contain.text','Proposals')
+
+        // Team Questions page
+        cy.get('a[href*="tab=teamQuestions"]').first().click()
+        cy.get('h4[class="mb-0"]').should('contain.text','Proponents')
+
+        // Code Challenge page
+        cy.get('a[href*="tab=codeChallenge"]').first().click()
+        cy.get('h4[class="mb-0"]').should('contain.text','Code Challenge Participants')
+
+        // Team scenario page
+        cy.get('a[href*="tab=teamScenario"]').first().click()
+        cy.get('h4[class="mb-0"]').should('contain.text','Team Scenario Participants')
+
+
+        // Opportunity page
         cy.get('a[href*="tab=opportunity"]').first().click()
 
 
