@@ -3,11 +3,8 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
-        cy.sqlFixture('users.sql')
-        cy.visit('/auth/createsession')
+        cy.login()
         cy.sqlFixture('swuOpportunity.sql')
-        Cypress.Cookies.preserveOnce("sid")
-        cy.getCookie('sid').should('exist');
     })
 
     it('update an existing SWU opportunity', function() {
