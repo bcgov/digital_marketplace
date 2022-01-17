@@ -18,7 +18,7 @@ This document describes this project's developer environment, technical architec
   - [Scripts (`src/scripts`)](#scripts-srcscripts)
 - [Development Environment](#development-environment)
   - [Dependencies](#dependencies)
-  - [Containerized Quick Start](#containerized-quick-start)
+  - [Quick Start](#quick-start)
   - [Local Development Environment](#local-development-environment)
   - [NPM Scripts](#npm-scripts)
   - [Environment Variables](#environment-variables)
@@ -99,12 +99,40 @@ npm run scripts:run -- <SCRIPT_NAME> [...args]
 
 ## Set Up
 
-First, create a `.env` file and replace the placeholder values with your credentials. Refer to the [Environment Variables](#environment-variables) section below for further information.
+### `.env` File
+
+First, create a `.env` file and replace the placeholder values with your credentials (refer to the [Environment Variables](#environment-variables) section below for further information):
 
 ```bash
 cp sample.env .env
 # Open and edit .env in your text editor.
 ```
+#### Keycloak Set Up
+
+If you don't have access the BC Government's keycloak and you want to be able to log in to the app, you'll need to
+set up a local instance of keycloak. To do this, update the following environment variables in the `.env` file:
+- `KEYCLOAK_CLIENT_ID="login"`
+- `KEYCLOAK_CLIENT_SECRET="abc-123"`
+- `KEYCLOAK_URL="http://localhost:8080"`
+- `KEYCLOAK_REALM="digitalmarketplace"`
+
+Additionally, add:
+- `KEYCLOAK_USER="admin"`
+- `KEYCLOAK_PASSWORD="password"`
+- `ID_PROVIDER="github"`
+
+- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app) and fill out the following fields:
+
+- Name: digital_marketplace
+- Homepage URL: https://localhost:3000 # Default back-end server address
+- Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
+
+Then:
+- Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
+- Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
+
+
+### Install Dependencies
 
 If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
 and drop you in a shell with them accessible in your `$PATH`.
@@ -123,19 +151,20 @@ Once installed, `cd` into this repository's root directory and proceed to instal
 yarn
 ```
 
-### Containerized Quick Start
-
-If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
-
-### Local Development Environment
+### Quick Start
 
 Open three terminals and run the following commands:
 
 ```bash
 # Terminal 1
-docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
+# If you don't need to be able to sign into the app or already have keycloak:
+docker-compose up -d # Start a local PostgreSQL server in the background.
 npm run migrations:latest # Run all database migrations.
-docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
+
+# If you need to sign in to the app and don't already have keycloak:
+docker-compose -f docker-compose.keycloak.yml up -d # Start local postgres and keycloak servers
+npm run migrations:latest # Run all database migrations.
+node .devcontainer/scripts/keycloak-local.js # Set up keycloak server
 
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
@@ -146,7 +175,7 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.
 
-You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
+You can stop the local PostgreSQL container server (and the keycloak server, if you're running it) by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
 ### NPM Scripts
 
@@ -226,10 +255,10 @@ Environment variables that affect the back-end server's functionality are stored
 | `MAILER_FROM`                           | The sender for transactional emails.                                                                                                                                                                                                     |
 | `MAILER_BATCH_SIZE`                     | The maximum number of email addresses to include in batch notification emails. Defaults to `50`.                                                                                                                                         |
 | `MAILER_MAX_CONNECTIONS`                | The maximum number of simultaneous SMTP connections to use for the mailer. Defaults to `5`.                                                                                                                                              |
-| `KEYCLOAK_URL`                          | The URL of the Keycloak server to use for authentication.                                                                                                                                                                                |
-| `KEYCLOAK_REALM`                        | The Keycloak realm. Please contact a team member to retrieve this credential.                                                                                                                                                            |
-| `KEYCLOAK_CLIENT_ID`                    | The Keycloak client ID. Please contact a team member to retrieve this credential.                                                                                                                                                        |
-| `KEYCLOAK_CLIENT_SECRET`                | The Keycloak client secret. Please contact a team member to retrieve this credential.                                                                                                                                                    |
+| `KEYCLOAK_URL`                          | The URL of the Keycloak server to use for authentication. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                             |
+| `KEYCLOAK_REALM`                        | The Keycloak realm. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                                                                   |
+| `KEYCLOAK_CLIENT_ID`                    | The Keycloak client ID. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                                                               |
+| `KEYCLOAK_CLIENT_SECRET`                | The Keycloak client secret. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                                                           |
 | `KNEX_DEBUG`                            | Set this to `true` to debug `knex` operations.                                                                                                                                                                                           |
 | `UPDATE_HOOK_THROTTLE`                  | The number of milliseconds used to throttle per-request jobs (e.g. automatically closing opportunities). Defaults to `60000`ms.                                                                                                          |
 | `AVATAR_MAX_IMAGE_WIDTH`                | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. Defaults to 500 pixels.                                                                                                             |

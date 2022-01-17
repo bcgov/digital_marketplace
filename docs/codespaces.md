@@ -28,16 +28,7 @@ cp codespaces.sample.env .env
 
 ### Keycloak setup
 
-- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app)
-```bash
-Name: digital_marketplace # GitHub 0Auth Values
-
-Homepage URL: https://localhost:3000 # Default back-end server address
-
-Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
-```
-- Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
-- Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
+- Follow the [Keycloak Set Up instructions in the README](https://github.com/button-inc/digital_marketplace/blob/main/README.md#keycloak-set-up)
 - Rebuild container
 ```bash
 Shift + cmd (ctrl) + p
