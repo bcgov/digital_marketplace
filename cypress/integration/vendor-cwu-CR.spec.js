@@ -42,13 +42,37 @@ describe('As a user authenticated via GitHub',  function() {
         cy.get('[type=file]').attachFile(fixtureFile);
 
         // Submit
-        // cy.wait(3000)
-        cy.get('a').contains('Submit').click()
-        // cy.wait(3000)
+        cy.get('a').contains('Submit').trigger('click')
         cy.contains('Review Terms and Conditions').should('be.visible')
         cy.get('#create-cwu-proposal-submit-terms-proposal').click()
         cy.get('#create-cwu-proposal-submit-terms-app').click()
         cy.get('a').contains('Submit Proposal').click()
+
+        // Confirm save
+        cy.visit("/dashboard")
+        cy.contains('Fixture CWU Opportunity Title').click()
+
+        // 1. Proponent tab
+        cy.get('#cwu-proposal-proponent-type-0').should('be.checked')
+        cy.get('#cwu-proposal-proponent-type-1').should('not.be.checked')
+        cy.get('#cwu-proposal-individual-legalName').should('have.value','legal name')
+        cy.get('#cwu-proposal-individual-email').should('have.value','fake@gmail.com')
+        cy.get('#cwu-proposal-individual-phone').should('have.value','123-456-7890')
+        cy.get('#cwu-proposal-individual-street1').should('have.value','address1')
+        cy.get('#cwu-proposal-individual-street2').should('have.value','address2')
+        cy.get('#cwu-proposal-individual-city').should('have.value','Victoria')
+        cy.get('#cwu-proposal-individual-region').should('have.value','BC')
+        cy.get('#cwu-proposal-individual-mailCode').should('have.value','V8W 2Z6')
+        cy.get('#cwu-proposal-individual-country').should('have.value','Canada')
+        cy.get('a').contains('Next').click()
+
+        // 2. Proposal
+        cy.get('#cwu-proposal-proposalText').should('have.value','Proposal')
+        cy.get('#cwu-proposal-additional-comments').should('have.value','Additional comments')
+        cy.get('a').contains('Next').click()
+
+        // 3. Attachments
+        cy.get('[type=text]').should('have.value','Screenshot.png')
 
     })
 });
