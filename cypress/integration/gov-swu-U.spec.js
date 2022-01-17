@@ -10,7 +10,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.getCookie('sid').should('exist');
     })
 
-    it.skip('update an existing SWU opportunity', function() {
+    it('update an existing SWU opportunity', function() {
         cy.visit("/dashboard")
         cy.contains('Fixture SWU Opportunity Title').click()
         cy.get('a[href*="tab=opportunity"]').first().click()
