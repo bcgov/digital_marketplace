@@ -33,7 +33,9 @@ describe('As a user authenticated via IDIR', function() {
 
 
         // 2. Description tab
-        cy.get('#swu-opportunity-description').clear().type('new desc')
+        cy.get('#swu-opportunity-description').clear()
+        cy.get('#swu-opportunity-description').should('be.empty')
+        cy.get('#swu-opportunity-description').type('new desc')
         cy.contains('Next').click()
 
         // 3. Phases tab
