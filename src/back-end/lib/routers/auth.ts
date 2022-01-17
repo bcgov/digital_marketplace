@@ -35,6 +35,7 @@ interface KeyCloakTokenRequestData {
 }
 
 async function makeRouter(connection: Connection): Promise<Router<any, any, any, any, TextResponseBody, any, any>> {
+  // @ts-ignore
   const router: Router<any, any, any, any, TextResponseBody, any, any> = [
     {
       method: ServerHttpMethod.Get,
@@ -136,16 +137,67 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
         }
       })
     },
-    // /auth/createsession is for testing only, so only exists outside of production
+    // /auth/createsessiongov is for testing only, so only exists outside of production
     // @ts-ignore
     ...(process.env.NODE_ENV === 'development' ? [{
       method: ServerHttpMethod.Get,
-      path: '/auth/createsession',
+      path: '/auth/createsessiongov',
       // @ts-ignore
       handler: nullRequestBodyHandler(async request => {
         try {
           const userType = UserType.Government; // Add a check for gov vs. admin as test suite expands
           const idpId = 'test-gov' // Add a check for gov vs. admin as test suite expands
+          const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
+          if (isInvalid(dbResult)) {
+           // @ts-ignore
+            makeAuthErrorRedirect(request);
+          }
+          const user = dbResult.value as User | null;
+
+          if (!user) {
+            console.log('Error: Test user does not exist in database')
+            return;
+          }
+          const result = await createSession(connection, {
+            user: user && user.id,
+            accessToken: '' // This token isn't required anywhere
+          });
+          if (isInvalid(result)) {
+            // @ts-ignore
+            makeAuthErrorRedirect(request);
+            console.log('Error: Unsuccessful login')
+            return null;
+          }
+
+          const session = result.value;
+
+          const signinCompleteLocation = prefixPath('/dashboard');
+          return {
+            code: 302,
+            headers: {
+              'Location': signinCompleteLocation
+            },
+            session,
+            body: makeTextResponseBody('')
+          };
+        } catch (error) {
+          request.logger.error('authentication failed', makeErrorResponseBody(error));
+          console.log('Error: Unsuccessful login')
+          // @ts-ignore
+          return makeAuthErrorRedirect(request);
+        }
+      })
+    }] : []),
+    // /auth/createsessionvendor is for testing only, so only exists outside of production
+    // @ts-ignore
+    ...(process.env.NODE_ENV === 'development' ? [{
+      method: ServerHttpMethod.Get,
+      path: '/auth/createsessionvendor',
+      // @ts-ignore
+      handler: nullRequestBodyHandler(async request => {
+        try {
+          const userType = UserType.Vendor; // Add a check for gov vs. admin as test suite expands
+          const idpId = 'test-vendor' // Add a check for gov vs. admin as test suite expands
           const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
           if (isInvalid(dbResult)) {
            // @ts-ignore
