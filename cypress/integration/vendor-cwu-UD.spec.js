@@ -11,9 +11,12 @@ describe('As a user authenticated via GitHub,',  function() {
     it('edit CWU proposal', function() {
         cy.get('#user-sign-up-step-two-terms').click()
         cy.get('a').contains('Complete Profile').click()
+        cy.visit('/opportunities')
         cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()
-        cy.contains('Edit',{ timeout: 10000 }).should('be.visible')
+        cy.contains('View Proposal').click()
+
+        cy.contains('Edit').should('be.visible')
         cy.contains('Edit').click()
 
         // 1. Proponent tab
@@ -76,8 +79,10 @@ describe('As a user authenticated via GitHub,',  function() {
     it('delete CWU proposal', function() {
         cy.get('#user-sign-up-step-two-terms').click()
         cy.get('a').contains('Complete Profile').click()
+        cy.visit('/opportunities')
         cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()
+        cy.contains('View Proposal').click()
         cy.contains('Withdraw').click()
         cy.get('div[class*="modal-footer"]').children().contains('Withdraw Proposal').click();
 
