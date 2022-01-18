@@ -37,8 +37,7 @@ describe('As a user authenticated via GitHub,',  function() {
         cy.get('a').contains('Next').click()
 
         // 3. Attachments
-        cy.get('path[d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"]').click({force: true})
-
+        cy.get('input[placeholder="Screenshot.png"]').siblings('svg').click() // delete attachment
 
         // Submit
         cy.get('a').contains('Submit Changes').trigger('click')
@@ -47,7 +46,7 @@ describe('As a user authenticated via GitHub,',  function() {
         cy.get('#edit-cwu-proposal-submit-terms-app').click()
         cy.get('div[class*="modal-footer"]').children().contains('Submit Changes').click();
         cy.contains('Your changes to your Code With Us proposal have been submitted.').should('be.visible');
-        cy.get('span[class*="badge"]').contains('Submitted').should('exist')
+        cy.get('span[class*="badge"]').contains('Submitted').should('be.visible')
 
         // Confirm save
         cy.visit("/dashboard")
@@ -84,8 +83,8 @@ describe('As a user authenticated via GitHub,',  function() {
         cy.contains('Withdraw').click()
         cy.get('div[class*="modal-footer"]').children().contains('Withdraw Proposal').click();
 
-        cy.contains('Code With Us proposal has been withdrawn.').should('exist');
-        cy.get('span[class*="badge"]').contains('Withdrawn').should('exist')
+        cy.contains('Code With Us proposal has been withdrawn.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Withdrawn').should('be.visible')
 
 
     })

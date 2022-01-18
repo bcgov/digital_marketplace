@@ -48,6 +48,9 @@ describe('As a user authenticated via GitHub',  function() {
         cy.get('#create-cwu-proposal-submit-terms-app').click()
         cy.get('a').contains('Submit Proposal').click()
 
+        cy.contains('Your Code With Us proposal have been submitted.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Submitted').should('be.visible')
+
         // Confirm save
         cy.visit("/dashboard")
         cy.contains('Fixture CWU Opportunity Title').click()
@@ -72,7 +75,7 @@ describe('As a user authenticated via GitHub',  function() {
         cy.get('a').contains('Next').click()
 
         // 3. Attachments
-        cy.get('[type=text]').should('have.value','Screenshot.png')
+        cy.get('input[placeholder="Screenshot.png"]').should('be.visible')
 
     })
 });
