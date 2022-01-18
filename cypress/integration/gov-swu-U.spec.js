@@ -84,8 +84,8 @@ describe('As a user authenticated via IDIR', function() {
         // Submit changes
         cy.contains('Submit Changes').click();
         cy.get('div[class*="modal-footer"]').children().contains('Submit Changes').click();
-        cy.contains('Your changes to this Sprint With Us opportunity have been saved.').should('exist');
-        cy.contains('Under Review').should('exist')
+        cy.contains('Your changes to this Sprint With Us opportunity have been saved.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Under Review').should('be.visible')
 
 
 

@@ -39,13 +39,13 @@ describe('As a user authenticated via IDIR', function() {
 
         // 4. Attachments tab
         const fixtureFile = 'Screenshot.png';
-        cy.get('[type=file]').attachFile(fixtureFile);
+        cy.get('input[type=file]').attachFile(fixtureFile);
 
         // Publish
         cy.contains('Publish').click();
         cy.contains('Publish Opportunity').click();
-        cy.contains('Code With Us opportunity has been published.').should('exist');
-        cy.get('span[class*="badge-success"]').should('exist')
+        cy.contains('Code With Us opportunity has been published.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Published').should('be.visible')
 
 
         // Read and confirm form saved
@@ -97,7 +97,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
-        cy.get('[type=text]').should('have.value','Screenshot.png')
+        cy.get('input[placeholder="Screenshot.png"]').should('be.visible')
 
     })
 

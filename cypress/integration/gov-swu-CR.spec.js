@@ -83,13 +83,13 @@ describe('As a user authenticated via IDIR', function() {
 
         // 6. Attachments
         const fixtureFile = 'Screenshot.png';
-        cy.get('[type=file]').attachFile(fixtureFile);
+        cy.get('input[type=file]').attachFile(fixtureFile);
 
         // Submit for review
         cy.get('a').contains('Submit for Review').click()
         cy.get('div[class*="modal-footer"]').children().contains('Submit for Review').click();
         cy.contains('Sprint With Us opportunity has been submitted.').should('be.visible');
-        cy.contains('Under Review').should('be.visible')
+        cy.get('span[class*="badge"]').contains('Under Review').should('be.visible')
 
 
 
@@ -195,9 +195,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('a').contains('Next').click()
 
         // 6. Attachments
-        cy.get('[type=text]').should('have.value','Screenshot.png')
-
-
+        cy.get('input[placeholder="Screenshot.png"]').should('be.visible')
 
     })
 
