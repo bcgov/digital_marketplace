@@ -120,16 +120,16 @@ describe('As a user authenticated via IDIR', function() {
         // eslint-disable-next-line
         cy.get('div[class="h3 mb-0"]').contains('Proof of Concept').click()
         cy.contains("During the Proof of Concept phase").should('be.visible')
-        cy.get('[id*=start-date]').eq(0).should('have.value','2029-03-01')
-        cy.get('[id*=completion-date]').eq(0).should('have.value','2029-03-31')
+        cy.get('[id*=start-date]').eq(0).should('have.value','2029-02-01')
+        cy.get('[id*=completion-date]').eq(0).should('have.value','2029-02-15')
         cy.get('[id*=max-budget]').eq(0).should('have.value','400000')
         cy.get('div[class="pt-2 pb-4 mb-4"]').eq(0).contains('Agile Coaching').should('include.text','Agile Coaching')
         cy.get('div[class="pt-2 pb-4 mb-4"]').eq(0).contains('User Experience Design').should('include.text','User Experience Design')
 
         cy.get('div[class="h3 mb-0"]').contains('Implementation').click()
         cy.contains("As you reach the Implementation phase").should('be.visible')
-        cy.get('[id*=start-date]').eq(1).should('have.value','2029-04-01')
-        cy.get('[id*=completion-date]').eq(1).should('have.value','2029-04-30')
+        cy.get('[id*=start-date]').eq(1).should('have.value','2029-02-16')
+        cy.get('[id*=completion-date]').eq(1).should('have.value','2029-02-28')
         cy.get('[id*=max-budget]').eq(1).should('have.value','1000000')
         cy.get('div[class="pt-2 pb-4 "]').contains('DevOps Engineering').should('include.text','DevOps Engineering')
 
