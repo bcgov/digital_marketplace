@@ -2,15 +2,10 @@
 
 describe('As a user authenticated via GitHub,',  function() {
     beforeEach(function() {
-        // refactor to use login later
-
         cy.sqlFixture('dbReset.sql')
-        cy.sqlFixture('users.sql')
-        cy.visit('/auth/createsessionvendor')
+        cy.login('vendor')
         cy.sqlFixture('cwuOpportunity.sql')
         cy.sqlFixture('cwuProposal.sql')
-        Cypress.Cookies.preserveOnce("sid")
-        cy.getCookie('sid').should('exist');
     })
 
     it('edit CWU proposal', function() {

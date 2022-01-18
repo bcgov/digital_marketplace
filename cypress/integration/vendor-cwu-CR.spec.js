@@ -2,14 +2,9 @@
 
 describe('As a user authenticated via GitHub',  function() {
     beforeEach(function() {
-        // refactor to use login later
-
         cy.sqlFixture('dbReset.sql')
-        cy.sqlFixture('users.sql')
-        cy.visit('/auth/createsessionvendor')
+        cy.login('vendor')
         cy.sqlFixture('cwuOpportunity.sql')
-        Cypress.Cookies.preserveOnce("sid")
-        cy.getCookie('sid').should('exist');
     })
 
     it('create and read CWU proposal', function() {
@@ -39,7 +34,7 @@ describe('As a user authenticated via GitHub',  function() {
 
         // 3. Attachments
         const fixtureFile = 'Screenshot.png';
-        cy.get('[type=file]').attachFile(fixtureFile);
+        cy.get('input[type=file]').attachFile(fixtureFile);
 
         // Submit
         cy.get('a').contains('Submit').trigger('click')
@@ -48,7 +43,7 @@ describe('As a user authenticated via GitHub',  function() {
         cy.get('#create-cwu-proposal-submit-terms-app').click()
         cy.get('a').contains('Submit Proposal').click()
 
-        cy.contains('Your Code With Us proposal have been submitted.').should('be.visible');
+        cy.contains('Your Code With Us proposal has been submitted.').should('be.visible');
         cy.get('span[class*="badge"]').contains('Submitted').should('be.visible')
 
         // Confirm save
