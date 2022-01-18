@@ -13,7 +13,7 @@ describe('As a user authenticated via GitHub,',  function() {
         cy.get('a').contains('Complete Profile').click()
         cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()
-        cy.contains('Edit').should('be.visible')
+        cy.contains('Edit',{ timeout: 10000 }).should('be.visible')
         cy.contains('Edit').click()
 
         // 1. Proponent tab
