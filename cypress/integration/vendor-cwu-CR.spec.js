@@ -11,6 +11,8 @@ describe('As a user authenticated via GitHub',  function() {
         cy.get('#user-sign-up-step-two-terms').click()
         cy.get('a').contains('Complete Profile').click()
         cy.get('a[href="/opportunities"]').contains('View All Opportunities').click()
+        cy.contains('Fixture CWU Opportunity Title').should('be.visible')
+        cy.contains('Fixture CWU Opportunity Title').click()
         cy.contains('Start Proposal').click()
 
         // 1. Proponent tab
