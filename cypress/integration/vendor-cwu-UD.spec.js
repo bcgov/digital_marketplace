@@ -11,8 +11,9 @@ describe('As a user authenticated via GitHub,',  function() {
     it('edit CWU proposal', function() {
         cy.get('#user-sign-up-step-two-terms').click()
         cy.get('a').contains('Complete Profile').click()
+        cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()
-        cy.contains('Edit').click()
+        cy.contains('Edit').should('be.visible').click()
 
         // 1. Proponent tab
         cy.get('#cwu-proposal-individual-legalName').clear().type('new legal name')
@@ -74,6 +75,7 @@ describe('As a user authenticated via GitHub,',  function() {
     it('delete CWU proposal', function() {
         cy.get('#user-sign-up-step-two-terms').click()
         cy.get('a').contains('Complete Profile').click()
+        cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()
         cy.contains('Withdraw').click()
         cy.get('div[class*="modal-footer"]').children().contains('Withdraw Proposal').click();
