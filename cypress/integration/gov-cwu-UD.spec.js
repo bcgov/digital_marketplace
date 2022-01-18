@@ -28,7 +28,9 @@ describe('As a user authenticated via IDIR', function() {
 
 
         // 2. Description tab
-        cy.get('#cwu-opportunity-description').clear().type('new desc')
+        cy.get('#cwu-opportunity-description').clear()
+        cy.get('#cwu-opportunity-description').should('be.empty')
+        cy.get('#cwu-opportunity-description').type('new desc')
         cy.get('a').contains('Next').click()
 
         // 3. Details tab
