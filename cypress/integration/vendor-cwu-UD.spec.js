@@ -74,4 +74,17 @@ describe('As a user authenticated via GitHub,',  function() {
         cy.get('input[placeholder="Screenshot.png"]').should('not.exist')
 
     })
+
+    it('delete CWU proposal', function() {
+        // cy.get('#user-sign-up-step-two-terms').click()
+        // cy.get('a').contains('Complete Profile').click()
+        cy.contains('Fixture CWU Opportunity Title').click()
+        cy.contains('Withdraw').click()
+        cy.get('div[class*="modal-footer"]').children().contains('Withdraw Proposal').click();
+
+        cy.contains('Code With Us proposal has been withdrawn.').should('exist');
+        cy.get('span[class*="badge"]').contains('Withdrawn').should('exist')
+
+
+    })
 });
