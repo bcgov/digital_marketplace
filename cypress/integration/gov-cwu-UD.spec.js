@@ -3,7 +3,7 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
-        cy.login()
+        cy.login('gov')
         cy.sqlFixture('cwuOpportunity.sql')
     })
 
@@ -28,7 +28,9 @@ describe('As a user authenticated via IDIR', function() {
 
 
         // 2. Description tab
-        cy.get('#cwu-opportunity-description').clear().type('new desc')
+        cy.get('#cwu-opportunity-description').clear()
+        cy.get('#cwu-opportunity-description').should('be.empty')
+        cy.get('#cwu-opportunity-description').type('new desc')
         cy.get('a').contains('Next').click()
 
         // 3. Details tab
@@ -42,13 +44,13 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
-        cy.get('path[d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"]').click({force: true})
+        cy.get('input[placeholder="Screenshot.png"]').siblings('svg').click() // delete attachment
 
         // Publish changes
         cy.contains('Publish Changes').click();
         cy.get('div[class*="modal-footer"]').children().contains('Publish Changes').click();
-        cy.contains('Your changes to this Code With Us opportunity have been published.').should('exist');
-        cy.contains('Published').should('exist')
+        cy.contains('Your changes to this Code With Us opportunity have been published.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Published').should('be.visible')
 
         // Confirm updates saved
         cy.visit("/dashboard")
@@ -82,7 +84,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('a').contains('Next').click()
 
         // 4. Attachments tab
-        cy.get('[type=text]').should('not.exist')
+        cy.get('input[placeholder="Screenshot.png"]').should('not.exist')
 
     })
 
@@ -93,8 +95,8 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Actions').click()
         cy.contains('Suspend').click()
         cy.get('div[class*="modal-footer"]').children().contains('Suspend Opportunity').click();
-        cy.contains('Code With Us opportunity has been suspended.').should('exist');
-        cy.contains('Suspended').should('exist')
+        cy.contains('Code With Us opportunity has been suspended.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Suspended').should('be.visible')
     })
 
     it('archive an existing CWU opportunity', function() {
@@ -104,8 +106,8 @@ describe('As a user authenticated via IDIR', function() {
         cy.contains('Actions').click()
         cy.contains('Cancel').click()
         cy.get('div[class*="modal-footer"]').children().contains('Cancel Opportunity').click();
-        cy.contains('Code With Us opportunity has been cancelled.').should('exist');
-        cy.contains('Cancelled').should('exist')
+        cy.contains('Code With Us opportunity has been cancelled.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Cancelled').should('be.visible')
     })
 
 });

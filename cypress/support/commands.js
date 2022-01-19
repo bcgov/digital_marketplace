@@ -31,8 +31,8 @@ Cypress.Commands.add('sqlFixture',(sqlFilename)=>{
     cy.exec(`docker exec dm_db psql -v "ON_ERROR_STOP=1" -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/${sqlFilename}`) //need /workspace/ because that's the file structure in the db container
 })
 
-Cypress.Commands.add('login',()=>{
+Cypress.Commands.add('login',(role)=>{
     cy.sqlFixture('users.sql')
-    cy.visit('/auth/createsession')
+    cy.visit(`/auth/createsession${role}`)
     Cypress.Cookies.preserveOnce("sid")
 })
