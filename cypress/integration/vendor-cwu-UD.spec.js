@@ -32,7 +32,9 @@ describe('As a user authenticated via GitHub,',  function() {
         cy.get('a').contains('Next').click()
 
         // 2. Proposal
-        cy.get('#cwu-proposal-proposalText').clear().type('new Proposal')
+        cy.get('#cwu-proposal-proposalText').clear()
+        cy.get('#cwu-proposal-proposalText').should('be.empty')
+        cy.get('#cwu-proposal-proposalText').type('new Proposal')
         cy.get('#cwu-proposal-additional-comments').clear().type('new Additional comments')
         cy.get('a').contains('Next').click()
 
