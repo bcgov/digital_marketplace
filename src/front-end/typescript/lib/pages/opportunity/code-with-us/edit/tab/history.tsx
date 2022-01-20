@@ -7,6 +7,8 @@ import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/view
 import React from 'react';
 import { Col, Row } from 'reactstrap';
 import { adt, ADT } from 'shared/lib/types';
+import { isVendor} from 'shared/lib/resources/user';
+import  { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
 
 export interface State extends Tab.Params {
   history: Immutable<History.State>;
@@ -16,6 +18,7 @@ export type InnerMsg
   = ADT<'history', History.Msg>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+
 
 const init: Init<Tab.Params, State> = async params => {
   return {
@@ -64,5 +67,18 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  getContextualActions({ state }) {
+    if (!state.viewerUser || isVendor(state.viewerUser)) { return null; }
+    return adt('links', [
+      {
+        children: 'Add Entry',
+        button: true,
+        // disabled: isLoading(state),
+        color: 'primary' as const,
+        symbol_: leftPlacement(iconLinkSymbol('file-export')),
+        dest: routeDest(adt('opportunityCreate', null))
+      }
+    ]);
+  }
 };
