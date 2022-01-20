@@ -81,6 +81,7 @@ export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
   switch (e) {
     case CWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
     case CWUOpportunityEvent.Edited: return 'Edited';
+    case CWUOpportunityEvent.NoteAdded: return 'Note Added';
   }
 }
 

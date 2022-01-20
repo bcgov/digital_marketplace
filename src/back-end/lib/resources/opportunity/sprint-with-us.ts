@@ -1,3 +1,4 @@
+import { FileRecord } from 'back-end/../shared/lib/resources/file';
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
 import * as swuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
@@ -8,7 +9,7 @@ import { validateAttachments, validateSWUOpportunityId } from 'back-end/lib/vali
 import { get, omit } from 'lodash';
 import { addDays, getBoolean, getNumber, getString, getStringArray } from 'shared/lib';
 import { invalid } from 'shared/lib/http';
-import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, isInvalid, isValid, optional, valid, validateUUID, Validation } from 'shared/lib/validation';
@@ -37,10 +38,15 @@ interface ValidatedUpdateRequestBody {
       | ADT<'startTeamScenario', string>
       | ADT<'suspend', string>
       | ADT<'cancel', string>
-      | ADT<'addAddendum', string>;
+      | ADT<'addAddendum', string>
+      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<ValidatedCreateRequestBody, 'status' | 'session'>;
+
+interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
+  attachments: FileRecord[];
+}
 
 type ValidatedDeleteRequestBody = Id;
 
@@ -432,6 +438,11 @@ const resource: Resource = {
             return adt('cancel', getString(body, 'value'));
           case 'addAddendum':
             return adt('addAddendum', getString(body, 'value'));
+          case 'addNote':
+            return adt('addNote', {
+              note: getString(value, 'note'),
+              attachments: getStringArray(value, 'attachments')
+            });
           default:
             return null;
         }
@@ -452,7 +463,7 @@ const resource: Resource = {
         }
 
         switch (request.body.tag) {
-          case 'edit': {
+          case 'edit':
             const { title,
                     teaser,
                     remoteOk,
@@ -689,8 +700,7 @@ const resource: Resource = {
                 })
               });
             }
-          }
-          case 'submitForReview': {
+          case 'submitForReview':
             if (!isValidStatusChange(swuOpportunity.status, SWUOpportunityStatus.UnderReview)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -728,8 +738,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('submitForReview', validatedSubmitNote.value)
             } as ValidatedUpdateRequestBody);
-          }
-          case 'publish': {
+          case 'publish':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Published)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -746,8 +755,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('publish', validatedPublishNote.value)
             });
-          }
-          case 'startCodeChallenge': {
+          case 'startCodeChallenge':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationCodeChallenge)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -764,8 +772,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('startCodeChallenge', validatedEvaluationCodeChallengeNote.value)
             });
-          }
-          case 'startTeamScenario': {
+          case 'startTeamScenario':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationTeamScenario)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -782,8 +789,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('startTeamScenario', validatedEvaluationTeamScenarioNote.value)
             });
-          }
-          case 'suspend': {
+          case 'suspend':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Suspended) || !permissions.suspendSWUOpportunity(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -795,8 +801,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('suspend', validatedSuspendNote.value)
             } as ValidatedUpdateRequestBody);
-          }
-          case 'cancel': {
+          case 'cancel':
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Canceled) || !permissions.cancelSWUOpportunity(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -808,8 +813,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('cancel', validatedCancelNote.value)
             } as ValidatedUpdateRequestBody);
-          }
-          case 'addAddendum': {
+          case 'addAddendum':
             if (validatedSWUOpportunity.value.status === SWUOpportunityStatus.Draft || !permissions.addSWUAddendum(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -821,7 +825,25 @@ const resource: Resource = {
               session: request.session,
               body: adt('addAddendum', validatedAddendumText.value)
             } as ValidatedUpdateRequestBody);
-          }
+          case 'addNote':
+            const { note, attachments : noteAttachments } = request.body.value;
+            const validatedNote = opportunityValidation.validateNote(note);
+            const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
+            if (allValid([validatedNote, validatedNoteAttachments])) {
+              return valid({
+                session: request.session,
+                body: adt('addNote', {
+                  note: validatedNote.value,
+                  attachments: validatedNoteAttachments.value
+                })
+              } as ValidatedUpdateRequestBody);
+            } else {
+              return invalid({ opportunity: adt('addNote' as const, {
+                  note: getInvalidValue(validatedNote, undefined),
+                  attachments: getInvalidValue(validatedNoteAttachments, undefined)
+                })
+              });
+            }
           default:
             return invalid({ opportunity: adt('parseFailure' as const) });
         }
@@ -845,7 +867,7 @@ const resource: Resource = {
                 swuOpportunityNotifications.handleSWUSubmittedForReview(connection, dbResult.value);
               }
               break;
-            case 'publish': {
+            case 'publish':
               const existingOpportunity = getValidValue(await db.readOneSWUOpportunity(connection, request.params.id, session), null);
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.Published, body.value, session);
               // Notify all users with notifications on of the new opportunity
@@ -853,7 +875,6 @@ const resource: Resource = {
                 swuOpportunityNotifications.handleSWUPublished(connection, dbResult.value, existingOpportunity?.status === SWUOpportunityStatus.Suspended);
               }
               break;
-            }
             case 'startCodeChallenge':
               dbResult = await db.updateSWUOpportunityStatus(connection, request.params.id, SWUOpportunityStatus.EvaluationCodeChallenge, body.value, session);
               break;
@@ -880,6 +901,9 @@ const resource: Resource = {
               if (isValid(dbResult)) {
                 swuOpportunityNotifications.handleSWUUpdated(connection, dbResult.value);
               }
+              break;
+            case 'addNote':
+              dbResult = await db.addSWUOpportunityNote(connection, request.params.id, body.value, session);
               break;
           }
           if (isInvalid(dbResult)) {
