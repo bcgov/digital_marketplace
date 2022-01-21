@@ -1,3 +1,4 @@
+// import { isAdmin } from 'shared/lib/resources/user'; //uncomment when ready to limit notes to admin
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -6,157 +7,32 @@ import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { adt, ADT, Id } from 'shared/lib/types';
+import { adt, ADT } from 'shared/lib/types';
 import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import * as ShortText from 'front-end/lib/components/form-field/short-text';
-// import * as FormField from 'front-end/lib/components/form-field';
-// import Icon from 'front-end/lib/views/icon';
-import * as Table from 'front-end/lib/components/table';
-import { Capability } from 'front-end/lib/views/capabilities';
-import CAPABILITIES from 'shared/lib/data/capabilities';
-import { AffiliationMember,  memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
-// import { isAdmin, isVendor } from 'shared/lib/resources/user';
-// import FileLink from 'front-end/lib/views/file-link';
-import { PageModal } from 'front-end/lib/framework';
-import { userAvatarPath } from 'front-end/lib/pages/user/lib';
-// import Badge from 'front-end/lib/views/badge';
-import Capabilities from 'front-end/lib/views/capabilities';
-// import { ComponentViewProps} from 'front-end/lib/framework';
 import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
+// import * as ShortText from 'front-end/lib/components/form-field/short-text';
+// import * as FormField from 'front-end/lib/components/form-field';
 
-
-// interface Props extends ComponentViewProps<State, Msg> {
-//   disabled?: boolean;
-//   className?: string;
-//   addButtonClassName?: string;
-// }
-// interface Props {
-//   disabled?: boolean;
-//   className?: string;
-//   addButtonClassName?: string;
-// }
-
-interface MakeViewTeamMemberModalParams<Msg> {
-  member: AffiliationMember;
-  onCloseMsg: Msg;
-}
-
-
-
+// probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
 type ModalId = ADT<'addAttachment'>
 
 export interface State extends Tab.Params {
   history: Immutable<History.State>;
-  // from team
   showModal: ModalId | null;
-  addTeamMembersLoading: number;
-  removeTeamMemberLoading: Id | null; //Id of affiliation, not user
-  approveAffiliationLoading: Id | null; //Id of affiliation, not user
-  membersTable: Immutable<Table.State>;
-  // capabilities: Capability[];
-  addTeamMembersEmails: Array<Immutable<ShortText.State>>;
-  // Attachments tab
   attachments: Immutable<Attachments.State>;
 }
 
 export type InnerMsg
   = ADT<'history', History.Msg>
   // Attachments tab
-  | ADT<'attachments',        Attachments.Msg>
-  //from team
-  | ADT<'addAttachment'>
-  | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
-  | ADT<'approveAffiliation', AffiliationMember>
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
-  | ADT<'membersTable', Table.Msg>
-  | ADT<'addTeamMembersEmails', [number, ShortText.Msg]> //[index, msg]
-  | ADT<'addTeamMembersEmailsAddField'>
-  | ADT<'addTeamMembersEmailsRemoveField', number> //index
-  | ADT<'noop'>; //index
+  | ADT<'noop'>
+  | ADT<'attachments',        Attachments.Msg>
+  | ADT<'addAttachment'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
-
-// team members functions
-export function determineCapabilities(members: AffiliationMember[]): Capability[] {
-  //Don't include pending members in capability calculation.
-  members = members.filter(m => !memberIsPending(m));
-  return CAPABILITIES.map(capability => ({
-    capability,
-    checked: membersHaveCapability(members, capability)
-  }));
-}
-
-// function resetCapabilities(state: Immutable<State>): Immutable<State> {
-//   return state.set('capabilities', determineCapabilities(state.affiliations));
-// }
-
-async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>> {
-  return immutable(await ShortText.init({
-    errors: [],
-    // validate: validateUserEmail,
-    child: {
-      id: 'organization-team-add-team-members-emails',
-      type: 'email',
-      value: ''
-    }
-  }));
-}
-
-async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immutable<State>> {
-  return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
-}
-
-// function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
-//   for (const s of state.addTeamMembersEmails) {
-//     if (!FormField.isValid(s)) { return false; }
-//   }
-//   return true;
-// }
-
-export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalParams<Msg>): PageModal<Msg> {
-  const { onCloseMsg, member } = params;
-
-  return {
-    title: 'View Team Member',
-    onCloseMsg,
-    body: () => {
-      const numCapabilities = member.user.capabilities.length;
-      return (
-        <div>
-          <div className='d-flex flex-nowrap align-items-center'>
-            <img
-              className='rounded-circle border'
-              style={{
-                width: '4rem',
-                height: '4rem',
-                objectFit: 'cover'
-              }}
-              src={userAvatarPath(member.user)} />
-
-
-            <div className='ml-3 d-flex flex-column align-items-start'>
-              <strong className='mb-1'>{member.user.name}</strong>
-              <span className='font-size-small'>{numCapabilities} Capabilit{numCapabilities === 1 ? 'y' : 'ies'}</span>
-            </div>
-          </div>
-          {numCapabilities
-            ? (<Capabilities
-                className='mt-4'
-                capabilities={member.user.capabilities.map(capability => ({
-                  capability,
-                  checked: true
-                }))} />)
-            : null}
-        </div>
-      );
-    },
-    actions: []
-  };
-}
-
-//team members functions end
 
 
 const init: Init<Tab.Params, State> = async params => {
@@ -167,16 +43,8 @@ const init: Init<Tab.Params, State> = async params => {
       items: opportunityToHistoryItems(params.opportunity),
       viewerUser: params.viewerUser
     })),
-    //from team
     showModal: null,
-    addTeamMembersLoading: 0,
-    removeTeamMemberLoading: null,
-    approveAffiliationLoading: null,
-    // capabilities: determineCapabilities(params.affiliations),
-    membersTable: immutable(await Table.init({
-      idNamespace: 'organization-members'
-    })),
-    addTeamMembersEmails: [await initAddTeamMemberEmailField()],
+
     //from form
     attachments: immutable(await Attachments.init({
       canRemoveExistingAttachments: true,
@@ -191,16 +59,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case 'showModal':
       return [state.set('showModal', msg.value)];
     case 'hideModal': {
-      const existingShowModal = state.showModal;
-      return [
-        state.set('showModal', null),
-        async state => {
-          if (existingShowModal && existingShowModal.tag === 'addAttachment') {
-            return await resetAddTeamMemberEmails(state);
-          }
-          return null;
-        }
-      ];
+      return [state.set('showModal', null)];
     }
     case 'history':
       return updateComponentChild({
@@ -241,12 +100,13 @@ export const component: Tab.Component<State, Msg> = {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
       case 'addAttachment': {
+        // add attachment validation
         // const isValid = isAddTeamMembersEmailsValid(state);
         return {
           title: 'Add Entry to Opportunity',
           onCloseMsg: adt('hideModal'),
           body: dispatch => {
-            // const addField = () => dispatch(adt('addTeamMembersEmailsAddField'));
+
 
             // const props = {
             //   extraChildProps: {},
@@ -263,7 +123,7 @@ export const component: Tab.Component<State, Msg> = {
                 </Alert>
 
 
-
+              {/* this adds the note fields; figure out the types */}
                 {/* <FormField.ConditionalLabel label='Email Addresses' required /> */}
                 <div className='mb-3 d-flex align-items-start flex-nowrap'>
                 {/* <ShortText.view {...props} /> */}
@@ -298,7 +158,8 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getContextualActions: ({ state, dispatch }) => {
-    // if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) { return null; }
+    // if (!isAdmin(state.viewerUser)) { return null; } //uncomment to hide the button from all but admin
+    // rewrite this for attachment loading
     // const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     // const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     // const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
