@@ -11,12 +11,36 @@ import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as FormField from 'front-end/lib/components/form-field';
 import Icon from 'front-end/lib/views/icon';
-import { makeViewTeamMemberModal} from 'front-end/lib/pages/organization/lib/views/team-member';
 import * as Table from 'front-end/lib/components/table';
 import { Capability } from 'front-end/lib/views/capabilities';
 import CAPABILITIES from 'shared/lib/data/capabilities';
 import { AffiliationMember,  memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
 // import { isAdmin, isVendor } from 'shared/lib/resources/user';
+// import FileLink from 'front-end/lib/views/file-link';
+import { PageModal } from 'front-end/lib/framework';
+import { userAvatarPath } from 'front-end/lib/pages/user/lib';
+// import Badge from 'front-end/lib/views/badge';
+import Capabilities from 'front-end/lib/views/capabilities';
+// import { ComponentViewProps} from 'front-end/lib/framework';
+import * as Attachments from 'front-end/lib/components/attachments'
+
+
+// interface Props extends ComponentViewProps<State, Msg> {
+//   disabled?: boolean;
+//   className?: string;
+//   addButtonClassName?: string;
+// }
+// interface Props {
+//   disabled?: boolean;
+//   className?: string;
+//   addButtonClassName?: string;
+// }
+
+interface MakeViewTeamMemberModalParams<Msg> {
+  member: AffiliationMember;
+  onCloseMsg: Msg;
+}
+
 
 
 type ModalId
@@ -35,10 +59,14 @@ export interface State extends Tab.Params {
   membersTable: Immutable<Table.State>;
   // capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
+  // Attachments tab
+  attachments: Immutable<Attachments.State>;
 }
 
 export type InnerMsg
   = ADT<'history', History.Msg>
+  // Attachments tab
+  | ADT<'attachments',        Attachments.Msg>
   //from team
   | ADT<'addTeamMembers'>
   | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
@@ -78,9 +106,9 @@ async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>
   }));
 }
 
-// async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immutable<State>> {
-//   return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
-// }
+async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immutable<State>> {
+  return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
+}
 
 function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
   for (const s of state.addTeamMembersEmails) {
@@ -88,6 +116,48 @@ function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
   }
   return true;
 }
+
+export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalParams<Msg>): PageModal<Msg> {
+  const { onCloseMsg, member } = params;
+
+  return {
+    title: 'View Team Member',
+    onCloseMsg,
+    body: () => {
+      const numCapabilities = member.user.capabilities.length;
+      return (
+        <div>
+          <div className='d-flex flex-nowrap align-items-center'>
+            <img
+              className='rounded-circle border'
+              style={{
+                width: '4rem',
+                height: '4rem',
+                objectFit: 'cover'
+              }}
+              src={userAvatarPath(member.user)} />
+
+
+            <div className='ml-3 d-flex flex-column align-items-start'>
+              <strong className='mb-1'>{member.user.name}</strong>
+              <span className='font-size-small'>{numCapabilities} Capabilit{numCapabilities === 1 ? 'y' : 'ies'}</span>
+            </div>
+          </div>
+          {numCapabilities
+            ? (<Capabilities
+                className='mt-4'
+                capabilities={member.user.capabilities.map(capability => ({
+                  capability,
+                  checked: true
+                }))} />)
+            : null}
+        </div>
+      );
+    },
+    actions: []
+  };
+}
+
 //team members functions end
 
 
@@ -108,12 +178,32 @@ const init: Init<Tab.Params, State> = async params => {
     membersTable: immutable(await Table.init({
       idNamespace: 'organization-members'
     })),
-    addTeamMembersEmails: [await initAddTeamMemberEmailField()]
+    addTeamMembersEmails: [await initAddTeamMemberEmailField()],
+    //from form
+    attachments: immutable(await Attachments.init({
+      canRemoveExistingAttachments: true,
+      existingAttachments:  [],
+      newAttachmentMetadata: []
+    }))
   };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case 'showModal':
+      return [state.set('showModal', msg.value)];
+    case 'hideModal': {
+      const existingShowModal = state.showModal;
+      return [
+        state.set('showModal', null),
+        async state => {
+          if (existingShowModal && existingShowModal.tag === 'addTeamMembers') {
+            return await resetAddTeamMemberEmails(state);
+          }
+          return null;
+        }
+      ];
+    }
     case 'history':
       return updateComponentChild({
         state,
@@ -150,7 +240,7 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
   getModal: state => {
-    if (!state.showModal) { return null; }
+    if (!state.showModal) { return null; } // this is tab page state, not overall state
     switch (state.showModal.tag) {
       case 'viewTeamMember':
         return makeViewTeamMemberModal({
@@ -181,6 +271,26 @@ export const component: Tab.Component<State, Msg> = {
 
       case 'addTeamMembers': {
         const isValid = isAddTeamMembersEmailsValid(state);
+          // const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
+    // const AddButton: View<Props> = ({ addButtonClassName = '', disabled }) => {
+    //   if (disabled) { return null; }
+    //   // const hasAttachments = !!(state.existingAttachments.length || state.newAttachments.length);
+    //   return (
+    //     //@ts-ignore
+    //     <FileLink
+    //       button
+    //       outline
+    //       size='sm'
+    //       color='primary'
+    //       className={`'mb-5'} ${addButtonClassName}`}
+    //       symbol_={leftPlacement(iconLinkSymbol('paperclip'))}
+    //       disabled={disabled}
+    //       // onChange={file => dispatch(adt('addAttachment', file))}
+    //     >
+    //       Add Attachment
+    //     </FileLink>
+    //   );
+    // };
         return {
           title: 'Add Team Member(s)',
           onCloseMsg: adt('hideModal'),
@@ -190,6 +300,13 @@ export const component: Tab.Component<State, Msg> = {
               <div>
                 <p>Provide an email address for each team member to invite them to join your organization.</p>
                 <p><strong>Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization, and only enter the email addresses associated with their Digital Marketplace accounts.</strong></p>
+                <Attachments.view
+                  dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
+
+                  state={state.attachments}
+                  disabled={false}
+                  className='mt-4' />
+
                 {state.addTeamMembersEmails.map((s, i) => {
                   const isFirst = i === 0;
                   const isLast = i === state.addTeamMembersEmails.length - 1;
@@ -281,9 +398,14 @@ export const component: Tab.Component<State, Msg> = {
     // const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     // const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     // const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+    console.log('History: getContextualActions is firing')
+    console.log('History: in getContextualActions, state is:', state)
     return adt('links', [{
       children: 'Add Entry',
-      onClick: () => dispatch(adt('showModal', adt('addTeamMembers')) as Msg),
+      onClick: () => {
+        console.log('******************************')
+        dispatch(adt('showModal', adt('addTeamMembers')) as Msg)
+      },
       button: true,
       // loading: isAddTeamMembersLoading,
       // disabled: isLoading,
@@ -292,3 +414,10 @@ export const component: Tab.Component<State, Msg> = {
     }]);
   }
 };
+
+
+        //@ts-ignore
+        // .then((resolve, reject) => {
+          //   console.log('resolve is: ',resolve)
+          //   console.log('reject is: ', reject)
+          // })
