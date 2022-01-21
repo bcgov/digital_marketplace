@@ -6,13 +6,18 @@ import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
 import React from 'react';
 import { Col, Row } from 'reactstrap';
-import { adt, ADT } from 'shared/lib/types';
-import { isVendor} from 'shared/lib/resources/user';
+import { adt, ADT, Id } from 'shared/lib/types';
 import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import { AffiliationMember } from 'shared/lib/resources/affiliation';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import * as FormField from 'front-end/lib/components/form-field';
 import Icon from 'front-end/lib/views/icon';
+import { makeViewTeamMemberModal} from 'front-end/lib/pages/organization/lib/views/team-member';
+import * as Table from 'front-end/lib/components/table';
+import { Capability } from 'front-end/lib/views/capabilities';
+import CAPABILITIES from 'shared/lib/data/capabilities';
+import { AffiliationMember,  memberIsPending, membersHaveCapability } from 'shared/lib/resources/affiliation';
+// import { isAdmin, isVendor } from 'shared/lib/resources/user';
+
 
 type ModalId
   = ADT<'addTeamMembers'>
@@ -22,19 +27,49 @@ type ModalId
 
 export interface State extends Tab.Params {
   history: Immutable<History.State>;
+  // from team
   showModal: ModalId | null;
+  addTeamMembersLoading: number;
+  removeTeamMemberLoading: Id | null; //Id of affiliation, not user
+  approveAffiliationLoading: Id | null; //Id of affiliation, not user
+  membersTable: Immutable<Table.State>;
+  // capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
 }
 
 export type InnerMsg
   = ADT<'history', History.Msg>
-  | ADT<'addTeamMembersEmailsAddField'>;
+  //from team
+  | ADT<'addTeamMembers'>
+  | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
+  | ADT<'approveAffiliation', AffiliationMember>
+  | ADT<'showModal', ModalId>
+  | ADT<'hideModal'>
+  | ADT<'membersTable', Table.Msg>
+  | ADT<'addTeamMembersEmails', [number, ShortText.Msg]> //[index, msg]
+  | ADT<'addTeamMembersEmailsAddField'>
+  | ADT<'addTeamMembersEmailsRemoveField', number>; //index
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+
+// team members functions
+export function determineCapabilities(members: AffiliationMember[]): Capability[] {
+  //Don't include pending members in capability calculation.
+  members = members.filter(m => !memberIsPending(m));
+  return CAPABILITIES.map(capability => ({
+    capability,
+    checked: membersHaveCapability(members, capability)
+  }));
+}
+
+// function resetCapabilities(state: Immutable<State>): Immutable<State> {
+//   return state.set('capabilities', determineCapabilities(state.affiliations));
+// }
 
 async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>> {
   return immutable(await ShortText.init({
     errors: [],
+    // validate: validateUserEmail,
     child: {
       id: 'organization-team-add-team-members-emails',
       type: 'email',
@@ -43,17 +78,37 @@ async function initAddTeamMemberEmailField(): Promise<Immutable<ShortText.State>
   }));
 }
 
+// async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immutable<State>> {
+//   return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
+// }
+
+function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
+  for (const s of state.addTeamMembersEmails) {
+    if (!FormField.isValid(s)) { return false; }
+  }
+  return true;
+}
+//team members functions end
+
 
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
-    addTeamMembersEmails: [await initAddTeamMemberEmailField()],
-    showModal: null,
     history: immutable(await History.init({
       idNamespace: 'cwu-opportunity-history',
       items: opportunityToHistoryItems(params.opportunity),
       viewerUser: params.viewerUser
-    }))
+    })),
+    //from team
+    showModal: null,
+    addTeamMembersLoading: 0,
+    removeTeamMemberLoading: null,
+    approveAffiliationLoading: null,
+    // capabilities: determineCapabilities(params.affiliations),
+    membersTable: immutable(await Table.init({
+      idNamespace: 'organization-members'
+    })),
+    addTeamMembersEmails: [await initAddTeamMemberEmailField()]
   };
 };
 
@@ -94,24 +149,38 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-  getContextualActions({ state }) {
-    if (!state.viewerUser || isVendor(state.viewerUser)) { return null; }
-    return adt('links', [{
-      children: 'Add Team Member(s)',
-      onClick: () => dispatch(adt('showModal', adt('addTeamMembers')) as Msg),
-      button: true,
-      // loading: isAddTeamMembersLoading,
-      // disabled: isLoading,
-      symbol_: leftPlacement(iconLinkSymbol('user-plus')),
-      color: 'primary'
-    }]);
-  },
-
   getModal: state => {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
+      case 'viewTeamMember':
+        return makeViewTeamMemberModal({
+          member: state.showModal.value,
+          onCloseMsg: adt('hideModal')
+        });
+
+      case 'approveAffiliation':
+        return {
+          title: 'Approve Request?',
+          body: () => 'Approving this request will allow this company to put you forward as a team member on proposals for opportunities.',
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Approve Request',
+              icon: 'user-check',
+              color: 'success',
+              msg: adt('approveAffiliation', state.showModal.value),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+
       case 'addTeamMembers': {
-        const isValid = true; //check if note meets requirements
+        const isValid = isAddTeamMembersEmailsValid(state);
         return {
           title: 'Add Team Member(s)',
           onCloseMsg: adt('hideModal'),
@@ -128,7 +197,6 @@ export const component: Tab.Component<State, Msg> = {
                     extraChildProps: {},
                     className: 'flex-grow-1 mb-0',
                     placeholder: 'Email Address',
-
                     dispatch: mapComponentDispatch(dispatch, v => adt('addTeamMembersEmails', [i, v]) as Msg),
                     state: s
                   };
@@ -149,7 +217,6 @@ export const component: Tab.Component<State, Msg> = {
                               className='ml-2'
                               width={0.9}
                               height={0.9}
-
                               onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
                           <Icon
                             hover={isLast}
@@ -184,6 +251,44 @@ export const component: Tab.Component<State, Msg> = {
           ]
         };
       }
+
+      case 'removeTeamMember': {
+        const affiliation = state.showModal.value;
+        return {
+          title: `Remove ${affiliation.user.name}?`,
+          body: () => `Are you sure you want to remove ${affiliation.user.name} from this organization?`,
+          onCloseMsg: adt('hideModal'),
+          actions: [
+            {
+              text: 'Remove Team Member',
+              icon: 'user-times',
+              color: 'danger',
+              msg: adt('removeTeamMember', affiliation),
+              button: true
+            },
+            {
+              text: 'Cancel',
+              color: 'secondary',
+              msg: adt('hideModal')
+            }
+          ]
+        };
+      }
     }
   },
+  getContextualActions: ({ state, dispatch }) => {
+    // if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) { return null; }
+    // const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
+    // const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
+    // const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+    return adt('links', [{
+      children: 'Add Entry',
+      onClick: () => dispatch(adt('showModal', adt('addTeamMembers')) as Msg),
+      button: true,
+      // loading: isAddTeamMembersLoading,
+      // disabled: isLoading,
+      symbol_: leftPlacement(iconLinkSymbol('file-edit')),
+      color: 'primary'
+    }]);
+  }
 };
