@@ -9,8 +9,8 @@ import { Col, Row } from 'reactstrap';
 import { adt, ADT, Id } from 'shared/lib/types';
 import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import * as FormField from 'front-end/lib/components/form-field';
-import Icon from 'front-end/lib/views/icon';
+// import * as FormField from 'front-end/lib/components/form-field';
+// import Icon from 'front-end/lib/views/icon';
 import * as Table from 'front-end/lib/components/table';
 import { Capability } from 'front-end/lib/views/capabilities';
 import CAPABILITIES from 'shared/lib/data/capabilities';
@@ -23,6 +23,7 @@ import { userAvatarPath } from 'front-end/lib/pages/user/lib';
 import Capabilities from 'front-end/lib/views/capabilities';
 // import { ComponentViewProps} from 'front-end/lib/framework';
 import * as Attachments from 'front-end/lib/components/attachments'
+import { Alert } from 'reactstrap';
 
 
 // interface Props extends ComponentViewProps<State, Msg> {
@@ -43,11 +44,7 @@ interface MakeViewTeamMemberModalParams<Msg> {
 
 
 
-type ModalId
-  = ADT<'addTeamMembers'>
-  | ADT<'viewTeamMember', AffiliationMember>
-  | ADT<'removeTeamMember', AffiliationMember>
-  | ADT<'approveAffiliation', AffiliationMember>;
+type ModalId = ADT<'addAttachment'>
 
 export interface State extends Tab.Params {
   history: Immutable<History.State>;
@@ -68,7 +65,7 @@ export type InnerMsg
   // Attachments tab
   | ADT<'attachments',        Attachments.Msg>
   //from team
-  | ADT<'addTeamMembers'>
+  | ADT<'addAttachment'>
   | ADT<'removeTeamMember', AffiliationMember> //Id of affiliation, not user
   | ADT<'approveAffiliation', AffiliationMember>
   | ADT<'showModal', ModalId>
@@ -76,7 +73,8 @@ export type InnerMsg
   | ADT<'membersTable', Table.Msg>
   | ADT<'addTeamMembersEmails', [number, ShortText.Msg]> //[index, msg]
   | ADT<'addTeamMembersEmailsAddField'>
-  | ADT<'addTeamMembersEmailsRemoveField', number>; //index
+  | ADT<'addTeamMembersEmailsRemoveField', number> //index
+  | ADT<'noop'>; //index
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -110,12 +108,12 @@ async function resetAddTeamMemberEmails(state: Immutable<State>): Promise<Immuta
   return state.set('addTeamMembersEmails', [await initAddTeamMemberEmailField()]);
 }
 
-function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
-  for (const s of state.addTeamMembersEmails) {
-    if (!FormField.isValid(s)) { return false; }
-  }
-  return true;
-}
+// function isAddTeamMembersEmailsValid(state: Immutable<State>): boolean {
+//   for (const s of state.addTeamMembersEmails) {
+//     if (!FormField.isValid(s)) { return false; }
+//   }
+//   return true;
+// }
 
 export function makeViewTeamMemberModal<Msg>(params: MakeViewTeamMemberModalParams<Msg>): PageModal<Msg> {
   const { onCloseMsg, member } = params;
@@ -197,7 +195,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set('showModal', null),
         async state => {
-          if (existingShowModal && existingShowModal.tag === 'addTeamMembers') {
+          if (existingShowModal && existingShowModal.tag === 'addAttachment') {
             return await resetAddTeamMemberEmails(state);
           }
           return null;
@@ -240,148 +238,54 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
   getModal: state => {
-    if (!state.showModal) { return null; } // this is tab page state, not overall state
+    if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
-      case 'viewTeamMember':
-        return makeViewTeamMemberModal({
-          member: state.showModal.value,
-          onCloseMsg: adt('hideModal')
-        });
-
-      case 'approveAffiliation':
+      case 'addAttachment': {
+        // const isValid = isAddTeamMembersEmailsValid(state);
         return {
-          title: 'Approve Request?',
-          body: () => 'Approving this request will allow this company to put you forward as a team member on proposals for opportunities.',
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Approve Request',
-              icon: 'user-check',
-              color: 'success',
-              msg: adt('approveAffiliation', state.showModal.value),
-              button: true
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
-
-      case 'addTeamMembers': {
-        const isValid = isAddTeamMembersEmailsValid(state);
-          // const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
-    // const AddButton: View<Props> = ({ addButtonClassName = '', disabled }) => {
-    //   if (disabled) { return null; }
-    //   // const hasAttachments = !!(state.existingAttachments.length || state.newAttachments.length);
-    //   return (
-    //     //@ts-ignore
-    //     <FileLink
-    //       button
-    //       outline
-    //       size='sm'
-    //       color='primary'
-    //       className={`'mb-5'} ${addButtonClassName}`}
-    //       symbol_={leftPlacement(iconLinkSymbol('paperclip'))}
-    //       disabled={disabled}
-    //       // onChange={file => dispatch(adt('addAttachment', file))}
-    //     >
-    //       Add Attachment
-    //     </FileLink>
-    //   );
-    // };
-        return {
-          title: 'Add Team Member(s)',
+          title: 'Add Entry to Opportunity',
           onCloseMsg: adt('hideModal'),
           body: dispatch => {
-            const addField = () => dispatch(adt('addTeamMembersEmailsAddField'));
+            // const addField = () => dispatch(adt('addTeamMembersEmailsAddField'));
+
+            // const props = {
+            //   extraChildProps: {},
+            //   className: 'flex-grow-1 mb-0',
+            //   placeholder: 'Email Address',
+            //   dispatch: dispatch(adt('noop')),
+            //   state
+            // };
+
             return (
               <div>
-                <p>Provide an email address for each team member to invite them to join your organization.</p>
-                <p><strong>Please ensure team members have already signed up for a Digital Marketplace Vendor account before adding them to your organization, and only enter the email addresses associated with their Digital Marketplace accounts.</strong></p>
+                <p>Provide a note or commentary below pertaining to the opportunity. You may also include any applicable attachments.</p>
+                <Alert color='danger' style={{ whiteSpace: 'pre-line' }}><strong>Important! </strong>The notes and any attachments, if applicable, cannot be edited or deleted once submitted.
+                </Alert>
+
+
+
+                {/* <FormField.ConditionalLabel label='Email Addresses' required /> */}
+                <div className='mb-3 d-flex align-items-start flex-nowrap'>
+                {/* <ShortText.view {...props} /> */}
+
+              </div>
                 <Attachments.view
                   dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
-
                   state={state.attachments}
                   disabled={false}
                   className='mt-4' />
-
-                {state.addTeamMembersEmails.map((s, i) => {
-                  const isFirst = i === 0;
-                  const isLast = i === state.addTeamMembersEmails.length - 1;
-                  const props = {
-                    extraChildProps: {},
-                    className: 'flex-grow-1 mb-0',
-                    placeholder: 'Email Address',
-                    dispatch: mapComponentDispatch(dispatch, v => adt('addTeamMembersEmails', [i, v]) as Msg),
-                    state: s
-                  };
-                  return (
-                    <div key={`organization-add-team-member-email-${i}`}>
-                      {isFirst
-                        ? (<FormField.ConditionalLabel label='Email Addresses' required {...props} />)
-                        : null}
-                      <div className='mb-3 d-flex align-items-start flex-nowrap'>
-                        <ShortText.view {...props} />
-                        <div className='d-flex flex-nowrap align-items-center' style={{ marginTop: '0.625rem' }}>
-                          {state.addTeamMembersEmails.length === 1
-                            ? null
-                            : (<Icon
-                              hover
-                              name='trash'
-                              color='info'
-                              className='ml-2'
-                              width={0.9}
-                              height={0.9}
-                              onClick={() => dispatch(adt('addTeamMembersEmailsRemoveField', i))} />)}
-                          <Icon
-                            hover={isLast}
-                            name='plus'
-                            color='primary'
-                            className={`ml-2 ${isLast ? 'o-100' : 'o-0'}`}
-                            width={1.1}
-                            height={1.1}
-                            onClick={isLast ? addField : undefined} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
+
             );
           },
           actions: [
             {
-              text: 'Add Team Member(s)',
+              text: 'Submit Entry',
               button: true,
-              disabled: !isValid,
+              // disabled: !isValid,
               color: 'primary',
-              icon: 'user-plus',
-              msg: adt('addTeamMembers')
-            },
-            {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
-            }
-          ]
-        };
-      }
-
-      case 'removeTeamMember': {
-        const affiliation = state.showModal.value;
-        return {
-          title: `Remove ${affiliation.user.name}?`,
-          body: () => `Are you sure you want to remove ${affiliation.user.name} from this organization?`,
-          onCloseMsg: adt('hideModal'),
-          actions: [
-            {
-              text: 'Remove Team Member',
-              icon: 'user-times',
-              color: 'danger',
-              msg: adt('removeTeamMember', affiliation),
-              button: true
+              icon: 'file-edit',
+              msg: adt('addAttachment')
             },
             {
               text: 'Cancel',
@@ -404,7 +308,7 @@ export const component: Tab.Component<State, Msg> = {
       children: 'Add Entry',
       onClick: () => {
         console.log('******************************')
-        dispatch(adt('showModal', adt('addTeamMembers')) as Msg)
+        dispatch(adt('showModal', adt('addAttachment')) as Msg)
       },
       button: true,
       // loading: isAddTeamMembersLoading,
@@ -414,10 +318,3 @@ export const component: Tab.Component<State, Msg> = {
     }]);
   }
 };
-
-
-        //@ts-ignore
-        // .then((resolve, reject) => {
-          //   console.log('resolve is: ',resolve)
-          //   console.log('reject is: ', reject)
-          // })
