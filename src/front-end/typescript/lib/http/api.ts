@@ -611,6 +611,7 @@ function rawSWUOpportunityToSWUOpportunity(raw: RawSWUOpportunity): SWUOpportuni
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     attachments: raw.attachments
+    /// brianna use this for new feature
       .map(a => rawFileRecordToFileRecord(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
     addenda: raw.addenda

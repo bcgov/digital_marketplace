@@ -1,3 +1,4 @@
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { EMPTY_STRING } from 'front-end/config';
 import * as Table from 'front-end/lib/components/table';
 import { Component, ComponentView, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -18,11 +19,16 @@ export interface Item {
   createdAt: Date;
   createdBy?: UserSlim;
 }
+// another interface for createnewnote, nest the attachment and note
+export interface ModalNote {
+  modalNote: Immutable<ShortText.State>;
+}
 
 export interface Params {
   idNamespace: string;
   items: Item[];
   viewerUser: User;
+  // modalNote: string; //fix later^^ see above comment
 }
 
 export interface State extends Pick<Params, 'items' | 'viewerUser'> {
@@ -34,6 +40,7 @@ export type Msg = ADT<'table', Table.Msg>;
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
     viewerUser,
+    // modalNote:'',
     items, //items sorted in the http/api module.
     table: immutable(await Table.init({
       idNamespace
