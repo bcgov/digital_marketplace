@@ -1,11 +1,13 @@
-import { NODE_ENV } from 'front-end/config';
+// import { NODE_ENV } from 'front-end/config';
 import app from 'front-end/lib/app';
 import { start } from 'front-end/lib/framework';
 import { debounce, set } from 'lodash';
 import { adt } from 'shared/lib/types';
 
 const element = document.getElementById('main') || document.body;
-const debug = NODE_ENV === 'development';
+// brianna take this out later
+// const debug = NODE_ENV === 'development';
+const debug = true;
 start(app, element, debug)
   .then(stateManager => {
     // Expose state manager in development.

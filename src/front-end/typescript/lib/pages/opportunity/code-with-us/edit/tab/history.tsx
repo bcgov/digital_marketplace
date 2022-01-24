@@ -12,7 +12,7 @@ import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
 
-// import * as ShortText from 'front-end/lib/components/form-field/short-text';
+import * as ShortText from 'front-end/lib/components/form-field/short-text';
 // import * as FormField from 'front-end/lib/components/form-field';
 
 // probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
@@ -22,6 +22,7 @@ export interface State extends Tab.Params {
   history: Immutable<History.State>;
   showModal: ModalId | null;
   attachments: Immutable<Attachments.State>;
+  modalNote: Immutable<ShortText.State>;
 }
 
 export type InnerMsg
@@ -29,6 +30,7 @@ export type InnerMsg
   // Attachments tab
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
+  | ADT<'modalNote', ShortText.Msg>
   | ADT<'noop'>
   | ADT<'attachments',        Attachments.Msg>
   | ADT<'addAttachment'>;
@@ -45,6 +47,15 @@ const init: Init<Tab.Params, State> = async params => {
       viewerUser: params.viewerUser
     })),
     showModal: null,
+    modalNote: immutable(await ShortText.init({
+      errors: [],
+      // validate: contentValidation.validateSlug,
+      child: {
+        type: 'text',
+        value: '',
+        id: 'modal-note'
+      }
+    })),
 
     //from form
     attachments: immutable(await Attachments.init({
@@ -69,6 +80,22 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childUpdate: History.update,
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'history', value })
+      });
+    case 'attachments':
+      return updateComponentChild({
+        state,
+        childStatePath: ['attachments'],
+        childUpdate: Attachments.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('attachments', value)
+      });
+    case 'modalNote':
+      return updateComponentChild({
+        state,
+        childStatePath: ['modalNote'],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt('modalNote', value)
       });
     default:
       return [state];
@@ -100,6 +127,8 @@ interface Props extends ComponentViewProps<State, Msg> {
 
 // @duplicated-attachments-view
 const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+  // debugger;
+  console.log(JSON.stringify(state, null, 2))
   return (
     <Row>
       <Col xs='12'>
@@ -150,7 +179,14 @@ export const component: Tab.Component<State, Msg> = {
               {/* this adds the note fields; they take the same props (see team.tsx) */}
                 {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
                 <div className='mb-3 d-flex align-items-start flex-nowrap'>
-                {/* <ShortText.view {...formProps} /> */}
+                <ShortText.view
+                  extraChildProps={{}}
+                  label='Note'
+                  placeholder='Note'
+                  required
+                  state={state.modalNote}
+                  dispatch={mapComponentDispatch(dispatch, value => adt('modalNote' as const, value))} />
+                {/* <input type="text"></input> */}
 
               </div>
               <AttachmentsView {...attachmentProps} />
