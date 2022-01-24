@@ -1,7 +1,7 @@
 // import { isAdmin } from 'shared/lib/resources/user'; //uncomment when ready to limit notes to admin
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
-import { ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
+import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
@@ -11,6 +11,7 @@ import { adt, ADT } from 'shared/lib/types';
 import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
+
 // import * as ShortText from 'front-end/lib/components/form-field/short-text';
 // import * as FormField from 'front-end/lib/components/form-field';
 
@@ -92,6 +93,26 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
+//props for the AttachmentsView component
+interface Props extends ComponentViewProps<State, Msg> {
+  disabled?: boolean;
+}
+
+// @duplicated-attachments-view
+const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+  return (
+    <Row>
+      <Col xs='12'>
+        <Attachments.view
+          dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
+          state={state.attachments}
+          disabled={disabled}
+          className='mt-4' />
+      </Col>
+    </Row>
+  );
+};
+
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
@@ -107,14 +128,17 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt('hideModal'),
           body: dispatch => {
 
+          // const formProps = {
+          //   extraChildProps: {},
+          //   className: 'flex-grow-1 mb-0',
+          //   placeholder: 'Email Address',
+          //   dispatch: dispatch(adt('noop')),
+          //   state
+          // };
 
-            // const props = {
-            //   extraChildProps: {},
-            //   className: 'flex-grow-1 mb-0',
-            //   placeholder: 'Email Address',
-            //   dispatch: dispatch(adt('noop')),
-            //   state
-            // };
+          // wrong dispatch?
+          const attachmentProps = { state, dispatch, disabled: false }
+
 
             return (
               <div>
@@ -123,17 +147,13 @@ export const component: Tab.Component<State, Msg> = {
                 </Alert>
 
 
-              {/* this adds the note fields; figure out the types */}
-                {/* <FormField.ConditionalLabel label='Email Addresses' required /> */}
+              {/* this adds the note fields; they take the same props (see team.tsx) */}
+                {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
                 <div className='mb-3 d-flex align-items-start flex-nowrap'>
-                {/* <ShortText.view {...props} /> */}
+                {/* <ShortText.view {...formProps} /> */}
 
               </div>
-                <Attachments.view
-                  dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
-                  state={state.attachments}
-                  disabled={false}
-                  className='mt-4' />
+              <AttachmentsView {...attachmentProps} />
               </div>
 
             );
