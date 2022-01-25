@@ -136,7 +136,8 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           dispatch={mapComponentDispatch(dispatch, msg => adt('attachments' as const, msg))}
           state={state.attachments}
           disabled={disabled}
-          className='mt-4' />
+          // className='mt-4'
+          />
       </Col>
     </Row>
   );
@@ -178,17 +179,16 @@ export const component: Tab.Component<State, Msg> = {
 
               {/* this adds the note fields; they take the same props (see team.tsx) */}
                 {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
-                <div className='mb-3 d-flex align-items-start flex-nowrap'>
+                {/* <div className='mb-3 d-flex align-items-start flex-nowrap'> */}
                 <ShortText.view
                   extraChildProps={{}}
-                  label='Note'
-                  placeholder='Note'
+                  label='Notes'
                   required
                   state={state.modalNote}
                   dispatch={mapComponentDispatch(dispatch, value => adt('modalNote' as const, value))} />
                 {/* <input type="text"></input> */}
 
-              </div>
+              {/* </div> */}
               <AttachmentsView {...attachmentProps} />
               </div>
 
