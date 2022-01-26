@@ -13,7 +13,7 @@ import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
 // import {createFile} from 'back-end/lib/db/file'
 
-import * as ShortText from 'front-end/lib/components/form-field/short-text';
+import * as LongText from 'front-end/lib/components/form-field/long-text';
 // import * as FormField from 'front-end/lib/components/form-field';
 
 // probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
@@ -23,7 +23,7 @@ export interface State extends Tab.Params {
   history: Immutable<History.State>;
   showModal: ModalId | null;
   attachments: Immutable<Attachments.State>;
-  modalNote: Immutable<ShortText.State>;
+  modalNote: Immutable<LongText.State>;
 }
 
 export type InnerMsg
@@ -31,7 +31,7 @@ export type InnerMsg
   // Attachments tab
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
-  | ADT<'modalNote', ShortText.Msg>
+  | ADT<'modalNote', LongText.Msg>
   | ADT<'noop'>
   | ADT<'attachments',        Attachments.Msg>
   | ADT<'addAttachment'>
@@ -49,11 +49,11 @@ const init: Init<Tab.Params, State> = async params => {
       viewerUser: params.viewerUser
     })),
     showModal: null,
-    modalNote: immutable(await ShortText.init({
+    modalNote: immutable(await LongText.init({
       errors: [],
       // validate: contentValidation.validateSlug,
       child: {
-        type: 'text',
+        // type: 'text',
         value: '',
         id: 'modal-note'
       }
@@ -95,7 +95,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       return updateComponentChild({
         state,
         childStatePath: ['modalNote'],
-        childUpdate: ShortText.update,
+        childUpdate: LongText.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt('modalNote', value)
       });
@@ -194,8 +194,8 @@ export const component: Tab.Component<State, Msg> = {
               {/* this adds the note fields; they take the same props (see team.tsx) */}
                 {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
                 {/* <div className='mb-3 d-flex align-items-start flex-nowrap'> */}
-                <ShortText.view
-                  extraChildProps={{inputClassName: 'note-input'}}
+                <LongText.view
+                  extraChildProps={{style: { height: '150px' }}}
                   label='Notes'
                   required
                   state={state.modalNote}
