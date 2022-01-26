@@ -195,7 +195,7 @@ export const component: Tab.Component<State, Msg> = {
                 {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
                 {/* <div className='mb-3 d-flex align-items-start flex-nowrap'> */}
                 <ShortText.view
-                  extraChildProps={{inputClassName: 'brianna-class'}}
+                  extraChildProps={{inputClassName: 'note-input'}}
                   label='Notes'
                   required
                   state={state.modalNote}
