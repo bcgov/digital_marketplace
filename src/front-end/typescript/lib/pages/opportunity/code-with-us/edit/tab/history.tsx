@@ -195,7 +195,7 @@ export const component: Tab.Component<State, Msg> = {
                 {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
                 {/* <div className='mb-3 d-flex align-items-start flex-nowrap'> */}
                 <LongText.view
-                  extraChildProps={{style: { height: '150px' }}}
+                  extraChildProps={{style: { height: '125px' }}}
                   label='Notes'
                   required
                   state={state.modalNote}
