@@ -11,6 +11,7 @@ import { adt, ADT } from 'shared/lib/types';
 import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
+// import {createFile} from 'back-end/lib/db/file'
 
 import * as ShortText from 'front-end/lib/components/form-field/short-text';
 // import * as FormField from 'front-end/lib/components/form-field';
@@ -33,7 +34,8 @@ export type InnerMsg
   | ADT<'modalNote', ShortText.Msg>
   | ADT<'noop'>
   | ADT<'attachments',        Attachments.Msg>
-  | ADT<'addAttachment'>;
+  | ADT<'addAttachment'>
+  | ADT<'createHistoryNote'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -97,6 +99,17 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt('modalNote', value)
       });
+      case 'createHistoryNote':
+        // 1. (validate valid files?)
+        // 2. store files in 'files' table (function createFile in src/back-end/lib/db/file.ts)
+        // createFile()
+        // 3. add to swuOpportunityNoteAttachments
+        // ( function CreateSWUOpportunityAttachments in back-end/lib/db/opportunity/sprint-with-us )
+        // 4. create the swuOpportunityNote (function addSwuopportunityNote same in same file)
+
+        console.log('state.modalNote',state.modalNote)
+        return [state.set('showModal', null)];
+
     default:
       return [state];
   }
@@ -128,7 +141,7 @@ interface Props extends ComponentViewProps<State, Msg> {
 // @duplicated-attachments-view
 const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   // debugger;
-  console.log(JSON.stringify(state, null, 2))
+  // console.log(JSON.stringify(state, null, 2))
   return (
     <Row>
       <Col xs='12'>
@@ -150,6 +163,7 @@ export const component: Tab.Component<State, Msg> = {
   getModal: state => {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
+      // remove case later brianna
       case 'addAttachment': {
         // add attachment validation
         // const isValid = isAddTeamMembersEmailsValid(state);
@@ -181,7 +195,7 @@ export const component: Tab.Component<State, Msg> = {
                 {/* <FormField.ConditionalLabel label='Email Addresses' required {...formProps}/> */}
                 {/* <div className='mb-3 d-flex align-items-start flex-nowrap'> */}
                 <ShortText.view
-                  extraChildProps={{}}
+                  extraChildProps={{inputClassName: 'brianna-class'}}
                   label='Notes'
                   required
                   state={state.modalNote}
@@ -201,7 +215,7 @@ export const component: Tab.Component<State, Msg> = {
               // disabled: !isValid,
               color: 'primary',
               icon: 'file-edit',
-              msg: adt('addAttachment')
+              msg: adt('createHistoryNote')
             },
             {
               text: 'Cancel',

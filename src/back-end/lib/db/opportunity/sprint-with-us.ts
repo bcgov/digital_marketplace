@@ -295,7 +295,7 @@ export function generateSWUOpportunityQuery(connection: Connection, full = false
 
   return query;
 }
-
+// puts files into db brianna
 async function createSWUOpportunityNoteAttachments(connection: Connection, trx: Transaction, eventId: Id, attachments: FileRecord[]) {
   for (const attachment of attachments) {
     const [attachmentResult] = await connection('swuOpportunityNoteAttachments')
