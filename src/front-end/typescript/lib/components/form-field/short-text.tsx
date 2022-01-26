@@ -15,6 +15,7 @@ type InnerChildMsg
 
 interface ExtraChildProps {
   onEnter?(): void;
+  inputClassName?: string;
 }
 
 type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
@@ -37,7 +38,7 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '', validityClassName, disabled = false, onEnter } = props;
+  const { state, dispatch, placeholder, className = '',validityClassName, disabled = false, onEnter, inputClassName } = props;
   return (
     <input
       id={state.id}

@@ -4,6 +4,7 @@ import { CSSProperties, default as React, MouseEventHandler, ReactElement } from
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCoffee } from '@fortawesome/free-solid-svg-icons'
 
+
 export const DEFAULT_ICON_WIDTH = 1;
 export const DEFAULT_ICON_HEIGHT = 1;
 

@@ -27,7 +27,7 @@ export const readOneFileBlob = tryDb<[string], FileBlob | null>(async (connectio
   return valid(result || null);
 });
 
-// brianna will need for note feature
+// brianna will need for note feature--add file to db
 export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (connection, fileRecord, userId) => {
   const now = new Date();
   if (!fileRecord) {
@@ -51,6 +51,7 @@ export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (conne
       throw new Error('Database error');
     }
     let fileBlob = dbResult.value;
+    // brianna this is where the blob goes into the db
     // Create a new blob if it doesn't already exist.
     if (!fileBlob) {
       [fileBlob] = await connection('fileBlobs')
