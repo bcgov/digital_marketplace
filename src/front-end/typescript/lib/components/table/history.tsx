@@ -9,6 +9,9 @@ import React from 'react';
 import { formatDate, formatTime } from 'shared/lib';
 import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
+// import * as validation from 'shared/lib/validation';
+// import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+
 
 export interface Item {
   type: {
@@ -32,10 +35,12 @@ export interface Params {
 }
 
 export interface State extends Pick<Params, 'items' | 'viewerUser'> {
-  table: Immutable<Table.State>;
+  table: Immutable<Table.State>,
+  briannaPublishNewNote?: any;
 }
 
-export type Msg = ADT<'table', Table.Msg>;
+export type Msg = ADT<'table', Table.Msg>
+| ADT<'publishNote'>
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
@@ -48,6 +53,15 @@ export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser
   };
 };
 
+export function getNewNote(state: Immutable<State>): string | null {
+  //how are we going to get the modalNote into this state in this file? brianna
+  //@ts-ignore--fix this function's types later
+  return state.table ? state.table : null;
+}
+
+// const startPublishLoading = makeStartLoading<State>('publishLoading');
+// const stopPublishLoading = makeStopLoading<State>('publishLoading');
+
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'table':
@@ -58,6 +72,30 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'table', value })
       });
+      //brianna new
+      case 'publishNote':
+        return [
+          // startPublishLoading(state).set('showModal', null),
+          state,
+          async (state, dispatch) => {
+          //   state = stopPublishLoading(state);
+            const newNote = getNewNote(state);
+            if (!newNote) { return state; }
+            const result = await state.briannaPublishNewNote(newNote);
+            console.log(result)
+            // if (validation.isValid(result)) {
+            //   dispatch(toast(adt('success', toasts.success)));
+            //   return immutable(await init({
+            //     publishNewAddendum: state.publishNewAddendum,
+            //     existingAddenda: result.value
+            //   }));
+            // } else {
+            //   dispatch(toast(adt('error', toasts.error)));
+            //   return state.update('newAddendum', s => s ? FormField.setErrors(s, result.value) : s);
+            // }
+            return null
+          }
+        ];
   }
 };
 

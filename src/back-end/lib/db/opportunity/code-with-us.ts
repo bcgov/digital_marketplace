@@ -432,7 +432,7 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Authentic
     if (!oppVersionRecord) {
       throw new Error('unable to create opportunity version');
     }
-
+// brianna
     // Create initial opportunity status record (Draft)
     await connection('cwuOpportunityStatuses')
       .transacting(trx)
@@ -651,7 +651,7 @@ export const readOneCWUOpportunityAuthor = tryDb<[Id], User | null>(async (conne
 
   return authorId ? await readOneUser(connection, authorId) : valid(null);
 });
-
+//brianna
 export const addCWUOpportunityNote = tryDb<[Id, UpdateCWUOpportunityWithNoteParams, AuthenticatedSession], CWUOpportunity>(async (connection, id, noteParams, session) => {
   const now = new Date();
   await connection.transaction(async trx => {

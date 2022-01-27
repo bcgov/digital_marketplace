@@ -619,6 +619,7 @@ const resource: Resource = {
                 cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
               }
               break;
+              // brianna
             case 'addNote':
               dbResult = await db.addCWUOpportunityNote(connection, request.params.id, body.value, session);
               break;
