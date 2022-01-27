@@ -1,7 +1,7 @@
 // import { isAdmin } from 'shared/lib/resources/user'; //uncomment when ready to limit notes to admin
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
-import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
+import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, } from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
@@ -12,9 +12,13 @@ import  { iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
 import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
 // import {createFile} from 'back-end/lib/db/file'
+import * as api from 'front-end/lib/http/api';
 
 import * as LongText from 'front-end/lib/components/form-field/long-text';
+import { invalid, valid } from 'shared/lib/validation';
 // import * as FormField from 'front-end/lib/components/form-field';
+// import { Addendum } from 'shared/lib/resources/addendum'; // make this note later
+
 
 // probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
 type ModalId = ADT<'addAttachment'>
@@ -39,10 +43,31 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-
+// brianna where does paramas come from
 const init: Init<Tab.Params, State> = async params => {
+  // debugger;
   return {
     ...params,
+    //change to be for note later brianna
+    async briannaPublishNewNote(value) {
+      console.log('value in briannaPublishNewNote is:',value)
+      const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
+      // let outcome: Validation<Addendum[], string[]> | undefined;
+      console.log('result in briannaPublishNewNote is:',result)
+      let outcome;
+      switch (result.tag) {
+        case 'valid':
+          console.log('i am valid')
+          outcome = valid(result.value.history);
+          break;
+        case 'invalid':
+          if (result.value.opportunity?.tag === 'addAddendum') {
+            outcome = invalid(result.value.opportunity.value);
+          }
+          break;
+      }
+      return outcome || invalid(['Unable to add note due to a system error.']);
+    },
     history: immutable(await History.init({
       idNamespace: 'cwu-opportunity-history',
       items: opportunityToHistoryItems(params.opportunity),
@@ -57,6 +82,7 @@ const init: Init<Tab.Params, State> = async params => {
         value: '',
         id: 'modal-note'
       }
+
     })),
 
     //from form
@@ -67,6 +93,75 @@ const init: Init<Tab.Params, State> = async params => {
     }))
   };
 };
+
+
+const briannaSendNoteAttachmentsToDB = async function(state) {
+  // const formValues = getValues(state); need to use something like this to capture returned ids (see src/front-end/typescript/lib/pages/proposal/code-with-us/lib/components/form.tsx)
+  let giveMeTheIds;
+  const newAttachments = Attachments.getNewAttachments(state.attachments);
+  console.log('newAttachments',newAttachments)
+  // Upload new attachments if necessary.
+  if (newAttachments.length) {
+    // if valid, this adds the files to the files and fileBlobs tables
+    const result = await api.uploadFiles(newAttachments);
+    switch (result.tag) {
+      case 'valid':
+        // need something like this to grab the attachment ids for later insertion into the cwuOpportunityStatuses table
+        // formValues.attachments = [
+        //   ...formValues.attachments,
+        //   ...(result.value.map(({ id }) => id))
+        // ];
+        // adding briannaFunction here would be easiest, but don't have access to params
+        // console.log(JSON.stringify(result, null, 2))
+        giveMeTheIds = [...(result.value.map(({ id }) => id))]
+        console.log('i am the ids', giveMeTheIds)
+        break;
+      case 'invalid':
+        return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
+      case 'unhandled':
+        return invalid(state);
+    }
+  }
+
+  // on existing PR, check if they're items to the 'cwu/swu statuses' table (use '' to get results for the table names specifically)--look at git diff. Should be a function somewhere in the api that adds to that table
+
+  // const actionResult = await (async () => {
+  //         return await api.oppNote.create({ //make your api function
+  //           // ...formValues, whatever you use
+  //           opportunity: state.opportunity.id,
+  //           // status: action.value
+  //         });
+
+          //also need to add to the CWUOpp table? It has a history
+
+
+  // })();
+
+  // need your own setErrors (existing one is customized to specific forms)
+  // switch (actionResult.tag) {
+  //   case 'valid':
+  //     state = setErrors(state, {});
+  //     // Update the attachments component accordingly.
+  //     state = state.set('attachments', immutable(await Attachments.init({
+  //       existingAttachments: actionResult.value.attachments || [],
+  //       newAttachmentMetadata
+  //     })));
+  //     return valid([state, actionResult.value]);
+  //   case 'unhandled':
+  //   case 'invalid':
+  //     return invalid(setErrors(state, actionResult.value));
+  // }
+
+  //ref for api function
+  // Create new note attachments tables
+  //  await connection.schema.createTable('cwuOpportunityNoteAttachments', table => {
+    //   table.uuid('event').references('id').inTable('cwuOpportunityStatuses').notNullable();
+    //   table.uuid('file').references('id').inTable('files').notNullable();
+    //   table.primary(['event', 'file']);
+    // });
+    // have to assume note goes into existing note column in the opportunitystatuses tables?
+    return null
+}
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -100,16 +195,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('modalNote', value)
       });
       case 'createHistoryNote':
-        // 1. (validate valid files?)
-        // 2. store files in 'files' table (function createFile in src/back-end/lib/db/file.ts)
-        // createFile()
-        // 3. add to swuOpportunityNoteAttachments
-        // ( function CreateSWUOpportunityAttachments in back-end/lib/db/opportunity/sprint-with-us )
-        // 4. create the swuOpportunityNote (function addSwuopportunityNote same in same file)
+        // call our new function here api.createcwuNote{note: whatever, attachments: maybe}
 
-        console.log('state.modalNote',state.modalNote)
-        return [state.set('showModal', null)];
+        state.briannaPublishNewNote(state.modalNote)
+        briannaSendNoteAttachmentsToDB(state);
 
+
+
+
+        return [state]
     default:
       return [state];
   }
