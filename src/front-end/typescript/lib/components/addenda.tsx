@@ -109,6 +109,7 @@ const startPublishLoading = makeStartLoading<State>('publishLoading');
 const stopPublishLoading = makeStopLoading<State>('publishLoading');
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
+  console.log('msg.value in addenda is:',msg.value)
   switch (msg.tag) {
     case 'showModal':
       return [state.set('showModal', msg.value)];
