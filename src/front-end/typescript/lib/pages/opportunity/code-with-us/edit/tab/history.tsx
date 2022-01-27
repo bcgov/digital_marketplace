@@ -43,16 +43,16 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-// brianna where does paramas come from
+// brianna where does params come from
 const init: Init<Tab.Params, State> = async params => {
-  // debugger;
   return {
     ...params,
-    //change to be for note later brianna
     async briannaPublishNewNote(value) {
       console.log('value in briannaPublishNewNote is:',value)
+      //BRIANNA, problem is here--note text not being added. adt('addNote') may not be a thing?
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
       // let outcome: Validation<Addendum[], string[]> | undefined;
+      console.log('value is:',value)
       console.log('result in briannaPublishNewNote is:',result)
       let outcome;
       switch (result.tag) {
@@ -196,8 +196,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
       case 'createHistoryNote':
         // call our new function here api.createcwuNote{note: whatever, attachments: maybe}
+        console.log('state.modalNote.child.value is',state.modalNote.child.value)
 
-        state.briannaPublishNewNote(state.modalNote)
+        state.briannaPublishNewNote(state.modalNote.child.value)
         briannaSendNoteAttachmentsToDB(state);
 
 
@@ -327,8 +328,7 @@ export const component: Tab.Component<State, Msg> = {
     // const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     // const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     // const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
-    console.log('History: getContextualActions is firing')
-    console.log('History: in getContextualActions, state is:', state)
+    state; //to avoid TS errors about arguments not being used
     return adt('links', [{
       children: 'Add Entry',
       onClick: () => {
