@@ -11,7 +11,18 @@ import { ADT, adt } from 'shared/lib/types';
 // import * as validation from 'shared/lib/validation';
 // import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { AttachmentList } from 'front-end/lib/components/attachments';
+// import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 
+// const toasts = {
+//   success: {
+//     title: 'Note Published',
+//     body: 'Your note has been successfully published.'
+//   },
+//   error: {
+//     title: 'Unable to Publish Note',
+//     body: 'Your note could not be published. Please try again later.'
+//   }
+// };
 
 export interface Item {
   type: {
@@ -36,11 +47,14 @@ export interface State extends Pick<Params, 'items' | 'viewerUser'> {
 }
 
 export type Msg = ADT<'table', Table.Msg>
-| ADT<'publishNote'>
+| ADT<'createHistoryNote'>;
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
+  console.log('init is being called')
+  //only updating db, not local state
   return {
     viewerUser,
+    //brianna--probably need to put the note into the history?
     items, //items sorted in the http/api module.
     table: immutable(await Table.init({
       idNamespace
@@ -56,7 +70,17 @@ export function getNewNote(state: Immutable<State>): string | null {
 // const startPublishLoading = makeStartLoading<State>('publishLoading');
 // const stopPublishLoading = makeStopLoading<State>('publishLoading');
 
+
+const triggerInit = async (state) => {
+  console.log('********state.history is',state.history)
+
+  immutable(await init({
+    idNamespace: 'cwu-opportunity-history', //fix later brianna
+    items: state.history.items,
+    viewerUser: state.viewerUser }));
+}
 export const update: Update<State, Msg> = ({ state, msg }) => {
+  console.log('i am in update, msg is ',msg)
   switch (msg.tag) {
     case 'table':
       return updateComponentChild({
@@ -67,29 +91,36 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: value => ({ tag: 'table', value })
       });
       //brianna new
-      case 'publishNote':
-        return [
-          // startPublishLoading(state).set('showModal', null),
-          state,
-          async (state, dispatch) => {
-          //   state = stopPublishLoading(state);
-            const newNote = getNewNote(state);
-            if (!newNote) { return state; }
-            const result = await state.publishNewNote(newNote);
-            console.log(result)
-            // if (validation.isValid(result)) {
-            //   dispatch(toast(adt('success', toasts.success)));
-            //   return immutable(await init({
-            //     publishNewAddendum: state.publishNewAddendum,
-            //     existingAddenda: result.value
-            //   }));
-            // } else {
-            //   dispatch(toast(adt('error', toasts.error)));
-            //   return state.update('newAddendum', s => s ? FormField.setErrors(s, result.value) : s);
-            // }
-            return null
-          }
-        ];
+    case 'createHistoryNote':
+      console.log('i am in in createHistoryNote ')
+      triggerInit(state)
+
+      return [
+        // startPublishLoading(state).set('showModal', null),
+        state,
+        async (state, dispatch) => {
+        //   state = stopPublishLoading(state);
+          const newNote = getNewNote(state);
+          if (!newNote) { return state; }
+          //this is doing nothing, the actual note creation is in the other history
+          const result = await state.publishNewNote(newNote);
+          triggerInit(result)
+
+          console.log('*****',result)
+          // if (validation.isValid(result)) {
+            console.log('i am in the if')
+            // dispatch(toast(adt('success', toasts.success)));
+            // return immutable(await init({
+            //   idNamespace: 'cwu-opportunity-history', //fix later brianna
+            //   items: state.items,
+            //   viewerUser: state.viewerUser }));
+          // } else {
+            // dispatch(toast(adt('error', toasts.error)));
+            // return state.update('newAddendum', s => s ? FormField.setErrors(s, result.value) : s);
+          // }
+          return null
+        }
+      ];
   }
 };
 
