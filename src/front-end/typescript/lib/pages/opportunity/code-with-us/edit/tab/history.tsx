@@ -293,7 +293,6 @@ export const component: Tab.Component<State, Msg> = {
     return adt('links', [{
       children: 'Add Entry',
       onClick: () => {
-        console.log('******************************')
         dispatch(adt('showModal', adt('addAttachment')) as Msg)
       },
       button: true,
