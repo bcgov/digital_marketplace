@@ -131,9 +131,6 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.items.map(item => {
-    const note = item.note || EMPTY_STRING;
-    const attachments = item.attachments.map(attachment => {return attachment.id}) || 'attachment did not show up'
-    const noteRow = `${note} ${attachments}`
     return [
       {
         children: item.type.color
@@ -144,7 +141,17 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         className: 'text-wrap'
       },
       {
-        children: noteRow
+        children: (
+          <div>
+            <div>
+            {item.note || EMPTY_STRING}
+            </div>
+            <div>
+            {item.attachments.map(attachment => {return attachment.name}) || null}
+          </div>
+          </div>
+
+        )
       },
       {
         className: 'text-nowrap',
