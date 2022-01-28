@@ -100,6 +100,7 @@ export function opportunityToHistoryItems({ history }: SWUOpportunity): History.
         color: s.type.tag === 'status' ? swuOpportunityStatusToColor(s.type.value) : undefined
       },
       note: s.note,
+      attachments: s.attachments,
       createdAt: s.createdAt,
       createdBy: s.createdBy || undefined
     }));
