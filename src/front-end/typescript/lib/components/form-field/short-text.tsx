@@ -38,15 +38,14 @@ const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
 };
 
 const ChildView: ChildComponent['view'] = props => {
-  const { state, dispatch, placeholder, className = '',validityClassName, disabled = false, onEnter, inputClassName } = props;
-  className //this is to avoid a TS error about className not being used
+  const { state, dispatch, placeholder, className = '',validityClassName, disabled = false, onEnter } = props;
   return (
     <input
       id={state.id}
       type={state.type}
       value={state.value}
       placeholder={placeholder}
-      className={`form-control ${inputClassName} ${validityClassName}`}
+      className={`form-control ${className} ${validityClassName}`}
       onChange={e => {
         const value = e.currentTarget.value;
         dispatch({ tag: 'onChange', value });

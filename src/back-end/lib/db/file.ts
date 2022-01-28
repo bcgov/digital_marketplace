@@ -11,7 +11,6 @@ import { isInvalid } from 'shared/lib/validation';
 
 type CreateFileParams = Partial<FileRecord> & { path: string, permissions: Array<FilePermissions<Id, UserType>> };
 
-
 export const readOneFileById = tryDb<[Id], FileRecord | null>(async (connection, id) => {
   const result = await connection<FileRecord>('files')
     .where({ id })
@@ -27,7 +26,7 @@ export const readOneFileBlob = tryDb<[string], FileBlob | null>(async (connectio
   return valid(result || null);
 });
 
-// brianna will need for note feature--add file to db
+// this function doesn't appear to be used anywhere
 export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (connection, fileRecord, userId) => {
   const now = new Date();
   if (!fileRecord) {
@@ -51,7 +50,6 @@ export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (conne
       throw new Error('Database error');
     }
     let fileBlob = dbResult.value;
-    // brianna this is where the blob goes into the db
     // Create a new blob if it doesn't already exist.
     if (!fileBlob) {
       [fileBlob] = await connection('fileBlobs')

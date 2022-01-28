@@ -44,7 +44,6 @@ const init: Init<Tab.Params, State> = async params => {
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  console.log('state in addendum update is:',state)
   switch (msg.tag) {
     case 'addenda':
       return updateGlobalComponentChild({

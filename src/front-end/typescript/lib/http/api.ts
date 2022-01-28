@@ -497,7 +497,6 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     addenda: raw.addenda
       .map(a => rawAddendumToAddendum(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
-      // brianna--what is happening here? history isn't stored in the cwu opp table
     history: raw.history && raw.history
       .map(s => rawCWUHistoryRecordToCWUHistoryRecord(s))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
@@ -540,18 +539,6 @@ const cwuOpportunityActionParams = {
 
 export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = makeCrudApi({
   routeNamespace: apiNamespace('opportunities/code-with-us'),
-  create: cwuOpportunityActionParams,
-  readOne: cwuOpportunityActionParams,
-  update: cwuOpportunityActionParams,
-  delete: cwuOpportunityActionParams,
-  readMany: {
-    transformValid: a => a
-  }
-});
-
-//Brianna opportunity note
-export const opportunityNote: CrudApi<CWUOpportunityResourceTypes> = makeCrudApi({
-  routeNamespace: apiNamespace('opportunityNote'),
   create: cwuOpportunityActionParams,
   readOne: cwuOpportunityActionParams,
   update: cwuOpportunityActionParams,
@@ -624,7 +611,6 @@ function rawSWUOpportunityToSWUOpportunity(raw: RawSWUOpportunity): SWUOpportuni
     updatedAt: new Date(raw.updatedAt),
     publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     attachments: raw.attachments
-    /// brianna use this for new feature
       .map(a => rawFileRecordToFileRecord(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
     addenda: raw.addenda
@@ -686,7 +672,6 @@ export const swuOpportunities: CrudApi<SWUOpportunityResourceTypes> = makeCrudAp
     transformValid: a => a
   }
 });
-
 
 // Opportunities
 
@@ -917,7 +902,6 @@ const affiliationActionParams = {
 
 const AFFILIATIONS_ROUTE_NAMESPACE = apiNamespace('affiliations');
 
-//brianna
 export const affiliations: AffiliationsApi = {
   ...makeCrudApi<AffiliationResourceTypes>({
     routeNamespace: AFFILIATIONS_ROUTE_NAMESPACE,
@@ -999,7 +983,7 @@ export const files: CrudApi<FileResourceTypes> = {
   ...fileCrudApi,
   create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
 };
-// brianna
+// brianna--use this to upload note attachment files
 export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
   const validResults: FileResource.FileRecord[] = [];
   let isInvalid = false;
