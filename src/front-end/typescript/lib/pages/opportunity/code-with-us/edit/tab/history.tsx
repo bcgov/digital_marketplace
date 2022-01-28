@@ -13,6 +13,7 @@ import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
 // import {createFile} from 'back-end/lib/db/file'
 import * as api from 'front-end/lib/http/api';
+// import { getString, getStringArray } from 'shared/lib';
 
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid, valid } from 'shared/lib/validation';
@@ -49,7 +50,7 @@ const init: Init<Tab.Params, State> = async params => {
     ...params,
     async briannaPublishNewNote(value) {
       console.log('value in briannaPublishNewNote is:',value)
-      //BRIANNA, problem is here--note text not being added. adt('addNote') may not be a thing?
+      //BRIANNA, problem is here--note text not being added. adt('addNote') may not be a thing? Should value be the whole history object instead of just the value?
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
       // let outcome: Validation<Addendum[], string[]> | undefined;
       console.log('value is:',value)
@@ -198,7 +199,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         // call our new function here api.createcwuNote{note: whatever, attachments: maybe}
         console.log('state.modalNote.child.value is',state.modalNote.child.value)
 
-        state.briannaPublishNewNote(state.modalNote.child.value)
+        state.briannaPublishNewNote({
+          note: state.modalNote.child.value,
+          attachments: state.attachments
+        })
         briannaSendNoteAttachmentsToDB(state);
 
 
