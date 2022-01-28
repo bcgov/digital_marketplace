@@ -18,7 +18,7 @@ import { invalid, valid } from 'shared/lib/validation';
 
 
 // probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
-type ModalId = ADT<'addAttachment'>
+type ModalId = ADT<'addNote'>
 
 export interface State extends Tab.Params {
   history: Immutable<History.State>;
@@ -35,7 +35,7 @@ export type InnerMsg
   | ADT<'modalNote', LongText.Msg>
   | ADT<'noop'>
   | ADT<'attachments',        Attachments.Msg>
-  | ADT<'addAttachment'>
+  | ADT<'addNote'>
   | ADT<'createHistoryNote'>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
@@ -238,7 +238,7 @@ export const component: Tab.Component<State, Msg> = {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
       // remove case later brianna
-      case 'addAttachment': {
+      case 'addNote': {
         // add attachment validation
         // const isValid = isAddTeamMembersEmailsValid(state);
         return {
@@ -293,7 +293,7 @@ export const component: Tab.Component<State, Msg> = {
     return adt('links', [{
       children: 'Add Entry',
       onClick: () => {
-        dispatch(adt('showModal', adt('addAttachment')) as Msg)
+        dispatch(adt('showModal', adt('addNote')) as Msg)
       },
       button: true,
       // loading: isAddTeamMembersLoading,
