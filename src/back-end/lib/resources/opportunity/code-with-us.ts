@@ -272,7 +272,7 @@ const resource: Resource = {
   },
 
   update(connection) {
-    console.log('I am in update--am I actually ever called?')
+    console.log('I am in update--am I actually ever called?') // this never showed up--I'm not convinced this function or any of it's 'addNote' cases are actually being used
     return {
       async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
@@ -306,7 +306,6 @@ const resource: Resource = {
             return adt('cancel', getString(body, 'value', ''));
           case 'addAddendum':
             return adt('addAddendum', getString(body, 'value', ''));
-            // brianna--attachments should also (?) be inside a history item. This isn't working; notes are blank and I don't think update is getting called
           case 'addNote':
             return adt('addNote', {
               note: getString(value, 'note'),
@@ -550,9 +549,8 @@ const resource: Resource = {
               body: adt('addAddendum', validatedAddendumText.value)
             } as ValidatedUpdateRequestBody);
           }
-          //possibly not doing anything either?
+
           case 'addNote':{
-            console.log('Am I getting called? case addNote')
             const { note, attachments : noteAttachments } = request.body.value;
             const validatedNote = opportunityValidation.validateNote(note);
             const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
@@ -622,9 +620,7 @@ const resource: Resource = {
                 cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
               }
               break;
-              // brianna
             case 'addNote':
-              console.log('what about me? Am I called?')
               dbResult = await db.addCWUOpportunityNote(connection, request.params.id, body.value, session);
               break;
           }

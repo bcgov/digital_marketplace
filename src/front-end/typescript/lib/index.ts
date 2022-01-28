@@ -121,7 +121,7 @@ export function getSignInUrl(userType: UserType, redirectOnSuccess?: string): st
   if (redirectOnSuccess) { result += `&redirectOnSuccess=${window.encodeURIComponent(redirectOnSuccess)}`; }
   return result;
 }
-// brianna dig through this
+
 export function fileBlobPath(file: Pick<FileRecord, 'id'>) {
   return prefixPath(`api/files/${file.id}?type=blob`);
 }

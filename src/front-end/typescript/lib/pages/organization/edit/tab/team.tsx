@@ -127,7 +127,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const errorToasts: string[] = []; //emails
           for (const s of state.addTeamMembersEmails) {
             const userEmail = FormField.getValue(s);
-            //brianna
             const result = await api.affiliations.create({
               userEmail,
               organization: state.organization.id,
