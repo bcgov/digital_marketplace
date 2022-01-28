@@ -12,6 +12,8 @@ import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 // import * as validation from 'shared/lib/validation';
 // import { makeStartLoading, makeStopLoading } from 'front-end/lib';
+import { AttachmentList } from 'front-end/lib/components/attachments';
+// import { Col, Row } from 'reactstrap';
 
 
 export interface Item {
@@ -128,6 +130,22 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 
+// const InfoAttachments = ({ state }) => {
+//   const attachments = state.opportunity.attachments;
+//   return (
+//     <Row>
+//       <Col xs='12'>
+//         <h3 className='mb-0'>Attachments</h3>
+//       </Col>
+//       <Col xs='12' className='mt-4'>
+//         {attachments.length
+//           ? (<AttachmentList files={state.opportunity.attachments} />)
+//           : 'There are currently no attachments for this opportunity.'}
+//       </Col>
+//     </Row>
+//   );
+// };
+
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.items.map(item => {
@@ -147,7 +165,8 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
             {item.note || EMPTY_STRING}
             </div>
             <div>
-            {item.attachments.map(attachment => {return (<div key={attachment.id}>{attachment.name}</div>)}) || null}
+            <AttachmentList files={item.attachments} />
+            {/* {item.attachments.map(attachment => {return (<div key={attachment.id}>{attachment.name}</div>)}) || null} */}
           </div>
           </div>
 
