@@ -1,5 +1,3 @@
-//most changes here are probably unneeded
-import * as ShortText from 'front-end/lib/components/form-field/short-text';
 import { EMPTY_STRING } from 'front-end/config';
 import * as Table from 'front-end/lib/components/table';
 import { Component, ComponentView, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild } from 'front-end/lib/framework';
@@ -13,7 +11,6 @@ import { ADT, adt } from 'shared/lib/types';
 // import * as validation from 'shared/lib/validation';
 // import { makeStartLoading, makeStopLoading } from 'front-end/lib';
 import { AttachmentList } from 'front-end/lib/components/attachments';
-// import { Col, Row } from 'reactstrap';
 
 
 export interface Item {
@@ -26,16 +23,11 @@ export interface Item {
   createdAt: Date;
   createdBy?: UserSlim;
 }
-// another interface for createnewnote, nest the attachment and note
-export interface ModalNote {
-  modalNote: Immutable<ShortText.State>;
-}
 
 export interface Params {
   idNamespace: string;
   items: Item[];
   viewerUser: User;
-  // modalNote: string; //fix later^^ see above comment
 }
 
 export interface State extends Pick<Params, 'items' | 'viewerUser'> {
@@ -49,7 +41,6 @@ export type Msg = ADT<'table', Table.Msg>
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
     viewerUser,
-    // modalNote:'',
     items, //items sorted in the http/api module.
     table: immutable(await Table.init({
       idNamespace
@@ -58,7 +49,6 @@ export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser
 };
 
 export function getNewNote(state: Immutable<State>): string | null {
-  //how are we going to get the modalNote into this state in this file? brianna
   //@ts-ignore--fix this function's types later
   return state.table ? state.table : null;
 }
@@ -130,23 +120,6 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 
-// const InfoAttachments = ({ state }) => {
-//   const attachments = state.opportunity.attachments;
-//   return (
-//     <Row>
-//       <Col xs='12'>
-//         <h3 className='mb-0'>Attachments</h3>
-//       </Col>
-//       <Col xs='12' className='mt-4'>
-//         {attachments.length
-//           ? (<AttachmentList files={state.opportunity.attachments} />)
-//           : 'There are currently no attachments for this opportunity.'}
-//       </Col>
-//     </Row>
-//   );
-// };
-
-
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.items.map(item => {
     return [
@@ -160,16 +133,10 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
       },
       {
         children: (
-          <div>
-            <div>
+          <>
             {item.note || EMPTY_STRING}
-            </div>
-            <div>
             <AttachmentList files={item.attachments} />
-            {/* {item.attachments.map(attachment => {return (<div key={attachment.id}>{attachment.name}</div>)}) || null} */}
-          </div>
-          </div>
-
+          </>
         )
       },
       {
