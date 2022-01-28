@@ -272,7 +272,7 @@ const resource: Resource = {
   },
 
   update(connection) {
-    console.log('I am in update--am I actually ever called?') // this never showed up--I'm not convinced this function or any of it's 'addNote' cases are actually being used
+    console.log('I am in update--am I actually ever called?') // this never showed up--I'm not convinced this function or any of it's 'addNote' cases are actually being used? If I connect it out the back-end won't build though
     return {
       async parseRequestBody(request) {
         const body = request.body.tag === 'json' ? request.body.value : {};
