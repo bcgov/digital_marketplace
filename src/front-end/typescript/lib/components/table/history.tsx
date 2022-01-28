@@ -32,7 +32,7 @@ export interface Params {
 
 export interface State extends Pick<Params, 'items' | 'viewerUser'> {
   table: Immutable<Table.State>,
-  briannaPublishNewNote?: any;
+  publishNewNote?: any;
 }
 
 export type Msg = ADT<'table', Table.Msg>
@@ -75,7 +75,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           //   state = stopPublishLoading(state);
             const newNote = getNewNote(state);
             if (!newNote) { return state; }
-            const result = await state.briannaPublishNewNote(newNote);
+            const result = await state.publishNewNote(newNote);
             console.log(result)
             // if (validation.isValid(result)) {
             //   dispatch(toast(adt('success', toasts.success)));

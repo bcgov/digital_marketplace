@@ -44,10 +44,10 @@ export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
-    async briannaPublishNewNote(value) {
+    async publishNewNote(value) {
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
       // let outcome: Validation<Addendum[], string[]> | undefined;
-      console.log('result in briannaPublishNewNote is:',result)
+      console.log('result in publishNewNote is:',result)
       let outcome;
       switch (result.tag) {
         case 'valid':
@@ -89,7 +89,7 @@ const init: Init<Tab.Params, State> = async params => {
 };
 
 
-const briannaSendNoteAttachmentsToDB = async function(state) {
+const sendNoteAttachmentsToDB = async function(state) {
   const newAttachments = Attachments.getNewAttachments(state.attachments);
   if (newAttachments.length) {
     // if valid, this adds the files to the files and fileBlobs tables
@@ -143,9 +143,9 @@ const briannaSendNoteAttachmentsToDB = async function(state) {
     return null
 }
 
-const briannaFullFunction = async function(state){
-  const backFromDB = await briannaSendNoteAttachmentsToDB(state);
-  state.briannaPublishNewNote({
+const createHistoryNote = async function(state){
+  const backFromDB = await sendNoteAttachmentsToDB(state);
+  state.publishNewNote({
     note: state.modalNote.child.value,
     attachments: backFromDB
   })
@@ -184,7 +184,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('modalNote', value)
       });
       case 'createHistoryNote':
-        briannaFullFunction(state)
+        createHistoryNote(state)
         return [state.set('showModal', null)];
     default:
       return [state];
