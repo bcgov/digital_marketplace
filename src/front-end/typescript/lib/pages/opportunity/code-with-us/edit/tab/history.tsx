@@ -47,7 +47,7 @@ const init: Init<Tab.Params, State> = async params => {
     async publishNewNote(value) {
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
       // let outcome: Validation<Addendum[], string[]> | undefined;
-      console.log('result in publishNewNote is:',result)
+      // console.log('result in publishNewNote is:',result)
       let outcome;
       switch (result.tag) {
         case 'valid':
@@ -143,12 +143,25 @@ const sendNoteAttachmentsToDB = async function(state) {
     return null
 }
 
-const createHistoryNote = async function(state){
-  const backFromDB = await sendNoteAttachmentsToDB(state);
-  state.publishNewNote({
+const createHistoryNote = async function(state, msg){
+  //send attachments to db
+  const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
+  //send new note to db
+  const notesBackFromDB = await state.publishNewNote({
     note: state.modalNote.child.value,
-    attachments: backFromDB
+    attachments: attachmentsBackFromDB
   })
+
+  const updatedState = {
+    ...state, //this isn't working, what am I doing wrong? brianna
+    history: notesBackFromDB.value
+  }
+
+  console.log('notesBackFromDB.value',notesBackFromDB.value, 'updatedState',updatedState)
+
+
+
+  History.update({state, msg}) //need to give this updated state
 
 }
 
@@ -184,7 +197,10 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('modalNote', value)
       });
       case 'createHistoryNote':
-        createHistoryNote(state)
+        createHistoryNote(state,msg)
+        // need to update state here
+
+
         return [state.set('showModal', null)];
     default:
       return [state];
