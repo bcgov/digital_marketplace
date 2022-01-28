@@ -147,7 +147,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
             {item.note || EMPTY_STRING}
             </div>
             <div>
-            {item.attachments.map(attachment => {return attachment.name}) || null}
+            {item.attachments.map(attachment => {return (<div key={attachment.id}>{attachment.name}</div>)}) || null}
           </div>
           </div>
 
