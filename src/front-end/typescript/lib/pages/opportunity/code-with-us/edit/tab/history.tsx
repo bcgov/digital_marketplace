@@ -49,11 +49,8 @@ const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
     async briannaPublishNewNote(value) {
-      console.log('value in briannaPublishNewNote is:',value)
-      //BRIANNA, problem is here--note text not being added. adt('addNote') may not be a thing? Should value be the whole history object instead of just the value?
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
       // let outcome: Validation<Addendum[], string[]> | undefined;
-      console.log('value is:',value)
       console.log('result in briannaPublishNewNote is:',result)
       let outcome;
       switch (result.tag) {
@@ -116,6 +113,8 @@ const briannaSendNoteAttachmentsToDB = async function(state) {
         // console.log(JSON.stringify(result, null, 2))
         giveMeTheIds = [...(result.value.map(({ id }) => id))]
         console.log('i am the ids', giveMeTheIds)
+        // return result;
+        return giveMeTheIds;
         break;
       case 'invalid':
         return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
@@ -164,6 +163,20 @@ const briannaSendNoteAttachmentsToDB = async function(state) {
     return null
 }
 
+const briannaFullFunction = async function(state){
+  console.log('state.modalNote.child.value is',state.modalNote.child.value)
+
+  const backFromDB = await briannaSendNoteAttachmentsToDB(state);
+  console.log('backFromDB', backFromDB)
+
+
+  state.briannaPublishNewNote({
+    note: state.modalNote.child.value,
+    attachments: backFromDB // Assuming that this is supposed to be an array of file ids. (An array of attachments, like in other places where attachment appears, comes back as invalid)
+  })
+
+}
+
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case 'showModal':
@@ -197,18 +210,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
       case 'createHistoryNote':
         // call our new function here api.createcwuNote{note: whatever, attachments: maybe}
-        console.log('state.modalNote.child.value is',state.modalNote.child.value)
+        // console.log('state.modalNote.child.value is',state.modalNote.child.value)
 
-        state.briannaPublishNewNote({
-          note: state.modalNote.child.value,
-          attachments: state.attachments
-        })
-        briannaSendNoteAttachmentsToDB(state);
-
-
-
-
-        return [state]
+        // const result = briannaSendNoteAttachmentsToDB(state);
+        // state.briannaPublishNewNote({
+        //   note: state.modalNote.child.value,
+        //   attachments: 'iamattachment' //check any of the other attachment sections to figure out what this is supposed to look like. File ids?
+        // })
+        briannaFullFunction(state)
+        return [state.set('showModal', null)];
     default:
       return [state];
   }
