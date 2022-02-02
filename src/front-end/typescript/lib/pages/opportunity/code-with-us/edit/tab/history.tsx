@@ -152,20 +152,48 @@ const createHistoryNote = async function(state, msg){
     attachments: attachmentsBackFromDB
   })
 
-  const updatedState = {
-    ...state, //this isn't working, what am I doing wrong? brianna
-    history: notesBackFromDB.value
+// brianna--might be able to do this more elegantly with state.get('history','table'), initial attempt didn't work
+  const updatedHistory = {
+    items: notesBackFromDB.value,
+    table: {
+      TDView: state.history.table.TDView,
+      THView: state.history.table.THView,
+      activeTooltipTdIndex: state.history.table.activeTooltipTdIndex,
+      activeTooltipThIndex: state.history.table.activeTooltipThIndex,
+      idNamespace: state.history.table.idNamespace,
+    },
+    viewerUser: state.viewerUser
   }
 
-  console.log('notesBackFromDB.value',notesBackFromDB.value, 'updatedState',updatedState)
 
 
+console.log('updated history is',updatedHistory)
 
-  History.update({state, msg}) //need to give this updated state
+  // const updatedState = {
+  //   showModal:  null,
+  //   attachments: state.attachments,
+  //   modalNote: state.modalNote,
+  //   history: notesBackFromDB.value
+  // }
+  // updatedState;
 
+  // console.log('updatedState',updatedState)
+
+  // state = updatedState;
+
+  state = state.set('history',updatedHistory)
+  // return updatedHistory;
+
+
+  // console.log('attempt to change state, state is:',state) //probably doesn't work because it's no longer immutable?
+
+  // update({state, msg}) //can the msg be something like stop, or hide modal, so it only updates once?
+  // History.update({state,msg: {tag: 'table', value: undefined}})
+  return state;
 }
 
 const update: Update<State, Msg> = ({ state, msg }) => {
+  console.log('i am in history TAB update')
   switch (msg.tag) {
     case 'showModal':
       return [state.set('showModal', msg.value)];
@@ -197,17 +225,51 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('modalNote', value)
       });
       case 'createHistoryNote':
-        createHistoryNote(state,msg)
+        // createHistoryNote(state,msg)
+        // createHistoryNote(state,msg).then(res => {
+        //   console.log('res is',res)
+        //   return res;
+        // })
         // need to update state here
+        // return await createHistoryNote(state,msg).set('showModal', null)
+        // console.log('state just before async is:',state)
+        // return [async (state)=>{
+        //   console.log('state in async is:',state)
+        //   // state = await createHistoryNote(state,msg)
+        //   console.log('state in async after createhistorynote is:',state)
+        //   return state.set('showModal',null)
+        // }];
+        // return state.set('showModal',null)
+        // return [
+        //   async (state, msg) => {
+        //     console.log('i exist and am hit')
+        //   const updatedHistory = await createHistoryNote(state, msg)
+        //   return state.set('history', updatedHistory)
+        //   }
+        //   ]
+        // const updatedHistory = async (state,msg) => {
+        //   return await createHistoryNote(state,msg)
+        //   }
+          // return [state.set('history', createHistoryNote(state,msg).then(res => {
+          //   console.log('res is',res)
+          //   return res;
+          // }))];
+        // return [state];
 
-
-        return [state.set('showModal', null)];
+        const bmessage = {tag: 'createHistoryNote',value: undefined}
+        console.log('history before changing it',state.history)
+        return [state.set('showModal',null),
+        async (state) =>{
+          return await createHistoryNote(state, bmessage)
+        }    
+      ]
     default:
       return [state];
   }
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  debugger;
   return (
     <div>
       <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
