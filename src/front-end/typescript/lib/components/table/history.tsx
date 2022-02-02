@@ -47,10 +47,10 @@ export interface State extends Pick<Params, 'items' | 'viewerUser'> {
 }
 
 export type Msg = ADT<'table', Table.Msg>
-| ADT<'createHistoryNote'>;
+| ADT<'createHistoryNote', any>;
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
-  console.log('init is being called')
+  console.log('history TAB init is being called')
   //only updating db, not local state
   return {
     viewerUser,
@@ -71,16 +71,16 @@ export function getNewNote(state: Immutable<State>): string | null {
 // const stopPublishLoading = makeStopLoading<State>('publishLoading');
 
 
-const triggerInit = async (state) => {
-  console.log('********state.history is',state.history)
+// const triggerInit = async (state) => {
+//   console.log('********state.history is',state.history)
 
-  immutable(await init({
-    idNamespace: 'cwu-opportunity-history', //fix later brianna
-    items: state.history.items,
-    viewerUser: state.viewerUser }));
-}
+//   immutable(await init({
+//     idNamespace: 'cwu-opportunity-history', //fix later brianna
+//     items: state.history.items,
+//     viewerUser: state.viewerUser }));
+// }
 export const update: Update<State, Msg> = ({ state, msg }) => {
-  console.log('i am in update, msg is ',msg)
+  console.log('i am in history TABLE update, msg is ',msg)
   switch (msg.tag) {
     case 'table':
       return updateComponentChild({
@@ -92,35 +92,43 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
       //brianna new
     case 'createHistoryNote':
-      console.log('i am in in createHistoryNote ')
-      triggerInit(state)
-
-      return [
-        // startPublishLoading(state).set('showModal', null),
+      console.log('i am in the history TABLE createhistorynote update case')
+      return updateComponentChild({
         state,
-        async (state, dispatch) => {
-        //   state = stopPublishLoading(state);
-          const newNote = getNewNote(state);
-          if (!newNote) { return state; }
-          //this is doing nothing, the actual note creation is in the other history
-          const result = await state.publishNewNote(newNote);
-          triggerInit(result)
+        childStatePath: ['table'],
+        childUpdate: Table.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'table', value })
+      });
 
-          console.log('*****',result)
-          // if (validation.isValid(result)) {
-            console.log('i am in the if')
-            // dispatch(toast(adt('success', toasts.success)));
-            // return immutable(await init({
-            //   idNamespace: 'cwu-opportunity-history', //fix later brianna
-            //   items: state.items,
-            //   viewerUser: state.viewerUser }));
-          // } else {
-            // dispatch(toast(adt('error', toasts.error)));
-            // return state.update('newAddendum', s => s ? FormField.setErrors(s, result.value) : s);
-          // }
-          return null
-        }
-      ];
+    //   triggerInit(state)
+
+    //   return [
+    //     // startPublishLoading(state).set('showModal', null),
+    //     state,
+    //     async (state, dispatch) => {
+    //     //   state = stopPublishLoading(state);
+    //       const newNote = getNewNote(state);
+    //       if (!newNote) { return state; }
+    //       //this is doing nothing, the actual note creation is in the other history
+    //       const result = await state.publishNewNote(newNote);
+    //       triggerInit(result)
+
+    //       console.log('*****',result)
+    //       // if (validation.isValid(result)) {
+    //         console.log('i am in the if')
+    //         // dispatch(toast(adt('success', toasts.success)));
+    //         // return immutable(await init({
+    //         //   idNamespace: 'cwu-opportunity-history', //fix later brianna
+    //         //   items: state.items,
+    //         //   viewerUser: state.viewerUser }));
+    //       // } else {
+    //         // dispatch(toast(adt('error', toasts.error)));
+    //         // return state.update('newAddendum', s => s ? FormField.setErrors(s, result.value) : s);
+    //       // }
+    //       return null
+    //     }
+    //   ];
   }
 };
 
@@ -153,6 +161,8 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.items.map(item => {
+    //remember, this is the history TABLE's state, not the same as the TAB state, the state object is different and "item" isn't the same thing
+    console.log('i am in tablebodyrows and item.type is',item.type)
     return [
       {
         children: item.type.color
@@ -193,6 +203,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
 }
 
 export const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+  console.log('i am in history TABLE view')
   return (
     <Table.view
       headCells={tableHeadCells(state)}
