@@ -16,7 +16,7 @@ import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid } from 'shared/lib/validation';
 import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
-// probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
+// The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
 type ModalId = ADT<'addNote'>
 
 export interface State extends Tab.Params {
@@ -28,11 +28,9 @@ export interface State extends Tab.Params {
 
 export type InnerMsg
   = ADT<'history', History.Msg>
-  // Attachments tab
   | ADT<'showModal', ModalId>
   | ADT<'hideModal'>
   | ADT<'modalNote', LongText.Msg>
-  | ADT<'noop'>
   | ADT<'attachments',        Attachments.Msg>
   | ADT<'addNote'>
   | ADT<'createHistoryNote'>;
@@ -40,9 +38,6 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export function historyToHistoryTableRow(rawHistory){
-  // if (!rawHistory) { return []; }
-  console.log('rawHistory is',rawHistory)
-
   const convertHistoryItemToHistoryTableItem = status =>{
     switch (status) {
       case CWUOpportunityEvent.Edited:
@@ -102,17 +97,14 @@ export function historyToHistoryTableRow(rawHistory){
 
   }
 
-  const bugs = rawHistory
+  return rawHistory
     .map(s => ({
-
       type: convertHistoryItemToHistoryTableItem(s.type.value),
       note: s.note,
       attachments: s.attachments,
       createdAt: s.createdAt,
       createdBy: s.createdBy || undefined
     }));
-    console.log('bugs is ',bugs)
-    return bugs
 }
 
 const init: Init<Tab.Params, State> = async params => {
@@ -184,8 +176,6 @@ const createHistoryNote = async function(state){
     note: state.modalNote.child.value,
     attachments: attachmentsBackFromDB
   })
-
-console.log('notesBackFromDB',notesBackFromDB)
 
 // brianna--might be able to do this more elegantly with state.get('history','table'), initial attempt didn't work
   const updatedHistory = {
