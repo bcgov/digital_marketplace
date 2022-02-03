@@ -40,6 +40,37 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
+export function historyToHistoryTableRow(rawHistory){
+  // if (!rawHistory) { return []; }
+  console.log('rawHistory is',rawHistory)
+
+  const convertHistoryItemToHistoryTableItem = status =>{
+    if (status === 'NOTE_ADDED') {
+      return {
+        text: 'Note Added',
+        color: undefined
+      }
+    }
+    return {
+      text: null,
+      color: undefined
+    }
+  }
+
+  const bugs = rawHistory
+    .map(s => ({
+
+      type: convertHistoryItemToHistoryTableItem(s.type.value),
+      // needs to map to this: {text: 'Published', color: 'success'}
+      note: s.note,
+      attachments: s.attachments,
+      createdAt: s.createdAt,
+      createdBy: s.createdBy || undefined
+    }));
+    console.log('bugs is ',bugs)
+    return bugs
+}
+
 // brianna where does params come from
 const init: Init<Tab.Params, State> = async params => {
   return {
@@ -48,11 +79,17 @@ const init: Init<Tab.Params, State> = async params => {
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
       // let outcome: Validation<Addendum[], string[]> | undefined;
       // console.log('result in publishNewNote is:',result)
+      let rawOutcome;
       let outcome;
       switch (result.tag) {
         case 'valid':
-          console.log('i am valid')
-          outcome = valid(result.value.history);
+
+          valid(result.value.history);
+          rawOutcome = result.value.history;
+          console.log('rawOutcome is',rawOutcome)
+          outcome = historyToHistoryTableRow(rawOutcome)
+          // outcome = valid(result.value.history);
+          console.log('outcome is',outcome)
           break;
         case 'invalid':
           if (result.value.opportunity?.tag === 'addAddendum') {
@@ -63,7 +100,7 @@ const init: Init<Tab.Params, State> = async params => {
       return outcome || invalid(['Unable to add note due to a system error.']);
     },
     history: immutable(await History.init({
-      idNamespace: 'cwu-opportunity-history',
+      idNamespace: 'cwu-opportunity-history', //probably shouldn't hardcode this, brianna
       items: opportunityToHistoryItems(params.opportunity),
       viewerUser: params.viewerUser
     })),
@@ -143,18 +180,20 @@ const sendNoteAttachmentsToDB = async function(state) {
     return null
 }
 
-const createHistoryNote = async function(state, msg){
+const createHistoryNote = async function(state){
   //send attachments to db
   const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
   //send new note to db
   const notesBackFromDB = await state.publishNewNote({
     note: state.modalNote.child.value,
     attachments: attachmentsBackFromDB
-  })
+  }) //BRIANNA--this is bring back the wrong history.item.type; it contains the event instead of txt colour, just happened to use the same key "item" so no errors
+
+console.log('notesBackFromDB',notesBackFromDB)
 
 // brianna--might be able to do this more elegantly with state.get('history','table'), initial attempt didn't work
   const updatedHistory = {
-    items: notesBackFromDB.value,
+    items: notesBackFromDB,
     table: {
       TDView: state.history.table.TDView,
       THView: state.history.table.THView,
@@ -256,12 +295,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           // }))];
         // return [state];
 
-        const bmessage = {tag: 'createHistoryNote',value: undefined}
         console.log('history before changing it',state.history)
         return [state.set('showModal',null),
         async (state) =>{
-          return await createHistoryNote(state, bmessage)
-        }    
+          const brianna = await createHistoryNote(state)
+
+          console.log('brianna is',brianna)
+          // History.init({ idNamespace: 'cwu-opportunity-history', items: , viewerUser: state.viewerUser })
+          return brianna
+        }
       ]
     default:
       return [state];
@@ -269,7 +311,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  debugger;
+  // debugger;
   return (
     <div>
       <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
