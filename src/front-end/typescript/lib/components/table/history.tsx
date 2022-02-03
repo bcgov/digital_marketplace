@@ -55,7 +55,6 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'table', value })
       });
-      //brianna new
     case 'createHistoryNote':
       return updateComponentChild({
         state,

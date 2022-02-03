@@ -283,9 +283,8 @@ export const component: Tab.Component<State, Msg> = {
   getModal: state => {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
-      // remove case later brianna
       case 'addNote': {
-        // add attachment validation
+        // add validation for non-empty note brianna
         // const isValid = isAddTeamMembersEmailsValid(state);
         return {
           title: 'Add Entry to Opportunity',

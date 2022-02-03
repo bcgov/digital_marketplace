@@ -983,7 +983,7 @@ export const files: CrudApi<FileResourceTypes> = {
   ...fileCrudApi,
   create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
 };
-// brianna--use this to upload note attachment files
+
 export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
   const validResults: FileResource.FileRecord[] = [];
   let isInvalid = false;
