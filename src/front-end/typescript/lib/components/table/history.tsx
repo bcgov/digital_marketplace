@@ -50,7 +50,7 @@ export type Msg = ADT<'table', Table.Msg>
 | ADT<'createHistoryNote', any>;
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
-  console.log('history TAB init is being called')
+  console.log('history TAB init is being called, params are',idNamespace, items, viewerUser)
   //only updating db, not local state
   return {
     viewerUser,
@@ -160,6 +160,7 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
+  console.log('state.items is',state.items)
   return state.items.map(item => {
     //remember, this is the history TABLE's state, not the same as the TAB state, the state object is different and "item" isn't the same thing
     console.log('i am in tablebodyrows and item.type is',item.type)
