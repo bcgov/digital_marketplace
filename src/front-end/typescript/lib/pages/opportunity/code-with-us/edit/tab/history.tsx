@@ -284,8 +284,6 @@ export const component: Tab.Component<State, Msg> = {
     if (!state.showModal) { return null; }
     switch (state.showModal.tag) {
       case 'addNote': {
-        // add validation for non-empty note brianna
-        // const isValid = isAddTeamMembersEmailsValid(state);
         return {
           title: 'Add Entry to Opportunity',
           onCloseMsg: adt('hideModal'),
@@ -313,7 +311,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              // disabled: !isValid,
+              disabled: state.modalNote.child.value.trim().length === 0,
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
