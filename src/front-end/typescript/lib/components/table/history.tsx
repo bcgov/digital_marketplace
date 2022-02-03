@@ -137,7 +137,6 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
 }
 
 export const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  console.log('i am in history TABLE view')
   return (
     <Table.view
       headCells={tableHeadCells(state)}
