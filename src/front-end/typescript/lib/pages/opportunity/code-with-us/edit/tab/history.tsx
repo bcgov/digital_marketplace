@@ -13,7 +13,7 @@ import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
 import * as api from 'front-end/lib/http/api';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
-import { invalid, valid } from 'shared/lib/validation';
+import { invalid } from 'shared/lib/validation';
 import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
 // probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
@@ -106,7 +106,6 @@ export function historyToHistoryTableRow(rawHistory){
     .map(s => ({
 
       type: convertHistoryItemToHistoryTableItem(s.type.value),
-      // needs to map to this: {text: 'Published', color: 'success'}
       note: s.note,
       attachments: s.attachments,
       createdAt: s.createdAt,
@@ -116,28 +115,18 @@ export function historyToHistoryTableRow(rawHistory){
     return bugs
 }
 
-// brianna where does params come from
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
     async publishNewNote(value) {
       const result = await api.opportunities.cwu.update(params.opportunity.id, adt('addNote', value));
-      // let outcome: Validation<Addendum[], string[]> | undefined;
-      // console.log('result in publishNewNote is:',result)
-      let rawOutcome;
       let outcome;
       switch (result.tag) {
         case 'valid':
-
-          valid(result.value.history);
-          rawOutcome = result.value.history;
-          console.log('rawOutcome is',rawOutcome)
-          outcome = historyToHistoryTableRow(rawOutcome)
-          // outcome = valid(result.value.history);
-          console.log('outcome is',outcome)
+          outcome = historyToHistoryTableRow(result.value.history)
           break;
         case 'invalid':
-          if (result.value.opportunity?.tag === 'addAddendum') {
+          if (result.value.opportunity?.tag === 'addNote') {
             outcome = invalid(result.value.opportunity.value);
           }
           break;
@@ -160,8 +149,6 @@ const init: Init<Tab.Params, State> = async params => {
       }
 
     })),
-
-    //from form
     attachments: immutable(await Attachments.init({
       canRemoveExistingAttachments: true,
       existingAttachments:  [],
@@ -186,42 +173,6 @@ const sendNoteAttachmentsToDB = async function(state) {
         return invalid(state);
     }
   }
-
-  // const actionResult = await (async () => {
-  //         return await api.oppNote.create({ //make your api function
-  //           // ...formValues, whatever you use
-  //           opportunity: state.opportunity.id,
-  //           // status: action.value
-  //         });
-
-          //also need to add to the CWUOpp table? It has a history
-
-
-  // })();
-
-  // need your own setErrors (existing one is customized to specific forms)
-  // switch (actionResult.tag) {
-  //   case 'valid':
-  //     state = setErrors(state, {});
-  //     // Update the attachments component accordingly.
-  //     state = state.set('attachments', immutable(await Attachments.init({
-  //       existingAttachments: actionResult.value.attachments || [],
-  //       newAttachmentMetadata
-  //     })));
-  //     return valid([state, actionResult.value]);
-  //   case 'unhandled':
-  //   case 'invalid':
-  //     return invalid(setErrors(state, actionResult.value));
-  // }
-
-  //ref for api function
-  // Create new note attachments tables
-  //  await connection.schema.createTable('cwuOpportunityNoteAttachments', table => {
-    //   table.uuid('event').references('id').inTable('cwuOpportunityStatuses').notNullable();
-    //   table.uuid('file').references('id').inTable('files').notNullable();
-    //   table.primary(['event', 'file']);
-    // });
-    // have to assume note goes into existing note column in the opportunitystatuses tables?
     return null
 }
 
@@ -232,7 +183,7 @@ const createHistoryNote = async function(state){
   const notesBackFromDB = await state.publishNewNote({
     note: state.modalNote.child.value,
     attachments: attachmentsBackFromDB
-  }) //BRIANNA--this is bring back the wrong history.item.type; it contains the event instead of txt colour, just happened to use the same key "item" so no errors
+  })
 
 console.log('notesBackFromDB',notesBackFromDB)
 
@@ -249,35 +200,11 @@ console.log('notesBackFromDB',notesBackFromDB)
     viewerUser: state.viewerUser
   }
 
-
-
-console.log('updated history is',updatedHistory)
-
-  // const updatedState = {
-  //   showModal:  null,
-  //   attachments: state.attachments,
-  //   modalNote: state.modalNote,
-  //   history: notesBackFromDB.value
-  // }
-  // updatedState;
-
-  // console.log('updatedState',updatedState)
-
-  // state = updatedState;
-
   state = state.set('history',updatedHistory)
-  // return updatedHistory;
-
-
-  // console.log('attempt to change state, state is:',state) //probably doesn't work because it's no longer immutable?
-
-  // update({state, msg}) //can the msg be something like stop, or hide modal, so it only updates once?
-  // History.update({state,msg: {tag: 'table', value: undefined}})
   return state;
 }
 
 const update: Update<State, Msg> = ({ state, msg }) => {
-  console.log('i am in history TAB update')
   switch (msg.tag) {
     case 'showModal':
       return [state.set('showModal', msg.value)];
@@ -309,45 +236,9 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt('modalNote', value)
       });
       case 'createHistoryNote':
-        // createHistoryNote(state,msg)
-        // createHistoryNote(state,msg).then(res => {
-        //   console.log('res is',res)
-        //   return res;
-        // })
-        // need to update state here
-        // return await createHistoryNote(state,msg).set('showModal', null)
-        // console.log('state just before async is:',state)
-        // return [async (state)=>{
-        //   console.log('state in async is:',state)
-        //   // state = await createHistoryNote(state,msg)
-        //   console.log('state in async after createhistorynote is:',state)
-        //   return state.set('showModal',null)
-        // }];
-        // return state.set('showModal',null)
-        // return [
-        //   async (state, msg) => {
-        //     console.log('i exist and am hit')
-        //   const updatedHistory = await createHistoryNote(state, msg)
-        //   return state.set('history', updatedHistory)
-        //   }
-        //   ]
-        // const updatedHistory = async (state,msg) => {
-        //   return await createHistoryNote(state,msg)
-        //   }
-          // return [state.set('history', createHistoryNote(state,msg).then(res => {
-          //   console.log('res is',res)
-          //   return res;
-          // }))];
-        // return [state];
-
-        console.log('history before changing it',state.history)
         return [state.set('showModal',null),
         async (state) =>{
-          const brianna = await createHistoryNote(state)
-
-          console.log('brianna is',brianna)
-          // History.init({ idNamespace: 'cwu-opportunity-history', items: , viewerUser: state.viewerUser })
-          return brianna
+          return await createHistoryNote(state)
         }
       ]
     default:
