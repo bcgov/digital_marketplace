@@ -177,20 +177,7 @@ const createHistoryNote = async function(state){
     attachments: attachmentsBackFromDB
   })
 
-// brianna--might be able to do this more elegantly with state.get('history','table'), initial attempt didn't work
-  const updatedHistory = {
-    items: notesBackFromDB,
-    table: {
-      TDView: state.history.table.TDView,
-      THView: state.history.table.THView,
-      activeTooltipTdIndex: state.history.table.activeTooltipTdIndex,
-      activeTooltipThIndex: state.history.table.activeTooltipThIndex,
-      idNamespace: state.history.table.idNamespace,
-    },
-    viewerUser: state.viewerUser
-  }
-
-  state = state.set('history',updatedHistory)
+  state = state.setIn(['history','items'],notesBackFromDB).setIn(['modalNote', 'child','value'],'')
   return state;
 }
 
