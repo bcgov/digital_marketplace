@@ -14,8 +14,7 @@ import { Alert } from 'reactstrap';
 import * as api from 'front-end/lib/http/api';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid, valid } from 'shared/lib/validation';
-
-
+import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
 // probably don't need this since there's only one kind of modal; but mimicking how it's done for the team member modals for now
 type ModalId = ADT<'addNote'>
@@ -45,16 +44,62 @@ export function historyToHistoryTableRow(rawHistory){
   console.log('rawHistory is',rawHistory)
 
   const convertHistoryItemToHistoryTableItem = status =>{
-    if (status === 'NOTE_ADDED') {
+    switch (status) {
+      case CWUOpportunityEvent.Edited:
+        return {
+          text: 'Note Added',
+          color: undefined
+        }
+      case CWUOpportunityEvent.AddendumAdded:
+        return {
+          text: 'Addendum Added',
+          color: undefined
+        }
+      case CWUOpportunityEvent.NoteAdded:
       return {
         text: 'Note Added',
         color: undefined
       }
+      case CWUOpportunityStatus.Draft:
+        return {
+          text: 'Draft',
+          color: 'secondary'
+        }
+      case CWUOpportunityStatus.Published:
+        return {
+          text: 'Published',
+          color: 'success'
+        }
+      case CWUOpportunityStatus.Evaluation:
+        return {
+          text: 'Evaluation',
+          color: 'warning'
+        }
+      case CWUOpportunityStatus.Awarded:
+        return {
+          text: 'Awarded',
+          color: 'success'
+        }
+      case CWUOpportunityStatus.Suspended:
+        return {
+          text: 'Suspended',
+          color: 'secondary'
+        }
+      case CWUOpportunityStatus.Canceled:
+        return {
+          text: 'Cancelled',
+          color: 'danger'
+        }
+      //is the best way to handle? brianna
+      default:
+        return {
+          text: null,
+          color: undefined
+        }
     }
-    return {
-      text: null,
-      color: undefined
-    }
+
+
+
   }
 
   const bugs = rawHistory
