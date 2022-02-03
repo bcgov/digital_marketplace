@@ -36,11 +36,8 @@ export type Msg = ADT<'table', Table.Msg>
 | ADT<'createHistoryNote', any>;
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
-  console.log('history TAB init is being called, params are',idNamespace, items, viewerUser)
-  //only updating db, not local state
   return {
     viewerUser,
-    //brianna--probably need to put the note into the history?
     items, //items sorted in the http/api module.
     table: immutable(await Table.init({
       idNamespace
@@ -49,7 +46,6 @@ export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
-  console.log('i am in history TABLE update, msg is ',msg)
   switch (msg.tag) {
     case 'table':
       return updateComponentChild({
