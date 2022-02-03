@@ -298,7 +298,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: state.modalNote.child.value.trim().length === 0,
+              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > 2000,
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
