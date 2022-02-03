@@ -181,7 +181,6 @@ const createHistoryNote = async function(state){
     .setIn(['history','items'],notesBackFromDB)
     .setIn(['modalNote', 'child','value'],'')
     .setIn(['attachments','newAttachments'],[])
-  console.log('state is',state)
   return state;
 }
 
