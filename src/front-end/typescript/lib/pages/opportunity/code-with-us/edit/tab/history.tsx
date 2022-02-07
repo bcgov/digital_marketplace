@@ -16,6 +16,8 @@ import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid } from 'shared/lib/validation';
 import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
+const MAX_NOTE_LENGTH = 2000;
+
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
 type ModalId = ADT<'addNote'>
 
@@ -38,6 +40,7 @@ export type InnerMsg
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export function historyToHistoryTableRow(rawHistory){
+
   const convertHistoryItemToHistoryTableItem = status =>{
     switch (status) {
       case CWUOpportunityEvent.Edited:
@@ -152,31 +155,41 @@ const init: Init<Tab.Params, State> = async params => {
 
 const sendNoteAttachmentsToDB = async function(state) {
   const newAttachments = Attachments.getNewAttachments(state.attachments);
-  if (newAttachments.length) {
-    // if valid, this adds the files to the files and fileBlobs tables
+  console.log('state.attachments',state.attachments)
+
+
+
+  if (newAttachments && newAttachments.length > 0) {
     const result = await api.uploadFiles(newAttachments);
+      // if valid, this adds the files to the files and fileBlobs tables
     switch (result.tag) {
       case 'valid':
-        return [...(result.value.map(({ id }) => id))];
+        return result;
         break;
       case 'invalid':
-        return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
+          return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
       case 'unhandled':
-        return invalid(state);
+          return invalid(state);
+      }
     }
-  }
-    return null
+    return invalid(state);
 }
 
 const createHistoryNote = async function(state){
+  console.log('state',state)
   //send attachments to db
-  const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
+  let attachmentIds;
+  if (state.attachments.newAttachments && state.attachments.newAttachments.length >= 1) {
+    const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
+   attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
+  }
   //send new note to db
   const notesBackFromDB = await state.publishNewNote({
     note: state.modalNote.child.value,
-    attachments: attachmentsBackFromDB
+    attachments: attachmentIds
   })
 
+  //add some sort of validation here too
   state = state
     .setIn(['history','items'],notesBackFromDB)
     .setIn(['modalNote', 'child','value'],'')
@@ -286,12 +299,23 @@ export const component: Tab.Component<State, Msg> = {
                 <p>Provide a note or commentary below pertaining to the opportunity. You may also include any applicable attachments.</p>
                 <Alert color='danger' style={{ whiteSpace: 'pre-line' }}><strong>Important! </strong>The notes and any attachments, if applicable, cannot be edited or deleted once submitted.
                 </Alert>
+
+
                 <LongText.view
-                  extraChildProps={{style: { height: '125px' }}}
+                  extraChildProps={{style: {
+                    height: '125px',
+                    border: state.modalNote.child.value.length > MAX_NOTE_LENGTH ? '1px solid red' : ''
+                  }}}
                   label='Notes'
                   required
                   state={state.modalNote}
                   dispatch={mapComponentDispatch(dispatch, value => adt('modalNote' as const, value))} />
+                  {state.modalNote.child.value.length === 0
+                  ? <Alert color='danger'>Note cannot be blank</Alert>
+                  : null}
+                  {state.modalNote.child.value.length > MAX_NOTE_LENGTH
+                  ? <Alert color='danger'>Note cannot be longer than {MAX_NOTE_LENGTH} characters</Alert>
+                  : null}
               <AttachmentsView {...attachmentProps} />
               </div>
 
@@ -301,7 +325,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > 2000,
+              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > MAX_NOTE_LENGTH,
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
