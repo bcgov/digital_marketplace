@@ -26,7 +26,6 @@ export const readOneFileBlob = tryDb<[string], FileBlob | null>(async (connectio
   return valid(result || null);
 });
 
-// this function doesn't appear to be used anywhere
 export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (connection, fileRecord, userId) => {
   const now = new Date();
   if (!fileRecord) {
