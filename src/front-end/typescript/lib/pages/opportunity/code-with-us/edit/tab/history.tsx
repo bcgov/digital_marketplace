@@ -318,6 +318,9 @@ export const component: Tab.Component<State, Msg> = {
                   ? <Alert color='danger'>Note cannot be longer than {MAX_NOTE_LENGTH} characters</Alert>
                   : null}
               <AttachmentsView {...attachmentProps} />
+                  {state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0
+                  ? <Alert color='danger'>Attachments must be PDFs</Alert>
+                  : null}
               </div>
 
             );
@@ -326,7 +329,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > MAX_NOTE_LENGTH,
+              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > MAX_NOTE_LENGTH || state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0,
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
