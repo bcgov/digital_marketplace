@@ -148,9 +148,10 @@ interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
   className?: string;
   addButtonClassName?: string;
+  accept?: readonly string[]
 }
 
-const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
+const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled, accept }) => {
   if (disabled) { return null; }
   const hasAttachments = !!(state.existingAttachments.length || state.newAttachments.length);
   return (
@@ -163,6 +164,7 @@ const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disa
       symbol_={leftPlacement(iconLinkSymbol('paperclip'))}
       disabled={disabled}
       onChange={file => dispatch(adt('addAttachment', file))}
+      accept={accept}
     >
       Add Attachment
     </FileLink>

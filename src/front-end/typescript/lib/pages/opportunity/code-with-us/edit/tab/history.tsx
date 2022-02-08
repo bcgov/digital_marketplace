@@ -273,6 +273,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           state={state.attachments}
           disabled={disabled}
           // className='mt-4'
+          accept={[".pdf"]}
           />
       </Col>
     </Row>
