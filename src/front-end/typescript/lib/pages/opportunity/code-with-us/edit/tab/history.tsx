@@ -17,6 +17,7 @@ import { invalid } from 'shared/lib/validation';
 import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
 const MAX_NOTE_LENGTH = 2000;
+const MAX_ATTACHMENT_SIZE = '2MB'
 
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
 type ModalId = ADT<'addNote'>
@@ -321,6 +322,9 @@ export const component: Tab.Component<State, Msg> = {
                   {state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0
                   ? <Alert color='danger'>Attachments must be PDFs</Alert>
                   : null}
+                  {state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.size > 2000000).length > 0
+                  ? <Alert color='danger'>Attachments must be smaller than {MAX_ATTACHMENT_SIZE}</Alert>
+                  : null}
               </div>
 
             );
@@ -329,7 +333,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > MAX_NOTE_LENGTH || state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0,
+              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > MAX_NOTE_LENGTH || state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0 || state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.size > 2000000).length > 0,
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
