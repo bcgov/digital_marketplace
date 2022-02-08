@@ -17,7 +17,7 @@ import { invalid } from 'shared/lib/validation';
 import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
 const MAX_NOTE_LENGTH = 2000;
-const MAX_ATTACHMENT_SIZE = '2MB'
+const MAX_ATTACHMENT_SIZE = 2000000
 
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
 type ModalId = ADT<'addNote'>
@@ -281,6 +281,80 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
+const isNoteMinLengthValid = (state) => {
+  return state.modalNote.child.value.trim().length !== 0
+};
+
+const isNoteMaxLengthValid = (state, MAX_NOTE_LENGTH) => {
+return state.modalNote.child.value.length < MAX_NOTE_LENGTH
+}
+
+const isNoteValid = (state, MAX_NOTE_LENGTH) => {
+ return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
+}
+
+const createNoteError = (state, MAX_NOTE_LENGTH) => {
+  if (!isNoteMinLengthValid(state)) {
+    return <Alert color="danger">Note cannot be blank</Alert>;
+  }
+  if (!isNoteMaxLengthValid(state, MAX_NOTE_LENGTH)) {
+    return (
+      <Alert color="danger">
+        Note cannot be longer than {MAX_NOTE_LENGTH} characters
+      </Alert>
+    );
+  }
+  return null;
+};
+
+const isAttachmentFormatValid = (state) => {
+  if (state.attachments.newAttachments.length >= 1) {
+    return state.attachments.newAttachments.filter(
+        (attachment) => attachment.file.type !== "application/pdf"
+      ).length === 0;
+  }
+  return true;
+};
+
+const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
+  if (state.attachments.newAttachments.length >= 1) {
+    return state.attachments.newAttachments.filter(
+        (attachment) => attachment.file.size > MAX_ATTACHMENT_SIZE
+      ).length === 0;
+  }
+  return true;
+};
+
+const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
+  return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
+};
+
+const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
+
+  if (!isAttachmentFormatValid(state) && !isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
+    return (
+      <>
+        <Alert color="danger">Attachments must be PDFs</Alert>
+        <Alert color="danger">
+          Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
+        </Alert>
+      </>
+    );
+  }
+
+  if (!isAttachmentFormatValid(state)) {
+    return <Alert color="danger">Attachments must be PDFs</Alert>;
+  }
+  if (!isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
+    return (
+      <Alert color="danger">
+        Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
+      </Alert>
+    );
+  }
+  return null;
+};
+
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
@@ -312,19 +386,9 @@ export const component: Tab.Component<State, Msg> = {
                   required
                   state={state.modalNote}
                   dispatch={mapComponentDispatch(dispatch, value => adt('modalNote' as const, value))} />
-                  {state.modalNote.child.value.length === 0
-                  ? <Alert color='danger'>Note cannot be blank</Alert>
-                  : null}
-                  {state.modalNote.child.value.length > MAX_NOTE_LENGTH
-                  ? <Alert color='danger'>Note cannot be longer than {MAX_NOTE_LENGTH} characters</Alert>
-                  : null}
+                  {createNoteError(state, MAX_NOTE_LENGTH)}
               <AttachmentsView {...attachmentProps} />
-                  {state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0
-                  ? <Alert color='danger'>Attachments must be PDFs</Alert>
-                  : null}
-                  {state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.size > 2000000).length > 0
-                  ? <Alert color='danger'>Attachments must be smaller than {MAX_ATTACHMENT_SIZE}</Alert>
-                  : null}
+                  {createAttachmentError(state, MAX_ATTACHMENT_SIZE)}
               </div>
 
             );
@@ -333,7 +397,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: state.modalNote.child.value.trim().length === 0 || state.modalNote.child.value.length > MAX_NOTE_LENGTH || state.attachments.newAttachments.filter(attachment => attachment.file.type !== "application/pdf").length > 0 || state.attachments.newAttachments && state.attachments.newAttachments.filter(attachment => attachment.file.size > 2000000).length > 0,
+              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE),
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
