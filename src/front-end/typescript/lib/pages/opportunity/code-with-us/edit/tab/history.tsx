@@ -1,7 +1,7 @@
 // import { isAdmin } from 'shared/lib/resources/user'; //uncomment when ready to limit notes to admin
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
-import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, } from 'front-end/lib/framework';
+import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, toast} from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
@@ -18,6 +18,17 @@ import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/op
 
 const MAX_NOTE_LENGTH = 2000;
 const MAX_ATTACHMENT_SIZE = 2000000
+
+const toasts = {
+  success: {
+    title: 'Note Published',
+    body: 'Your note has been successfully published.'
+  },
+  error: {
+    title: 'Unable to Publish Note',
+    body: 'Your note could not be published. Please try again later.'
+  }
+};
 
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
 type ModalId = ADT<'addNote'>
@@ -161,7 +172,7 @@ const sendNoteAttachmentsToDB = async function(state) {
 
 
   if (newAttachments && newAttachments.length > 0) {
-    const result = await api.uploadFiles(newAttachments);
+    const result = await api.uploadFiles(newAttachments, MAX_ATTACHMENT_SIZE, ["application/pdf"]);
       // if valid, this adds the files to the files and fileBlobs tables
     switch (result.tag) {
       case 'valid':
@@ -176,26 +187,41 @@ const sendNoteAttachmentsToDB = async function(state) {
     return invalid(state);
 }
 
-const createHistoryNote = async function(state){
-  console.log('state',state)
-  //send attachments to db
+const createHistoryNote = async function(state, dispatch){
+  console.log('i am in create history note')
   let attachmentIds;
   if (state.attachments.newAttachments && state.attachments.newAttachments.length >= 1) {
+    //send attachments to db
     const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
-   attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
-  }
-  //send new note to db
-  const notesBackFromDB = await state.publishNewNote({
-    note: state.modalNote.child.value,
-    attachments: attachmentIds
-  })
+    console.log('attachmentsBackFromDB',attachmentsBackFromDB)
+    switch (attachmentsBackFromDB.tag) {
+      case 'valid':
+        attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
+        break;
+        default:
+          // brianna--in form, if the file is invalid, its name goes into an errors array. Need to do this here too, or does clearing the attachments and doing toast (or something else?) work?
+          dispatch(toast(adt('error', toasts.error)));
+          state = state
+          .setIn(['modalNote', 'child','value'],'')
+          // .setIn(['attachments','newAttachments'],[])
+          return state;
 
-  //add some sort of validation here too
-  state = state
-    .setIn(['history','items'],notesBackFromDB)
-    .setIn(['modalNote', 'child','value'],'')
-    .setIn(['attachments','newAttachments'],[])
-  return state;
+        }
+      }
+        //send new note to db
+        const notesBackFromDB = await state.publishNewNote({
+          note: state.modalNote.child.value,
+          // attachments: attachmentIds
+          attachments: attachmentIds
+        })
+        console.log('notesBackFromDB',notesBackFromDB)
+        dispatch(toast(adt('success', toasts.success)));
+        state = state
+          .setIn(['history','items'],notesBackFromDB)
+          .setIn(['modalNote', 'child','value'],'')
+          .setIn(['attachments','newAttachments'],[])
+
+        return state;
 }
 
 const update: Update<State, Msg> = ({ state, msg }) => {
@@ -231,8 +257,8 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
       case 'createHistoryNote':
         return [state.set('showModal',null),
-        async (state) =>{
-          return await createHistoryNote(state)
+        async (state, dispatch) =>{
+          return await createHistoryNote(state, dispatch)
         }
       ]
     default:
@@ -289,9 +315,9 @@ const isNoteMaxLengthValid = (state, MAX_NOTE_LENGTH) => {
 return state.modalNote.child.value.length < MAX_NOTE_LENGTH
 }
 
-const isNoteValid = (state, MAX_NOTE_LENGTH) => {
- return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
-}
+// const isNoteValid = (state, MAX_NOTE_LENGTH) => {
+//  return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
+// }
 
 const createNoteError = (state, MAX_NOTE_LENGTH) => {
   if (!isNoteMinLengthValid(state)) {
@@ -325,9 +351,9 @@ const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
   return true;
 };
 
-const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
-  return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
-};
+// const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
+//   return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
+// };
 
 const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
 
@@ -397,7 +423,8 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE),
+              // disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE),
+              disabled: false,
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
