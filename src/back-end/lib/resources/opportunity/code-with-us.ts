@@ -331,7 +331,6 @@ const resource: Resource = {
 
         switch (request.body.tag) {
           case 'edit':{
-
             const { title,
                     teaser,
                     remoteOk,
@@ -474,7 +473,6 @@ const resource: Resource = {
             }
           }
           case 'publish': {
-
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Published)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -507,7 +505,6 @@ const resource: Resource = {
             } as ValidatedUpdateRequestBody);
           }
           case 'suspend': {
-
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Suspended)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -520,8 +517,7 @@ const resource: Resource = {
               body: adt('suspend', validatedSuspendNote.value)
             } as ValidatedUpdateRequestBody);
           }
-          case 'cancel': {
-
+          case 'cancel':{
             if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Canceled)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -535,7 +531,6 @@ const resource: Resource = {
             } as ValidatedUpdateRequestBody);
           }
           case 'addAddendum':{
-
             if (validatedCWUOpportunity.value.status === CWUOpportunityStatus.Draft) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -585,7 +580,7 @@ const resource: Resource = {
                 cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
               }
               break;
-            case 'publish': {
+            case 'publish':{
 
               const existingOpportunity = getValidValue(await db.readOneCWUOpportunity(connection, request.params.id, session), null);
               dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);

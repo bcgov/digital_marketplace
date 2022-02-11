@@ -33,8 +33,6 @@ export async function validateUserId(connection: db.Connection, userId: Id): Pro
 }
 
 export async function validateFileRecord(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
-  console.log('*******************************************************')
-  console.log('fileId is',fileId)
   try {
     // Validate the provided id
     const validatedId = validateUUID(fileId);
