@@ -9,6 +9,7 @@ import { formatDate, formatTime } from 'shared/lib';
 import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 import { AttachmentList } from 'front-end/lib/components/attachments';
+import { FileRecord } from 'shared/lib/resources/file';
 
 export interface Item {
   type: {
@@ -16,7 +17,7 @@ export interface Item {
     color?: ThemeColor;
   };
   note?: string;
-  attachments?: any; // brianna--change type later
+  attachments?: any;
   createdAt: Date;
   createdBy?: UserSlim;
 }
@@ -92,7 +93,6 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
     }
   ];
 }
-
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.items.map(item => {
