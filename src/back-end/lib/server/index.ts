@@ -59,6 +59,9 @@ export interface FileUpload<Metadata> {
   readonly name: string;
   readonly path: string;
   readonly metadata?: Metadata;
+  //brianna choose better types here later
+  readonly maxFileSize?: any;
+  readonly allowedFormats?: any;
 }
 
 export type FileRequestBody<FileUploadMetadata> = ADT<'file', FileUpload<FileUploadMetadata>>;

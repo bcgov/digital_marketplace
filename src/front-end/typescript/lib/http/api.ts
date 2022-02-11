@@ -937,9 +937,13 @@ function rawFileRecordToFileRecord(raw: RawFileRecord): FileResource.FileRecord 
 }
 
 export interface CreateFileRequestBody {
-  name: string;
-  file: File;
-  metadata: FileResource.FileUploadMetadata;
+  fileToCreate: {
+    name: string;
+    file: File;
+    metadata: FileResource.FileUploadMetadata;
+  }
+  maxFileSize?: null | number;
+  allowedFormats?: null | string[];
 }
 
 interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'readOne'> {
@@ -966,16 +970,28 @@ const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: un
   }
 });
 
+// brianna -- this just makes an an object that's used in the body? no validation?
 function makeCreateFileAction(routeNamespace: string): CrudClientActionWithBody<FileResourceTypes['create']>  {
-  return body => {
+  return (body) => {
+    console.log('body in makecreatefileaction is',body)
     const multipartBody = new FormData();
-    multipartBody.append('name', body.name);
-    multipartBody.append('file', body.file);
-    multipartBody.append('metadata', JSON.stringify(body.metadata));
-    return makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
+    multipartBody.append('name', body.fileToCreate.name);
+    multipartBody.append('file', body.fileToCreate.file);
+    multipartBody.append('metadata', JSON.stringify(body.fileToCreate.metadata));
+    multipartBody.append('maxFileSize', JSON.stringify(body.maxFileSize));
+    multipartBody.append('allowedFormats', JSON.stringify(body.allowedFormats));
+    console.log('********')
+    console.log(multipartBody.forEach((value, key)=> console.log('key:',key,'| value:',value)))
+
+   console.log('********')
+    const briannaToCheck = makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
       routeNamespace,
       transformValid: rawFileRecordToFileRecord
     })(multipartBody);
+    briannaToCheck.then(res => {
+      console.log('in makecreatefileactionbriannatocheck is',res)
+    })
+    return briannaToCheck
   };
 }
 
@@ -984,17 +1000,30 @@ export const files: CrudApi<FileResourceTypes> = {
   create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
 };
 
-export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
+export async function uploadFiles(filesToUpload: CreateFileRequestBody[], maxFileSize: null | number = null, allowedFormats: null | string[] = null): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
   const validResults: FileResource.FileRecord[] = [];
   let isInvalid = false;
   const invalidResults: FileResource.CreateValidationErrors[] = [];
   for (const file of filesToUpload) {
+    console.log('file is',file)
+    // debugger;
+    // if (maxFileSize && file.file.size > maxFileSize) {
+    //   isInvalid = true;
+    // }
+
+    // if (allowedFormats && !allowedFormats.includes(file.file.type)) {
+    //   isInvalid = true;
+    // }
+
     if (isInvalid) {
       //Skip uploading files if a validation error has occurred.
       invalidResults.push({});
       continue;
     }
-    const result = await files.create(file);
+    const requestBody = {fileToCreate: file.fileToCreate, maxFileSize, allowedFormats}
+
+    const result = await files.create(requestBody);
+    console.log('result is',result)
     switch (result.tag) {
       case 'valid':
         validResults.push(result.value);
@@ -1004,11 +1033,13 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
         isInvalid = true;
         invalidResults.push(result.value);
         break;
+        // brianna why doesn't this set isInvalid?
       case 'unhandled':
         return result;
     }
   }
   if (isInvalid) {
+    console.log('invalid(invalidResults)',invalid(invalidResults))
     return invalid(invalidResults);
   } else {
     return valid(validResults);
@@ -1018,9 +1049,11 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
 export function makeUploadMarkdownImage(metadata: FileResource.FileUploadMetadata = [adt('any')]): RichMarkdownEditor.UploadImage {
   return async file => {
     const result = await files.create({
-      name: file.name,
-      file,
-      metadata
+      fileToCreate: {
+        name: file.name,
+        file,
+        metadata,
+      },
     });
     if (isValid(result)) {
       return valid({
