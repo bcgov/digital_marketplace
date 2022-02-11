@@ -300,5 +300,5 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Status Note', 0, 1000);
+  return validateGenericString(raw, 'Status Note', 1, 1000);
 }
