@@ -1,7 +1,7 @@
 import { isVendor } from 'shared/lib/resources/user';
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
-import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, toast} from 'front-end/lib/framework';
+import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View} from 'front-end/lib/framework';
 import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
 import { opportunityToHistoryItems } from 'front-end/lib/pages/opportunity/code-with-us/lib';
 import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
@@ -14,21 +14,8 @@ import { Alert } from 'reactstrap';
 import * as api from 'front-end/lib/http/api';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid } from 'shared/lib/validation';
-import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
+import {MAX_ATTACHMENT_SIZE, MAX_NOTE_LENGTH, historyToHistoryTableRow,createHistoryNote, isNoteValid, isAttachmentValid, createAttachmentError, createNoteError } from 'front-end/lib/pages/opportunity/helpers'
 
-const MAX_NOTE_LENGTH = 1000;
-const MAX_ATTACHMENT_SIZE = 2000000
-
-const toasts = {
-  success: {
-    title: 'Note Published',
-    body: 'Your note has been successfully published.'
-  },
-  error: {
-    title: 'Unable to Publish Note',
-    body: 'Your note could not be published. Please try again later.'
-  }
-};
 
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
 type ModalId = ADT<'addNote'>
@@ -51,73 +38,7 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-export function historyToHistoryTableRow(rawHistory){
 
-  const convertHistoryItemToHistoryTableItem = status =>{
-    switch (status) {
-      case CWUOpportunityEvent.Edited:
-        return {
-          text: 'Note Added',
-          color: undefined
-        }
-      case CWUOpportunityEvent.AddendumAdded:
-        return {
-          text: 'Addendum Added',
-          color: undefined
-        }
-      case CWUOpportunityEvent.NoteAdded:
-      return {
-        text: 'Note Added',
-        color: undefined
-      }
-      case CWUOpportunityStatus.Draft:
-        return {
-          text: 'Draft',
-          color: 'secondary'
-        }
-      case CWUOpportunityStatus.Published:
-        return {
-          text: 'Published',
-          color: 'success'
-        }
-      case CWUOpportunityStatus.Evaluation:
-        return {
-          text: 'Evaluation',
-          color: 'warning'
-        }
-      case CWUOpportunityStatus.Awarded:
-        return {
-          text: 'Awarded',
-          color: 'success'
-        }
-      case CWUOpportunityStatus.Suspended:
-        return {
-          text: 'Suspended',
-          color: 'secondary'
-        }
-      case CWUOpportunityStatus.Canceled:
-        return {
-          text: 'Cancelled',
-          color: 'danger'
-        }
-      //is the best way to handle? brianna
-      default:
-        return {
-          text: null,
-          color: undefined
-        }
-    }
-  }
-
-  return rawHistory
-    .map(s => ({
-      type: convertHistoryItemToHistoryTableItem(s.type.value),
-      note: s.note,
-      attachments: s.attachments,
-      createdAt: s.createdAt,
-      createdBy: s.createdBy || undefined
-    }));
-}
 
 const init: Init<Tab.Params, State> = async params => {
   return {
@@ -138,7 +59,7 @@ const init: Init<Tab.Params, State> = async params => {
       return outcome || invalid(['Unable to add note due to a system error.']);
     },
     history: immutable(await History.init({
-      idNamespace: 'cwu-opportunity-history', //probably shouldn't hardcode this, brianna
+      idNamespace: 'cwu-opportunity-history',
       items: opportunityToHistoryItems(params.opportunity),
       viewerUser: params.viewerUser
     })),
@@ -160,56 +81,7 @@ const init: Init<Tab.Params, State> = async params => {
 };
 
 
-const sendNoteAttachmentsToDB = async function(state) {
-  const newAttachments = Attachments.getNewAttachments(state.attachments);
 
-  if (newAttachments && newAttachments.length > 0) {
-    const result = await api.uploadFiles(newAttachments);
-      // if valid, this adds the files to the files and fileBlobs tables
-    switch (result.tag) {
-      case 'valid':
-        return result;
-        break;
-      case 'invalid':
-          return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
-      case 'unhandled':
-          return invalid(state);
-      }
-    }
-    return invalid(state);
-}
-
-const createHistoryNote = async function(state, dispatch){
-  let attachmentIds;
-  if (state.attachments.newAttachments && state.attachments.newAttachments.length >= 1) {
-    //send attachments to db
-    const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
-    console.log('attachmentsBackFromDB',attachmentsBackFromDB)
-    switch (attachmentsBackFromDB.tag) {
-      case 'valid':
-        attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
-        break;
-        default:
-          dispatch(toast(adt('error', toasts.error)));
-          // leave note text and attachments in state so that user can quickly resubmit if there was a db error
-          return state;
-
-        }
-      }
-        //send new note to db
-        const notesBackFromDB = await state.publishNewNote({
-          note: state.modalNote.child.value,
-          attachments: attachmentIds
-        })
-        dispatch(toast(adt('success', toasts.success)));
-        //clear note modal
-        state = state
-          .setIn(['history','items'],notesBackFromDB)
-          .setIn(['modalNote', 'child','value'],'')
-          .setIn(['attachments','newAttachments'],[])
-
-        return state;
-}
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -293,79 +165,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const isNoteMinLengthValid = (state) => {
-  return state.modalNote.child.value.trim().length !== 0
-};
 
-const isNoteMaxLengthValid = (state, MAX_NOTE_LENGTH) => {
-return state.modalNote.child.value.length < MAX_NOTE_LENGTH
-}
-
-const isNoteValid = (state, MAX_NOTE_LENGTH) => {
- return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
-}
-
-const createNoteError = (state, MAX_NOTE_LENGTH) => {
-  if (!isNoteMinLengthValid(state)) {
-    return <Alert color="danger">Note cannot be blank</Alert>;
-  }
-  if (!isNoteMaxLengthValid(state, MAX_NOTE_LENGTH)) {
-    return (
-      <Alert color="danger">
-        Note cannot be longer than {MAX_NOTE_LENGTH} characters
-      </Alert>
-    );
-  }
-  return null;
-};
-
-const isAttachmentFormatValid = (state) => {
-  if (state.attachments.newAttachments.length >= 1) {
-    return state.attachments.newAttachments.filter(
-        (attachment) => attachment.file.type !== "application/pdf"
-      ).length === 0;
-  }
-  return true;
-};
-
-const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
-  if (state.attachments.newAttachments.length >= 1) {
-    return state.attachments.newAttachments.filter(
-        (attachment) => attachment.file.size > MAX_ATTACHMENT_SIZE
-      ).length === 0;
-  }
-  return true;
-};
-
-const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
-  return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
-};
-
-const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
-
-  if (!isAttachmentFormatValid(state) && !isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
-    return (
-      <>
-        <Alert color="danger">Attachments must be PDFs</Alert>
-        <Alert color="danger">
-          Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
-        </Alert>
-      </>
-    );
-  }
-
-  if (!isAttachmentFormatValid(state)) {
-    return <Alert color="danger">Attachments must be PDFs</Alert>;
-  }
-  if (!isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
-    return (
-      <Alert color="danger">
-        Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
-      </Alert>
-    );
-  }
-  return null;
-};
 
 export const component: Tab.Component<State, Msg> = {
   init,
@@ -425,7 +225,7 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getContextualActions: ({ state, dispatch }) => {
-    if (isVendor(state.viewerUser)) { return null; } //uncomment to hide the button from all
+    if (isVendor(state.viewerUser)) { return null; }
     return adt('links', [{
       children: 'Add Entry',
       onClick: () => {
