@@ -38,8 +38,6 @@ export type InnerMsg
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-
-
 const init: Init<Tab.Params, State> = async params => {
   return {
     ...params,
@@ -79,9 +77,6 @@ const init: Init<Tab.Params, State> = async params => {
     }))
   };
 };
-
-
-
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -164,8 +159,6 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
     </Row>
   );
 };
-
-
 
 export const component: Tab.Component<State, Msg> = {
   init,
