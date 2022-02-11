@@ -57,7 +57,6 @@ interface MakeRequestParams<T extends ActionWithBodyTypes> {
 export type CrudResponse<T extends ActionTypes> = ResponseValidation<T['validResponse'], T['invalidResponse']>;
 
 export async function makeRequest<T extends ActionWithBodyTypes>(params: MakeRequestParams<T>): Promise<CrudResponse<T>> {
-  console.log('i am in makeRequest, params is:',params)
   const response = await request(params.method, params.url, params.body as object);
   switch (response.status) {
     case 200:
@@ -78,15 +77,12 @@ interface MakeActionParams<T extends ActionTypes> {
 }
 
 export function makeCreate<T extends ActionWithBodyTypes>(params: MakeActionParams<T>): CrudClientActionWithBody<T> {
-  return async body =>
- {
-   console.log('i am in makeCreate, body is',body)
-    return makeRequest({
+  return async body => makeRequest({
     body,
     method: ClientHttpMethod.Post,
     url: params.routeNamespace,
     transformValid: params.transformValid
-  })};
+  });
 }
 
 export function makeReadMany<T extends ActionTypes>(params: MakeActionParams<T>): CrudClientAction<ReadManyActionTypes<T>> {

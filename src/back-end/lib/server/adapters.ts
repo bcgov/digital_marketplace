@@ -53,7 +53,6 @@ function incomingHeaderMatches(headers: IncomingHttpHeaders, header: string, val
  *
  * `metadata` is an optional field containing a JSON string
  */
-//brianna--you can probably validate file size and type here**
 function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUploadMetadata: (raw: any) => FileUploadMetadata, expressReq: expressLib.Request): Promise<FileRequestBody<FileUploadMetadata>> {
   return new Promise((resolve, reject) => {
     // Reject the promise if the content length is too large.
@@ -62,40 +61,21 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
       return reject(new Error('Content-Length is too large.'));
     }
     // Parse the request.
-    console.log('*****i am in parseMultipartRequest and I think this is where data is transformed')
     let filePath: string | undefined;
     let metadata = '';
     let fileName = '';
-    let fileSize;
-    let maxFileSize = '';
-    let allowedFormats = '';
-    let fileFormat;
     const form = new multiparty.Form();
     // Listen for files and fields.
     // We only want to receive one file, so we disregard all other files.
     // We only want the (optional) metadata field, so we disregard all other fields.
     form.on('part', part => {
       part.on('error', error => reject(error));
-
-      if(part.name === 'maxFileSize' && !part.filename && !maxFileSize) {
-        part.setEncoding('utf8');
-        part.on('data', chunk => maxFileSize += chunk);
-      }
-
-      if(part.name === 'allowedFormats' && !part.filename && !allowedFormats) {
-        part.setEncoding('utf8');
-        part.on('data', chunk => allowedFormats += chunk);
-      }
-
       // We expect the file's field to have the name `file`.
       if (part.name === 'file' && part.filename && !filePath) {
         // We only want to receive one file.
         const tmpPath = path.join(TMP_DIR, generateUuid());
         part.pipe(createWriteStream(tmpPath));
         filePath = tmpPath;
-        fileSize = part.byteCount;
-        fileFormat = part.headers['content-type']
-        console.log('part is',part)
       } else if (part.name === 'metadata' && !part.filename && !metadata) {
         part.setEncoding('utf8');
         part.on('data', chunk => metadata += chunk);
@@ -106,52 +86,15 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
         part.on('data', chunk => fileName += chunk);
         // No need to listen to 'end' event as the multiparty form won't end until the
         // entire request body has been processed.
-      }
-      else {
+      } else {
         // Ignore all other files and fields.
         part.resume();
       }
-    }
-
-    );
-
-
-
+    });
     // Handle errors.
     form.on('error', error => reject(error));
     // Resolve the promise once the request has finished parsing.
     form.on('close', () => {
-      console.log('##################filesize is ',fileSize)
-      console.log('####################allowedFormats is',allowedFormats)
-      console.log('######################fileFormat',fileFormat)
-      if (fileSize > Number(maxFileSize)) {
-        console.log('file is too big, filesize is',fileSize, 'and max is',maxFileSize)
-        reject(new Error('File is too large.'));
-      }
-
-      if (!allowedFormats.includes(fileFormat)) {
-        console.log('format is',fileFormat, 'and allowed format is',allowedFormats)
-        reject(new Error('File format not allowed.'));
-      }
-
-      //brianna--sends the max file size on, no longer need probably if validating above
-      if (filePath && metadata && fileName && maxFileSize) {
-        console.log('******************************i made it into form close')
-        const jsonMetadata = parseJsonSafely(metadata);
-        switch (jsonMetadata.tag) {
-          case 'valid':
-            resolve(makeFileRequestBody({
-              name: fileName,
-              path: filePath,
-              metadata: parseFileUploadMetadata(jsonMetadata.value),
-              maxFileSize: maxFileSize,
-            }));
-            break;
-          case 'invalid':
-            reject(new Error('Invalid `metadata` field.'));
-            break;
-        }
-      }
       if (filePath && metadata && fileName) {
         const jsonMetadata = parseJsonSafely(metadata);
         switch (jsonMetadata.tag) {
@@ -257,7 +200,6 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           body = makeJsonRequestBody(expressReq.body);
         } else if (method !== ServerHttpMethod.Get && incomingHeaderMatches(headers, 'content-type', 'multipart')) {
           body = await parseMultipartRequest(maxMultipartFilesSize, parseFileUploadMetadata, expressReq);
-          console.log('*************body in async handler is:',body)
         }
         // Create the initial request.
         const requestId = generateUuid();
@@ -272,7 +214,6 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           query: expressReq.query,
           body
         };
-        // console.log('initialRequest.body.value',initialRequest.body.value)
         // Run the before hook if specified.
         const hookState = route.hook ? await route.hook.before(initialRequest) : null;
         // Parse the request according to the route handler.
@@ -280,7 +221,6 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           ...initialRequest,
           body: await route.handler.parseRequestBody(initialRequest)
         };
-        // console.log('parsedrequest.body is',parsedRequest.body)
         // Validate the request according to the route handler.
         const validatedRequest: Request<Validation<ValidatedReqBody, ReqBodyErrors>, Session> = {
           ...parsedRequest,

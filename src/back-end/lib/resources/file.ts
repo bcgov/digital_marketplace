@@ -85,8 +85,7 @@ const resource: Resource = {
           return {
             name: getString(body, 'name'),
             metadata: body.metadata,
-            path: getString(body, 'path'),
-            maxFileSize: getString(body, 'maxFileSize')
+            path: getString(body, 'path')
           };
         } else {
           return null;
@@ -103,33 +102,28 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const { name, metadata, path, maxFileSize } = request.body;
+        const { name, metadata, path } = request.body;
         const validatedOriginalFileName = fileValidation.validateFileName(name);
         const validatedFilePermissions = metadata ? valid(metadata) : invalid(['Invalid metadata provided.']);
         const validatedFilePath = validateFilePath(path);
-        //brianna--put the validation here
-        const validatedMaxFileSize = valid(maxFileSize);
 
         if (allValid([validatedOriginalFileName, validatedFilePermissions, validatedFilePath])) {
           return valid({
             name: validatedOriginalFileName.value,
             permissions: validatedFilePermissions.value,
-            path: validatedFilePath.value,
-            maxFileSize: validatedMaxFileSize.value,
+            path: validatedFilePath.value
           } as ValidatedCreateRequestBody);
         } else {
           return invalid({
             name: getInvalidValue(validatedOriginalFileName, undefined),
             metadata: getInvalidValue(validatedFilePermissions, undefined),
-            path: getInvalidValue(validatedFilePath, undefined),
-            maxFileSize: getInvalidValue(validatedMaxFileSize, undefined)
+            path: getInvalidValue(validatedFilePath, undefined)
           });
         }
       },
       respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
           const createdById = getString(request.session?.user || {}, 'id');
-          //brianna
           const dbResult = await db.createFile(connection, request.body, createdById);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
