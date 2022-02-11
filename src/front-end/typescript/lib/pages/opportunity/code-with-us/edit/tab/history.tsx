@@ -1,4 +1,4 @@
-// import { isAdmin } from 'shared/lib/resources/user'; //uncomment when ready to limit notes to admin
+import { isVendor } from 'shared/lib/resources/user';
 import { Route } from 'front-end/lib/app/types';
 import * as History from 'front-end/lib/components/table/history';
 import { ComponentViewProps, ComponentView, GlobalComponentMsg, Immutable, immutable, Init, mapComponentDispatch, Update, updateComponentChild, View, toast} from 'front-end/lib/framework';
@@ -16,7 +16,7 @@ import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid } from 'shared/lib/validation';
 import {CWUOpportunityStatus, CWUOpportunityEvent} from 'shared/lib/resources/opportunity/code-with-us';
 
-const MAX_NOTE_LENGTH = 2000;
+const MAX_NOTE_LENGTH = 1000;
 const MAX_ATTACHMENT_SIZE = 2000000
 
 const toasts = {
@@ -107,9 +107,6 @@ export function historyToHistoryTableRow(rawHistory){
           color: undefined
         }
     }
-
-
-
   }
 
   return rawHistory
@@ -148,9 +145,7 @@ const init: Init<Tab.Params, State> = async params => {
     showModal: null,
     modalNote: immutable(await LongText.init({
       errors: [],
-      // validate: contentValidation.validateSlug,
       child: {
-        // type: 'text',
         value: '',
         id: 'modal-note'
       }
@@ -167,12 +162,9 @@ const init: Init<Tab.Params, State> = async params => {
 
 const sendNoteAttachmentsToDB = async function(state) {
   const newAttachments = Attachments.getNewAttachments(state.attachments);
-  console.log('state.attachments',state.attachments)
-
-
 
   if (newAttachments && newAttachments.length > 0) {
-    const result = await api.uploadFiles(newAttachments, MAX_ATTACHMENT_SIZE, ["application/pdf"]);
+    const result = await api.uploadFiles(newAttachments);
       // if valid, this adds the files to the files and fileBlobs tables
     switch (result.tag) {
       case 'valid':
@@ -188,7 +180,6 @@ const sendNoteAttachmentsToDB = async function(state) {
 }
 
 const createHistoryNote = async function(state, dispatch){
-  console.log('i am in create history note')
   let attachmentIds;
   if (state.attachments.newAttachments && state.attachments.newAttachments.length >= 1) {
     //send attachments to db
@@ -199,11 +190,8 @@ const createHistoryNote = async function(state, dispatch){
         attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
         break;
         default:
-          // brianna--in form, if the file is invalid, its name goes into an errors array. Need to do this here too, or does clearing the attachments and doing toast (or something else?) work?
           dispatch(toast(adt('error', toasts.error)));
-          state = state
-          .setIn(['modalNote', 'child','value'],'')
-          // .setIn(['attachments','newAttachments'],[])
+          // leave note text and attachments in state so that user can quickly resubmit if there was a db error
           return state;
 
         }
@@ -211,11 +199,10 @@ const createHistoryNote = async function(state, dispatch){
         //send new note to db
         const notesBackFromDB = await state.publishNewNote({
           note: state.modalNote.child.value,
-          // attachments: attachmentIds
           attachments: attachmentIds
         })
-        console.log('notesBackFromDB',notesBackFromDB)
         dispatch(toast(adt('success', toasts.success)));
+        //clear note modal
         state = state
           .setIn(['history','items'],notesBackFromDB)
           .setIn(['modalNote', 'child','value'],'')
@@ -267,7 +254,6 @@ const update: Update<State, Msg> = ({ state, msg }) => {
 };
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  // debugger;
   return (
     <div>
       <EditTabHeader opportunity={state.opportunity} viewerUser={state.viewerUser} />
@@ -315,9 +301,9 @@ const isNoteMaxLengthValid = (state, MAX_NOTE_LENGTH) => {
 return state.modalNote.child.value.length < MAX_NOTE_LENGTH
 }
 
-// const isNoteValid = (state, MAX_NOTE_LENGTH) => {
-//  return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
-// }
+const isNoteValid = (state, MAX_NOTE_LENGTH) => {
+ return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
+}
 
 const createNoteError = (state, MAX_NOTE_LENGTH) => {
   if (!isNoteMinLengthValid(state)) {
@@ -351,9 +337,9 @@ const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
   return true;
 };
 
-// const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
-//   return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
-// };
+const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
+  return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
+};
 
 const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
 
@@ -423,8 +409,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              // disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE),
-              disabled: false,
+              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE),
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
@@ -440,20 +425,13 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getContextualActions: ({ state, dispatch }) => {
-    // if (!isAdmin(state.viewerUser)) { return null; } //uncomment to hide the button from all but admin
-    // rewrite this for attachment loading
-    // const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
-    // const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
-    // const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
-    state; //to avoid TS errors about arguments not being used
+    if (isVendor(state.viewerUser)) { return null; } //uncomment to hide the button from all
     return adt('links', [{
       children: 'Add Entry',
       onClick: () => {
         dispatch(adt('showModal', adt('addNote')) as Msg)
       },
       button: true,
-      // loading: isAddTeamMembersLoading,
-      // disabled: isLoading,
       symbol_: leftPlacement(iconLinkSymbol('file-edit')),
       color: 'primary'
     }]);
