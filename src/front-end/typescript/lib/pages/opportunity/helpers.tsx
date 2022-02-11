@@ -109,128 +109,138 @@ export function historyToHistoryTableRow(rawHistory){
         createdAt: s.createdAt,
         createdBy: s.createdBy || undefined
       }));
-  }
+}
 
-   const sendNoteAttachmentsToDB = async function(state) {
-    const newAttachments = Attachments.getNewAttachments(state.attachments);
+const sendNoteAttachmentsToDB = async function(state) {
+  const newAttachments = Attachments.getNewAttachments(state.attachments);
 
-    if (newAttachments && newAttachments.length > 0) {
-      const result = await api.uploadFiles(newAttachments);
-        // if valid, this adds the files to the files and fileBlobs tables
-      switch (result.tag) {
-        case 'valid':
-          return result;
-          break;
-        case 'invalid':
-            return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
-        case 'unhandled':
-            return invalid(state);
-        }
+  if (newAttachments && newAttachments.length > 0) {
+    const result = await api.uploadFiles(newAttachments);
+      // if valid, this adds the files to the files and fileBlobs tables
+    switch (result.tag) {
+      case 'valid':
+        return result;
+        break;
+      case 'invalid':
+          return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
+      case 'unhandled':
+          return invalid(state);
       }
-      return invalid(state);
-  }
+    }
+    return invalid(state);
+}
 
-  export const createHistoryNote = async function(state, dispatch){
+export const createHistoryNote = async function (state, dispatch) {
     let attachmentIds;
-    if (state.attachments.newAttachments && state.attachments.newAttachments.length >= 1) {
+    if (
+      state.attachments.newAttachments &&
+      state.attachments.newAttachments.length >= 1
+    ) {
       //send attachments to db
       const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
       switch (attachmentsBackFromDB.tag) {
-        case 'valid':
+        case "valid":
           attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
           break;
-          default:
-            dispatch(toast(adt('error', toasts.error)));
-            // leave note text and attachments in state so that user can quickly resubmit if there was a db error
-            return state;
-
-          }
-        }
-          //send new note to db
-          const notesBackFromDB = await state.publishNewNote({
-            note: state.modalNote.child.value,
-            attachments: attachmentIds
-          })
-          dispatch(toast(adt('success', toasts.success)));
-          //clear note modal
-          state = state
-            .setIn(['history','items'],notesBackFromDB)
-            .setIn(['modalNote', 'child','value'],'')
-            .setIn(['attachments','newAttachments'],[])
-
+        default:
+          dispatch(toast(adt("error", toasts.error)));
+          // leave note text and attachments in state so that user can quickly resubmit if there was a db error
           return state;
+      }
+    }
+    //send new note to db
+    const notesBackFromDB = await state.publishNewNote({
+      note: state.modalNote.child.value,
+      attachments: attachmentIds,
+    });
+    console.log("notes back from db", notesBackFromDB);
+    switch (notesBackFromDB.tag) {
+      case "valid":
+        dispatch(toast(adt("success", toasts.success)));
+        //clear note modal
+        state = state
+          .setIn(["history", "items"], notesBackFromDB)
+          .setIn(["modalNote", "child", "value"], "")
+          .setIn(["attachments", "newAttachments"], []);
+
+        return state;
+      default:
+        dispatch(toast(adt("error", toasts.error)));
+        // leave note text and attachments in state so that user can quickly resubmit if there was a db error
+        return state;
+    }
+};
+
+const isNoteMinLengthValid = (state) => {
+  return state.modalNote.child.value.trim().length !== 0
+};
+
+const isNoteMaxLengthValid = (state, MAX_NOTE_LENGTH) => {
+return state.modalNote.child.value.length < MAX_NOTE_LENGTH
+}
+
+export const isNoteValid = (state, MAX_NOTE_LENGTH) => {
+  return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
+}
+
+export const createNoteError = (state, MAX_NOTE_LENGTH) => {
+  if (!isNoteMinLengthValid(state)) {
+    return <Alert color="danger">Note cannot be blank</Alert>;
   }
-
-  const isNoteMinLengthValid = (state) => {
-    return state.modalNote.child.value.trim().length !== 0
-  };
-
-  const isNoteMaxLengthValid = (state, MAX_NOTE_LENGTH) => {
-  return state.modalNote.child.value.length < MAX_NOTE_LENGTH
+  if (!isNoteMaxLengthValid(state, MAX_NOTE_LENGTH)) {
+    return (
+      <Alert color="danger">
+        Note cannot be longer than {MAX_NOTE_LENGTH} characters
+      </Alert>
+    );
   }
+  return null;
+};
 
-  export const isNoteValid = (state, MAX_NOTE_LENGTH) => {
-   return isNoteMinLengthValid(state) && isNoteMaxLengthValid(state, MAX_NOTE_LENGTH) ? true: false;
+const isAttachmentFormatValid = (state) => {
+  if (state.attachments.newAttachments.length >= 1) {
+    return state.attachments.newAttachments.filter(
+        (attachment) => attachment.file.type !== "application/pdf"
+      ).length === 0;
   }
+  return true;
+};
 
-  export const createNoteError = (state, MAX_NOTE_LENGTH) => {
-    if (!isNoteMinLengthValid(state)) {
-      return <Alert color="danger">Note cannot be blank</Alert>;
-    }
-    if (!isNoteMaxLengthValid(state, MAX_NOTE_LENGTH)) {
-      return (
-        <Alert color="danger">
-          Note cannot be longer than {MAX_NOTE_LENGTH} characters
-        </Alert>
-      );
-    }
-    return null;
-  };
+const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
+  if (state.attachments.newAttachments.length >= 1) {
+    return state.attachments.newAttachments.filter(
+        (attachment) => attachment.file.size > MAX_ATTACHMENT_SIZE
+      ).length === 0;
+  }
+  return true;
+};
 
-  const isAttachmentFormatValid = (state) => {
-    if (state.attachments.newAttachments.length >= 1) {
-      return state.attachments.newAttachments.filter(
-          (attachment) => attachment.file.type !== "application/pdf"
-        ).length === 0;
-    }
-    return true;
-  };
+export const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
+  return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
+};
 
- const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
-    if (state.attachments.newAttachments.length >= 1) {
-      return state.attachments.newAttachments.filter(
-          (attachment) => attachment.file.size > MAX_ATTACHMENT_SIZE
-        ).length === 0;
-    }
-    return true;
-  };
+export const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
 
-  export const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
-    return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
-  };
-
-  export const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
-
-    if (!isAttachmentFormatValid(state) && !isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
-      return (
-        <>
-          <Alert color="danger">Attachments must be PDFs</Alert>
-          <Alert color="danger">
-            Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
-          </Alert>
-        </>
-      );
-    }
-
-    if (!isAttachmentFormatValid(state)) {
-      return <Alert color="danger">Attachments must be PDFs</Alert>;
-    }
-    if (!isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
-      return (
+  if (!isAttachmentFormatValid(state) && !isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
+    return (
+      <>
+        <Alert color="danger">Attachments must be PDFs</Alert>
         <Alert color="danger">
           Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
         </Alert>
-      );
-    }
-    return null;
-  };
+      </>
+    );
+  }
+
+  if (!isAttachmentFormatValid(state)) {
+    return <Alert color="danger">Attachments must be PDFs</Alert>;
+  }
+  if (!isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
+    return (
+      <Alert color="danger">
+        Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
+      </Alert>
+    );
+  }
+  return null;
+};
