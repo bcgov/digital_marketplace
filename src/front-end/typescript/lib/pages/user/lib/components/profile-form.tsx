@@ -249,11 +249,9 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
   // Update avatar image.
   if (values.newAvatarImage) {
     const fileResult = await api.avatars.create({
-      fileToCreate: {
-        name: values.newAvatarImage.name,
-        file: values.newAvatarImage,
-        metadata: [adt("any")],
-      },
+      name: values.newAvatarImage.name,
+      file: values.newAvatarImage,
+      metadata: [adt('any')]
     });
     if (!api.isValid(fileResult)) {
       return invalid(setErrors(state, {

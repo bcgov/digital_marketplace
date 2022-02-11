@@ -545,23 +545,19 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
     : undefined;
   if (values.newLogoImage) {
     const fileResult = await api.avatars.create({
-      fileToCreate: {
-        name: values.newLogoImage.name,
-        file: values.newLogoImage,
-        metadata: [adt("any")],
-      },
+      name: values.newLogoImage.name,
+      file: values.newLogoImage,
+      metadata: [adt('any')]
     });
     switch (fileResult.tag) {
-      case "valid":
+      case 'valid':
         logoImageFile = fileResult.value.id;
         break;
-      case "unhandled":
-      case "invalid":
-        return invalid(
-          setErrors(state, {
-            newLogoImage: ["Please select a different avatar image."],
-          })
-        );
+      case 'unhandled':
+      case 'invalid':
+        return invalid(setErrors(state, {
+          newLogoImage: ['Please select a different avatar image.']
+        }));
     }
   }
   values.newLogoImage = undefined; // So this property isn't passed to back-end.

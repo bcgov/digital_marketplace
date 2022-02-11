@@ -57,8 +57,6 @@ interface Response<Data> {
 export type RequestFunction = <Data>(method: ClientHttpMethod, path: string, data?: object | string, headers?: object) => Promise<Response<Data>>;
 
 export const request: RequestFunction = async (method: any, url: any, data: any, headers: any) => {
-  //brianna--this is sending the whole FormData object, so should include the maxFileSize and format
-  console.log('i am in request, data is:',data)
   try {
     const axiosResponse = await axios({
       method,
