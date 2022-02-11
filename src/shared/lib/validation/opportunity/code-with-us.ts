@@ -88,5 +88,5 @@ export function validateEvaluationCriteria(raw: string): Validation<string> {
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Status Note', 1, 1000);
+  return validateGenericString(raw, 'Status Note', 0, 1000);
 }
