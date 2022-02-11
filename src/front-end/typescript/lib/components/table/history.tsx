@@ -10,16 +10,17 @@ import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
 import { AttachmentList } from 'front-end/lib/components/attachments';
 import { FileRecord } from 'shared/lib/resources/file';
+import { UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/sprint-with-us';
 
 export interface Item {
   type: {
     text: string;
     color?: ThemeColor;
   };
-  note?: string;
-  attachments?: any;
   createdAt: Date;
   createdBy?: UserSlim;
+  note?: string;
+  attachments?: FileRecord[];
 }
 
 export interface Params {
@@ -30,11 +31,11 @@ export interface Params {
 
 export interface State extends Pick<Params, 'items' | 'viewerUser'> {
   table: Immutable<Table.State>,
-  publishNewNote?: any;
+  publishNewNote?: (value: UpdateWithNoteRequestBody) => Record<string,unknown>;
 }
 
 export type Msg = ADT<'table', Table.Msg>
-| ADT<'createHistoryNote', any>;
+| ADT<'createHistoryNote', Table.Msg>;
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
@@ -109,7 +110,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         children: (
           <>
             {item.note || EMPTY_STRING}
-            <AttachmentList files={item.attachments} />
+            {item.attachments && <AttachmentList files={item.attachments} />}
           </>
         )
       },
