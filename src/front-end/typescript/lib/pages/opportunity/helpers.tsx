@@ -93,7 +93,6 @@ export function historyToHistoryTableRow(rawHistory){
                 text: 'Team Scenario',
                 color: 'warning'
             }
-        //is the best way to handle? brianna
         default:
           return {
             text: null,
@@ -136,7 +135,6 @@ export function historyToHistoryTableRow(rawHistory){
     if (state.attachments.newAttachments && state.attachments.newAttachments.length >= 1) {
       //send attachments to db
       const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
-      console.log('attachmentsBackFromDB',attachmentsBackFromDB)
       switch (attachmentsBackFromDB.tag) {
         case 'valid':
           attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
