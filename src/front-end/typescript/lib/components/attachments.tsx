@@ -57,24 +57,11 @@ export function setNewAttachmentErrors(state: Immutable<State>, errors: CreateVa
 }
 
 export function getNewAttachments(state: Immutable<State>): CreateFileRequestBody[] {
-  console.log('i am in getnewattachments')
-  return state.newAttachments.map((a) => {
-    //brianna--state is now a different shape than the request body, so these properties do exist even though TS thinks they don't
-    //@ts-ignore
-    console.log('a.name is',a.name)
-    return ({
-    fileToCreate: {
-      name: a.newName
-        ? enforceExtension(a.newName, getExtension(a.fileToCreate.name))
-        //@ts-ignore
-        : a.name,
-        //@ts-ignore
-      file: a.file,
-      //@ts-ignore
-      metadata: a.metadata,
-    },
-  })
-});
+  return state.newAttachments.map(a => ({
+    name: a.newName ? enforceExtension(a.newName, getExtension(a.name)) : a.name,
+    file: a.file,
+    metadata: a.metadata
+  }));
 }
 
 export const init: Init<Params, State> = async params => {
@@ -185,7 +172,6 @@ const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disa
 };
 
 export const view: View<Props> = props => {
-  // debugger;
   const { className, state, dispatch, disabled } = props;
   return (
     <div className={className}>
@@ -201,12 +187,9 @@ export const view: View<Props> = props => {
           onRemove={() => dispatch(adt('removeExistingAttachment', i))}
         />
       ))}
-      {state.newAttachments.map((file, i) => {
-        console.log('file in attachments view is:',JSON.stringify(file, null, 2))
-        return (
+      {state.newAttachments.map((file, i) => (
         <FileField
           key={`attachments-new-${i}`}
-          //@ts-ignore
           defaultName={file.name}
           value={file.newName}
           disabled={disabled}
@@ -216,8 +199,7 @@ export const view: View<Props> = props => {
           onChange={value => dispatch(adt('onChangeNewAttachmentName', [i, value] as [number, string]))}
           onRemove={() => dispatch(adt('removeNewAttachment', i))}
         />
-      )}
-      )}
+      ))}
     </div>);
 };
 
