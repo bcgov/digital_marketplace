@@ -546,7 +546,7 @@ const resource: Resource = {
 
           case 'addNote':{
             const { note, attachments : noteAttachments } = request.body.value;
-            const validatedNote = opportunityValidation.validateNote(note);
+            const validatedNote = opportunityValidation.validateHistoryNote(note);
             const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
             if (allValid([validatedNote, validatedNoteAttachments])) {
               return valid({
