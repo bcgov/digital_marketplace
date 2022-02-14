@@ -204,7 +204,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS),
+              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS),
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')
