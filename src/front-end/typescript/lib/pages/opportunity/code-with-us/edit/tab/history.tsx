@@ -14,7 +14,8 @@ import { Alert } from 'reactstrap';
 import * as api from 'front-end/lib/http/api';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid, valid } from 'shared/lib/validation';
-import {MAX_ATTACHMENT_SIZE, MAX_NOTE_LENGTH, historyToHistoryTableRow,createHistoryNote, isNoteValid, isAttachmentValid, createAttachmentError, createNoteError } from 'front-end/lib/pages/opportunity/helpers'
+import {historyToHistoryTableRow,createHistoryNote, isNoteValid, isAttachmentValid, createAttachmentError, createNoteError } from 'front-end/lib/pages/opportunity/helpers'
+import {MAX_NOTE_LENGTH, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS} from 'shared/lib/resources/note'
 
 
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
@@ -194,7 +195,7 @@ export const component: Tab.Component<State, Msg> = {
                   dispatch={mapComponentDispatch(dispatch, value => adt('modalNote' as const, value))} />
                   {createNoteError(state, MAX_NOTE_LENGTH)}
               <AttachmentsView {...attachmentProps} />
-                  {createAttachmentError(state, MAX_ATTACHMENT_SIZE)}
+                  {createAttachmentError(state, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS)}
               </div>
 
             );
@@ -203,7 +204,7 @@ export const component: Tab.Component<State, Msg> = {
             {
               text: 'Submit Entry',
               button: true,
-              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE),
+              disabled: !isNoteValid(state, MAX_NOTE_LENGTH) || !isAttachmentValid(state, MAX_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS),
               color: 'primary',
               icon: 'file-edit',
               msg: adt('createHistoryNote')

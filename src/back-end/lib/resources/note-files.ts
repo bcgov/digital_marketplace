@@ -13,7 +13,7 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
-// import {MAX_ATTACHMENT_SIZE} from 'front-end/lib/pages/opportunity/helpers'
+import {MAX_NOTE_ATTACHMENT_SIZE} from 'shared/lib/resources/note'
 
 export function hashFile(originalName: string, data: Buffer): string {
   const hash = shajs('sha1');
@@ -107,7 +107,7 @@ const resource: Resource = {
         }
         const { name, metadata, path, fileSize, fileFormat } = request.body;
 
-        if (fileSize && Number(fileSize) > 2000000) {
+        if (fileSize && Number(fileSize) > MAX_NOTE_ATTACHMENT_SIZE) {
           return invalid({
             requestBodyType: ['Your file is too large.']
           });
@@ -122,7 +122,6 @@ const resource: Resource = {
         const validatedOriginalFileName = fileValidation.validateFileName(name);
         const validatedFilePermissions = metadata ? valid(metadata) : invalid(['Invalid metadata provided.']);
         const validatedFilePath = validateFilePath(path);
-
 
         if (allValid([validatedOriginalFileName, validatedFilePermissions, validatedFilePath])) {
           return valid({
@@ -141,7 +140,6 @@ const resource: Resource = {
       respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
           const createdById = getString(request.session?.user || {}, 'id');
-
           const dbResult = await db.createFile(connection, request.body, createdById);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));

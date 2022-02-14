@@ -4,6 +4,7 @@ import { getISODateString, getNumber, getString, setDateTo4PM } from 'shared/lib
 import { CreateSWUOpportunityPhaseBody, CreateSWUOpportunityPhaseRequiredCapabilityBody, CreateSWUOpportunityPhaseRequiredCapabilityErrors, CreateSWUOpportunityPhaseValidationErrors, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateSWUTeamQuestionValidationErrors, isSWUOpportunityClosed, MAX_TEAM_QUESTION_WORD_LIMIT, MAX_TEAM_QUESTIONS, parseSWUOpportunityStatus, SWUOpportunity, SWUOpportunityStatus } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, mapValid, optional, valid, validateArray, validateArrayCustom, validateCapability, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isArray, isBoolean } from 'util';
+import {MAX_NOTE_LENGTH} from 'shared/lib/resources/note'
 
 export { validateCapabilities } from 'shared/lib/validation';
 export { validateAddendumText } from 'shared/lib/validation/addendum';
@@ -300,9 +301,9 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Status Note', 0, 1000);
+  return validateGenericString(raw, 'Status Note', 0, MAX_NOTE_LENGTH);
 }
 
 export function validateHistoryNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'History Note', 1, 1000);
+  return validateGenericString(raw, 'History Note', 1, MAX_NOTE_LENGTH);
 }

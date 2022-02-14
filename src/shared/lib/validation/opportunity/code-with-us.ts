@@ -4,6 +4,7 @@ import { setDateTo4PM } from 'shared/lib';
 import { CreateCWUOpportunityStatus, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityClosed, parseCWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
 import { ArrayValidation, invalid, mapValid, optional, valid, validateArray, validateDate, validateGenericString, validateNumber, Validation } from 'shared/lib/validation';
 import { isBoolean } from 'util';
+import {MAX_NOTE_LENGTH} from 'shared/lib/resources/note'
 
 export { validateAddendumText } from 'shared/lib/validation/addendum';
 
@@ -88,9 +89,9 @@ export function validateEvaluationCriteria(raw: string): Validation<string> {
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'Status Note', 0, 1000);
+  return validateGenericString(raw, 'Status Note', 0, MAX_NOTE_LENGTH);
 }
 
 export function validateHistoryNote(raw: string): Validation<string> {
-  return validateGenericString(raw, 'History Note', 1, 1000);
+  return validateGenericString(raw, 'History Note', 1, MAX_NOTE_LENGTH);
 }
