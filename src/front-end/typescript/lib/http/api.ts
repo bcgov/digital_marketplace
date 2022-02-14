@@ -957,10 +957,19 @@ interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'rea
 }
 
 const FILES_ROUTE_NAMESPACE = apiNamespace('files');
+const NOTE_FILES_ROUTE_NAMESPACE = apiNamespace('note-files');
 
 const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
   ...undefinedActions,
   routeNamespace: FILES_ROUTE_NAMESPACE,
+  readOne: {
+    transformValid: rawFileRecordToFileRecord
+  }
+});
+
+const noteFileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
+  ...undefinedActions,
+  routeNamespace: NOTE_FILES_ROUTE_NAMESPACE,
   readOne: {
     transformValid: rawFileRecordToFileRecord
   }
@@ -984,6 +993,11 @@ export const files: CrudApi<FileResourceTypes> = {
   create: makeCreateFileAction(FILES_ROUTE_NAMESPACE)
 };
 
+export const noteFiles: CrudApi<FileResourceTypes> = {
+  ...fileCrudApi,
+  create: makeCreateFileAction(NOTE_FILES_ROUTE_NAMESPACE)
+};
+
 export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
   const validResults: FileResource.FileRecord[] = [];
   let isInvalid = false;
@@ -995,6 +1009,37 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
       continue;
     }
     const result = await files.create(file);
+    switch (result.tag) {
+      case 'valid':
+        validResults.push(result.value);
+        invalidResults.push({});
+        break;
+      case 'invalid':
+        isInvalid = true;
+        invalidResults.push(result.value);
+        break;
+      case 'unhandled':
+        return result;
+    }
+  }
+  if (isInvalid) {
+    return invalid(invalidResults);
+  } else {
+    return valid(validResults);
+  }
+}
+
+export async function uploadNoteFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
+  const validResults: FileResource.FileRecord[] = [];
+  let isInvalid = false;
+  const invalidResults: FileResource.CreateValidationErrors[] = [];
+  for (const file of filesToUpload) {
+    if (isInvalid) {
+      //Skip uploading files if a validation error has occurred.
+      invalidResults.push({});
+      continue;
+    }
+    const result = await noteFiles.create(file);
     switch (result.tag) {
       case 'valid':
         validResults.push(result.value);

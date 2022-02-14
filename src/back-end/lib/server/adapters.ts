@@ -64,6 +64,8 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     let filePath: string | undefined;
     let metadata = '';
     let fileName = '';
+    let fileSize;
+    let allowedFormats;
     const form = new multiparty.Form();
     // Listen for files and fields.
     // We only want to receive one file, so we disregard all other files.
@@ -76,6 +78,9 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
         const tmpPath = path.join(TMP_DIR, generateUuid());
         part.pipe(createWriteStream(tmpPath));
         filePath = tmpPath;
+        fileSize = part.byteCount;
+        allowedFormats = part.headers['content-type']
+        console.log('file size is ',fileSize, "| allowedformats is ",allowedFormats)
       } else if (part.name === 'metadata' && !part.filename && !metadata) {
         part.setEncoding('utf8');
         part.on('data', chunk => metadata += chunk);
@@ -95,6 +100,24 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     form.on('error', error => reject(error));
     // Resolve the promise once the request has finished parsing.
     form.on('close', () => {
+      if (filePath && metadata && fileName && fileSize && allowedFormats) {
+        console.log('i am in if with the full request')
+        const jsonMetadata = parseJsonSafely(metadata);
+        switch (jsonMetadata.tag) {
+          case 'valid':
+            resolve(makeFileRequestBody({
+              name: fileName,
+              path: filePath,
+              metadata: parseFileUploadMetadata(jsonMetadata.value),
+              fileSize,
+              allowedFormats
+            }));
+            break;
+          case 'invalid':
+            reject(new Error('Invalid `metadata` field.'));
+            break;
+        }
+      }
       if (filePath && metadata && fileName) {
         const jsonMetadata = parseJsonSafely(metadata);
         switch (jsonMetadata.tag) {

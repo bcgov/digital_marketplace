@@ -115,7 +115,7 @@ const sendNoteAttachmentsToDB = async function(state) {
   const newAttachments = Attachments.getNewAttachments(state.attachments);
 
   if (newAttachments && newAttachments.length > 0) {
-    const result = await api.uploadFiles(newAttachments);
+    const result = await api.uploadNoteFiles(newAttachments);
       // if valid, this adds the files to the files and fileBlobs tables
     switch (result.tag) {
       case 'valid':
@@ -138,6 +138,7 @@ export const createHistoryNote = async function (state, dispatch) {
     ) {
       //send attachments to db
       const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
+      console.log('attachmentsBackFromDB',attachmentsBackFromDB)
       switch (attachmentsBackFromDB.tag) {
         case "valid":
           attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
@@ -159,7 +160,7 @@ export const createHistoryNote = async function (state, dispatch) {
         dispatch(toast(adt("success", toasts.success)));
         //clear note modal
         state = state
-          .setIn(["history", "items"], notesBackFromDB)
+          .setIn(["history", "items"], notesBackFromDB.value)
           .setIn(["modalNote", "child", "value"], "")
           .setIn(["attachments", "newAttachments"], []);
 
