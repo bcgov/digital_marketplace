@@ -994,7 +994,7 @@ export const files: CrudApi<FileResourceTypes> = {
 };
 
 export const noteFiles: CrudApi<FileResourceTypes> = {
-  ...fileCrudApi,
+  ...noteFileCrudApi,
   create: makeCreateFileAction(NOTE_FILES_ROUTE_NAMESPACE)
 };
 
