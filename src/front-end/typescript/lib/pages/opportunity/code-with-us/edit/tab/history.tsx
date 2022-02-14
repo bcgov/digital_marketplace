@@ -13,7 +13,7 @@ import * as Attachments from 'front-end/lib/components/attachments'
 import { Alert } from 'reactstrap';
 import * as api from 'front-end/lib/http/api';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
-import { invalid } from 'shared/lib/validation';
+import { invalid, valid } from 'shared/lib/validation';
 import {MAX_ATTACHMENT_SIZE, MAX_NOTE_LENGTH, historyToHistoryTableRow,createHistoryNote, isNoteValid, isAttachmentValid, createAttachmentError, createNoteError } from 'front-end/lib/pages/opportunity/helpers'
 
 
@@ -46,7 +46,8 @@ const init: Init<Tab.Params, State> = async params => {
       let outcome;
       switch (result.tag) {
         case 'valid':
-          outcome = historyToHistoryTableRow(result.value.history)
+          outcome = valid(historyToHistoryTableRow(result.value.history))
+          console.log('outcome is',outcome)
           break;
         case 'invalid':
           if (result.value.opportunity?.tag === 'addNote') {
