@@ -65,7 +65,7 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     let metadata = '';
     let fileName = '';
     let fileSize;
-    let allowedFormats;
+    let fileFormat;
     const form = new multiparty.Form();
     // Listen for files and fields.
     // We only want to receive one file, so we disregard all other files.
@@ -79,8 +79,8 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
         part.pipe(createWriteStream(tmpPath));
         filePath = tmpPath;
         fileSize = part.byteCount;
-        allowedFormats = part.headers['content-type']
-        console.log('file size is ',fileSize, "| allowedformats is ",allowedFormats)
+        fileFormat = part.headers['content-type']
+        console.log('file size is ',fileSize, "| fileformat is ",fileFormat)
       } else if (part.name === 'metadata' && !part.filename && !metadata) {
         part.setEncoding('utf8');
         part.on('data', chunk => metadata += chunk);
@@ -100,7 +100,7 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     form.on('error', error => reject(error));
     // Resolve the promise once the request has finished parsing.
     form.on('close', () => {
-      if (filePath && metadata && fileName && fileSize && allowedFormats) {
+      if (filePath && metadata && fileName && fileSize && fileFormat) {
         console.log('i am in if with the full request')
         const jsonMetadata = parseJsonSafely(metadata);
         switch (jsonMetadata.tag) {
@@ -110,7 +110,7 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
               path: filePath,
               metadata: parseFileUploadMetadata(jsonMetadata.value),
               fileSize,
-              allowedFormats
+              fileFormat
             }));
             break;
           case 'invalid':
@@ -225,6 +225,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         } else if (method !== ServerHttpMethod.Get && incomingHeaderMatches(headers, 'content-type', 'multipart')) {
           body = await parseMultipartRequest(maxMultipartFilesSize, parseFileUploadMetadata, expressReq);
         }
+
         // Create the initial request.
         const requestId = generateUuid();
         const initialRequest: Request<ExpressRequestBodies<FileUploadMetaData>, Session> = {
@@ -238,6 +239,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           query: expressReq.query,
           body
         };
+        // console.log('initial request is',initialRequest)
         // Run the before hook if specified.
         const hookState = route.hook ? await route.hook.before(initialRequest) : null;
         // Parse the request according to the route handler.

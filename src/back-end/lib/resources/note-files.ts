@@ -13,6 +13,7 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
+// import {MAX_ATTACHMENT_SIZE} from 'front-end/lib/pages/opportunity/helpers'
 
 export function hashFile(originalName: string, data: Buffer): string {
   const hash = shajs('sha1');
@@ -85,7 +86,9 @@ const resource: Resource = {
           return {
             name: getString(body, 'name'),
             metadata: body.metadata,
-            path: getString(body, 'path')
+            path: getString(body, 'path'),
+            fileSize: getString(body, 'fileSize'),
+            fileFormat: getString(body, 'fileFormat'),
           };
         } else {
           return null;
@@ -102,10 +105,24 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const { name, metadata, path } = request.body;
+        const { name, metadata, path, fileSize, fileFormat } = request.body;
+
+        if (fileSize && Number(fileSize) > 2000000) {
+          return invalid({
+            requestBodyType: ['Your file is too large.']
+          });
+        }
+
+        if (fileFormat && fileFormat !== "application/pdf") {
+          return invalid({
+            requestBodyType: ['Your file must be a pdf.']
+          });
+        }
+
         const validatedOriginalFileName = fileValidation.validateFileName(name);
         const validatedFilePermissions = metadata ? valid(metadata) : invalid(['Invalid metadata provided.']);
         const validatedFilePath = validateFilePath(path);
+
 
         if (allValid([validatedOriginalFileName, validatedFilePermissions, validatedFilePath])) {
           return valid({
@@ -124,8 +141,8 @@ const resource: Resource = {
       respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<FileRecord>, JsonResponseBody<CreateValidationErrors>, Session>({
         valid: (async request => {
           const createdById = getString(request.session?.user || {}, 'id');
-          //@ts-ignore
-          const dbResult = await db.createFile(connection, request.body, createdById, 2000000,["application/pdf"]);
+
+          const dbResult = await db.createFile(connection, request.body, createdById);
           if (isInvalid(dbResult)) {
             return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
           }
