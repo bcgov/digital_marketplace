@@ -8,10 +8,6 @@ import { invalid } from 'shared/lib/validation';
 import { adt } from 'shared/lib/types';
 import { Alert } from 'reactstrap';
 
-
-export const MAX_NOTE_LENGTH = 1000;
-export const MAX_ATTACHMENT_SIZE = 2000000
-
 const toasts = {
   success: {
     title: 'Note Published',
@@ -198,48 +194,48 @@ export const createNoteError = (state, MAX_NOTE_LENGTH) => {
   return null;
 };
 
-const isAttachmentFormatValid = (state) => {
+const isAttachmentFormatValid = (state, SUPPORTED_NOTE_ATTACHMENT_FORMATS) => {
   if (state.attachments.newAttachments.length >= 1) {
     return state.attachments.newAttachments.filter(
-        (attachment) => attachment.file.type !== "application/pdf"
+        (attachment) => !SUPPORTED_NOTE_ATTACHMENT_FORMATS.includes(attachment.file.type)
       ).length === 0;
   }
   return true;
 };
 
-const isAttachmentSizeValid = (state, MAX_ATTACHMENT_SIZE) => {
+const isAttachmentSizeValid = (state, MAX_NOTE_ATTACHMENT_SIZE) => {
   if (state.attachments.newAttachments.length >= 1) {
     return state.attachments.newAttachments.filter(
-        (attachment) => attachment.file.size > MAX_ATTACHMENT_SIZE
+        (attachment) => attachment.file.size > MAX_NOTE_ATTACHMENT_SIZE
       ).length === 0;
   }
   return true;
 };
 
-export const isAttachmentValid = (state, MAX_ATTACHMENT_SIZE) => {
-  return isAttachmentFormatValid(state) && isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE) ? true : false;
+export const isAttachmentValid = (state, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS) => {
+  return isAttachmentFormatValid(state, SUPPORTED_NOTE_ATTACHMENT_FORMATS) && isAttachmentSizeValid(state, MAX_NOTE_ATTACHMENT_SIZE) ? true : false;
 };
 
-export const createAttachmentError = (state, MAX_ATTACHMENT_SIZE) => {
+export const createAttachmentError = (state, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS) => {
 
-  if (!isAttachmentFormatValid(state) && !isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
+  if (!isAttachmentFormatValid(state, SUPPORTED_NOTE_ATTACHMENT_FORMATS) && !isAttachmentSizeValid(state, MAX_NOTE_ATTACHMENT_SIZE)) {
     return (
       <>
         <Alert color="danger">Attachments must be PDFs</Alert>
         <Alert color="danger">
-          Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
+          Attachments must be smaller than {MAX_NOTE_ATTACHMENT_SIZE / 1000000} MB
         </Alert>
       </>
     );
   }
 
-  if (!isAttachmentFormatValid(state)) {
+  if (!isAttachmentFormatValid(state, SUPPORTED_NOTE_ATTACHMENT_FORMATS)) {
     return <Alert color="danger">Attachments must be PDFs</Alert>;
   }
-  if (!isAttachmentSizeValid(state, MAX_ATTACHMENT_SIZE)) {
+  if (!isAttachmentSizeValid(state, MAX_NOTE_ATTACHMENT_SIZE)) {
     return (
       <Alert color="danger">
-        Attachments must be smaller than {MAX_ATTACHMENT_SIZE / 1000000} MB
+        Attachments must be smaller than {MAX_NOTE_ATTACHMENT_SIZE / 1000000} MB
       </Alert>
     );
   }
