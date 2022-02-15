@@ -1049,6 +1049,7 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
         .orderBy('createdAt', 'desc')
         .first())?.status;
 
+      //   //brianna
       if (currentStatus && [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded].includes(currentStatus)) {
         await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
           .transacting(trx)

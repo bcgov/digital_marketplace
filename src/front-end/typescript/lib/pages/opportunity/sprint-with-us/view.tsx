@@ -66,6 +66,7 @@ function canVendorStartProposal(state: Immutable<ValidState>): boolean {
 }
 
 const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, routeParams, shared, routePath }) => {
+  console.log('i am in swu init')
   const fail = () => {
     dispatch(replaceRoute(adt('notFound', { path: routePath }) as Route));
     return invalid(null);
@@ -74,7 +75,11 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ dispatch, 
   const viewerUser = shared.session?.user;
   const oppR = await api.opportunities.swu.readOne(opportunityId);
   if (!api.isValid(oppR)) { return fail(); }
+  // cypress opp is failing here
   const scopeContentResult = await api.content.readOne(SWU_OPPORTUNITY_SCOPE_CONTENT_ID);
+
+  console.log('scopeCOntentresult',scopeContentResult)
+
   if (!api.isValid(scopeContentResult)) { return fail(); }
   await api.counters.update(getSWUOpportunityViewsCounterName(opportunityId), null);
   let existingProposal: SWUProposalSlim | undefined;
