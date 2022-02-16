@@ -80,7 +80,6 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
         filePath = tmpPath;
         fileSize = part.byteCount;
         fileFormat = part.headers['content-type']
-        console.log('file size is ',fileSize, "| fileformat is ",fileFormat)
       } else if (part.name === 'metadata' && !part.filename && !metadata) {
         part.setEncoding('utf8');
         part.on('data', chunk => metadata += chunk);
@@ -101,7 +100,6 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     // Resolve the promise once the request has finished parsing.
     form.on('close', () => {
       if (filePath && metadata && fileName && fileSize && fileFormat) {
-        console.log('i am in if with the full request')
         const jsonMetadata = parseJsonSafely(metadata);
         switch (jsonMetadata.tag) {
           case 'valid':
@@ -238,7 +236,6 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           query: expressReq.query,
           body
         };
-        // console.log('initial request is',initialRequest)
         // Run the before hook if specified.
         const hookState = route.hook ? await route.hook.before(initialRequest) : null;
         // Parse the request according to the route handler.

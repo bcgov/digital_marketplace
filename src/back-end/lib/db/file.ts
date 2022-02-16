@@ -26,28 +26,11 @@ export const readOneFileBlob = tryDb<[string], FileBlob | null>(async (connectio
   return valid(result || null);
 });
 
-export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (connection, fileRecord, userId, maxFileSize: null | number = null, allowedFormats: null | [] = null) => {
+export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (connection, fileRecord, userId) => {
   const now = new Date();
   if (!fileRecord) {
     throw new Error('unable to create file');
   }
-  console.log('fileRecord is',fileRecord)
-maxFileSize;
-allowedFormats;
-  // if (maxFileSize) {
-  //   if (fileRecord.fileSize > maxFileSize) {
-  //     throw new Error('file is too large');
-  //   }
-  // }
-
-  // if (allowedFormats) {
-  //   for (const format of allowedFormats) {
-    // if !allowedFormats.includes(format) {
-// throw new Error('file format is not allowed');
-    // }
-  // }
-  // }
-
 
   return valid(await connection.transaction(async trx => {
     const fileData: Buffer = await new Promise((resolve, reject) => {

@@ -134,7 +134,6 @@ export const createHistoryNote = async function (state, dispatch) {
     ) {
       //send attachments to db
       const attachmentsBackFromDB = await sendNoteAttachmentsToDB(state);
-      console.log('attachmentsBackFromDB',attachmentsBackFromDB)
       switch (attachmentsBackFromDB.tag) {
         case "valid":
           attachmentIds = attachmentsBackFromDB.value.map(({ id }) => id);
@@ -150,7 +149,6 @@ export const createHistoryNote = async function (state, dispatch) {
       note: state.modalNote.child.value,
       attachments: attachmentIds,
     });
-    console.log("notes back from db", notesBackFromDB);
     switch (notesBackFromDB.tag) {
       case "valid":
         dispatch(toast(adt("success", toasts.success)));
