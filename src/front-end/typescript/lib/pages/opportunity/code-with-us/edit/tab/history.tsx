@@ -48,7 +48,6 @@ const init: Init<Tab.Params, State> = async params => {
       switch (result.tag) {
         case 'valid':
           outcome = valid(historyToHistoryTableRow(result.value.history))
-          console.log('outcome is',outcome)
           break;
         case 'invalid':
           if (result.value.opportunity?.tag === 'addNote') {
