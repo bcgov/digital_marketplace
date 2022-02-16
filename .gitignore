@@ -21,3 +21,4 @@ node_modules/
 Session.vim
 tags
 __tmp/
+/cypress/fixtures/myAccount.sql
