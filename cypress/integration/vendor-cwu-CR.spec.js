@@ -8,7 +8,7 @@ describe('As a user authenticated via GitHub',  function() {
     })
 
     it('create and read CWU proposal', function() {
-        cy.get('#user-sign-up-step-two-terms').click()
+        cy.get('#user-sign-up-step-two-terms').check()
         cy.get('a').contains('Complete Profile').click()
         // cy.get('a[href="/opportunities"]').contains('View All Opportunities').click()
         cy.visit('/opportunities')
