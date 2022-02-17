@@ -1,7 +1,5 @@
 \i /workspace/cypress/fixtures/swuProposalScoredTQ.sql
 
--- brianna--confirm this is when price score is set
-
 --score proposal #1
 update "swuProposals" set "scenarioScore"=100 where "id"='cf9bf170-02bb-4ea7-8932-65fef16d0a6d';
 update "swuProposals" set "priceScore"=100 where "id"='cf9bf170-02bb-4ea7-8932-65fef16d0a6d';
