@@ -4,6 +4,10 @@
   "description": "Digital Marketplace",
   "main": "index.js",
   "scripts": {
+    "unscored": "docker exec dm_db psql -v ON_ERROR_STOP=1 -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/dbReset.sql -f /workspace/cypress/fixtures/users.sql -f /workspace/cypress/fixtures/swuOpportunityPublished.sql -f /workspace/cypress/fixtures/swuProposalUnscored.sql -f /workspace/cypress/fixtures/myAccount.sql",
+    "tqscored": "docker exec dm_db psql -v ON_ERROR_STOP=1 -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/dbReset.sql -f /workspace/cypress/fixtures/users.sql -f /workspace/cypress/fixtures/swuOpportunityPublished.sql -f /workspace/cypress/fixtures/swuProposalScoredTQ.sql -f /workspace/cypress/fixtures/myAccount.sql",
+    "ccscored": "docker exec dm_db psql -v ON_ERROR_STOP=1 -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/dbReset.sql -f /workspace/cypress/fixtures/users.sql -f /workspace/cypress/fixtures/swuOpportunityPublished.sql -f /workspace/cypress/fixtures/swuProposalScoredCC.sql -f /workspace/cypress/fixtures/myAccount.sql",
+    "tsscored": "docker exec dm_db psql -v ON_ERROR_STOP=1 -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/dbReset.sql -f /workspace/cypress/fixtures/users.sql -f /workspace/cypress/fixtures/swuOpportunityPublished.sql -f /workspace/cypress/fixtures/swuProposalScoredTS.sql -f /workspace/cypress/fixtures/myAccount.sql",
     "cypress:run": "./node_modules/.bin/cypress run",
     "cypress:open": "./node_modules/.bin/cypress open",
     "build": "npm run back-end:build && npm run front-end:build",
