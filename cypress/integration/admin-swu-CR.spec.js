@@ -14,7 +14,7 @@ describe('As a user authenticated via IDIR', function() {
         // Fill out form
 
         // 1. Overview tab
-        cy.get('#swu-opportunity-title').should('be.visible').type('SWU cy title')
+        cy.get('#swu-opportunity-title').should('be.visible').type('SWU created by admin')
         cy.get('#swu-opportunity-teaser').type('SWU cy teaser')
         cy.get('#swu-opportunity-remote-ok-0').check({force:true})
         cy.get('#swu-opportunity-remote-desc').type('SWU cy remote desc')
@@ -82,7 +82,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('a').contains('Next').click()
 
         // 6. Attachments
-        const fixtureFile = 'Screenshot.png';
+        const fixtureFile = 'adminSWUattachment.png';
         cy.get('input[type=file]').attachFile(fixtureFile);
 
         // Publish
@@ -95,7 +95,7 @@ describe('As a user authenticated via IDIR', function() {
 
         // Confirm form saved
         cy.visit("/dashboard")
-        cy.contains('SWU cy title').click()
+        cy.contains('SWU created by admin').click()
 
         // Summary page
 
@@ -127,7 +127,7 @@ describe('As a user authenticated via IDIR', function() {
 
 
         // 1. Overview tab
-        cy.get('#swu-opportunity-title').should('have.value','SWU cy title')
+        cy.get('#swu-opportunity-title').should('have.value','SWU created by admin')
 
         cy.get('#swu-opportunity-teaser').should('have.value','SWU cy teaser')
         cy.get('#swu-opportunity-remote-ok-0').should('be.checked')
@@ -195,7 +195,7 @@ describe('As a user authenticated via IDIR', function() {
         cy.get('a').contains('Next').click()
 
         // 6. Attachments
-        cy.get('input[placeholder="Screenshot.png"]').should('be.visible')
+        cy.get('input[placeholder="adminSWUattachment.png"]').should('be.visible')
 
     })
 

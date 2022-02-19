@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+// brianna--where are the attachments?
 
 describe('As a user authenticated via GitHub',  function() {
     beforeEach(function() {
@@ -13,8 +14,7 @@ describe('As a user authenticated via GitHub',  function() {
         cy.get('a').contains('Complete Profile').click()
         // cy.get('a[href="/opportunities"]').contains('View All Opportunities').click()
         cy.visit('/opportunities')
-        cy.contains('Fixture SWU Opportunity Title').should('be.visible')
-        cy.contains('Fixture SWU Opportunity Title').click()
+        cy.contains('SWU created by admin').should('be.visible').click()
         cy.contains('Start Proposal').should('be.visible').click();
 
 
@@ -82,7 +82,7 @@ describe('As a user authenticated via GitHub',  function() {
 
         // Confirm save
         cy.visit("/dashboard")
-        cy.contains('Fixture SWU Opportunity Title').click()
+        cy.contains('SWU created by admin').click()
 
         // 1. Evaluation tab
         cy.contains('Scoring Table').should('be.visible')
