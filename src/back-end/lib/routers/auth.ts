@@ -243,12 +243,12 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
     // @ts-ignore
     ...(process.env.NODE_ENV === 'development' ? [{
       method: ServerHttpMethod.Get,
-      path: '/auth/createsessionvendor',
+      path: '/auth/createsessionvendor/:id',
       // @ts-ignore
       handler: nullRequestBodyHandler(async request => {
         try {
           const userType = UserType.Vendor; // Add a check for gov vs. admin as test suite expands
-          const idpId = 'test-vendor' // Add a check for gov vs. admin as test suite expands
+          const idpId = `test-vendor-${request.params.id}` // Add a check for gov vs. admin as test suite expands
           const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
           if (isInvalid(dbResult)) {
            // @ts-ignore
