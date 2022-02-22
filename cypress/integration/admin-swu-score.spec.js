@@ -53,13 +53,9 @@ describe('As an administrator authenticated via IDIR',  function() {
 
         //Login in as vendors and check for correct proposal statuses and badges
         cy.vendorLogin(1)
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
-        cy.get('span[class=" text-capitalize text-nowrap badge badge-success"]').contains('Awarded').should('be.visible')
+        cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
 
         cy.vendorLogin(4)
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
         cy.get('span[class*="badge"]').contains('Not Awarded').should('be.visible')
 
 
@@ -102,12 +98,8 @@ describe('As an administrator authenticated via IDIR',  function() {
 
         //Login in as vendors and check for correct proposal statuses and badges
         cy.vendorLogin(1)
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
         cy.get('span[class*="badge"]').contains('Not Awarded').should('be.visible')
         cy.vendorLogin(4)
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
         cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
 
 
@@ -151,12 +143,8 @@ describe('As an administrator authenticated via IDIR',  function() {
 
         //Login in as vendors and check for correct proposal statuses and badges
         cy.vendorLogin(1)
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
         cy.get('span[class*="badge"]').contains('Not Awarded').should('be.visible')
         cy.vendorLogin(4)
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
         cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
 
 
