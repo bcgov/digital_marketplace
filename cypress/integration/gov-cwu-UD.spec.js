@@ -3,6 +3,7 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
+        cy.sqlFixture('users.sql')
         cy.login('gov')
         cy.sqlFixture('cwuOpportunity.sql')
     })

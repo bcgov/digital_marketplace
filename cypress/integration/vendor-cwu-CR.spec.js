@@ -3,6 +3,7 @@
 describe('As a user authenticated via GitHub',  function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
+        cy.sqlFixture('users.sql')
         cy.login('vendor')
         cy.sqlFixture('cwuOpportunity.sql')
     })

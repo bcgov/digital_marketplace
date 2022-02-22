@@ -32,7 +32,6 @@ Cypress.Commands.add('sqlFixture',(sqlFilename)=>{
 })
 
 Cypress.Commands.add('login',(role)=>{
-    cy.sqlFixture('users.sql')
     cy.visit(`/auth/createsession${role}`)
     Cypress.Cookies.preserveOnce("sid")
 })
