@@ -3,6 +3,7 @@
 describe('As a user authenticated via GitHub',  function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
+        cy.sqlFixture('users.sql')
         cy.login('admin')
         cy.sqlFixture('organizations.sql')
         cy.sqlFixture('swuOpportunityPublished.sql')
@@ -71,21 +72,41 @@ describe('As a user authenticated via GitHub',  function() {
 
         // Confirm all scores entered correctly
         cy.get('a[href*="tab=proposals"]').first().click()
-        cy.get('tr').eq(1).children('td').eq(0).children().contains('Test Organization 1')
-        //check table rows
-        // cy.get('span[class=" text-capitalize text-nowrap badge badge-primary"]').eq(0).should('have.text','Evaluated (TS)')
-        // cy.get('tr').eq(1).children('td').eq(3).children('div').should('have.text','100.00%')
-        // cy.get('tr').eq(1).children('td').eq(4).children('div').should('have.text','100.00%')
-        // cy.get('tr').eq(1).children('td').eq(5).children('div').should('have.text','100.00%')
-        // cy.get('tr').eq(1).children('td').eq(6).children('div').should('have.text','100.00%')
-        // cy.get('tr').eq(1).children('td').eq(7).children('div').should('have.text','100.00%')
+        //check proponent #1
+        cy.get('tr').eq(1).children('td').eq(0).children().should('have.text','Test Organization 1Proponent 1')
+        cy.get('span[class=" text-capitalize text-nowrap badge badge-primary"]').eq(1).should('have.text','Evaluated (TS)')
+        cy.get('tr').eq(1).children('td').eq(2).children().contains('100.00%')
+        cy.wait(1000)
+        cy.get('tr').eq(1).children('td').eq(3).children().contains('100.00%')
+        cy.get('tr').eq(1).children('td').eq(4).children().contains('100.00%')
+        cy.get('tr').eq(1).children('td').eq(5).children().contains('100.00%')
+        cy.get('tr').eq(1).children('td').eq(6).children().contains('100.00%')
+        //check proponent #2
+        cy.get('tr').eq(2).children('td').eq(0).children().should('have.text','Test Organization 2Proponent 2')
+        cy.wait(1000)
+        // cy.get('span[class=" text-capitalize text-nowrap badge badge-primary"]').eq(2).should('have.text','Evaluated (TS)')
+        cy.get('tr').eq(2).children('td').eq(2).children().contains('20.00%')
+        cy.wait(200)
+        cy.get('tr').eq(2).children('td').eq(3).children().contains('20.00%')
+        cy.get('tr').eq(2).children('td').eq(4).children().contains('20.00%')
+        cy.get('tr').eq(2).children('td').eq(5).children().contains('100.00%')
+        cy.get('tr').eq(2).children('td').eq(6).children().contains('52.00%')
 
-        // cy.get('a').contains('Award').trigger()
+        // Award opportunity
         cy.get('div[class="table-show-on-hover"]').children('a').contains('Award').click({force:true}) //forcing because it requires hover
         cy.get('div[class*="modal-footer"]').children().contains('Award Opportunity').click();
+        cy.contains('Sprint With Us opportunity has been awarded.').should('be.visible');
+        cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
+
         //check table rows for correct status
+        // cy.get('span[class=" text-capitalize text-nowrap badge badge-primary"]').eq(1).should('have.text','Awarded (TS)')
+        // cy.get('span[class=" text-capitalize text-nowrap badge badge-primary"]').eq(2).should('have.text','Not Awarded (TS)')
 
         //Login in as both vendors and check for awarded/not awarded
+        cy.login('vendor')
+        cy.get('#user-sign-up-step-two-terms').check()
+        cy.get('a').contains('Complete Profile').click()
+        cy.get('span[class=" text-capitalize text-nowrap badge badge-success"]').contains('Awarded')
 
 
     })
