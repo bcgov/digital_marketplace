@@ -55,7 +55,8 @@ Cypress.Commands.add('scoreTeamQuestions',(proponent, score)=>{
 Cypress.Commands.add('scoreCodeChallenge',(proponent, score)=>{
 
     cy.contains(proponent).should('be.visible')
-    cy.wait(1000)
+    // eslint-disable-next-line
+    cy.wait(1000) // without this, the element detaches from the DOM
     cy.contains(proponent).click()
     cy.contains('Enter Score').should('be.visible').click()
     cy.get('#swu-proposal-code-challenge-score').type(score)
@@ -67,7 +68,8 @@ Cypress.Commands.add('scoreCodeChallenge',(proponent, score)=>{
 
 Cypress.Commands.add('scoreTeamScenario',(proponent, score)=>{
     cy.contains(proponent).should('be.visible')
-    cy.wait(1000)
+    // eslint-disable-next-line
+    cy.wait(1000) // without this, the element detaches from the DOM
     cy.contains(proponent).click()
     cy.contains('Enter Score').should('exist').click()
     cy.get('#swu-proposal-team-scenario-score').type(score)
