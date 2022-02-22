@@ -78,8 +78,6 @@ describe('As a user authenticated via GitHub,',  function() {
     })
 
     it('delete CWU proposal', function() {
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
         cy.visit('/opportunities')
         cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()
