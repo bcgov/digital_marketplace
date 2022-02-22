@@ -74,13 +74,13 @@ Cypress.Commands.add('scoreTeamScenario',(proponent, score)=>{
     cy.get('a').contains('Submit Score').click()
     cy.get('a').contains('Back to Opportunity').click()
     cy.get('div[class*="toast-header"]').children('svg').click({ multiple: true, force: true }) //clear toasts
-    
+
 })
 
 Cypress.Commands.add('evaluateStage',(evaluationStage)=>{
     cy.get('a').contains(`Complete ${evaluationStage}`).click()
         cy.get('div[class*="modal-footer"]').children().contains(`Complete ${evaluationStage}`).click();
-    
+
 })
 
 Cypress.Commands.add('checkEvalTableRow',(proponent, evalStage, tqScore, ccScore, tsScore, priceScore, total)=>{
@@ -93,12 +93,12 @@ Cypress.Commands.add('checkEvalTableRow',(proponent, evalStage, tqScore, ccScore
         .next().contains('TS')
         .next().contains('Price')
         .next().contains('Total')
-        
+
     cy.contains(proponent).parents('td').next().contains(evalStage)
         .parents('td').next().contains(tqScore)
         .parents('td').next().contains(ccScore)
         .parents('td').next().contains(tsScore)
         .parents('td').next().contains(priceScore)
         .parents('td').next().contains(total)
-    
+
 })
