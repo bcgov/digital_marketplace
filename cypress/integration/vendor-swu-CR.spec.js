@@ -1,19 +1,15 @@
 /// <reference types="cypress" />
-// brianna--where are the attachments?
 
 describe('As a user authenticated via GitHub',  function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
         cy.sqlFixture('users.sql')
-        cy.login('vendor')
+        cy.vendorLogin(1)
         cy.sqlFixture('organizations.sql')
         cy.sqlFixture('swuOpportunityPublished.sql')
     })
 
     it('create and read SWU proposal', function() {
-        cy.get('#user-sign-up-step-two-terms').check()
-        cy.get('a').contains('Complete Profile').click()
-        // cy.get('a[href="/opportunities"]').contains('View All Opportunities').click()
         cy.visit('/opportunities')
         cy.contains('SWU created by admin').should('be.visible').click()
         cy.contains('Start Proposal').should('be.visible').click();
