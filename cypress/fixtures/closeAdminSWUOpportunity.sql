@@ -2,7 +2,7 @@
 UPDATE "swuOpportunityVersions" set "proposalDeadline"='2022-02-18 12:17:17.72+00' where "opportunity"='593f191a-8c7d-4a3b-92e2-4703a80f4f05';
 
 --add opp status
-INSERT INTO "swuOpportunityStatuses" VALUES('9de528da-fb11-414e-916c-f3bbd123e48c', '2022-02-18 22:19:51.395+00', null, '593f191a-8c7d-4a3b-92e2-4703a80f4f05', 'EVAL_QUESTIONS', null, 'This opportunity has closed.'); --when I set this manually, it never seems to change
+INSERT INTO "swuOpportunityStatuses" VALUES('9de528da-fb11-414e-916c-f3bbd123e48c', '2022-02-18 22:19:51.395+00', null, '593f191a-8c7d-4a3b-92e2-4703a80f4f05', 'EVAL_QUESTIONS', null, 'This opportunity has closed.');
 
 --add proposal statuses
 

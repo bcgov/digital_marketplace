@@ -24,7 +24,6 @@ INSERT INTO "swuProposalTeamMembers" (member, phase, "scrumMaster") VALUES('0617
 INSERT INTO "swuTeamQuestionResponses" (proposal, "order", response, score) VALUES('7a6dce2b-8344-41aa-a429-43e80758aef1', '0', 'Answering question 1',null);
 
 
--- INSERT INTO "viewCounters" (name, count) VALUES('opportunity.sprint-with-us.593f191a-8c7d-4a3b-92e2-4703a80f4f05.views', '');
 
 --create proposal 2
 INSERT INTO "swuProposals" (id, "createdAt", "createdBy", "updatedAt", "updatedBy", "challengeScore", "scenarioScore", "priceScore", opportunity, organization, "anonymousProponentName") VALUES('7a6dce2b-8344-41aa-a429-43e80758aef2', '2022-02-18 18:59:35.676+00', '06172f56-f08c-4380-86db-603bec98a8c7', '2022-02-18 18:59:35.676+00', '06172f56-f08c-4380-86db-603bec98a8c7', null, null, null, '593f191a-8c7d-4a3b-92e2-4703a80f4f05', '0e593592-4df5-412c-bd68-cc7718e3bc75','');
@@ -50,6 +49,3 @@ INSERT INTO "swuProposalTeamMembers" (member, phase, "scrumMaster") VALUES('0617
 
 
 INSERT INTO "swuTeamQuestionResponses" (proposal, "order", response, score) VALUES('7a6dce2b-8344-41aa-a429-43e80758aef2', '0', 'Answering question 1',null);
-
-
--- INSERT INTO "viewCounters" (name, count) VALUES('opportunity.sprint-with-us.593f191a-8c7d-4a3b-92e2-4703a80f4f05.views', '');

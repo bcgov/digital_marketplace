@@ -45,7 +45,7 @@ Cypress.Commands.add('vendorLogin',(id)=>{
 Cypress.Commands.add('scoreTeamQuestions',(proponent, score)=>{
 
         cy.contains(proponent).should('be.visible').click()
-        cy.contains('Enter Score').should('be.visible').click() //brianna--why won't 'a' pick it up?
+        cy.contains('Enter Score').should('be.visible').click()
         cy.get('#swu-proposal-question-score-0').type(score)
         cy.get('a').contains('Submit Score').click()
         cy.get('a').contains('Screen In').click()
@@ -54,7 +54,7 @@ Cypress.Commands.add('scoreTeamQuestions',(proponent, score)=>{
 
 Cypress.Commands.add('scoreCodeChallenge',(proponent, score)=>{
 
-    cy.contains(proponent).should('be.visible') //sometimes detaches--brianna--how to fix?
+    cy.contains(proponent).should('be.visible')
     cy.wait(1000)
     cy.contains(proponent).click()
     cy.contains('Enter Score').should('be.visible').click()
@@ -66,7 +66,7 @@ Cypress.Commands.add('scoreCodeChallenge',(proponent, score)=>{
 })
 
 Cypress.Commands.add('scoreTeamScenario',(proponent, score)=>{
-    cy.contains(proponent).should('be.visible') //sometimes detaches--brianna--how to fix?
+    cy.contains(proponent).should('be.visible')
     cy.wait(1000)
     cy.contains(proponent).click()
     cy.contains('Enter Score').should('exist').click()
@@ -94,6 +94,7 @@ Cypress.Commands.add('checkEvalTableRow',(proponent, evalStage, tqScore, ccScore
         .next().contains('Price')
         .next().contains('Total')
 
+    //check tables contains correct values
     cy.contains(proponent).parents('td').next().contains(evalStage)
         .parents('td').next().contains(tqScore)
         .parents('td').next().contains(ccScore)

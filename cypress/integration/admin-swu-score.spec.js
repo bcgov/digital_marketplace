@@ -47,7 +47,7 @@ describe('As an administrator authenticated via IDIR',  function() {
         cy.contains('Sprint With Us opportunity has been awarded.').should('be.visible');
         cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
 
-        //check table rows for correct status and badges
+        //Check table rows for correct status and badges
         cy.checkEvalTableRow('Test Organization 1','Awarded','90.00%','91.00%','92.00%','100.00%','94.60%')
         cy.checkEvalTableRow('Test Organization 2','Not Awarded','50.00%','51.00%','52.00%','50.00%','50.60%')
 
@@ -65,7 +65,6 @@ describe('As an administrator authenticated via IDIR',  function() {
 
     })
     it('screens out proponent 1 at the team questions stage, advances proponent 2 through all evaluations, and awards opportunity to proponent 2', function() {
-        // cy.pause()
         cy.visit('/dashboard')
         cy.contains('SWU created by admin').should('be.visible')
         cy.contains('SWU created by admin').click()
@@ -77,7 +76,6 @@ describe('As an administrator authenticated via IDIR',  function() {
         cy.contains('Proponent 1').parents('td').next().next().next().contains('Screen Out').click({force:true}) //forcing because it requires hover
         cy.evaluateStage('Team Questions')
 
-
         //Score Code Challenge
         cy.get('a[href*="tab=codeChallenge"]').first().click()
         cy.scoreCodeChallenge('Test Organization 2','81')
@@ -86,7 +84,6 @@ describe('As an administrator authenticated via IDIR',  function() {
         //Score Team Scenario
         cy.get('a[href*="tab=teamScenario"]').first().click()
         cy.scoreTeamScenario('Test Organization 2','82')
-
 
         // Confirm all scores entered correctly
         cy.get('a[href*="tab=proposals"]').first().click()
@@ -99,11 +96,11 @@ describe('As an administrator authenticated via IDIR',  function() {
         cy.contains('Sprint With Us opportunity has been awarded.').should('be.visible');
         cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
 
-        //check table rows for correct status and badges
+        //Check table rows for correct status and badges
         cy.checkEvalTableRow('Test Organization 1','Not Awarded','10.00%','—','—','—','—')
         cy.checkEvalTableRow('Test Organization 2','Awarded','80.00%','81.00%','82.00%','100.00%','88.60%')
 
-        //Login in as proponent 1 and confirm proposal not awarded
+        //Login in as vendors and check for correct proposal statuses and badges
         cy.vendorLogin(1)
         cy.get('#user-sign-up-step-two-terms').check()
         cy.get('a').contains('Complete Profile').click()
@@ -126,7 +123,6 @@ describe('As an administrator authenticated via IDIR',  function() {
         cy.scoreTeamQuestions('Proponent 2','6')
         cy.evaluateStage('Team Questions')
 
-
         //Score Code Challenge
         cy.get('a[href*="tab=codeChallenge"]').first().click()
         cy.scoreCodeChallenge('Test Organization 1','31')
@@ -137,7 +133,6 @@ describe('As an administrator authenticated via IDIR',  function() {
         //Score Team Scenario
         cy.get('a[href*="tab=teamScenario"]').first().click()
         cy.scoreTeamScenario('Test Organization 2','62')
-
 
         // Confirm all scores entered correctly
         cy.get('a[href*="tab=proposals"]').first().click()
@@ -150,11 +145,11 @@ describe('As an administrator authenticated via IDIR',  function() {
         cy.contains('Sprint With Us opportunity has been awarded.').should('be.visible');
         cy.get('span[class*="badge"]').contains('Awarded').should('be.visible')
 
-        //check table rows for correct status and badges
+        //Check table rows for correct status and badges
         cy.checkEvalTableRow('Test Organization 1','Not Awarded','30.00%','31.00%','—','—','—')
         cy.checkEvalTableRow('Test Organization 2','Awarded','60.00%','61.00%','62.00%','100.00%','76.60%')
 
-        //Login in as proponent 1 and confirm proposal not awarded
+        //Login in as vendors and check for correct proposal statuses and badges
         cy.vendorLogin(1)
         cy.get('#user-sign-up-step-two-terms').check()
         cy.get('a').contains('Complete Profile').click()
