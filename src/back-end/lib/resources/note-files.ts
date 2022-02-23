@@ -13,7 +13,7 @@ import { UserType } from 'shared/lib/resources/user';
 import { adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, invalid, isInvalid, valid, Validation } from 'shared/lib/validation';
 import * as fileValidation from 'shared/lib/validation/file';
-import {MAX_NOTE_ATTACHMENT_SIZE} from 'shared/lib/resources/note'
+import {MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS} from 'shared/lib/resources/note'
 
 export function hashFile(originalName: string, data: Buffer): string {
   const hash = shajs('sha1');
@@ -113,11 +113,15 @@ const resource: Resource = {
           });
         }
 
-        if (fileFormat && fileFormat !== "application/pdf") {
-          return invalid({
-            requestBodyType: ['Your file must be a pdf.']
-          });
+        for (const format of SUPPORTED_NOTE_ATTACHMENT_FORMATS) {
+          console.log('fileformat is',fileFormat )
+          if (fileFormat && !SUPPORTED_NOTE_ATTACHMENT_FORMATS.includes(format)) {
+            return invalid({
+              requestBodyType: ['Your file type is not supported.']
+            });
+          }
         }
+
 
         const validatedOriginalFileName = fileValidation.validateFileName(name);
         const validatedFilePermissions = metadata ? valid(metadata) : invalid(['Invalid metadata provided.']);

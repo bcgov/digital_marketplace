@@ -15,7 +15,7 @@ import { invalid, valid } from 'shared/lib/validation';
 import * as api from 'front-end/lib/http/api';
 import { Alert } from 'reactstrap';
 import {historyToHistoryTableRow,createHistoryNote, isNoteValid, isAttachmentValid, createAttachmentError, createNoteError } from 'front-end/lib/pages/opportunity/helpers'
-import {MAX_NOTE_LENGTH, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS} from 'shared/lib/resources/note'
+import {MAX_NOTE_LENGTH, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS, SUPPORTED_NOTE_ATTACHMENT_EXTENSIONS} from 'shared/lib/resources/note'
 
 
 type ModalId = ADT<'addNote'>
@@ -154,7 +154,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           state={state.attachments}
           disabled={disabled}
           // className='mt-4'
-          accept={[".pdf"]}
+          accept={SUPPORTED_NOTE_ATTACHMENT_EXTENSIONS}
           />
       </Col>
     </Row>

@@ -15,7 +15,7 @@ import * as api from 'front-end/lib/http/api';
 import * as LongText from 'front-end/lib/components/form-field/long-text';
 import { invalid, valid } from 'shared/lib/validation';
 import {historyToHistoryTableRow,createHistoryNote, isNoteValid, isAttachmentValid, createAttachmentError, createNoteError } from 'front-end/lib/pages/opportunity/helpers'
-import {MAX_NOTE_LENGTH, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS} from 'shared/lib/resources/note'
+import {MAX_NOTE_LENGTH, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS, SUPPORTED_NOTE_ATTACHMENT_EXTENSIONS} from 'shared/lib/resources/note'
 
 
 // The history has only one type of modal, but I've done it the same way as the other modals (e.g. adding team members) for consistency.
@@ -154,7 +154,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           state={state.attachments}
           disabled={disabled}
           // className='mt-4'
-          accept={[".pdf"]}
+          accept={SUPPORTED_NOTE_ATTACHMENT_EXTENSIONS}
           />
       </Col>
     </Row>
