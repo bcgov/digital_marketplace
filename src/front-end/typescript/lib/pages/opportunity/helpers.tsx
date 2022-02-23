@@ -216,25 +216,24 @@ export const isAttachmentValid = (state, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOT
 
 export const createAttachmentError = (state, MAX_NOTE_ATTACHMENT_SIZE, SUPPORTED_NOTE_ATTACHMENT_FORMATS) => {
 
+  const formatError = 'Attachment format must be PDF, CSV, or XLSX';
+  const sizeError = 'Attachments must be smaller than {MAX_NOTE_ATTACHMENT_SIZE / 1000000} MB';
+
   if (!isAttachmentFormatValid(state, SUPPORTED_NOTE_ATTACHMENT_FORMATS) && !isAttachmentSizeValid(state, MAX_NOTE_ATTACHMENT_SIZE)) {
     return (
       <>
-        <Alert color="danger">Attachments must be PDFs</Alert>
-        <Alert color="danger">
-          Attachments must be smaller than {MAX_NOTE_ATTACHMENT_SIZE / 1000000} MB
-        </Alert>
+        <Alert color="danger">{formatError}</Alert>
+        <Alert color="danger">{sizeError}</Alert>
       </>
     );
   }
 
   if (!isAttachmentFormatValid(state, SUPPORTED_NOTE_ATTACHMENT_FORMATS)) {
-    return <Alert color="danger">Attachments must be PDFs</Alert>;
+    return <Alert color="danger">{formatError}</Alert>;
   }
   if (!isAttachmentSizeValid(state, MAX_NOTE_ATTACHMENT_SIZE)) {
     return (
-      <Alert color="danger">
-        Attachments must be smaller than {MAX_NOTE_ATTACHMENT_SIZE / 1000000} MB
-      </Alert>
+      <Alert color="danger">{sizeError}</Alert>
     );
   }
   return null;
