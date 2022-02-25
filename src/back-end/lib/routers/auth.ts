@@ -138,14 +138,14 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       })
     },
     // /auth/createsessiongov is for testing only, so only exists outside of production
-   
+
     ...(process.env.NODE_ENV === 'development' ? [{
       method: ServerHttpMethod.Get,
       path: '/auth/createsessiongov',
       handler: nullRequestBodyHandler(async request => {
         try {
-          const userType = UserType.Government; 
-          const idpId = 'test-gov' 
+          const userType = UserType.Government;
+          const idpId = 'test-gov'
           const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
           if (isInvalid(dbResult)) {
            // @ts-ignore
