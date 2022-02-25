@@ -1053,7 +1053,14 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
             status: SWUProposalStatus.NotAwarded,
             note: ''
           });
-    }
+
+        await connection<RawSWUProposal>('swuProposals')
+          .where({ id: id })
+          .update({
+            updatedAt: now,
+            updatedBy: session.user.id
+                  }, '*');
+        }
 
     // Update opportunity
     await updateSWUOpportunityStatus(trx, proposalRecord.opportunity, SWUOpportunityStatus.Awarded, '', session);
