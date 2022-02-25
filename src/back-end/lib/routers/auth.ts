@@ -138,15 +138,14 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       })
     },
     // /auth/createsessiongov is for testing only, so only exists outside of production
-    // @ts-ignore
+   
     ...(process.env.NODE_ENV === 'development' ? [{
       method: ServerHttpMethod.Get,
       path: '/auth/createsessiongov',
-      // @ts-ignore
       handler: nullRequestBodyHandler(async request => {
         try {
-          const userType = UserType.Government; // Add a check for gov vs. admin as test suite expands
-          const idpId = 'test-gov' // Add a check for gov vs. admin as test suite expands
+          const userType = UserType.Government; 
+          const idpId = 'test-gov' 
           const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
           if (isInvalid(dbResult)) {
            // @ts-ignore
@@ -189,15 +188,13 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       })
     }] : []),
     // /auth/createsessionadmin is for testing only, so only exists outside of production
-    // @ts-ignore
     ...(process.env.NODE_ENV === 'development' ? [{
       method: ServerHttpMethod.Get,
       path: '/auth/createsessionadmin',
-      // @ts-ignore
       handler: nullRequestBodyHandler(async request => {
         try {
-          const userType = UserType.Admin; // Add a check for gov vs. admin as test suite expands
-          const idpId = 'test-admin' // Add a check for gov vs. admin as test suite expands
+          const userType = UserType.Admin;
+          const idpId = 'test-admin'
           const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
           if (isInvalid(dbResult)) {
            // @ts-ignore
@@ -240,15 +237,13 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
       })
     }] : []),
     // /auth/createsessionvendor is for testing only, so only exists outside of production
-    // @ts-ignore
     ...(process.env.NODE_ENV === 'development' ? [{
       method: ServerHttpMethod.Get,
       path: '/auth/createsessionvendor/:id',
-      // @ts-ignore
       handler: nullRequestBodyHandler(async request => {
         try {
-          const userType = UserType.Vendor; // Add a check for gov vs. admin as test suite expands
-          const idpId = `test-vendor-${request.params.id}` // Add a check for gov vs. admin as test suite expands
+          const userType = UserType.Vendor;
+          const idpId = `test-vendor-${request.params.id}`
           const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
           if (isInvalid(dbResult)) {
            // @ts-ignore
