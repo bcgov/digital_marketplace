@@ -1,0 +1,10 @@
+apiVersion: v2
+name: digital-marketplace
+description: A Helm chart for the Digital Marketplace
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+# dependencies:
+#   - name: cas-postgres
+#     version: "0.8.3"
+#     repository: https://bcgov.github.io/cas-postgres/

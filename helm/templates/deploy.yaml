@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "digital_marketplace.fullname" . }}
+  labels:
+{{ include "digital_marketplace.labels" . | indent 4}}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "digital_marketplace.fullname" . }}
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: {{ template "digital_marketplace.fullname" . }}
+    spec:
+      containers:
+        - name: {{ template "digital_marketplace.fullname" . }}
+          image: {{ .Values.image.app.repository }}:sha-{{ .Values.image.app.tag }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.app.probesPort }}
+            failureThreshold: 1
+            successThreshold: 1
+            periodSeconds: 5
+            timeoutSeconds: 5
+            initialDelaySeconds: 5
