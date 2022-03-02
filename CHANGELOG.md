@@ -37,11 +37,20 @@ Note that each log must include a version number that has either an incremented 
 
 ## Versions
 
+### 2022.03.02
+- Version Number 1.8.4
+- fix email sender address
+- add sonarCloud scan job
+- updates to documentation
+- fix origin issue with deployment 
+- feature add admin button to approve members
+- Commit Hash: TBD
+
 ### 2021.11.18
 
 - Version Number: 1.8.2
 - hotfix for email issues
-- Commit Hash: TBD
+- Commit Hash: 7f9b691dd67424fc99b9c7c2ea0374287bb642bd
 
 ### 2021.11.15
 
