@@ -1,0 +1,37 @@
+fullNameOverride: digital-marketplace
+replicaCount: 1
+
+image:
+  app:
+    repository: ghcr.io/bcgov/digital_marketplace
+    pullPolicy: IfNotPresent
+    tag: latest # The tag value must be passed in via the deploy script
+    clientSecret: "" # clientSecret must be passed in via deploy script
+app:
+  port: "3000"
+  probesPort: "9000"
+  namespace: ""
+route:
+  host: "app-digmkt-dev.apps.silver.devops.gov.bc.ca"
+
+
+networkPolicies:
+  enabled: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+resources:
+  app:
+    requests: 
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "150m"
+      memory: "256Mi"
