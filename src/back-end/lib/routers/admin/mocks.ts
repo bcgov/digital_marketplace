@@ -95,7 +95,7 @@ export const cwuOpportunity: CWUOpportunity = {
   successfulProponent: {
     id: adt('individual', id),
     name: 'Successful Proponent',
-    email: 'noreply_DigitalMarketplace@gov.bc.ca',
+    email: 'donotreply_DigitalMarketplace@gov.bc.ca',
     createdBy: vendorUserSlim
   },
   status: CWUOpportunityStatus.Published,
@@ -198,7 +198,7 @@ export const swuOpportunity: SWUOpportunity = {
   successfulProponent: {
     id,
     name: 'Successful Proponent',
-    email: 'noreply_DigitalMarketplace@gov.bc.ca',
+    email: 'donotreply_DigitalMarketplace@gov.bc.ca',
     createdBy: vendorUserSlim
   },
   attachments: [],

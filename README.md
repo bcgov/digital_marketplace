@@ -100,9 +100,14 @@ General purpose scripts are stored in this folder. The scripts themselves are st
 npm run scripts:run -- <SCRIPT_NAME> [...args]
 ```
 
-## Development Environment
+## Set Up
 
-### Dependencies
+First, create a `.env` file and replace the placeholder values with your credentials. Refer to the [Environment Variables](#environment-variables) section below for further information.
+
+```bash
+cp sample.env .env
+# Open and edit .env in your text editor.
+```
 
 If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
 and drop you in a shell with them accessible in your `$PATH`.
@@ -120,21 +125,19 @@ Once installed, `cd` into this repository's root directory and proceed to instal
 npm install
 ```
 
-### Quick Start
+### Containerized Quick Start
 
-Once you have installed all necessary dependencies, create a `.env` file and replace the placeholder values with your credentials. Refer to the "Environment Variables" section below for further information.
+If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
 
-```bash
-cp sample.env .env
-# Open and edit .env in your text editor.
-```
+### Local Development Environment
 
-Finally, open three terminals and run the following commands:
+Open three terminals and run the following commands:
 
 ```bash
 # Terminal 1
-docker-compose up -d # Start a local PostgreSQL server in a container in the background.
+docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
 npm run migrations:latest # Run all database migrations.
+docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
 
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
