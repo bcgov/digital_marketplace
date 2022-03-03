@@ -295,7 +295,7 @@ Automated backups of the PostgreSQL database are performed with the BC Governmen
 - Every week with a retention of 4 backups (weekly)
 - Every month with a retention of 1 backup (monthly)
 
-A manual backup can be immediately performed by connecting to the backup container pod in OpenShift and running `backup.sh -1`.
+A manual backup can be immediately performed by connecting to the backup container pod in OpenShift and running `./backup.sh -1`.
 
 Backup archives are stored in the same OpenShift project as the Digital Marketplace application, on a separate provisioned volume.
 

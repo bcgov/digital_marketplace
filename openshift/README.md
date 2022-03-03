@@ -45,11 +45,11 @@ to trigger the build.
 To create build configs for the Patroni-PostgreSQL images, run this command in the tools namespace:
 
 ```
-oc process -f openshift/build.yaml \
+oc process -f openshift/templates/database/build.yaml \
  -p GIT_URI=https://github.com/BCDevOps/platform-services/tree/master/apps/pgsql/patroni \
  -p GIT_REF=master \
  -p SUFFIX=-pg11 \
- -p OUT_VERSION=v11-latest \
+ -p OUT_VERSION=v11-2.0.1 \
  -p PG_VERSION=11 | oc create -f -
 ```
 
