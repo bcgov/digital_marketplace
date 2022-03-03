@@ -4,6 +4,8 @@ The Digital Marketplace is a web application that administers British Columbia's
 
 This document describes this project's developer environment, technical architecture and deployment infrastructure.
 
+The file `docs/ONBOARDING.md` contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
+
 ## Table of Contents
 
 <!-- toc -->
@@ -54,7 +56,7 @@ The source code is split into five parts:
 A TypeScript single-page application using React, Immutable.js, Bootstrap and SASS.
 The front-end's build system is executed by Grunt.
 
-The front-end's state management framework (`src/front-end/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
+The front-end's state management framework (`src/front-end/typescript/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
 ### Back-End (`src/back-end`)
 
@@ -127,7 +129,7 @@ npm install
 
 ### Containerized Quick Start
 
-If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach.
+If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach. Below are instructions on how to use a docker container to handle the database, and the `watch` scripts to run the app. This solves the problem of the slow turnaround. A point of note here is that to start the application, it is the `back-end:start` (or `back-end:watch`) scripts that must be run. The `front-end:watch` script will monitor changes to the front-end source and update when it's changed, but will not run the app on it's own. This is a product of the back-end and front-end being very tightly coupled in this code base. If you are using the `docker-compose` file to run the app, this is done for you. However if you are running the app with the npm scripts for the automatic updates, it will be important to know. 
 
 ### Local Development Environment
 
@@ -138,6 +140,8 @@ Open three terminals and run the following commands:
 docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
 npm run migrations:latest # Run all database migrations.
 docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
+# An alternative to running the docker stop dm_app command is to comment out the app portion of the docker-compose file before running docker-compose up.
+# If this is done, the only step that you omit from this process is the docker stop dm_app command. The rest remains the same.
 
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
