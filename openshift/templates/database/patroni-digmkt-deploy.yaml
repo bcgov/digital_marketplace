@@ -238,7 +238,7 @@ parameters:
 
 - name: IMAGE_STREAM_TAG
   description: Patroni ImageTag
-  value: patroni:v11-stable
+  value: patroni:v11-latest
 
 - description: The size of the persistent volume to create.
   displayName: Persistent Volume Size
