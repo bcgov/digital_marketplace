@@ -3,8 +3,9 @@
 describe('As a user authenticated via IDIR', function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
-        cy.login('gov')
-        cy.sqlFixture('swuOpportunity.sql')
+        cy.sqlFixture('users.sql')
+        cy.idirLogin('gov')
+        cy.sqlFixture('swuOpportunityUnderReview.sql')
     })
 
     it('update an existing SWU opportunity', function() {
