@@ -1042,14 +1042,7 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
 
     for (const id of otherProposalIds) {
       // Get latest status for proposal and check equal to Evaluated/Awarded
-      const currentStatus = (await connection<{ status: SWUProposalStatus }>('swuProposalStatuses')
-        .whereNotNull('status')
-        .andWhere({ proposal: id })
-        .select('status')
-        .orderBy('createdAt', 'desc')
-        .first())?.status;
 
-      if (currentStatus && [SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded].includes(currentStatus)) {
         await connection<RawHistoryRecord & { id: Id, proposal: Id }>('swuProposalStatuses')
           .transacting(trx)
           .insert({
@@ -1060,8 +1053,14 @@ export const awardSWUProposal = tryDb<[Id, string, AuthenticatedSession], SWUPro
             status: SWUProposalStatus.NotAwarded,
             note: ''
           });
-      }
-    }
+
+        await connection<RawSWUProposal>('swuProposals')
+          .where({ id: id })
+          .update({
+            updatedAt: now,
+            updatedBy: session.user.id
+                  }, '*');
+        }
 
     // Update opportunity
     await updateSWUOpportunityStatus(trx, proposalRecord.opportunity, SWUOpportunityStatus.Awarded, '', session);
