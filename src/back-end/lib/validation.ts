@@ -47,10 +47,10 @@ export async function validateFileRecord(connection: db.Connection, fileId: Id):
     if (file) {
       return valid(file);
     } else {
-      return invalid(['The specified image file was not found.']);
+      return invalid(['The specified file was not found.']);
     }
   } catch (e) {
-    return invalid(['Please specify a valid image file id.']);
+    return invalid(['Please specify a valid file id.']);
   }
 }
 
