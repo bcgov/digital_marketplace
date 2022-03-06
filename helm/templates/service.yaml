@@ -7,9 +7,9 @@ metadata:
 spec:
   ports:
   - name: {{ template "digital_marketplace.fullname" . }}
-    port: {{ .Values.port }}
+    port: {{ .Values.app.port }}
     protocol: TCP
-    targetPort: {{ .Values.port }}
+    targetPort: {{ .Values.app.port }}
   selector:
     app: {{ template "digital_marketplace.fullname" . }}
   sessionAffinity: None
