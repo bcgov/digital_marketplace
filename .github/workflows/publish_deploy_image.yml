@@ -51,7 +51,7 @@ jobs:
     needs: [build-and-push-image]
     runs-on: ubuntu-latest
     environment:
-      name: Development
+      name: development
       url: "https://app-digmkt-dev.apps.silver.devops.gov.bc.ca/"
     steps:
       - name: Checkout
@@ -63,5 +63,5 @@ jobs:
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
           namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
           tag: ${{ env.TAG }}
-          client_secret: ${{ secrets.CLIENT_SECRET }}
+          client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           route: ${{ secrets.ROUTE }}
