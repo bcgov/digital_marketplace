@@ -3,8 +3,8 @@ name: Create and publish app Docker image
 on:
   push:
     branches: [ development ]
-  # pull_request:
-  #   branches: [ development ]
+  pull_request:
+    branches: [ development ]
 
 env:
   GITHUB_REGISTRY: ghcr.io
