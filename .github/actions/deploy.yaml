@@ -1,0 +1,36 @@
+
+name: Deploy to OpenShift
+
+inputs: 
+  openshift_server_url:
+    description: "URL of the OpenShift server"
+    required: true
+  openshift_token:
+    description: "Unique login token for OpenShift"
+    required: true
+  namespace:
+    description: "The namespace being deployed to"
+    required: true
+  tag:
+    description: "the sha value from the latest build"
+    required: true
+  client_secret:
+    description: "Client secret for sso keycloak login"
+    required: true
+  route:
+    description: "URL where the application can be accessed"
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Authenticate, set context, and run deploy script
+    uses: redhat-actions/oc-login@v1
+    with:
+      openshift_server_url: ${{ inputs.openshift_server_url }}
+      openshift_token: ${{ inputs.openshift_token }}
+      namespace: ${{ inputs.namespace }}
+      insecure_skip_tls_verify: true
+  - run: |
+      chmod +x ./lib/helm_deploy.sh
+      ./lib/helm_deploy.sh -n ${{ inputs.namespace }} --set app.namespace=${{ inputs.namespace }} --set image.app.tag=${{ inputs.tag }} --set image.db.tag=${{ inputs.tag  }} --set image.app.clientSecret=${{ inputs.client_secret }} --set route.host=${{ inputs.route }}
+    shell: bash
