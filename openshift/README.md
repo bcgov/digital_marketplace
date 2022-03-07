@@ -39,20 +39,6 @@ If the build already exists the `create` option will error out.  This can be fix
 
 to trigger the build.
 
-
-------
-
-To create build configs for the Patroni-PostgreSQL images, run this command in the tools namespace:
-
-```
-oc process -f openshift/templates/database/build.yaml \
- -p GIT_URI=https://github.com/BCDevOps/platform-services/tree/master/apps/pgsql/patroni \
- -p GIT_REF=master \
- -p SUFFIX=-pg11 \
- -p OUT_VERSION=v11-2.0.1 \
- -p PG_VERSION=11 | oc create -f -
-```
-
  -----
 
 To deploy a single PostgreSQL instance (for use in DEV and TEST):
@@ -71,13 +57,13 @@ To deploy a highly available Patroni-PostgreSQL stateful set (for use in PROD), 
 
 ```
 oc project ccc866-prod
-oc process -f templates/database/patroni-prereq-create.yaml | oc create -f -
+oc process -f openshift/templates/database/patroni-prereq-create.yaml | oc create -f -
 
 oc project ccc866-tools
 oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-prod:patroni-digmkt-prod --namespace=ccc866-tools
 
 oc project ccc866-prod
-oc process -f templates/database/patroni-digmkt-deploy.yaml | oc apply -f -
+oc process -f openshift/templates/database/patroni-digmkt-deploy.yaml | oc apply -f -
 ```
 
 ------
