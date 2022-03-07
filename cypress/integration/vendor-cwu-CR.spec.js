@@ -3,14 +3,12 @@
 describe('As a user authenticated via GitHub',  function() {
     beforeEach(function() {
         cy.sqlFixture('dbReset.sql')
-        cy.login('vendor')
+        cy.sqlFixture('users.sql')
+        cy.vendorLogin(1)
         cy.sqlFixture('cwuOpportunity.sql')
     })
 
     it('create and read CWU proposal', function() {
-        cy.get('#user-sign-up-step-two-terms').click()
-        cy.get('a').contains('Complete Profile').click()
-        // cy.get('a[href="/opportunities"]').contains('View All Opportunities').click()
         cy.visit('/opportunities')
         cy.contains('Fixture CWU Opportunity Title').should('be.visible')
         cy.contains('Fixture CWU Opportunity Title').click()

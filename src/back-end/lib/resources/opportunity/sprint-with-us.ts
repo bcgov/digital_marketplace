@@ -1,3 +1,4 @@
+import { FileRecord } from 'back-end/../shared/lib/resources/file';
 import * as crud from 'back-end/lib/crud';
 import * as db from 'back-end/lib/db';
 import * as swuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/sprint-with-us';
@@ -8,7 +9,7 @@ import { validateAttachments, validateSWUOpportunityId } from 'back-end/lib/vali
 import { get, omit } from 'lodash';
 import { addDays, getBoolean, getNumber, getString, getStringArray } from 'shared/lib';
 import { invalid } from 'shared/lib/http';
-import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/opportunity/sprint-with-us';
+import { CreateRequestBody, CreateSWUOpportunityPhaseBody, CreateSWUOpportunityStatus, CreateSWUTeamQuestionBody, CreateValidationErrors, DeleteValidationErrors, editableOpportunityStatuses, isValidStatusChange, SWUOpportunity, SWUOpportunitySlim, SWUOpportunityStatus, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/sprint-with-us';
 import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
 import { ADT, adt, Id } from 'shared/lib/types';
 import { allValid, getInvalidValue, getValidValue, isInvalid, isValid, optional, valid, validateUUID, Validation } from 'shared/lib/validation';
@@ -37,10 +38,15 @@ interface ValidatedUpdateRequestBody {
       | ADT<'startTeamScenario', string>
       | ADT<'suspend', string>
       | ADT<'cancel', string>
-      | ADT<'addAddendum', string>;
+      | ADT<'addAddendum', string>
+      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<ValidatedCreateRequestBody, 'status' | 'session'>;
+
+interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
+  attachments: FileRecord[];
+}
 
 type ValidatedDeleteRequestBody = Id;
 
@@ -432,6 +438,11 @@ const resource: Resource = {
             return adt('cancel', getString(body, 'value'));
           case 'addAddendum':
             return adt('addAddendum', getString(body, 'value'));
+          case 'addNote':
+            return adt('addNote', {
+              note: getString(value, 'note'),
+              attachments: getStringArray(value, 'attachments')
+            });
           default:
             return null;
         }
@@ -453,6 +464,7 @@ const resource: Resource = {
 
         switch (request.body.tag) {
           case 'edit': {
+
             const { title,
                     teaser,
                     remoteOk,
@@ -729,7 +741,8 @@ const resource: Resource = {
               body: adt('submitForReview', validatedSubmitNote.value)
             } as ValidatedUpdateRequestBody);
           }
-          case 'publish': {
+          case 'publish':{
+
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.Published)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -766,6 +779,7 @@ const resource: Resource = {
             });
           }
           case 'startTeamScenario': {
+
             if (!isValidStatusChange(validatedSWUOpportunity.value.status, SWUOpportunityStatus.EvaluationTeamScenario)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -821,6 +835,26 @@ const resource: Resource = {
               session: request.session,
               body: adt('addAddendum', validatedAddendumText.value)
             } as ValidatedUpdateRequestBody);
+          }
+          case 'addNote':{
+            const { note, attachments : noteAttachments } = request.body.value;
+            const validatedNote = opportunityValidation.validateHistoryNote(note);
+            const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
+            if (allValid([validatedNote, validatedNoteAttachments])) {
+              return valid({
+                session: request.session,
+                body: adt('addNote', {
+                  note: validatedNote.value,
+                  attachments: validatedNoteAttachments.value
+                })
+              } as ValidatedUpdateRequestBody);
+            } else {
+              return invalid({ opportunity: adt('addNote' as const, {
+                  note: getInvalidValue(validatedNote, undefined),
+                  attachments: getInvalidValue(validatedNoteAttachments, undefined)
+                })
+              });
+            }
           }
           default:
             return invalid({ opportunity: adt('parseFailure' as const) });
@@ -880,6 +914,9 @@ const resource: Resource = {
               if (isValid(dbResult)) {
                 swuOpportunityNotifications.handleSWUUpdated(connection, dbResult.value);
               }
+              break;
+            case 'addNote':
+              dbResult = await db.addSWUOpportunityNote(connection, request.params.id, body.value, session);
               break;
           }
           if (isInvalid(dbResult)) {

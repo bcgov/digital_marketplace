@@ -48,6 +48,9 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.7",
+    "@fortawesome/fontawesome-svg-core": "^1.2.36",
+    "@fortawesome/free-solid-svg-icons": "^5.15.4",
+    "@fortawesome/react-fontawesome": "^0.1.16",
     "@keycloak/keycloak-admin-client": "^15.0.2",
     "@testing-library/cypress": "^8.0.2",
     "@types/cookie-parser": "^1.4.2",
