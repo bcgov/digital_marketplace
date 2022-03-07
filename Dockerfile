@@ -2,6 +2,7 @@ FROM --platform=linux/amd64 docker.io/node:14
 WORKDIR /usr/app
 COPY ./src /usr/app/src
 COPY package*.json ./
+COPY ./lib /usr/app/lib
 COPY gruntfile.js ./
 COPY ./grunt-configs ./grunt-configs
 # COPY tsconfig.json ./
