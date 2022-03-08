@@ -55,7 +55,7 @@ spec:
               protocol: TCP
           readinessProbe:
             httpGet:
-              path: /ready
+              path: /healthz
               port: {{ .Values.app.probesPort }}
             failureThreshold: 1
             successThreshold: 1
