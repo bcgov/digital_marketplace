@@ -4,7 +4,7 @@ apiVersion: authorization.openshift.io/v1
 kind: Role
 metadata:
   labels:
-{{ include "digital_marketplace.labels" . | indent 4}}
+{{ include "digital-marketplace.labels" . | indent 4}}
   annotations:
     openshift.io/description: A user who can deploy applications
     openshift.io/reconcile-protect: "false"
