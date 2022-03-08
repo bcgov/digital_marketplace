@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "digital_marketplace.fullname" . }}
+  name: {{ template "digital-marketplace.fullname" . }}
   labels:
-{{ include "digital_marketplace.labels" . | indent 4}}
+{{ include "digital-marketplace.labels" . | indent 4}}
 spec:
   selector:
     matchLabels:
-      app: {{ template "digital_marketplace.fullname" . }}
+      app: {{ template "digital-marketplace.fullname" . }}
   replicas: 3
   template:
     metadata:
       labels:
-        app: {{ template "digital_marketplace.fullname" . }}
+        app: {{ template "digital-marketplace.fullname" . }}
     spec:
       containers:
-        - name: {{ template "digital_marketplace.fullname" . }}
+        - name: {{ template "digital-marketplace.fullname" . }}
           image: {{ .Values.image.app.repository }}:sha-{{ .Values.image.app.tag }}
           ports:
             - containerPort: {{ .Values.app.port }}

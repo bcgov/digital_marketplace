@@ -1,7 +1,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: {{ template "digital_marketplace.fullname" . }}
+  name: {{ template "digital-marketplace.fullname" . }}
 spec:
   host: {{ .Values.route.host }}
   port:
@@ -11,4 +11,4 @@ spec:
     insecureEdgeTerminationPolicy: Redirect
   to:
     kind: Service
-    name: {{ template "digital_marketplace.fullname" . }}
+    name: {{ template "digital-marketplace.fullname" . }}
