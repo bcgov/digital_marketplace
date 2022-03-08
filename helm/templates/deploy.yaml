@@ -29,8 +29,10 @@ spec:
               secretKeyRef:
                 key: cookie-secret
                 name: {{ template "digital-marketplace.fullname" . }}-cookie
+          - name: DATABASE_SERVICE_NAME
+            value: {{ .Values.app.databaseServiceName }}
           - name: MAILER_HOST
-            value: {{ .Values.image.app.mailerHost }}
+            value: {{ .Values.app.mailerHost }}
           resources:
             requests:
               memory: {{ .Values.resources.app.requests.memory }}
