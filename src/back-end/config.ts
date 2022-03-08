@@ -66,9 +66,9 @@ export function getPostgresUrl(): string | null {
   const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
   const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
   const port = get(`${databaseServiceName}_SERVICE_PORT`, '5432');
-  const user = get('DATABASE_USERNAME', '');
+  const user = get('DATABASE_USERNAME', 'dig-mkt');
   const password = get('DATABASE_PASSWORD', '');
-  const databaseName = get('DATABASE_NAME', '');
+  const databaseName = get('DATABASE_NAME', 'dig-mkt');
   // Support OpenShift's environment variables.
   if (host && port && user && password && databaseName) {
     return `postgresql://${user}:${password}@${host}:${port}/${databaseName}`;
