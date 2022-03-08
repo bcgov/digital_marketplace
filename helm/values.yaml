@@ -1,4 +1,4 @@
-fullNameOverride: digital-marketplace
+fullnameOverride: digital-marketplace
 replicaCount: 1
 
 image:
