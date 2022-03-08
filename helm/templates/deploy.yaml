@@ -31,11 +31,16 @@ spec:
                 name: {{ template "digital-marketplace.fullname" . }}-cookie
           - name: DATABASE_SERVICE_NAME
             value: {{ .Values.app.databaseServiceName }}
+          - name: POSTGRESQL_DIGMKT_DEV_SERVICE_HOST
+            valueFrom:
+              secretKeyRef:
+                key: database-service-host
+                name: {{ template "digital-marketplace.fullname" . }}-database
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
                 key: database-password
-                name: {{ template "digital-marketplace.fullname" . }}-database-password
+                name: {{ template "digital-marketplace.fullname" . }}-database
           - name: MAILER_HOST
             value: {{ .Values.app.mailerHost }}
           resources:

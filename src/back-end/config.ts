@@ -187,14 +187,8 @@ export function getConfigErrors(): string[] {
   }
 
   if (!POSTGRES_URL) {
-    const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
-    const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
-    const port = get(`${databaseServiceName}_SERVICE_PORT`, '5432');
-    const user = get('DATABASE_USERNAME', 'dig-mkt');
-    const databaseName = get('DATABASE_NAME', 'dig-mkt');
     errors = errors.concat([
-      // 'POSTGRES_URL must be specified.'
-      `host: ${host}, port: ${port}, user: ${user}, databaseName: ${databaseName}`
+      'POSTGRES_URL must be specified.'
     ]);
   }
 
