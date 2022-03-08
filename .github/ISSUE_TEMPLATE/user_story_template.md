@@ -2,8 +2,6 @@
 name: User Story Template
 about: Template for new user stories
 title: ''
-labels: ''
-assignees: ''
 
 ---
 
@@ -11,7 +9,6 @@ assignees: ''
 As a <user>
 I want <what>
 So that <this is important because ...>
-### Tasks (How)
-- [ ] Task
-- [ ] Task
-- [ ] Task
+### Acceptance Criteria
+
+### Definition of Done

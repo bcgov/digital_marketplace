@@ -36,7 +36,6 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           PGHOST: localhost
-          CYPRESS_RECORD_KEY: ${{secrets.CYPRESS_RECORD_KEY}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           NODE_ENV: "development"
           POSTGRES_URL: "postgresql://digitalmarketplace:digitalmarketplace@localhost:5432/digitalmarketplace"
@@ -48,4 +47,3 @@ jobs:
           build: npm run build
           start: npm run migrations:latest,npm run start
           wait-on: 'http://localhost:3000'
-          record: true

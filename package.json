@@ -35,10 +35,12 @@
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > docs/OPEN_SOURCE_LICENSES.txt",
     "docs:db": "npx pg-doc --out docs/DATABASE.md --connection"
   },
+
   "repository": {
     "type": "git",
     "url": ""
   },
+  "author": "Real Folk Inc.",
   "license": "Apache-2.0",
   "homepage": "",
   "engines": {

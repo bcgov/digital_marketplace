@@ -1,10 +1,10 @@
 name: Sonar
 on:
-  # Trigger analysis when pushing in master or pull requests, and when creating
+  # Trigger analysis when pushing in development or pull requests, and when creating
   # a pull request.
   push:
     branches:
-      - main
+      - development
   pull_request:
 jobs:
   sonarcloud:
