@@ -64,11 +64,11 @@ spec:
           #   failureThreshold: 3
           readinessProbe:
             tcpSocket:
-              port: 8080
+              port: {{ .Values.app.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             tcpSocket:
-              port: 8080
+              port: {{ .Values.app.port }}
             initialDelaySeconds: 15
             periodSeconds: 20
