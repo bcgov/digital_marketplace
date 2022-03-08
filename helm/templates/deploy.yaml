@@ -56,9 +56,9 @@ spec:
           readinessProbe:
             httpGet:
               path: /status
-              port: {{ .Values.app.probesPort }}
-            failureThreshold: 1
+              port: 3000
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
             successThreshold: 1
-            periodSeconds: 5
-            timeoutSeconds: 5
-            initialDelaySeconds: 5
+            failureThreshold: 3
