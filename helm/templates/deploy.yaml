@@ -53,12 +53,22 @@ spec:
           ports:
             - containerPort: {{ .Values.app.port }}
               protocol: TCP
+          # readinessProbe:
+          #   httpGet:
+          #     path: /status
+          #     port: 3000
+          #     scheme: HTTP
+          #   timeoutSeconds: 10
+          #   periodSeconds: 30
+          #   successThreshold: 1
+          #   failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /status
-              port: 3000
-              scheme: HTTP
-            timeoutSeconds: 10
-            periodSeconds: 30
-            successThreshold: 1
-            failureThreshold: 3
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
