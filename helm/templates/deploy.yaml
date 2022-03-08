@@ -8,7 +8,12 @@ spec:
   selector:
     matchLabels:
       app: {{ template "digital-marketplace.fullname" . }}
-  replicas: 3
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -17,6 +22,22 @@ spec:
       containers:
         - name: {{ template "digital-marketplace.fullname" . }}
           image: {{ .Values.image.app.repository }}:sha-{{ .Values.image.app.tag }}
+          imagePullPolicy: {{ .Values.image.app.pullPolicy }}
+          env:
+          - name: COOKIE_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: cookie-secret
+                name: {{ template "digital-marketplace.fullname" . }}-cookie
+          - name: MAILER_HOST
+            value: {{ .Values.image.app.mailerHost }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.app.requests.memory }}
+              cpu: {{ .Values.resources.app.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.app.limits.memory }}
+              cpu: {{ .Values.resources.app.limits.cpu }}
           ports:
             - containerPort: {{ .Values.app.port }}
               protocol: TCP
