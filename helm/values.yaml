@@ -12,20 +12,11 @@ app:
   probesPort: "9000"
   namespace: ""
 route:
-  host: "app-digmkt-dev.apps.silver.devops.gov.bc.ca"
+  host: "" # Pass the host in through the deploy script: app-digmkt-dev.apps.silver.devops.gov.bc.ca
 
 
 networkPolicies:
   enabled: true
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
 
 resources:
   app:
@@ -35,3 +26,8 @@ resources:
     limits:
       cpu: "500m"
       memory: "1Gi"
+
+deployer:
+  namespace: ccc866-dev
+  serviceAccount:
+    enabled: true
