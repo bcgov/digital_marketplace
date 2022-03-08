@@ -37,7 +37,7 @@ import { flipCurried } from 'shared/lib';
 import { MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { isValid } from 'shared/lib/validation';
-const lightship = require('lightship')
+import * as lightship from 'lightship';
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 
@@ -139,7 +139,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
   ])([]);
 }
 
-async function start(lightshipInstance: any) {
+async function start(lightshipInstance: lightship.Lightship) {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
   if (configErrors.length || !POSTGRES_URL) {
