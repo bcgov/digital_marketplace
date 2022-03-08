@@ -13,7 +13,7 @@ app:
   port: "3000"
   probesPort: "9000"
   namespace: ""
-  databaseServiceName: postgresql-digmkt-dev
+  databaseServiceName: postgresql
   databaseUsername: dig-mkt
   mailerHost: apps.smtp.gov.bc.ca
 route:
