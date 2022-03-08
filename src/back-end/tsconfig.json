@@ -22,9 +22,6 @@
     },
     "skipLibCheck": true
   },
-  "files": [
-    "node_modules/typescript/lib/lib.es6.d.ts"
-  ],
   "include": [
     "**/*.ts",
     "**/*.tsx",
@@ -32,6 +29,6 @@
     "**/*.js"
   ],
   "exclude": [
-    "**/node_modules/*"
+    "node_modules"
   ]
 }

@@ -32,12 +32,12 @@ import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRou
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
 import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import Knex from 'knex';
-import { createLightship } from 'lightship';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
 import { Session } from 'shared/lib/resources/session';
 import { isValid } from 'shared/lib/validation';
+const lightship = require('lightship')
 
 type BasicCrudResource = crud.Resource<SupportedRequestBodies, SupportedResponseBodies, any, any, any, any, any, any, any, any, any, any, Session, Connection>;
 
@@ -139,7 +139,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
   ])([]);
 }
 
-async function start(lightship) {
+async function start(lightshipInstance) {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
   if (configErrors.length || !POSTGRES_URL) {
@@ -191,11 +191,11 @@ async function start(lightship) {
       return parseFilePermissions(raw);
     }
   });
-  lightship.signalReady();
+  lightshipInstance.signalReady();
   logger.info('server started', { host: SERVER_HOST, port: String(SERVER_PORT) });
 }
-const lightship = createLightship();
-start(lightship)
+const lightshipInstance = lightship.createLightship();
+start(lightshipInstance)
   .catch(error => {
     logger.error('app startup failed', makeErrorResponseBody(error).value);
     process.exit(1);
