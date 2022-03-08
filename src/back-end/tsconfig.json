@@ -19,15 +19,13 @@
       "back-end/*": ["./*"],
       "migrations/*": ["../migrations/*"],
       "shared/*": ["../shared/*"]
-    }
+    },
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     "**/*.json",
     "**/*.js"
-  ],
-  "exclude": [
-    "node_modules"
   ]
 }
