@@ -31,7 +31,7 @@ spec:
                 name: {{ template "digital-marketplace.fullname" . }}-cookie
           - name: DATABASE_SERVICE_NAME
             value: {{ .Values.app.databaseServiceName }}
-          - name: POSTGRESQL_DIGMKT_DEV_SERVICE_HOST
+          - name: POSTGRESQL_SERVICE_HOST
             valueFrom:
               secretKeyRef:
                 key: database-service-host
