@@ -34,7 +34,7 @@ spec:
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
-                key: databasePassword
+                key: database-password
                 name: {{ template "digital-marketplace.fullname" . }}-database-password
           - name: MAILER_HOST
             value: {{ .Values.app.mailerHost }}
