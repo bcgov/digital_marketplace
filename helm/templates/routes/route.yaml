@@ -7,7 +7,7 @@ spec:
   port:
     targetPort: {{ .Values.app.port }}
   tls:
-    termination: passthrough
+    termination: edge
     insecureEdgeTerminationPolicy: Redirect
   to:
     kind: Service
