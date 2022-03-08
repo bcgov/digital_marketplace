@@ -65,7 +65,7 @@ export function getPostgresUrl(): string | null {
   // *SERVICE* variables are set automatically by OpenShift.
   const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
   const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
-  const port = get(`${databaseServiceName}_SERVICE_PORT`, '');
+  const port = get(`${databaseServiceName}_SERVICE_PORT`, '5432');
   const user = get('DATABASE_USERNAME', '');
   const password = get('DATABASE_PASSWORD', '');
   const databaseName = get('DATABASE_NAME', '');
