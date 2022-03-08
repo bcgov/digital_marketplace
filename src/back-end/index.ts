@@ -32,6 +32,7 @@ import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRou
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
 import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
 import Knex from 'knex';
+import { createLightship } from 'lightship';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
@@ -138,7 +139,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
   ])([]);
 }
 
-async function start() {
+async function start(lightship) {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
   if (configErrors.length || !POSTGRES_URL) {
@@ -159,6 +160,7 @@ async function start() {
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
   const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata | null> = express();
+
   adapter({
     router,
     sessionIdToSession: async id => {
@@ -189,10 +191,11 @@ async function start() {
       return parseFilePermissions(raw);
     }
   });
+  lightship.signalReady();
   logger.info('server started', { host: SERVER_HOST, port: String(SERVER_PORT) });
 }
-
-start()
+const lightship = createLightship();
+start(lightship)
   .catch(error => {
     logger.error('app startup failed', makeErrorResponseBody(error).value);
     process.exit(1);
