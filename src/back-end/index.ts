@@ -139,7 +139,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
   ])([]);
 }
 
-async function start(lightshipInstance) {
+async function start(lightshipInstance: any) {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
   if (configErrors.length || !POSTGRES_URL) {
