@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: {{ template "digital-marketplace.fullname" . }}
-          image: {{ .Values.image.app.repository }}:sha-{{ .Values.image.app.tag }}
+          image: {{ .Values.image.app.repository }}:{{ .Values.image.app.tag }}
           imagePullPolicy: {{ .Values.image.app.pullPolicy }}
           env:
           - name: COOKIE_SECRET
