@@ -2,6 +2,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: {{ template "digital-marketplace.fullname" . }}
+  labels:
+{{ include "digital-marketplace.labels" . | indent 4}}
 spec:
   host: {{ .Values.route.host }}
   port:
@@ -12,3 +14,4 @@ spec:
   to:
     kind: Service
     name: {{ template "digital-marketplace.fullname" . }}
+    weight: 100

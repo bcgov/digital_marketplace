@@ -1,4 +1,4 @@
-fullnameOverride: digital-marketplace
+fullnameOverride: app-digmkt-dev
 replicaCount: 3
 
 image:
