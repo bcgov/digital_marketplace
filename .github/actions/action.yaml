@@ -32,5 +32,5 @@ runs:
       insecure_skip_tls_verify: true
   - run: |
       chmod +x ./lib/helm_deploy.sh
-      ./lib/helm_deploy.sh -n ${{ inputs.namespace }} --set app.namespace=${{ inputs.namespace }} --set image.app.tag=${{ inputs.tag }} --set image.app.clientSecret=${{ inputs.client_secret }} --set route.host=${{ inputs.route }}
+      ./lib/helm_deploy.sh -n ${{ inputs.namespace }} --set app.namespace=${{ inputs.namespace }} --set image.app.tag=${{ inputs.tag }} --set image.app.clientSecret=${{ inputs.client_secret }} --set route.host=${{ inputs.route }} --set image.app.cookieSecret={{ inputs.cookie_secret }} --set image.app.databasePassword={{ inputs.database_password }} --set image.app.databaseServiceHost={{ inputs.database_service_host }}
     shell: bash

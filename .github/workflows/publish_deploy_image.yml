@@ -65,3 +65,6 @@ jobs:
           tag: ${{ env.TAG }}
           client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           route: ${{ secrets.ROUTE }}
+          cookie_secret: ${{ secrets.COOKIE_SECRET }}
+          database_password: ${{ secrets.DATABASE_PASSWORD }}
+          database_service_host: ${{ secrets.DATABASE_SERVICE_HOST }}
