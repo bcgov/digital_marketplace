@@ -43,7 +43,7 @@ export const ENV = NODE_ENV;
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config', ENV);
 
-export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
+export const SERVER_HOST = get('SERVER_HOST', '0.0.0.0');
 
 export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
