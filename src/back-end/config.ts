@@ -166,9 +166,9 @@ export function getConfigErrors(): string[] {
     errors.push('NODE_ENV must be either "development" or "production"');
   }
 
-  if (!SERVER_HOST.match(/^\d+\.\d+\.\d+\.\d+/)) {
-    errors.push('SERVER_HOST must be a valid IP address.');
-  }
+  // if (!SERVER_HOST.match(/^\d+\.\d+\.\d+\.\d+/)) {
+  //   errors.push('SERVER_HOST must be a valid IP address.');
+  // }
 
   if (BASIC_AUTH_USERNAME && !BASIC_AUTH_PASSWORD_HASH) {
     errors.push('BASIC_AUTH_PASSWORD_HASH must be defined if BASIC_AUTH_USERNAME is non-empty.');
