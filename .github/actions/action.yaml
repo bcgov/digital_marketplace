@@ -17,8 +17,17 @@ inputs:
   client_secret:
     description: "Client secret for sso keycloak login"
     required: true
-  route:
+  origin:
     description: "URL where the application can be accessed"
+    required: true
+  cookie_secret:
+    description: "Secret used to has cookies"
+    required: true
+  database_service_host:
+    description: "IP of the database service host host"
+    required: true
+  database_password:
+    description: "Password for the database"
     required: true
 runs:
   using: composite
@@ -32,5 +41,5 @@ runs:
       insecure_skip_tls_verify: true
   - run: |
       chmod +x ./lib/helm_deploy.sh
-      ./lib/helm_deploy.sh -n ${{ inputs.namespace }} --set app.namespace=${{ inputs.namespace }} --set image.app.tag=${{ inputs.tag }} --set image.app.clientSecret=${{ inputs.client_secret }} --set route.host=${{ inputs.route }} --set image.app.cookieSecret={{ inputs.cookie_secret }} --set image.app.databasePassword={{ inputs.database_password }} --set image.app.databaseServiceHost={{ inputs.database_service_host }}
+      ./lib/helm_deploy.sh -n ${{ inputs.namespace }} --set app.namespace=${{ inputs.namespace }} --set image.app.tag=${{ inputs.tag }} --set image.app.clientSecret=${{ inputs.client_secret }} --set route.origin=${{ inputs.origin }} --set image.app.cookieSecret={{ inputs.cookie_secret }} --set image.app.databasePassword={{ inputs.database_password }} --set image.app.databaseServiceHost={{ inputs.database_service_host }}
     shell: bash
