@@ -7,7 +7,7 @@ metadata:
 spec:
   host: {{ .Values.route.host }}
   port:
-    targetPort: {{ .Values.app.port }}
+    targetPort: {{ template "digital-marketplace.fullname" . }}
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect

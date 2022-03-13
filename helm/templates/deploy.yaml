@@ -24,6 +24,10 @@ spec:
           image: {{ .Values.image.app.repository }}:{{ .Values.image.app.tag }}
           imagePullPolicy: {{ .Values.image.app.pullPolicy }}
           env:
+          - name: ORIGIN
+            value: {{ .Values.route.origin }}
+          - name: SERVER_PORT
+            value: {{ .Values.app.port | quote }}
           - name: COOKIE_SECRET
             valueFrom:
               secretKeyRef:
@@ -62,13 +66,12 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             failureThreshold: 3
-          # readinessProbe:
-          #   tcpSocket:
-          #     port: {{ .Values.app.port }}
-          #   initialDelaySeconds: 60
-          #   periodSeconds: 10
           # livenessProbe:
-          #   tcpSocket:
-          #     port: {{ .Values.app.port }}
-          #   initialDelaySeconds: 60
-          #   periodSeconds: 20
+          #   httpGet:
+          #     path: "/status"
+          #     port: 3000
+          #     scheme: HTTP
+          #   timeoutSeconds: 10
+          #   periodSeconds: 30
+          #   successThreshold: 1
+          #   failureThreshold: 3

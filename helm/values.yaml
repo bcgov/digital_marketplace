@@ -1,5 +1,7 @@
-fullnameOverride: app-digmkt-dev
+fullnameOverride: digital-marketplace
 replicaCount: 3
+defaultImagePullPolicy: IfNotPresent
+defaultImageTag: latest
 
 image:
   app:
@@ -7,7 +9,7 @@ image:
     pullPolicy: IfNotPresent
     tag: latest # The tag value must be passed in via the deploy script
     clientSecret: "" # clientSecret must be passed in via deploy script
-    cookieSecret: ""
+    cookieSecret: "" # cookieSecret is passed in via deploy script
 
 app:
   port: "3000"
@@ -17,7 +19,7 @@ app:
   databaseUsername: dig-mkt
   mailerHost: apps.smtp.gov.bc.ca
 route:
-  host: "" # Pass the host in through the deploy script: app-digmkt-dev.apps.silver.devops.gov.bc.ca
+  origin: "" # Pass the origin in through the deploy script: app-digmkt-dev.apps.silver.devops.gov.bc.ca
 
 
 networkPolicies:
