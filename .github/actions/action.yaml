@@ -32,6 +32,9 @@ inputs:
   keycloak_url:
     description: "URL for keycloak"
     required: true
+  host:
+    description: "Host URL"
+    required: true
 runs:
   using: composite
   steps:
@@ -52,5 +55,6 @@ runs:
         --set image.app.cookieSecret=${{ inputs.cookie_secret }} \
         --set image.app.databasePassword=${{ inputs.database_password }} \
         --set image.app.databaseServiceHost=${{ inputs.database_service_host }} \
-        --set route.origin=${{ inputs.origin }}
+        --set route.origin=${{ inputs.origin }} \
+        --set route.host=${{ inputs.host }}
     shell: bash

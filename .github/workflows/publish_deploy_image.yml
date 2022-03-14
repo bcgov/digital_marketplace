@@ -69,3 +69,4 @@ jobs:
           cookie_secret: ${{ secrets.COOKIE_SECRET }}
           database_password: ${{ secrets.DATABASE_PASSWORD }}
           database_service_host: ${{ secrets.DATABASE_SERVICE_HOST }}
+          host: ${{ secrets.HOST }}
