@@ -5,7 +5,7 @@ metadata:
   labels:
 {{ include "digital-marketplace.labels" . | indent 4}}
 spec:
-  host: {{ .Values.route.origin }}
+  host: {{ .Values.route.host }}
   port:
     targetPort: {{ template "digital-marketplace.fullname" . }}
   tls:
