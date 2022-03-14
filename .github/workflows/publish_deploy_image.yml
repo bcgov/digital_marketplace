@@ -62,6 +62,7 @@ jobs:
           openshift_server_url: ${{ env.OPENSHIFT_SERVER }}
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
           namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+          keycloak_url: ${{ secrets.KEYCLOAK_URL }}
           tag: ${{ env.TAG }}
           client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           origin: ${{ secrets.ORIGIN }}

@@ -28,6 +28,8 @@ spec:
             value: {{ .Values.route.origin }}
           - name: SERVER_PORT
             value: {{ .Values.app.port | quote }}
+          - name: KEYCLOAK_URL
+            value: {{ .Values.app.keycloakUrl }}
           - name: COOKIE_SECRET
             valueFrom:
               secretKeyRef:

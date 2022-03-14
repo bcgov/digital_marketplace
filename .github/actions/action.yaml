@@ -29,6 +29,9 @@ inputs:
   database_password:
     description: "Password for the database"
     required: true
+  keycloak_url:
+    description: "URL for keycloak"
+    required: true
 runs:
   using: composite
   steps:
@@ -43,6 +46,7 @@ runs:
       chmod +x ./lib/helm_deploy.sh
       ./lib/helm_deploy.sh -n ${{ inputs.namespace }} \
         --set app.namespace=${{ inputs.namespace }} \
+        --set app.keycloakUrl=${{ inputs.keycloak_url }} \
         --set image.app.tag=${{ inputs.tag }} \
         --set image.app.clientSecret=${{ inputs.client_secret }} \
         --set image.app.cookieSecret=${{ inputs.cookie_secret }} \

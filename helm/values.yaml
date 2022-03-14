@@ -10,6 +10,7 @@ image:
     tag: latest # The tag value must be passed in via the deploy script
     clientSecret: "" # clientSecret must be passed in via deploy script
     cookieSecret: "" # cookieSecret is passed in via deploy script
+    keycloakUrl: "" # keycloakUrl is passed in via deploy scirpt
 
 app:
   port: "3000"
