@@ -45,8 +45,8 @@ runs:
         --set app.namespace=${{ inputs.namespace }} \
         --set image.app.tag=${{ inputs.tag }} \
         --set image.app.clientSecret=${{ inputs.client_secret }} \
-        --set image.app.cookieSecret={{ inputs.cookie_secret }} \
-        --set image.app.databasePassword={{ inputs.database_password }} \
-        --set image.app.databaseServiceHost={{ inputs.database_service_host }} \
+        --set image.app.cookieSecret=${{ inputs.cookie_secret }} \
+        --set image.app.databasePassword=${{ inputs.database_password }} \
+        --set image.app.databaseServiceHost=${{ inputs.database_service_host }} \
         --set route.origin=${{ inputs.origin }}
     shell: bash
