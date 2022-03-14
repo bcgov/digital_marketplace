@@ -123,7 +123,7 @@ export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_REPL
 export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
 
 // Keycloak configuration
-export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://sso-dev.pathfinder.gov.bc.ca');
+export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://dev.oidc.gov.bc.ca');
 
 export const KEYCLOAK_REALM = get('KEYCLOAK_REALM', 'p2zhow64');
 
