@@ -13,10 +13,12 @@ $ oc login --token=<token> --server=https://api.silver.devops.gov.bc.ca:6443
 $ bash  ./lib/helm_deploy.sh -n <namespace> \ # eg ccc866-dev
           --set app.namespace=<namespace> \
           --set image.app.clientSecret=<keycloak_client_secret> \
-          --set route.origin=<app_origin> \ #eg app-digmkt-dev.apps.silver.devops.gov.bc.ca
+          --set route.origin=<app_origin> \ # eg https://app-digmkt-dev.apps.silver.devops.gov.bc.ca
+          --set route.host=<app_host> \ # eg app-digmkt-dev.apps.silver.devops.gov.bc.ca
           --set image.app.cookieSecret=<cookie_secret> \
           --set image.app.databasePassword=<db_password> \
           --set image.app.databaseServiceHost=<db_service_host> \
+          --set app.keycloakUrl=<keycloak_url> \ # eg https://dev.oidc.gov.bc.ca
           --set image.app.tag=<tag> # see below
 ```
 
@@ -36,7 +38,7 @@ eg. `sha-b0086114dfdd9ddcf1f8bb0ad3980dd261a987d6d42f85595da7b24d2f0c3230`
 - In the `Data` section copy to clipboard the entry labelled `token`
 - Paste the `token` value into the repositories [GitHub secrets](https://github.com/bcgov/digital_marketplace/settings/secrets/actions) in `OPENSHIFT_TOKEN`
 
-### Secrets
+## Secrets
 The secrets we need to set are in github. Secrets common to all of the deploys are i the repository secrets. Secrets that are specific to the environment (dev, test or prod) are in the environment secrets. They are read in in the `/.github/workflows/publish_deploy_image.yml` workflow, which passes them to the action `/.github/actions/action.yaml`. This injects them to the script `/lib/helm_deploy.sh` script, which supplies them to the helm values, which are consumed in `deploy.yaml`.
 
 In Openshift gui, the secrets are found as an admin under `Workloads` -> `Secrets`.
@@ -51,6 +53,7 @@ These create the network policies `digital-marketplace-allow-route-ingress` and 
 
 ### routes
 Sets up the `route` to redirect to the namespace url. Found in Openshift gui when logged in as an admin under `Networking` -> `Routes`.
+**NOTE** If changes are made to the route, the deploy process may error out with something along the lines of `...variable is immutable...` for `spec.host` (or whatever else you changed). In this case you need to go manually delete the route from either console with `kubectl` or in the Openshift gui, the rerun the deploy to have it recreate the host.
 
 ### _helpers.tpl
 This file sets up the full name, and labels for the deployment.
