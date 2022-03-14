@@ -33,9 +33,9 @@ spec:
           - name: KEYCLOAK_URL
             value: {{ .Values.app.keycloakUrl }}
           - name: KEYCLOAK_REALM
-            value: p2zhow64
+            value: {{ .Values.app.keycloakRealm }}
           - name: KEYCLOAK_CLIENT_ID
-            value: dm-auth-test
+            value: {{ .Values.app.keycloakClientID }}
           - name: KEYCLOAK_CLIENT_SECRET
             value: {{ .Values.image.app.clientSecret }}
           - name: COOKIE_SECRET
