@@ -10,7 +10,6 @@ image:
     tag: latest # The tag value must be passed in via the deploy script
     clientSecret: "" # clientSecret must be passed in via deploy script
     cookieSecret: "" # cookieSecret is passed in via deploy script
-    keycloakUrl: "" # keycloakUrl is passed in via deploy scirpt
 
 app:
   port: "3000"
@@ -19,6 +18,7 @@ app:
   databaseServiceName: postgresql
   databaseUsername: dig-mkt
   mailerHost: apps.smtp.gov.bc.ca
+  keycloakUrl: "" # keycloakUrl is passed in via deploy scirpt
 route:
   origin: "" # Pass the origin in through the deploy script: app-digmkt-dev.apps.silver.devops.gov.bc.ca
 
