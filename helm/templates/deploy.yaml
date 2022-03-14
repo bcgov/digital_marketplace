@@ -29,13 +29,22 @@ spec:
           - name: SERVER_PORT
             value: {{ .Values.app.port | quote }}
           - name: COOKIE_SECRET
-            value: {{ .Values.image.app.cookieSecret }}
+            valueFrom:
+              secretKeyRef:
+                key: cookie-secret
+                name: {{ template "digital-marketplace.fullname" . }}-cookie
           - name: DATABASE_SERVICE_NAME
             value: {{ .Values.app.databaseServiceName }}
           - name: POSTGRESQL_SERVICE_HOST
-            value: {{ .Values.image.app.databaseServiceHost }}
+            valueFrom:
+              secretKeyRef:
+                key: database-service-host
+                name: {{ template "digital-marketplace.fullname" . }}-database
           - name: DATABASE_PASSWORD
-            value: {{ .Values.image.app.databasePassword }}
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: {{ template "digital-marketplace.fullname" . }}-database
           - name: MAILER_HOST
             value: {{ .Values.app.mailerHost }}
           resources:
