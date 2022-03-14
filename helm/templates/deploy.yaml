@@ -26,6 +26,8 @@ spec:
           env:
           - name: ORIGIN
             value: {{ .Values.route.origin }}
+          - name: HOST
+            value: {{ .Values.route.host }}
           - name: SERVER_PORT
             value: {{ .Values.app.port | quote }}
           - name: KEYCLOAK_URL
