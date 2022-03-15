@@ -10,21 +10,25 @@ To deploy the application for the first time you must deploy logged in as a loca
 # Login to OpenShift using oc login
 $ oc login --token=<token> --server=https://api.silver.devops.gov.bc.ca:6443
 # Run deploy script from project root
-$ bash  ./lib/helm_deploy.sh -n <namespace> \ # eg ccc866-dev
+$ bash  ./lib/helm_deploy.sh -n <namespace> \
           --set app.namespace=<namespace> \
           --set image.app.clientSecret=<keycloak_client_secret> \
-          --set route.origin=<app_origin> \ # eg https://app-digmkt-dev.apps.silver.devops.gov.bc.ca
-          --set route.host=<app_host> \ # eg app-digmkt-dev.apps.silver.devops.gov.bc.ca
+          --set route.origin=<app_origin> \
+          --set route.host=<app_host> \
           --set image.app.cookieSecret=<cookie_secret> \
           --set image.app.databasePassword=<db_password> \
           --set image.app.databaseServiceHost=<db_service_host> \
-          --set app.keycloakUrl=<keycloak_url> \ # eg https://dev.oidc.gov.bc.ca
-          --set image.app.tag=<tag> # see below
+          --set app.keycloakUrl=<keycloak_url> \
+          --set image.app.tag=<tag>
 ```
+**Sample Vars**
+namespace: `ccc866-dev`
+app_origin `https://app-digmkt-dev.apps.silver.devops.gov.bc.ca`
+app_host `app-digmkt-dev.apps.silver.devops.gov.bc.ca`
+keycloak_url `https://dev.oidc.gov.bc.ca`
+tag `sha-b0086114dfdd9ddcf1f8bb0ad3980dd261a987d6d42f85595da7b24d2f0c3230`
 
 To find the `<tag>` visit [our GitHub packages page](https://github.com/bcgov/digital_marketplace/pkgs/container/digital_marketplace) and use the latest docker image sha. 
-
-eg. `sha-b0086114dfdd9ddcf1f8bb0ad3980dd261a987d6d42f85595da7b24d2f0c3230`
 
 ---
 
