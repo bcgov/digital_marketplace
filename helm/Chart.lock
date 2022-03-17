@@ -1,0 +1,6 @@
+dependencies:
+- name: spilo
+  repository: https://bcgov.github.io/spilo-chart
+  version: 0.1.0
+digest: sha256:449091d69b82deadec18f8fc8e862500a61a3188e9bd1e03fb630cce9290a69f
+generated: "2022-03-17T14:06:45.111674-07:00"
