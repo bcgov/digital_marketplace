@@ -37,7 +37,10 @@ spec:
           - name: KEYCLOAK_CLIENT_ID
             value: {{ .Values.app.keycloakClientID }}
           - name: KEYCLOAK_CLIENT_SECRET
-            value: {{ .Values.image.app.clientSecret }}
+            valueFrom:
+              secretKeyRef:
+                key: client-secret
+                name: {{ template "digital-marketplace.fullname" . }}-keycloak
           - name: COOKIE_SECRET
             valueFrom:
               secretKeyRef:
