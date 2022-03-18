@@ -45,7 +45,8 @@ spec:
             valueFrom:
               secretKeyRef:
                 key: cookie-secret
-                name: {{ template "digital-marketplace.fullname" . }}-cookie
+                # name: {{ template "digital-marketplace.fullname" . }}-cookie
+                name: app-digmkt-dev-cookie
           - name: DATABASE_SERVICE_NAME
             value: {{ .Values.app.databaseServiceName }}
           - name: POSTGRESQL_SERVICE_HOST
