@@ -1,8 +1,8 @@
-import { DB_MIGRATIONS_TABLE_NAME, POSTGRES_URL } from 'back-end/config';
+import { DB_MIGRATIONS_TABLE_NAME, getPGConfig } from 'back-end/config';
 
 module.exports = {
   client: 'pg',
-  connection: POSTGRES_URL,
+  connection: getPGConfig(),
   migrations: {
     tableName: DB_MIGRATIONS_TABLE_NAME,
     directory: './tasks'
