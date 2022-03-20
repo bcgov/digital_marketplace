@@ -10,7 +10,6 @@ COPY ./grunt-configs ./grunt-configs
 RUN npm install
 RUN npm run front-end:build
 RUN npm run back-end:build
-RUN npm run migrations:latest
 RUN chmod -R 775 /usr/app
 RUN chown -R node:root /usr/app
 EXPOSE 3000
