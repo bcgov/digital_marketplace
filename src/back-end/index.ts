@@ -1,4 +1,4 @@
-import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
+import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT, getPGConfig } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
@@ -31,7 +31,7 @@ import statusRouter from 'back-end/lib/routers/status';
 import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, RouteHook, Router } from 'back-end/lib/server';
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
 import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import Knex from 'knex';
+import Knex, { ConnectionConfig } from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
@@ -46,10 +46,20 @@ type AppRouter = Router<SupportedRequestBodies, any, any, any, SupportedResponse
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end', ENV);
 
-export function connectToDatabase(postgresUrl: string): Connection {
+// export function connectToDatabase(postgresUrl: string): Connection {
+//   return Knex({
+//     client: 'pg',
+//     connection: postgresUrl,
+//     migrations: {
+//       tableName: DB_MIGRATIONS_TABLE_NAME
+//     },
+//     debug: KNEX_DEBUG
+//   });
+// }
+export function connectToDatabase(connectionConfig: string | ConnectionConfig): Connection {
   return Knex({
     client: 'pg',
-    connection: postgresUrl,
+    connection: connectionConfig,
     migrations: {
       tableName: DB_MIGRATIONS_TABLE_NAME
     },
@@ -146,8 +156,13 @@ async function start() {
     throw new Error('Invalid environment variable configuration.');
   }
   // Connect to Postgres.
-  const connection = connectToDatabase(POSTGRES_URL);
-  logger.info('connected to the database');
+  const connectionConfig = getPGConfig()
+  const connection = connectToDatabase(connectionConfig);
+  // Test DB connection
+  connection.raw("SELECT 1").then(() => {
+    console.log("PostgreSQL connected");
+})
+
   // Create the router.
   let router: AppRouter = await (SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter)(connection);
   // Add the status router.

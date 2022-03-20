@@ -5,6 +5,7 @@ import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import { parseBooleanEnvironmentVariable } from 'shared/config';
+import { ConnectionConfig } from 'knex';
 
 // HARDCODED CONFIG
 // Offset for total opportunity metrics displayed on landing page
@@ -61,7 +62,26 @@ export const SWAGGER_ENABLE = get('SWAGGER_ENABLE', '') === 'true';
 
 export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
 
-export function getPostgresUrl(): string | null {
+export function getPGConfig(): string | ConnectionConfig {
+  let connectionConfig: string | ConnectionConfig = '';
+  if (process.env.PGUSER && process.env.PGPASSWORD && process.env.PGDATABASE && process.env.PGHOST && process.env.PGPORT) {
+    connectionConfig = {
+      host: process.env.PGHOST,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE
+    };
+  }
+  else if (process.env.POSTGRES_URL) {
+    connectionConfig = process.env.POSTGRES_URL;
+  }
+  else {
+    connectionConfig = getPostgresUrl();
+  }
+  return connectionConfig;
+}
+
+export function getPostgresUrl(): string {
   // *SERVICE* variables are set automatically by OpenShift.
   const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
   const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
@@ -74,7 +94,7 @@ export function getPostgresUrl(): string | null {
     return `postgresql://${user}:${password}@${host}:${port}/${databaseName}`;
   } else {
     // Return standard POSTGRES_URL as fallback.
-    return get('POSTGRES_URL', '') || null;
+    return get('POSTGRES_URL', '');
   }
 }
 
@@ -186,9 +206,9 @@ export function getConfigErrors(): string[] {
     errors.push('SERVER_PORT must be a positive integer.');
   }
 
-  if (!POSTGRES_URL) {
+  if (getPGConfig() === '') {
     errors = errors.concat([
-      'POSTGRES_URL must be specified.'
+      'Postgres config properties or POSTGRES_URL must be specified.'
     ]);
   }
 
