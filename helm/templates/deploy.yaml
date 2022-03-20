@@ -19,6 +19,64 @@ spec:
       labels:
         app: {{ template "digital-marketplace.fullname" . }}
     spec:
+      initContainers:
+      - env:
+        - name: PGDATABASE
+          value: postgres
+        - name: PGUSER
+          value: postgres
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password-superuser
+              name: {{ template "digital-marketplace.fullname" . }}-spilo
+        - name: PGUSER_OWNER
+          valueFrom:
+            secretKeyRef:
+              key: database-owner-user
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGPASSWORD_OWNER
+          valueFrom:
+            secretKeyRef:
+              key: database-owner-password
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGDATABASE_OWNER
+          valueFrom:
+            secretKeyRef:
+              key: database-name
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGUSER_APP
+          valueFrom: 
+            secretKeyRef:
+              key: database-app-user
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGPASSWORD_APP
+          valueFrom: 
+            secretKeyRef:
+              key: database-app-password
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGPORT
+          value: "5432"
+        - name: PGHOST
+          value: {{ template "digital-marketplace.fullname" . }}-spilo
+        name: {{ template "digital-marketplace.fullname" . }}-provision-pg-credentials
+        image: {{ .Values.image.psql.repository }}:{{ .Values.image.psql.tag }}
+        resources:
+          limits:
+            cpu: {{ .Values.resources.psql.limits.cpu }}
+            memory: {{ .Values.resources.psql.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.psql.requests.cpu }}
+            memory: {{ .Values.resources.psql.requests.memory }}
+        command:
+          - /usr/bin/env
+          - bash
+          - -c
+          - |
+            set -euox pipefail;
+            create-user-db -d $(PGDATABASE_OWNER) -u $(PGUSER_OWNER) -p $(PGPASSWORD_OWNER) --owner;
+            alter-role $(PGUSER_OWNER) createrole;
+            create-user-db -d $(PGDATABASE_OWNER) -u $(PGUSER_APP) -p $(PGPASSWORD_APP);
       containers:
         - name: {{ template "digital-marketplace.fullname" . }}
           image: {{ .Values.image.app.repository }}:{{ .Values.image.app.tag }}
@@ -61,6 +119,26 @@ spec:
                 name: {{ template "digital-marketplace.fullname" . }}-database
           - name: MAILER_HOST
             value: {{ .Values.app.mailerHost }}
+            # NEW
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                key: database-app-user
+                name: {{ template "digital-marketplace.fullname" . }}
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-app-password
+                name: {{ template "digital-marketplace.fullname" . }}
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                key: database-name
+                name: {{ template "digital-marketplace.fullname" . }}
+          - name: PGPORT
+            value: "5432"
+          - name: PGHOST
+            value: {{ template "digital-marketplace.fullname" . }}-spilo
           resources:
             requests:
               memory: {{ .Values.resources.app.requests.memory }}

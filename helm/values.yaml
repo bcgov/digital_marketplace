@@ -10,6 +10,9 @@ image:
     tag: latest # The tag value must be passed in via the deploy script
     clientSecret: "" # clientSecret must be passed in via deploy script
     cookieSecret: "" # cookieSecret is passed in via deploy script
+  psql:
+    repository: gcr.io/ggl-cas-storage/cas-postgres
+    tag: "0.3.0"
 
 app:
   port: "3000"
@@ -17,10 +20,17 @@ app:
   namespace: ""
   databaseServiceName: postgresql
   databaseUsername: dig-mkt
+  databaseName: dig-mkt
   mailerHost: apps.smtp.gov.bc.ca
   keycloakUrl: "" # keycloakUrl is passed in via deploy scirpt
   keycloakClientID: dm-auth-web
   keycloakRealm: p2zhow64
+
+db:
+  name: digital_marketplace
+  appUser: digital_marketplace_app
+  ownerUser: digital_marketplace
+
 route:
   origin: "" # Pass the origin in through the deploy script: app-digmkt-dev.apps.silver.devops.gov.bc.ca
 
@@ -36,8 +46,23 @@ resources:
     limits:
       cpu: "500m"
       memory: "1Gi"
+  psql:
+    limits:
+      cpu: "150m"
+      memory: "64Mi"
+    requests:
+      cpu: "50m"
+      memory: "32Mi"
 
 deployer:
   namespace: ccc866-dev
   serviceAccount:
     enabled: true
+
+spilo:
+  postgresMajorVersion: 10
+  continuousArchive:
+    enabled: false
+
+  persistentVolume:
+    size: "5Gi"
