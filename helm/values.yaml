@@ -65,4 +65,4 @@ spilo:
     enabled: false
 
   persistentVolume:
-    size: "5Gi"
+    size: "1024Mi"
