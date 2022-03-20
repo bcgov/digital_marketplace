@@ -1,4 +1,4 @@
-import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT, getPGConfig } from 'back-end/config';
+import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, PG_CONFIG, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
@@ -151,13 +151,12 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
 async function start() {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
-  if (configErrors.length || !POSTGRES_URL) {
+  if (configErrors.length || !PG_CONFIG) {
     configErrors.forEach((error: string) => logger.error(error));
     throw new Error('Invalid environment variable configuration.');
   }
   // Connect to Postgres.
-  const connectionConfig = getPGConfig()
-  const connection = connectToDatabase(connectionConfig);
+  const connection = connectToDatabase(PG_CONFIG);
   // Test DB connection
   connection.raw("SELECT 1").then(() => {
     console.log("PostgreSQL connected");

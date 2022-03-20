@@ -98,7 +98,7 @@ export function getPostgresUrl(): string {
   }
 }
 
-export const POSTGRES_URL = getPostgresUrl();
+export const PG_CONFIG = getPGConfig();
 
 export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
@@ -206,9 +206,9 @@ export function getConfigErrors(): string[] {
     errors.push('SERVER_PORT must be a positive integer.');
   }
 
-  if (getPGConfig() === '') {
+  if (PG_CONFIG === '') {
     errors = errors.concat([
-      'Postgres config properties or POSTGRES_URL must be specified.'
+      'PG_CONFIG must be specified.'
     ]);
   }
 
