@@ -49,10 +49,10 @@ resources:
   psql:
     limits:
       cpu: "150m"
-      memory: "64Mi"
+      memory: "5Gi"
     requests:
       cpu: "50m"
-      memory: "32Mi"
+      memory: "3Gi"
 
 deployer:
   namespace: ccc866-dev
