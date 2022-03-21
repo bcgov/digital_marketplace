@@ -23,6 +23,9 @@ inputs:
   host:
     description: "Host URL"
     required: true
+  cookieSecret:
+    description: "Secret used to has cookies"
+    required: true
   # basicAuthPasswordHash:
   #   description: "Basic auth password"
   #   required: false
@@ -43,5 +46,6 @@ runs:
         --set app.keycloakUrl=${{ inputs.keycloak_url }} \
         --set image.app.tag=${{ inputs.tag }} \
         --set route.origin=${{ inputs.origin }} \
-        --set route.host=${{ inputs.host }}
+        --set route.host=${{ inputs.host }} \
+        --set image.app.cookieSecret=${{ inputs.cookie_secret }}
     shell: bash

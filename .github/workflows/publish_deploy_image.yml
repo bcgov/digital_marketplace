@@ -67,3 +67,4 @@ jobs:
           origin: ${{ secrets.ORIGIN }}
           # basicAuthPasswordHash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}
           host: ${{ secrets.HOST }}
+          cookie_secret: ${{ secrets.COOKIE_SECRET }}
