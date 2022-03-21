@@ -27,7 +27,7 @@ app:
   keycloakRealm: p2zhow64
 
 db:
-  name: dig-mkt
+  name: digital_marketplace
   appUser: digital_marketplace_app
   ownerUser: digital_marketplace
 
