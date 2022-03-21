@@ -43,9 +43,16 @@ To find the `<tag>` visit [our GitHub packages page](https://github.com/bcgov/di
 - Paste the `token` value into the repositories [GitHub secrets](https://github.com/bcgov/digital_marketplace/settings/secrets/actions) in `OPENSHIFT_TOKEN`
 
 ## Secrets
-The secrets we need to set are in github. Secrets common to all of the deploys are i the repository secrets. Secrets that are specific to the environment (dev, test or prod) are in the environment secrets. They are read in in the `/.github/workflows/publish_deploy_image.yml` workflow, which passes them to the action `/.github/actions/action.yaml`. This injects them to the script `/lib/helm_deploy.sh` script, which supplies them to the helm values, which are consumed in `deploy.yaml`.
+The secrets we need to set are in github. Secrets common to all of the deploys are i the repository secrets. Secrets that are specific to the environment (dev, test or prod) are in the environment secrets. They are read in in the `/.github/workflows/publish_deploy_image.yml` workflow, which passes them to the action `/.github/actions/action.yaml`. This gives them to the script `/lib/helm_deploy.sh` script, which supplies them to the helm values, which are consumed in `deploy.yaml`.
+
+Other secrets are generated in `helm/templates/*Secret.yaml` files, and stored in OpenShift. These are read in `deploy.yaml` byt the name of the secret, and the values key.
 
 In Openshift gui, the secrets are found as an admin under `Workloads` -> `Secrets`.
+
+**NOTE** The [BCGov spilo-chart](https://bcgov.github.io/spilo-chart) creates some secrets as well. More infor in their docs, but the ones we reference in `deploy.yaml` are from the secret suffixed with `-spilo`.
+
+## Chart.yaml
+The Helm chart for this deployment. Requirement includes [BCGov spilo-chart](https://bcgov.github.io/spilo-chart) which is responsible for deploying Patroni and Postgres.
 
 ## Helm Templates
 
@@ -62,11 +69,13 @@ Sets up the `route` to redirect to the namespace url. Found in Openshift gui whe
 ### _helpers.tpl
 This file sets up the full name, and labels for the deployment.
 
-### *secret.yaml
-These files take the secrets passed in (from GHSecrets to the action to `values.yaml`) and create them in Openshift. They are read into `deploy.yaml` using `valueFrom` -> `secretKeyRef`.
-
-### deploy.yaml
-The deployment spec for digital marketplace.
+### *Secret.yaml
+These files create secrets for the cluster. They are read into `deploy.yaml` using `valueFrom` -> `secretKeyRef`. They can be accessed in OpenShift as an administrator under `Workloads` -> `Secrets`.
 
 ### values.yaml
 Creates the Service. Found as an admin in Openshift under `Networking` -> `Services`.
+
+### deploy.yaml
+The deployment spec for digital marketplace.
+**InitContainers**
+These are run prior to containers, and always run to completion. Currently, ours is used to provision database credentials. 
