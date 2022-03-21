@@ -98,7 +98,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 key: client-secret
-                name: {{ template "digital-marketplace.fullname" . }}-keycloak
+                name: {{ template "digital-marketplace.fullname" . }}-cookie
           - name: COOKIE_SECRET
             valueFrom:
               secretKeyRef:
@@ -106,19 +106,8 @@ spec:
                 name: {{ template "digital-marketplace.fullname" . }}-cookie
           - name: DATABASE_SERVICE_NAME
             value: {{ .Values.app.databaseServiceName }}
-          - name: POSTGRESQL_SERVICE_HOST
-            valueFrom:
-              secretKeyRef:
-                key: database-service-host
-                name: {{ template "digital-marketplace.fullname" . }}-database
-          - name: DATABASE_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                key: database-password
-                name: {{ template "digital-marketplace.fullname" . }}-database
           - name: MAILER_HOST
             value: {{ .Values.app.mailerHost }}
-            # NEW
           - name: PGUSER
             valueFrom:
               secretKeyRef:
