@@ -26,7 +26,7 @@ inputs:
   host:
     description: "Host URL"
     required: true
-  cookieSecret:
+  cookie_secret:
     description: "Secret used to has cookies"
     required: true
   # basicAuthPasswordHash:
