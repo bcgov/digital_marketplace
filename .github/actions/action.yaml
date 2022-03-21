@@ -14,20 +14,8 @@ inputs:
   tag:
     description: "the sha value from the latest build"
     required: true
-  client_secret:
-    description: "Client secret for sso keycloak login"
-    required: true
   origin:
     description: "URL where the application can be accessed"
-    required: true
-  cookie_secret:
-    description: "Secret used to has cookies"
-    required: true
-  database_service_host:
-    description: "IP of the database service host host"
-    required: true
-  database_password:
-    description: "Password for the database"
     required: true
   keycloak_url:
     description: "URL for keycloak"
@@ -35,6 +23,9 @@ inputs:
   host:
     description: "Host URL"
     required: true
+  basicAuthPasswordHash:
+    description: "Basic auth password"
+    required: false
 runs:
   using: composite
   steps:
@@ -50,11 +41,8 @@ runs:
       ./lib/helm_deploy.sh -n ${{ inputs.namespace }} \
         --set app.namespace=${{ inputs.namespace }} \
         --set app.keycloakUrl=${{ inputs.keycloak_url }} \
+        --set image.app.basicAuthPasswordHash=${{inputs.basicAuthPasswordHash}} \
         --set image.app.tag=${{ inputs.tag }} \
-        --set image.app.clientSecret=${{ inputs.client_secret }} \
-        --set image.app.cookieSecret=${{ inputs.cookie_secret }} \
-        --set image.app.databasePassword=${{ inputs.database_password }} \
-        --set image.app.databaseServiceHost=${{ inputs.database_service_host }} \
         --set route.origin=${{ inputs.origin }} \
         --set route.host=${{ inputs.host }}
     shell: bash

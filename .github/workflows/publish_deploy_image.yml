@@ -64,9 +64,6 @@ jobs:
           namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
           keycloak_url: ${{ secrets.KEYCLOAK_URL }}
           tag: ${{ env.TAG }}
-          client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           origin: ${{ secrets.ORIGIN }}
-          cookie_secret: ${{ secrets.COOKIE_SECRET }}
-          database_password: ${{ secrets.DATABASE_PASSWORD }}
-          database_service_host: ${{ secrets.DATABASE_SERVICE_HOST }}
+          basicAuthPasswordHash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}
           host: ${{ secrets.HOST }}
