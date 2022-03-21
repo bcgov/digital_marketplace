@@ -68,3 +68,4 @@ jobs:
           # basicAuthPasswordHash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}
           host: ${{ secrets.HOST }}
           cookie_secret: ${{ secrets.COOKIE_SECRET }}
+          client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}

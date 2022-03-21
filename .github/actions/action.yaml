@@ -20,6 +20,9 @@ inputs:
   keycloak_url:
     description: "URL for keycloak"
     required: true
+  client_secret:
+    description: Keycloak client secret"
+    required: true
   host:
     description: "Host URL"
     required: true
@@ -47,5 +50,6 @@ runs:
         --set image.app.tag=${{ inputs.tag }} \
         --set route.origin=${{ inputs.origin }} \
         --set route.host=${{ inputs.host }} \
-        --set image.app.cookieSecret=${{ inputs.cookie_secret }}
+        --set image.app.cookieSecret=${{ inputs.cookie_secret }} \
+        --set image.app.clientSecret=${{ inputs.client_secret }}
     shell: bash
