@@ -23,9 +23,9 @@ inputs:
   host:
     description: "Host URL"
     required: true
-  basicAuthPasswordHash:
-    description: "Basic auth password"
-    required: false
+  # basicAuthPasswordHash:
+  #   description: "Basic auth password"
+  #   required: false
 runs:
   using: composite
   steps:
@@ -41,7 +41,6 @@ runs:
       ./lib/helm_deploy.sh -n ${{ inputs.namespace }} \
         --set app.namespace=${{ inputs.namespace }} \
         --set app.keycloakUrl=${{ inputs.keycloak_url }} \
-        --set image.app.basicAuthPasswordHash=${{inputs.basicAuthPasswordHash}} \
         --set image.app.tag=${{ inputs.tag }} \
         --set route.origin=${{ inputs.origin }} \
         --set route.host=${{ inputs.host }}
