@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 docker.io/node:10-jessie
+FROM --platform=linux/amd64 docker.io/node:16
 COPY . /usr/app
 WORKDIR /usr/app
 RUN npm install
