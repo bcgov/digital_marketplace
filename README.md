@@ -157,14 +157,9 @@ Open three terminals and run the following commands:
 
 ```bash
 # Terminal 1
-# If you don't need to be able to sign into the app or already have keycloak:
-docker-compose up -d # Start a local PostgreSQL server in the background.
+docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
 npm run migrations:latest # Run all database migrations.
-
-# If you need to sign in to the app and don't already have keycloak:
-docker-compose -f docker-compose.keycloak.yml up -d # Start local postgres and keycloak servers
-npm run migrations:latest # Run all database migrations.
-node .devcontainer/scripts/keycloak-local.js # Set up keycloak server
+docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
 
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
