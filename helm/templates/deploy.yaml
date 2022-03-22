@@ -127,10 +127,10 @@ spec:
             value: "5432"
           - name: PGHOST
             value: {{ template "digital-marketplace.fullname" . }}-spilo
-          - name: BASIC_AUTH_USERNAME
-            value: {{ .Values.image.app.basicAuthUser }}
-          - name: BASIC_AUTH_PASSWORD_HASH
-            value: {{ .Values.image.app.basicAuthPasswordHash }}
+          # - name: BASIC_AUTH_USERNAME
+          #   value: {{ .Values.image.app.basicAuthUser }}
+          # - name: BASIC_AUTH_PASSWORD_HASH
+          #   value: {{ .Values.image.app.basicAuthPasswordHash }}
           resources:
             requests:
               memory: {{ .Values.resources.app.requests.memory }}
