@@ -1,6 +1,6 @@
 {
   "name": "bcgov-digital-marketplace",
-  "version": "1.8.2",
+  "version": "1.8.4",
   "description": "Digital Marketplace",
   "main": "index.js",
   "scripts": {
@@ -35,7 +35,6 @@
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > docs/OPEN_SOURCE_LICENSES.txt",
     "docs:db": "npx pg-doc --out docs/DATABASE.md --connection"
   },
-
   "repository": {
     "type": "git",
     "url": ""
