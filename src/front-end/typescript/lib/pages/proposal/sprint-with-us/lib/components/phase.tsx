@@ -354,7 +354,7 @@ const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
     <Row className='mb-5'>
       <Col xs='12'>
         <h4>Team Members</h4>
-        <p className='mb-0'>To satisfy this phase's requirements, your team must only consist of confirmed (non-pending) members of the selected organization.</p>
+        <p className='mb-0'>To satisfy this phase{'\''}s requirements, your team must only consist of confirmed (non-pending) members of the selected organization.</p>
         {disabled
           ? null
           : (<Link
@@ -392,7 +392,7 @@ const CapabilitiesView: View<Props> = ({ state, dispatch }) => {
     <Row>
       <Col xs='12'>
         <h4>Required Capabilities</h4>
-        <p className='mb-4'>This list will automatically update to reflect the combined capabilities of your selected team (includes pending team members). To satisfy this phase's requirements, your team must collectively possess all capabilities listed here.</p>
+        <p className='mb-4'>This list will automatically update to reflect the combined capabilities of your selected team (includes pending team members). To satisfy this phase{'\''}s requirements, your team must collectively possess all capabilities listed here.</p>
     </Col>
       <Col xs='12'>
         <Capabilities grid capabilities={state.capabilities} />

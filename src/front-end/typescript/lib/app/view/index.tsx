@@ -56,7 +56,7 @@ import { hasAcceptedTermsOrIsAnonymous } from 'shared/lib/resources/session';
 import { UserType } from 'shared/lib/resources/user';
 import { ADT, adt, adtCurried } from 'shared/lib/types';
 
-function makeViewPageProps<RouteParams, PageState, PageMsg>(
+function makeViewPageProps<RouteParams, PageState extends object, PageMsg>(
   props: ComponentViewProps<State, Msg>,
   component: ViewPageProps<RouteParams, PageState, PageMsg>['component'],
   getPageState: ((state: Immutable<State>) => Immutable<PageState> | undefined),

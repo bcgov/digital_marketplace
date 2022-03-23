@@ -47,7 +47,7 @@ paths:
         - Opportunities
       produces:
         - application/json
-      description: Retrieve a single Code-With-Us Opportunity for the specified id. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored. 
+      description: Retrieve a single Code-With-Us Opportunity for the specified id. Anonymous users and vendors can only view public Opportunities. Public service users can view public Opportunities and opportunities they have authored.
       parameters:
         - name: id
           in: path
@@ -63,7 +63,7 @@ paths:
           description: A database error occurred.
         404:
           description: A Code-With-Us Opportunity for the specified ID was not found.
-    
+
     put:
       summary: Update an existing Code-With-Us Opportunity.
       tags:
@@ -111,7 +111,7 @@ paths:
           description: A Code-With-Us Opportunity for the specified ID was not found.
         401:
           description: You do not have permission to update this Opportunity.
-    
+
     delete:
       summary: Delete a draft Code-With-Us Opportunity (Opportunity must be in draft)
       tags:
@@ -163,7 +163,7 @@ components:
           type: string
         proposalDeadline:
           type: string
-        assignmentDate: 
+        assignmentDate:
           type: string
         startDate:
           type: string
@@ -183,7 +183,7 @@ components:
           type: string
           enum: [DRAFT, PUBLISHED]
 
-        
+
   examples:
     createCWUOpportunity:
       summary: Request body for creating a Code-With-Us opportunity
@@ -226,7 +226,7 @@ components:
           acceptanceCriteria: You must have 8+ years of WordPress experience.
           evaluationCriteria: Proponents will be evaluated on their level of experience and ability to meet the completion deadline.
           attachments: [89fe0644-50e1-4939-a488-aa6cf5977d7b]
-    
+
     publishCWUOpportunity:
       summary: Request body for publishing a Code-With-Us opportunity
       value:

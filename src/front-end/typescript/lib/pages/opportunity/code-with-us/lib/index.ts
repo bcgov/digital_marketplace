@@ -81,6 +81,7 @@ export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
   switch (e) {
     case CWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
     case CWUOpportunityEvent.Edited: return 'Edited';
+    case CWUOpportunityEvent.NoteAdded: return 'Note Added';
   }
 }
 
@@ -93,6 +94,7 @@ export function opportunityToHistoryItems({ history }: CWUOpportunity): History.
         color: s.type.tag === 'status' ? cwuOpportunityStatusToColor(s.type.value) : undefined
       },
       note: s.note,
+      attachments: s.attachments,
       createdAt: s.createdAt,
       createdBy: s.createdBy || undefined
     }));

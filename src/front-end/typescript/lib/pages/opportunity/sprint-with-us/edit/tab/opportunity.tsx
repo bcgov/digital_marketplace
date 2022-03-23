@@ -528,7 +528,7 @@ export const component: Tab.Component<State, Msg> = {
     // Show relevant actions when the user is editing the opportunity.
     if (state.isEditing) {
       return adt('links', (() => {
-        const links = [];
+        const links: any = [];
         if (!isPublic && viewerIsAdmin) {
           // Allow admins to publish changes directly after editing a non-public opp.
           links.push({

@@ -43,7 +43,7 @@ const NotificationGroup: View<NotificationGroupProps> = ({ title, emails }) => {
   );
 };
 
-async function makeEmailNotificationReference(): Promise<View<{}>> {
+async function makeEmailNotificationReference(): Promise<View<Record<string, never>>> {
   const notifications: NotificationGroupProps[] = [
     {
       title: 'Account Registered',
@@ -218,7 +218,7 @@ async function makeEmailNotificationReference(): Promise<View<{}>> {
       emails: await organizationArchivedT(mocks.vendorUser, mocks.organization)
     }
   ];
-  return () => {
+  return function EmailNotificationWrapper() {
     return (
       <html>
         <head>

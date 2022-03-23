@@ -47,5 +47,3 @@ paths:
           description: An invalid Counter name was provided
         503:
           description: A database error has occurred or the Counter is not updatable.
-
-   

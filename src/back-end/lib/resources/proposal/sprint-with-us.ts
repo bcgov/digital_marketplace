@@ -377,7 +377,7 @@ const resource: Resource = {
         }
 
         switch (request.body.tag) {
-          case 'edit':
+          case 'edit': {
             const { organization,
                     inceptionPhase,
                     prototypePhase,
@@ -511,7 +511,8 @@ const resource: Resource = {
                 } as UpdateEditValidationErrors)
               });
             }
-          case 'submit':
+          }
+          case 'submit': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.Submitted, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -610,7 +611,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('submit' as const, validatedSubmissionNote.value)
             } as ValidatedUpdateRequestBody);
-          case 'scoreQuestions':
+          }
+          case 'scoreQuestions': {
             if (![SWUProposalStatus.UnderReviewTeamQuestions, SWUProposalStatus.EvaluatedTeamQuestions].includes(validatedSWUProposal.value.status)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -632,7 +634,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('scoreQuestions' as const, validatedQuestionsScore.value)
             } as ValidatedUpdateRequestBody);
-          case 'screenInToCodeChallenge':
+          }
+          case 'screenInToCodeChallenge': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewCodeChallenge, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -654,7 +657,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('screenInToCodeChallenge' as const, validatedScreenInCCNote.value)
             });
-          case 'screenOutFromCodeChallenge':
+          }
+          case 'screenOutFromCodeChallenge': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.EvaluatedTeamQuestions, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -676,7 +680,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('screenOutFromCodeChallenge' as const, validatedScreenOutCCNote.value)
             });
-          case 'scoreCodeChallenge':
+          }
+          case 'scoreCodeChallenge': {
             if (![SWUProposalStatus.UnderReviewCodeChallenge, SWUProposalStatus.EvaluatedCodeChallenge].includes(validatedSWUProposal.value.status)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -698,7 +703,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('scoreCodeChallenge' as const, validatedCodeChallengeScore.value)
             } as ValidatedUpdateRequestBody);
-          case 'screenInToTeamScenario':
+          }
+          case 'screenInToTeamScenario': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.UnderReviewTeamScenario, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -720,7 +726,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('screenInToTeamScenario' as const, validatedScreenInTSNote.value)
             });
-          case 'screenOutFromTeamScenario':
+          }
+          case 'screenOutFromTeamScenario': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.EvaluatedCodeChallenge, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -742,7 +749,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('screenOutFromTeamScenario' as const, validatedScreenOutTSNote.value)
             });
-          case 'scoreTeamScenario':
+          }
+          case 'scoreTeamScenario': {
             if (![SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.EvaluatedTeamScenario].includes(validatedSWUProposal.value.status)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -764,7 +772,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('scoreTeamScenario' as const, validatedTeamScenarioScore.value)
             } as ValidatedUpdateRequestBody);
-          case 'award':
+          }
+          case 'award': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.Awarded, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -786,7 +795,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('award' as const, validatedAwardNote.value)
             } as ValidatedUpdateRequestBody);
-          case 'disqualify':
+          }
+          case 'disqualify': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.Disqualified, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -802,7 +812,8 @@ const resource: Resource = {
               session: request.session,
               body: adt('disqualify' as const, validatedDisqualifyNote.value)
             } as ValidatedUpdateRequestBody);
-          case 'withdraw':
+          }
+          case 'withdraw': {
             if (!isValidStatusChange(validatedSWUProposal.value.status, SWUProposalStatus.Withdrawn, request.session.user.type, swuOpportunity.proposalDeadline)) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
@@ -818,6 +829,7 @@ const resource: Resource = {
               session: request.session,
               body: adt('withdraw' as const, validatedWithdrawnNote.value)
             } as ValidatedUpdateRequestBody);
+          }
           default:
             return invalid({ proposal: adt('parseFailure' as const) });
         }

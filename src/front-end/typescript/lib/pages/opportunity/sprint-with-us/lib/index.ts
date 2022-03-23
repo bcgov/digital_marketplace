@@ -87,6 +87,7 @@ export function swuOpportunityEventToTitleCase(e: SWUOpportunityEvent): string {
   switch (e) {
     case SWUOpportunityEvent.AddendumAdded: return 'Addendum Added';
     case SWUOpportunityEvent.Edited: return 'Edited';
+    case SWUOpportunityEvent.NoteAdded: return 'Note Added';
   }
 }
 
@@ -99,6 +100,7 @@ export function opportunityToHistoryItems({ history }: SWUOpportunity): History.
         color: s.type.tag === 'status' ? swuOpportunityStatusToColor(s.type.value) : undefined
       },
       note: s.note,
+      attachments: s.attachments,
       createdAt: s.createdAt,
       createdBy: s.createdBy || undefined
     }));

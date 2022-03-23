@@ -139,7 +139,7 @@ export function getValues(state: Immutable<State>): Values {
 
 export type Errors = CreateSWUProposalReferenceValidationErrors[];
 
-export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
+export function setErrors(state: Immutable<State> | any, errors: Errors): Immutable<State> {
   return errors.reduce(
     (acc, e, i) => acc
       .updateIn(['references', i, 'name'], s => FormField.setErrors(s, e.name || []))
@@ -150,7 +150,7 @@ export function setErrors(state: Immutable<State>, errors: Errors): Immutable<St
   );
 }
 
-export function validate(state: Immutable<State>): Immutable<State> {
+export function validate(state: Immutable<State> | any): Immutable<State> {
   return state.references.reduce(
     (acc, r, i) => acc
       .updateIn(['references', i, 'name'], s => FormField.validate(s))

@@ -344,7 +344,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
             opportunity: state.opportunity.id,
             status: action.value
           });
-        case 'update':
+        case 'update': {
           const updateResult = await api.proposals.swu.update(action.value, adt('edit' as const, formValues));
           return api.mapInvalid(updateResult, errors => {
             if (errors.proposal && errors.proposal.tag === 'edit') {
@@ -353,6 +353,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
               return {};
             }
           });
+        }
     }
   })();
   switch (actionResult.tag) {
@@ -574,7 +575,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
           <p>Select your organization and team members for each phase of this Sprint With Us opportunity. In order to submit your proposal for consideration, you must:</p>
           <ul className='mb-5'>
             <li>Select at least two members for each phase; and</li>
-            <li>Ensure the aggregate of your team's capabilities must satisfy all of the required capabilities for each phase.</li>
+            <li>Ensure the aggregate of your team{'\''}s capabilities must satisfy all of the required capabilities for each phase.</li>
           </ul>
         </Col>
         <Col xs='12'>
@@ -615,7 +616,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
     <div>
       <Row>
         <Col xs='12' className='mb-4'>
-          <p>Propose a Total Cost for each of this opportunity's phases using the fields provided below. In order to submit your proposal for consideration, you must:</p>
+          <p>Propose a Total Cost for each of this opportunity{'\''}s phases using the fields provided below. In order to submit your proposal for consideration, you must:</p>
           <ul>
             <li>Not exceed the maximum budget for each phase; and</li>
             <li>Not exceed the total maximum budget for the opportunity.</li>
@@ -690,7 +691,7 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs='12'>
         <p className='mb-4'>Provide a response to each of the team questions below. Please note that responses that exceed the word limit will receive a score of zero.</p>
         <Alert color='danger' fade={false} className='mb-5'>
-          <strong>Important!</strong> Do not reference your organization's name, a team member's name or specific company software in any of your responses.
+          <strong>Important!</strong> Do not reference your organization{'\''}s name, a team member{'\''}s name or specific company software in any of your responses.
         </Alert>
       </Col>
       <Col xs='12'>
@@ -840,7 +841,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
           <h2>Organization Info</h2>
           {organization
             ? (<div>
-                <p className='mb-4'>Please review your organization's information to ensure it is up-to-date by clicking on the link below.</p>
+                <p className='mb-4'>Please review your organization{'\''}s information to ensure it is up-to-date by clicking on the link below.</p>
                 <Link
                   newTab
                   symbol_={leftPlacement(imageLinkSymbol(organization.logoImageFile ? fileBlobPath(organization.logoImageFile) : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH))}
@@ -919,7 +920,7 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
       </Col>
       <Col xs='12'>
         <div  className='mt-5 pt-5 border-top'>
-          <h2 className='mb-4'>Team Questions' Responses</h2>
+          <h2 className='mb-4'>Team Questions{'\''} Responses</h2>
           {TeamQuestions.getValues(state.teamQuestions).map((r, i, rs) => (
             <ReviewTeamQuestionResponseView
               key={`swu-proposal-review-team-question-response-${i}`}
