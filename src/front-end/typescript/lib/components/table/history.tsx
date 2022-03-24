@@ -8,15 +8,19 @@ import React from 'react';
 import { formatDate, formatTime } from 'shared/lib';
 import { isAdmin, User, UserSlim } from 'shared/lib/resources/user';
 import { ADT, adt } from 'shared/lib/types';
+import { AttachmentList } from 'front-end/lib/components/attachments';
+import { FileRecord } from 'shared/lib/resources/file';
+import { UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/sprint-with-us';
 
 export interface Item {
   type: {
     text: string;
     color?: ThemeColor;
   };
-  note?: string;
   createdAt: Date;
   createdBy?: UserSlim;
+  note?: string;
+  attachments?: FileRecord[];
 }
 
 export interface Params {
@@ -26,10 +30,12 @@ export interface Params {
 }
 
 export interface State extends Pick<Params, 'items' | 'viewerUser'> {
-  table: Immutable<Table.State>;
+  table: Immutable<Table.State>,
+  publishNewNote?: (value: UpdateWithNoteRequestBody) => Record<string,unknown>;
 }
 
-export type Msg = ADT<'table', Table.Msg>;
+export type Msg = ADT<'table', Table.Msg>
+| ADT<'createHistoryNote', Table.Msg>;
 
 export const init: Init<Params, State> = async ({ idNamespace, items, viewerUser }) => {
   return {
@@ -51,6 +57,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: value => ({ tag: 'table', value })
       });
+    case 'createHistoryNote':
+      return updateComponentChild({
+        state,
+        childStatePath: ['table'],
+        childUpdate: Table.update,
+        childMsg: msg.value,
+        mapChildMsg: value => ({ tag: 'table', value })
+      });
+
   }
 };
 
@@ -92,7 +107,12 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         className: 'text-wrap'
       },
       {
-        children: item.note || EMPTY_STRING
+        children: (
+          <>
+            {item.note || EMPTY_STRING}
+            {item.attachments && <AttachmentList files={item.attachments} />}
+          </>
+        )
       },
       {
         className: 'text-nowrap',

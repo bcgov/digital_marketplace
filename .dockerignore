@@ -10,9 +10,9 @@ sonar-project.properties
 # Github
 .github
 
-# macOS 
+# macOS
 .DS_Store
 
-# IDE 
+# IDE
 .vscode
 .idea

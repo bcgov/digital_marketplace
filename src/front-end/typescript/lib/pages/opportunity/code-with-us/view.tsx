@@ -403,7 +403,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
                 ? (<span>If you already have a vendor account, please <Link dest={routeDest(adt('signIn', { redirectOnSuccess: state.routePath }))}>sign in</Link>.</span>)
                 : null}
             </p>
-            <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity's proposal deadline has passed.</p>
+            <p className='mb-0'>Please note that you will not be able to submit a proposal if the opportunity{'\''}s proposal deadline has passed.</p>
             {viewerUser && isVendor(viewerUser) && !state.existingProposal && isCWUOpportunityAcceptingProposals(state.opportunity)
               ? (<Link
                   disabled={state.toggleWatchLoading > 0}
@@ -459,7 +459,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     const successfulProponentName = state.opportunity.successfulProponent?.name;
     return {
       info: (() => {
-        const alerts = [];
+        const alerts: any = [];
         if (viewerUser && isVendor(viewerUser) && existingProposal?.submittedAt) {
           alerts.push({
             text: `You submitted a proposal to this opportunity on ${formatDateAtTime(existingProposal.submittedAt, true)}.`

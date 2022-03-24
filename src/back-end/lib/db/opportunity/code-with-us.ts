@@ -21,6 +21,11 @@ interface CreateCWUOpportunityParams extends Omit<CWUOpportunity, 'createdBy' | 
 
 type UpdateCWUOpportunityParams = Partial<CWUOpportunity>;
 
+interface UpdateCWUOpportunityWithNoteParams {
+  note: string;
+  attachments: FileRecord[];
+}
+
 interface RootOpportunityRecord {
   id: Id;
   createdAt: Date;
@@ -51,10 +56,11 @@ interface RawCWUOpportunityAddendum extends Omit<Addendum, 'createdBy'> {
   createdBy?: Id;
 }
 
-interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityHistoryRecord, 'createdBy' | 'type'> {
+interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityHistoryRecord, 'createdBy' | 'type' | 'attachments'> {
   createdBy: Id | null;
   status?: CWUOpportunityStatus;
   event?: CWUOpportunityEvent;
+  attachments: Id[];
 }
 
 async function rawCWUOpportunityToCWUOpportunity(connection: Connection, raw: RawCWUOpportunity): Promise<CWUOpportunity> {
@@ -109,8 +115,15 @@ async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(connection: Con
 }
 
 async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection: Connection, session: Session, raw: RawCWUOpportunityHistoryRecord): Promise<CWUOpportunityHistoryRecord> {
-  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
+  const { createdBy: createdById, status, event, attachments: attachmentIds, ...restOfRaw } = raw;
   const createdBy = createdById ? getValidValue(await readOneUserSlim(connection, createdById), null) : null;
+  const attachments = await Promise.all(attachmentIds.map(async id => {
+    const result = getValidValue(await readOneFileById(connection, id), null);
+    if (!result) {
+      throw new Error('unable to process opportunity status record attachments');
+    }
+    return result;
+  }));
 
   if (!status && !event) {
     throw new Error('unable to process opportunity status record');
@@ -119,7 +132,8 @@ async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(conne
   return {
     ...restOfRaw,
     createdBy,
-    type: status ? adt('status', status as CWUOpportunityStatus) : adt('event', event as CWUOpportunityEvent)
+    type: status ? adt('status', status as CWUOpportunityStatus) : adt('event', event as CWUOpportunityEvent),
+    attachments
   };
 }
 
@@ -140,6 +154,20 @@ async function createCWUOpportunityAttachments(connection: Connection, trx: Tran
       .transacting(trx)
       .insert({
         opportunityVersion: oppVersionId,
+        file: attachment.id
+      }, '*');
+    if (!attachmentResult) {
+      throw new Error('Unable to create opportunity attachment');
+    }
+  }
+}
+
+async function createCWUOpportunityNoteAttachments(connection: Connection, trx: Transaction, eventId: Id, attachments: FileRecord[]) {
+  for (const attachment of attachments) {
+    const [attachmentResult] = await connection('cwuOpportunityNoteAttachments')
+      .transacting(trx)
+      .insert({
+        event: eventId,
         file: attachment.id
       }, '*');
     if (!attachmentResult) {
@@ -282,6 +310,15 @@ export const readOneCWUOpportunity = tryDb<[Id, Session], CWUOpportunity | null>
         .where({ opportunity: result.id })
         .orderBy('createdAt', 'desc');
 
+      if (!rawStatusArray) {
+        throw new Error('unable to read opportunity statuses');
+      }
+
+      // For reach status record, fetch any attachments and add their ids to the record as an array
+      await Promise.all(rawStatusArray.map(async raw => raw.attachments = (await connection<{ file: Id }>('cwuOpportunityNoteAttachments')
+        .where({ event: raw.id })
+        .select('file')).map(row => row.file)));
+
       result.history = await Promise.all(rawStatusArray.map(async raw => await rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(connection, session, raw)));
 
       if (publicOpportunityStatuses.includes(result.status)) {
@@ -395,7 +432,6 @@ export const createCWUOpportunity = tryDb<[CreateCWUOpportunityParams, Authentic
     if (!oppVersionRecord) {
       throw new Error('unable to create opportunity version');
     }
-
     // Create initial opportunity status record (Draft)
     await connection('cwuOpportunityStatuses')
       .transacting(trx)
@@ -613,4 +649,33 @@ export const readOneCWUOpportunityAuthor = tryDb<[Id], User | null>(async (conne
     .first())?.createdBy || null;
 
   return authorId ? await readOneUser(connection, authorId) : valid(null);
+});
+
+export const addCWUOpportunityNote = tryDb<[Id, UpdateCWUOpportunityWithNoteParams, AuthenticatedSession], CWUOpportunity>(async (connection, id, noteParams, session) => {
+  const now = new Date();
+  await connection.transaction(async trx => {
+    // Add a history record for the note addition
+    const [event] = await connection<RawCWUOpportunityHistoryRecord & { opportunity: Id }>('cwuOpportunityStatuses')
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: CWUOpportunityEvent.NoteAdded,
+        note: noteParams.note
+      }, '*');
+
+    if (!event) {
+      throw new Error('unable to create note for opportunity');
+    }
+
+    await createCWUOpportunityNoteAttachments(connection, trx, event.id, noteParams.attachments);
+  });
+
+  const dbResult = await readOneCWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error('unable to add note');
+  }
+  return valid(dbResult.value);
 });

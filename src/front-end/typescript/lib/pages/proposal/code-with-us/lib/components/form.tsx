@@ -473,6 +473,7 @@ export function isProponentTabValid(state: State): boolean {
     case 'organization':
       return FormField.isValid(state.organization);
   }
+  return false;
 }
 
 export function isProposalTabValid(state: State): boolean {
@@ -570,7 +571,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
             opportunity: state.opportunity.id,
             status: action.value
           });
-        case 'update':
+        case 'update':{
           const updateResult = await api.proposals.cwu.update(action.value, adt('edit' as const, formValues));
           return api.mapInvalid(updateResult, errors => {
             if (errors.proposal && errors.proposal.tag === 'edit') {
@@ -579,6 +580,7 @@ export async function persist(state: Immutable<State>, action: PersistAction): P
               return {};
             }
           });
+        }
     }
   })();
 

@@ -1,7 +1,7 @@
-FROM --platform=linux/amd64 docker.io/node:10-jessie
+FROM --platform=linux/amd64 docker.io/node:16
 COPY . /usr/app
 WORKDIR /usr/app
-RUN npm install
+RUN yarn install
 RUN npm run front-end:build
 RUN npm run back-end:build
 RUN chmod -R 775 /usr/app

@@ -175,7 +175,7 @@ export function getValues(state: Immutable<State>): Values {
 
 export type Errors = CreateSWUTeamQuestionValidationErrors[];
 
-export function setErrors(state: Immutable<State>, errors: Errors = []): Immutable<State> {
+export function setErrors(state: any, errors: Errors = []): Immutable<State> {
   return errors.reduce((acc, e, i) => {
     return acc
       .updateIn(['questions', i, 'question'], s => FormField.setErrors(s, e.question || []))
@@ -185,7 +185,7 @@ export function setErrors(state: Immutable<State>, errors: Errors = []): Immutab
   }, state);
 }
 
-export function validate(state: Immutable<State>): Immutable<State> {
+export function validate(state: any): Immutable<State> {
   return state.questions.reduce((acc, q, i) => {
     return acc
       .updateIn(['questions', i, 'question'], s => FormField.validate(s))

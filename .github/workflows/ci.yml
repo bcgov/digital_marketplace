@@ -1,7 +1,11 @@
 name: CI
-on: 
+on:
   push:
-    branches: [development, master]
+    branches:
+      - development
+      - master
+  pull_request:
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -9,38 +13,44 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '10'
-      - run: npm ci
+          node-version: '16'
+          cache: 'yarn'
+      - run: yarn
       - run: npm run front-end:test
       - run: npm run back-end:test
-  lint: 
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '10'
-      - run: npm ci
+          node-version: '16'
+          cache: 'yarn'
+      - run: yarn
       - run: npm run front-end:lint
       - run: npm run back-end:lint
-  audit:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '10'
-      - run: npm ci
-      - run: npm audit --audit-level=moderate
-  sonarcloud:
-    name: sonarCloud 
+          node-version: '16'
+          cache: 'yarn'
+      - run: yarn
+      - run: npm run front-end:build
+      - run: npm run back-end:build
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files -v
+  commitlint:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v2

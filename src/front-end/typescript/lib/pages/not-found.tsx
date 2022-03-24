@@ -32,7 +32,7 @@ const view: ComponentView<State, Msg> = () => {
       </Row>
       <Row className='mb-3 pb-3'>
         <Col xs='12'>
-          <p>The page you are looking for doesn't exist.</p>
+          <p>The page you are looking for doesn{'\''}t exist.</p>
         </Col>
       </Row>
       <Row>

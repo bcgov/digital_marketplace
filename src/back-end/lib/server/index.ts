@@ -25,7 +25,7 @@ export interface Request<Body, Session>        {
   readonly method: ServerHttpMethod;
   readonly session: Session;
   readonly params: Record<string, string>;
-  readonly query: Record<string, string>;
+  readonly query: Record<string, string> | any;
   readonly body: Body;
 }
 
@@ -59,6 +59,8 @@ export interface FileUpload<Metadata> {
   readonly name: string;
   readonly path: string;
   readonly metadata?: Metadata;
+  readonly fileSize?: string;
+  readonly fileFormat?: string;
 }
 
 export type FileRequestBody<FileUploadMetadata> = ADT<'file', FileUpload<FileUploadMetadata>>;
@@ -301,7 +303,7 @@ export interface RouteHook<IncomingReqBody, ValidatedReqBody, ReqBodyErrors, Res
 export function combineHooks<Session>(hooks: Array<RouteHook<any, any, any, any, any, Session>>): RouteHook<any, any, any, any, any, Session> {
   return {
     async before(request) {
-      const results = [];
+      const results: any = [];
       for (const hook of hooks) {
         results.push({
           state: await hook.before(request),

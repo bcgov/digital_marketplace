@@ -64,6 +64,8 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     let filePath: string | undefined;
     let metadata = '';
     let fileName = '';
+    let fileSize;
+    let fileFormat;
     const form = new multiparty.Form();
     // Listen for files and fields.
     // We only want to receive one file, so we disregard all other files.
@@ -76,6 +78,8 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
         const tmpPath = path.join(TMP_DIR, generateUuid());
         part.pipe(createWriteStream(tmpPath));
         filePath = tmpPath;
+        fileSize = part.byteCount;
+        fileFormat = part.headers['content-type']
       } else if (part.name === 'metadata' && !part.filename && !metadata) {
         part.setEncoding('utf8');
         part.on('data', chunk => metadata += chunk);
@@ -95,6 +99,23 @@ function parseMultipartRequest<FileUploadMetadata>(maxSize: number, parseFileUpl
     form.on('error', error => reject(error));
     // Resolve the promise once the request has finished parsing.
     form.on('close', () => {
+      if (filePath && metadata && fileName && fileSize && fileFormat) {
+        const jsonMetadata = parseJsonSafely(metadata);
+        switch (jsonMetadata.tag) {
+          case 'valid':
+            resolve(makeFileRequestBody({
+              name: fileName,
+              path: filePath,
+              metadata: parseFileUploadMetadata(jsonMetadata.value),
+              fileSize,
+              fileFormat
+            }));
+            break;
+          case 'invalid':
+            reject(new Error('Invalid `metadata` field.'));
+            break;
+        }
+      }
       if (filePath && metadata && fileName) {
         const jsonMetadata = parseJsonSafely(metadata);
         switch (jsonMetadata.tag) {
@@ -135,7 +156,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
       const setSessionId = (id: string) => expressRes.cookie(SESSION_COOKIE_NAME, id, {
         signed: true,
         httpOnly: true,
-        sameSite: 'Lax',
+        sameSite: 'lax',
         expires: addDays(new Date(), 2) //Expire cookie if not re-used within 2 days.
       });
       const sessionId = sessionToSessionId(response.session);
@@ -147,7 +168,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         case 'json':
           expressRes.json(response.body.value);
           break;
-        case 'file':
+        case 'file':{
           const file = response.body.value;
           expressRes.set('Content-Type', file.contentType);
           if (file.contentEncoding) {
@@ -158,6 +179,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
           }
           expressRes.send(response.body.value.buffer);
           break;
+        }
         case 'text':
           expressRes
             .set('Content-Type', 'text/plain')
@@ -201,6 +223,7 @@ export function express<ParsedReqBody, ValidatedReqBody, ReqBodyErrors, HookStat
         } else if (method !== ServerHttpMethod.Get && incomingHeaderMatches(headers, 'content-type', 'multipart')) {
           body = await parseMultipartRequest(maxMultipartFilesSize, parseFileUploadMetadata, expressReq);
         }
+
         // Create the initial request.
         const requestId = generateUuid();
         const initialRequest: Request<ExpressRequestBodies<FileUploadMetaData>, Session> = {

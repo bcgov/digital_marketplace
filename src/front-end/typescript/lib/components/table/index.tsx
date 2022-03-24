@@ -32,20 +32,22 @@ export const init: Init<Params, State> = async ({ idNamespace, THView = DefaultT
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'toggleTooltipTh':
+    case 'toggleTooltipTh': {
       const currentThIndex = state.activeTooltipThIndex;
       if (!currentThIndex) {
         return [state.set('activeTooltipThIndex', msg.value)];
       } else {
         return [state.set('activeTooltipThIndex', null)];
       }
-    case 'toggleTooltipTd':
+    }
+    case 'toggleTooltipTd': {
       const currentTdIndex = state.activeTooltipTdIndex;
       if (!currentTdIndex) {
         return [state.set('activeTooltipTdIndex', msg.value)];
       } else {
         return [state.set('activeTooltipTdIndex', null)];
       }
+    }
     default:
       return [state];
   }

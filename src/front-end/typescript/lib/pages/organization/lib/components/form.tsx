@@ -569,7 +569,7 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
           ...values,
           logoImageFile
         });
-      case 'update':
+      case 'update': {
         const updateResult = await api.organizations.update(params.value.orgId, adt('updateProfile', {
           ...params.value.extraBody,
           ...values,
@@ -584,6 +584,7 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
         } else {
           return updateResult;
         }
+      }
     }
   })();
   // Handle the back-end response.

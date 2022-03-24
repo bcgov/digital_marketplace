@@ -14,17 +14,17 @@ import { adt, ADT } from 'shared/lib/types';
 
 // Types & functions to assist with constructing TabComponents inside a PageComponent.
 
-export interface TabComponent<Params, State, Msg> extends Omit<PageComponent<never, never, State, Msg>, 'init' | 'getMetadata'> {
+export interface TabComponent<Params, State extends object, Msg> extends Omit<PageComponent<never, never, State, Msg>, 'init' | 'getMetadata'> {
   init: Init<Params, State>;
 }
 
-export interface Tab<Params, State, InnerMsg> {
+export interface Tab<Params, State extends object, InnerMsg> {
   params: Params;
   state: State;
   innerMsg: InnerMsg;
 }
 
-type TabsRecord<T> = Record<keyof T, Tab<unknown, unknown, unknown>>;
+type TabsRecord<T> = Record<keyof T, Tab<unknown, any, unknown>>;
 
 type Tabs<T extends TabsRecord<T>> = T;
 
@@ -163,7 +163,7 @@ export function makeParentUpdate<
   >(params: MakeParentUpdateParams<T, K, ExtraState, InnerMsg>): Update<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
   return ({ state, msg }) => {
     switch (msg.tag) {
-      case 'tab':
+      case 'tab':{
         const tabId = state.tab[0];
         const definition = params.idToDefinition(state)(tabId);
         return updateGlobalComponentChild({
@@ -173,6 +173,7 @@ export function makeParentUpdate<
           childMsg: msg.value,
           mapChildMsg: value => adt('tab' as const, value as TabMsg<T, K>)
         });
+      }
       case 'sidebar':
         return updateComponentChild({
           state,
@@ -196,7 +197,7 @@ export function makeParentView<
   ExtraState,
   InnerMsg
   >(idToDefinition: IdToDefinitionWithState<T, K, ExtraState>): ComponentView<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
-  return ({ state, dispatch }) => {
+  return function TabWrapper ({ state, dispatch })  {
     const [tabId, tabState] = state.tab;
     const definition = idToDefinition(state)(tabId);
     return (
