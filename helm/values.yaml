@@ -10,7 +10,7 @@ image:
     tag: latest # The tag value must be passed in via the deploy script
     clientSecret: "" # clientSecret must be passed in via deploy script
     cookieSecret: "" # cookieSecret is passed in via deploy script
-    basicAuthUser: "jiminy"
+    # basicAuthUser: "jiminy"
     # basicAuthPasswordHash: "" # provided by deploy script
   psql:
     repository: gcr.io/ggl-cas-storage/cas-postgres
