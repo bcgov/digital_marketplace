@@ -79,7 +79,7 @@ export function getValues(state: Immutable<State>): Values {
 
 export type Errors = CreateSWUProposalTeamQuestionResponseValidationErrors[];
 
-export function setErrors(state: Immutable<State>, errors: Errors = []): Immutable<State> {
+export function setErrors(state: Immutable<State>, errors: Errors | any = []): Immutable<State> {
   return errors.reduce((acc, e, i) => {
     return acc
       .updateIn(['responses', i, 'response'], s => FormField.setErrors(s, e.response || []));

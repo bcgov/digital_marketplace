@@ -14,9 +14,9 @@ export { newUrl, replaceUrl, replaceRoute, newRoute } from 'front-end/lib/framew
 // Base logic.
 
 // TODO replace Immutable with TypeScript's built-in Readonly
-export type Immutable<State = unknown> = Immutable.RecordOf<State>;
+export type Immutable<State extends object> = Immutable.RecordOf<State>;
 
-export function immutable<State = unknown>(state: State): Immutable<State> {
+export function immutable<State extends object>(state: State): Immutable<State> {
   return Immutable.Record(state)();
 }
 
@@ -27,16 +27,16 @@ export type Dispatch<Msg> = (msg: Msg) => Promise<any>;
 export type Init<Params, State> = (params: Params) => Promise<State>;
 
 // Update returns a tuple representing sync and async state mutations.
-export type UpdateReturnValue<State, Msg> = [Immutable<State>, ((state: Immutable<State>, dispatch: Dispatch<Msg>) => Promise<Immutable<State> | null>)?];
+export type UpdateReturnValue<State extends object, Msg> = [Immutable<State>, ((state: Immutable<State>, dispatch: Dispatch<Msg>) => Promise<Immutable<State> | null>)?];
 
-export interface UpdateParams<State, Msg> {
-  state: Immutable<State>;
+export interface UpdateParams<State extends object, Msg> {
+  state: Immutable<State> | any;
   msg: Msg;
 }
 
-export type Update<State, Msg> = (params: UpdateParams<State, Msg>) => UpdateReturnValue<State, Msg>;
+export type Update<State extends object, Msg> = (params: UpdateParams<State, Msg>) => UpdateReturnValue<State, Msg>;
 
-export interface UpdateChildParams<ParentState, ParentMsg, ChildState, ChildMsg> {
+export interface UpdateChildParams<ParentState extends object, ParentMsg, ChildState extends object, ChildMsg> {
   state: Immutable<ParentState>;
   childStatePath: string[];
   childUpdate: Update<ChildState, ChildMsg>;
@@ -49,14 +49,14 @@ export type ViewElement<Props = any> = null | ReactElement<Props>;
 
 export type ViewElementChildren<Props = any> = ViewElement<Props> | string | Array<ReactElement<Props> | null | string>;
 
-export type View<Props = {}, ReturnValue = ViewElement> = (props: Props) => ReturnValue;
+export type View<Props = Record<string, never>, ReturnValue = ViewElement> = (props: Props) => ReturnValue;
 
-export interface ComponentViewProps<State, Msg> {
+export interface ComponentViewProps<State extends object, Msg> {
   state: Immutable<State>;
   dispatch: Dispatch<Msg>;
 }
 
-export type ComponentView<State, Msg, ReturnValue = ViewElement> = View<ComponentViewProps<State, Msg>, ReturnValue>;
+export type ComponentView<State extends object, Msg, ReturnValue = ViewElement> = View<ComponentViewProps<State, Msg>, ReturnValue>;
 
 /**
  * The optional `Props` type parameter enables you
@@ -64,7 +64,7 @@ export type ComponentView<State, Msg, ReturnValue = ViewElement> = View<Componen
  * type-safe manner.
  */
 
-export interface Component<Params, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
+export interface Component<Params, State extends object, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   init: Init<Params, State>;
   update: Update<State, Msg>;
   view: View<Props>;
@@ -76,7 +76,7 @@ export function mapComponentDispatch<ParentMsg, ChildMsg>(dispatch: Dispatch<Par
   };
 }
 
-export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<PS, PM, CS, CM>): UpdateReturnValue<PS, PM> {
+export function updateComponentChild<PS extends object, PM, CS extends object, CM>(params: UpdateChildParams<PS , PM, CS, CM>): UpdateReturnValue<PS, PM> {
   const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
@@ -96,7 +96,7 @@ export function updateComponentChild<PS, PM, CS, CM>(params: UpdateChildParams<P
   }
   let asyncStateUpdate: UpdateReturnValue<PS, PM>[1];
   if (newAsyncChildState || newAsyncUpdateAfterState) {
-    asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<PM>) => {
+    asyncStateUpdate = async (state: Immutable<PS> | any, dispatch: Dispatch<PM>) => {
       const mappedDispatch = mapComponentDispatch(dispatch, mapChildMsg);
       let updated = false;
       if (newAsyncChildState) {
@@ -163,7 +163,7 @@ export function mapGlobalComponentDispatch<ParentMsg, ChildMsg, Route>(dispatch:
   };
 }
 
-export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<PS, GlobalComponentMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>> {
+export function updateGlobalComponentChild<PS extends object, PM, CS extends object, CM, Route>(params: UpdateChildParams<PS, GlobalComponentMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>> {
   const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
@@ -181,7 +181,7 @@ export function updateGlobalComponentChild<PS, PM, CS, CM, Route>(params: Update
   }
   let asyncStateUpdate: UpdateReturnValue<PS, GlobalComponentMsg<PM, Route>>[1];
   if (newAsyncChildState) {
-    asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<GlobalComponentMsg<PM, Route>>) => {
+    asyncStateUpdate = async (state: Immutable<PS> | any, dispatch: Dispatch<GlobalComponentMsg<PM, Route>>) => {
       const mappedDispatch = mapGlobalComponentDispatch(dispatch, mapChildMsg);
       let updated = false;
       if (newAsyncChildState) {
@@ -222,7 +222,7 @@ export interface PageMetadata {
   title: string;
 }
 
-export type PageGetMetadata<State> = (state: Immutable<State>) => PageMetadata;
+export type PageGetMetadata<State extends object> = (state: Immutable<State>) => PageMetadata;
 
 export interface PageAlert<Msg> {
   text: string | ReactElement;
@@ -235,7 +235,7 @@ export interface PageAlerts<Msg> {
   errors?: Array<PageAlert<Msg>>;
 }
 
-export type PageGetAlerts<State, Msg> = (state: Immutable<State>) => PageAlerts<Msg>;
+export type PageGetAlerts<State extends object, Msg> = (state: Immutable<State>) => PageAlerts<Msg>;
 
 export function emptyPageAlerts<Msg>(): PageAlerts<Msg> {
   return {};
@@ -265,7 +265,7 @@ export interface PageBreadcrumb<Msg> {
 
 export type PageBreadcrumbs<Msg> = Array<PageBreadcrumb<Msg>>;
 
-export type PageGetBreadcrumbs<State, Msg> = (state: Immutable<State>) => PageBreadcrumbs<Msg>;
+export type PageGetBreadcrumbs<State extends object, Msg> = (state: Immutable<State>) => PageBreadcrumbs<Msg>;
 
 export function emptyPageBreadcrumbs<Msg>(): PageBreadcrumbs<Msg> {
   return [];
@@ -299,7 +299,7 @@ export function mapPageModalGlobalComponentMsg<MsgA, MsgB, Route>(modal: PageMod
   return mapPageModalMsg(modal, msg => mapGlobalComponentMsg(msg, mapMsg));
 }
 
-export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<MsgA> | null, mapMsg: (msgA: MsgA) => MsgB): PageModal<MsgB> | null {
+export function mapPageModalMsg<MsgA, MsgB>(modal: PageModal<MsgA> | null, mapMsg: (msgA: MsgA) => MsgB): PageModal<MsgB> | null {
   if (!modal) { return null; }
   return {
     ...modal,
@@ -314,13 +314,13 @@ export function mapPageModalMsg<MsgA, MsgB, Route>(modal: PageModal<MsgA> | null
   };
 }
 
-export type PageGetModal<State, Msg> = (state: Immutable<State>) => PageModal<Msg> | null;
+export type PageGetModal<State extends object, Msg> = (state: Immutable<State>) => PageModal<Msg> | null;
 
 export function noPageModal<Msg>() {
   return null;
 }
 
-export interface PageSidebar<State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
+export interface PageSidebar<State extends object, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   size: 'medium' | 'large';
   color: ThemeColor;
   view: View<Props>;
@@ -344,9 +344,9 @@ export type PageContextualActions
   = ADT<'links', Link.Props[]>
   | ADT<'dropdown', PageContextualDropdown>;
 
-export type PageGetContextualActions<State, Msg> = (props: ComponentViewProps<State, Msg>) => PageContextualActions | null;
+export type PageGetContextualActions<State extends object, Msg> = (props: ComponentViewProps<State, Msg>) => PageContextualActions | null;
 
-export interface PageComponent<RouteParams, SharedState, State, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
+export interface PageComponent<RouteParams, SharedState, State extends object, Msg, Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>> {
   fullWidth?: boolean;
   simpleNav?: boolean;
   backgroundColor?: ThemeColor;
@@ -369,9 +369,9 @@ export function setPageMetadata(metadata: PageMetadata): void {
 
 export type AppMsg<Msg, Route> = GlobalComponentMsg<Msg, Route> | Router.IncomingRouteMsg<Route>;
 
-export type AppGetAlerts<State, Msg> = (props: ComponentViewProps<State, Msg>) => PageAlerts<Msg>;
+export type AppGetAlerts<State extends object, Msg> = (props: ComponentViewProps<State, Msg>) => PageAlerts<Msg>;
 
-export interface AppComponent<State, Msg, Route> extends Component<null, State, AppMsg<Msg, Route>> {
+export interface AppComponent<State extends object, Msg, Route> extends Component<null, State, AppMsg<Msg, Route>> {
   router: Router.Router<Route>;
 }
 
@@ -382,7 +382,7 @@ export function mapAppDispatch<ParentMsg, ChildMsg, Route>(dispatch: Dispatch<Ap
   };
 }
 
-export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams, ChildState, ChildMsg, SharedState> {
+export interface InitAppChildPageParams<ParentState extends object, ParentMsg, ChildRouteParams, ChildState extends object, ChildMsg, SharedState> {
   state: Immutable<ParentState>;
   dispatch: Dispatch<ParentMsg>;
   routePath: string;
@@ -399,7 +399,7 @@ export interface InitAppChildPageParams<ParentState, ParentMsg, ChildRouteParams
  * in an AppComponent's update function.
  */
 
-export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams, ChildState, ChildMsg, SharedState, Route>(params: InitAppChildPageParams<ParentState, AppMsg<ParentMsg, Route>, ChildRouteParams, ChildState, GlobalComponentMsg<ChildMsg, Route>, SharedState>): Promise<Immutable<ParentState>> {
+export async function initAppChildPage<ParentState extends object, ParentMsg, ChildRouteParams, ChildState extends object, ChildMsg, SharedState, Route>(params: InitAppChildPageParams<ParentState, AppMsg<ParentMsg, Route>, ChildRouteParams, ChildState, GlobalComponentMsg<ChildMsg, Route>, SharedState>): Promise<Immutable<ParentState>> {
   const childDispatch = mapAppDispatch(params.dispatch, params.mapChildMsg);
   const childState = immutable(await params.childInit({
     routePath: params.routePath,
@@ -416,7 +416,7 @@ export async function initAppChildPage<ParentState, ParentMsg, ChildRouteParams,
  * in an AppComponent's update function.
  */
 
-export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<PS, AppMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, AppMsg<PM, Route>> {
+export function updateAppChild<PS extends object, PM, CS extends object, CM, Route>(params: UpdateChildParams<PS, AppMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, AppMsg<PM, Route>> {
   const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
@@ -434,7 +434,7 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
   }
   let asyncStateUpdate: UpdateReturnValue<PS, AppMsg<PM, Route>>[1];
   if (newAsyncChildState) {
-    asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
+    asyncStateUpdate = async (state: Immutable<PS> | any, dispatch: Dispatch<AppMsg<PM, Route>>) => {
       const mappedDispatch = mapAppDispatch(dispatch, mapChildMsg);
       let updated = false;
       if (newAsyncChildState) {
@@ -460,7 +460,7 @@ export function updateAppChild<PS, PM, CS, CM, Route>(params: UpdateChildParams<
   ];
 }
 
-export interface UpdateChildPageParams<PS, PM, CS, CM> extends UpdateChildParams<PS, PM, CS, CM> {
+export interface UpdateChildPageParams<PS extends object, PM, CS extends object, CM> extends UpdateChildParams<PS, PM, CS, CM> {
   childGetMetadata: PageGetMetadata<CS>;
 }
 
@@ -469,16 +469,16 @@ export interface UpdateChildPageParams<PS, PM, CS, CM> extends UpdateChildParams
  * in an AppComponent's update function.
  */
 
-export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPageParams<PS, AppMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, AppMsg<PM, Route>> {
+export function updateAppChildPage<PS extends object, PM, CS extends object, CM, Route>(params: UpdateChildPageParams<PS, AppMsg<PM, Route>, CS, GlobalComponentMsg<CM, Route>>): UpdateReturnValue<PS, AppMsg<PM, Route>> {
   const [newState, newAsyncState] = updateAppChild(params);
-  const setMetadata = (parentState: Immutable<PS>) => {
+  const setMetadata = (parentState: Immutable<PS> | any) => {
     const pageState = parentState.getIn(params.childStatePath);
     const metadata = params.childGetMetadata(pageState);
     setPageMetadata(metadata);
   };
   setMetadata(newState);
   const asyncStateUpdate = async (state: Immutable<PS>, dispatch: Dispatch<AppMsg<PM, Route>>) => {
-    let newState = null;
+    let newState: any = null;
     if (newAsyncState) { newState = await newAsyncState(state, dispatch); }
     if (!newState) { return state; }
     setMetadata(newState);
@@ -492,11 +492,11 @@ export function updateAppChildPage<PS, PM, CS, CM, Route>(params: UpdateChildPag
 
 // State Manager.
 
-export type StateSubscription<State, Msg> = (state: Immutable<State>, dispatch: Dispatch<Msg>) => void;
+export type StateSubscription<State extends object, Msg> = (state: Immutable<State>, dispatch: Dispatch<Msg>) => void;
 
-export type StateSubscribe<State, Msg> = (fn: StateSubscription<State, Msg>) => boolean;
+export type StateSubscribe<State extends object, Msg> = (fn: StateSubscription<State, Msg>) => boolean;
 
-export type StateUnsubscribe<State, Msg> = (fn: StateSubscription<State, Msg>) => boolean;
+export type StateUnsubscribe<State extends object, Msg> = (fn: StateSubscription<State, Msg>) => boolean;
 
 export type MsgSubscription<Msg> = (msg: Msg) => void;
 
@@ -504,7 +504,7 @@ export type MsgSubscribe<Msg> = (fn: MsgSubscription<Msg>) => boolean;
 
 export type MsgUnsubscribe<Msg> = (fn: MsgSubscription<Msg>) => boolean;
 
-export interface StateManager<State, Msg> {
+export interface StateManager<State extends object, Msg> {
   dispatch: Dispatch<Msg>;
   stateSubscribe: StateSubscribe<State, Msg>;
   stateUnsubscribe: StateUnsubscribe<State, Msg>;
@@ -515,7 +515,7 @@ export interface StateManager<State, Msg> {
 
 // Start.
 
-export async function start<State, Msg extends ADT<any, any>, Route>(app: AppComponent<State, Msg, Route>, element: HTMLElement, debug: boolean): Promise<StateManager<State, AppMsg<Msg, Route>>> {
+export async function start<State extends object, Msg extends ADT<any, any>, Route>(app: AppComponent<State, Msg, Route>, element: HTMLElement, debug: boolean): Promise<StateManager<State, AppMsg<Msg, Route>>> {
   // Initialize state.
   // We do not need the RecordFactory, so we create the Record immediately.
   let state = Immutable.Record(await app.init(null))({});

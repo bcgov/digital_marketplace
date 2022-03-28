@@ -255,7 +255,7 @@ const resource: Resource = {
         }
         const validatedOrganization = await validateOrganizationId(connection, request.params.id, request.session);
         switch (request.body.tag) {
-          case 'updateProfile':
+          case 'updateProfile': {
             const {
               legalName,
               logoImageFile,
@@ -340,6 +340,7 @@ const resource: Resource = {
                 })
               });
             }
+          }
           case 'acceptSWUTerms':
             if (isValid(validatedOrganization)) {
               if (validatedOrganization.value.acceptedSWUTerms) {
@@ -347,6 +348,7 @@ const resource: Resource = {
               }
               return valid({ session: request.session, body: adt('acceptSWUTerms' as const) });
             }
+            return invalid({ organization: adt('parseFailure' as const) });
           default:
             return invalid({ organization: adt('parseFailure' as const) });
         }

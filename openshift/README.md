@@ -35,7 +35,7 @@ oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=pr
 
 If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
 
-`oc start-build <buildconfig_name>` 
+`oc start-build <buildconfig_name>`
 
 to trigger the build.
 
@@ -87,7 +87,7 @@ Replace `<secret>` with the KeyCloak client secret for the target environment.
 
 To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
 
-The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app. 
+The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app.
 
 ```
 oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
@@ -164,5 +164,5 @@ Note 1: When `apply` is used the deployment will not be automatically triggered.
 
 `oc -n ccc866-<dev,test,prod> rollout latest dc/<deploymentconfig_name>`
 
-Note 2: the `apply` command will not override an existing `KEYCLOAK_CLIENT_SECRET` stored in the OCP namespace.  
+Note 2: the `apply` command will not override an existing `KEYCLOAK_CLIENT_SECRET` stored in the OCP namespace.
 If the `KEYCLOAK_CLIENT_SECRET` needs to be changed, the previous one will need to be deleted (in the namespace) before generating the new one.

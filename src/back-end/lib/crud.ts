@@ -77,7 +77,7 @@ export function makeRouter<SupportedRequestBodies, SupportedResponseBodies, Crea
   return connection => {
     // We do not destructure `delete` because it conflicts with a TypeScript keyword.
     const { create, readOne, readMany, update } = resource;
-    const routes = [];
+    const routes: any = [];
     if (create) { routes.push(namespaceRoute(resource.routeNamespace, makeCreateRoute(connection, create))); }
     if (readOne) { routes.push(namespaceRoute(resource.routeNamespace, makeReadOneRoute(connection, readOne))); }
     if (readMany) { routes.push(namespaceRoute(resource.routeNamespace, makeReadManyRoute(connection, readMany))); }

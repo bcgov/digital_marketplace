@@ -1,3 +1,4 @@
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/button-inc/digital_marketplace/main.svg)](https://results.pre-commit.ci/latest/github/button-inc/digital_marketplace/main)
 # Digital Marketplace
 
 The Digital Marketplace is a web application that administers British Columbia's Code With Us and Sprint With Us procurement programs. It enables (1) public sector employees to create and publish procurement opportunities, and (2) vendors to submit proposals to these opportunities.
@@ -20,6 +21,7 @@ The file `docs/ONBOARDING.md` contains a collection of helpful information about
 - [Development Environment](#development-environment)
   - [Dependencies](#dependencies)
   - [Quick Start](#quick-start)
+  - [Local Development Environment](#local-development-environment)
   - [NPM Scripts](#npm-scripts)
   - [Environment Variables](#environment-variables)
 - [Deployment](#deployment)
@@ -35,12 +37,7 @@ The file `docs/ONBOARDING.md` contains a collection of helpful information about
 
 <!-- tocstop -->
 
-## Authors and Licensing
-
-This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
-
-**Dhruv Dang**, Managing Director
-[dhruv@realfolk.com](mailto:dhruv@realfolk.com)
+## Licensing
 
 This project available to use under the Apache 2.0 license (see `LICENSE.txt`). Please note the `NOTICE.txt` file included with this repository and the guidelines in section 4(d) of the license.
 
@@ -104,34 +101,59 @@ npm run scripts:run -- <SCRIPT_NAME> [...args]
 
 ## Set Up
 
-First, create a `.env` file and replace the placeholder values with your credentials. Refer to the [Environment Variables](#environment-variables) section below for further information.
+### `.env` File
+
+First, create a `.env` file and replace the placeholder values with your credentials (refer to the [Environment Variables](#environment-variables) section below for further information):
 
 ```bash
 cp sample.env .env
 # Open and edit .env in your text editor.
 ```
+#### Keycloak Set Up
+
+If you don't have access the BC Government's keycloak and you want to be able to log in to the app, you'll need to
+set up a local instance of keycloak. To do this, update the following environment variables in the `.env` file:
+- `KEYCLOAK_CLIENT_ID="login"`
+- `KEYCLOAK_CLIENT_SECRET="abc-123"`
+- `KEYCLOAK_URL="http://localhost:8080"`
+- `KEYCLOAK_REALM="digitalmarketplace"`
+
+Additionally, add:
+- `KEYCLOAK_USER="admin"`
+- `KEYCLOAK_PASSWORD="password"`
+- `ID_PROVIDER="github"`
+
+- Create `GitHub 0Auth` App - [Link](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app) and fill out the following fields:
+
+- Name: digital_marketplace
+- Homepage URL: https://localhost:3000 # Default back-end server address
+- Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
+
+Then:
+- Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
+- Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
+
+
+### Install Dependencies
 
 If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
 and drop you in a shell with them accessible in your `$PATH`.
 
 If you are not using Nix, please ensure the following packages have been installed:
 
-- Node.js 10.x
+- yarn
+- Node.js 16.x
 - SASS
 - Docker
 - Docker Compose 3.x
 
-Once installed, `cd` into this repository's root directory and proceed to install NPM dependencies:
+Once installed, `cd` into this repository's root directory and proceed to install  dependencies:
 
 ```bash
-npm install
+yarn
 ```
 
-### Containerized Quick Start
-
-If a local environment needs to be spun up to demo or test the app, the commands `docker-compose build` followed by `docker-compose up` will build and start the app and database in local containers. However, changes to the codebase will not be reflected in the app until the build command is re-run. This slow turn around makes local development using docker a less desirable approach. Below are instructions on how to use a docker container to handle the database, and the `watch` scripts to run the app. This solves the problem of the slow turnaround. A point of note here is that to start the application, it is the `back-end:start` (or `back-end:watch`) scripts that must be run. The `front-end:watch` script will monitor changes to the front-end source and update when it's changed, but will not run the app on it's own. This is a product of the back-end and front-end being very tightly coupled in this code base. If you are using the `docker-compose` file to run the app, this is done for you. However if you are running the app with the npm scripts for the automatic updates, it will be important to know. 
-
-### Local Development Environment
+### Quick Start
 
 Open three terminals and run the following commands:
 
@@ -152,7 +174,7 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.
 
-You can stop the local PostgreSQL container server by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
+You can stop the local PostgreSQL container server (and the keycloak server, if you're running it) by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
 ### NPM Scripts
 
@@ -163,35 +185,37 @@ It is recommended that developers use the following scripts defined in `package.
 npm run <SCRIPT_NAME>
 ```
 
-| Script Name                             | Description                                                                                                                                                   |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `start`                                 | Runs the back-end server.                                                                                                                                     |
-| `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                 |
-| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                               |
-| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                |
-| `front-end:build`                       | Builds the front-end using grunt.                                                                                                                             |
-| `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                         |
-| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                               |
-| `back-end:lint`                         | Lints the back-end source code using tslint.                                                                                                                  |
-| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                |
-| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                 |
-| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                      |
-| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                       |
-| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.               |
-| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                |
-| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                  |
-| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below. |
-| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                           |
-| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                              |
-| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                              |
-| `migrations:up`                         | Runs one migration `up`.                                                                                                                                      |
-| `migrations:down`                       | Runs one migration `down`.                                                                                                                                    |
-| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.          |
-| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                         |
-| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                               |
-| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                      |
-| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                        |
-| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                               |
+| Script Name                             | Description                                                                                                                                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cypress:run`                          | Runs the Cypress tests. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.                      |
+| `cypress:open`                          | Opens the interactive Cypress test runner. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.   |
+| `start`                                 | Runs the back-end server.                                                                                                                                                                                          |
+| `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                                                                      |
+| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                    |
+| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                     |
+| `front-end:build`                       | Builds the front-end using grunt.                                                                                                                                                                                  |
+| `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                              |
+| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                    |
+| `back-end:lint`                         | Lints the back-end source code using tslint.                                                                                                                                                                       |
+| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                     |
+| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                      |
+| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                           |
+| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                            |
+| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                    |
+| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                     |
+| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                                                                       |
+| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below.                                                      |
+| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                                                                                |
+| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                                                                                   |
+| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                                                                                   |
+| `migrations:up`                         | Runs one migration `up`.                                                                                                                                                                                           |
+| `migrations:down`                       | Runs one migration `down`.                                                                                                                                                                                         |
+| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.                                                               |
+| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                                                                              |
+| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                                                                                    |
+| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                           |
+| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                                                                             |
+| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                                                                                    |
 
 ### Environment Variables
 
@@ -230,10 +254,10 @@ Environment variables that affect the back-end server's functionality are stored
 | `MAILER_FROM`                           | The sender for transactional emails.                                                                                                                                                                                                     |
 | `MAILER_BATCH_SIZE`                     | The maximum number of email addresses to include in batch notification emails. Defaults to `50`.                                                                                                                                         |
 | `MAILER_MAX_CONNECTIONS`                | The maximum number of simultaneous SMTP connections to use for the mailer. Defaults to `5`.                                                                                                                                              |
-| `KEYCLOAK_URL`                          | The URL of the Keycloak server to use for authentication.                                                                                                                                                                                |
-| `KEYCLOAK_REALM`                        | The Keycloak realm. Please contact a team member to retrieve this credential.                                                                                                                                                            |
-| `KEYCLOAK_CLIENT_ID`                    | The Keycloak client ID. Please contact a team member to retrieve this credential.                                                                                                                                                        |
-| `KEYCLOAK_CLIENT_SECRET`                | The Keycloak client secret. Please contact a team member to retrieve this credential.                                                                                                                                                    |
+| `KEYCLOAK_URL`                          | The URL of the Keycloak server to use for authentication. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                             |
+| `KEYCLOAK_REALM`                        | The Keycloak realm. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                                                                   |
+| `KEYCLOAK_CLIENT_ID`                    | The Keycloak client ID. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                                                               |
+| `KEYCLOAK_CLIENT_SECRET`                | The Keycloak client secret. Please contact a team member to retrieve this credential, or [use a local instance of keycloak](#keycloak-set-up).                                                                                           |
 | `KNEX_DEBUG`                            | Set this to `true` to debug `knex` operations.                                                                                                                                                                                           |
 | `UPDATE_HOOK_THROTTLE`                  | The number of milliseconds used to throttle per-request jobs (e.g. automatically closing opportunities). Defaults to `60000`ms.                                                                                                          |
 | `AVATAR_MAX_IMAGE_WIDTH`                | The maximum image width for uploaded avatar image files. Files with a greater width will be resized. Defaults to 500 pixels.                                                                                                             |
@@ -362,11 +386,6 @@ When maintaining a fork of this project that has its own database migrations, sp
 ## Team
 
 The Digital Marketplace is currently operated by the Procurement Services Branch within the Government of British Columbia's Ministry of Citizen's Services.
-
-This project is designed, implemented and maintained by the team at Real Folk. If you are interested in adopting the Digital Markteplace, Code With Us and/or Sprint With Us for your government or organization, please reach out to us! Our team's intimate knowledge of the public sector and technology services procurement enables us to modify the Digital Marketplace to meet your needs and business processes.
-
-**Dhruv Dang**, Managing Director
-[dhruv@realfolk.com](mailto:dhruv@realfolk.com)
 
 ## Credits
 

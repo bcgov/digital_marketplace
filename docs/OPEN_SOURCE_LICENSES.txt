@@ -710,7 +710,7 @@
 │  ├─ url: https://github.com/jonschlinkert
 ├─ bcgov-digital-marketplace@1.0.0
 │  ├─ licenses: Apache-2.0
-│  ├─ repository: 
+│  ├─ repository:
 │  ├─ publisher: Real Folk Inc.
 │  └─ noticeFile: /home/dd/src/bcgov/digital_marketplace/NOTICE.txt
 ├─ bcrypt-pbkdf@1.0.2
@@ -6490,4 +6490,3 @@
    ├─ repository: https://github.com/archiverjs/node-zip-stream
    ├─ publisher: Chris Talkington
    ├─ url: http://christalkington.com/
-

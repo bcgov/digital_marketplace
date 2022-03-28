@@ -41,7 +41,7 @@ export interface Params {
   };
 }
 
-export type Component<State, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
+export type Component<State extends object, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
 
 export interface Tabs {
   profile: TabbedPage.Tab<Params, ProfileTab.State, ProfileTab.InnerMsg>;

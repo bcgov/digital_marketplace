@@ -73,7 +73,7 @@ paths:
           description: A database error occurred.
         404:
           description: A Code-With-Us Proposal for the specified ID was not found.
-    
+
     put:
       summary: Update an existing Code-With-Us Proposal.
       tags:
@@ -123,7 +123,7 @@ paths:
           description: A Code-With-Us Proposal for the specified ID was not found.
         401:
           description: You do not have permission to update this Proposal.
-    
+
     delete:
       summary: Delete a draft Code-With-Us Proposal (Opportunity must be in draft)
       tags:
@@ -173,7 +173,7 @@ components:
           type: string
           enum: [DRAFT, PUBLISHED]
 
-        
+
   examples:
     createCWUProposal:
       summary: Request body for creating a Code-With-Us proposal
@@ -199,7 +199,7 @@ components:
               tag: organization
               value: 69fe0644-50e1-3919-a458-aa6cf5977d7v
             status: DRAFT
-    
+
     submitCWUProposal:
       summary: Request body for submitting a Code-With-Us proposal
       value:
