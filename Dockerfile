@@ -1,7 +1,7 @@
-FROM --platform=linux/amd64 docker.io/node:14
+FROM --platform=linux/amd64 docker.io/node:16
 WORKDIR /usr/app
 COPY ./src /usr/app/src
-COPY package*.json ./
+COPY package.json ./
 COPY yarn.lock ./
 COPY ./lib /usr/app/lib
 COPY gruntfile.js ./
