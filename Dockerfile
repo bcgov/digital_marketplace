@@ -8,9 +8,12 @@ COPY gruntfile.js ./
 COPY ./grunt-configs ./grunt-configs
 COPY tsconfig.json ./
 
-RUN yarn install --frozen-lockfile --production=true
+RUN yarn install --frozen-lockfile --production=false
 RUN yarn run front-end:build
-RUN yarn run back-end:build
+RUN yarn run back-end:build && \
+    yarn install --frozen-lockfile --production=true && \
+    yarn cache clean
+
 RUN chmod -R 775 /usr/app
 RUN chown -R node:root /usr/app
 EXPOSE 3000
