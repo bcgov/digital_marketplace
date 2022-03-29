@@ -96,6 +96,7 @@
     "jimp": "^0.16.0",
     "keycloak-connect": "^8.0.0",
     "knex": "0.19.5",
+    "lightship": "^7.0.1",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
     "module-alias": "^2.2.2",
