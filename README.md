@@ -5,6 +5,8 @@ The Digital Marketplace is a web application that administers British Columbia's
 
 This document describes this project's developer environment, technical architecture and deployment infrastructure.
 
+The file `docs/ONBOARDING.md` contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
+
 ## Table of Contents
 
 <!-- toc -->
@@ -51,7 +53,7 @@ The source code is split into five parts:
 A TypeScript single-page application using React, Immutable.js, Bootstrap and SASS.
 The front-end's build system is executed by Grunt.
 
-The front-end's state management framework (`src/front-end/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
+The front-end's state management framework (`src/front-end/typescript/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
 ### Back-End (`src/back-end`)
 
@@ -160,6 +162,8 @@ Open three terminals and run the following commands:
 docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
 npm run migrations:latest # Run all database migrations.
 docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
+# An alternative to running the docker stop dm_app command is to comment out the app portion of the docker-compose file before running docker-compose up.
+# If this is done, the only step that you omit from this process is the docker stop dm_app command. The rest remains the same.
 
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
