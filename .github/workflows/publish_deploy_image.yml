@@ -63,5 +63,8 @@ jobs:
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
           namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
           tag: ${{ env.TAG }}
+          origin: ${{ secrets.ORIGIN }}
+          host: ${{ secrets.HOST }}
+          cookie_secret: ${{ secrets.COOKIE_SECRET }}
           client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           route: ${{ secrets.ROUTE }}
