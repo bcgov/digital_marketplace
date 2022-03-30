@@ -17,4 +17,4 @@ RUN yarn run back-end:build && \
 RUN chmod -R 775 /usr/app
 RUN chown -R node:root /usr/app
 EXPOSE 3000
-ENTRYPOINT ["/usr/local/bin/node", "build/back-end/back-end/start.js"]
+ENTRYPOINT ["/usr/app/src/front-end/docker-entrypoint.sh"]
