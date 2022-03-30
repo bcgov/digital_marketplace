@@ -29,9 +29,6 @@ inputs:
   cookie_secret:
     description: "Secret used to has cookies"
     required: true
-  # basic_auth_password_hash:
-  #   description: "Basic auth password"
-  #   required: false
 runs:
   using: composite
   steps:
@@ -51,5 +48,5 @@ runs:
         --set route.origin=${{ inputs.origin }} \
         --set route.host=${{ inputs.host }} \
         --set image.app.cookieSecret=${{ inputs.cookie_secret }} \
-        --set image.app.clientSecret=${{ inputs.client_secret }} \
+        --set image.app.clientSecret=${{ inputs.client_secret }}
     shell: bash
