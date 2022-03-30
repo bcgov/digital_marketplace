@@ -11,7 +11,7 @@ spec:
   replicas: {{ .Values.replicaCount }}
   strategy:
     type: RollingUpdate
-    rollingUpdate: 
+    rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
   template:
@@ -46,12 +46,12 @@ spec:
               key: database-name
               name: {{ template "digital-marketplace.fullname" . }}
         - name: PGUSER_APP
-          valueFrom: 
+          valueFrom:
             secretKeyRef:
               key: database-app-user
               name: {{ template "digital-marketplace.fullname" . }}
         - name: PGPASSWORD_APP
-          valueFrom: 
+          valueFrom:
             secretKeyRef:
               key: database-app-password
               name: {{ template "digital-marketplace.fullname" . }}

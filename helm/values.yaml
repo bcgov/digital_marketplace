@@ -42,7 +42,7 @@ networkPolicies:
 
 resources:
   app:
-    requests: 
+    requests:
       cpu: "100m"
       memory: "512Mi"
     limits:

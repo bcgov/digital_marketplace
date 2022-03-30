@@ -28,7 +28,7 @@ app_host `app-digmkt-dev.apps.silver.devops.gov.bc.ca`
 keycloak_url `https://dev.oidc.gov.bc.ca`
 tag `sha-b0086114dfdd9ddcf1f8bb0ad3980dd261a987d6d42f85595da7b24d2f0c3230`
 
-To find the `<tag>` visit [our GitHub packages page](https://github.com/bcgov/digital_marketplace/pkgs/container/digital_marketplace) and use the latest docker image sha. 
+To find the `<tag>` visit [our GitHub packages page](https://github.com/bcgov/digital_marketplace/pkgs/container/digital_marketplace) and use the latest docker image sha.
 
 Note that running the first deploy like this will generate a `charts` directory (in the `helm` directory) containing a .tgz file for spilo. This doesn't need to be checked in to git, you can remove it locally.
 
@@ -44,7 +44,7 @@ Note that running the first deploy like this will generate a `charts` directory 
 - In the `Data` section copy to clipboard the entry labelled `token`
 - Paste the `token` value into the repositories [GitHub secrets](https://github.com/bcgov/digital_marketplace/settings/secrets/actions) in `OPENSHIFT_TOKEN`
 
-If the github action for deploying is failing because of timeout, the time allowed can be changed in `/lib/helm_deploy.sh`. 
+If the github action for deploying is failing because of timeout, the time allowed can be changed in `/lib/helm_deploy.sh`.
 
 ## Secrets
 The secrets we need to set are in github. Secrets common to all of the deploys are i the repository secrets. Secrets that are specific to the environment (dev, test or prod) are in the environment secrets. They are read in in the `/.github/workflows/publish_deploy_image.yml` workflow, which passes them to the action `/.github/actions/action.yaml`. This gives them to the script `/lib/helm_deploy.sh` script, which supplies them to the helm values, which are consumed in `deploy.yaml`.
@@ -82,4 +82,4 @@ Creates the Service. Found as an admin in Openshift under `Networking` -> `Servi
 ### deploy.yaml
 The deployment spec for digital marketplace.
 **InitContainers**
-These are run prior to containers, and always run to completion. Currently, ours is used to provision database credentials. 
+These are run prior to containers, and always run to completion. Currently, ours is used to provision database credentials.

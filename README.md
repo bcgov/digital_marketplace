@@ -300,7 +300,7 @@ The Development and Test environments are secured behind HTTP Basic Auth. Please
 
 ### Deployment Process
 
-**IMPORTANT** 
+**IMPORTANT**
 For information on Helm deployment, see [helm deploy docs](./docs/HELM_DEPLOY.md).
 
 The "ccc866-tools" OpenShift project is used to trigger the deployment process for all environments.
