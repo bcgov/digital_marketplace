@@ -50,7 +50,7 @@ export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
 export const SCHEDULED_DOWNTIME = parseBooleanEnvironmentVariable(get('SCHEDULED_DOWNTIME', '0')) || false;
 
-export const BASIC_AUTH_USERNAME = get('BASIC_AUTH_USERNAME', 'jiminy');
+export const BASIC_AUTH_USERNAME = get('BASIC_AUTH_USERNAME', '');
 
 export const BASIC_AUTH_PASSWORD_HASH = get('BASIC_AUTH_PASSWORD_HASH', '');
 
