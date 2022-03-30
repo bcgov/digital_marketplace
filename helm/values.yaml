@@ -25,7 +25,7 @@ app:
   keycloakUrl: "" # keycloakUrl is passed in via deploy scirpt
   keycloakClientID: dm-auth-web
   keycloakRealm: p2zhow64
-  basicAuthUser: "jiminy"
+  basicAuthUsername: "jiminy"
   basicAuthPasswordHash: "" # provided by deploy script
 
 db:
