@@ -65,7 +65,6 @@ jobs:
           keycloak_url: ${{ secrets.KEYCLOAK_URL }}
           tag: ${{ env.TAG }}
           origin: ${{ secrets.ORIGIN }}
-          # basic_auth_password_hash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}
           host: ${{ secrets.HOST }}
           cookie_secret: ${{ secrets.COOKIE_SECRET }}
           client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
