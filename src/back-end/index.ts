@@ -160,9 +160,9 @@ async function start() {
   // Connect to Postgres.
   const connection = connectToDatabase(PG_CONFIG);
   // Test DB connection
-  connection.raw("SELECT 1").then(() => {
-    console.log("PostgreSQL connected");
-})
+  connection.raw('SELECT 1').then(() => {
+    console.log('PostgreSQL connected');
+});
 
   // Create the router.
   let router: AppRouter = await (SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter)(connection);
