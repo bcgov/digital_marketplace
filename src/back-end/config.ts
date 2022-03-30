@@ -72,9 +72,6 @@ export function getPGConfig(): string | ConnectionConfig {
       database: process.env.PGDATABASE
     };
   }
-  else if (process.env.POSTGRES_URL) {
-    connectionConfig = process.env.POSTGRES_URL;
-  }
   else {
     connectionConfig = getPostgresUrl();
   }
