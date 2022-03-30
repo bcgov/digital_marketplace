@@ -30,6 +30,8 @@ tag `sha-b0086114dfdd9ddcf1f8bb0ad3980dd261a987d6d42f85595da7b24d2f0c3230`
 
 To find the `<tag>` visit [our GitHub packages page](https://github.com/bcgov/digital_marketplace/pkgs/container/digital_marketplace) and use the latest docker image sha. 
 
+Note that running the first deploy like this will generate a `charts` directory (in the `helm` directory) containing a .tgz file for spilo. This doesn't need to be checked in to git, you can remove it locally.
+
 ---
 
 ### Subsequent Deployments
