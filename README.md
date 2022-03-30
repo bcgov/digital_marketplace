@@ -269,6 +269,10 @@ Environment variables that affect the back-end server's functionality are stored
 | `TZ`                                    | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration.                                                                                                           |
 | `SHOW_TEST_INDICATOR`                   | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `false`. |
 
+**Note on Postgres Connection**
+If the credentials for Patroni are provided, they will be used in place of the `POSTGRES_URL`, which acts as a fallback (as it is used for local dev).
+The Patroni credentials are `PGHOST`, `PGUSER`, `PGPASSWORD` and `PGDATABASE` which are supplied by the Helm deployment.
+
 #### Front-End Environment Variables
 
 Environment variables that affect the front-end's build process are stored and sanitized in `src/front-end/config.ts`, and referenced to in `gruntfile.js`.
@@ -299,6 +303,9 @@ Each environment has its own database instance.
 The Development and Test environments are secured behind HTTP Basic Auth. Please contact a team member to access these credentials.
 
 ### Deployment Process
+
+**IMPORTANT**
+For information on Helm deployment, see [helm deploy docs](./docs/HELM_DEPLOY.md).
 
 The "ccc866-tools" OpenShift project is used to trigger the deployment process for all environments.
 

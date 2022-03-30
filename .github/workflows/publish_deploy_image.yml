@@ -1,0 +1,71 @@
+name: Create and publish app Docker image
+
+on:
+  push:
+    branches: [ development ]
+  pull_request:
+    branches: [ development ]
+
+env:
+  GITHUB_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  TAG: sha-${{ github.sha }}
+  OPENSHIFT_SERVER: ${{ secrets.OPENSHIFT_SERVER }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-18.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to the GitHub Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.GITHUB_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.GITHUB_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-to-openshift-development:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    needs: [build-and-push-image]
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: "https://app-digmkt-dev.apps.silver.devops.gov.bc.ca/"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Deploy
+        uses: ./.github/actions/
+        with:
+          openshift_server_url: ${{ env.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+          keycloak_url: ${{ secrets.KEYCLOAK_URL }}
+          tag: ${{ env.TAG }}
+          origin: ${{ secrets.ORIGIN }}
+          host: ${{ secrets.HOST }}
+          cookie_secret: ${{ secrets.COOKIE_SECRET }}
+          client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+          basic_auth_password_hash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}

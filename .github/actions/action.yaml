@@ -1,0 +1,56 @@
+
+name: Deploy to OpenShift
+
+inputs:
+  openshift_server_url:
+    description: "URL of the OpenShift server"
+    required: true
+  openshift_token:
+    description: "Unique login token for OpenShift"
+    required: true
+  namespace:
+    description: "The namespace being deployed to"
+    required: true
+  tag:
+    description: "the sha value from the latest build"
+    required: true
+  origin:
+    description: "URL where the application can be accessed"
+    required: true
+  keycloak_url:
+    description: "URL for keycloak"
+    required: true
+  client_secret:
+    description: Keycloak client secret"
+    required: true
+  host:
+    description: "Host URL"
+    required: true
+  cookie_secret:
+    description: "Secret used to has cookies"
+    required: true
+  basic_auth_password_hash:
+    description: "Password for basic auth to allow access to site"
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Authenticate, set context, and run deploy script
+    uses: redhat-actions/oc-login@v1
+    with:
+      openshift_server_url: ${{ inputs.openshift_server_url }}
+      openshift_token: ${{ inputs.openshift_token }}
+      namespace: ${{ inputs.namespace }}
+      insecure_skip_tls_verify: true
+  - run: |
+      chmod +x ./lib/helm_deploy.sh
+      ./lib/helm_deploy.sh -n ${{ inputs.namespace }} \
+        --set app.namespace=${{ inputs.namespace }} \
+        --set app.keycloakUrl=${{ inputs.keycloak_url }} \
+        --set image.app.tag=${{ inputs.tag }} \
+        --set route.origin=${{ inputs.origin }} \
+        --set route.host=${{ inputs.host }} \
+        --set image.app.cookieSecret=${{ inputs.cookie_secret }} \
+        --set image.app.clientSecret=${{ inputs.client_secret }} \
+        --set app.basicAuthPasswordHash=${{ inputs.basic_auth_password_hash }}
+    shell: bash

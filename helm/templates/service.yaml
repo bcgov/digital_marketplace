@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "digital-marketplace.fullname" . }}
+  labels:
+{{ include "digital-marketplace.labels" . | indent 4}}
+spec:
+  ports:
+  - name: {{ template "digital-marketplace.fullname" . }}
+    port: {{ .Values.app.port }}
+    protocol: TCP
+    targetPort: {{ .Values.app.port }}
+  selector:
+    app: {{ template "digital-marketplace.fullname" . }}
+  sessionAffinity: None
+  type: ClusterIP

@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "digital-marketplace.fullname" . }}
+  labels:
+{{ include "digital-marketplace.labels" . | indent 4}}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "digital-marketplace.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: {{ template "digital-marketplace.fullname" . }}
+    spec:
+      initContainers:
+      - env:
+        - name: PGDATABASE
+          value: postgres
+        - name: PGUSER
+          value: postgres
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password-superuser
+              name: {{ template "digital-marketplace.fullname" . }}-spilo
+        - name: PGUSER_OWNER
+          valueFrom:
+            secretKeyRef:
+              key: database-owner-user
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGPASSWORD_OWNER
+          valueFrom:
+            secretKeyRef:
+              key: database-owner-password
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGDATABASE_OWNER
+          valueFrom:
+            secretKeyRef:
+              key: database-name
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGUSER_APP
+          valueFrom:
+            secretKeyRef:
+              key: database-app-user
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGPASSWORD_APP
+          valueFrom:
+            secretKeyRef:
+              key: database-app-password
+              name: {{ template "digital-marketplace.fullname" . }}
+        - name: PGPORT
+          value: "5432"
+        - name: PGHOST
+          value: {{ template "digital-marketplace.fullname" . }}-spilo
+        name: {{ template "digital-marketplace.fullname" . }}-provision-pg-credentials
+        image: {{ .Values.image.psql.repository }}:{{ .Values.image.psql.tag }}
+        resources:
+          limits:
+            cpu: {{ .Values.resources.psql.limits.cpu }}
+            memory: {{ .Values.resources.psql.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.psql.requests.cpu }}
+            memory: {{ .Values.resources.psql.requests.memory }}
+        command:
+          - /usr/bin/env
+          - bash
+          - -c
+          - |
+            set -euox pipefail;
+            create-user-db -d $(PGDATABASE_OWNER) -u $(PGUSER_OWNER) -p $(PGPASSWORD_OWNER) --owner;
+            alter-role $(PGUSER_OWNER) createrole;
+            create-user-db -d $(PGDATABASE_OWNER) -u $(PGUSER_APP) -p $(PGPASSWORD_APP);
+      containers:
+        - name: {{ template "digital-marketplace.fullname" . }}
+          image: {{ .Values.image.app.repository }}:{{ .Values.image.app.tag }}
+          imagePullPolicy: {{ .Values.image.app.pullPolicy }}
+          env:
+          - name: ORIGIN
+            value: {{ .Values.route.origin }}
+          - name: HOST
+            value: {{ .Values.route.host }}
+          - name: SERVER_PORT
+            value: {{ .Values.app.port | quote }}
+          - name: KEYCLOAK_URL
+            value: {{ .Values.app.keycloakUrl }}
+          - name: KEYCLOAK_REALM
+            value: {{ .Values.app.keycloakRealm }}
+          - name: KEYCLOAK_CLIENT_ID
+            value: {{ .Values.app.keycloakClientID }}
+          - name: KEYCLOAK_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: client-secret
+                name: {{ template "digital-marketplace.fullname" . }}-cookie
+          - name: COOKIE_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: cookie-secret
+                name: {{ template "digital-marketplace.fullname" . }}-cookie
+          - name: DATABASE_SERVICE_NAME
+            value: {{ .Values.app.databaseServiceName }}
+          - name: MAILER_HOST
+            value: {{ .Values.app.mailerHost }}
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                key: database-app-user
+                name: {{ template "digital-marketplace.fullname" . }}
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-app-password
+                name: {{ template "digital-marketplace.fullname" . }}
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                key: database-name
+                name: {{ template "digital-marketplace.fullname" . }}
+          - name: PGPORT
+            value: "5432"
+          - name: PGHOST
+            value: {{ template "digital-marketplace.fullname" . }}-spilo
+          - name: BASIC_AUTH_PASSWORD_HASH
+            value: {{ .Values.app.basicAuthPasswordHash }}
+          - name: BASIC_AUTH_USERNAME
+            value: {{ .Values.app.basicAuthUsername }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.app.requests.memory }}
+              cpu: {{ .Values.resources.app.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.app.limits.memory }}
+              cpu: {{ .Values.resources.app.limits.cpu }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: {{ .Values.app.port }}
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3

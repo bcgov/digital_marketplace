@@ -5,6 +5,7 @@ import findUp from 'find-up';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import { parseBooleanEnvironmentVariable } from 'shared/config';
+import { ConnectionConfig } from 'knex';
 
 // HARDCODED CONFIG
 // Offset for total opportunity metrics displayed on landing page
@@ -43,7 +44,7 @@ export const ENV = NODE_ENV;
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end:config', ENV);
 
-export const SERVER_HOST = get('SERVER_HOST', '127.0.0.1');
+export const SERVER_HOST = get('SERVER_HOST', '0.0.0.0');
 
 export const SERVER_PORT = parseInt(get('SERVER_PORT', '3000'), 10);
 
@@ -61,24 +62,40 @@ export const SWAGGER_ENABLE = get('SWAGGER_ENABLE', '') === 'true';
 
 export const SWAGGER_UI_PATH = get('SWAGGER_UI_PATH', '/docs/api');
 
-export function getPostgresUrl(): string | null {
+export function getPGConfig(): string | ConnectionConfig {
+  let connectionConfig: string | ConnectionConfig = '';
+  if (process.env.PGUSER && process.env.PGPASSWORD && process.env.PGDATABASE && process.env.PGHOST && process.env.PGPORT) {
+    connectionConfig = {
+      host: process.env.PGHOST,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE
+    };
+  }
+  else {
+    connectionConfig = getPostgresUrl();
+  }
+  return connectionConfig;
+}
+
+export function getPostgresUrl(): string {
   // *SERVICE* variables are set automatically by OpenShift.
   const databaseServiceName = (process.env.DATABASE_SERVICE_NAME || 'postgresql').toUpperCase().replace(/-/g, '_');
   const host = get(`${databaseServiceName}_SERVICE_HOST`, '');
-  const port = get(`${databaseServiceName}_SERVICE_PORT`, '');
-  const user = get('DATABASE_USERNAME', '');
+  const port = get(`${databaseServiceName}_SERVICE_PORT`, '5432');
+  const user = get('DATABASE_USERNAME', 'dig-mkt');
   const password = get('DATABASE_PASSWORD', '');
-  const databaseName = get('DATABASE_NAME', '');
+  const databaseName = get('DATABASE_NAME', 'dig-mkt');
   // Support OpenShift's environment variables.
   if (host && port && user && password && databaseName) {
     return `postgresql://${user}:${password}@${host}:${port}/${databaseName}`;
   } else {
     // Return standard POSTGRES_URL as fallback.
-    return get('POSTGRES_URL', '') || null;
+    return get('POSTGRES_URL', '');
   }
 }
 
-export const POSTGRES_URL = getPostgresUrl();
+export const PG_CONFIG = getPGConfig();
 
 export const COOKIE_SECRET = get('COOKIE_SECRET', '');
 
@@ -123,7 +140,7 @@ export const MAILER_FROM = get('MAILER_FROM', `Digital Marketplace<${MAILER_REPL
 export const MAILER_BATCH_SIZE = parseInt(get('MAILER_BATCH_SIZE', '50'), 10);
 
 // Keycloak configuration
-export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://sso-dev.pathfinder.gov.bc.ca');
+export const KEYCLOAK_URL = get('KEYCLOAK_URL', 'https://dev.oidc.gov.bc.ca');
 
 export const KEYCLOAK_REALM = get('KEYCLOAK_REALM', 'p2zhow64');
 
@@ -186,9 +203,9 @@ export function getConfigErrors(): string[] {
     errors.push('SERVER_PORT must be a positive integer.');
   }
 
-  if (!POSTGRES_URL) {
+  if (PG_CONFIG === '') {
     errors = errors.concat([
-      'POSTGRES_URL must be specified.'
+      'PG_CONFIG must be specified.'
     ]);
   }
 

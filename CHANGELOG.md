@@ -42,7 +42,7 @@ Note that each log must include a version number that has either an incremented 
 - fix email sender address
 - add sonarCloud scan job
 - updates to documentation
-- fix origin issue with deployment 
+- fix origin issue with deployment
 - feature add admin button to approve members
 - Commit Hash: TBD
 
