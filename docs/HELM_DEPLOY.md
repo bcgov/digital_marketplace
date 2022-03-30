@@ -44,6 +44,8 @@ Note that running the first deploy like this will generate a `charts` directory 
 - In the `Data` section copy to clipboard the entry labelled `token`
 - Paste the `token` value into the repositories [GitHub secrets](https://github.com/bcgov/digital_marketplace/settings/secrets/actions) in `OPENSHIFT_TOKEN`
 
+If the github action for deploying is failing because of timeout, the time allowed can be changed in `/lib/helm_deploy.sh`. 
+
 ## Secrets
 The secrets we need to set are in github. Secrets common to all of the deploys are i the repository secrets. Secrets that are specific to the environment (dev, test or prod) are in the environment secrets. They are read in in the `/.github/workflows/publish_deploy_image.yml` workflow, which passes them to the action `/.github/actions/action.yaml`. This gives them to the script `/lib/helm_deploy.sh` script, which supplies them to the helm values, which are consumed in `deploy.yaml`.
 
