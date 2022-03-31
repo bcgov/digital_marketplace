@@ -5,7 +5,6 @@ on:
     branches: [ development ]
   pull_request:
     branches: [ development ]
-    types: [ opened, synchronize, reopened, closed ]
 
 env:
   GITHUB_REGISTRY: ghcr.io
@@ -15,9 +14,6 @@ env:
 
 jobs:
   build-and-push-image:
-    if: >-
-      github.event.action != 'closed' ||
-      github.event.pull_request.merged == true
     runs-on: ubuntu-18.04
     permissions:
       contents: read
@@ -51,7 +47,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   deploy-to-openshift-development:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'push' && github.event.push.base.ref == 'development'
     needs: [build-and-push-image]
     runs-on: ubuntu-latest
     environment:
