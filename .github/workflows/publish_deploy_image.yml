@@ -5,6 +5,7 @@ on:
     branches: [ development ]
   pull_request:
     branches: [ development ]
+    types: [ opened, synchronize, reopened, closed ]
 
 env:
   GITHUB_REGISTRY: ghcr.io
@@ -14,6 +15,9 @@ env:
 
 jobs:
   build-and-push-image:
+    if: >-
+      github.event.action != 'closed' ||
+      github.event.pull_request.merged == true
     runs-on: ubuntu-18.04
     permissions:
       contents: read
