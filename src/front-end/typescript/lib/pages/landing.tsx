@@ -49,7 +49,7 @@ const Hero: ComponentView<State, Msg> = ({state, dispatch}) => {
       <Row className='justify-content-center text-center'>
         <Col xs='12' sm='10' md='6'>
           <h1 style={{lineHeight: '3.75rem'}}>
-            Discover Unique Opportunities to Collaborate with the {COPY.region.name.short} Public Sector.
+            mike was here Discover Unique Opportunities to Collaborate with the {COPY.region.name.short} Public Sector.
           </h1>
         </Col>
       </Row>
