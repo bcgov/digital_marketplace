@@ -120,7 +120,6 @@ const sendNoteAttachmentsToDB = async function(state) {
     switch (result.tag) {
       case 'valid':
         return result;
-        break;
       case 'invalid':
           return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
       case 'unhandled':
