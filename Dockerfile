@@ -1,7 +1,7 @@
 FROM --platform=linux/amd64 docker.io/node:16
 WORKDIR /usr/app
 COPY ./src /usr/app/src
-COPY package.json gruntfile.js yarn.lock tsconfig.json ./
+COPY package.json gruntfile.js yarn.lock tsconfig.json .env* ./
 COPY ./lib /usr/app/lib
 COPY ./grunt-configs ./grunt-configs
 
