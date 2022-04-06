@@ -7,7 +7,7 @@ import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
 import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
-import { getString, getStringArray } from 'shared/lib';
+import { getString } from 'shared/lib';
 import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -350,10 +350,10 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
     }
   } else if (user.status === UserStatus.InactiveByUser) {
     const { id } = user;
-    const dbResult = await updateUser(connection, { id, status: UserStatus.Active });
+    const dbUserResult = await updateUser(connection, { id, status: UserStatus.Active });
     // // Send notification
-    if (isValid(dbResult)) {
-      accountReactivatedSelf(dbResult.value);
+    if (isValid(dbUserResult)) {
+      accountReactivatedSelf(dbUserResult.value);
     }
   } else if (user.status === UserStatus.InactiveByAdmin) {
     makeAuthErrorRedirect(request);
