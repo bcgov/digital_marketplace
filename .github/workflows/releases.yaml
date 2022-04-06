@@ -1,0 +1,22 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release-on-push:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - id: release
+        uses: rymndhng/release-on-push-action@v0.24.0
+        with:
+          bump_version_scheme: patch
+
+      - name: Check Output Parameters
+        run: |
+          echo "Tag Name ${{ steps.release.outputs.tag_name }}"
+          echo "Version ${{ steps.release.outputs.version }}"
