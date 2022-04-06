@@ -289,8 +289,15 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
   return router;
 }
 
-// Process claims into a user, and establish a session
-// If something goes wrong return null
+/**
+ * Process claims into a user, and establish a session
+ * If something goes wrong return null
+ *
+ * @param connection
+ * @param request
+ * @param tokenSet
+ * @returns
+ */
 async function establishSessionWithClaims(connection: Connection, request: Request<any, Session>, tokenSet: TokenSet) {
   const claims = tokenSet.claims();
   let userType: UserType;
