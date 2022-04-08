@@ -7,7 +7,7 @@ import { ServerHttpMethod } from 'back-end/lib/types';
 import { generators, TokenSet, TokenSetParameters } from 'openid-client';
 import qs from 'querystring';
 import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
-import { getString, getStringArray } from 'shared/lib';
+import { getString } from 'shared/lib';
 import { request as httpRequest } from 'shared/lib/http';
 import { Session } from 'shared/lib/resources/session';
 import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
@@ -289,22 +289,23 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
   return router;
 }
 
-// Process claims into a user, and establish a session
-// If something goes wrong return null
+/**
+ * Process claims into a user, and establish a session
+ * If something goes wrong return null
+ *
+ * @param connection
+ * @param request
+ * @param tokenSet
+ * @returns
+ */
 async function establishSessionWithClaims(connection: Connection, request: Request<any, Session>, tokenSet: TokenSet) {
   const claims = tokenSet.claims();
   let userType: UserType;
   const identityProvider = getString(claims, 'loginSource');
   switch (identityProvider) {
-    case GOV_IDP_SUFFIX.toUpperCase(): {
-      const roles = getStringArray(claims, 'roles');
-      if (roles.includes('dm_admin')) {
-        userType = UserType.Admin;
-      } else {
-        userType = UserType.Government;
-      }
+    case GOV_IDP_SUFFIX.toUpperCase():
+      userType = UserType.Government;
       break;
-    }
     case VENDOR_IDP_SUFFIX.toUpperCase():
       userType = UserType.Vendor;
       break;
@@ -349,10 +350,10 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
     }
   } else if (user.status === UserStatus.InactiveByUser) {
     const { id } = user;
-    const dbResult = await updateUser(connection, { id, status: UserStatus.Active });
+    const dbUserResult = await updateUser(connection, { id, status: UserStatus.Active });
     // // Send notification
-    if (isValid(dbResult)) {
-      accountReactivatedSelf(dbResult.value);
+    if (isValid(dbUserResult)) {
+      accountReactivatedSelf(dbUserResult.value);
     }
   } else if (user.status === UserStatus.InactiveByAdmin) {
     makeAuthErrorRedirect(request);

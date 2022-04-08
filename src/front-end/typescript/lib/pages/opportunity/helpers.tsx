@@ -23,27 +23,28 @@ export function historyToHistoryTableRow(rawHistory){
 
     const convertHistoryItemToHistoryTableItem = status =>{
       switch (status) {
-        case CWUOpportunityEvent.Edited || SWUOpportunityEvent.Edited:
+        case CWUOpportunityEvent.Edited:
+        case SWUOpportunityEvent.Edited:
+        case CWUOpportunityEvent.NoteAdded:
+        case SWUOpportunityEvent.NoteAdded:
           return {
             text: 'Note Added',
             color: undefined
           }
-        case CWUOpportunityEvent.AddendumAdded || SWUOpportunityEvent.AddendumAdded:
+        case CWUOpportunityEvent.AddendumAdded:
+        case SWUOpportunityEvent.AddendumAdded:
           return {
             text: 'Addendum Added',
             color: undefined
           }
-        case CWUOpportunityEvent.NoteAdded || SWUOpportunityEvent.NoteAdded:
-        return {
-          text: 'Note Added',
-          color: undefined
-        }
-        case CWUOpportunityStatus.Draft || SWUOpportunityStatus.Draft:
+        case CWUOpportunityStatus.Draft:
+        case SWUOpportunityStatus.Draft:
           return {
             text: 'Draft',
             color: 'secondary'
           }
-        case CWUOpportunityStatus.Published || SWUOpportunityStatus.Published:
+        case CWUOpportunityStatus.Published:
+        case SWUOpportunityStatus.Published:
           return {
             text: 'Published',
             color: 'success'
@@ -53,17 +54,20 @@ export function historyToHistoryTableRow(rawHistory){
             text: 'Evaluation',
             color: 'warning'
           }
-        case CWUOpportunityStatus.Awarded || SWUOpportunityStatus.Awarded:
+        case CWUOpportunityStatus.Awarded:
+        case SWUOpportunityStatus.Awarded:
           return {
             text: 'Awarded',
             color: 'success'
           }
-        case CWUOpportunityStatus.Suspended || SWUOpportunityStatus.Suspended:
+        case CWUOpportunityStatus.Suspended:
+        case SWUOpportunityStatus.Suspended:
           return {
             text: 'Suspended',
             color: 'secondary'
           }
-        case CWUOpportunityStatus.Canceled || SWUOpportunityStatus.Canceled:
+        case CWUOpportunityStatus.Canceled:
+        case SWUOpportunityStatus.Canceled:
           return {
             text: 'Cancelled',
             color: 'danger'
@@ -116,7 +120,6 @@ const sendNoteAttachmentsToDB = async function(state) {
     switch (result.tag) {
       case 'valid':
         return result;
-        break;
       case 'invalid':
           return invalid(state.update('attachments', attachments => Attachments.setNewAttachmentErrors(attachments, result.value)));
       case 'unhandled':
