@@ -4,7 +4,9 @@ services:
     image: dm_app_image
     container_name: dm_app
     build:
+      context: .
       dockerfile: ./Dockerfile
+    env_file: .env
     ports:
       - "3000:3000"
     environment:

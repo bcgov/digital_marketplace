@@ -29,7 +29,7 @@ objects:
     strategy:
       type: Source
       dockerStrategy:
-        dockerfilePath: src/front-end/Dockerfile
+        dockerfilePath: ./Dockerfile
         from:
           kind: ${SOURCE_IMAGE_KIND}
           name: ${SOURCE_IMAGE_NAME_SPACE}/${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}
