@@ -1,20 +1,27 @@
-FROM --platform=linux/amd64 docker.io/node:16
-WORKDIR /usr/app
-COPY ./src /usr/app/src
-COPY package.json ./
-COPY yarn.lock ./
-COPY ./lib /usr/app/lib
-COPY gruntfile.js ./
+FROM --platform=linux/amd64 docker.io/node:16.13 AS dm_app_build
+ARG DIRPATH=/usr/app
+WORKDIR $DIRPATH
+COPY ./src $DIRPATH/src
+COPY package.json gruntfile.js yarn.lock tsconfig.json ./
+COPY ./lib $DIRPATH/lib
 COPY ./grunt-configs ./grunt-configs
-COPY tsconfig.json ./
 
-RUN yarn install --frozen-lockfile --production=false
-RUN yarn run front-end:build
-RUN yarn run back-end:build && \
-    yarn install --frozen-lockfile --production=true && \
-    yarn cache clean
+# `yarn install` runs twice as a workaround for development and production
+# dependencies in package.json needing better taxonomy
 
-RUN chmod -R 775 /usr/app
-RUN chown -R node:root /usr/app
+# NODE_ENV=production is passed here to allow for specific dev env variables when NODE_ENV=development
+# @see /src/back-end/config.ts::developmentMailerConfigOptions
+RUN yarn install --frozen-lockfile && \
+    NODE_ENV=production npm run front-end:build && \
+    npm run back-end:build && \
+    yarn install --frozen-lockfile --production && \
+    yarn cache clean && \
+    rm -Rf $DIRPATH/src $DIRPATH/tmp
+
+FROM --platform=linux/amd64 docker.io/node:16.13
+ARG DIRPATH=/usr/app
+WORKDIR $DIRPATH
+COPY --from=dm_app_build --chown=node $DIRPATH ./
+USER node
 EXPOSE 3000
-ENTRYPOINT ["/usr/app/src/front-end/docker-entrypoint.sh"]
+CMD node build/back-end/back-end/start.js
