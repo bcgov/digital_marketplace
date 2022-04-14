@@ -51,7 +51,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   deploy-to-openshift-development:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.actor != 'dependabot[bot]'
     needs: [build-and-push-image]
     runs-on: ubuntu-latest
     environment:
