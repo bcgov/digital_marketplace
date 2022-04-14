@@ -16,7 +16,8 @@ RUN yarn install --frozen-lockfile && \
     npm run back-end:build && \
     yarn install --frozen-lockfile --production && \
     yarn cache clean && \
-    rm -Rf $DIRPATH/src $DIRPATH/tmp
+    rm -Rf $DIRPATH/src $DIRPATH/tmp && \
+    mkdir $DIRPATH/__tmp
 
 FROM --platform=linux/amd64 docker.io/node:16.13
 ARG DIRPATH=/usr/app
