@@ -4,11 +4,10 @@ on:
     branches:
       - development
       - master
-  pull_request:
-    branches-ignore:
-      - 'dependabot/**'
+
 jobs:
   unit-test:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +19,7 @@ jobs:
       - run: npm run front-end:test
       - run: npm run back-end:test
   tslint:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,6 +31,7 @@ jobs:
       - run: npm run front-end:lint
       - run: npm run back-end:lint
   yarn-build:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,6 +43,7 @@ jobs:
       - run: npm run front-end:build
       - run: npm run back-end:build
   pre-commit:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -49,6 +51,7 @@ jobs:
       - run: pip install pre-commit
       - run: pre-commit run --all-files -v
   commitlint:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2

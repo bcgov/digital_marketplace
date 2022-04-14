@@ -1,11 +1,11 @@
 ---
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   name: "${NAME}-deployment-template"
 objects:
 - kind: PersistentVolumeClaim
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${BACKUP_VOLUME_NAME}"
     labels:
@@ -20,14 +20,14 @@ objects:
         storage: "${BACKUP_VOLUME_SIZE}"
 
 - kind: Secret
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}"
   type: Opaque
   stringData:
     webhook-url: "${WEBHOOK_URL}"
 - kind: Secret
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${FTP_SECRET_KEY}"
   type: Opaque
@@ -36,7 +36,7 @@ objects:
     ftp-user: "${FTP_USER}"
     ftp-password: "${FTP_PASSWORD}"
 - kind: DeploymentConfig
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}"
     labels:

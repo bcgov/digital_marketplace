@@ -4,11 +4,10 @@ on:
     branches:
       - development
       - master
-  pull_request:
-    branches-ignore:
-      - 'dependabot/**'
+
 jobs:
   cypress:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     # prevent a hanging process from using all the CI minutes
     timeout-minutes: 10

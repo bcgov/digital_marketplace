@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   annotations:
@@ -19,7 +19,7 @@ labels:
   app.kubernetes.io/managed-by: template
 
 objects:
-- apiVersion: v1
+- apiVersion: template.openshift.io/v1
   kind: Service
   metadata:
     creationTimestamp: null
@@ -79,12 +79,12 @@ objects:
           - name: POD_IP
             valueFrom:
               fieldRef:
-                apiVersion: v1
+                apiVersion: template.openshift.io/v1
                 fieldPath: status.podIP
           - name: PATRONI_KUBERNETES_NAMESPACE
             valueFrom:
               fieldRef:
-                apiVersion: v1
+                apiVersion: template.openshift.io/v1
                 fieldPath: metadata.namespace
           - name: PATRONI_KUBERNETES_LABELS
             value: '{"cluster-name": "${NAME}-${APP_GROUP}-${TAG_NAME}", "app.kubernetes.io/name": "patroni"}'
@@ -128,7 +128,7 @@ objects:
           - name: PATRONI_NAME
             valueFrom:
               fieldRef:
-                apiVersion: v1
+                apiVersion: template.openshift.io/v1
                 fieldPath: metadata.name
           - name: PATRONI_LOG_LEVEL
             value: WARNING

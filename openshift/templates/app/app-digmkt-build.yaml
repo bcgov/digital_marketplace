@@ -1,6 +1,6 @@
 ---
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   annotations:
     description: Build template for the Digital Marketplace app.
@@ -8,12 +8,12 @@ metadata:
   name: "${NAME}-build"
 objects:
 - kind: ImageStream
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${ENV_NAME}"
 
 - kind: BuildConfig
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${ENV_NAME}"
     labels:

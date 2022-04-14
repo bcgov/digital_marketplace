@@ -1,6 +1,6 @@
 ---
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   annotations:
     description: Deployment template for the Digital Marketplace app.
@@ -9,7 +9,7 @@ metadata:
 
 objects:
 - kind: ConfigMap
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
   data:
@@ -32,7 +32,7 @@ objects:
     SHOW_TEST_INDICATOR: ${SHOW_TEST_INDICATOR}
 
 - kind: Secret
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
   stringData:
@@ -40,7 +40,7 @@ objects:
     KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
 
 - kind: DeploymentConfig
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     labels:
@@ -117,7 +117,7 @@ objects:
         schedulerName: default-scheduler
 
 - kind: Service
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     creationTimestamp:
@@ -139,7 +139,7 @@ objects:
     loadBalancer: {}
 
 - kind: Route
-  apiVersion: v1
+  apiVersion: template.openshift.io/v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     labels:
