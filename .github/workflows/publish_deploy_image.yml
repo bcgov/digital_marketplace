@@ -5,7 +5,8 @@ on:
     branches:
       - development
   pull_request:
-
+    branches-ignore:
+      - 'dependabot/**'
 env:
   GITHUB_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -16,8 +17,7 @@ jobs:
   build-and-push-image:
     if: >-
       github.event.action != 'closed' ||
-      github.event.pull_request.merged == true ||
-      github.actor != 'dependabot[bot]'
+      github.event.pull_request.merged == true
     runs-on: ubuntu-18.04
     permissions:
       contents: read
