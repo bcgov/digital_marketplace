@@ -5,7 +5,8 @@ on:
       - development
       - master
   pull_request:
-
+    branches-ignore:
+      - 'dependabot/**'
 jobs:
   unit-test:
     runs-on: ubuntu-latest

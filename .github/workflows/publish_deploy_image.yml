@@ -1,9 +1,10 @@
 name: Create and publish app Docker image
 
 on:
+  push:
+    branches:
+      - development
   pull_request:
-    branches: [ development ]
-    types: [ opened, synchronize, reopened, closed ]
 
 env:
   GITHUB_REGISTRY: ghcr.io
@@ -15,7 +16,8 @@ jobs:
   build-and-push-image:
     if: >-
       github.event.action != 'closed' ||
-      github.event.pull_request.merged == true
+      github.event.pull_request.merged == true ||
+      github.actor != 'dependabot[bot]'
     runs-on: ubuntu-18.04
     permissions:
       contents: read

@@ -1,5 +1,12 @@
 name: e2e
-on: [push]
+on:
+  push:
+    branches:
+      - development
+      - master
+  pull_request:
+    branches-ignore:
+      - 'dependabot/**'
 jobs:
   cypress:
     runs-on: ubuntu-latest
