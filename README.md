@@ -155,21 +155,20 @@ yarn
 
 ### Quick Start
 
-Open three terminals and run the following commands:
+Open four terminals and run the following commands:
 
 ```bash
 # Terminal 1
-docker-compose up -d # Start the app and a PostgreSQL server in containers in the background.
-npm run migrations:latest # Run all database migrations.
-docker stop dm_app # Stop the app container so it doesn't interfere with the next two terminals.
-# An alternative to running the docker stop dm_app command is to comment out the app portion of the docker-compose file before running docker-compose up.
-# If this is done, the only step that you omit from this process is the docker stop dm_app command. The rest remains the same.
+docker-compose up db # Start PostgreSQL only
 
 # Terminal 2
 npm run back-end:watch # Start the back-end server, restart on source changes.
 
 # Terminal 3
 npm run front-end:watch # Build the front-end source code, rebuild on source changes.
+
+# Terminal 4
+npm run migrations:latest # Run all database migrations.
 ```
 
 Then, visit the URL logged to your terminal to view the now locally-running web application.

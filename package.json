@@ -1,6 +1,6 @@
 {
   "name": "bcgov-digital-marketplace",
-  "version": "1.8.4",
+  "version": "2.0.0",
   "description": "Digital Marketplace",
   "main": "index.js",
   "scripts": {
