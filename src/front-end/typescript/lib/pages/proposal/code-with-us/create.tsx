@@ -131,7 +131,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
       return [hideModal(state)];
 
     case 'saveDraft':
-    case 'submit':
+    case 'submit':{
       state = hideModal(state);
       const isSubmit = msg.tag === 'submit';
       return [
@@ -162,6 +162,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           return state.set('form', result.value[0]);
         }
       ];
+    }
 
     case 'submitTerms':
       return updateComponentChild({

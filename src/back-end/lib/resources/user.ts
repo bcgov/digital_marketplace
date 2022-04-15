@@ -35,7 +35,7 @@ type Resource = crud.Resource<
   null,
   null,
   null,
-  UpdateRequestBody,
+  UpdateRequestBody | any,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
   DeleteValidatedReqBody,
@@ -129,7 +129,7 @@ const resource: Resource = {
           return invalid({ notFound: ['The specified user does not exist.'] });
         }
         switch (request.body.tag) {
-          case 'updateProfile':
+          case 'updateProfile': {
             const { name, email, jobTitle, avatarImageFile } = request.body.value;
             const validatedName = userValidation.validateName(name);
             const validatedEmail = userValidation.validateEmail(email);
@@ -156,8 +156,9 @@ const resource: Resource = {
                 })
               });
             }
+          }
 
-          case 'updateCapabilities':
+          case 'updateCapabilities': {
             if (!permissions.updateUser(request.session, request.params.id)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
@@ -169,6 +170,7 @@ const resource: Resource = {
                 user: adt('updateCapabilities' as const, getInvalidValue(validatedCapabilities, []) as string[][])
               });
             }
+          }
 
           case 'acceptTerms':
             if (!permissions.acceptTerms(request.session, request.params.id)) {
@@ -189,7 +191,7 @@ const resource: Resource = {
             }
             return valid(adt('reactivateUser' as const));
 
-          case 'updateAdminPermissions':
+          case 'updateAdminPermissions': {
             const userType = adminPermissionsToUserType(request.body.value);
             if (!permissions.updateAdminStatus(request.session)) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -200,6 +202,7 @@ const resource: Resource = {
               });
             }
             return valid(adt('updateAdminPermissions' as const, userType));
+          }
 
           default:
             return invalid({ user: adt('parseFailure' as const) });
@@ -215,10 +218,11 @@ const resource: Resource = {
             case 'updateCapabilities':
               dbResult = await db.updateUser(connection, { capabilities: request.body.value, id: request.params.id });
               break;
-            case 'acceptTerms':
+            case 'acceptTerms': {
               const currentDate = new Date();
               dbResult = await db.updateUser(connection, { acceptedTermsAt: currentDate, lastAcceptedTermsAt: currentDate, id: request.params.id });
               break;
+            }
             case 'updateNotifications':
               dbResult = await db.updateUser(connection, {
                 notificationsOn: request.body.value,

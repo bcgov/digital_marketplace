@@ -1,6 +1,6 @@
 ---
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   annotations:
     description: Deployment template for a PostgreSQL server with persistent storage.
@@ -215,5 +215,3 @@ parameters:
   description: A valid database host port used by the service.
   required: true
   value: '5432'
-
-

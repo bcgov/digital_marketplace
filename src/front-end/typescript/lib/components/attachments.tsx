@@ -36,7 +36,7 @@ export type Msg
 
 export type Params = Pick<State, 'canRemoveExistingAttachments' | 'existingAttachments' | 'newAttachmentMetadata'>;
 
-export function validate(state: Immutable<State>): Immutable<State> {
+export function validate(state: Immutable<State> | any): Immutable<State> {
   return state.newAttachments.reduce((acc, a, i) => {
     return acc.updateIn(['newAttachments', i], newAttachment => {
       const errors = getInvalidValue(validateNewName(newAttachment.newName), []);
@@ -148,9 +148,10 @@ interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
   className?: string;
   addButtonClassName?: string;
+  accept?: readonly string[]
 }
 
-const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled }) => {
+const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled, accept }) => {
   if (disabled) { return null; }
   const hasAttachments = !!(state.existingAttachments.length || state.newAttachments.length);
   return (
@@ -163,6 +164,7 @@ const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disa
       symbol_={leftPlacement(iconLinkSymbol('paperclip'))}
       disabled={disabled}
       onChange={file => dispatch(adt('addAttachment', file))}
+      accept={accept}
     >
       Add Attachment
     </FileLink>

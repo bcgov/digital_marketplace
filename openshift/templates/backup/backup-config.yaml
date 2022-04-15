@@ -1,6 +1,6 @@
 ---
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   name: "${NAME}-config-template"
 objects:
@@ -11,7 +11,7 @@ objects:
   data:
     backup.conf: |-
       postgres=${DATABASE_SERVICE_NAME}:${DATABASE_PORT}/${DATABASE_NAME}
-      
+
       0 */6 * * * default ./backup.sh -s
 
 parameters:

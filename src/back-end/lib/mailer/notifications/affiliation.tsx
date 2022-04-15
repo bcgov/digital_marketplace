@@ -77,7 +77,7 @@ export async function approvedRequestToJoinT(recipient: User, affiliation: Affil
       title,
       body: (
         <div>
-          <p>{memberName} has approved your request to join {organizationName}'s team on the Digital Marketplace.</p>
+          <p>{memberName} has approved your request to join {organizationName}{'\''}s team on the Digital Marketplace.</p>
           <p>{memberName} can now be included in proposals submitted by {organizationName} to Sprint With Us opportunities.</p>
         </div>
       ),
@@ -99,7 +99,7 @@ export async function rejectRequestToJoinT(recipient: User, affiliation: Affilia
       title,
       body: (
         <div>
-          <p>{memberName} has rejected your request to join {organizationName}'s team on the Digital Marketplace.</p>
+          <p>{memberName} has rejected your request to join {organizationName}{'\''}s team on the Digital Marketplace.</p>
         </div>
       )
     })
@@ -119,7 +119,7 @@ export async function membershipCompleteT(affiliation: Affiliation): Promise<Ema
       title,
       body: (
         <div>
-          <p>You are now a member of {organizationName}'s team on the Digital Marketplace</p>
+          <p>You are now a member of {organizationName}{'\''}s team on the Digital Marketplace</p>
           <p>{organizationName} can now include you on proposals to  Sprint With Us opportunities.</p>
         </div>
       ),
@@ -141,7 +141,7 @@ export async function memberLeavesT(recipient: User, affiliation: Affiliation): 
       title,
       body: (
         <div>
-          <p>{memberName} has left {organizationName}'s team on the Digital Marketplace.  They will no longer be able to be included on proposals for Sprint With Us opportunities.</p>
+          <p>{memberName} has left {organizationName}{'\''}s team on the Digital Marketplace.  They will no longer be able to be included on proposals for Sprint With Us opportunities.</p>
         </div>
       ),
       callsToAction: [viewOrganizationCallToAction(affiliation.organization)]

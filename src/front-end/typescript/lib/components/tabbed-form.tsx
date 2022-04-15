@@ -156,7 +156,7 @@ export function view<TabId>(): View<Props<TabId>> {
     );
   };
 
-  return props => {
+  return function PageWrapper(props) {
     return (
       <div id={props.state.id}>
         <Header {...props} />

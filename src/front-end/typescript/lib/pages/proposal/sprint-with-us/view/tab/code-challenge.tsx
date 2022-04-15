@@ -170,7 +170,7 @@ const Participants: View<Pick<State, 'proposal'>> = ({ proposal }) => {
             {participants.map((p, i) => {
               const username = p.idpUsername;
               return (
-                <tr>
+                <tr key={`participant-${i}`}>
                   <td>{p.member.name}</td>
                   <td className='text-nowrap'>
                     {username
@@ -253,7 +253,7 @@ export const component: Tab.Component<State,  Msg> = {
           ],
           body: dispatch => (
             <div>
-              <p>Provide a score for the proponent's Code Challenge.</p>
+              <p>Provide a score for the proponent{'\''}s Code Challenge.</p>
               <NumberField.view
                 extraChildProps={{ suffix: '%' }}
                 required

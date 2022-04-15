@@ -1,10 +1,10 @@
 # The creation of admin users
 
-The Digital Marketplace app uses Keycloak to authenticate users, however their roles are stored in the PostgreSQL database.  
+The Digital Marketplace app uses Keycloak to authenticate users, however their roles are stored in the PostgreSQL database.
 
 Users that log into the app through IDIR are public sector employees, those that log in through GitHub authentication are vendors. Any public sector employee can be promoted to an admin by another admin.
 
-There are three ways of creating an admin in the app. 
+There are two ways of creating an admin in the app.
 
 ## 1. GUI: Have an admin promote them.
 
@@ -14,17 +14,7 @@ _Keycloak Environment: Dev/Test/Prod_
 
 This is the simplest method. As long as there is an existing admin in the app, they can navigate to the 'Users' tab in the app header, go to the public sector employee user they want to promote to admin, and check the box on their profile.
 
-## 2. Keycloak: Use the `dm_admin` Role in Keycloak.
-
-_App Environment: (Local development, Dev/Test/Prod)_
-
-_Keycloak Environment: Dev/Test/Prod_
-
-If there is no admin user set up for the app one must be created.  This is a workaround that is most useful when spinning up a local database for development.  
-
-As a Keycloak admin, navigate to 'Users' -> 'Add user' to create an IDIR user in Keycloak **before** they attempt to log into the app for the first time. After the user has been created, navigate to the 'Role Mappings' tab and assign them the role `dm_admin`.  When they log into the Digital Marketplace app for the firs time, they should be an admin.  If this does not work proceed to the third option. Alternatively, and *only* if this is for local development, destroying the existing database and rebuilding it should give that user admin access.
-
-## 3. SQL: Change the role in the PostgreSQL db.
+## 2. SQL: Change the role in the PostgreSQL db.
 
 _App Environment: (Dev/Test/Prod)_
 
@@ -37,6 +27,12 @@ After the `oc login` command and confirming you are in the correct namespace (de
 `oc port-forward <PostgreSQL pod name> 5432`
 
 Now it is possible to use any database management software to write SQL queries.
+
+Alternatively, you can open a remote shell:
+
+`oc rsh <PostgreSQL pod name>`
+`psql`
+`\c digmkt`
 
 Find the user you wish to promote to admin:
 

@@ -1,6 +1,6 @@
 ---
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   name: "${NAME}-deployment-template"
 objects:
@@ -417,10 +417,9 @@ parameters:
   description: The resources Memory request (in Mi, Gi, etc) for this build.
   required: true
   value: 0Mi
-  
+
 - name: MEMORY_LIMIT
   displayName: Resources Memory Limit
   description: The resources Memory limit (in Mi, Gi, etc) for this build.
   required: true
   value: 0Mi
-

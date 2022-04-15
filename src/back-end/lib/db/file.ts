@@ -31,6 +31,7 @@ export const createFile = tryDb<[CreateFileParams, Id], FileRecord>(async (conne
   if (!fileRecord) {
     throw new Error('unable to create file');
   }
+
   return valid(await connection.transaction(async trx => {
     const fileData: Buffer = await new Promise((resolve, reject) => {
       readFile(fileRecord.path, (err, data) => {

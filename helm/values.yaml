@@ -1,0 +1,70 @@
+fullnameOverride: digital-marketplace
+replicaCount: 3
+defaultImagePullPolicy: IfNotPresent
+defaultImageTag: latest
+
+image:
+  app:
+    repository: ghcr.io/bcgov/digital_marketplace
+    pullPolicy: IfNotPresent
+    tag: latest # The tag value must be passed in via the deploy script
+    clientSecret: "" # clientSecret must be passed in via deploy script
+    cookieSecret: "" # cookieSecret is passed in via deploy script
+  psql:
+    repository: gcr.io/ggl-cas-storage/cas-postgres
+    tag: "0.3.0"
+
+app:
+  port: "3000"
+  probesPort: "3000"
+  namespace: ""
+  databaseServiceName: postgresql
+  databaseUsername: dig-mkt
+  databaseName: dig-mkt
+  mailerHost: apps.smtp.gov.bc.ca
+  keycloakUrl: "" # keycloakUrl is passed in via deploy scirpt
+  keycloakClientID: dm-auth-web
+  keycloakRealm: p2zhow64
+  basicAuthUsername: "jiminy"
+  basicAuthPasswordHash: "" # provided by deploy script
+
+db:
+  name: digital_marketplace
+  appUser: digital_marketplace_app
+  ownerUser: digital_marketplace
+
+route:
+  origin: "" # Pass the origin in through the deploy script: app-digmkt-dev.apps.silver.devops.gov.bc.ca
+
+
+networkPolicies:
+  enabled: true
+
+resources:
+  app:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  psql:
+    limits:
+      cpu: "150m"
+      memory: "5Gi"
+    requests:
+      cpu: "50m"
+      memory: "3Gi"
+
+deployer:
+  namespace: ccc866-dev
+  serviceAccount:
+    enabled: true
+
+spilo:
+  postgresMajorVersion: 10
+  continuousArchive:
+    enabled: false
+
+  persistentVolume:
+    size: "2Gi"

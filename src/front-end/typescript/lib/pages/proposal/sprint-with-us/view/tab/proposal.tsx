@@ -124,7 +124,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         startDisqualifyLoading(state),
         async (state, dispatch) => {
           state = stopDisqualifyLoading(state);
-          const reason = FormField.getValue(state.disqualificationReason);
+          const reason: any = FormField.getValue(state.disqualificationReason);
           const result = await api.proposals.swu.update(state.proposal.id, adt('disqualify', reason));
           switch (result.tag) {
             case 'valid':
@@ -217,7 +217,7 @@ const view: ComponentView<State, Msg> = viewValid(props => {
                   state={state.form}
                   dispatch={mapComponentDispatch(dispatch, v => adt('form' as const, v))} />
               )
-            : <div className='pt-5 border-top'>This proposal's details will be available once the opportunity reaches the Code Challenge.</div>}
+            : <div className='pt-5 border-top'>This proposal{'\''}s details will be available once the opportunity reaches the Code Challenge.</div>}
         </Col>
       </Row>
     </div>

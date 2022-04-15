@@ -1,4 +1,4 @@
-import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, POSTGRES_URL, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
+import { BASIC_AUTH_PASSWORD_HASH, BASIC_AUTH_USERNAME, DB_MIGRATIONS_TABLE_NAME, ENV, getConfigErrors, KNEX_DEBUG, PG_CONFIG, SCHEDULED_DOWNTIME, SERVER_HOST, SERVER_PORT } from 'back-end/config';
 import * as crud from 'back-end/lib/crud';
 import { Connection, readOneSession } from 'back-end/lib/db';
 import codeWithUsHook from 'back-end/lib/hooks/code-with-us';
@@ -13,6 +13,7 @@ import contentResource from 'back-end/lib/resources/content';
 import counterResource from 'back-end/lib/resources/counter';
 import emailNotificationsResource from 'back-end/lib/resources/email-notifications';
 import fileResource from 'back-end/lib/resources/file';
+import noteFileResource from 'back-end/lib/resources/note-files';
 import metricsResource from 'back-end/lib/resources/metrics';
 import codeWithUsOpportunityResource from 'back-end/lib/resources/opportunity/code-with-us';
 import sprintWithUsOpportunityResource from 'back-end/lib/resources/opportunity/sprint-with-us';
@@ -31,7 +32,7 @@ import statusRouter from 'back-end/lib/routers/status';
 import { addHooksToRoute, makeErrorResponseBody, namespaceRoute, notFoundJsonRoute, Route, RouteHook, Router } from 'back-end/lib/server';
 import { express, ExpressAdapter } from 'back-end/lib/server/adapters';
 import { FileUploadMetadata, SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import Knex from 'knex';
+import Knex, { ConnectionConfig } from 'knex';
 import { concat, flatten, flow, map } from 'lodash/fp';
 import { flipCurried } from 'shared/lib';
 import { MAX_MULTIPART_FILES_SIZE, parseFilePermissions } from 'shared/lib/resources/file';
@@ -46,10 +47,20 @@ type AppRouter = Router<SupportedRequestBodies, any, any, any, SupportedResponse
 
 const logger = makeDomainLogger(consoleAdapter, 'back-end', ENV);
 
-export function connectToDatabase(postgresUrl: string): Connection {
+// export function connectToDatabase(postgresUrl: string): Connection {
+//   return Knex({
+//     client: 'pg',
+//     connection: postgresUrl,
+//     migrations: {
+//       tableName: DB_MIGRATIONS_TABLE_NAME
+//     },
+//     debug: KNEX_DEBUG
+//   });
+// }
+export function connectToDatabase(connectionConfig: string | ConnectionConfig): Connection {
   return Knex({
     client: 'pg',
-    connection: postgresUrl,
+    connection: connectionConfig,
     migrations: {
       tableName: DB_MIGRATIONS_TABLE_NAME
     },
@@ -61,8 +72,8 @@ const globalHooks = [
   loggerHook
 ];
 
-const addHooks: (hooks: Array<RouteHook<unknown, unknown, unknown, unknown, any, Session>>) => (_: BasicRoute[]) => BasicRoute[]
-  = (hooks: Array<RouteHook<unknown, unknown, unknown, unknown, any, Session>>) => map((route: BasicRoute) => addHooksToRoute(hooks, route));
+const addHooks: (hooks: (RouteHook<unknown, unknown, unknown, unknown, any, Session>)[]) => (_: BasicRoute[]) => BasicRoute[]
+  = (hooks: (RouteHook<unknown, unknown, unknown, unknown, any, Session>)[]) => map((route: BasicRoute) => addHooksToRoute(hooks, route));
 
 // We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.
 const flippedConcat = flipCurried(concat);
@@ -80,6 +91,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     codeWithUsSubscriberResource,
     sprintWithUsSubscriberResource,
     fileResource,
+    noteFileResource,
     counterResource,
     organizationResource,
     ownedOrganizationResource,
@@ -141,13 +153,17 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
 async function start() {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
-  if (configErrors.length || !POSTGRES_URL) {
+  if (configErrors.length || !PG_CONFIG) {
     configErrors.forEach((error: string) => logger.error(error));
     throw new Error('Invalid environment variable configuration.');
   }
   // Connect to Postgres.
-  const connection = connectToDatabase(POSTGRES_URL);
-  logger.info('connected to the database');
+  const connection = connectToDatabase(PG_CONFIG);
+  // Test DB connection
+  connection.raw('SELECT 1').then(() => {
+    console.log('PostgreSQL connected');
+});
+
   // Create the router.
   let router: AppRouter = await (SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter)(connection);
   // Add the status router.
@@ -159,6 +175,7 @@ async function start() {
   // Bind the server to a port and listen for incoming connections.
   // Need to lock-in Session type here.
   const adapter: ExpressAdapter<any, any, any, any, Session, FileUploadMetadata | null> = express();
+
   adapter({
     router,
     sessionIdToSession: async id => {

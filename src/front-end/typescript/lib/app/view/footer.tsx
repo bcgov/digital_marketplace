@@ -50,7 +50,7 @@ const links: AnchorProps[] = [
   }
 ];
 
-const Footer: View<{}> = () => {
+const Footer: View<Record<string, never>> = () => {
   return (
     <footer className='w-100 bg-c-footer-bg text-light d-print-none'>
       <Container>
@@ -66,10 +66,7 @@ const Footer: View<{}> = () => {
             ))}
           </Col>
           <Col xs='12' className='small pb-3 o-75 text-white'>
-            Owned and operated by the {COPY.gov.name.short}.&nbsp;
-            <Link newTab color='white' dest={externalDest('https://www.realfolk.io')} className='text-decoration-underline'>
-              Designed and implemented by Real Folk.
-            </Link>
+            Owned and operated by the {COPY.gov.name.short}.
           </Col>
         </Row>
       </Container>
