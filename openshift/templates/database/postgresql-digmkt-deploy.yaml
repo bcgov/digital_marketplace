@@ -9,7 +9,7 @@ metadata:
 
 objects:
 - kind: DeploymentConfig
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     generation: 1
@@ -102,7 +102,7 @@ objects:
         schedulerName: default-scheduler
 
 - kind: PersistentVolumeClaim
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-data"
     labels:
@@ -118,7 +118,7 @@ objects:
         storage: "${PERSISTENT_VOLUME_SIZE}"
 
 - kind: Secret
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
     labels:
@@ -134,7 +134,7 @@ objects:
   type: Opaque
 
 - kind: Service
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     labels:

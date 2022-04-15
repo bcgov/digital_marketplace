@@ -8,12 +8,12 @@ metadata:
   name: "${NAME}-build"
 objects:
 - kind: ImageStream
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${ENV_NAME}"
 
 - kind: BuildConfig
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: "${NAME}-${APP_GROUP}-${ENV_NAME}"
     labels:

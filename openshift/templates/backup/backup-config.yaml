@@ -5,7 +5,7 @@ metadata:
   name: "${NAME}-config-template"
 objects:
 - kind: ConfigMap
-  apiVersion: template.openshift.io/v1
+  apiVersion: v1
   metadata:
     name: backup-conf
   data:
