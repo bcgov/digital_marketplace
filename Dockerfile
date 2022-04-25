@@ -23,7 +23,7 @@ FROM --platform=linux/amd64 docker.io/node:16.13
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY --from=dm_app_build --chown=node $DIRPATH ./
-RUN chmod 775 $DIRPATH/__tmp
+RUN chmod o+w $DIRPATH/__tmp
 USER node
 EXPOSE 3000
 CMD node build/back-end/back-end/start.js
