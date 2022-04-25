@@ -16,12 +16,14 @@ RUN yarn install --frozen-lockfile && \
     npm run back-end:build && \
     yarn install --frozen-lockfile --production && \
     yarn cache clean && \
+    rmdir $DIRPATH/tmp && \
     mkdir $DIRPATH/__tmp
 
 FROM --platform=linux/amd64 docker.io/node:16.13
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY --from=dm_app_build --chown=node $DIRPATH ./
+RUN chown root $DIRPATH/__tmp
 USER node
 EXPOSE 3000
 CMD node build/back-end/back-end/start.js
