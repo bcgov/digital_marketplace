@@ -5,7 +5,7 @@ The Digital Marketplace is a web application that administers British Columbia's
 
 This document describes this project's developer environment, technical architecture and deployment infrastructure.
 
-The file `docs/ONBOARDING.md` contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
+The file [`docs/onboarding-tips.md`](docs/onboarding-tips.md) contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
 
 ## Table of Contents
 
@@ -13,13 +13,14 @@ The file `docs/ONBOARDING.md` contains a collection of helpful information about
 
 - [Authors and Licensing](#authors-and-licensing)
 - [Project Organisation](#project-organisation)
-  - [Front-End (`src/front-end`)](#front-end-srcfront-end)
-  - [Back-End (`src/back-end`)](#back-end-srcback-end)
-  - [Shared (`src/shared`)](#shared-srcshared)
-  - [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
-  - [Scripts (`src/scripts`)](#scripts-srcscripts)
+  - [Front-End (`src/front-end`)](#1-front-end-srcfront-end)
+  - [Back-End (`src/back-end`)](#2-back-end-srcback-end)
+  - [Email Notifications](#3-email-notifications)
+  - [Shared (`src/shared`)](#4-shared-srcshared)
+  - [Database Migrations (`src/migrations`)](#5-database-migrations-srcmigrations)
+  - [Scripts (`src/scripts`)](#6-scripts-srcscripts)
 - [Development Environment](#development-environment)
-  - [Dependencies](#dependencies)
+  - [Dependencies](#install-dependencies)
   - [Quick Start](#quick-start)
   - [Local Development Environment](#local-development-environment)
   - [NPM Scripts](#npm-scripts)
@@ -46,38 +47,38 @@ This project available to use under the Apache 2.0 license (see `LICENSE.txt`). 
 The Digital Marketplace is a full-stack TypeScript web application that uses PostgreSQL for persistence.
 It is written in a functional and declarative style with the goal of maximizing compile-time guarantees through type-safety.
 
-The source code is split into five parts:
+The source code is split into six parts:
 
-### Front-End (`src/front-end`)
+### 1. Front-End (`src/front-end`)
 
 A TypeScript single-page application using React, Immutable.js, Bootstrap and SASS.
 The front-end's build system is executed by Grunt.
 
 The front-end's state management framework (`src/front-end/typescript/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
-### Back-End (`src/back-end`)
+### 2. Back-End (`src/back-end`)
 
 A TypeScript server that vends the front-end's build assets (`src/back-end/lib/routers/front-end.ts`) as well as a JSON CRUD API (`src/back-end/lib/resources/**/*.ts`) that performs business logic and persists data to a PostgreSQL database.
 
 The server framework (`src/back-end/lib/server/index.ts`) provides type-safe abstractions for API development, and is executed by Express (`src/back-end/lib/server/adapters.ts`).
 
-#### Authentication
+#### 2a. Authentication
 
 The server uses OpenID Connect to authenticate users with a Keycloak server (managed by B.C. government employees). The authentication routes are implemented in `src/back-end/lib/routers/auth.ts`.
 
-#### CRUD Resources
+#### 2b. CRUD Resources
 
 CRUD resources are created in a standardised, type-safe way in this project. CRUD abstractions are located in `src/back-end/lib/crud.ts`, and it is recommended to review this module prior to extending the API.
 
-#### Email Notifications
+### 3. Email Notifications
 
 Email notifications are all rendered server-side using React's static HTML renderer. Stub versions of all email notifications can be viewed by authenticated admin users at `{HOST}/admin/email-notification-reference` in your browser.
 
-### Shared (`src/shared`)
+### 4. Shared (`src/shared`)
 
 The `src/shared` folder contains modules that expose types and functions that are used across the entire stack: front-end and back-end.
 
-### Database Migrations (`src/migrations`)
+### 5. Database Migrations (`src/migrations`)
 
 All database migration logic is stored in the `src/migrations` folder. Migrations are managed and executed by the `knex` NPM module (a SQL ORM bundled with database migration functionality). The PostgreSQL-related environment variables described below are required to define the database to connect to.
 
@@ -91,15 +92,15 @@ This command creates a migration file from a template and stores it at `src/migr
 
 **DO NOT delete or change committed migration files. Creating and executing migrations is a stateful process, and, unless you know what you are doing, running a database migration should be viewed as an irreversible process.**
 
-### Scripts (`src/scripts`)
+### 6. Scripts (`src/scripts`)
 
 General purpose scripts are stored in this folder. The scripts themselves are stored in the `src/scripts/bin/` folder, and can be run using the following command:
 
 ```
 npm run scripts:run -- <SCRIPT_NAME> [...args]
 ```
-
-## Set Up
+## Development Environment
+### Set Up
 
 ### `.env` File
 
@@ -146,8 +147,9 @@ If you are not using Nix, please ensure the following packages have been install
 - SASS
 - Docker
 - Docker Compose 3.x
+- [pre-commit](docs/pre-commit.md)
 
-Once installed, `cd` into this repository's root directory and proceed to install  dependencies:
+Once installed, `cd` into this repository's root directory and proceed to install  dependencies (if running for the first time):
 
 ```bash
 yarn
@@ -171,7 +173,7 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 npm run migrations:latest # Run all database migrations.
 ```
 
-Then, visit the URL logged to your terminal to view the now locally-running web application.
+Then, visit the [URL](http://localhost:3000) logged to your terminal to view the now locally-running web application.
 
 You can stop the local PostgreSQL container server (and the keycloak server, if you're running it) by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
@@ -213,8 +215,8 @@ npm run <SCRIPT_NAME>
 | `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                                                                              |
 | `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                                                                                    |
 | `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                           |
-| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                                                                             |
-| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                                                                                    |
+| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/open-source-licenses.txt`.                                                                                                             |
+| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/database.md` from the database specified by the connection url.                                                                                                    |
 
 ### Environment Variables
 
@@ -304,7 +306,7 @@ The Development and Test environments are secured behind HTTP Basic Auth. Please
 ### Deployment Process
 
 **IMPORTANT**
-For information on Helm deployment, see [helm deploy docs](./docs/HELM_DEPLOY.md).
+For information on Helm deployment, see [helm deploy docs](./docs/helm-deploy.md).
 
 The "ccc866-tools" OpenShift project is used to trigger the deployment process for all environments.
 
@@ -395,4 +397,4 @@ The Digital Marketplace is currently operated by the Procurement Services Branch
 
 ## Credits
 
-This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used by the Procurement Concierge Program's web app are documented in `docs/OPEN_SOURCE_LICENSES.txt`.
+This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used by the Procurement Concierge Program's web app are documented in `docs/open-source-licenses.txt`.
