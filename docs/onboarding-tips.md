@@ -8,7 +8,7 @@ The process for setting up local development environment can be found in `README
 
 ### Accessing the Local DB
 Once your local development environment is running, you may need to access the database. If the database is running in a Docker container, use the following to access the DB:
-`docker exec -it  <container_name>  psql -U digitalmarketplace digitalmarketplace`
+`docker exec -it  <container_name>  psql -U digmkt digmkt`
 Unless changed, the container name will be `dm_db`.
 
 To log in to the site as a government employee or an admin, you will need an IDIR. If you do not have one yet, or are handling multiple users in your local environment, the following can be used to update a users type directly in the database:
@@ -18,7 +18,7 @@ A list of the available user types can be found in the `UserType` enum in `/src/
 ## Front-end
 
 ### State Management
-As mentioned in the README, the front-end state management was based on the Elm architecture, and functions comparably to Redux. The relevant files can be found in 
+As mentioned in the README, the front-end state management was based on the Elm architecture, and functions comparably to Redux. The relevant files can be found in
 `src/front-end/typescript/lib/framework/**/*.tsx`. The state object itself is created using `Immutable.js`. (Reference https://immutable-js.com/docs/v4.0.0)
 In `src/front-end/typescript/lib/framework/index.tsx` the `start` function is defined. To better understand how the state management works in this project, spend some time reading this function. Notable points in it include:
 - `state` object is created using Immutable
@@ -54,12 +54,12 @@ The shared folder contains types and functions used by both the `back-end` and `
 `src/shared/lib/validation/` contains the validation functions used. For example, file validation functions can be found in `src/shared/lib/validation/file.ts`.
 
 ## Back-end
-As mentioned in the `README.md` the back-end vends the front-end assets in `src/back-end/lib/routers/front-end.ts`. This is why `back-end:start` is what spins up the front end. The `createRouter` function collects all of the routes to serve, including the front-ends. 
+As mentioned in the `README.md` the back-end vends the front-end assets in `src/back-end/lib/routers/front-end.ts`. This is why `back-end:start` is what spins up the front end. The `createRouter` function collects all of the routes to serve, including the front-ends.
 
 All of the API logic that handles persisting data to the DB is found in `src/back-end/lib/resources/**/*.ts`. For example, the CRUD operations for SWU proposals can be found in `src/back-end/lib/resources/proposal/sprint-with-us.ts`.
 
 ### Swagger UI
-In your local `.env` file you can set `SWAGGER_ENABLE` to true, spin up a local instance of the app, and then visit the `SWAGGER_UI_PATH` (default `/docs/api`) to view the generated API docs. 
+In your local `.env` file you can set `SWAGGER_ENABLE` to true, spin up a local instance of the app, and then visit the `SWAGGER_UI_PATH` (default `/docs/api`) to view the generated API docs.
 
 ## Migrations
 DB migrations are written using the `knex` package (https://knexjs.org/). Read the `README.md` section on migrations. As mentioned there, it is important not to modify these files as the process as a whole is stateful. Existing migrations can be found in `src/migrations/tasks` and can be applied to your database by running `npm run migrations:latest` while the DB is running locally.

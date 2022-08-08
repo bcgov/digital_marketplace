@@ -28,7 +28,7 @@ import 'cypress-file-upload';
 import '@testing-library/cypress/add-commands';
 
 Cypress.Commands.add('sqlFixture',(sqlFilename)=>{
-    cy.exec(`docker exec dm_db psql -v "ON_ERROR_STOP=1" -U digitalmarketplace digitalmarketplace -f /workspace/cypress/fixtures/${sqlFilename}`) //need /workspace/ because that's the file structure in the db container
+    cy.exec(`docker exec dm_db psql -v "ON_ERROR_STOP=1" -U digmkt digmkt -f /workspace/cypress/fixtures/${sqlFilename}`) //need /workspace/ because that's the file structure in the db container
 })
 
 Cypress.Commands.add('idirLogin',(role)=>{
