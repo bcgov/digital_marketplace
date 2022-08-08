@@ -22,7 +22,6 @@ The file [`docs/onboarding-tips.md`](docs/onboarding-tips.md) contains a collect
 - [Development Environment](#development-environment)
   - [Dependencies](#install-dependencies)
   - [Quick Start](#quick-start)
-  - [Local Development Environment](#local-development-environment)
   - [NPM Scripts](#npm-scripts)
   - [Environment Variables](#environment-variables)
 - [Deployment](#deployment)
@@ -110,7 +109,28 @@ First, create a `.env` file and replace the placeholder values with your credent
 cp sample.env .env
 # Open and edit .env in your text editor.
 ```
-#### Keycloak Set Up
+
+### Install Dependencies
+
+If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
+and drop you in a shell with them accessible in your `$PATH`.
+
+If you are not using Nix, please ensure the following packages have been installed:
+
+- yarn
+- Node.js 16.x
+- SASS
+- Docker
+- Docker Compose 3.x
+- [pre-commit](docs/pre-commit.md)
+
+Once installed, `cd` into this repository's root directory and proceed to install  dependencies (if running for the first time):
+
+```bash
+yarn
+```
+
+### Keycloak Set Up (optional)
 
 If you don't have access the BC Government's keycloak and you want to be able to log in to the app, you'll need to
 set up a local instance of keycloak. To do this, update the following environment variables in the `.env` file:
@@ -134,27 +154,6 @@ Then:
 - Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
 - Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
 
-
-### Install Dependencies
-
-If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
-and drop you in a shell with them accessible in your `$PATH`.
-
-If you are not using Nix, please ensure the following packages have been installed:
-
-- yarn
-- Node.js 16.x
-- SASS
-- Docker
-- Docker Compose 3.x
-- [pre-commit](docs/pre-commit.md)
-
-Once installed, `cd` into this repository's root directory and proceed to install  dependencies (if running for the first time):
-
-```bash
-yarn
-```
-
 ### Quick Start
 
 Open four terminals and run the following commands:
@@ -172,6 +171,9 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 # Terminal 4
 npm run migrations:latest # Run all database migrations.
 ```
+
+#### Admin user
+If this is the first time spinning up a local development environment, set up an [admin user](docs/admin-creation.md)
 
 Then, visit the [URL](http://localhost:3000) logged to your terminal to view the now locally-running web application.
 
