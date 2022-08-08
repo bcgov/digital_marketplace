@@ -39,7 +39,7 @@ objects:
             claimName: "${NAME}-${APP_GROUP}-${TAG_NAME}-data"
         containers:
         - name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-          image: "image-registry.openshift-image-registry.svc:5000/openshift/postgresql:10"
+          image: "image-registry.openshift-image-registry.svc:5000/openshift/postgresql:11"
           ports:
           - containerPort: 5432
             protocol: TCP

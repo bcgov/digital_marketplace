@@ -10,14 +10,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      POSTGRES_URL: postgresql://digitalmarketplace:digitalmarketplace@db:5432/digitalmarketplace
+      POSTGRES_URL: postgresql://digmkt:digmkt@db:5432/digmkt
       NODE_ENV: ${NODE_ENV}
     depends_on:
       - db
 
   db:
     container_name: dm_db
-    image: postgres:10
+    image: postgres:11
     volumes:
       - dm-vol:/var/lib/postgresql/data
       - ./:/workspace
@@ -25,9 +25,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: digitalmarketplace
-      POSTGRES_PASSWORD: digitalmarketplace
-      POSTGRES_DB: digitalmarketplace
+      POSTGRES_USER: digmkt
+      POSTGRES_PASSWORD: digmkt
+      POSTGRES_DB: digmkt
     command: ["postgres", "-c", "log_statement=all"]
 
 volumes:
