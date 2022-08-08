@@ -8,7 +8,7 @@ The process for setting up local development environment can be found in `README
 
 ### Accessing the Local DB
 Once your local development environment is running, you may need to access the database. If the database is running in a Docker container, use the following to access the DB:
-`docker exec -it  <container_name>  psql -U digitalmarketplace digitalmarketplace`
+`docker exec -it  <container_name>  psql -U digmkt digmkt`
 Unless changed, the container name will be `dm_db`.
 
 To log in to the site as a government employee or an admin, you will need an IDIR. If you do not have one yet, or are handling multiple users in your local environment, the following can be used to update a users type directly in the database:

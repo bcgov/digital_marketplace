@@ -10,7 +10,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT truncate_tables('digitalmarketplace');
+SELECT truncate_tables('digmkt');
 
 -- Since the above truncates all table, re-add initial content and contentVersions data (from migration 20201202094826_admin-content-stubs.ts)
 INSERT INTO content (id, "createdAt", "createdBy", slug, fixed) VALUES('042cb7fe-aae7-4b27-aea0-6a4cf6c7ef73', '2022-02-15 23:06:05.71+00', null, 'about', 't');
