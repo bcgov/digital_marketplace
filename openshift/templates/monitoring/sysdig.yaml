@@ -1,0 +1,13 @@
+apiVersion: ops.gov.bc.ca/v1alpha1
+kind: SysdigTeam
+metadata:
+  name: ccc866-sysdigteam
+  namespace: cc866-tools
+spec:
+  team:
+    description: The Sysdig Team for the OpenShift Project Set <PROJECT_SET_NAME>
+    users:
+    - name: brad.payne@gov.bc.ca
+      role: ROLE_TEAM_EDIT
+    - name: steve.chapman@gov.bc.ca
+      role: ROLE_TEAM_READ
