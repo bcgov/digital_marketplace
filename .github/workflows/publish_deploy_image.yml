@@ -46,26 +46,26 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  deploy-to-openshift-development:
-    if: github.event.pull_request.merged == true
-    needs: [build-and-push-image]
-    runs-on: ubuntu-latest
-    environment:
-      name: development
-      url: "https://app-digmkt-dev.apps.silver.devops.gov.bc.ca/"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Deploy
-        uses: ./.github/actions/
-        with:
-          openshift_server_url: ${{ env.OPENSHIFT_SERVER }}
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
-          keycloak_url: ${{ secrets.KEYCLOAK_URL }}
-          tag: ${{ env.TAG }}
-          origin: ${{ secrets.ORIGIN }}
-          host: ${{ secrets.HOST }}
-          cookie_secret: ${{ secrets.COOKIE_SECRET }}
-          client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
-          basic_auth_password_hash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}
+  # deploy-to-openshift-development:
+  #   if: github.event.pull_request.merged == true
+  #   needs: [build-and-push-image]
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: development
+  #     url: "https://app-digmkt-dev.apps.silver.devops.gov.bc.ca/"
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Deploy
+  #       uses: ./.github/actions/
+  #       with:
+  #         openshift_server_url: ${{ env.OPENSHIFT_SERVER }}
+  #         openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+  #         namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+  #         keycloak_url: ${{ secrets.KEYCLOAK_URL }}
+  #         tag: ${{ env.TAG }}
+  #         origin: ${{ secrets.ORIGIN }}
+  #         host: ${{ secrets.HOST }}
+  #         cookie_secret: ${{ secrets.COOKIE_SECRET }}
+  #         client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+  #         basic_auth_password_hash: ${{ secrets.BASIC_AUTH_PASSWORD_HASH }}

@@ -2,7 +2,7 @@
 
 All below commands should be run from openshift directory in the project root. You will also need to log in with the oc command line tool and a token retrieved from the OpenShift 4 Web GUI.
 
-For instructions on deploying the Backup Container for each environment please refer to [BACKUPS.md](./BACKUPS.md).
+For instructions on deploying the Backup Container for each environment please refer to [backups.md](../docs/backups.md).
 
 -----
 
@@ -28,9 +28,9 @@ oc policy add-role-to-user system:image-puller system:serviceaccount:<yyyy>:defa
 To create build configs for the application images, run these commands in the tools namespace:
 
 ```
-oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
-oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
-oc -n ccc866-tools process -f templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
 ```
 
 If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
@@ -53,31 +53,17 @@ oc process -f openshift/build.yaml \
  -p PG_VERSION=11 | oc create -f -
 ```
 
- -----
-
-To deploy a single PostgreSQL instance (for use in DEV and TEST):
+To deploy a highly available Patroni-PostgreSQL stateful set (for use in DEV/TEST/PROD), run the following:
 
 ```
-oc process -f templates/database/postgresql-digmkt-deploy.yaml -p TAG_NAME=dev | oc create -f -
-```
-
-```
-oc process -f templates/database/postgresql-digmkt-deploy.yaml -p TAG_NAME=test | oc create -f -
-```
-
-------
-
-To deploy a highly available Patroni-PostgreSQL stateful set (for use in PROD), run the following:
-
-```
-oc project ccc866-prod
-oc process -f templates/database/patroni-prereq-create.yaml | oc create -f -
+oc project ccc866-<dev/test/prod>
+oc process -f openshift/templates/database/patroni-prereq-create.yaml -p TAG_NAME=<dev/test/prod> | oc create -f -
 
 oc project ccc866-tools
-oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-prod:patroni-digmkt-prod --namespace=ccc866-tools
+oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-<dev/test/prod>:patroni-digmkt-<dev/test/prod> -n ccc866-tools
 
-oc project ccc866-prod
-oc process -f templates/database/patroni-digmkt-deploy.yaml | oc apply -f -
+oc project ccc866-<dev/test/prod>
+oc process -f openshift/templates/database/patroni-digmkt-deploy.yaml -p TAG_NAME=<dev/test/prod> -p PVC_SIZE=<2Gi/10Gi> | oc apply -f -
 ```
 
 ------
@@ -90,7 +76,7 @@ To password protect the dev and test namespace deployments, replace `BASIC_AUTH_
 The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app.
 
 ```
-oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
@@ -98,11 +84,11 @@ oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p ORIGIN=https://app-digmkt-dev.apps.silver.devops.gov.bc.ca \
--p DATABASE_SERVICE_NAME=postgresql | oc create -f -
+-p DATABASE_SERVICE_NAME=patroni | oc create -f -
 ```
 
 ```
-oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=test \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
@@ -114,7 +100,7 @@ oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
 ```
 
 ```
-oc -n ccc866-prod process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=prod \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://oidc.gov.bc.ca \
@@ -128,7 +114,7 @@ When there is an existing deployment config in the namespace these commands must
 In the dev namespace, updating the dc is done using apply:
 
 ```
-oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
@@ -139,7 +125,7 @@ oc -n ccc866-dev process -f templates/app/app-digmkt-deploy.yaml \
 -p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
 ```
 ```
-oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=test \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
@@ -151,7 +137,7 @@ oc -n ccc866-test process -f templates/app/app-digmkt-deploy.yaml \
 ```
 
 ```
-oc -n ccc866-prod process -f templates/app/app-digmkt-deploy.yaml \
+oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=prod \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://oidc.gov.bc.ca \
