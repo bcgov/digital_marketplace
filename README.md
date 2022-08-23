@@ -337,7 +337,7 @@ A manual backup can be immediately performed by connecting to the backup contain
 
 Backup archives are stored in the same OpenShift project as the Digital Marketplace application, on a separate provisioned volume.
 
-You can find instructions for building and deploying the Backup Container images to OpenShift 4 [here](./openshift/BACKUPS.md).
+You can find instructions for building and deploying the Backup Container images to OpenShift 4 [here](docs/backups.md).
 
 #### Restoring from Backup
 
@@ -345,7 +345,7 @@ In the unfortunate event that you need to restore your data from a backup archiv
 
 ### High Availability Database Deployment
 
-The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](./openshift/BACKUPS.md).
+The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](docs/backups.md).
 
 Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/database`.
 
