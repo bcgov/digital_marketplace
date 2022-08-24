@@ -68,6 +68,16 @@ objects:
           deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
           template: "${NAME}-deploy"
       spec:
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: DeploymentConfig
+                    operator: In
+                    values:
+                    - "${NAME}-${APP_GROUP}-${TAG_NAME}"
+              topologyKey: kubernetes.io/hostname
         containers:
         - name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
           image: image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${NAME}-${APP_GROUP}-${TAG_NAME}:latest
