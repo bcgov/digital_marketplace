@@ -176,6 +176,19 @@ objects:
       matchLabels:
         deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
 
+- kind: HorizontalPodAutoscaler
+  apiVersion: autoscaling/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa"
+  spec:
+    maxReplicas: 6
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: DeploymentConfig
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    targetCPUUtilizationPercentage: 80
+
 parameters:
 - name: NAME
   displayName: Name
