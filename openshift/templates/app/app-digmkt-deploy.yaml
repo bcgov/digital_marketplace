@@ -69,6 +69,16 @@ objects:
           deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
           template: "${NAME}-deploy"
       spec:
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: DeploymentConfig
+                    operator: In
+                    values:
+                    - "${NAME}-${APP_GROUP}-${TAG_NAME}"
+              topologyKey: kubernetes.io/hostname
         containers:
         - name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
           image: image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${NAME}-${APP_GROUP}-${TAG_NAME}:latest
@@ -166,6 +176,60 @@ objects:
         status: 'True'
       wildcardPolicy: None
 
+- kind: PodDisruptionBudget
+  apiVersion: policy/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-pdb"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+
+- kind: HorizontalPodAutoscaler
+  apiVersion: autoscaling/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-cpu"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    maxReplicas: 6
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    targetCPUUtilizationPercentage: 80
+
+- kind: HorizontalPodAutoscaler
+  apiVersion: autoscaling/v2beta2
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-mem"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    scaleTargetRef:
+      apiVersion: apps.openshift.io/v1
+      kind: DeploymentConfig
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    minReplicas: 1
+    maxReplicas: 6
+    metrics:
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+
 parameters:
 - name: NAME
   displayName: Name
@@ -195,23 +259,23 @@ parameters:
 - name: CPU_REQUEST
   displayName: Resources CPU Request
   required: true
-  value: 100m
+  value: 50m
 
 - name: CPU_LIMIT
   displayName: Resources CPU Limit
   description: The resources CPU limit (in cores) for this build.
   required: true
-  value: 500m
+  value: 100m
 
 - name: MEMORY_REQUEST
   displayName: Resources Memory Request
   required: true
-  value: 512Mi
+  value: 100Mi
 
 - name: MEMORY_LIMIT
   displayName: Resources Memory Limit
   required: true
-  value: 1Gi
+  value: 200Mi
 
 - name: REPLICAS
   displayName: The number of replicas to run
