@@ -166,6 +166,16 @@ objects:
         status: 'True'
       wildcardPolicy: None
 
+- kind: PodDisruptionBudget
+  apiVersion: policy/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-pdb"
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+
 parameters:
 - name: NAME
   displayName: Name
