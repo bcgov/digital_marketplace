@@ -56,6 +56,7 @@ objects:
         timeoutSeconds: 600
         maxUnavailable: 25%
         maxSurge: 25%
+    replicas: ${{REPLICAS}}
     test: false
     selector:
       app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
@@ -201,7 +202,7 @@ objects:
     maxReplicas: 6
     minReplicas: 1
     scaleTargetRef:
-      apiVersion: apps/v1
+      apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     targetCPUUtilizationPercentage: 80
@@ -275,6 +276,11 @@ parameters:
   displayName: Resources Memory Limit
   required: true
   value: 200Mi
+
+- name: REPLICAS
+  displayName: The number of replicas to run
+  required: true
+  value: '3'
 
 - name: COOKIE_SECRET
   displayName: Cookie Secret
