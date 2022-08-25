@@ -191,23 +191,6 @@ objects:
         deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
 
 - kind: HorizontalPodAutoscaler
-  apiVersion: autoscaling/v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-cpu"
-    labels:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      app-group: "${APP_GROUP}"
-      template: "${NAME}-deploy"
-  spec:
-    maxReplicas: 6
-    minReplicas: 1
-    scaleTargetRef:
-      apiVersion: apps.openshift.io/v1
-      kind: DeploymentConfig
-      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    targetCPUUtilizationPercentage: 80
-
-- kind: HorizontalPodAutoscaler
   apiVersion: autoscaling/v2beta2
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-mem"
@@ -228,7 +211,7 @@ objects:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: 85
 
 parameters:
 - name: NAME
@@ -259,28 +242,28 @@ parameters:
 - name: CPU_REQUEST
   displayName: Resources CPU Request
   required: true
-  value: 50m
+  value: 25m
 
 - name: CPU_LIMIT
   displayName: Resources CPU Limit
   description: The resources CPU limit (in cores) for this build.
   required: true
-  value: 100m
+  value: 75m
 
 - name: MEMORY_REQUEST
   displayName: Resources Memory Request
   required: true
-  value: 100Mi
+  value: 120Mi
 
 - name: MEMORY_LIMIT
   displayName: Resources Memory Limit
   required: true
-  value: 200Mi
+  value: 240Mi
 
 - name: REPLICAS
   displayName: The number of replicas to run
   required: true
-  value: '3'
+  value: '2'
 
 - name: COOKIE_SECRET
   displayName: Cookie Secret
