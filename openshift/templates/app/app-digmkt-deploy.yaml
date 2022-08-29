@@ -188,7 +188,7 @@ objects:
     minAvailable: 1
     selector:
       matchLabels:
-        deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
 
 - kind: HorizontalPodAutoscaler
   apiVersion: autoscaling/v2beta2
