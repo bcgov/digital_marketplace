@@ -5,7 +5,7 @@ The Digital Marketplace is a web application that administers British Columbia's
 
 This document describes this project's developer environment, technical architecture and deployment infrastructure.
 
-The file `docs/ONBOARDING.md` contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
+The file [`docs/onboarding-tips.md`](docs/onboarding-tips.md) contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
 
 ## Table of Contents
 
@@ -13,15 +13,15 @@ The file `docs/ONBOARDING.md` contains a collection of helpful information about
 
 - [Authors and Licensing](#authors-and-licensing)
 - [Project Organisation](#project-organisation)
-  - [Front-End (`src/front-end`)](#front-end-srcfront-end)
-  - [Back-End (`src/back-end`)](#back-end-srcback-end)
-  - [Shared (`src/shared`)](#shared-srcshared)
-  - [Database Migrations (`src/migrations`)](#database-migrations-srcmigrations)
-  - [Scripts (`src/scripts`)](#scripts-srcscripts)
+  - [Front-End (`src/front-end`)](#1-front-end-srcfront-end)
+  - [Back-End (`src/back-end`)](#2-back-end-srcback-end)
+  - [Email Notifications](#3-email-notifications)
+  - [Shared (`src/shared`)](#4-shared-srcshared)
+  - [Database Migrations (`src/migrations`)](#5-database-migrations-srcmigrations)
+  - [Scripts (`src/scripts`)](#6-scripts-srcscripts)
 - [Development Environment](#development-environment)
-  - [Dependencies](#dependencies)
+  - [Dependencies](#install-dependencies)
   - [Quick Start](#quick-start)
-  - [Local Development Environment](#local-development-environment)
   - [NPM Scripts](#npm-scripts)
   - [Environment Variables](#environment-variables)
 - [Deployment](#deployment)
@@ -46,38 +46,38 @@ This project available to use under the Apache 2.0 license (see `LICENSE.txt`). 
 The Digital Marketplace is a full-stack TypeScript web application that uses PostgreSQL for persistence.
 It is written in a functional and declarative style with the goal of maximizing compile-time guarantees through type-safety.
 
-The source code is split into five parts:
+The source code is split into six parts:
 
-### Front-End (`src/front-end`)
+### 1. Front-End (`src/front-end`)
 
 A TypeScript single-page application using React, Immutable.js, Bootstrap and SASS.
 The front-end's build system is executed by Grunt.
 
 The front-end's state management framework (`src/front-end/typescript/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
-### Back-End (`src/back-end`)
+### 2. Back-End (`src/back-end`)
 
 A TypeScript server that vends the front-end's build assets (`src/back-end/lib/routers/front-end.ts`) as well as a JSON CRUD API (`src/back-end/lib/resources/**/*.ts`) that performs business logic and persists data to a PostgreSQL database.
 
 The server framework (`src/back-end/lib/server/index.ts`) provides type-safe abstractions for API development, and is executed by Express (`src/back-end/lib/server/adapters.ts`).
 
-#### Authentication
+#### 2a. Authentication
 
 The server uses OpenID Connect to authenticate users with a Keycloak server (managed by B.C. government employees). The authentication routes are implemented in `src/back-end/lib/routers/auth.ts`.
 
-#### CRUD Resources
+#### 2b. CRUD Resources
 
 CRUD resources are created in a standardised, type-safe way in this project. CRUD abstractions are located in `src/back-end/lib/crud.ts`, and it is recommended to review this module prior to extending the API.
 
-#### Email Notifications
+### 3. Email Notifications
 
 Email notifications are all rendered server-side using React's static HTML renderer. Stub versions of all email notifications can be viewed by authenticated admin users at `{HOST}/admin/email-notification-reference` in your browser.
 
-### Shared (`src/shared`)
+### 4. Shared (`src/shared`)
 
 The `src/shared` folder contains modules that expose types and functions that are used across the entire stack: front-end and back-end.
 
-### Database Migrations (`src/migrations`)
+### 5. Database Migrations (`src/migrations`)
 
 All database migration logic is stored in the `src/migrations` folder. Migrations are managed and executed by the `knex` NPM module (a SQL ORM bundled with database migration functionality). The PostgreSQL-related environment variables described below are required to define the database to connect to.
 
@@ -91,15 +91,15 @@ This command creates a migration file from a template and stores it at `src/migr
 
 **DO NOT delete or change committed migration files. Creating and executing migrations is a stateful process, and, unless you know what you are doing, running a database migration should be viewed as an irreversible process.**
 
-### Scripts (`src/scripts`)
+### 6. Scripts (`src/scripts`)
 
 General purpose scripts are stored in this folder. The scripts themselves are stored in the `src/scripts/bin/` folder, and can be run using the following command:
 
 ```
 npm run scripts:run -- <SCRIPT_NAME> [...args]
 ```
-
-## Set Up
+## Development Environment
+### Set Up
 
 ### `.env` File
 
@@ -109,7 +109,28 @@ First, create a `.env` file and replace the placeholder values with your credent
 cp sample.env .env
 # Open and edit .env in your text editor.
 ```
-#### Keycloak Set Up
+
+### Install Dependencies
+
+If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
+and drop you in a shell with them accessible in your `$PATH`.
+
+If you are not using Nix, please ensure the following packages have been installed:
+
+- yarn
+- Node.js 16.x
+- SASS
+- Docker
+- Docker Compose 3.x
+- [pre-commit](docs/pre-commit.md)
+
+Once installed, `cd` into this repository's root directory and proceed to install  dependencies (if running for the first time):
+
+```bash
+yarn
+```
+
+### Keycloak Set Up (optional)
 
 If you don't have access the BC Government's keycloak and you want to be able to log in to the app, you'll need to
 set up a local instance of keycloak. To do this, update the following environment variables in the `.env` file:
@@ -133,26 +154,6 @@ Then:
 - Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
 - Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
 
-
-### Install Dependencies
-
-If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
-and drop you in a shell with them accessible in your `$PATH`.
-
-If you are not using Nix, please ensure the following packages have been installed:
-
-- yarn
-- Node.js 16.x
-- SASS
-- Docker
-- Docker Compose 3.x
-
-Once installed, `cd` into this repository's root directory and proceed to install  dependencies:
-
-```bash
-yarn
-```
-
 ### Quick Start
 
 Open four terminals and run the following commands:
@@ -171,7 +172,10 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 npm run migrations:latest # Run all database migrations.
 ```
 
-Then, visit the URL logged to your terminal to view the now locally-running web application.
+#### Admin user
+If this is the first time spinning up a local development environment, set up an [admin user](docs/admin-creation.md)
+
+Then, visit the [URL](http://localhost:3000) logged to your terminal to view the now locally-running web application.
 
 You can stop the local PostgreSQL container server (and the keycloak server, if you're running it) by running `docker-compose down`. If you wish to completely wipe the container database, including all the data added by the migrations, run `docker volume rm digital_marketplace_dm-vol`.
 
@@ -213,8 +217,8 @@ npm run <SCRIPT_NAME>
 | `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                                                                              |
 | `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                                                                                    |
 | `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                           |
-| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/OPEN_SOURCE_LICENSES.txt`.                                                                                                             |
-| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/DATABASE.md` from the database specified by the connection url.                                                                                                    |
+| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/open-source-licenses.txt`.                                                                                                             |
+| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/database.md` from the database specified by the connection url.                                                                                                    |
 
 ### Environment Variables
 
@@ -304,7 +308,7 @@ The Development and Test environments are secured behind HTTP Basic Auth. Please
 ### Deployment Process
 
 **IMPORTANT**
-For information on Helm deployment, see [helm deploy docs](./docs/HELM_DEPLOY.md).
+For information on Helm deployment, see [helm deploy docs](./docs/helm-deploy.md).
 
 The "ccc866-tools" OpenShift project is used to trigger the deployment process for all environments.
 
@@ -333,7 +337,7 @@ A manual backup can be immediately performed by connecting to the backup contain
 
 Backup archives are stored in the same OpenShift project as the Digital Marketplace application, on a separate provisioned volume.
 
-You can find instructions for building and deploying the Backup Container images to OpenShift 4 [here](./openshift/BACKUPS.md).
+You can find instructions for building and deploying the Backup Container images to OpenShift 4 [here](docs/backups.md).
 
 #### Restoring from Backup
 
@@ -341,7 +345,7 @@ In the unfortunate event that you need to restore your data from a backup archiv
 
 ### High Availability Database Deployment
 
-The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](./openshift/BACKUPS.md).
+The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](docs/backups.md).
 
 Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/database`.
 
@@ -395,4 +399,4 @@ The Digital Marketplace is currently operated by the Procurement Services Branch
 
 ## Credits
 
-This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used by the Procurement Concierge Program's web app are documented in `docs/OPEN_SOURCE_LICENSES.txt`.
+This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used by the Procurement Concierge Program's web app are documented in `docs/open-source-licenses.txt`.

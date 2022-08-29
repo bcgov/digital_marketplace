@@ -94,7 +94,7 @@ parameters:
   displayName: Source Image Tag
   required: true
   description: The tag of the source image.
-  value: 10-jessie
+  value: '16.13'
 
 - name: OUTPUT_IMAGE_TAG
   displayName: Output Image Tag

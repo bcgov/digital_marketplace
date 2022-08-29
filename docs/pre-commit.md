@@ -19,6 +19,16 @@ Running hooks on unstaged changes can lead to both false-positives and false-neg
 
 Always stage the changes you intend to commit before committing and with the `pre-commit` hook set up or running `pre-commit` explicitly. If a hook changes our code and fails you will need to manually stage the changes made by `pre-commit`, viewing them one by one with `git add -p` or your preferred git GUI.
 
+### Adding new secrets to the baseline
+
+`ERROR: Potential secrets about to be committed to git repo!`
+
+Should you receive the following error, and you have confirmed that the lines it complains about do NOT pose a risk, run the following:
+
+`detect-secrets scan --baseline .secrets.baseline`
+
+[Reference documentation](https://github.com/Yelp/detect-secrets#adding-new-secrets-to-baseline)
+
 ### Running the pre-commit hook directly from the .git folder
 
 - run `bash .git/hooks/pre-commit` to execute pre-commit hook on staged files without committing
