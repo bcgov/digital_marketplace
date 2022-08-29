@@ -7,7 +7,7 @@ metadata:
     iconClass: icon-postgresql
     openshift.io/display-name: Patroni Postgresql (Persistent)
     openshift.io/long-description: This template deploys a patroni postgresql HA
-      cluster with persistent storage.
+      cluster with persistent storage (Service, StatefulSet).
     tags: postgresql
   name: patroni-pgsql-persistent
 labels:
@@ -160,8 +160,9 @@ objects:
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           readinessProbe:
-            initialDelaySeconds: 5
-            timeoutSeconds: 5
+            initialDelaySeconds: 10
+            timeoutSeconds: 40
+            successThreshold: 1
             failureThreshold: 4
             exec:
               command:

@@ -237,7 +237,7 @@ parameters:
 - name: DATABASE_SERVICE_NAME
   displayName: Database Service Name
   required: true
-  value: postgresql
+  value: patroni-pg12
 
 - name: CPU_REQUEST
   displayName: Resources CPU Request
