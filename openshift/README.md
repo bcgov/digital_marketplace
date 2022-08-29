@@ -60,7 +60,7 @@ oc project ccc866-<dev/test/prod>
 oc process -f openshift/templates/database/patroni-prereq-create.yaml -p TAG_NAME=<dev/test/prod> | oc create -f -
 
 oc project ccc866-tools
-oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-<dev/test/prod>:patroni-digmkt-<dev/test/prod> -n ccc866-tools
+oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-<dev/test/prod>:patroni-pg12-digmkt-<dev/test/prod> -n ccc866-tools
 
 oc project ccc866-<dev/test/prod>
 oc process -f openshift/templates/database/patroni-digmkt-deploy.yaml -p TAG_NAME=<dev/test/prod> -p PVC_SIZE=<2Gi/10Gi> | oc apply -f -

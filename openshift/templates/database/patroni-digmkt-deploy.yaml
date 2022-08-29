@@ -195,7 +195,7 @@ objects:
 parameters:
 - name: NAME
   displayName: Application Name
-  value: patroni
+  value: patroni-pg12
 
 - name: APP_GROUP
   displayName: The application group name.
@@ -238,7 +238,7 @@ parameters:
 
 - name: IMAGE_STREAM_TAG
   description: Patroni ImageTag
-  value: patroni:v11-stable
+  value: patroni-postgres:12.4-latest
 
 - description: The size of the persistent volume to create.
   displayName: Persistent Volume Size

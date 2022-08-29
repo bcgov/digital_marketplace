@@ -112,7 +112,7 @@ parameters:
   displayName: Application Name
   name: NAME
   required: true
-  value: patroni
+  value: patroni-pg12
 
 - name: APP_GROUP
   displayName: The application group name.
