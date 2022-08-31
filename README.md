@@ -112,10 +112,7 @@ cp sample.env .env
 
 ### Install Dependencies
 
-If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
-and drop you in a shell with them accessible in your `$PATH`.
-
-If you are not using Nix, please ensure the following packages have been installed:
+Please ensure the following packages have been installed:
 
 - yarn
 - Node.js 16.x
