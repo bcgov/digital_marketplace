@@ -1,59 +1,59 @@
-## Notes for Digital Marketplace deployment to OCP4
+# Notes for Digital Marketplace deployment to OCP4
 
 All below commands should be run from openshift directory in the project root. You will also need to log in with the oc command line tool and a token retrieved from the OpenShift 4 Web GUI.
 
 For instructions on deploying the Backup Container for each environment please refer to [backups.md](../docs/backups.md).
 
 -----
+## Prerequisites
 
-To create default network security policies, run this command in each namespace, replacing `<namespace>` with the name of the target namespace:
+### Network
+For appropriate security on deployed pods:
 
-```
-oc process -f \
-https://raw.githubusercontent.com/BCDevOps/platform-services/master/security/aporeto/docs/sample/quickstart-nsp.yaml \
-
--p NAMESPACE=<namespace> | oc create -f -
-```
+    Kubernetes Network Policies should be in place, see the [Network Policy QuickStart](https://github.com/bcgov/how-to-workshops/tree/master/labs/netpol-quickstart)
 
 -----
+### Role Binding
+To create permissions for image pulls between namespaces, run this in the tools namespace, replacing `<namespace>` with the name of the namespace that is pulling images (e.g. ccc866-dev):
 
-To create permissions for image pulls between namespaces, run this in the tools namespace, replacing `<yyyy>` with the name of the namespace that is pulling images (e.g. ccc866-dev):
-
-```
-oc policy add-role-to-user system:image-puller system:serviceaccount:<yyyy>:default --namespace=ccc866-tools
-```
+`oc policy add-role-to-user system:image-puller system:serviceaccount:<namespace>:default --namespace=ccc866-tools`
 
 -----
-
+### Build Configs
+#### Application Image build
 To create build configs for the application images, run these commands in the tools namespace:
 
 ```
-oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc create -f -
-oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc create -f -
-oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc -n ccc866-tools create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc -n ccc866-tools create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc -n ccc866-tools create -f -
 ```
 
-If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
+**Note**: If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
 
 `oc start-build <buildconfig_name>`
 
 to trigger the build.
 
-
 ------
+#### Patroni-postgres build
 
-To create build configs for the Patroni-PostgreSQL images, run this command in the tools namespace:
+Currently we use a Platform Services built image stored in Artifactory for Patroni-PostgreSQL. The image is maintained and available to all namespaces. In short, no build configs necessary.
 
-```
-oc process -f openshift/build.yaml \
- -p GIT_URI=https://github.com/BCDevOps/platform-services/tree/master/apps/pgsql/patroni \
- -p GIT_REF=master \
- -p SUFFIX=-pg11 \
- -p OUT_VERSION=v11-latest \
- -p PG_VERSION=11 | oc create -f -
-```
+More information: https://github.com/bcgov/patroni-postgres-container
 
+##### Artifactory Overview
+ - **How is the Service Accessed**
+ 	- artifacts.developer.gov.bc.ca
+ - **What is it used for**
+ 	- Marketplace project is using it to obtain access to a shared image (postgres/patroni), which is built and maintained by the platform services team.
+ - **How is it authenticated**
+ 	- every namespace is supplied with a default username/password that follows the pattern `artifacts-default-xxxxx`
+
+## Patroni-Postgres deploy
 To deploy a highly available Patroni-PostgreSQL stateful set (for use in DEV/TEST/PROD), run the following:
+
+**First time only**
 
 ```
 oc project ccc866-<dev/test/prod>
@@ -61,13 +61,16 @@ oc process -f openshift/templates/database/patroni-prereq-create.yaml -p TAG_NAM
 
 oc project ccc866-tools
 oc policy add-role-to-user system:image-puller system:serviceaccount:ccc866-<dev/test/prod>:patroni-pg12-digmkt-<dev/test/prod> -n ccc866-tools
+```
 
+**Deploy**
+```
 oc project ccc866-<dev/test/prod>
 oc process -f openshift/templates/database/patroni-digmkt-deploy.yaml -p TAG_NAME=<dev/test/prod> -p PVC_SIZE=<2Gi/10Gi> | oc apply -f -
 ```
 
 ------
-
+## Application deploy
 To deploy the Digital Marketplace app, run these commands in each namespace (dev/test/prod).
 Replace `<secret>` with the KeyCloak client secret for the target environment.
 
@@ -75,6 +78,7 @@ To password protect the dev and test namespace deployments, replace `BASIC_AUTH_
 
 The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app.
 
+**Dev**
 ```
 oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
@@ -84,9 +88,10 @@ oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p ORIGIN=https://app-digmkt-dev.apps.silver.devops.gov.bc.ca \
--p DATABASE_SERVICE_NAME=patroni | oc create -f -
+-p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-dev apply -f -
 ```
 
+**Test**
 ```
 oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=test \
@@ -96,9 +101,10 @@ oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p ORIGIN=https://digital-gov-frontend-test-c0cce6-test.apps.silver.devops.gov.bc.ca/marketplace \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
--p DATABASE_SERVICE_NAME=postgresql | oc create -f -
+-p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-test apply -f -
 ```
 
+**Prod**
 ```
 oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=prod \
@@ -106,47 +112,10 @@ oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_URL=https://oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=0 \
 -p ORIGIN=https://digital.gov.bc.ca/marketplace \
--p DATABASE_SERVICE_NAME=patroni | oc create -f -
+-p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-prod apply -f -
 ```
 
-When there is an existing deployment config in the namespace these commands must be modified:
-
-In the dev namespace, updating the dc is done using apply:
-
-```
-oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
--p TAG_NAME=dev \
--p KEYCLOAK_CLIENT_SECRET=<secret> \
--p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
--p SHOW_TEST_INDICATOR=1 \
--p BASIC_AUTH_USERNAME=<username> \
--p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
--p ORIGIN=https://app-digmkt-dev.apps.silver.devops.gov.bc.ca \
--p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
-```
-```
-oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
--p TAG_NAME=test \
--p KEYCLOAK_CLIENT_SECRET=<secret> \
--p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
--p SHOW_TEST_INDICATOR=1 \
--p BASIC_AUTH_USERNAME=<username> \
--p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
--p ORIGIN=https://digital-gov-frontend-test-c0cce6-test.apps.silver.devops.gov.bc.ca/marketplace \
--p DATABASE_SERVICE_NAME=postgresql | oc apply -f -
-```
-
-```
-oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
--p TAG_NAME=prod \
--p KEYCLOAK_CLIENT_SECRET=<secret> \
--p KEYCLOAK_URL=https://oidc.gov.bc.ca \
--p SHOW_TEST_INDICATOR=0 \
--p ORIGIN=https://digital.gov.bc.ca/marketplace \
--p DATABASE_SERVICE_NAME=patroni | oc apply -f -
-```
-
-Note 1: When `apply` is used the deployment will not be automatically triggered.  That is done with the command:
+Note 1: When `apply` is used the deployment will (sometimes) not be automatically triggered.  If this happens, you can trigger it manually with:
 
 `oc -n ccc866-<dev,test,prod> rollout latest dc/<deploymentconfig_name>`
 

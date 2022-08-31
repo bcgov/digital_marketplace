@@ -140,10 +140,11 @@ objects:
             value: 0.0.0.0:5432
           - name: PATRONI_RESTAPI_LISTEN
             value: 0.0.0.0:8008
-          image: ${IMAGE_REGISTRY}/${IMAGE_STREAM_NAMESPACE}/${IMAGE_STREAM_TAG}
+          image: ${IMAGE_REGISTRY}/${IMAGE_STREAM_NAMESPACE}:${IMAGE_STREAM_TAG}
           # Because we are using image reference to a tag, we need to always pull the image otherwise
           #   we end up with outdated/out-of-sync image depending on the node where it is running
           imagePullPolicy: Always
+          imagePullSecrets: artifacts-default-rbehd
           name: postgresql
           ports:
           - containerPort: 8008
@@ -193,6 +194,20 @@ objects:
           requests:
             storage: ${PVC_SIZE}
 
+- kind: PodDisruptionBudget
+  apiVersion: policy/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-pdb"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: patroni-pgsql-persistent
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        statefulset: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+
 parameters:
 - name: NAME
   displayName: Application Name
@@ -235,11 +250,11 @@ parameters:
     resides.
   displayName: ImageStream Namespace
   name: IMAGE_STREAM_NAMESPACE
-  value: ccc866-tools
+  value: bcgov-docker-local/patroni-postgres
 
 - name: IMAGE_STREAM_TAG
   description: Patroni ImageTag
-  value: patroni-postgres:12.4-latest
+  value: 2.0.1-12.4-latest
 
 - description: The size of the persistent volume to create.
   displayName: Persistent Volume Size
@@ -250,4 +265,4 @@ parameters:
   value: netapp-block-standard
 
 - name: IMAGE_REGISTRY
-  value: image-registry.openshift-image-registry.svc:5000
+  value: artifacts.developer.gov.bc.ca
