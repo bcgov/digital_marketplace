@@ -1,5 +1,5 @@
 import { getSignInUrl } from "front-end/lib";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link, { externalDest } from "front-end/lib/views/link";
 import React from "react";
@@ -23,7 +23,7 @@ function userTypeToIcon(userType: Props["userType"]): AvailableIcons {
   }
 }
 
-export const SignInCard: View<Props> = (props) => {
+export const SignInCard: component.base.View<Props> = (props) => {
   return (
     <Row>
       <Col xs="12">

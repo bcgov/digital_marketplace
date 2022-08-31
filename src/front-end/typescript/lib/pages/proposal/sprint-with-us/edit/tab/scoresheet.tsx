@@ -2,15 +2,9 @@ import { EMPTY_STRING } from "front-end/config";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import { swuProposalStatusToTitleCase } from "front-end/lib/pages/proposal/sprint-with-us/lib";
@@ -33,23 +27,25 @@ export interface State extends Tab.Params {
 
 export type InnerMsg = ADT<"table", Table.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    table: immutable(
-      await Table.init({
-        idNamespace: "swu-proposal-edit-scoresheet"
-      })
-    )
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "swu-proposal-edit-scoresheet"
+  });
+  return [
+    {
+      ...params,
+      table: immutable(tableState)
+    },
+    component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg))
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "table":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -57,11 +53,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("table", value)
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-function tableHeadCells(state: Immutable<State>): Table.HeadCells {
+function tableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Team Questions",
@@ -128,7 +124,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   ];
 }
 
-const Rank: ComponentView<State, Msg> = ({ state }) => {
+const Rank: component_.base.ComponentView<State, Msg> = ({ state }) => {
   if (!showScoreAndRankToProponent(state.proposal) || !state.proposal.rank) {
     return null;
   }
@@ -152,7 +148,9 @@ const Rank: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const NotAvailable: View<Pick<State, "proposal">> = ({ proposal }) => {
+const NotAvailable: component_.base.View<Pick<State, "proposal">> = ({
+  proposal
+}) => {
   switch (proposal.status) {
     case SWUProposalStatus.Disqualified:
     case SWUProposalStatus.Withdrawn: {
@@ -181,7 +179,10 @@ const NotAvailable: View<Pick<State, "proposal">> = ({ proposal }) => {
   }
 };
 
-const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const Scoresheet: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -189,10 +190,10 @@ const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <h3 className="mb-4">Scoresheet</h3>
           {showScoreAndRankToProponent(state.proposal) ? (
             <Table.view
-              headCells={tableHeadCells(state)}
+              headCells={tableHeadCells()}
               bodyRows={tableBodyRows(state)}
               state={state.table}
-              dispatch={mapComponentDispatch(dispatch, (v) =>
+              dispatch={component_.base.mapDispatch(dispatch, (v) =>
                 adt("table" as const, v)
               )}
             />
@@ -205,7 +206,7 @@ const Scoresheet: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state } = props;
   return (
     <div>
@@ -219,5 +220,8 @@ const view: ComponentView<State, Msg> = (props) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  }
 };

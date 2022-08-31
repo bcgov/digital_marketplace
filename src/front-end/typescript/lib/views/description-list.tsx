@@ -1,13 +1,13 @@
-import { View, ViewElementChildren } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import React, { Fragment } from "react";
 
 interface DescriptionItem {
   name: string;
-  children: ViewElementChildren;
+  children: component.base.ViewElementChildren;
   className?: string;
 }
 
-export const DescriptionItem: View<DescriptionItem> = ({
+export const DescriptionItem: component.base.View<DescriptionItem> = ({
   className = "",
   name,
   children
@@ -27,7 +27,10 @@ export interface Props {
   className?: string;
 }
 
-export const DescriptionList: View<Props> = ({ items, className }) => {
+export const DescriptionList: component.base.View<Props> = ({
+  items,
+  className
+}) => {
   items = items.filter((i) => !!i);
   return (
     <div className={className}>

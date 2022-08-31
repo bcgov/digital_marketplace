@@ -1,6 +1,6 @@
 import {
   getAlertsValid,
-  getContextualActionsValid,
+  getActionsValid,
   getMetadataValid,
   getModalValid,
   makePageMetadata,
@@ -9,14 +9,12 @@ import {
   viewValid
 } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
-import { SharedState } from "front-end/lib/app/types";
+import { SharedState, Route } from "front-end/lib/app/types";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import {
   immutable,
   Immutable,
-  PageComponent,
-  PageInit,
-  replaceRoute
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
@@ -27,9 +25,10 @@ import {
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
-  opportunity: SWUOpportunity;
+  opportunity: SWUOpportunity | null;
 }
 
 export type State_<K extends Tab.TabId> = Validation<
@@ -39,7 +38,22 @@ export type State_<K extends Tab.TabId> = Validation<
 
 export type State = State_<Tab.TabId>;
 
-export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, ADT<"noop">>;
+export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
+  K,
+  ADT<
+    "onInitResponse",
+    [
+      string,
+      Tab.TabId,
+      api.ResponseValidation<SWUOpportunity, string[]>,
+      api.ResponseValidation<SWUProposalSlim[], string[]>
+    ]
+  >
+>;
+
+export type InnerMsg = InnerMsg_<Tab.TabId>;
+
+export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, InnerMsg>;
 
 export type Msg = Msg_<Tab.TabId>;
 
@@ -48,58 +62,78 @@ export interface RouteParams {
   tab?: Tab.TabId;
 }
 
-function makeInit<K extends Tab.TabId>(): PageInit<
+function makeInit<K extends Tab.TabId>(): component_.page.Init<
   RouteParams,
   SharedState,
   State_<K>,
-  Msg_<K>
+  InnerMsg_<K>,
+  Route
 > {
   return isUserType({
     userType: [UserType.Government, UserType.Admin],
-
-    async success({ routePath, routeParams, shared, dispatch }) {
-      // Get the opportunity.
-      const opportunityResult = await api.opportunities.swu.readOne(
-        routeParams.opportunityId
-      );
-      // If the request failed, then show the "Not Found" page.
-      // The back-end will return a 404 if the viewer is a Government
-      // user and is not the owner.
-      if (!api.isValid(opportunityResult)) {
-        dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-        return invalid(null);
-      }
-      const opportunity = opportunityResult.value;
-      // Set up the visible tab state.
+    success({ routePath, routeParams, shared }) {
       const tabId = routeParams.tab || "summary";
-      const tabState = immutable(
-        await Tab.idToDefinition(tabId).component.init({
-          opportunity,
-          viewerUser: shared.sessionUser
-        })
-      );
-      // Everything checks out, return valid state.
-      return valid(
-        immutable({
-          opportunity,
-          tab: [tabId, tabState],
-          sidebar: await Tab.makeSidebarState(opportunity, tabId)
-        })
-      ) as State_<K>;
+      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
+      const tabComponent = Tab.idToDefinition(tabId).component;
+      const [tabState, tabCmds] = tabComponent.init({
+        viewerUser: shared.sessionUser
+      });
+      return [
+        valid(
+          immutable({
+            opportunity: null,
+            tab: [tabId, immutable(tabState)],
+            sidebar: sidebarState
+          })
+        ) as State_<K>,
+        [
+          ...component_.cmd.mapMany(
+            sidebarCmds,
+            (msg) => adt("sidebar", msg) as Msg
+          ),
+          ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
+          component_.cmd.join(
+            api.opportunities.swu.readOne(
+              routeParams.opportunityId,
+              (response) => response
+            ),
+            tabId === "proposals"
+              ? api.proposals.swu.readMany(routeParams.opportunityId)(
+                  (response) => response
+                )
+              : component_.cmd.dispatch(valid([])),
+            (opportunity, proposals) =>
+              adt("onInitResponse", [
+                routePath,
+                tabId,
+                opportunity,
+                proposals
+              ]) as Msg
+          )
+        ]
+      ];
     },
-
-    async fail({ routePath, dispatch }) {
-      dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-      return invalid(null);
+    fail({ routePath }) {
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(
+              adt("notFound" as const, { path: routePath })
+            )
+          )
+        ]
+      ];
     }
   });
 }
 
-function makeComponent<K extends Tab.TabId>(): PageComponent<
+function makeComponent<K extends Tab.TabId>(): component_.page.Component<
   RouteParams,
   SharedState,
   State_<K>,
-  Msg_<K>
+  InnerMsg_<K>,
+  Route
 > {
   const idToDefinition: TabbedPage.IdToDefinitionWithState<
     Tab.Tabs,
@@ -110,27 +144,82 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<
     init: makeInit(),
     update: updateValid(
       TabbedPage.makeParentUpdate({
-        extraUpdate: ({ state }) => [state],
-        idToDefinition
+        idToDefinition,
+        extraUpdate: ({ state, msg }) => {
+          switch (msg.tag) {
+            case "onInitResponse": {
+              const [routePath, tabId, opportunityResponse, proposalsResponse] =
+                msg.value;
+              // If the opportunity request failed, then show the "Not Found" page.
+              // The back-end will return a 404 if the viewer is a Government
+              // user and is not the owner.
+              // We default invalid proposal responses to an empty list.
+              if (!api.isValid(opportunityResponse)) {
+                return [
+                  state,
+                  [
+                    component_.cmd.dispatch(
+                      component_.global.replaceRouteMsg(
+                        adt("notFound" as const, { path: routePath })
+                      )
+                    )
+                  ]
+                ];
+              }
+              const opportunity = opportunityResponse.value;
+              const proposals = api.getValidValue(proposalsResponse, []);
+              // Re-initialize sidebar.
+              const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
+                tabId,
+                opportunity
+              );
+              const tabComponent = Tab.idToDefinition(tabId).component;
+              return [
+                state
+                  .set("opportunity", opportunity)
+                  .set("sidebar", immutable(sidebarState)),
+                [
+                  ...component_.cmd.mapMany(
+                    sidebarCmds,
+                    (msg) => adt("sidebar", msg) as Msg
+                  ),
+                  component_.cmd.dispatch(
+                    adt(
+                      "tab",
+                      tabComponent.onInitResponse([opportunity, proposals])
+                    )
+                  )
+                ]
+              ];
+            }
+            default:
+              return [state, []];
+          }
+        }
       })
     ),
     view: viewValid(TabbedPage.makeParentView(idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
     getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(idToDefinition)),
     getModal: getModalValid(TabbedPage.makeGetParentModal(idToDefinition)),
-    getContextualActions: getContextualActionsValid(
-      TabbedPage.makeGetParentContextualActions(idToDefinition)
+    getActions: getActionsValid(
+      TabbedPage.makeGetParentActions(idToDefinition)
     ),
     getMetadata: getMetadataValid(
       TabbedPage.makeGetParentMetadata({
         idToDefinition,
         getTitleSuffix: (state) =>
-          state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
+          state.opportunity?.title || DEFAULT_OPPORTUNITY_TITLE
       }),
       makePageMetadata("Edit Sprint With Us Opportunity")
     )
   };
 }
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> =
-  makeComponent();
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = makeComponent();

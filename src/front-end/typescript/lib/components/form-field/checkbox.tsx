@@ -1,5 +1,5 @@
 import * as FormField from "front-end/lib/components/form-field";
-import { ViewElement } from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import React from "react";
 import { Spinner } from "reactstrap";
 import { CustomInput } from "reactstrap";
@@ -14,7 +14,7 @@ type ChildParams = FormField.ChildParamsBase<Value>;
 type InnerChildMsg = ADT<"onChange", Value>;
 
 interface ExtraChildProps {
-  inlineLabel: string | ViewElement;
+  inlineLabel: string | component_.base.ViewElement;
   loading?: boolean;
   slimHeight?: boolean;
 }
@@ -33,14 +33,14 @@ export type Params = FormField.Params<Value, ChildParams>;
 
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: ChildComponent["init"] = async (params) => params;
+const childInit: ChildComponent["init"] = (params) => [params, []];
 
 const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
   switch (msg.tag) {
     case "onChange":
-      return [state.set("value", msg.value)];
+      return [state.set("value", msg.value), []];
     default:
-      return [state];
+      return [state, []];
   }
 };
 

@@ -2,16 +2,9 @@ import { EMPTY_STRING } from "front-end/config";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/organization/lib/toasts";
@@ -53,77 +46,111 @@ export interface State extends Tab.Params {
 }
 
 export type InnerMsg =
+  | ADT<"noop">
+  | ADT<
+      "onInitResponse",
+      [
+        Tab.Params["invitation"],
+        api.ResponseValidation<AffiliationSlim[], string[]>
+      ]
+    >
   | ADT<"ownedTable", Table.Msg>
   | ADT<"affiliatedTable", Table.Msg>
   | ADT<"deleteAffiliation", AffiliationSlim>
+  | ADT<"onDeleteAffiliationResponse", [AffiliationSlim, boolean]>
   | ADT<"approveAffiliation", AffiliationSlim>
+  | ADT<"onApproveAffiliationResponse", [AffiliationSlim, boolean]>
   | ADT<"rejectAffiliation", AffiliationSlim>
+  | ADT<"onRejectAffiliationResponse", [AffiliationSlim, boolean]>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async ({
+const init: component_.base.Init<Tab.Params, State, Msg> = ({
   viewerUser,
   profileUser,
   invitation
 }) => {
-  const result = await api.affiliations.readMany();
-  let affiliations: TableAffiliation[] = [];
-  if (api.isValid(result)) {
-    affiliations = result.value.sort((a, b) =>
-      compareStrings(a.organization.legalName, b.organization.legalName)
-    );
-  }
-  let showModal: State["showModal"] = null;
-  if (invitation) {
-    const affiliation = find(
-      affiliations,
-      (a) => a.id === invitation.affiliationId
-    );
-    if (affiliation && memberIsPending(affiliation)) {
-      showModal = adt(
-        invitation.response === "approve"
-          ? "approveAffiliation"
-          : "rejectAffiliation",
-        affiliation
-      );
-    }
-  }
-  return {
-    showModal,
-    deleteAffiliationLoading: null,
-    approveAffiliationLoading: null,
-    rejectAffiliationLoading: null,
-    profileUser,
-    viewerUser,
-    ownedRecords: affiliations.filter(
-      (a) => a.membershipType === MembershipType.Owner
-    ),
-    affiliatedRecords: affiliations.filter(
-      (a) => a.membershipType === MembershipType.Member
-    ),
-    ownedTable: immutable(
-      await Table.init({
-        idNamespace: "user-profile-orgs-owned"
-      })
-    ),
-    affiliatedTable: immutable(
-      await Table.init({
-        idNamespace: "user-profile-orgs-affiliated"
-      })
-    )
-  };
+  const [ownedTableState, ownedTableCmds] = Table.init({
+    idNamespace: "user-profile-orgs-owned"
+  });
+  const [affiliatedTableState, affiliatedTableCmds] = Table.init({
+    idNamespace: "user-profile-orgs-affiliated"
+  });
+  return [
+    {
+      showModal: null,
+      deleteAffiliationLoading: null,
+      approveAffiliationLoading: null,
+      rejectAffiliationLoading: null,
+      profileUser,
+      viewerUser,
+      ownedRecords: [],
+      affiliatedRecords: [],
+      ownedTable: immutable(ownedTableState),
+      affiliatedTable: immutable(affiliatedTableState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        ownedTableCmds,
+        (msg) => adt("ownedTable", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        affiliatedTableCmds,
+        (msg) => adt("affiliatedTable", msg) as Msg
+      ),
+      api.affiliations.readMany((response) =>
+        adt("onInitResponse", [invitation, response])
+      ) as component_.Cmd<Msg>
+    ]
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      let affiliations: TableAffiliation[] = [];
+      const [invitation, response] = msg.value;
+      if (api.isValid(response)) {
+        affiliations = response.value.sort((a, b) =>
+          compareStrings(a.organization.legalName, b.organization.legalName)
+        );
+      }
+      let showModal: State["showModal"] = null;
+      if (invitation) {
+        const affiliation = find(
+          affiliations,
+          (a) => a.id === invitation.affiliationId
+        );
+        if (affiliation && memberIsPending(affiliation)) {
+          showModal = adt(
+            invitation.response === "approve"
+              ? "approveAffiliation"
+              : "rejectAffiliation",
+            affiliation
+          );
+        }
+      }
+      return [
+        state.merge({
+          showModal,
+          ownedRecords: affiliations.filter(
+            (a) => a.membershipType === MembershipType.Owner
+          ),
+          affiliatedRecords: affiliations.filter(
+            (a) => a.membershipType === MembershipType.Member
+          )
+        }),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
     case "ownedTable":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["ownedTable"],
         childUpdate: Table.update,
@@ -131,7 +158,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => ({ tag: "ownedTable", value })
       });
     case "affiliatedTable":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["affiliatedTable"],
         childUpdate: Table.update,
@@ -143,102 +170,154 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         state
           .set("deleteAffiliationLoading", msg.value.id)
           .set("showModal", null),
-        async (state, dispatch) => {
-          state = state.set("deleteAffiliationLoading", null);
-          const result = await api.affiliations.delete(msg.value.id);
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(adt("error", toasts.leftOrganization.error(msg.value)))
-            );
-            return state;
-          }
-          dispatch(
-            toast(adt("success", toasts.leftOrganization.success(msg.value)))
-          );
-          return immutable(
-            await init({
-              profileUser: state.profileUser,
-              viewerUser: state.viewerUser
-            })
-          );
-        }
+        [
+          api.affiliations.delete_(msg.value.id, (response) =>
+            adt("onDeleteAffiliationResponse", [
+              msg.value,
+              api.isValid(response)
+            ])
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    case "onDeleteAffiliationResponse": {
+      state = state.set("deleteAffiliationLoading", null);
+      const [affiliation, succeeded] = msg.value;
+      if (!succeeded) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.leftOrganization.error(affiliation))
+              )
+            )
+          ]
+        ];
+      }
+      const [initState, initCmds] = init({
+        profileUser: state.profileUser,
+        viewerUser: state.viewerUser
+      });
+      return [
+        immutable(initState),
+        [
+          ...initCmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.leftOrganization.success(affiliation))
+            )
+          )
+        ]
+      ];
+    }
     case "approveAffiliation":
       return [
         state
           .set("approveAffiliationLoading", msg.value.id)
           .set("showModal", null),
-        async (state, dispatch) => {
-          state = state.set("approveAffiliationLoading", null);
-          const result = await api.affiliations.update(msg.value.id, null);
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(
+        [
+          api.affiliations.update(msg.value.id, null, (response) =>
+            adt("onApproveAffiliationResponse", [
+              msg.value,
+              api.isValid(response)
+            ])
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    case "onApproveAffiliationResponse": {
+      state = state.set("approveAffiliationLoading", null);
+      const [affiliation, succeeded] = msg.value;
+      if (!succeeded) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
                 adt(
                   "error",
-                  toasts.approvedOrganizationRequest.error(msg.value)
+                  toasts.approvedOrganizationRequest.error(affiliation)
                 )
               )
-            );
-            return state;
-          }
-          dispatch(
-            toast(
+            )
+          ]
+        ];
+      }
+      const [initState, initCmds] = init({
+        profileUser: state.profileUser,
+        viewerUser: state.viewerUser
+      });
+      return [
+        immutable(initState),
+        [
+          ...initCmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
               adt(
                 "success",
-                toasts.approvedOrganizationRequest.success(msg.value)
+                toasts.approvedOrganizationRequest.success(affiliation)
               )
             )
-          );
-          return immutable(
-            await init({
-              profileUser: state.profileUser,
-              viewerUser: state.viewerUser
-            })
-          );
-        }
+          )
+        ]
       ];
+    }
     case "rejectAffiliation":
       return [
         state
           .set("rejectAffiliationLoading", msg.value.id)
           .set("showModal", null),
-        async (state, dispatch) => {
-          state = state.set("rejectAffiliationLoading", null);
-          const result = await api.affiliations.delete(msg.value.id);
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(
+        [
+          api.affiliations.delete_(msg.value.id, (response) =>
+            adt("onRejectAffiliationResponse", [
+              msg.value,
+              api.isValid(response)
+            ])
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    case "onRejectAffiliationResponse": {
+      state = state.set("rejectAffiliationLoading", null);
+      const [affiliation, succeeded] = msg.value;
+      if (!succeeded) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
                 adt(
                   "error",
-                  toasts.rejectedOrganizationRequest.error(msg.value)
+                  toasts.rejectedOrganizationRequest.error(affiliation)
                 )
               )
-            );
-            return state;
-          }
-          dispatch(
-            toast(
+            )
+          ]
+        ];
+      }
+      const [initState, initCmds] = init({
+        profileUser: state.profileUser,
+        viewerUser: state.viewerUser
+      });
+      return [
+        immutable(initState),
+        [
+          ...initCmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
               adt(
                 "success",
-                toasts.rejectedOrganizationRequest.success(msg.value)
+                toasts.rejectedOrganizationRequest.success(affiliation)
               )
             )
-          );
-          return immutable(
-            await init({
-              profileUser: state.profileUser,
-              viewerUser: state.viewerUser
-            })
-          );
-        }
+          )
+        ]
       ];
+    }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-function ownedTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function ownedTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Legal Name",
@@ -301,7 +380,7 @@ function ownedTableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
-function affiliatedTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function affiliatedTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Legal Name",
@@ -322,7 +401,7 @@ function affiliatedTableHeadCells(state: Immutable<State>): Table.HeadCells {
 
 function affiliatedTableBodyRows(
   state: Immutable<State>,
-  dispatch: Dispatch<Msg>
+  dispatch: component_.base.Dispatch<Msg>
 ): Table.BodyRows {
   return state.affiliatedRecords.map((affiliation) => {
     const isDeleteLoading = state.deleteAffiliationLoading === affiliation.id;
@@ -401,12 +480,15 @@ function affiliatedTableBodyRows(
   });
 }
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const dispatchOwnedTable = mapComponentDispatch<Msg, Table.Msg>(
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
+  const dispatchOwnedTable = component_.base.mapDispatch<Msg, Table.Msg>(
     dispatch,
     (value) => ({ tag: "ownedTable", value })
   );
-  const dispatchAffiliatedTable = mapComponentDispatch<Msg, Table.Msg>(
+  const dispatchAffiliatedTable = component_.base.mapDispatch<Msg, Table.Msg>(
     dispatch,
     (value) => ({ tag: "affiliatedTable", value })
   );
@@ -426,7 +508,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Row>
           <Col xs="12">
             <Table.view
-              headCells={ownedTableHeadCells(state)}
+              headCells={ownedTableHeadCells()}
               bodyRows={ownedTableBodyRows(state)}
               state={state.ownedTable}
               dispatch={dispatchOwnedTable}
@@ -450,7 +532,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
         <Row>
           <Col xs="12">
             <Table.view
-              headCells={affiliatedTableHeadCells(state)}
+              headCells={affiliatedTableHeadCells()}
               bodyRows={affiliatedTableBodyRows(state, dispatch)}
               state={state.affiliatedTable}
               dispatch={dispatchAffiliatedTable}
@@ -466,17 +548,20 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  onInitResponse() {
+    return adt("noop");
+  },
   getModal(state) {
     if (!state.showModal) {
-      return null;
+      return component_.page.modal.hide();
     }
     switch (state.showModal.tag) {
       case "deleteAffiliation":
-        return {
+        return component_.page.modal.show({
           title: "Leave Organization?",
           body: () =>
             "Are you sure you want to leave this organization? You will no longer be able to be included as a team member in its opportunity proposals.",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Leave Organization",
@@ -491,13 +576,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "approveAffiliation":
-        return {
+        return component_.page.modal.show({
           title: "Approve Request?",
           body: () =>
             "Approving this request will allow this company to put you forward as a team member on proposals for opportunities.",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Approve Request",
@@ -512,13 +597,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "rejectAffiliation":
-        return {
+        return component_.page.modal.show({
           title: "Reject Request?",
           body: () =>
             "Are you sure you want to reject this organization's request for you to join their team?",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Reject Request",
@@ -533,11 +618,11 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
     }
   },
-  getContextualActions({ state }) {
-    return adt("links", [
+  getActions() {
+    return component_.page.actions.links([
       {
         children: "Create Organization",
         dest: routeDest(adt("orgCreate", null)),

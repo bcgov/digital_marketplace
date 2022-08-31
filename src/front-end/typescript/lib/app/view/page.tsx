@@ -1,21 +1,12 @@
 import getAppAlerts from "front-end/lib/app/alerts";
-import { Msg, Route, SharedState, State } from "front-end/lib/app/types";
 import {
-  Dispatch,
-  emptyPageAlerts,
-  emptyPageBreadcrumbs,
-  GlobalComponentMsg,
-  Immutable,
-  mapAppDispatch,
-  mapPageAlerts,
-  mapPageBreadcrumbsMsg,
-  mergePageAlerts,
-  newRoute,
-  PageAlert,
-  PageAlerts,
-  PageBreadcrumbs,
-  PageComponent
-} from "front-end/lib/framework";
+  Msg,
+  Route,
+  InnerMsg,
+  SharedState,
+  State
+} from "front-end/lib/app/types";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Icon from "front-end/lib/views/icon";
 import Link from "front-end/lib/views/link";
@@ -28,11 +19,11 @@ import {
   Container,
   Row
 } from "reactstrap";
-import { adt } from "shared/lib/types";
+import { ADT, adt } from "shared/lib/types";
 
 interface ViewAlertProps {
-  messages: Array<PageAlert<Msg>>;
-  dispatch: Dispatch<Msg>;
+  messages: Array<component_.page.alerts.Alert<Msg>>;
+  dispatch: component_.base.Dispatch<Msg>;
   color: ThemeColor;
   className?: string;
 }
@@ -76,8 +67,8 @@ function ViewAlert({
 }
 
 interface ViewAlertsProps {
-  alerts: PageAlerts<Msg>;
-  dispatch: Dispatch<Msg>;
+  alerts: component_.page.Alerts<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
 function ViewAlerts({ alerts, dispatch }: ViewAlertsProps) {
@@ -95,8 +86,8 @@ function ViewAlerts({ alerts, dispatch }: ViewAlertsProps) {
 }
 
 interface ViewBreadcrumbsProps {
-  breadcrumbs: PageBreadcrumbs<Msg>;
-  dispatch: Dispatch<Msg>;
+  breadcrumbs: component_.page.Breadcrumbs<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
 function ViewBreadcrumbs(
@@ -159,49 +150,57 @@ function ViewAlertsAndBreadcrumbs(props: ViewAlertsAndBreadcrumbsProps) {
   }
 }
 
-export interface Props<RouteParams, PageState extends object, PageMsg> {
+export interface Props<RouteParams, PageState, PageMsg> {
   state: Immutable<State>;
-  dispatch: Dispatch<Msg>;
-  component: PageComponent<
+  dispatch: component_.base.Dispatch<Msg>;
+  component: component_.page.Component<
     RouteParams,
     SharedState,
     PageState,
-    GlobalComponentMsg<PageMsg, Route>
+    PageMsg,
+    Route
   >;
   pageState?: Immutable<PageState>;
-  mapPageMsg(msg: GlobalComponentMsg<PageMsg, Route>): Msg;
+  mapPageMsg(msg: PageMsg): InnerMsg;
 }
 
-export function view<RouteParams, PageState extends object, PageMsg>(
-  props: Props<RouteParams, PageState, PageMsg>
-) {
+export function view<
+  RouteParams,
+  PageState,
+  PageMsg extends ADT<unknown, unknown>
+>(props: Props<RouteParams, PageState, PageMsg>) {
   const { state, dispatch, mapPageMsg, component, pageState } = props;
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
   if (!pageState) {
-    dispatch(newRoute(adt("notFound" as const, {})));
+    dispatch(component_.global.newRouteMsg(adt("notFound" as const, {})));
     return null;
   }
   // pageState is defined, render page.
   const {
     sidebar,
-    getBreadcrumbs = emptyPageBreadcrumbs,
-    getAlerts = emptyPageAlerts,
+    getBreadcrumbs = component_.page.breadcrumbs.empty,
+    getAlerts = component_.page.alerts.empty,
     fullWidth = false,
     backgroundColor = "white"
   } = component;
-  const dispatchPage: Dispatch<GlobalComponentMsg<PageMsg, Route>> =
-    mapAppDispatch(dispatch, mapPageMsg);
+  const dispatchPage = component_.app.mapDispatch(dispatch, mapPageMsg);
   const viewProps = {
     dispatch: dispatchPage,
     state: pageState
   };
   const appAlerts = getAppAlerts({ state, dispatch });
-  const pageAlerts = mapPageAlerts(getAlerts(pageState), mapPageMsg);
+  const pageAlerts = component_.page.alerts.map(
+    getAlerts(pageState),
+    mapPageMsg
+  );
   const viewAlertsAndBreadcrumbsProps = {
     dispatch,
-    alerts: mergePageAlerts(appAlerts, pageAlerts),
-    breadcrumbs: mapPageBreadcrumbsMsg(getBreadcrumbs(pageState), mapPageMsg)
+    alerts: component_.page.alerts.merge(appAlerts, pageAlerts),
+    breadcrumbs: component_.page.breadcrumbs.map(
+      getBreadcrumbs(pageState),
+      mapPageMsg
+    )
   };
   const backgroundClassName = `bg-${backgroundColor}`;
   // Handle full width pages.

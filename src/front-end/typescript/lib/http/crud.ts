@@ -1,325 +1,242 @@
-import {
-  invalid,
-  request,
-  ResponseValidation,
-  unhandled,
-  valid
-} from "shared/lib/http";
-import { ClientHttpMethod, Defined, Id, IfDefined } from "shared/lib/types";
+import { prefixPath } from "front-end/lib";
+import { prefix } from "shared/lib";
+import { invalid, valid, ResponseValidation } from "shared/lib/http";
+import { Id, ClientHttpMethod } from "shared/lib/types";
+import { Immutable, immutable, component } from "front-end/lib/framework";
 
-// Types
+export const apiNamespace = (p: string) => `/${prefix(prefixPath("api"))(p)}`;
 
-interface ActionTypes {
-  rawResponse: unknown;
-  validResponse: unknown;
-  invalidResponse: unknown;
-}
+export type HandleResponse<ValidResponse, InvalidResponse, Msg> = (
+  response: ResponseValidation<ValidResponse, InvalidResponse>
+) => Msg;
 
-interface ActionWithBodyTypes extends ActionTypes {
-  request: unknown;
-}
+export type CreateAction<RequestBody, ValidResponse, InvalidResponse, Msg> = (
+  body: RequestBody,
+  handleResponse: HandleResponse<ValidResponse, InvalidResponse, Msg>
+) => component.cmd.Cmd<Msg>;
 
-export interface ReadManyActionTypes<T extends ActionTypes> {
-  rawResponse: Array<T["rawResponse"]>;
-  validResponse: Array<T["validResponse"]>;
-  invalidResponse: T["invalidResponse"];
-}
+export type CreateManyAction<RequestBodyItem, ValidItem, InvalidItem, Msg> = (
+  body: RequestBodyItem[],
+  handleResponse: HandleResponse<ValidItem[], InvalidItem[], Msg>
+) => component.cmd.Cmd<Msg>;
 
-export interface BaseResourceTypes {
-  create: ActionWithBodyTypes | undefined;
-  readMany: ActionTypes | undefined;
-  readOne: ActionTypes | undefined;
-  update: ActionWithBodyTypes | undefined;
-  delete: ActionTypes | undefined;
-}
+export type ReadManyAction<ValidItem, InvalidResponse, Msg> = (
+  handleResponse: HandleResponse<ValidItem[], InvalidResponse, Msg>
+) => component.cmd.Cmd<Msg>;
 
-export type CrudClientAction<T extends ActionTypes> = () => Promise<
-  ResponseValidation<T["validResponse"], T["invalidResponse"]>
->;
-
-export type CrudClientActionWithBody<T extends ActionWithBodyTypes> = (
-  body: T["request"]
-) => Promise<ResponseValidation<T["validResponse"], T["invalidResponse"]>>;
-
-export type CrudClientActionWithId<T extends ActionTypes> = (
-  id: Id
-) => Promise<ResponseValidation<T["validResponse"], T["invalidResponse"]>>;
-
-export type CrudClientActionWithIdAndBody<T extends ActionWithBodyTypes> = (
+export type ReadOneAction<ValidResponse, InvalidResponse, Msg> = (
   id: Id,
-  body: T["request"]
-) => Promise<ResponseValidation<T["validResponse"], T["invalidResponse"]>>;
+  handleResponse: HandleResponse<ValidResponse, InvalidResponse, Msg>
+) => component.cmd.Cmd<Msg>;
 
-export interface CrudApi<
-  ResourceTypes extends BaseResourceTypes = BaseResourceTypes
-> {
-  create: IfDefined<
-    ResourceTypes["create"],
-    CrudClientActionWithBody<Defined<ResourceTypes["create"]>>
-  >;
-  readMany: IfDefined<
-    ResourceTypes["readMany"],
-    CrudClientAction<ReadManyActionTypes<Defined<ResourceTypes["readMany"]>>>
-  >;
-  readOne: IfDefined<
-    ResourceTypes["readOne"],
-    CrudClientActionWithId<Defined<ResourceTypes["readOne"]>>
-  >;
-  update: IfDefined<
-    ResourceTypes["update"],
-    CrudClientActionWithIdAndBody<Defined<ResourceTypes["update"]>>
-  >;
-  delete: IfDefined<
-    ResourceTypes["delete"],
-    CrudClientActionWithId<Defined<ResourceTypes["delete"]>>
-  >;
+export type UpdateAction<RequestBody, ValidResponse, InvalidResponse, Msg> = (
+  id: Id,
+  body: RequestBody,
+  handleResponse: HandleResponse<ValidResponse, InvalidResponse, Msg>
+) => component.cmd.Cmd<Msg>;
+
+export type DeleteAction<ValidResponse, InvalidResponse, Msg> = (
+  id: Id,
+  handleResponse: HandleResponse<ValidResponse, InvalidResponse, Msg>
+) => component.cmd.Cmd<Msg>;
+
+// makeCreateAction
+
+export function makeCreateAction<
+  RequestBody extends object | null,
+  RawResponse,
+  ValidResponse,
+  InvalidResponse,
+  Msg
+>(
+  path: string,
+  transformResponse: (raw: RawResponse) => ValidResponse
+): CreateAction<RequestBody, ValidResponse, InvalidResponse, Msg> {
+  return (body, handleResponse) =>
+    component.cmd.httpRequest({
+      method: ClientHttpMethod.Post,
+      url: apiNamespace(path),
+      body,
+      transformResponse,
+      handleResponse
+    });
 }
 
-// Generic, customizable CRUD API.
+// makeCreateManyAction
 
-type TransformValid<T extends ActionTypes> = (
-  raw: T["rawResponse"]
-) => T["validResponse"];
-
-interface MakeRequestParams<T extends ActionWithBodyTypes> {
-  method: ClientHttpMethod;
-  url: string;
-  body: T["request"];
-  transformValid?: TransformValid<T>;
+export function makeCreateManyAction<
+  RequestBodyItem,
+  ValidItem,
+  InvalidItem,
+  Msg
+>(
+  create: CreateAction<RequestBodyItem, ValidItem, InvalidItem, unknown>,
+  emptyInvalidResult: InvalidItem
+): CreateManyAction<RequestBodyItem, ValidItem, InvalidItem, Msg> {
+  return (items, handleResponse) => {
+    const resultsCmd: CreateManyAccumulatorCmd<ValidItem, InvalidItem> =
+      items.reduce<CreateManyAccumulatorCmd<ValidItem, InvalidItem>>(
+        (cmd, item) => {
+          return component.cmd.andThen(
+            cmd,
+            (accumulator: CreateManyAccumulator<ValidItem, InvalidItem>) => {
+              //Skip creating items if a validation error has occurred.
+              if (accumulator.isInvalid)
+                return component.cmd.dispatch(
+                  appendInvalidCreateResult(accumulator, emptyInvalidResult)
+                );
+              // Create item if there have been no invalid items so far.
+              return create(
+                item,
+                (result: ResponseValidation<ValidItem, InvalidItem>) =>
+                  appendCreateResult(accumulator, emptyInvalidResult, result)
+              ) as component.cmd.Cmd<
+                CreateManyAccumulator<ValidItem, InvalidItem>
+              >;
+            }
+          );
+        },
+        component.cmd.dispatch(
+          emptyCreateManyAccumulator<ValidItem, InvalidItem>()
+        )
+      );
+    return component.cmd.map(
+      resultsCmd,
+      (accumulator: CreateManyAccumulator<ValidItem, InvalidItem>) =>
+        handleResponse(
+          accumulator.isInvalid
+            ? invalid(accumulator.invalidResults)
+            : valid(accumulator.validResults)
+        )
+    ) as component.cmd.Cmd<Msg>;
+  };
 }
 
-export type CrudResponse<T extends ActionTypes> = ResponseValidation<
-  T["validResponse"],
-  T["invalidResponse"]
+//// makeCreateManyAction Helpers
+
+type CreateManyAccumulatorCmd<ValidItem, InvalidItem> = component.cmd.Cmd<
+  CreateManyAccumulator<ValidItem, InvalidItem>
 >;
 
-export async function makeRequest<T extends ActionWithBodyTypes>(
-  params: MakeRequestParams<T>
-): Promise<CrudResponse<T>> {
-  const response = await request(
-    params.method,
-    params.url,
-    params.body as object
-  );
-  switch (response.status) {
-    case 200:
-    case 201:
-      return valid(
-        params.transformValid
-          ? params.transformValid(response.data as T["rawResponse"])
-          : (response.data as T["validResponse"])
+type CreateManyAccumulator<ValidItem, InvalidItem> = Immutable<{
+  isInvalid: boolean;
+  validResults: ValidItem[];
+  invalidResults: InvalidItem[];
+}>;
+
+function emptyCreateManyAccumulator<
+  ValidItem,
+  InvalidItem
+>(): CreateManyAccumulator<ValidItem, InvalidItem> {
+  return immutable({
+    isInvalid: false,
+    validResults: [],
+    invalidResults: []
+  });
+}
+
+function appendCreateResult<ValidItem, InvalidItem>(
+  accumulator: CreateManyAccumulator<ValidItem, InvalidItem>,
+  emptyInvalidResult: InvalidItem,
+  result: ResponseValidation<ValidItem, InvalidItem>
+): CreateManyAccumulator<ValidItem, InvalidItem> {
+  switch (result.tag) {
+    case "valid":
+      return appendInvalidCreateResult(accumulator, emptyInvalidResult).update(
+        "validResults",
+        (results) => [...results, result.value]
       );
-    case 400:
-    case 401:
-    case 404:
-      return invalid(response.data as T["invalidResponse"]);
-    default:
-      return unhandled();
+    case "invalid":
+      return appendInvalidCreateResult(accumulator, result.value);
+    case "unhandled":
+      return appendInvalidCreateResult(accumulator, emptyInvalidResult);
   }
 }
 
-interface MakeActionParams<T extends ActionTypes> {
-  routeNamespace: string;
-  transformValid?: TransformValid<T>;
+function appendInvalidCreateResult<ValidItem, InvalidItem>(
+  accumulator: CreateManyAccumulator<ValidItem, InvalidItem>,
+  invalidItem: InvalidItem
+): CreateManyAccumulator<ValidItem, InvalidItem> {
+  return accumulator.update("invalidResults", (results) => [
+    ...results,
+    invalidItem
+  ]);
 }
 
-export function makeCreate<T extends ActionWithBodyTypes>(
-  params: MakeActionParams<T>
-): CrudClientActionWithBody<T> {
-  return async (body) =>
-    makeRequest({
-      body,
-      method: ClientHttpMethod.Post,
-      url: params.routeNamespace,
-      transformValid: params.transformValid
-    });
-}
+// makeReadManyAction
 
-export function makeReadMany<T extends ActionTypes>(
-  params: MakeActionParams<T>
-): CrudClientAction<ReadManyActionTypes<T>> {
-  const { transformValid } = params;
-  return async () =>
-    makeRequest<ReadManyActionTypes<T> & { request: any }>({
-      body: undefined,
+export function makeReadManyAction<RawItem, ValidItem, InvalidResponse, Msg>(
+  path: string,
+  transformItem: (raw: RawItem) => ValidItem
+): ReadManyAction<ValidItem, InvalidResponse, Msg> {
+  return (handleResponse) =>
+    component.cmd.httpRequest({
       method: ClientHttpMethod.Get,
-      url: params.routeNamespace,
-      transformValid: transformValid && ((v) => v.map((w) => transformValid(w)))
+      url: apiNamespace(path),
+      transformResponse: (rawItems: RawItem[]) =>
+        rawItems.map((item) => transformItem(item)),
+      handleResponse
     });
 }
 
-export function makeReadOne<T extends ActionTypes>(
-  params: MakeActionParams<T & { request: any }>
-): CrudClientActionWithId<T> {
-  return async (id) =>
-    makeRequest({
-      body: undefined,
+// makeReadOneAction
+
+export function makeReadOneAction<
+  RawResponse,
+  ValidResponse,
+  InvalidResponse,
+  Msg
+>(
+  path: string,
+  transformResponse: (raw: RawResponse) => ValidResponse
+): ReadOneAction<ValidResponse, InvalidResponse, Msg> {
+  return (id, handleResponse) =>
+    component.cmd.httpRequest({
       method: ClientHttpMethod.Get,
-      url: `${params.routeNamespace}/${id}`,
-      transformValid: params.transformValid
+      url: apiNamespace(`${path}/${id}`),
+      transformResponse,
+      handleResponse
     });
 }
 
-export function makeUpdate<T extends ActionWithBodyTypes>(
-  params: MakeActionParams<T>
-): CrudClientActionWithIdAndBody<T> {
-  return async (id, body) => {
-    return makeRequest({
-      body,
+// makeUpdateAction
+
+export function makeUpdateAction<
+  RequestBody extends object | null,
+  RawResponse,
+  ValidResponse,
+  InvalidResponse,
+  Msg
+>(
+  path: string,
+  transformResponse: (raw: RawResponse) => ValidResponse
+): UpdateAction<RequestBody, ValidResponse, InvalidResponse, Msg> {
+  return (id, body, handleResponse) =>
+    component.cmd.httpRequest({
       method: ClientHttpMethod.Put,
-      url: `${params.routeNamespace}/${id}`,
-      transformValid: params.transformValid
-    });
-  };
-}
-
-export function makeDelete<T extends ActionTypes>(
-  params: MakeActionParams<T & { request: any }>
-): CrudClientActionWithId<T> {
-  return async (id) =>
-    makeRequest({
-      body: undefined,
-      method: ClientHttpMethod.Delete,
-      url: `${params.routeNamespace}/${id}`,
-      transformValid: params.transformValid
+      url: apiNamespace(`${path}/${id}`),
+      body: body,
+      transformResponse,
+      handleResponse
     });
 }
 
-type CrudActionParams<T extends ActionTypes> = Pick<
-  MakeActionParams<T>,
-  "transformValid"
->;
+// makeDeleteAction
 
-type DetermineCrudActionParams<
-  ResourceTypes extends BaseResourceTypes,
-  Action extends keyof BaseResourceTypes
-> = IfDefined<
-  ResourceTypes[Action],
-  CrudActionParams<Defined<ResourceTypes[Action]>>
->;
-
-interface MakeCrudApiParams<ResourceTypes extends BaseResourceTypes> {
-  routeNamespace: string;
-  create: DetermineCrudActionParams<ResourceTypes, "create">;
-  readMany: DetermineCrudActionParams<ResourceTypes, "readMany">;
-  readOne: DetermineCrudActionParams<ResourceTypes, "readOne">;
-  update: DetermineCrudActionParams<ResourceTypes, "update">;
-  delete: DetermineCrudActionParams<ResourceTypes, "delete">;
+export function makeDeleteAction<
+  RawResponse,
+  ValidResponse,
+  InvalidResponse,
+  Msg
+>(
+  path: string,
+  transformResponse: (raw: RawResponse) => ValidResponse
+): DeleteAction<ValidResponse, InvalidResponse, Msg> {
+  return (id, handleResponse) =>
+    component.cmd.httpRequest({
+      method: ClientHttpMethod.Get,
+      url: apiNamespace(`${path}/${id}`),
+      transformResponse,
+      handleResponse
+    });
 }
-
-export function makeCrudApi<ResourceTypes extends BaseResourceTypes>(
-  params: MakeCrudApiParams<ResourceTypes>
-): CrudApi<ResourceTypes> {
-  const { routeNamespace } = params;
-  return {
-    create: params.create && makeCreate({ ...params.create, routeNamespace }),
-    readMany:
-      params.readMany && makeReadMany({ ...params.readMany, routeNamespace }),
-    readOne:
-      params.readOne && makeReadOne({ ...params.readOne, routeNamespace }),
-    update: params.update && makeUpdate({ ...params.update, routeNamespace }),
-    delete: params.delete && makeDelete({ ...params.delete, routeNamespace })
-  } as CrudApi<ResourceTypes>;
-}
-
-// Simple, easy-to-implement, CRUD API.
-
-export interface SimpleResourceTypesParams<Record = unknown> {
-  record: Record;
-  create: {
-    request: unknown;
-    invalidResponse: unknown;
-  };
-  update: {
-    request: unknown;
-    invalidResponse: unknown;
-  };
-}
-
-export interface SimpleResourceTypes<T extends SimpleResourceTypesParams>
-  extends BaseResourceTypes {
-  create: {
-    request: T["create"]["request"];
-    rawResponse: T["record"];
-    validResponse: T["record"];
-    invalidResponse: T["create"]["invalidResponse"];
-  };
-  readMany: {
-    rawResponse: T["record"];
-    validResponse: T["record"];
-    invalidResponse: string[];
-  };
-  readOne: {
-    rawResponse: T["record"];
-    validResponse: T["record"];
-    invalidResponse: string[];
-  };
-  update: {
-    request: T["update"]["request"];
-    rawResponse: T["record"];
-    validResponse: T["record"];
-    invalidResponse: T["update"]["invalidResponse"];
-  };
-  delete: {
-    rawResponse: T["record"];
-    validResponse: T["record"];
-    invalidResponse: string[];
-  };
-}
-
-export function makeSimpleActionParams<
-  T extends ActionTypes
->(): CrudActionParams<T> {
-  return {
-    transformValid: (a) => a
-  };
-}
-
-export function makeSimpleCrudApi<
-  Params extends SimpleResourceTypesParams,
-  ResourceTypes extends SimpleResourceTypes<Params> = SimpleResourceTypes<Params>
->(routeNamespace: string): CrudApi<ResourceTypes> {
-  return makeCrudApi({
-    routeNamespace,
-    create: makeSimpleActionParams(),
-    readMany: makeSimpleActionParams(),
-    readOne: makeSimpleActionParams(),
-    update: makeSimpleActionParams(),
-    delete: makeSimpleActionParams()
-  } as MakeCrudApiParams<ResourceTypes>);
-}
-
-// Useful helper types and values.
-
-export interface UndefinedResourceTypes extends BaseResourceTypes {
-  create: undefined;
-  readMany: undefined;
-  readOne: undefined;
-  update: undefined;
-  delete: undefined;
-}
-
-export type PickCrudApi<
-  ResourceTypes extends BaseResourceTypes,
-  K extends keyof BaseResourceTypes
-> = {
-  [P in keyof BaseResourceTypes]: P extends K
-    ? ResourceTypes[P]
-    : UndefinedResourceTypes[P];
-};
-
-export type OmitCrudApi<
-  ResourceTypes extends BaseResourceTypes,
-  K extends keyof BaseResourceTypes
-> = PickCrudApi<ResourceTypes, Exclude<keyof BaseResourceTypes, K>>;
-
-export const undefinedActions: Omit<
-  MakeCrudApiParams<UndefinedResourceTypes>,
-  "routeNamespace"
-> = {
-  create: undefined,
-  readMany: undefined,
-  readOne: undefined,
-  update: undefined,
-  delete: undefined
-};

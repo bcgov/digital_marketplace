@@ -1,12 +1,5 @@
 import { Route } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
-  Init,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/user/profile/tab";
 import Icon from "front-end/lib/views/icon";
@@ -14,7 +7,11 @@ import Link, { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row, Spinner } from "reactstrap";
 import { CAPABILITIES_WITH_DESCRIPTIONS } from "shared/lib/data/capabilities";
-import { usersAreEquivalent } from "shared/lib/resources/user";
+import {
+  usersAreEquivalent,
+  UpdateValidationErrors,
+  User
+} from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 
 export interface Capability {
@@ -29,73 +26,88 @@ export interface State extends Tab.Params {
   loading: number | null; //index of capability loading
 }
 
-export type InnerMsg = ADT<"toggleOpen", number> | ADT<"toggleChecked", number>;
+export type InnerMsg =
+  | ADT<"toggleOpen", number>
+  | ADT<"toggleChecked", number>
+  | ADT<
+      "onToggleCheckedResponse",
+      api.ResponseValidation<User, UpdateValidationErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    loading: null,
-    capabilities: CAPABILITIES_WITH_DESCRIPTIONS.map((capability) => ({
-      ...capability,
-      checked: params.profileUser.capabilities.indexOf(capability.name) !== -1,
-      open: false
-    }))
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  return [
+    {
+      ...params,
+      loading: null,
+      capabilities: CAPABILITIES_WITH_DESCRIPTIONS.map((capability) => ({
+        ...capability,
+        checked:
+          params.profileUser.capabilities.indexOf(capability.name) !== -1,
+        open: false
+      }))
+    },
+    []
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "toggleChecked":
+    case "toggleChecked": {
+      const capabilities = state.capabilities.filter((c, i) =>
+        i === msg.value ? !c.checked : c.checked
+      );
       return [
         state.set("loading", msg.value),
-        async (state, dispatch) => {
-          state = state.set("loading", null);
-          const capabilities = state.capabilities.filter((c, i) =>
-            i === msg.value ? !c.checked : c.checked
-          );
-          const result = await api.users.update(
+        [
+          api.users.update(
             state.profileUser.id,
             adt(
               "updateCapabilities",
               capabilities.map(({ name }) => name)
-            )
-          );
-          if (api.isValid(result)) {
-            return state.update("capabilities", (cs) =>
-              cs.map((c) => ({
-                ...c,
-                checked: result.value.capabilities.indexOf(c.name) !== -1
-              }))
-            );
-          }
-          return state;
-        }
+            ),
+            (response) => adt("onToggleCheckedResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
-
+    }
+    case "onToggleCheckedResponse": {
+      state = state.set("loading", null);
+      const response = msg.value;
+      if (api.isValid(response)) {
+        state = state.update("capabilities", (cs) =>
+          cs.map((c) => ({
+            ...c,
+            checked: response.value.capabilities.indexOf(c.name) !== -1
+          }))
+        );
+      }
+      return [state, []];
+    }
     case "toggleOpen":
       return [
         state.update("capabilities", (cs) =>
           cs.map((c, i) => {
             return i === msg.value ? { ...c, open: !c.open } : c;
           })
-        )
+        ),
+        []
       ];
 
     default:
-      return [state];
+      return [state, []];
   }
 };
 
 interface CapabilityProps extends Capability {
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
   index: number;
   loading: boolean;
   disabled: boolean;
 }
 
-const Capability: View<CapabilityProps> = ({
+const Capability: component_.base.View<CapabilityProps> = ({
   dispatch,
   index,
   loading,
@@ -148,7 +160,7 @@ const Capability: View<CapabilityProps> = ({
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
   return (
     <Row>
@@ -185,5 +197,8 @@ const view: ComponentView<State, Msg> = (props) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  }
 };

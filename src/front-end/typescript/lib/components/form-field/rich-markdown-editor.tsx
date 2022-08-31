@@ -1,11 +1,6 @@
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import * as FormField from "front-end/lib/components/form-field";
-import {
-  Immutable,
-  UpdateReturnValue,
-  View,
-  ViewElement
-} from "front-end/lib/framework";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import FileLink from "front-end/lib/views/file-link";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link, { routeDest } from "front-end/lib/views/link";
@@ -14,13 +9,13 @@ import { FormText, Spinner } from "reactstrap";
 import { countWords } from "shared/lib";
 import { SUPPORTED_IMAGE_EXTENSIONS } from "shared/lib/resources/file";
 import { adt, ADT } from "shared/lib/types";
-import { Validation } from "shared/lib/validation";
+import { isValid, Validation } from "shared/lib/validation";
 
 export type Value = string;
 
-export type UploadImage = (
-  file: File
-) => Promise<Validation<{ name: string; url: string }>>;
+export type UploadImageResult = Validation<{ name: string; url: string }>;
+
+export type UploadImage = (file: File) => component_.Cmd<UploadImageResult>;
 
 type Snapshot = [string, number, number]; // [value, selectionStart, selectionEnd]
 
@@ -53,6 +48,7 @@ export interface ChildParams extends FormField.ChildParamsBase<Value> {
 }
 
 type InnerChildMsg =
+  | ADT<"noop">
   | ADT<"onChangeTextArea", Snapshot>
   | ADT<"onChangeSelection", [number, number]> // [selectionStart, selectionEnd]
   | ADT<"controlUndo">
@@ -65,7 +61,7 @@ type InnerChildMsg =
   | ADT<"controlOrderedList">
   | ADT<"controlUnorderedList">
   | ADT<"controlImage", File>
-  | ADT<"focus">;
+  | ADT<"onUploadImage", UploadImageResult>;
 
 interface ExtraChildProps {
   style?: CSSProperties;
@@ -85,19 +81,31 @@ export type Params = FormField.Params<Value, ChildParams>;
 
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: ChildComponent["init"] = async (params) => ({
-  ...params,
-  wordLimit: params.wordLimit === undefined ? null : params.wordLimit,
-  currentStackEntry: null,
-  undo: emptyStack(),
-  redo: emptyStack(),
-  loading: 0,
-  selectionStart: 0,
-  selectionEnd: 0
-});
+const childInit: ChildComponent["init"] = (params) => [
+  {
+    ...params,
+    wordLimit: params.wordLimit === undefined ? null : params.wordLimit,
+    currentStackEntry: null,
+    undo: emptyStack(),
+    redo: emptyStack(),
+    loading: 0,
+    selectionStart: 0,
+    selectionEnd: 0
+  },
+  []
+];
 
 const startLoading = makeStartLoading<ChildState>("loading");
 const stopLoading = makeStopLoading<ChildState>("loading");
+
+function validateAndFocus(
+  id: string
+): Array<component_.Cmd<FormField.ChildMsg<InnerChildMsg>>> {
+  return [
+    component_.cmd.dispatch(adt("@validate")),
+    component_.cmd.focus(id, adt("noop"))
+  ];
+}
 
 interface InsertParams {
   separateLine?: boolean;
@@ -107,7 +115,10 @@ interface InsertParams {
 function insert(
   state: Immutable<ChildState>,
   params: InsertParams
-): UpdateReturnValue<ChildState, FormField.ChildMsg<InnerChildMsg>> {
+): component_.base.UpdateReturnValue<
+  ChildState,
+  FormField.ChildMsg<InnerChildMsg>
+> {
   const { text, separateLine = false } = params;
   const selectedText = state.value.substring(
     state.selectionStart,
@@ -129,14 +140,7 @@ function insert(
     prefix.length,
     prefix.length + body.length
   ]);
-  return [
-    state,
-    async (state, dispatch) => {
-      dispatch(adt("@validate"));
-      dispatch(adt("focus"));
-      return null;
-    }
-  ];
+  return [state, validateAndFocus(state.id)];
 }
 
 function getSnapshot(state: Immutable<ChildState>): Snapshot {
@@ -214,46 +218,33 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
     case "onChangeTextArea":
       state = pushStack(state, "undo", getStackEntry(state));
       state = resetRedoStack(state);
-      return [setSnapshot(state, msg.value)];
+      return [setSnapshot(state, msg.value), []];
     case "onChangeSelection":
       return [
         state
           .set("selectionStart", msg.value[0])
-          .set("selectionEnd", msg.value[1])
+          .set("selectionEnd", msg.value[1]),
+        []
       ];
     case "controlUndo": {
-      let entry;
+      let entry: StackEntry | undefined;
       [entry, state] = popStack(state, "undo");
       if (!entry) {
-        return [state];
+        return [state, []];
       }
       state = pushStack(state, "redo", getStackEntry(state));
       state = setStackEntry(state, entry);
-      return [
-        state,
-        async (state, dispatch) => {
-          dispatch(adt("@validate"));
-          dispatch(adt("focus"));
-          return null;
-        }
-      ];
+      return [state, validateAndFocus(state.id)];
     }
     case "controlRedo": {
-      let entry;
+      let entry: StackEntry | undefined;
       [entry, state] = popStack(state, "redo");
       if (!entry) {
-        return [state];
+        return [state, []];
       }
       state = pushStack(state, "undo", getStackEntry(state));
       state = setStackEntry(state, entry);
-      return [
-        state,
-        async (state, dispatch) => {
-          dispatch(adt("@validate"));
-          dispatch(adt("focus"));
-          return null;
-        }
-      ];
+      return [state, validateAndFocus(state.id)];
     }
     case "controlH1":
       return insert(state, {
@@ -290,50 +281,36 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
       });
     case "controlImage":
       if (!state.uploadImage) {
-        return [state];
+        return [state, []];
       }
       return [
         startLoading(state),
-        async (state, dispatch) => {
-          state = stopLoading(state);
-          if (!state.uploadImage) {
-            return state;
-          }
-          const uploadResult = await state.uploadImage(msg.value);
-          if (uploadResult.tag === "invalid") {
-            return state;
-          }
-          const result = insert(state, {
-            text: () =>
-              `![${uploadResult.value.name}](${uploadResult.value.url})`
-          });
-          state = result[0];
-          if (result[1]) {
-            await result[1](state, dispatch);
-          }
-          return state;
-        }
+        [
+          component_.cmd.map(state.uploadImage(msg.value), (msg) =>
+            adt("onUploadImage", msg)
+          )
+        ]
       ];
-    case "focus":
-      return [
-        state,
-        async () => {
-          const el = document.getElementById(state.id);
-          if (el) {
-            el.focus();
-          }
-          return null;
-        }
-      ];
+    case "onUploadImage": {
+      state = stopLoading(state);
+      const uploadResult = msg.value;
+      if (isValid(uploadResult)) {
+        return insert(state, {
+          text: () => `![${uploadResult.value.name}](${uploadResult.value.url})`
+        });
+      } else {
+        return [state, []];
+      }
+    }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
 interface ControlIconProps {
   name: AvailableIcons;
   disabled: boolean;
-  children?: ViewElement;
+  children?: component_.base.ViewElement;
   width?: number;
   height?: number;
   className?: string;
@@ -341,7 +318,7 @@ interface ControlIconProps {
   onClick?(): void;
 }
 
-const ControlIcon: View<ControlIconProps> = ({
+const ControlIcon: component_.base.View<ControlIconProps> = ({
   name,
   disabled,
   onClick,
@@ -367,7 +344,9 @@ const ControlIcon: View<ControlIconProps> = ({
   );
 };
 
-const ControlSeparator: View<{ desktopOnly?: boolean }> = ({ desktopOnly }) => {
+const ControlSeparator: component_.base.View<{ desktopOnly?: boolean }> = ({
+  desktopOnly
+}) => {
   return (
     <div
       className={`mr-3 border-left h-100 ${

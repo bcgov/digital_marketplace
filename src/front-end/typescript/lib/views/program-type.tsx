@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React from "react";
 
@@ -10,7 +10,11 @@ export interface Props {
   size?: "sm" | "md" | "lg";
 }
 
-const ProgramType: View<Props> = ({ type_, className = "", size = "md" }) => {
+const ProgramType: component.base.View<Props> = ({
+  type_,
+  className = "",
+  size = "md"
+}) => {
   const sizeClassName = (() => {
     switch (size) {
       case "sm":

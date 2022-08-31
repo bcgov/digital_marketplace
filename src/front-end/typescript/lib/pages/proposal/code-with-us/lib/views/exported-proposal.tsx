@@ -1,5 +1,5 @@
 import { fileBlobPath } from "front-end/lib";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import DescriptionList from "front-end/lib/views/description-list";
 import Link, {
   externalDest,
@@ -25,7 +25,7 @@ export interface Props {
   proposal: CWUProposal;
 }
 
-export const ExportedPropsal: View<Props> = ({
+export const ExportedPropsal: component.base.View<Props> = ({
   proposal,
   showOpportunityInformation,
   exportedBy,

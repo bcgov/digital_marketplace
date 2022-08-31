@@ -1,8 +1,4 @@
-import {
-  View,
-  ViewElement,
-  ViewElementChildren
-} from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link from "front-end/lib/views/link";
@@ -12,7 +8,7 @@ export interface Props {
   open: boolean;
   disabled?: boolean;
   color: ThemeColor;
-  title: string | ViewElement;
+  title: string | component.base.ViewElement;
   titleClassName?: string;
   icon?: AvailableIcons;
   iconWidth?: number;
@@ -24,12 +20,12 @@ export interface Props {
   chevronClassName?: string;
   linkClassName?: string;
   className?: string;
-  children: ViewElementChildren;
+  children: component.base.ViewElementChildren;
   childrenWrapperClassName?: string;
   toggle(): void;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component.base.View<Props> = (props) => {
   const {
     open,
     disabled,

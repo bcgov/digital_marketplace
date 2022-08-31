@@ -2,18 +2,10 @@ import { EMPTY_STRING } from "front-end/config";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
-import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import {
@@ -42,47 +34,59 @@ import {
 import { ADT, adt } from "shared/lib/types";
 
 export interface State extends Tab.Params {
-  canViewProposals: boolean;
+  opportunity: SWUOpportunity | null;
   proposals: SWUProposalSlim[];
+  canViewProposals: boolean;
   table: Immutable<Table.State>;
 }
 
-export type InnerMsg = ADT<"table", Table.Msg>;
+export type InnerMsg =
+  | ADT<"onInitResponse", Tab.InitResponse>
+  | ADT<"table", Table.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  const canViewProposals =
-    canViewSWUOpportunityProposals(params.opportunity) &&
-    hasSWUOpportunityPassedTeamScenario(params.opportunity);
-  let proposals: SWUProposalSlim[] = [];
-  if (canViewProposals) {
-    const proposalResult = await api.proposals.swu.readMany(
-      params.opportunity.id
-    );
-    proposals = api
-      .getValidValue(proposalResult, [])
-      .filter((p) => isSWUProposalInTeamScenario(p))
-      .sort((a, b) =>
-        compareSWUProposalsForPublicSector(a, b, "scenarioScore")
-      );
-  }
-  return {
-    canViewProposals: canViewProposals && !!proposals.length,
-    proposals,
-    table: immutable(
-      await Table.init({
-        idNamespace: "proposal-table"
-      })
-    ),
-    ...params
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "proposal-table"
+  });
+  return [
+    {
+      ...params,
+      opportunity: null,
+      proposals: [],
+      canViewProposals: false,
+      table: immutable(tableState)
+    },
+    component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const opportunity = msg.value[0];
+      let proposals = msg.value[1];
+      const canViewProposals =
+        canViewSWUOpportunityProposals(opportunity) &&
+        hasSWUOpportunityPassedTeamScenario(opportunity) &&
+        !!proposals.length;
+      proposals = proposals
+        .filter((p) => isSWUProposalInTeamScenario(p))
+        .sort((a, b) =>
+          compareSWUProposalsForPublicSector(a, b, "scenarioScore")
+        );
+      return [
+        state
+          .set("opportunity", opportunity)
+          .set("proposals", proposals)
+          .set("canViewProposals", canViewProposals),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
+
     case "table":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -91,7 +95,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     default:
-      return [state];
+      return [state, []];
   }
 };
 
@@ -140,7 +144,7 @@ const makeCardData = (
   ];
 };
 
-const WaitForTeamScenario: ComponentView<State, Msg> = ({ state }) => {
+const WaitForTeamScenario: component_.base.ComponentView<State, Msg> = () => {
   return (
     <div>
       Participants will be displayed here once the opportunity has reached the
@@ -155,7 +159,7 @@ interface ProponentCellProps {
   disabled: boolean;
 }
 
-const ProponentCell: View<ProponentCellProps> = ({
+const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   opportunity,
   disabled
@@ -186,10 +190,9 @@ const ProponentCell: View<ProponentCellProps> = ({
   );
 };
 
-function evaluationTableBodyRows(
-  state: Immutable<State>,
-  dispatch: Dispatch<Msg>
-): Table.BodyRows {
+function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
+  const opportunity = state.opportunity;
+  if (!opportunity) return [];
   return state.proposals.map((p) => {
     return [
       {
@@ -198,7 +201,7 @@ function evaluationTableBodyRows(
           <ProponentCell
             proposal={p}
             disabled={false}
-            opportunity={state.opportunity}
+            opportunity={opportunity}
           />
         )
       },
@@ -224,7 +227,7 @@ function evaluationTableBodyRows(
   });
 }
 
-function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function evaluationTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Proponent",
@@ -244,22 +247,26 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-const EvaluationTable: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   return (
     <Table.view
-      headCells={evaluationTableHeadCells(state)}
-      bodyRows={evaluationTableBodyRows(state, dispatch)}
+      headCells={evaluationTableHeadCells()}
+      bodyRows={evaluationTableBodyRows(state)}
       state={state.table}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("table" as const, msg)
       )}
     />
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state } = props;
   const opportunity = state.opportunity;
+  if (!opportunity) return null;
   const cardData = makeCardData(opportunity, state.proposals);
   return (
     <div>
@@ -292,5 +299,8 @@ const view: ComponentView<State, Msg> = (props) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse(response) {
+    return adt("onInitResponse", response);
+  }
 };
