@@ -122,6 +122,7 @@
     "@babel/preset-env": "^7.16.8",
     "@babel/preset-react": "^7.16.0",
     "@commitlint/config-conventional": "^16.0.0",
+    "@fsouza/prettierd": "^0.22.2",
     "@testing-library/react": "^12.1.2",
     "autoprefixer": "^9.4.4",
     "axios": "^0.24.0",
