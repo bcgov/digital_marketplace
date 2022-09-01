@@ -80,7 +80,7 @@ export function updateComponentChild<PS extends object, PM, CS extends object, C
   const { childStatePath, childUpdate, childMsg, mapChildMsg, updateAfter } = params;
   let { state } = params;
   const childState = state.getIn(childStatePath);
-  // tslint:disable:next-line no-console
+  // eslint-disable-next-line no-console
   if (NODE_ENV === 'development') { console.assert(childState); }
   if (!childState) { return [state]; }
   const [newChildState, newAsyncChildState] = childUpdate({
@@ -580,13 +580,13 @@ export async function start<State extends object, Msg extends ADT<any, any>, Rou
   // Set up function to notify msg subscriptions.
   function notifyMsgSubscriptions(msg: AppMsg<Msg, Route>): void {
     msgSubscriptions.forEach(fn => fn(msg));
-    // tslint:disable:next-line no-console
+    // eslint-disable-next-line no-console
     if (debug) { console.log('msg dispatched', msg); }
   }
   // Set up function to notify state subscriptions.
   function notifyStateSubscriptions(): void {
     stateSubscriptions.forEach(fn => fn(state, dispatch));
-    // tslint:disable:next-line no-console
+    // eslint-disable-next-line no-console
     if (debug) { console.log('state updated', state.toJS()); }
   }
   // Trigger state initialization notification.

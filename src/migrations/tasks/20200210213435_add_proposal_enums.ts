@@ -44,7 +44,7 @@ export async function up(connection: Knex): Promise<void> {
   logger.info('Modified constraint on cwuProposalStatuses');
 }
 
-// tslint:disable-next-line: no-empty
+// eslint-disable-next-line no-empty
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.raw(' \
     ALTER TABLE "cwuProposalStatuses" \

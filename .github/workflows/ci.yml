@@ -18,7 +18,7 @@ jobs:
       - run: yarn
       - run: npm run front-end:test
       - run: npm run back-end:test
-  tslint:
+  eslint:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -30,6 +30,8 @@ jobs:
       - run: yarn
       - run: npm run front-end:lint
       - run: npm run back-end:lint
+      - run: npm run shared:lint
+      - run: npm run migrations:lint
   yarn-build:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest

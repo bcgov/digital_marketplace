@@ -4,10 +4,10 @@ import Knex from 'knex';
 
 makeDomainLogger(consoleAdapter, 'migrations', 'development');
 
-// tslint:disable-next-line: no-empty
+// eslint-disable-next-line no-empty
 export async function up(connection: Knex): Promise<void> {
 }
 
-// tslint:disable-next-line: no-empty
+// eslint-disable-next-line no-empty
 export async function down(connection: Knex): Promise<void> {
 }
