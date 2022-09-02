@@ -62,7 +62,6 @@ export default function clickHandler(dispatchUrl: (url: Url) => void): (e: Mouse
     const parsed = url.parse(link);
     const sameProtocol = !parsed.protocol || parsed.protocol === window.location.protocol;
     const sameHostname = !parsed.hostname || parsed.hostname === window.location.hostname;
-    // tslint:disable:next-line triple-equals
     const samePort = !parsed.hostname || (parsed.port === window.location.port) || (window.location.port === '' && (parsed.port == '80' || parsed.port == '443'));
     if (!sameProtocol || !sameHostname || !samePort) {
       return;
