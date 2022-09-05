@@ -484,7 +484,9 @@ export function validateCapabilities(
     ]);
   }
   const validatedArray = validateArray(raw, validateCapability);
-  return mapValid(validatedArray, (v) => uniq(v));
+  return mapValid<string[], string[][], string[]>(validatedArray, (v) =>
+    uniq(v)
+  );
 }
 
 // Validate pagination index and size query params

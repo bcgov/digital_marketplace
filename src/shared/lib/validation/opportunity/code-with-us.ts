@@ -89,7 +89,9 @@ export function validateSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Skill", 1, 100)
   );
-  return mapValid(validatedArray, (skills) => uniq(skills));
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
 }
 
 export function validateDescription(raw: string): Validation<string> {
