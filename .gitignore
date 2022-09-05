@@ -5,6 +5,8 @@
 *.map
 *.DS_Store
 .env
+.envrc
+.direnv/
 make.sh
 .sass-cache/
 node_modules/
