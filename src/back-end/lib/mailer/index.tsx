@@ -1,4 +1,4 @@
-import { SendParams } from 'back-end/lib/mailer/transport';
+import { SendParams } from "back-end/lib/mailer/transport";
 
 export interface Email extends SendParams {
   summary?: string;

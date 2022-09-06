@@ -1,18 +1,45 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import * as ShortText from 'front-end/lib/components/form-field/short-text';
-import { ComponentViewProps, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
-import { keyCloakIdentityProviderToTitleCase, userAvatarPath, userToKeyCloakIdentityProviderTitleCase } from 'front-end/lib/pages/user/lib';
-import { AvatarFiletype } from 'front-end/lib/types';
-import FileLink from 'front-end/lib/views/file-link';
-import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { getString} from 'shared/lib';
-import { SUPPORTED_IMAGE_EXTENSIONS } from 'shared/lib/resources/file';
-import { isPublicSectorUserType, User, userTypeToKeycloakIdentityProvider } from 'shared/lib/resources/user';
-import { adt, ADT, Id } from 'shared/lib/types';
-import { ErrorTypeFrom, invalid, mapValid, valid, Validation } from 'shared/lib/validation';
-import { validateEmail, validateJobTitle, validateName } from 'shared/lib/validation/user';
+import * as FormField from "front-end/lib/components/form-field";
+import * as ShortText from "front-end/lib/components/form-field/short-text";
+import {
+  ComponentViewProps,
+  immutable,
+  Immutable,
+  Init,
+  mapComponentDispatch,
+  Update,
+  updateComponentChild,
+  View
+} from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
+import {
+  keyCloakIdentityProviderToTitleCase,
+  userAvatarPath,
+  userToKeyCloakIdentityProviderTitleCase
+} from "front-end/lib/pages/user/lib";
+import { AvatarFiletype } from "front-end/lib/types";
+import FileLink from "front-end/lib/views/file-link";
+import React from "react";
+import { Col, Row } from "reactstrap";
+import { getString } from "shared/lib";
+import { SUPPORTED_IMAGE_EXTENSIONS } from "shared/lib/resources/file";
+import {
+  isPublicSectorUserType,
+  User,
+  userTypeToKeycloakIdentityProvider
+} from "shared/lib/resources/user";
+import { adt, ADT, Id } from "shared/lib/types";
+import {
+  ErrorTypeFrom,
+  invalid,
+  mapValid,
+  valid,
+  Validation
+} from "shared/lib/validation";
+import {
+  validateEmail,
+  validateJobTitle,
+  validateName
+} from "shared/lib/validation/user";
 
 export interface Params {
   user: User;
@@ -26,12 +53,12 @@ export interface State extends Params {
   newAvatarImage: AvatarFiletype;
 }
 
-export type Msg
-  = ADT<'jobTitle',       ShortText.Msg>
-  | ADT<'email',          ShortText.Msg>
-  | ADT<'name',           ShortText.Msg>
-  | ADT<'onChangeAvatar', File>
-  | ADT<'idpUsername',    ShortText.Msg>;
+export type Msg =
+  | ADT<"jobTitle", ShortText.Msg>
+  | ADT<"email", ShortText.Msg>
+  | ADT<"name", ShortText.Msg>
+  | ADT<"onChangeAvatar", File>
+  | ADT<"idpUsername", ShortText.Msg>;
 
 export interface Values {
   name: string;
@@ -52,20 +79,28 @@ export function getValues(state: Immutable<State>): Values {
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return !!state.name.child.value
-      && !!state.email.child.value
-      && (!state.newAvatarImage || !state.newAvatarImage.errors.length)
-      && FormField.isValid(state.name)
-      && FormField.isValid(state.email)
-      && FormField.isValid(state.jobTitle);
+  return (
+    !!state.name.child.value &&
+    !!state.email.child.value &&
+    (!state.newAvatarImage || !state.newAvatarImage.errors.length) &&
+    FormField.isValid(state.name) &&
+    FormField.isValid(state.email) &&
+    FormField.isValid(state.jobTitle)
+  );
 }
 
-export function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
+export function setErrors(
+  state: Immutable<State>,
+  errors: Errors
+): Immutable<State> {
   return state
-    .update('name', s => FormField.setErrors(s, errors.name || []))
-    .update('email', s => FormField.setErrors(s, errors.email || []))
-    .update('jobTitle', s => FormField.setErrors(s, errors.jobTitle || []))
-    .update('newAvatarImage', v => v && ({ ...v, errors: errors.newAvatarImage || [] }));
+    .update("name", (s) => FormField.setErrors(s, errors.name || []))
+    .update("email", (s) => FormField.setErrors(s, errors.email || []))
+    .update("jobTitle", (s) => FormField.setErrors(s, errors.jobTitle || []))
+    .update(
+      "newAvatarImage",
+      (v) => v && { ...v, errors: errors.newAvatarImage || [] }
+    );
 }
 
 export const init: Init<Params, State> = async ({ user }) => {
@@ -73,84 +108,94 @@ export const init: Init<Params, State> = async ({ user }) => {
     user,
     newAvatarImage: null,
     newAvatarImageErrors: [],
-    idpUsername: immutable(await ShortText.init({
-      errors: [],
-      child: {
-        type: 'text',
-        value: getString(user, 'idpUsername'),
-        id: 'user-profile-idp-username'
-      }
-    })),
-    email: immutable(await ShortText.init({
-      errors: [],
-      validate: validateEmail,
-      child: {
-        type: 'text',
-        value: getString(user, 'email'),
-        id: 'user-profile-email'
-      }
-    })),
-    name: immutable(await ShortText.init({
-      errors: [],
-      validate: validateName,
-      child: {
-        type: 'text',
-        value: getString(user, 'name'),
-        id: 'user-profile-name'
-      }
-    })),
-    jobTitle: immutable(await ShortText.init({
-      errors: [],
-      validate: v => mapValid(validateJobTitle(v), w => w || ''),
-      child: {
-        type: 'text',
-        value: getString(user, 'jobTitle'),
-        id: 'user-profile-job-title'
-      }
-    }))
+    idpUsername: immutable(
+      await ShortText.init({
+        errors: [],
+        child: {
+          type: "text",
+          value: getString(user, "idpUsername"),
+          id: "user-profile-idp-username"
+        }
+      })
+    ),
+    email: immutable(
+      await ShortText.init({
+        errors: [],
+        validate: validateEmail,
+        child: {
+          type: "text",
+          value: getString(user, "email"),
+          id: "user-profile-email"
+        }
+      })
+    ),
+    name: immutable(
+      await ShortText.init({
+        errors: [],
+        validate: validateName,
+        child: {
+          type: "text",
+          value: getString(user, "name"),
+          id: "user-profile-name"
+        }
+      })
+    ),
+    jobTitle: immutable(
+      await ShortText.init({
+        errors: [],
+        validate: (v) => mapValid(validateJobTitle(v), (w) => w || ""),
+        child: {
+          type: "text",
+          value: getString(user, "jobTitle"),
+          id: "user-profile-job-title"
+        }
+      })
+    )
   };
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'idpUsername':
+    case "idpUsername":
       return updateComponentChild({
         state,
-        childStatePath: ['idpUsername'],
+        childStatePath: ["idpUsername"],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('idpUsername', value)
+        mapChildMsg: (value) => adt("idpUsername", value)
       });
-    case 'jobTitle':
+    case "jobTitle":
       return updateComponentChild({
         state,
-        childStatePath: ['jobTitle'],
+        childStatePath: ["jobTitle"],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('jobTitle', value)
+        mapChildMsg: (value) => adt("jobTitle", value)
       });
-    case 'email':
+    case "email":
       return updateComponentChild({
         state,
-        childStatePath: ['email'],
+        childStatePath: ["email"],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('email', value)
+        mapChildMsg: (value) => adt("email", value)
       });
-    case 'name':
+    case "name":
       return updateComponentChild({
         state,
-        childStatePath: ['name'],
+        childStatePath: ["name"],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt('name', value)
+        mapChildMsg: (value) => adt("name", value)
       });
-    case 'onChangeAvatar':
-      return [state.set('newAvatarImage', {
-        file: msg.value,
-        path: URL.createObjectURL(msg.value),
-        errors: []
-      })];
+    case "onChangeAvatar":
+      return [
+        state.set("newAvatarImage", {
+          file: msg.value,
+          path: URL.createObjectURL(msg.value),
+          errors: []
+        })
+      ];
   }
 };
 
@@ -158,75 +203,102 @@ export interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = props => {
+export const view: View<Props> = (props) => {
   const { state, dispatch, disabled } = props;
   return (
     <Row>
-      <Col xs='12'>
+      <Col xs="12">
         <Row>
-          <Col xs='12' className='mb-4 d-flex align-items-center flex-nowrap'>
+          <Col xs="12" className="mb-4 d-flex align-items-center flex-nowrap">
             <img
-              className='rounded-circle border'
+              className="rounded-circle border"
               style={{
-                width: '5rem',
-                height: '5rem',
-                objectFit: 'cover'
+                width: "5rem",
+                height: "5rem",
+                objectFit: "cover"
               }}
-              src={state.newAvatarImage ? state.newAvatarImage.path : userAvatarPath(state.user)} />
-            <div className='ml-3 d-flex flex-column align-items-start flex-nowrap'>
-              <div className='mb-2'><b>Profile Picture (Optional)</b></div>
+              src={
+                state.newAvatarImage
+                  ? state.newAvatarImage.path
+                  : userAvatarPath(state.user)
+              }
+            />
+            <div className="ml-3 d-flex flex-column align-items-start flex-nowrap">
+              <div className="mb-2">
+                <b>Profile Picture (Optional)</b>
+              </div>
               <FileLink
                 button
                 outline
-                size='sm'
+                size="sm"
                 style={{
-                  visibility: disabled ? 'hidden' : undefined,
-                  pointerEvents: disabled ? 'none' : undefined
+                  visibility: disabled ? "hidden" : undefined,
+                  pointerEvents: disabled ? "none" : undefined
                 }}
-                onChange={file => dispatch(adt('onChangeAvatar', file))}
+                onChange={(file) => dispatch(adt("onChangeAvatar", file))}
                 accept={SUPPORTED_IMAGE_EXTENSIONS}
-                color='primary'>
+                color="primary">
                 Choose Image
               </FileLink>
-              {state.newAvatarImage && state.newAvatarImage.errors.length
-                ? (<div className='mt-2 small text-danger'>{state.newAvatarImage.errors.map((e, i) => (<div key={`profile-avatar-error-${i}`}>{e}</div>))}</div>)
-                : null}
+              {state.newAvatarImage && state.newAvatarImage.errors.length ? (
+                <div className="mt-2 small text-danger">
+                  {state.newAvatarImage.errors.map((e, i) => (
+                    <div key={`profile-avatar-error-${i}`}>{e}</div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </Col>
         </Row>
 
         <ShortText.view
           extraChildProps={{}}
-          help={`Your unique ${keyCloakIdentityProviderToTitleCase(userTypeToKeycloakIdentityProvider(state.user.type))} username.`}
-          label={userToKeyCloakIdentityProviderTitleCase(state.user) || undefined}
+          help={`Your unique ${keyCloakIdentityProviderToTitleCase(
+            userTypeToKeycloakIdentityProvider(state.user.type)
+          )} username.`}
+          label={
+            userToKeyCloakIdentityProviderTitleCase(state.user) || undefined
+          }
           disabled
           state={state.idpUsername}
-          dispatch={mapComponentDispatch(dispatch, value => adt('idpUsername' as const, value))} />
+          dispatch={mapComponentDispatch(dispatch, (value) =>
+            adt("idpUsername" as const, value)
+          )}
+        />
 
         <ShortText.view
           extraChildProps={{}}
-          label='Name'
+          label="Name"
           required
           disabled={disabled}
           state={state.name}
-          dispatch={mapComponentDispatch(dispatch, value => adt('name' as const, value))} />
+          dispatch={mapComponentDispatch(dispatch, (value) =>
+            adt("name" as const, value)
+          )}
+        />
 
-        {isPublicSectorUserType(state.user.type)
-          ? (<ShortText.view
-              extraChildProps={{}}
-              label='Job Title'
-              disabled={disabled}
-              state={state.jobTitle}
-              dispatch={mapComponentDispatch(dispatch, value => adt('jobTitle' as const, value))} />)
-          : null}
+        {isPublicSectorUserType(state.user.type) ? (
+          <ShortText.view
+            extraChildProps={{}}
+            label="Job Title"
+            disabled={disabled}
+            state={state.jobTitle}
+            dispatch={mapComponentDispatch(dispatch, (value) =>
+              adt("jobTitle" as const, value)
+            )}
+          />
+        ) : null}
 
         <ShortText.view
           extraChildProps={{}}
-          label='Email Address'
+          label="Email Address"
           required
           disabled={disabled}
           state={state.email}
-          dispatch={mapComponentDispatch(dispatch, value => adt('email' as const, value))} />
+          dispatch={mapComponentDispatch(dispatch, (value) =>
+            adt("email" as const, value)
+          )}
+        />
       </Col>
     </Row>
   );
@@ -240,10 +312,21 @@ interface PersistParams {
   notificationsOn?: boolean;
 }
 
-type PersistReturnValue = Validation<[Immutable<State>, User], Immutable<State>>;
+type PersistReturnValue = Validation<
+  [Immutable<State>, User],
+  Immutable<State>
+>;
 
-export async function persist(params: PersistParams): Promise<PersistReturnValue> {
-  const { state, existingAvatarImageFile, acceptedTerms, notificationsOn, userId } = params;
+export async function persist(
+  params: PersistParams
+): Promise<PersistReturnValue> {
+  const {
+    state,
+    existingAvatarImageFile,
+    acceptedTerms,
+    notificationsOn,
+    userId
+  } = params;
   const values = getValues(state);
   let avatarImageFile: Id | undefined = existingAvatarImageFile;
   // Update avatar image.
@@ -251,42 +334,54 @@ export async function persist(params: PersistParams): Promise<PersistReturnValue
     const fileResult = await api.avatars.create({
       name: values.newAvatarImage.name,
       file: values.newAvatarImage,
-      metadata: [adt('any')]
+      metadata: [adt("any")]
     });
     if (!api.isValid(fileResult)) {
-      return invalid(setErrors(state, {
-        newAvatarImage: ['Please select a different avatar image.']
-      }));
+      return invalid(
+        setErrors(state, {
+          newAvatarImage: ["Please select a different avatar image."]
+        })
+      );
     }
     avatarImageFile = fileResult.value.id;
   }
   // Accept terms.
   if (acceptedTerms === true) {
-    const result = await api.users.update(userId, adt('acceptTerms'));
-    if (api.isInvalid(result)) { return invalid(state); }
+    const result = await api.users.update(userId, adt("acceptTerms"));
+    if (api.isInvalid(result)) {
+      return invalid(state);
+    }
   }
   // Modify notification subscription.
   if (notificationsOn !== undefined) {
-    const result = await api.users.update(userId, adt('updateNotifications', notificationsOn));
-    if (api.isInvalid(result)) { return invalid(state); }
+    const result = await api.users.update(
+      userId,
+      adt("updateNotifications", notificationsOn)
+    );
+    if (api.isInvalid(result)) {
+      return invalid(state);
+    }
   }
   // Update the user's profile.
-  const result = await api.users.update(userId, adt('updateProfile', {
-    name: values.name,
-    email: values.email,
-    jobTitle: values.jobTitle,
-    avatarImageFile
-  }));
+  const result = await api.users.update(
+    userId,
+    adt("updateProfile", {
+      name: values.name,
+      email: values.email,
+      jobTitle: values.jobTitle,
+      avatarImageFile
+    })
+  );
   switch (result.tag) {
-    case 'invalid':
-      if (result.value.user && result.value.user.tag === 'updateProfile') {
+    case "invalid":
+      if (result.value.user && result.value.user.tag === "updateProfile") {
         return invalid(setErrors(state, result.value.user.value));
       } else {
         return invalid(state);
       }
-    case 'unhandled':
+    case "unhandled":
       return invalid(state);
-    case 'valid':
+    case "valid":
       return valid([
         immutable(await init({ user: result.value })),
         result.value

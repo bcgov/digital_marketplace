@@ -1,5 +1,5 @@
-import { UserSlim } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { UserSlim } from "shared/lib/resources/user";
+import { Id } from "shared/lib/types";
 
 export interface Addendum {
   id: Id;

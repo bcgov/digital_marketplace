@@ -1,4 +1,3 @@
-
 paths:
   /opportunities/sprint-with-us:
     get:
@@ -28,10 +27,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SWUOpportunity'
+              $ref: "#/components/schemas/SWUOpportunity"
             examples:
               createSWUOpportunity:
-                $ref: '#/components/examples/createSWUOpportunity'
+                $ref: "#/components/examples/createSWUOpportunity"
       responses:
         201:
           description: Receive the created Sprint-With-Us Opportunity.
@@ -86,24 +85,34 @@ paths:
               properties:
                 tag:
                   type: string
-                  enum: [edit, submitForReview, publish, startCodeChallenge, startTeamScenario, suspend, cancel, addAddendum]
+                  enum:
+                    [
+                      edit,
+                      submitForReview,
+                      publish,
+                      startCodeChallenge,
+                      startTeamScenario,
+                      suspend,
+                      cancel,
+                      addAddendum
+                    ]
                 value:
                   type: object
             examples:
               edit:
-                $ref: '#/components/examples/editSWUOpportunity'
+                $ref: "#/components/examples/editSWUOpportunity"
               publish:
-                $ref: '#/components/examples/publishSWUOpportunity'
+                $ref: "#/components/examples/publishSWUOpportunity"
               startCodeChallenge:
-                $ref: '#/components/examples/startCodeChallengeForSWUOpportunity'
+                $ref: "#/components/examples/startCodeChallengeForSWUOpportunity"
               startTeamScenario:
-                $ref: '#/components/examples/startTeamScenarioForSWUOpportunity'
+                $ref: "#/components/examples/startTeamScenarioForSWUOpportunity"
               suspend:
-                $ref: '#/components/examples/suspendSWUOpportunity'
+                $ref: "#/components/examples/suspendSWUOpportunity"
               cancel:
-                $ref: '#/components/examples/cancelSWUOpportunity'
+                $ref: "#/components/examples/cancelSWUOpportunity"
               addAddendum:
-                $ref: '#/components/examples/addAddendumToSWUOpportunity'
+                $ref: "#/components/examples/addAddendumToSWUOpportunity"
       responses:
         200:
           description: Receive the updated Code-With-Us Opportunity.
@@ -140,7 +149,6 @@ paths:
           description: A Code-With-Us Opportunity for the specified ID was not found.
         401:
           description: You do not have permission to delete this Opportunity.
-
 
 components:
   schemas:

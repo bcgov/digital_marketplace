@@ -1,8 +1,8 @@
-import { makeDomainLogger } from 'back-end/lib/logger';
-import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import Knex from 'knex';
+import { makeDomainLogger } from "back-end/lib/logger";
+import { console as consoleAdapter } from "back-end/lib/logger/adapters";
+import Knex from "knex";
 
-const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
+const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
 
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.raw(`
@@ -16,7 +16,7 @@ export async function up(connection: Knex): Promise<void> {
     $$;
   `);
 
-  logger.info('Created delete_old_sessions function.');
+  logger.info("Created delete_old_sessions function.");
 
   await connection.schema.raw(`
     CREATE TRIGGER trigger_delete_old_rows
@@ -24,20 +24,19 @@ export async function up(connection: Knex): Promise<void> {
       EXECUTE PROCEDURE delete_old_sessions();
   `);
 
-  logger.info('Created trigger_delete_old_rows trigger on sessions table.');
+  logger.info("Created trigger_delete_old_rows trigger on sessions table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
-
   await connection.schema.raw(`
     DROP TRIGGER trigger_delete_old_rows ON sessions;
   `);
 
-  logger.info('Dropped trigger trigger_delete_old_rows on sessions table.');
+  logger.info("Dropped trigger trigger_delete_old_rows on sessions table.");
 
   await connection.schema.raw(`
     DROP FUNCTION delete_old_sessions;
   `);
 
-  logger.info('Dropped function delete_old_sessions');
+  logger.info("Dropped function delete_old_sessions");
 }

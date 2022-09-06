@@ -1,6 +1,6 @@
 // Imports
 
-@import './font';
+@import "./font";
 
 // Custom Bootstrap variable overrides.
 
@@ -21,18 +21,42 @@ $spacer: 1rem;
 
 // 'h' stands for 'half'
 $spacers: (
-  n4h: ($spacer * -2),
-	n6:  ($spacer * -4),
-	n7:  ($spacer * -5),
-	n8:  ($spacer * -6),
-	n9:  ($spacer * -8),
-	n10: ($spacer * -10),
-  4h:  ($spacer * 2),
-	6:   ($spacer * 4),
-	7:   ($spacer * 5),
-	8:   ($spacer * 6),
-	9:   ($spacer * 8),
-	10:  ($spacer * 10)
+  n4h: (
+    $spacer * -2
+  ),
+  n6: (
+    $spacer * -4
+  ),
+  n7: (
+    $spacer * -5
+  ),
+  n8: (
+    $spacer * -6
+  ),
+  n9: (
+    $spacer * -8
+  ),
+  n10: (
+    $spacer * -10
+  ),
+  4h: (
+    $spacer * 2
+  ),
+  6: (
+    $spacer * 4
+  ),
+  7: (
+    $spacer * 5
+  ),
+  8: (
+    $spacer * 6
+  ),
+  9: (
+    $spacer * 8
+  ),
+  10: (
+    $spacer * 10
+  )
 );
 
 $grid-gutter-width: $spacer * 2;
@@ -43,43 +67,44 @@ $gray-200: #e9ecef;
 $gray-300: #dee2e6;
 $gray-400: #ced4da;
 $gray-500: #adb5bd;
-$gray-600: #6C757D;
+$gray-600: #6c757d;
 $gray-700: #495057;
 $gray-800: #343a40;
 $gray-900: #212529;
 
 // Colors.
-$white:            #ffffff;
-$black:            #000000;
-$blue:             #0C99D6;
-$blue-alt:         #17A2B8;
-$blue-alt-2:       #1e98d2;
-$blue-dark:        #003366;
-$blue-dark-alt:    #38598A;
-$blue-dark-alt-2:  #0F4C8B;
-$blue-light:       #E7EDF3;
-$blue-light-alt:   #E9F5FB;
-$blue-light-alt-2: #F4FAFD;
-$purple:           #52489C;
-$purple-light:     lighten($purple, 20);
-$yellow:           #FCBA19;
-$yellow-light: #FDD675;
-$red:              #DC3545;
-$green:            #2E8540;
-$orange:           #FD7E14;
+$white: #ffffff;
+$black: #000000;
+$blue: #0c99d6;
+$blue-alt: #17a2b8;
+$blue-alt-2: #1e98d2;
+$blue-dark: #003366;
+$blue-dark-alt: #38598a;
+$blue-dark-alt-2: #0f4c8b;
+$blue-light: #e7edf3;
+$blue-light-alt: #e9f5fb;
+$blue-light-alt-2: #f4fafd;
+$purple: #52489c;
+$purple-light: lighten($purple, 20);
+$yellow: #fcba19;
+$yellow-light: #fdd675;
+$red: #dc3545;
+$green: #2e8540;
+$orange: #fd7e14;
 
 // Bootstrap Utility colors.
-$body-color:                        $gray-900;
-$border-color:                      $gray-400;
-$nav-tabs-border-color:             $border-color;
-$nav-tabs-link-hover-border-color:  $gray-200 $gray-200 transparent;
-$nav-tabs-link-active-bg:           $white;
-$nav-tabs-link-active-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
-$component-active-bg:               $blue;
+$body-color: $gray-900;
+$border-color: $gray-400;
+$nav-tabs-border-color: $border-color;
+$nav-tabs-link-hover-border-color: $gray-200 $gray-200 transparent;
+$nav-tabs-link-active-bg: $white;
+$nav-tabs-link-active-border-color: $nav-tabs-border-color
+  $nav-tabs-border-color transparent;
+$component-active-bg: $blue;
 $custom-control-indicator-checked-disabled-bg: rgba($component-active-bg, 0.5);
-$link-color:                        $blue;
-$dropdown-link-hover-bg:            $gray-100;
-$dropdown-link-active-bg:           $gray-200;
+$link-color: $blue;
+$dropdown-link-hover-bg: $gray-100;
+$dropdown-link-active-bg: $gray-200;
 $table-hover-bg: $blue-light-alt;
 
 // App-Specific Utility Colors
@@ -144,91 +169,93 @@ $c-static-html-fg: $white;
 
 $app-utility-colors: (
   // App Views
-  'c-body-bg': $c-body-bg,
-  'c-nav-bg': $c-nav-bg,
-  'c-nav-bg-alt': $c-nav-bg-alt,
-  'c-nav-border-bottom': $c-nav-border-bottom,
-  'c-nav-fg': $c-nav-fg,
-  'c-nav-fg-alt': $c-nav-fg-alt,
-  'c-footer-bg': $c-footer-bg,
-  'c-footer-separator': $c-footer-separator,
-  'c-footer-border-top': $c-footer-border-top,
-  'c-toast-info-icon': $c-toast-info-icon,
-  'c-toast-error-icon': $c-toast-error-icon,
-  'c-toast-warning-icon': $c-toast-warning-icon,
-  'c-toast-success-icon': $c-toast-success-icon,
-  'c-sidebar-instructional-bg': $c-sidebar-instructional-bg,
-  'c-sidebar-menu-link-inactive-fg': $c-sidebar-menu-link-inactive-fg,
-  'c-sidebar-menu-link-inactive-icon': $c-sidebar-menu-link-inactive-icon,
-  'c-sidebar-menu-link-active-fg': $c-sidebar-menu-link-active-fg,
-  'c-sidebar-menu-link-active-icon': $c-sidebar-menu-link-active-icon,
-  'c-sidebar-menu-link-active-bg': $c-sidebar-menu-link-active-bg,
-  'c-sidebar-menu-mobile-caret': $c-sidebar-menu-mobile-caret,
+  "c-body-bg": $c-body-bg,
+  "c-nav-bg": $c-nav-bg,
+  "c-nav-bg-alt": $c-nav-bg-alt,
+  "c-nav-border-bottom": $c-nav-border-bottom,
+  "c-nav-fg": $c-nav-fg,
+  "c-nav-fg-alt": $c-nav-fg-alt,
+  "c-footer-bg": $c-footer-bg,
+  "c-footer-separator": $c-footer-separator,
+  "c-footer-border-top": $c-footer-border-top,
+  "c-toast-info-icon": $c-toast-info-icon,
+  "c-toast-error-icon": $c-toast-error-icon,
+  "c-toast-warning-icon": $c-toast-warning-icon,
+  "c-toast-success-icon": $c-toast-success-icon,
+  "c-sidebar-instructional-bg": $c-sidebar-instructional-bg,
+  "c-sidebar-menu-link-inactive-fg": $c-sidebar-menu-link-inactive-fg,
+  "c-sidebar-menu-link-inactive-icon": $c-sidebar-menu-link-inactive-icon,
+  "c-sidebar-menu-link-active-fg": $c-sidebar-menu-link-active-fg,
+  "c-sidebar-menu-link-active-icon": $c-sidebar-menu-link-active-icon,
+  "c-sidebar-menu-link-active-bg": $c-sidebar-menu-link-active-bg,
+  "c-sidebar-menu-mobile-caret": $c-sidebar-menu-mobile-caret,
   // Pages
-  'c-landing-role-heading': $c-landing-role-heading,
-  'c-landing-role-icon': $c-landing-role-icon,
-  'c-landing-testimonial-source': $c-landing-testimonial-source,
-  'c-landing-small-underline': $c-landing-small-underline,
-  'c-landing-programs-bg': $c-landing-programs-bg,
-  'c-landing-stats-bg': $c-landing-stats-bg,
-  'c-landing-stats-stat': $c-landing-stats-stat,
-  'c-landing-stats-description': $c-landing-stats-description,
-  'c-learn-more-bg': $c-learn-more-bg,
-  'c-dashboard-bg': $c-dashboard-bg,
-  'c-opportunity-list-learn-more-bg': $c-opportunity-list-learn-more-bg,
-  'c-opportunity-list-card-hover-bg': $c-opportunity-list-card-hover-bg,
-  'c-opportunity-create-bg': $c-opportunity-create-bg,
-  'c-opportunity-view-got-questions-icon': $c-opportunity-view-got-questions-icon,
-  'c-opportunity-view-got-questions-bg': $c-opportunity-view-got-questions-bg,
-  'c-opportunity-view-apply-bg': $c-opportunity-view-apply-bg,
-  'c-proposal-swu-form-team-question-response-heading': $c-proposal-swu-form-team-question-response-heading,
-  'c-proposal-swu-form-scrum-master': $c-proposal-swu-form-scrum-master,
-  'c-user-profile-permission': $c-user-profile-permission,
+  "c-landing-role-heading": $c-landing-role-heading,
+  "c-landing-role-icon": $c-landing-role-icon,
+  "c-landing-testimonial-source": $c-landing-testimonial-source,
+  "c-landing-small-underline": $c-landing-small-underline,
+  "c-landing-programs-bg": $c-landing-programs-bg,
+  "c-landing-stats-bg": $c-landing-stats-bg,
+  "c-landing-stats-stat": $c-landing-stats-stat,
+  "c-landing-stats-description": $c-landing-stats-description,
+  "c-learn-more-bg": $c-learn-more-bg,
+  "c-dashboard-bg": $c-dashboard-bg,
+  "c-opportunity-list-learn-more-bg": $c-opportunity-list-learn-more-bg,
+  "c-opportunity-list-card-hover-bg": $c-opportunity-list-card-hover-bg,
+  "c-opportunity-create-bg": $c-opportunity-create-bg,
+  "c-opportunity-view-got-questions-icon":
+    $c-opportunity-view-got-questions-icon,
+  "c-opportunity-view-got-questions-bg": $c-opportunity-view-got-questions-bg,
+  "c-opportunity-view-apply-bg": $c-opportunity-view-apply-bg,
+  "c-proposal-swu-form-team-question-response-heading":
+    $c-proposal-swu-form-team-question-response-heading,
+  "c-proposal-swu-form-scrum-master": $c-proposal-swu-form-scrum-master,
+  "c-user-profile-permission": $c-user-profile-permission,
   // Misc. Views
-  'c-report-card-bg': $c-report-card-bg,
-  'c-report-card-icon-default': $c-report-card-icon-default,
-  'c-report-card-icon-highlight': $c-report-card-icon-highlight,
-  'c-capability-ft-bg': $c-capability-ft-bg,
-  'c-capability-pt-bg': $c-capability-pt-bg,
-  'c-capability-grid-switch': $c-capability-grid-switch,
-  'c-how-it-works-item-bg': $c-how-it-works-item-bg,
-  'c-skills-bg': $c-skills-bg,
-  'c-multi-select-item-bg': $c-multi-select-item-bg,
-  'c-multi-select-item-remove': $c-multi-select-item-remove,
-  'c-form-field-required': $c-form-field-required,
-  'c-table-icon-check': $c-table-icon-check,
-  'c-table-icon-times': $c-table-icon-times,
+  "c-report-card-bg": $c-report-card-bg,
+  "c-report-card-icon-default": $c-report-card-icon-default,
+  "c-report-card-icon-highlight": $c-report-card-icon-highlight,
+  "c-capability-ft-bg": $c-capability-ft-bg,
+  "c-capability-pt-bg": $c-capability-pt-bg,
+  "c-capability-grid-switch": $c-capability-grid-switch,
+  "c-how-it-works-item-bg": $c-how-it-works-item-bg,
+  "c-skills-bg": $c-skills-bg,
+  "c-multi-select-item-bg": $c-multi-select-item-bg,
+  "c-multi-select-item-remove": $c-multi-select-item-remove,
+  "c-form-field-required": $c-form-field-required,
+  "c-table-icon-check": $c-table-icon-check,
+  "c-table-icon-times": $c-table-icon-times,
   // Static HTML Pages
-  'c-static-html-bg': $c-static-html-bg,
-  'c-static-html-fg': $c-static-html-fg
+  "c-static-html-bg": $c-static-html-bg,
+  "c-static-html-fg": $c-static-html-fg
 );
 
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
 // so we don't need to update the map at all.
-$primary:      $blue;
-$secondary:    $gray-600;
-$info:         $blue-dark-alt-2;
-$warning:      $orange;
-$danger:       $red;
-$success:      $green;
-$body:         $body-color;
-$light:        $gray-100;
-$dark:         $gray-800;
+$primary: $blue;
+$secondary: $gray-600;
+$info: $blue-dark-alt-2;
+$warning: $orange;
+$danger: $red;
+$success: $green;
+$body: $body-color;
+$light: $gray-100;
+$dark: $gray-800;
 
-$theme-colors:   map-merge(
+$theme-colors: map-merge(
   (
-    'white':     $white,
-    'black':     $black,
-    'primary':   $primary,
-    'secondary': $secondary,
-    'info':      $info,
-    'warning':   $warning,
-    'danger':    $danger,
-    'success':   $success,
-    'body':      $body,
-    'light':     $light,
-    'dark':      $dark
+    "white": $white,
+    "black": $black,
+    "primary": $primary,
+    "secondary": $secondary,
+    "info": $info,
+    "warning": $warning,
+    "danger": $danger,
+    "success": $success,
+    "body": $body,
+    "light": $light,
+    "dark": $dark
   ),
   $app-utility-colors
 );
@@ -236,21 +263,23 @@ $theme-colors:   map-merge(
 // Other overrides.
 $border-width: 1px;
 
-$font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
-$font-weight-bold:       500;
-$font-weight-bolder:     700;
+$font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+  "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-weight-bold: 500;
+$font-weight-bolder: 700;
 
 $font-size-base: 1rem;
-$h1-font-size:   $font-size-base * 2.5;
+$h1-font-size: $font-size-base * 2.5;
 
-$input-btn-padding-x:    0.75rem;
+$input-btn-padding-x: 0.75rem;
 $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
 
 $badge-font-size: 80%;
 
 $border-radius-sm: 0.2rem;
-$border-radius:    0.3em;
+$border-radius: 0.3em;
 $border-radius-lg: 0.5rem;
 
 $enable-validation-icons: false;
@@ -261,7 +290,7 @@ $transition-duration: 240ms;
 
 // Import Bootstrap.
 
-@import 'bootstrap';
+@import "bootstrap";
 
 // Mixins.
 
@@ -274,7 +303,6 @@ $transition-duration: 240ms;
     @content;
   }
 }
-
 
 // Global styles.
 
@@ -307,7 +335,6 @@ input:-ms-clear {
 
 input[type="date"],
 input[type="time"] {
-
   &::-ms-clear {
     display: none;
   }
@@ -321,19 +348,16 @@ input[type="time"] {
 
 input,
 textarea {
-
   @include placeholder {
     color: $secondary;
   }
 
   &:disabled,
   &.disabled {
-
     @include placeholder {
       color: transparent;
       opacity: 0;
     }
-
   }
 }
 
@@ -358,7 +382,6 @@ textarea {
 }
 
 nav {
-
   $main-nav-top-height: 67px;
   $main-nav-bottom-navbar-height: 56px;
   &.main-nav {
@@ -386,8 +409,8 @@ nav {
       background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
-        transition: transform $transition-duration ease-out
-                  , opacity 0ms linear $opacity-delay;
+        transition: transform $transition-duration ease-out,
+          opacity 0ms linear $opacity-delay;
       }
 
       overflow: hidden;
@@ -410,7 +433,6 @@ nav {
     }
 
     .main-nav-bottom-navbar {
-
       &.mobile,
       &.desktop {
         @extend .align-items-center;
@@ -473,7 +495,6 @@ footer {
 
 .btn,
 button {
-
   &.disabled {
     pointer-events: none;
   }
@@ -578,7 +599,6 @@ nav.navbar .nav-link:hover {
 
 .custom-radio,
 .custom-checkbox {
-
   .custom-control-label::before {
     transition: none;
   }
@@ -626,7 +646,7 @@ nav.navbar .nav-link:hover {
 }
 
 .o-50 {
-  opacity: 0.50 !important;
+  opacity: 0.5 !important;
 }
 
 .o-75 {
@@ -638,7 +658,7 @@ nav.navbar .nav-link:hover {
 }
 
 .font-size-extra-small {
-  font-size: $font-size-sm*0.8;
+  font-size: $font-size-sm * 0.8;
 }
 
 .font-size-small {
@@ -671,10 +691,16 @@ nav.navbar .nav-link:hover {
 @each $color, $value in $theme-colors {
   .text-hover-#{$color} {
     @include hover {
-      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
+      color: darken(
+        $value,
+        $emphasized-link-hover-darken-percentage
+      ) !important;
     }
     &:focus {
-      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
+      color: darken(
+        $value,
+        $emphasized-link-hover-darken-percentage
+      ) !important;
     }
   }
 }
@@ -684,10 +710,16 @@ nav.navbar .nav-link:hover {
   }
   .text-hover-gray-#{$color} {
     @include hover {
-      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
+      color: darken(
+        $value,
+        $emphasized-link-hover-darken-percentage
+      ) !important;
     }
     &:focus {
-      color: darken($value, $emphasized-link-hover-darken-percentage) !important;
+      color: darken(
+        $value,
+        $emphasized-link-hover-darken-percentage
+      ) !important;
     }
   }
 }
@@ -722,7 +754,6 @@ nav.navbar .nav-link:hover {
   $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
   @include media-breakpoint-up($breakpoint) {
-
     .sticky#{$infix} {
       position: sticky;
       z-index: 2;
@@ -742,10 +773,8 @@ nav.navbar .nav-link:hover {
     }
   }
 
-  @if ($breakpoint == 'xs') or ($breakpoint == 'sm') {
-
+  @if ($breakpoint == "xs") or ($breakpoint == "sm") {
     @include media-breakpoint-down(sm) {
-
       .app:not(.contextual-actions-visible) .sticky#{$infix} {
         top: 1rem;
       }
@@ -783,7 +812,6 @@ nav.navbar .nav-link:hover {
 }
 
 .sidebar {
-
   @include media-breakpoint-down(sm) {
     background-color: $white !important;
     z-index: 3;
@@ -798,8 +826,7 @@ nav.navbar .nav-link:hover {
     $color: map-get($data, color);
     $icon: map-get($data, icon);
 
-		&.is-#{$state} {
-
+    &.is-#{$state} {
       .react-select__control {
         border-color: $color;
 
@@ -813,7 +840,7 @@ nav.navbar .nav-link:hover {
 
         &--is-focused {
           border-color: $color;
-          box-shadow: 0 0 0 $input-focus-width rgba($color, .25);
+          box-shadow: 0 0 0 $input-focus-width rgba($color, 0.25);
         }
 
         ~ .#{$state}-feedback,
@@ -826,7 +853,6 @@ nav.navbar .nav-link:hover {
 
   // Standard control styles.
   .react-select {
-
     &__control {
       @extend .form-control;
       @extend .p-0;
@@ -881,7 +907,6 @@ nav.navbar .nav-link:hover {
 }
 
 .markdown {
-
   img {
     width: 100%;
     max-width: 600px;
@@ -893,9 +918,8 @@ nav.navbar .nav-link:hover {
   h4,
   h5,
   h6 {
-
     &:not(:first-child) {
-      margin-top: 1.5*$spacer;
+      margin-top: 1.5 * $spacer;
     }
   }
 
@@ -904,14 +928,13 @@ nav.navbar .nav-link:hover {
   table,
   pre,
   hr {
-    margin-top: 1.5*$spacer;
-    margin-bottom: 1.5*$spacer;
+    margin-top: 1.5 * $spacer;
+    margin-bottom: 1.5 * $spacer;
   }
 
   & > *:last-child {
     @extend .mb-0;
   }
-
 }
 
 .vi-card {

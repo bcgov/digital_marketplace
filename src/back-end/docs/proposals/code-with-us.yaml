@@ -1,4 +1,3 @@
-
 paths:
   /proposals/code-with-us:
     get:
@@ -23,7 +22,6 @@ paths:
         401:
           description: You do not have permissions to view Proposals for the Opportunity or are not signed in.
 
-
     post:
       summary: Create a new Code-With-Us Proposal.
       tags:
@@ -38,10 +36,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CWUProposal'
+              $ref: "#/components/schemas/CWUProposal"
             examples:
               createCWUProposal:
-                $ref: '#/components/examples/createCWUProposal'
+                $ref: "#/components/examples/createCWUProposal"
       responses:
         201:
           description: Receive the created Code-With-Us Proposal.
@@ -101,17 +99,17 @@ paths:
                   type: object
             examples:
               edit:
-                $ref: '#/components/examples/editCWUProposal'
+                $ref: "#/components/examples/editCWUProposal"
               submit:
-                $ref: '#/components/examples/submitCWUProposal'
+                $ref: "#/components/examples/submitCWUProposal"
               score:
-                $ref: '#/components/examples/scoreCWUProposal'
+                $ref: "#/components/examples/scoreCWUProposal"
               award:
-                $ref: '#/components/examples/awardCWUProposal'
+                $ref: "#/components/examples/awardCWUProposal"
               disqualify:
-                $ref: '#/components/examples/disqualifyCWUProposal'
+                $ref: "#/components/examples/disqualifyCWUProposal"
               withdraw:
-                $ref: '#/components/examples/withdrawCWUProposal'
+                $ref: "#/components/examples/withdrawCWUProposal"
       responses:
         200:
           description: Receive the updated Code-With-Us Proposal.
@@ -149,7 +147,6 @@ paths:
         401:
           description: You do not have permission to delete this Proposal.
 
-
 components:
   schemas:
     CWUProposal:
@@ -172,7 +169,6 @@ components:
         status:
           type: string
           enum: [DRAFT, PUBLISHED]
-
 
   examples:
     createCWUProposal:

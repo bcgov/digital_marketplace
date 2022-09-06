@@ -1,16 +1,41 @@
-import * as crud from 'back-end/lib/crud';
-import * as db from 'back-end/lib/db';
-import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
-import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateContentId } from 'back-end/lib/validation';
-import { get } from 'lodash';
-import { getString } from 'shared/lib';
-import { Content, ContentSlim, CreateRequestBody, CreateValidationErrors, DeleteValidationErrors, UpdateRequestBody, UpdateValidationErrors } from 'shared/lib/resources/content';
-import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, invalid, isInvalid, isValid, valid, validateUUID } from 'shared/lib/validation';
-import * as contentValidation from 'shared/lib/validation/content';
+import * as crud from "back-end/lib/crud";
+import * as db from "back-end/lib/db";
+import * as permissions from "back-end/lib/permissions";
+import {
+  basicResponse,
+  JsonResponseBody,
+  makeJsonResponseBody,
+  nullRequestBodyHandler,
+  wrapRespond
+} from "back-end/lib/server";
+import {
+  SupportedRequestBodies,
+  SupportedResponseBodies
+} from "back-end/lib/types";
+import { validateContentId } from "back-end/lib/validation";
+import { get } from "lodash";
+import { getString } from "shared/lib";
+import {
+  Content,
+  ContentSlim,
+  CreateRequestBody,
+  CreateValidationErrors,
+  DeleteValidationErrors,
+  UpdateRequestBody,
+  UpdateValidationErrors
+} from "shared/lib/resources/content";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
+import { Id } from "shared/lib/types";
+import {
+  allValid,
+  getInvalidValue,
+  invalid,
+  isInvalid,
+  isValid,
+  valid,
+  validateUUID
+} from "shared/lib/validation";
+import * as contentValidation from "shared/lib/validation/content";
 
 export type ValidatedCreateRequestBody = CreateRequestBody;
 
@@ -38,11 +63,15 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'content',
+  routeNamespace: "content",
 
   readMany(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<ContentSlim[] | string[]>, Session>(async request => {
-      const respond = (code: number, body: ContentSlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    return nullRequestBodyHandler<
+      JsonResponseBody<ContentSlim[] | string[]>,
+      Session
+    >(async (request) => {
+      const respond = (code: number, body: ContentSlim[] | string[]) =>
+        basicResponse(code, request.session, makeJsonResponseBody(body));
       if (!permissions.readManyContent(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -55,15 +84,23 @@ const resource: Resource = {
   },
 
   readOne(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<Content | string[]>, Session>(async request => {
-      const respond = (code: number, body: Content | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    return nullRequestBodyHandler<
+      JsonResponseBody<Content | string[]>,
+      Session
+    >(async (request) => {
+      const respond = (code: number, body: Content | string[]) =>
+        basicResponse(code, request.session, makeJsonResponseBody(body));
       // Validate the provided id or slug
       // If it's a valid UUID, query by id.
       // If not a valid UUID, or query by id failed (possible a UUID was used as a slug), then query by slug
       const validatedId = validateUUID(request.params.id);
       let dbResult: any = null;
       if (isValid(validatedId)) {
-        dbResult = await db.readOneContentById(connection, validatedId.value, request.session);
+        dbResult = await db.readOneContentById(
+          connection,
+          validatedId.value,
+          request.session
+        );
       }
 
       if (!dbResult || isInvalid(dbResult) || !dbResult.value) {
@@ -71,7 +108,11 @@ const resource: Resource = {
         if (isInvalid(validatedSlug)) {
           return respond(400, validatedSlug.value);
         }
-        dbResult = await db.readOneContentBySlug(connection, validatedSlug.value, request.session);
+        dbResult = await db.readOneContentBySlug(
+          connection,
+          validatedSlug.value,
+          request.session
+        );
       }
 
       if (isInvalid(dbResult)) {
@@ -79,7 +120,7 @@ const resource: Resource = {
       }
 
       if (!dbResult.value) {
-        return respond(404, ['Content not found']);
+        return respond(404, ["Content not found"]);
       }
 
       return respond(200, dbResult.value);
@@ -89,16 +130,20 @@ const resource: Resource = {
   create(connection) {
     return {
       async parseRequestBody(request) {
-        const body: unknown = request.body.tag === 'json' ? request.body.value : {};
+        const body: unknown =
+          request.body.tag === "json" ? request.body.value : {};
         return {
-          slug: getString(body, 'slug'),
-          title: getString(body, 'title'),
-          body: getString(body, 'body'),
-          fixed: get(body, 'fixed')
+          slug: getString(body, "slug"),
+          title: getString(body, "title"),
+          body: getString(body, "body"),
+          fixed: get(body, "fixed")
         };
       },
       async validateRequestBody(request) {
-        if (!permissions.createContent(request.session) || !permissions.isSignedIn(request.session)) {
+        if (
+          !permissions.createContent(request.session) ||
+          !permissions.isSignedIn(request.session)
+        ) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
@@ -111,9 +156,13 @@ const resource: Resource = {
         const validatedBody = contentValidation.validateBody(body);
 
         if (allValid([validatedSlug, validatedTitle, validatedBody])) {
-           // Check to see if slug is available
+          // Check to see if slug is available
           if (isValid(validatedSlug)) {
-            const dbResult = await db.readOneContentBySlug(connection, validatedSlug.value, session);
+            const dbResult = await db.readOneContentBySlug(
+              connection,
+              validatedSlug.value,
+              session
+            );
             if (isInvalid(dbResult)) {
               return invalid({
                 database: [db.ERROR_MESSAGE]
@@ -121,7 +170,7 @@ const resource: Resource = {
             }
             if (isValid(dbResult) && dbResult.value) {
               return invalid({
-                slug: ['This slug is already in use.']
+                slug: ["This slug is already in use."]
               });
             }
           }
@@ -139,40 +188,71 @@ const resource: Resource = {
           });
         }
       },
-      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<Content>, JsonResponseBody<CreateValidationErrors>, Session>({
-        valid: (async request => {
-          const dbResult = await db.createContent(connection, request.body, request.session);
+      respond: wrapRespond<
+        ValidatedCreateRequestBody,
+        CreateValidationErrors,
+        JsonResponseBody<Content>,
+        JsonResponseBody<CreateValidationErrors>,
+        Session
+      >({
+        valid: async (request) => {
+          const dbResult = await db.createContent(
+            connection,
+            request.body,
+            request.session
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }),
-        invalid: (async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        })
+          return basicResponse(
+            201,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
+        },
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
+        }
       })
     };
   },
   update(connection) {
     return {
       async parseRequestBody(request) {
-        const body = request.body.tag === 'json' ? request.body.value : {};
+        const body = request.body.tag === "json" ? request.body.value : {};
         return {
-          slug: getString(body, 'slug'),
-          title: getString(body, 'title'),
-          body: getString(body, 'body')
+          slug: getString(body, "slug"),
+          title: getString(body, "title"),
+          body: getString(body, "body")
         };
       },
       async validateRequestBody(request) {
-        if (!permissions.editContent(request.session) || !permissions.isSignedIn(request.session)) {
+        if (
+          !permissions.editContent(request.session) ||
+          !permissions.isSignedIn(request.session)
+        ) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
         const session: AuthenticatedSession = request.session;
-        const validatedContent = await validateContentId(connection, request.params.id, session);
+        const validatedContent = await validateContentId(
+          connection,
+          request.params.id,
+          session
+        );
         if (isInvalid(validatedContent)) {
-          return invalid({ notFound: ['The specified content does not exists.']});
+          return invalid({
+            notFound: ["The specified content does not exists."]
+          });
         }
         const existingContent = validatedContent.value;
         const { slug, title, body } = request.body;
@@ -182,14 +262,24 @@ const resource: Resource = {
 
         if (allValid([validatedSlug, validatedTitle, validatedBody])) {
           // If content is fixed, and slug is being updated, disallow
-          if (existingContent.fixed && existingContent.slug !== validatedSlug.value) {
+          if (
+            existingContent.fixed &&
+            existingContent.slug !== validatedSlug.value
+          ) {
             return invalid({
-              fixed: ['You cannot change the slug of fixed content.']
+              fixed: ["You cannot change the slug of fixed content."]
             });
           }
           // If slug name is being updated, check to see if new slug name is available
-          if (isValid(validatedSlug) && existingContent.slug !== validatedSlug.value) {
-            const dbResult = await db.readOneContentBySlug(connection, validatedSlug.value, session);
+          if (
+            isValid(validatedSlug) &&
+            existingContent.slug !== validatedSlug.value
+          ) {
+            const dbResult = await db.readOneContentBySlug(
+              connection,
+              validatedSlug.value,
+              session
+            );
             if (isInvalid(dbResult)) {
               return invalid({
                 database: [db.ERROR_MESSAGE]
@@ -197,7 +287,7 @@ const resource: Resource = {
             }
             if (isValid(dbResult) && dbResult.value) {
               return invalid({
-                slug: ['This slug is already in use.']
+                slug: ["This slug is already in use."]
               });
             }
           }
@@ -217,16 +307,33 @@ const resource: Resource = {
         }
       },
       respond: wrapRespond({
-        valid: (async request => {
-          const dbResult = await db.updateContent(connection, request.params.id, request.body, request.session);
+        valid: async (request) => {
+          const dbResult = await db.updateContent(
+            connection,
+            request.params.id,
+            request.body,
+            request.session
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
-        }),
-        invalid: (async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        })
+          return basicResponse(
+            200,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
+        },
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
+        }
       })
     };
   },
@@ -234,31 +341,54 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request) {
-        if (!permissions.deleteContent(request.session) || !permissions.isSignedIn(request.session)) {
+        if (
+          !permissions.deleteContent(request.session) ||
+          !permissions.isSignedIn(request.session)
+        ) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
         const session: AuthenticatedSession = request.session;
-        const validatedContent = await validateContentId(connection, request.params.id, session);
+        const validatedContent = await validateContentId(
+          connection,
+          request.params.id,
+          session
+        );
         if (isInvalid(validatedContent)) {
-          return invalid({ notFound: ['Content not found.']});
+          return invalid({ notFound: ["Content not found."] });
         }
         if (validatedContent.value.fixed) {
-          return invalid({ fixed: ['You cannot delete fixed content.']});
+          return invalid({ fixed: ["You cannot delete fixed content."] });
         }
         return valid(validatedContent.value.id);
       },
       respond: wrapRespond({
-        valid: async request => {
-          const dbResult = await db.deleteContent(connection, request.body, request.session);
+        valid: async (request) => {
+          const dbResult = await db.deleteContent(
+            connection,
+            request.body,
+            request.session
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+          return basicResponse(
+            200,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
         },
-        invalid: async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
         }
       })
     };

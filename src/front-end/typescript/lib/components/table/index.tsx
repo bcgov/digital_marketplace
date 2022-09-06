@@ -1,8 +1,16 @@
-import { Component, ComponentViewProps, Dispatch, Init, Update, View, ViewElementChildren } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import React, { CSSProperties, ReactElement } from 'react';
-import { Table, Tooltip } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import {
+  Component,
+  ComponentViewProps,
+  Dispatch,
+  Init,
+  Update,
+  View,
+  ViewElementChildren
+} from "front-end/lib/framework";
+import Icon from "front-end/lib/views/icon";
+import React, { CSSProperties, ReactElement } from "react";
+import { Table, Tooltip } from "reactstrap";
+import { ADT } from "shared/lib/types";
 
 export interface State {
   idNamespace: string;
@@ -18,11 +26,15 @@ export interface Params {
   TDView?: View<TDProps>;
 }
 
-export type Msg
-  = ADT<'toggleTooltipTh', number>
-  | ADT<'toggleTooltipTd', [number, number]>; // [row, cell]
+export type Msg =
+  | ADT<"toggleTooltipTh", number>
+  | ADT<"toggleTooltipTd", [number, number]>; // [row, cell]
 
-export const init: Init<Params, State> = async ({ idNamespace, THView = DefaultTHView, TDView = DefaultTDView }) => ({
+export const init: Init<Params, State> = async ({
+  idNamespace,
+  THView = DefaultTHView,
+  TDView = DefaultTDView
+}) => ({
   idNamespace,
   THView,
   TDView,
@@ -32,20 +44,20 @@ export const init: Init<Params, State> = async ({ idNamespace, THView = DefaultT
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'toggleTooltipTh': {
+    case "toggleTooltipTh": {
       const currentThIndex = state.activeTooltipThIndex;
       if (!currentThIndex) {
-        return [state.set('activeTooltipThIndex', msg.value)];
+        return [state.set("activeTooltipThIndex", msg.value)];
       } else {
-        return [state.set('activeTooltipThIndex', null)];
+        return [state.set("activeTooltipThIndex", null)];
       }
     }
-    case 'toggleTooltipTd': {
+    case "toggleTooltipTd": {
       const currentTdIndex = state.activeTooltipTdIndex;
       if (!currentTdIndex) {
-        return [state.set('activeTooltipTdIndex', msg.value)];
+        return [state.set("activeTooltipTdIndex", msg.value)];
       } else {
-        return [state.set('activeTooltipTdIndex', null)];
+        return [state.set("activeTooltipTdIndex", null)];
       }
     }
     default:
@@ -60,9 +72,13 @@ interface TableTooltipProps {
   toggle(): any;
 }
 
-const TableTooltip: View<TableTooltipProps> = props => {
+const TableTooltip: View<TableTooltipProps> = (props) => {
   return (
-    <Tooltip autohide={false} placement='top' boundariesElement='window' {...props}>
+    <Tooltip
+      autohide={false}
+      placement="top"
+      boundariesElement="window"
+      {...props}>
       {props.text}
     </Tooltip>
   );
@@ -82,23 +98,34 @@ export interface THProps extends THSpec {
   id: string;
 }
 
-export const DefaultTHView: View<THProps> = ({ id, style, className, children, index, tooltipText, dispatch, tooltipIsOpen }) => {
+export const DefaultTHView: View<THProps> = ({
+  id,
+  style,
+  className,
+  children,
+  index,
+  tooltipText,
+  dispatch,
+  tooltipIsOpen
+}) => {
   const tooltipProps = !tooltipText
     ? undefined
     : {
         text: tooltipText,
         isOpen: tooltipIsOpen,
         target: id,
-        toggle: () => dispatch({ tag: 'toggleTooltipTh', value: index })
+        toggle: () => dispatch({ tag: "toggleTooltipTh", value: index })
       };
   return (
     <th key={id} style={style} className={className}>
-      {tooltipProps
-        ? (<div className='d-inline-block' id={id}>
-            {children}
-            <TableTooltip {...tooltipProps} />
-          </div>)
-        : children}
+      {tooltipProps ? (
+        <div className="d-inline-block" id={id}>
+          {children}
+          <TableTooltip {...tooltipProps} />
+        </div>
+      ) : (
+        children
+      )}
     </th>
   );
 };
@@ -109,12 +136,12 @@ interface THeadProps {
 }
 
 export const THead: View<THeadProps> = ({ cells, THView }) => {
-  const children = cells.map((cell, i) => (<THView key={`table-thead-${i}`} {...cell} />));
+  const children = cells.map((cell, i) => (
+    <THView key={`table-thead-${i}`} {...cell} />
+  ));
   return (
     <thead>
-      <tr>
-        {children}
-      </tr>
+      <tr>{children}</tr>
     </thead>
   );
 };
@@ -136,24 +163,37 @@ export interface TDProps extends TDSpec {
 }
 
 export function DefaultTDView(props: TDProps): ReactElement {
-  const { colSpan, id, style, className, children, index, tooltipText, dispatch, tooltipIsOpen, showOnHover } = props;
+  const {
+    colSpan,
+    id,
+    style,
+    className,
+    children,
+    index,
+    tooltipText,
+    dispatch,
+    tooltipIsOpen,
+    showOnHover
+  } = props;
   const tooltipProps = !tooltipText
     ? undefined
     : {
         text: tooltipText,
         isOpen: tooltipIsOpen,
         target: id,
-        toggle: () => dispatch({ tag: 'toggleTooltipTd', value: index })
+        toggle: () => dispatch({ tag: "toggleTooltipTd", value: index })
       };
   return (
     <td key={id} style={style} className={className} colSpan={colSpan}>
-      <div className={showOnHover ? 'table-show-on-hover' : ''}>
-        {tooltipProps
-          ? (<div className='d-inline-block' id={id}>
-              {children}
-              <TableTooltip {...tooltipProps} />
-            </div>)
-          : children}
+      <div className={showOnHover ? "table-show-on-hover" : ""}>
+        {tooltipProps ? (
+          <div className="d-inline-block" id={id}>
+            {children}
+            <TableTooltip {...tooltipProps} />
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </td>
   );
@@ -176,15 +216,14 @@ interface TBodyProps {
 
 const TBody: View<TBodyProps> = ({ id, rows, TDView, borderless }) => {
   const children = rows.map((row, rowIndex) => {
-    const cellChildren = row.map(cell => (<TDView key={`${cell.id}-wrapper`} {...cell} />));
-    return (
-      <tr key={`${id}-row-${rowIndex}`}>
-        {cellChildren}
-      </tr>
-    );
+    const cellChildren = row.map((cell) => (
+      <TDView key={`${cell.id}-wrapper`} {...cell} />
+    ));
+    return <tr key={`${id}-row-${rowIndex}`}>{cellChildren}</tr>;
   });
   return (
-    <tbody className={`font-size-small ${borderless ? 'table-borderless' : ''}`}>
+    <tbody
+      className={`font-size-small ${borderless ? "table-borderless" : ""}`}>
       {children}
     </tbody>
   );
@@ -203,8 +242,17 @@ export interface Props extends ComponentViewProps<State, Msg> {
   hover?: boolean;
 }
 
-export const view: View<Props> = props => {
-  const { state, dispatch, className = '', style, headCells, bodyRows, borderless, hover = true } = props;
+export const view: View<Props> = (props) => {
+  const {
+    state,
+    dispatch,
+    className = "",
+    style,
+    headCells,
+    bodyRows,
+    borderless,
+    hover = true
+  } = props;
   const headProps: THeadProps = {
     THView: state.THView,
     cells: headCells.map((spec, index) => {
@@ -227,14 +275,21 @@ export const view: View<Props> = props => {
           dispatch,
           index: [rowIndex, cellIndex],
           id: `table-${state.idNamespace}-td-${rowIndex}-${cellIndex}`,
-          tooltipIsOpen: !!state.activeTooltipTdIndex && rowIndex === state.activeTooltipTdIndex[0] && cellIndex === state.activeTooltipTdIndex[1]
+          tooltipIsOpen:
+            !!state.activeTooltipTdIndex &&
+            rowIndex === state.activeTooltipTdIndex[0] &&
+            cellIndex === state.activeTooltipTdIndex[1]
         };
       });
     }),
     borderless
   };
   return (
-    <Table className={`mb-0 ${className}`} style={style} responsive hover={hover}>
+    <Table
+      className={`mb-0 ${className}`}
+      style={style}
+      responsive
+      hover={hover}>
       <THead {...headProps} />
       <TBody {...bodyProps} />
     </Table>
@@ -252,5 +307,10 @@ export const component: TableComponent = {
 // Misc views.
 
 export const Check: View<{ checked: boolean }> = ({ checked }) => {
-  return (<Icon name={checked ? 'check' : 'times'} color={checked ? 'c-table-icon-check' : 'c-table-icon-times'} />);
+  return (
+    <Icon
+      name={checked ? "check" : "times"}
+      color={checked ? "c-table-icon-check" : "c-table-icon-times"}
+    />
+  );
 };

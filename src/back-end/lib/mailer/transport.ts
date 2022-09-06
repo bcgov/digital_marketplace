@@ -1,12 +1,12 @@
-import { ENV, MAILER_CONFIG, MAILER_FROM } from 'back-end/config';
-import { makeDomainLogger } from 'back-end/lib/logger';
-import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import { Emails } from 'back-end/lib/mailer';
-import { fromString } from 'html-to-text';
-import nodemailer from 'nodemailer';
-import { SHOW_TEST_INDICATOR } from 'shared/config';
+import { ENV, MAILER_CONFIG, MAILER_FROM } from "back-end/config";
+import { makeDomainLogger } from "back-end/lib/logger";
+import { console as consoleAdapter } from "back-end/lib/logger/adapters";
+import { Emails } from "back-end/lib/mailer";
+import { fromString } from "html-to-text";
+import nodemailer from "nodemailer";
+import { SHOW_TEST_INDICATOR } from "shared/config";
 
-const logger = makeDomainLogger(consoleAdapter, 'mailer', ENV);
+const logger = makeDomainLogger(consoleAdapter, "mailer", ENV);
 
 const transport = nodemailer.createTransport(MAILER_CONFIG);
 
@@ -19,28 +19,33 @@ export interface SendParams {
 
 export function send(params: SendParams): Promise<void> {
   return new Promise((resolve, reject) => {
-    transport.sendMail({
-      ...params,
-      from: MAILER_FROM,
-      text: fromString(params.html, { wordwrap: 130 }),
-      subject: `${SHOW_TEST_INDICATOR ? '[TEST] ' : ''}${params.subject}`
-    }, error => {
-      if (error) {
-        // Do not reject promise, only log the error.
-        logger.error('Unable to send email', {
-          errorMessage: error.message,
-          errorStack: error.stack,
-          to: params.to,
-          bcc: params.bcc,
-          subject: params.subject
-        });
+    transport.sendMail(
+      {
+        ...params,
+        from: MAILER_FROM,
+        text: fromString(params.html, { wordwrap: 130 }),
+        subject: `${SHOW_TEST_INDICATOR ? "[TEST] " : ""}${params.subject}`
+      },
+      (error) => {
+        if (error) {
+          // Do not reject promise, only log the error.
+          logger.error("Unable to send email", {
+            errorMessage: error.message,
+            errorStack: error.stack,
+            to: params.to,
+            bcc: params.bcc,
+            subject: params.subject
+          });
+        }
+        resolve();
       }
-      resolve();
-    });
+    );
   });
 }
 
-export function makeSend<Args extends unknown[]>(makeEmails: (...args: Args) => Promise<Emails>): (...args: Args) => Promise<void> {
+export function makeSend<Args extends unknown[]>(
+  makeEmails: (...args: Args) => Promise<Emails>
+): (...args: Args) => Promise<void> {
   return async (...args) => {
     try {
       const emails = await makeEmails(...args);
@@ -48,11 +53,11 @@ export function makeSend<Args extends unknown[]>(makeEmails: (...args: Args) => 
         await send(email);
       }
     } catch (e) {
-        logger.error('Unable to create email content', {
-          errorMessage: e.message,
-          errorStack: e.error,
-          args
-        });
+      logger.error("Unable to create email content", {
+        errorMessage: e.message,
+        errorStack: e.error,
+        args
+      });
     }
   };
 }

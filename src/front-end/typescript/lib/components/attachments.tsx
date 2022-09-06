@@ -1,15 +1,36 @@
-import { fileBlobPath } from 'front-end/lib';
-import { ComponentViewProps, Immutable, Init, Update, View } from 'front-end/lib/framework';
-import { CreateFileRequestBody } from 'front-end/lib/http/api';
-import FileLink from 'front-end/lib/views/file-link';
-import Icon from 'front-end/lib/views/icon';
-import Link, { externalDest, iconLinkSymbol, leftPlacement } from 'front-end/lib/views/link';
-import React from 'react';
-import { FormText } from 'reactstrap';
-import { CreateValidationErrors, enforceExtension, FileRecord, FileUploadMetadata, getExtension } from 'shared/lib/resources/file';
-import { adt, ADT } from 'shared/lib/types';
-import { getInvalidValue, mapValid, optional, Validation } from 'shared/lib/validation';
-import { validateFileName } from 'shared/lib/validation/file';
+import { fileBlobPath } from "front-end/lib";
+import {
+  ComponentViewProps,
+  Immutable,
+  Init,
+  Update,
+  View
+} from "front-end/lib/framework";
+import { CreateFileRequestBody } from "front-end/lib/http/api";
+import FileLink from "front-end/lib/views/file-link";
+import Icon from "front-end/lib/views/icon";
+import Link, {
+  externalDest,
+  iconLinkSymbol,
+  leftPlacement
+} from "front-end/lib/views/link";
+import React from "react";
+import { FormText } from "reactstrap";
+import {
+  CreateValidationErrors,
+  enforceExtension,
+  FileRecord,
+  FileUploadMetadata,
+  getExtension
+} from "shared/lib/resources/file";
+import { adt, ADT } from "shared/lib/types";
+import {
+  getInvalidValue,
+  mapValid,
+  optional,
+  Validation
+} from "shared/lib/validation";
+import { validateFileName } from "shared/lib/validation/file";
 
 interface NewAttachment extends CreateFileRequestBody {
   newName: string;
@@ -18,7 +39,7 @@ interface NewAttachment extends CreateFileRequestBody {
 }
 
 function validateNewName(name?: string): Validation<string> {
-  return mapValid(optional(name, validateFileName), v => v || '');
+  return mapValid(optional(name, validateFileName), (v) => v || "");
 }
 
 export interface State {
@@ -28,18 +49,26 @@ export interface State {
   newAttachmentMetadata: FileUploadMetadata;
 }
 
-export type Msg
-  = ADT<'addAttachment', File>
-  | ADT<'removeExistingAttachment', number>
-  | ADT<'removeNewAttachment', number>
-  | ADT<'onChangeNewAttachmentName', [number, string]>;
+export type Msg =
+  | ADT<"addAttachment", File>
+  | ADT<"removeExistingAttachment", number>
+  | ADT<"removeNewAttachment", number>
+  | ADT<"onChangeNewAttachmentName", [number, string]>;
 
-export type Params = Pick<State, 'canRemoveExistingAttachments' | 'existingAttachments' | 'newAttachmentMetadata'>;
+export type Params = Pick<
+  State,
+  | "canRemoveExistingAttachments"
+  | "existingAttachments"
+  | "newAttachmentMetadata"
+>;
 
 export function validate(state: Immutable<State> | any): Immutable<State> {
   return state.newAttachments.reduce((acc, a, i) => {
-    return acc.updateIn(['newAttachments', i], newAttachment => {
-      const errors = getInvalidValue(validateNewName(newAttachment.newName), []);
+    return acc.updateIn(["newAttachments", i], (newAttachment) => {
+      const errors = getInvalidValue(
+        validateNewName(newAttachment.newName),
+        []
+      );
       return {
         ...newAttachment,
         errors
@@ -49,22 +78,34 @@ export function validate(state: Immutable<State> | any): Immutable<State> {
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return state.newAttachments.reduce((valid, attachment) => valid && !attachment.errors.length, true as boolean);
+  return state.newAttachments.reduce(
+    (valid, attachment) => valid && !attachment.errors.length,
+    true as boolean
+  );
 }
 
-export function setNewAttachmentErrors(state: Immutable<State>, errors: CreateValidationErrors[]): Immutable<State> {
-  return state.update('newAttachments', attachments => attachments.map((a, i) => ({ ...a, errors: errors[i].name || [] })));
+export function setNewAttachmentErrors(
+  state: Immutable<State>,
+  errors: CreateValidationErrors[]
+): Immutable<State> {
+  return state.update("newAttachments", (attachments) =>
+    attachments.map((a, i) => ({ ...a, errors: errors[i].name || [] }))
+  );
 }
 
-export function getNewAttachments(state: Immutable<State>): CreateFileRequestBody[] {
-  return state.newAttachments.map(a => ({
-    name: a.newName ? enforceExtension(a.newName, getExtension(a.name)) : a.name,
+export function getNewAttachments(
+  state: Immutable<State>
+): CreateFileRequestBody[] {
+  return state.newAttachments.map((a) => ({
+    name: a.newName
+      ? enforceExtension(a.newName, getExtension(a.name))
+      : a.name,
     file: a.file,
     metadata: a.metadata
   }));
 }
 
-export const init: Init<Params, State> = async params => {
+export const init: Init<Params, State> = async (params) => {
   return {
     ...params,
     newAttachments: []
@@ -73,35 +114,49 @@ export const init: Init<Params, State> = async params => {
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'addAttachment':
-      return [state.update('newAttachments', attachments => [
-        ...attachments,
-        {
-          name: msg.value.name,
-          file: msg.value,
-          url: URL.createObjectURL(msg.value),
-          metadata: state.newAttachmentMetadata,
-          newName: '',
-          errors: []
-        }
-      ])];
-    case 'removeExistingAttachment':
-      return [state.update('existingAttachments', attachments => attachments.filter((a, i) => i !== msg.value))];
-    case 'removeNewAttachment':
-      return [state.update('newAttachments', attachments => attachments.filter((a, i) => i !== msg.value))];
-    case 'onChangeNewAttachmentName':
-      return [state.update('newAttachments', attachments => attachments.map((a, i) => {
-        if (i === msg.value[0]) {
-          const errors = getInvalidValue(validateNewName(msg.value[1]), []);
-          return {
-            ...a,
-            errors,
-            newName: msg.value[1]
-          };
-        } else {
-          return a;
-        }
-      }))];
+    case "addAttachment":
+      return [
+        state.update("newAttachments", (attachments) => [
+          ...attachments,
+          {
+            name: msg.value.name,
+            file: msg.value,
+            url: URL.createObjectURL(msg.value),
+            metadata: state.newAttachmentMetadata,
+            newName: "",
+            errors: []
+          }
+        ])
+      ];
+    case "removeExistingAttachment":
+      return [
+        state.update("existingAttachments", (attachments) =>
+          attachments.filter((a, i) => i !== msg.value)
+        )
+      ];
+    case "removeNewAttachment":
+      return [
+        state.update("newAttachments", (attachments) =>
+          attachments.filter((a, i) => i !== msg.value)
+        )
+      ];
+    case "onChangeNewAttachmentName":
+      return [
+        state.update("newAttachments", (attachments) =>
+          attachments.map((a, i) => {
+            if (i === msg.value[0]) {
+              const errors = getInvalidValue(validateNewName(msg.value[1]), []);
+              return {
+                ...a,
+                errors,
+                newName: msg.value[1]
+              };
+            } else {
+              return a;
+            }
+          })
+        )
+      ];
   }
 };
 
@@ -116,30 +171,48 @@ interface FileFieldProps {
   onRemove(): void;
 }
 
-const FileField: View<FileFieldProps> = props => {
-  const { defaultName, value, disabled, editable, url, onChange, onRemove, errors = [] } = props;
+const FileField: View<FileFieldProps> = (props) => {
+  const {
+    defaultName,
+    value,
+    disabled,
+    editable,
+    url,
+    onChange,
+    onRemove,
+    errors = []
+  } = props;
   return (
-    <div className='form-group'>
-      <div className='d-flex flex-nowrap align-items-center'>
+    <div className="form-group">
+      <div className="d-flex flex-nowrap align-items-center">
         <input
-          type='text'
+          type="text"
           placeholder={defaultName}
           value={value}
           disabled={disabled || !editable}
-          className={`form-control ${errors.length ? 'is-invalid' : ''}`}
-          onChange={onChange && (e => onChange(e.currentTarget.value))} />
-        {disabled
-          ? null
-          : (<Icon name='trash' color='info' hover onClick={onRemove} className='ml-3' />)}
-        <Link color='info' download dest={externalDest(url)} className='ml-3'>
-          <Icon name='download' />
+          className={`form-control ${errors.length ? "is-invalid" : ""}`}
+          onChange={onChange && ((e) => onChange(e.currentTarget.value))}
+        />
+        {disabled ? null : (
+          <Icon
+            name="trash"
+            color="info"
+            hover
+            onClick={onRemove}
+            className="ml-3"
+          />
+        )}
+        <Link color="info" download dest={externalDest(url)} className="ml-3">
+          <Icon name="download" />
         </Link>
       </div>
-      {errors.length
-        ? (<FormText color='danger'>
-            {errors.map((error, i) => (<div key={`form-field-conditional-errors-${i}`}>{error}</div>))}
-          </FormText>)
-        : null}
+      {errors.length ? (
+        <FormText color="danger">
+          {errors.map((error, i) => (
+            <div key={`form-field-conditional-errors-${i}`}>{error}</div>
+          ))}
+        </FormText>
+      ) : null}
     </div>
   );
 };
@@ -148,30 +221,39 @@ interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
   className?: string;
   addButtonClassName?: string;
-  accept?: readonly string[]
+  accept?: readonly string[];
 }
 
-const AddButton: View<Props> = ({ addButtonClassName = '', state, dispatch, disabled, accept }) => {
-  if (disabled) { return null; }
-  const hasAttachments = !!(state.existingAttachments.length || state.newAttachments.length);
+const AddButton: View<Props> = ({
+  addButtonClassName = "",
+  state,
+  dispatch,
+  disabled,
+  accept
+}) => {
+  if (disabled) {
+    return null;
+  }
+  const hasAttachments = !!(
+    state.existingAttachments.length || state.newAttachments.length
+  );
   return (
     <FileLink
       button
       outline
-      size='sm'
-      color='primary'
-      className={`${hasAttachments ? 'mb-5' : ''} ${addButtonClassName}`}
-      symbol_={leftPlacement(iconLinkSymbol('paperclip'))}
+      size="sm"
+      color="primary"
+      className={`${hasAttachments ? "mb-5" : ""} ${addButtonClassName}`}
+      symbol_={leftPlacement(iconLinkSymbol("paperclip"))}
       disabled={disabled}
-      onChange={file => dispatch(adt('addAttachment', file))}
-      accept={accept}
-    >
+      onChange={(file) => dispatch(adt("addAttachment", file))}
+      accept={accept}>
       Add Attachment
     </FileLink>
   );
 };
 
-export const view: View<Props> = props => {
+export const view: View<Props> = (props) => {
   const { className, state, dispatch, disabled } = props;
   return (
     <div className={className}>
@@ -184,7 +266,7 @@ export const view: View<Props> = props => {
           disabled={disabled || !state.canRemoveExistingAttachments}
           editable={false}
           url={fileBlobPath(file)}
-          onRemove={() => dispatch(adt('removeExistingAttachment', i))}
+          onRemove={() => dispatch(adt("removeExistingAttachment", i))}
         />
       ))}
       {state.newAttachments.map((file, i) => (
@@ -196,23 +278,31 @@ export const view: View<Props> = props => {
           editable
           url={file.url}
           errors={file.errors}
-          onChange={value => dispatch(adt('onChangeNewAttachmentName', [i, value] as [number, string]))}
-          onRemove={() => dispatch(adt('removeNewAttachment', i))}
+          onChange={(value) =>
+            dispatch(
+              adt("onChangeNewAttachmentName", [i, value] as [number, string])
+            )
+          }
+          onRemove={() => dispatch(adt("removeNewAttachment", i))}
         />
       ))}
-    </div>);
+    </div>
+  );
 };
 
-export const AttachmentList: View<{ files: FileRecord[]; }> = ({ files }) => {
+export const AttachmentList: View<{ files: FileRecord[] }> = ({ files }) => {
   return (
-    <div className='d-flex flex-column flex-nowrap align-items-start'>
+    <div className="d-flex flex-column flex-nowrap align-items-start">
       {files.map((f, i) => (
         <Link
           key={`file-list-${i}`}
           download
           dest={externalDest(fileBlobPath(f))}
-          className={`flex-nowrap ${i < files.length - 1 ? 'mb-3' : ''}`}>
-          <Icon name='paperclip' className='mr-2 flex-shrink-0 align-self-start mt-1' />
+          className={`flex-nowrap ${i < files.length - 1 ? "mb-3" : ""}`}>
+          <Icon
+            name="paperclip"
+            className="mr-2 flex-shrink-0 align-self-start mt-1"
+          />
           {f.name}
         </Link>
       ))}

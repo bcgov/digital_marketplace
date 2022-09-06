@@ -1,6 +1,6 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import React, { CSSProperties } from 'react';
-import { ADT } from 'shared/lib/types';
+import * as FormField from "front-end/lib/components/form-field";
+import React, { CSSProperties } from "react";
+import { ADT } from "shared/lib/types";
 
 export type Value = string;
 
@@ -8,14 +8,19 @@ type ChildState = FormField.ChildStateBase<Value>;
 
 type ChildParams = FormField.ChildParamsBase<Value>;
 
-type InnerChildMsg
-  = ADT<'onChange', Value>;
+type InnerChildMsg = ADT<"onChange", Value>;
 
 interface ExtraChildProps {
   style?: CSSProperties;
 }
 
-type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
+type ChildComponent = FormField.ChildComponent<
+  Value,
+  ChildParams,
+  ChildState,
+  InnerChildMsg,
+  ExtraChildProps
+>;
 
 export type State = FormField.State<Value, ChildState>;
 
@@ -23,19 +28,27 @@ export type Params = FormField.Params<Value, ChildParams>;
 
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: ChildComponent['init'] = async params => params;
+const childInit: ChildComponent["init"] = async (params) => params;
 
-const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
+const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'onChange':
-      return [state.set('value', msg.value)];
+    case "onChange":
+      return [state.set("value", msg.value)];
     default:
       return [state];
   }
 };
 
-const ChildView: ChildComponent['view'] = props => {
-  const { state, style, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+const ChildView: ChildComponent["view"] = (props) => {
+  const {
+    state,
+    style,
+    dispatch,
+    placeholder,
+    className = "",
+    validityClassName,
+    disabled = false
+  } = props;
   return (
     <textarea
       id={state.id}
@@ -43,17 +56,24 @@ const ChildView: ChildComponent['view'] = props => {
       placeholder={placeholder}
       className={`form-control ${className} ${validityClassName}`}
       style={style}
-      onChange={e => {
+      onChange={(e) => {
         const value = e.currentTarget.value;
-        dispatch({ tag: 'onChange', value });
+        dispatch({ tag: "onChange", value });
         // Let the parent form field component know that the value has been updated.
         props.onChange(value);
       }}
-      disabled={disabled} />
+      disabled={disabled}
+    />
   );
 };
 
-export const component = FormField.makeComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>({
+export const component = FormField.makeComponent<
+  Value,
+  ChildParams,
+  ChildState,
+  InnerChildMsg,
+  ExtraChildProps
+>({
   init: childInit,
   update: childUpdate,
   view: ChildView

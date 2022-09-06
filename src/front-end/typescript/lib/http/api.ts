@@ -1,33 +1,58 @@
-import { prefixPath } from 'front-end/lib';
-import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { CrudApi, CrudClientAction, CrudClientActionWithBody, CrudResponse, makeCreate, makeCrudApi, makeRequest, makeSimpleCrudApi, OmitCrudApi, PickCrudApi, ReadManyActionTypes, SimpleResourceTypes, undefinedActions, UndefinedResourceTypes } from 'front-end/lib/http/crud';
-import { compareDates, compareNumbers, prefix } from 'shared/lib';
-import { invalid, isValid, ResponseValidation, valid } from 'shared/lib/http';
-import * as AddendumResource from 'shared/lib/resources/addendum';
-import * as AffiliationResource from 'shared/lib/resources/affiliation';
-import * as ContentResource from 'shared/lib/resources/content';
-import * as CounterResource from 'shared/lib/resources/counter';
-import * as EmailNotificationsResource from 'shared/lib/resources/email-notifications';
-import * as FileResource from 'shared/lib/resources/file';
-import * as MetricsResource from 'shared/lib/resources/metrics';
-import * as CWUOpportunityResource from 'shared/lib/resources/opportunity/code-with-us';
-import * as SWUOpportunityResource from 'shared/lib/resources/opportunity/sprint-with-us';
-import * as OrgResource from 'shared/lib/resources/organization';
-import * as CWUProposalResource from 'shared/lib/resources/proposal/code-with-us';
-import * as SWUProposalResource from 'shared/lib/resources/proposal/sprint-with-us';
-import * as SessionResource from 'shared/lib/resources/session';
-import * as CWUSubscriberResource from 'shared/lib/resources/subscribers/code-with-us';
-import * as SWUSubscriberResource from 'shared/lib/resources/subscribers/sprint-with-us';
-import * as UserResource from 'shared/lib/resources/user';
-import { adt, ClientHttpMethod, Id } from 'shared/lib/types';
+import { prefixPath } from "front-end/lib";
+import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
+import {
+  CrudApi,
+  CrudClientAction,
+  CrudClientActionWithBody,
+  CrudResponse,
+  makeCreate,
+  makeCrudApi,
+  makeRequest,
+  makeSimpleCrudApi,
+  OmitCrudApi,
+  PickCrudApi,
+  ReadManyActionTypes,
+  SimpleResourceTypes,
+  undefinedActions,
+  UndefinedResourceTypes
+} from "front-end/lib/http/crud";
+import { compareDates, compareNumbers, prefix } from "shared/lib";
+import { invalid, isValid, ResponseValidation, valid } from "shared/lib/http";
+import * as AddendumResource from "shared/lib/resources/addendum";
+import * as AffiliationResource from "shared/lib/resources/affiliation";
+import * as ContentResource from "shared/lib/resources/content";
+import * as CounterResource from "shared/lib/resources/counter";
+import * as EmailNotificationsResource from "shared/lib/resources/email-notifications";
+import * as FileResource from "shared/lib/resources/file";
+import * as MetricsResource from "shared/lib/resources/metrics";
+import * as CWUOpportunityResource from "shared/lib/resources/opportunity/code-with-us";
+import * as SWUOpportunityResource from "shared/lib/resources/opportunity/sprint-with-us";
+import * as OrgResource from "shared/lib/resources/organization";
+import * as CWUProposalResource from "shared/lib/resources/proposal/code-with-us";
+import * as SWUProposalResource from "shared/lib/resources/proposal/sprint-with-us";
+import * as SessionResource from "shared/lib/resources/session";
+import * as CWUSubscriberResource from "shared/lib/resources/subscribers/code-with-us";
+import * as SWUSubscriberResource from "shared/lib/resources/subscribers/sprint-with-us";
+import * as UserResource from "shared/lib/resources/user";
+import { adt, ClientHttpMethod, Id } from "shared/lib/types";
 
-export { getValidValue, getInvalidValue, mapValid, mapInvalid, ResponseValidation, isValid, isInvalid, isUnhandled } from 'shared/lib/http';
+export {
+  getValidValue,
+  getInvalidValue,
+  mapValid,
+  mapInvalid,
+  ResponseValidation,
+  isValid,
+  isInvalid,
+  isUnhandled
+} from "shared/lib/http";
 
-export const apiNamespace = (p: string) => `/${prefix(prefixPath('api'))(p)}`;
+export const apiNamespace = (p: string) => `/${prefix(prefixPath("api"))(p)}`;
 
 // Metrics
 
-interface MetricsResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> {
+interface MetricsResourceTypes
+  extends Omit<UndefinedResourceTypes, "readMany"> {
   readMany: {
     rawResponse: MetricsResource.OpportunityMetrics;
     validResponse: MetricsResource.OpportunityMetrics;
@@ -35,20 +60,22 @@ interface MetricsResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> 
   };
 }
 
-const METRICS_ROUTE_NAMESPACE = apiNamespace('metrics');
+const METRICS_ROUTE_NAMESPACE = apiNamespace("metrics");
 
-export const metrics: CrudApi<MetricsResourceTypes> = makeCrudApi<MetricsResourceTypes>({
-  routeNamespace: METRICS_ROUTE_NAMESPACE,
-  readMany: { transformValid: a => a },
-  create: undefined,
-  readOne: undefined,
-  update: undefined,
-  delete: undefined
-});
+export const metrics: CrudApi<MetricsResourceTypes> =
+  makeCrudApi<MetricsResourceTypes>({
+    routeNamespace: METRICS_ROUTE_NAMESPACE,
+    readMany: { transformValid: (a) => a },
+    create: undefined,
+    readOne: undefined,
+    update: undefined,
+    delete: undefined
+  });
 
 // Counters
 
-interface CounterResourceTypes extends Pick<UndefinedResourceTypes, 'create' | 'readOne' | 'delete'> {
+interface CounterResourceTypes
+  extends Pick<UndefinedResourceTypes, "create" | "readOne" | "delete"> {
   readMany: ReadManyActionTypes<{
     rawResponse: CounterResource.Counter;
     validResponse: CounterResource.Counter;
@@ -62,15 +89,20 @@ interface CounterResourceTypes extends Pick<UndefinedResourceTypes, 'create' | '
   };
 }
 
-interface CountersCrudApi extends Omit<CrudApi<CounterResourceTypes>, 'readMany'> {
-  readMany(counters: string[]): ReturnType<CrudApi<CounterResourceTypes>['readMany']>;
+interface CountersCrudApi
+  extends Omit<CrudApi<CounterResourceTypes>, "readMany"> {
+  readMany(
+    counters: string[]
+  ): ReturnType<CrudApi<CounterResourceTypes>["readMany"]>;
 }
 
-const COUNTERS_ROUTE_NAMESPACE = apiNamespace('counters');
+const COUNTERS_ROUTE_NAMESPACE = apiNamespace("counters");
 
 export const counters: CountersCrudApi = {
-
-  ...makeCrudApi<Omit<CounterResourceTypes, 'readMany'> & Pick<UndefinedResourceTypes, 'readMany'>>({
+  ...makeCrudApi<
+    Omit<CounterResourceTypes, "readMany"> &
+      Pick<UndefinedResourceTypes, "readMany">
+  >({
     routeNamespace: COUNTERS_ROUTE_NAMESPACE,
     update: {},
     create: undefined,
@@ -80,13 +112,16 @@ export const counters: CountersCrudApi = {
   }),
 
   async readMany(counters: string[]) {
-    return await makeRequest<ReadManyActionTypes<CounterResourceTypes['readMany']> & { request: null; }>({
+    return await makeRequest<
+      ReadManyActionTypes<CounterResourceTypes["readMany"]> & { request: null }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${COUNTERS_ROUTE_NAMESPACE}?counters=${window.encodeURIComponent(counters.join(','))}`,
+      url: `${COUNTERS_ROUTE_NAMESPACE}?counters=${window.encodeURIComponent(
+        counters.join(",")
+      )}`,
       body: null
     });
   }
-
 };
 
 // Content
@@ -103,9 +138,11 @@ interface ContentSimpleResourceTypesParams {
   };
 }
 
-type ContentResourceTypes = SimpleResourceTypes<ContentSimpleResourceTypesParams>;
+type ContentResourceTypes =
+  SimpleResourceTypes<ContentSimpleResourceTypesParams>;
 
-export const content: CrudApi<ContentResourceTypes> = makeSimpleCrudApi<ContentSimpleResourceTypesParams>(apiNamespace('content'));
+export const content: CrudApi<ContentResourceTypes> =
+  makeSimpleCrudApi<ContentSimpleResourceTypesParams>(apiNamespace("content"));
 
 // EmailNotifications
 
@@ -121,12 +158,18 @@ interface EmailNotificationsSimpleResourceTypesParams {
   };
 }
 
-type EmailNotificationsSimpleResourceTypes = SimpleResourceTypes<EmailNotificationsSimpleResourceTypesParams>;
+type EmailNotificationsSimpleResourceTypes =
+  SimpleResourceTypes<EmailNotificationsSimpleResourceTypesParams>;
 
-type EmailNotificationsResourceTypes = PickCrudApi<EmailNotificationsSimpleResourceTypes, 'create'>;
+type EmailNotificationsResourceTypes = PickCrudApi<
+  EmailNotificationsSimpleResourceTypes,
+  "create"
+>;
 
 export const emailNotifications: CrudApi<EmailNotificationsResourceTypes> = {
-  ...makeSimpleCrudApi<EmailNotificationsSimpleResourceTypesParams>(apiNamespace('emailNotifications')),
+  ...makeSimpleCrudApi<EmailNotificationsSimpleResourceTypesParams>(
+    apiNamespace("emailNotifications")
+  ),
   readMany: undefined,
   readOne: undefined,
   update: undefined,
@@ -147,12 +190,18 @@ interface SessionSimpleResourceTypesParams {
   };
 }
 
-type SessionSimpleResourceTypes = SimpleResourceTypes<SessionSimpleResourceTypesParams>;
+type SessionSimpleResourceTypes =
+  SimpleResourceTypes<SessionSimpleResourceTypesParams>;
 
-type SessionResourceTypes = PickCrudApi<SessionSimpleResourceTypes, 'readOne' | 'delete'>;
+type SessionResourceTypes = PickCrudApi<
+  SessionSimpleResourceTypes,
+  "readOne" | "delete"
+>;
 
 export const sessions: CrudApi<SessionResourceTypes> = {
-  ...makeSimpleCrudApi<SessionSimpleResourceTypesParams>(apiNamespace('sessions')),
+  ...makeSimpleCrudApi<SessionSimpleResourceTypesParams>(
+    apiNamespace("sessions")
+  ),
   create: undefined,
   readMany: undefined,
   update: undefined
@@ -172,29 +221,37 @@ interface UserSimpleResourceTypesParams {
   };
 }
 
-type UserSimpleResourceTypes = SimpleResourceTypes<UserSimpleResourceTypesParams>;
+type UserSimpleResourceTypes =
+  SimpleResourceTypes<UserSimpleResourceTypesParams>;
 
-type UserResourceTypes = OmitCrudApi<UserSimpleResourceTypes, 'create'>;
+type UserResourceTypes = OmitCrudApi<UserSimpleResourceTypes, "create">;
 
 export const users: CrudApi<UserResourceTypes> = {
-  ...makeSimpleCrudApi<UserSimpleResourceTypesParams>(apiNamespace('users')),
+  ...makeSimpleCrudApi<UserSimpleResourceTypesParams>(apiNamespace("users")),
   create: undefined
 };
 
 // CWU Proposals
 
-interface RawCWUProposalHistoryRecord extends Omit<CWUProposalResource.CWUProposalHistoryRecord, 'createdAt'> {
+interface RawCWUProposalHistoryRecord
+  extends Omit<CWUProposalResource.CWUProposalHistoryRecord, "createdAt"> {
   createdAt: string;
 }
 
-function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(raw: RawCWUProposalHistoryRecord): CWUProposalResource.CWUProposalHistoryRecord {
+function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(
+  raw: RawCWUProposalHistoryRecord
+): CWUProposalResource.CWUProposalHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdAt' | 'updatedAt' | 'submittedAt' | 'history' | 'attachments'> {
+interface RawCWUProposal
+  extends Omit<
+    CWUProposalResource.CWUProposal,
+    "createdAt" | "updatedAt" | "submittedAt" | "history" | "attachments"
+  > {
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
@@ -202,27 +259,35 @@ interface RawCWUProposal extends Omit<CWUProposalResource.CWUProposal, 'createdA
   history?: RawCWUProposalHistoryRecord[];
 }
 
-function rawCWUProposalToCWUProposal(raw: RawCWUProposal): CWUProposalResource.CWUProposal {
+function rawCWUProposalToCWUProposal(
+  raw: RawCWUProposal
+): CWUProposalResource.CWUProposal {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
+    submittedAt:
+      raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
     attachments: raw.attachments
-      .map(a => rawFileRecordToFileRecord(a))
+      .map((a) => rawFileRecordToFileRecord(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
-    history: raw.history && raw.history
-      .map(s => rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(s))
-      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
+    history:
+      raw.history &&
+      raw.history
+        .map((s) => rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(s))
+        .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
   };
 }
 
-interface RawCWUProposalSlim extends Omit<CWUProposalResource.CWUProposalSlim, 'createdAt' | 'updatedAt'> {
+interface RawCWUProposalSlim
+  extends Omit<CWUProposalResource.CWUProposalSlim, "createdAt" | "updatedAt"> {
   createdAt: string;
   updatedAt: string;
 }
 
-function rawCWUProposalSlimToCWUProposalSlim(raw: RawCWUProposalSlim): CWUProposalResource.CWUProposalSlim {
+function rawCWUProposalSlimToCWUProposalSlim(
+  raw: RawCWUProposalSlim
+): CWUProposalResource.CWUProposalSlim {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt),
@@ -260,19 +325,28 @@ interface CWUProposalResourceTypes {
   };
 }
 
-interface CWUProposalCrudApi extends Omit<CrudApi<CWUProposalResourceTypes>, 'readMany' | 'readOne'> {
-  readMany(opportunityId?: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readMany']>;
-  readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<CWUProposalResourceTypes>['readOne']>;
+interface CWUProposalCrudApi
+  extends Omit<CrudApi<CWUProposalResourceTypes>, "readMany" | "readOne"> {
+  readMany(
+    opportunityId?: Id
+  ): ReturnType<CrudApi<CWUProposalResourceTypes>["readMany"]>;
+  readOne(
+    opportunityId: Id,
+    proposalId: Id
+  ): ReturnType<CrudApi<CWUProposalResourceTypes>["readOne"]>;
 }
 
-const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/code-with-us');
+const CWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace("proposals/code-with-us");
 
 const cwuProposalActionParams = {
   transformValid: rawCWUProposalToCWUProposal
 };
 
 const cwuProposals: CWUProposalCrudApi = {
-  ...makeCrudApi<Omit<CWUProposalResourceTypes, 'readMany' | 'readOne'> & Pick<UndefinedResourceTypes, 'readMany' | 'readOne'>>({
+  ...makeCrudApi<
+    Omit<CWUProposalResourceTypes, "readMany" | "readOne"> &
+      Pick<UndefinedResourceTypes, "readMany" | "readOne">
+  >({
     routeNamespace: CWU_PROPOSAL_ROUTE_NAMESPACE,
     create: cwuProposalActionParams,
     update: cwuProposalActionParams,
@@ -282,18 +356,31 @@ const cwuProposals: CWUProposalCrudApi = {
   }),
 
   async readMany(opportunityId) {
-    return await makeRequest<ReadManyActionTypes<CWUProposalResourceTypes['readMany']> & { request: null; }>({
+    return await makeRequest<
+      ReadManyActionTypes<CWUProposalResourceTypes["readMany"]> & {
+        request: null;
+      }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}${opportunityId !== undefined ? `?opportunity=${window.encodeURIComponent(opportunityId)}` : ''}`,
+      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}${
+        opportunityId !== undefined
+          ? `?opportunity=${window.encodeURIComponent(opportunityId)}`
+          : ""
+      }`,
       body: null,
-      transformValid: v => v.map(w => rawCWUProposalSlimToCWUProposalSlim(w))
+      transformValid: (v) =>
+        v.map((w) => rawCWUProposalSlimToCWUProposalSlim(w))
     });
   },
 
   async readOne(opportunityId, proposalId) {
-    return await makeRequest<CWUProposalResourceTypes['readOne'] & { request: null; }>({
+    return await makeRequest<
+      CWUProposalResourceTypes["readOne"] & { request: null }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(proposalId)}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      url: `${CWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(
+        proposalId
+      )}?opportunity=${window.encodeURIComponent(opportunityId)}`,
       body: null,
       transformValid: rawCWUProposalToCWUProposal
     });
@@ -302,44 +389,61 @@ const cwuProposals: CWUProposalCrudApi = {
 
 // SWU Proposals
 
-interface RawSWUProposalHistoryRecord extends Omit<SWUProposalResource.SWUProposalHistoryRecord, 'createdAt'> {
+interface RawSWUProposalHistoryRecord
+  extends Omit<SWUProposalResource.SWUProposalHistoryRecord, "createdAt"> {
   createdAt: string;
 }
 
-function rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(raw: RawSWUProposalHistoryRecord): SWUProposalResource.SWUProposalHistoryRecord {
+function rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(
+  raw: RawSWUProposalHistoryRecord
+): SWUProposalResource.SWUProposalHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawSWUProposal extends Omit<SWUProposalResource.SWUProposal, 'createdAt' | 'updatedAt' | 'submittedAt' | 'history'> {
+interface RawSWUProposal
+  extends Omit<
+    SWUProposalResource.SWUProposal,
+    "createdAt" | "updatedAt" | "submittedAt" | "history"
+  > {
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
   history?: RawSWUProposalHistoryRecord[];
 }
 
-function rawSWUProposalToSWUProposal(raw: RawSWUProposal): SWUProposalResource.SWUProposal {
+function rawSWUProposalToSWUProposal(
+  raw: RawSWUProposal
+): SWUProposalResource.SWUProposal {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    submittedAt: raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
-    history: raw.history && raw.history
-      .map(s => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
-      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
-    teamQuestionResponses: raw.teamQuestionResponses.sort((a, b) => compareNumbers(a.order, b.order)),
+    submittedAt:
+      raw.submittedAt === undefined ? undefined : new Date(raw.submittedAt),
+    history:
+      raw.history &&
+      raw.history
+        .map((s) => rawSWUProposalHistoryRecordToSWUProposalHistoryRecord(s))
+        .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    teamQuestionResponses: raw.teamQuestionResponses.sort((a, b) =>
+      compareNumbers(a.order, b.order)
+    ),
     references: raw.references?.sort((a, b) => compareNumbers(a.order, b.order))
   };
 }
 
-interface RawSWUProposalSlim extends Omit<SWUProposalResource.SWUProposalSlim, 'createdAt' | 'updatedAt'> {
+interface RawSWUProposalSlim
+  extends Omit<SWUProposalResource.SWUProposalSlim, "createdAt" | "updatedAt"> {
   createdAt: string;
   updatedAt: string;
 }
 
-function rawSWUProposalSlimToSWUProposalSlim(raw: RawSWUProposalSlim): SWUProposalResource.SWUProposalSlim {
+function rawSWUProposalSlimToSWUProposalSlim(
+  raw: RawSWUProposalSlim
+): SWUProposalResource.SWUProposalSlim {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt),
@@ -377,19 +481,28 @@ interface SWUProposalResourceTypes {
   };
 }
 
-interface SWUProposalCrudApi extends Omit<CrudApi<SWUProposalResourceTypes>, 'readMany' | 'readOne'> {
-  readMany(opportunityId?: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readMany']>;
-  readOne(opportunityId: Id, proposalId: Id): ReturnType<CrudApi<SWUProposalResourceTypes>['readOne']>;
+interface SWUProposalCrudApi
+  extends Omit<CrudApi<SWUProposalResourceTypes>, "readMany" | "readOne"> {
+  readMany(
+    opportunityId?: Id
+  ): ReturnType<CrudApi<SWUProposalResourceTypes>["readMany"]>;
+  readOne(
+    opportunityId: Id,
+    proposalId: Id
+  ): ReturnType<CrudApi<SWUProposalResourceTypes>["readOne"]>;
 }
 
-const SWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace('proposals/sprint-with-us');
+const SWU_PROPOSAL_ROUTE_NAMESPACE = apiNamespace("proposals/sprint-with-us");
 
 const swuProposalActionParams = {
   transformValid: rawSWUProposalToSWUProposal
 };
 
 const swuProposals: SWUProposalCrudApi = {
-  ...makeCrudApi<Omit<SWUProposalResourceTypes, 'readMany' | 'readOne'> & Pick<UndefinedResourceTypes, 'readMany' | 'readOne'>>({
+  ...makeCrudApi<
+    Omit<SWUProposalResourceTypes, "readMany" | "readOne"> &
+      Pick<UndefinedResourceTypes, "readMany" | "readOne">
+  >({
     routeNamespace: SWU_PROPOSAL_ROUTE_NAMESPACE,
     create: swuProposalActionParams,
     update: swuProposalActionParams,
@@ -399,18 +512,31 @@ const swuProposals: SWUProposalCrudApi = {
   }),
 
   async readMany(opportunityId) {
-    return await makeRequest<ReadManyActionTypes<SWUProposalResourceTypes['readMany']> & { request: null; }>({
+    return await makeRequest<
+      ReadManyActionTypes<SWUProposalResourceTypes["readMany"]> & {
+        request: null;
+      }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}${opportunityId !== undefined ? `?opportunity=${window.encodeURIComponent(opportunityId)}` : ''}`,
+      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}${
+        opportunityId !== undefined
+          ? `?opportunity=${window.encodeURIComponent(opportunityId)}`
+          : ""
+      }`,
       body: null,
-      transformValid: v => v.map(w => rawSWUProposalSlimToSWUProposalSlim(w))
+      transformValid: (v) =>
+        v.map((w) => rawSWUProposalSlimToSWUProposalSlim(w))
     });
   },
 
   async readOne(opportunityId, proposalId) {
-    return await makeRequest<SWUProposalResourceTypes['readOne'] & { request: null; }>({
+    return await makeRequest<
+      SWUProposalResourceTypes["readOne"] & { request: null }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(proposalId)}?opportunity=${window.encodeURIComponent(opportunityId)}`,
+      url: `${SWU_PROPOSAL_ROUTE_NAMESPACE}/${window.encodeURIComponent(
+        proposalId
+      )}?opportunity=${window.encodeURIComponent(opportunityId)}`,
       body: null,
       transformValid: rawSWUProposalToSWUProposal
     });
@@ -422,7 +548,9 @@ const swuProposals: SWUProposalCrudApi = {
 export const proposals = {
   cwu: {
     ...cwuProposals,
-    async getExistingProposalForOpportunity(opportunityId: Id): Promise<CWUProposalResource.CWUProposalSlim | undefined> {
+    async getExistingProposalForOpportunity(
+      opportunityId: Id
+    ): Promise<CWUProposalResource.CWUProposalSlim | undefined> {
       const result = await cwuProposals.readMany(opportunityId);
       if (isValid(result) && result.value.length) {
         return result.value[0];
@@ -432,7 +560,9 @@ export const proposals = {
   },
   swu: {
     ...swuProposals,
-    async getExistingProposalForOpportunity(opportunityId: Id): Promise<SWUProposalResource.SWUProposalSlim | undefined> {
+    async getExistingProposalForOpportunity(
+      opportunityId: Id
+    ): Promise<SWUProposalResource.SWUProposalSlim | undefined> {
       const result = await swuProposals.readMany(opportunityId);
       if (isValid(result) && result.value.length) {
         return result.value[0];
@@ -444,7 +574,7 @@ export const proposals = {
 
 // Addenda
 
-interface RawAddendum extends Omit<AddendumResource.Addendum, 'createdAt'> {
+interface RawAddendum extends Omit<AddendumResource.Addendum, "createdAt"> {
   createdAt: string;
 }
 
@@ -457,18 +587,37 @@ function rawAddendumToAddendum(raw: RawAddendum): AddendumResource.Addendum {
 
 // CWU Opportunities
 
-interface RawCWUOpportunityHistoryRecord extends Omit<CWUOpportunityResource.CWUOpportunityHistoryRecord, 'createdAt'> {
+interface RawCWUOpportunityHistoryRecord
+  extends Omit<
+    CWUOpportunityResource.CWUOpportunityHistoryRecord,
+    "createdAt"
+  > {
   createdAt: string;
 }
 
-function rawCWUHistoryRecordToCWUHistoryRecord(raw: RawCWUOpportunityHistoryRecord): CWUOpportunityResource.CWUOpportunityHistoryRecord {
+function rawCWUHistoryRecordToCWUHistoryRecord(
+  raw: RawCWUOpportunityHistoryRecord
+): CWUOpportunityResource.CWUOpportunityHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history' | 'attachments'> {
+interface RawCWUOpportunity
+  extends Omit<
+    CWUOpportunityResource.CWUOpportunity,
+    | "proposalDeadline"
+    | "assignmentDate"
+    | "startDate"
+    | "completionDate"
+    | "createdAt"
+    | "updatedAt"
+    | "publishedAt"
+    | "addenda"
+    | "history"
+    | "attachments"
+  > {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
@@ -481,7 +630,9 @@ interface RawCWUOpportunity extends Omit<CWUOpportunityResource.CWUOpportunity, 
   history?: RawCWUOpportunityHistoryRecord[];
 }
 
-function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportunityResource.CWUOpportunity {
+function rawCWUOpportunityToCWUOpportunity(
+  raw: RawCWUOpportunity
+): CWUOpportunityResource.CWUOpportunity {
   return {
     ...raw,
     proposalDeadline: new Date(raw.proposalDeadline),
@@ -490,16 +641,19 @@ function rawCWUOpportunityToCWUOpportunity(raw: RawCWUOpportunity): CWUOpportuni
     completionDate: raw.completionDate ? new Date(raw.completionDate) : null,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
+    publishedAt:
+      raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     attachments: raw.attachments
-      .map(a => rawFileRecordToFileRecord(a))
+      .map((a) => rawFileRecordToFileRecord(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
     addenda: raw.addenda
-      .map(a => rawAddendumToAddendum(a))
+      .map((a) => rawAddendumToAddendum(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
-    history: raw.history && raw.history
-      .map(s => rawCWUHistoryRecordToCWUHistoryRecord(s))
-      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
+    history:
+      raw.history &&
+      raw.history
+        .map((s) => rawCWUHistoryRecordToCWUHistoryRecord(s))
+        .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
   };
 }
 
@@ -537,37 +691,50 @@ const cwuOpportunityActionParams = {
   transformValid: rawCWUOpportunityToCWUOpportunity
 };
 
-export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> = makeCrudApi({
-  routeNamespace: apiNamespace('opportunities/code-with-us'),
-  create: cwuOpportunityActionParams,
-  readOne: cwuOpportunityActionParams,
-  update: cwuOpportunityActionParams,
-  delete: cwuOpportunityActionParams,
-  readMany: {
-    transformValid: a => a
-  }
-});
+export const cwuOpportunities: CrudApi<CWUOpportunityResourceTypes> =
+  makeCrudApi({
+    routeNamespace: apiNamespace("opportunities/code-with-us"),
+    create: cwuOpportunityActionParams,
+    readOne: cwuOpportunityActionParams,
+    update: cwuOpportunityActionParams,
+    delete: cwuOpportunityActionParams,
+    readMany: {
+      transformValid: (a) => a
+    }
+  });
 
 // SWU Opportunities
 
-interface RawSWUOpportunityHistoryRecord extends Omit<SWUOpportunityResource.SWUOpportunityHistoryRecord, 'createdAt'> {
+interface RawSWUOpportunityHistoryRecord
+  extends Omit<
+    SWUOpportunityResource.SWUOpportunityHistoryRecord,
+    "createdAt"
+  > {
   createdAt: string;
 }
 
-function rawSWUHistoryRecordToSWUHistoryRecord(raw: RawSWUOpportunityHistoryRecord): SWUOpportunityResource.SWUOpportunityHistoryRecord {
+function rawSWUHistoryRecordToSWUHistoryRecord(
+  raw: RawSWUOpportunityHistoryRecord
+): SWUOpportunityResource.SWUOpportunityHistoryRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawSWUOpportunityPhase extends Omit<SWUOpportunityResource.SWUOpportunityPhase, 'startDate' | 'completionDate' | 'createdAt'> {
+interface RawSWUOpportunityPhase
+  extends Omit<
+    SWUOpportunityResource.SWUOpportunityPhase,
+    "startDate" | "completionDate" | "createdAt"
+  > {
   startDate: string;
   completionDate: string;
   createdAt: string;
 }
 
-function rawSWUOpportunityPhaseToSWUOpportunityPhase(raw: RawSWUOpportunityPhase): SWUOpportunityResource.SWUOpportunityPhase {
+function rawSWUOpportunityPhaseToSWUOpportunityPhase(
+  raw: RawSWUOpportunityPhase
+): SWUOpportunityResource.SWUOpportunityPhase {
   return {
     ...raw,
     startDate: new Date(raw.startDate),
@@ -576,18 +743,36 @@ function rawSWUOpportunityPhaseToSWUOpportunityPhase(raw: RawSWUOpportunityPhase
   };
 }
 
-interface RawSWUTeamQuestion extends Omit<SWUOpportunityResource.SWUTeamQuestion, 'createdAt'> {
+interface RawSWUTeamQuestion
+  extends Omit<SWUOpportunityResource.SWUTeamQuestion, "createdAt"> {
   createdAt: string;
 }
 
-function rawSWUTeamQuestionToSWUTeamQuestion(raw: RawSWUTeamQuestion): SWUOpportunityResource.SWUTeamQuestion {
+function rawSWUTeamQuestionToSWUTeamQuestion(
+  raw: RawSWUTeamQuestion
+): SWUOpportunityResource.SWUTeamQuestion {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface RawSWUOpportunity extends Omit<SWUOpportunityResource.SWUOpportunity, 'proposalDeadline' | 'assignmentDate' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'addenda' | 'history' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase' | 'teamQuestions' | 'attachments'> {
+interface RawSWUOpportunity
+  extends Omit<
+    SWUOpportunityResource.SWUOpportunity,
+    | "proposalDeadline"
+    | "assignmentDate"
+    | "createdAt"
+    | "updatedAt"
+    | "publishedAt"
+    | "addenda"
+    | "history"
+    | "inceptionPhase"
+    | "prototypePhase"
+    | "implementationPhase"
+    | "teamQuestions"
+    | "attachments"
+  > {
   proposalDeadline: string;
   assignmentDate: string;
   createdAt: string;
@@ -602,28 +787,39 @@ interface RawSWUOpportunity extends Omit<SWUOpportunityResource.SWUOpportunity, 
   teamQuestions: RawSWUTeamQuestion[];
 }
 
-function rawSWUOpportunityToSWUOpportunity(raw: RawSWUOpportunity): SWUOpportunityResource.SWUOpportunity {
+function rawSWUOpportunityToSWUOpportunity(
+  raw: RawSWUOpportunity
+): SWUOpportunityResource.SWUOpportunity {
   return {
     ...raw,
     proposalDeadline: new Date(raw.proposalDeadline),
     assignmentDate: new Date(raw.assignmentDate),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    publishedAt: raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
+    publishedAt:
+      raw.publishedAt !== undefined ? new Date(raw.publishedAt) : undefined,
     attachments: raw.attachments
-      .map(a => rawFileRecordToFileRecord(a))
+      .map((a) => rawFileRecordToFileRecord(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt)),
     addenda: raw.addenda
-      .map(a => rawAddendumToAddendum(a))
+      .map((a) => rawAddendumToAddendum(a))
       .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
-    history: raw.history && raw
-      .history.map(s => rawSWUHistoryRecordToSWUHistoryRecord(s))
-      .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
-    inceptionPhase: raw.inceptionPhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.inceptionPhase),
-    prototypePhase: raw.prototypePhase && rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.prototypePhase),
-    implementationPhase: rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.implementationPhase),
+    history:
+      raw.history &&
+      raw.history
+        .map((s) => rawSWUHistoryRecordToSWUHistoryRecord(s))
+        .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    inceptionPhase:
+      raw.inceptionPhase &&
+      rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.inceptionPhase),
+    prototypePhase:
+      raw.prototypePhase &&
+      rawSWUOpportunityPhaseToSWUOpportunityPhase(raw.prototypePhase),
+    implementationPhase: rawSWUOpportunityPhaseToSWUOpportunityPhase(
+      raw.implementationPhase
+    ),
     teamQuestions: raw.teamQuestions
-      .map(tq => rawSWUTeamQuestionToSWUTeamQuestion(tq))
+      .map((tq) => rawSWUTeamQuestionToSWUTeamQuestion(tq))
       .sort((a, b) => compareNumbers(a.order, b.order))
   };
 }
@@ -662,16 +858,17 @@ const swuOpportunityActionParams = {
   transformValid: rawSWUOpportunityToSWUOpportunity
 };
 
-export const swuOpportunities: CrudApi<SWUOpportunityResourceTypes> = makeCrudApi({
-  routeNamespace: apiNamespace('opportunities/sprint-with-us'),
-  create: swuOpportunityActionParams,
-  readOne: swuOpportunityActionParams,
-  update: swuOpportunityActionParams,
-  delete: swuOpportunityActionParams,
-  readMany: {
-    transformValid: a => a
-  }
-});
+export const swuOpportunities: CrudApi<SWUOpportunityResourceTypes> =
+  makeCrudApi({
+    routeNamespace: apiNamespace("opportunities/sprint-with-us"),
+    create: swuOpportunityActionParams,
+    readOne: swuOpportunityActionParams,
+    update: swuOpportunityActionParams,
+    delete: swuOpportunityActionParams,
+    readMany: {
+      transformValid: (a) => a
+    }
+  });
 
 // Opportunities
 
@@ -694,12 +891,18 @@ interface CWUSubscriberSimpleResourceTypesParams {
   };
 }
 
-type CWUSubscriberSimpleResourceTypes = SimpleResourceTypes<CWUSubscriberSimpleResourceTypesParams>;
+type CWUSubscriberSimpleResourceTypes =
+  SimpleResourceTypes<CWUSubscriberSimpleResourceTypesParams>;
 
-type CWUSubscriberResourceTypes = PickCrudApi<CWUSubscriberSimpleResourceTypes, 'create' | 'delete'>;
+type CWUSubscriberResourceTypes = PickCrudApi<
+  CWUSubscriberSimpleResourceTypes,
+  "create" | "delete"
+>;
 
 const cwuSubscribers: CrudApi<CWUSubscriberResourceTypes> = {
-  ...makeSimpleCrudApi<CWUSubscriberSimpleResourceTypesParams>(apiNamespace('subscribers/code-with-us')),
+  ...makeSimpleCrudApi<CWUSubscriberSimpleResourceTypesParams>(
+    apiNamespace("subscribers/code-with-us")
+  ),
   readOne: undefined,
   readMany: undefined,
   update: undefined
@@ -719,12 +922,18 @@ interface SWUSubscriberSimpleResourceTypesParams {
   };
 }
 
-type SWUSubscriberSimpleResourceTypes = SimpleResourceTypes<SWUSubscriberSimpleResourceTypesParams>;
+type SWUSubscriberSimpleResourceTypes =
+  SimpleResourceTypes<SWUSubscriberSimpleResourceTypesParams>;
 
-type SWUSubscriberResourceTypes = PickCrudApi<SWUSubscriberSimpleResourceTypes, 'create' | 'delete'>;
+type SWUSubscriberResourceTypes = PickCrudApi<
+  SWUSubscriberSimpleResourceTypes,
+  "create" | "delete"
+>;
 
 const swuSubscribers: CrudApi<SWUSubscriberResourceTypes> = {
-  ...makeSimpleCrudApi<SWUSubscriberSimpleResourceTypesParams>(apiNamespace('subscribers/sprint-with-us')),
+  ...makeSimpleCrudApi<SWUSubscriberSimpleResourceTypesParams>(
+    apiNamespace("subscribers/sprint-with-us")
+  ),
   readOne: undefined,
   readMany: undefined,
   update: undefined
@@ -739,29 +948,36 @@ export const subscribers = {
 
 // Organizations
 
-interface RawOrganization extends Omit<OrgResource.Organization, 'acceptedSWUTerms'> {
+interface RawOrganization
+  extends Omit<OrgResource.Organization, "acceptedSWUTerms"> {
   acceptedSWUTerms?: Date | null;
 }
 
-function rawOrganizationToOrganization(raw: RawOrganization): OrgResource.Organization {
+function rawOrganizationToOrganization(
+  raw: RawOrganization
+): OrgResource.Organization {
   return {
     ...raw,
     acceptedSWUTerms: raw.acceptedSWUTerms && new Date(raw.acceptedSWUTerms)
   };
 }
 
-interface RawOrganizationSlim extends Omit<OrgResource.OrganizationSlim, 'acceptedSWUTerms'> {
+interface RawOrganizationSlim
+  extends Omit<OrgResource.OrganizationSlim, "acceptedSWUTerms"> {
   acceptedSWUTerms?: Date | null;
 }
 
-function rawOrganizationSlimToOrganizationSlim(raw: RawOrganizationSlim): OrgResource.OrganizationSlim {
+function rawOrganizationSlimToOrganizationSlim(
+  raw: RawOrganizationSlim
+): OrgResource.OrganizationSlim {
   return {
     ...raw,
     acceptedSWUTerms: raw.acceptedSWUTerms && new Date(raw.acceptedSWUTerms)
   };
 }
 
-interface RawOrganizationReadManyResponse extends Omit<OrgResource.ReadManyResponseBody, 'items'> {
+interface RawOrganizationReadManyResponse
+  extends Omit<OrgResource.ReadManyResponseBody, "items"> {
   items: RawOrganizationSlim[];
 }
 
@@ -795,18 +1011,25 @@ interface OrganizationResourceTypes {
   };
 }
 
-const ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace('organizations');
+const ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace("organizations");
 
 const organizationActionParams = {
   transformValid: rawOrganizationToOrganization
 };
 
-interface OrganizationsApi extends Omit<CrudApi<OrganizationResourceTypes>, 'readMany'> {
-  readMany(page: number, pageSize: number): Promise<CrudResponse<OrganizationResourceTypes['readMany']>>;
+interface OrganizationsApi
+  extends Omit<CrudApi<OrganizationResourceTypes>, "readMany"> {
+  readMany(
+    page: number,
+    pageSize: number
+  ): Promise<CrudResponse<OrganizationResourceTypes["readMany"]>>;
 }
 
 export const organizations: OrganizationsApi = {
-  ...makeCrudApi<Omit<OrganizationResourceTypes, 'readMany'> & Pick<UndefinedResourceTypes, 'readMany'>>({
+  ...makeCrudApi<
+    Omit<OrganizationResourceTypes, "readMany"> &
+      Pick<UndefinedResourceTypes, "readMany">
+  >({
     routeNamespace: ORGANIZATIONS_ROUTE_NAMESPACE,
     create: organizationActionParams,
     readOne: organizationActionParams,
@@ -815,14 +1038,18 @@ export const organizations: OrganizationsApi = {
     readMany: undefined
   }),
   readMany(page, pageSize) {
-    return makeRequest<OrganizationResourceTypes['readMany'] & { request: null; }>({
+    return makeRequest<
+      OrganizationResourceTypes["readMany"] & { request: null }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${ORGANIZATIONS_ROUTE_NAMESPACE}?page=${window.encodeURIComponent(page)}&pageSize=${window.encodeURIComponent(pageSize)}`,
+      url: `${ORGANIZATIONS_ROUTE_NAMESPACE}?page=${window.encodeURIComponent(
+        page
+      )}&pageSize=${window.encodeURIComponent(pageSize)}`,
       body: null,
       transformValid(raw) {
         return {
           ...raw,
-          items: raw.items.map(i => rawOrganizationSlimToOrganizationSlim(i))
+          items: raw.items.map((i) => rawOrganizationSlimToOrganizationSlim(i))
         };
       }
     });
@@ -830,7 +1057,8 @@ export const organizations: OrganizationsApi = {
 };
 
 // Owned Organizations
-interface OwnedOrganizationResourceTypes extends Omit<UndefinedResourceTypes, 'readMany'> {
+interface OwnedOrganizationResourceTypes
+  extends Omit<UndefinedResourceTypes, "readMany"> {
   readMany: {
     rawResponse: RawOrganizationSlim;
     validResponse: OrgResource.OrganizationSlim;
@@ -838,30 +1066,35 @@ interface OwnedOrganizationResourceTypes extends Omit<UndefinedResourceTypes, 'r
   };
 }
 
-const OWNED_ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace('ownedOrganizations');
+const OWNED_ORGANIZATIONS_ROUTE_NAMESPACE = apiNamespace("ownedOrganizations");
 
-export const ownedOrganizations: CrudApi<OwnedOrganizationResourceTypes> = makeCrudApi({
-  ...undefinedActions,
-  routeNamespace: OWNED_ORGANIZATIONS_ROUTE_NAMESPACE,
-  readMany: {
-    transformValid: rawOrganizationSlimToOrganizationSlim
-  }
-});
+export const ownedOrganizations: CrudApi<OwnedOrganizationResourceTypes> =
+  makeCrudApi({
+    ...undefinedActions,
+    routeNamespace: OWNED_ORGANIZATIONS_ROUTE_NAMESPACE,
+    readMany: {
+      transformValid: rawOrganizationSlimToOrganizationSlim
+    }
+  });
 
 // Affiliations
 
-interface RawAffiliation extends Omit<AffiliationResource.Affiliation, 'createdAt'> {
+interface RawAffiliation
+  extends Omit<AffiliationResource.Affiliation, "createdAt"> {
   createdAt: string;
 }
 
-function rawAffiliationToAffiliation(raw: RawAffiliation): AffiliationResource.Affiliation {
+function rawAffiliationToAffiliation(
+  raw: RawAffiliation
+): AffiliationResource.Affiliation {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
   };
 }
 
-interface AffiliationResourceTypes extends Pick<UndefinedResourceTypes, 'readOne'> {
+interface AffiliationResourceTypes
+  extends Pick<UndefinedResourceTypes, "readOne"> {
   create: {
     request: AffiliationResource.CreateRequestBody;
     rawResponse: RawAffiliation;
@@ -893,14 +1126,18 @@ type AffiliationReadManyForOrganizationActionTypes = ReadManyActionTypes<{
 }>;
 
 interface AffiliationsApi extends CrudApi<AffiliationResourceTypes> {
-  readManyForOrganization(organizationId: Id): ReturnType<CrudClientAction<AffiliationReadManyForOrganizationActionTypes>>;
+  readManyForOrganization(
+    organizationId: Id
+  ): ReturnType<
+    CrudClientAction<AffiliationReadManyForOrganizationActionTypes>
+  >;
 }
 
 const affiliationActionParams = {
   transformValid: rawAffiliationToAffiliation
 };
 
-const AFFILIATIONS_ROUTE_NAMESPACE = apiNamespace('affiliations');
+const AFFILIATIONS_ROUTE_NAMESPACE = apiNamespace("affiliations");
 
 export const affiliations: AffiliationsApi = {
   ...makeCrudApi<AffiliationResourceTypes>({
@@ -909,15 +1146,19 @@ export const affiliations: AffiliationsApi = {
     update: affiliationActionParams,
     delete: affiliationActionParams,
     readMany: {
-      transformValid: a => a
+      transformValid: (a) => a
     },
     readOne: undefined
   }),
 
   async readManyForOrganization(organizationId) {
-    return await makeRequest<AffiliationReadManyForOrganizationActionTypes & { request: null; }>({
+    return await makeRequest<
+      AffiliationReadManyForOrganizationActionTypes & { request: null }
+    >({
       method: ClientHttpMethod.Get,
-      url: `${AFFILIATIONS_ROUTE_NAMESPACE}?organization=${window.encodeURIComponent(organizationId)}`,
+      url: `${AFFILIATIONS_ROUTE_NAMESPACE}?organization=${window.encodeURIComponent(
+        organizationId
+      )}`,
       body: null
     });
   }
@@ -925,11 +1166,13 @@ export const affiliations: AffiliationsApi = {
 
 // Files
 
-interface RawFileRecord extends Omit<FileResource.FileRecord, 'createdAt'> {
+interface RawFileRecord extends Omit<FileResource.FileRecord, "createdAt"> {
   createdAt: string;
 }
 
-function rawFileRecordToFileRecord(raw: RawFileRecord): FileResource.FileRecord {
+function rawFileRecordToFileRecord(
+  raw: RawFileRecord
+): FileResource.FileRecord {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt)
@@ -942,7 +1185,8 @@ export interface CreateFileRequestBody {
   metadata: FileResource.FileUploadMetadata;
 }
 
-interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'readOne'> {
+interface FileResourceTypes
+  extends Omit<UndefinedResourceTypes, "create" | "readOne"> {
   create: {
     request: CreateFileRequestBody;
     rawResponse: RawFileRecord;
@@ -956,10 +1200,12 @@ interface FileResourceTypes extends Omit<UndefinedResourceTypes, 'create' | 'rea
   };
 }
 
-const FILES_ROUTE_NAMESPACE = apiNamespace('files');
-const NOTE_FILES_ROUTE_NAMESPACE = apiNamespace('note-files');
+const FILES_ROUTE_NAMESPACE = apiNamespace("files");
+const NOTE_FILES_ROUTE_NAMESPACE = apiNamespace("note-files");
 
-const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
+const fileCrudApi = makeCrudApi<
+  Omit<FileResourceTypes, "create"> & { create: undefined }
+>({
   ...undefinedActions,
   routeNamespace: FILES_ROUTE_NAMESPACE,
   readOne: {
@@ -967,7 +1213,9 @@ const fileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: un
   }
 });
 
-const noteFileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create: undefined }>({
+const noteFileCrudApi = makeCrudApi<
+  Omit<FileResourceTypes, "create"> & { create: undefined }
+>({
   ...undefinedActions,
   routeNamespace: NOTE_FILES_ROUTE_NAMESPACE,
   readOne: {
@@ -975,13 +1223,17 @@ const noteFileCrudApi = makeCrudApi<Omit<FileResourceTypes, 'create'> & { create
   }
 });
 
-function makeCreateFileAction(routeNamespace: string): CrudClientActionWithBody<FileResourceTypes['create']>  {
-  return body => {
+function makeCreateFileAction(
+  routeNamespace: string
+): CrudClientActionWithBody<FileResourceTypes["create"]> {
+  return (body) => {
     const multipartBody = new FormData();
-    multipartBody.append('name', body.name);
-    multipartBody.append('file', body.file);
-    multipartBody.append('metadata', JSON.stringify(body.metadata));
-    return makeCreate<Omit<FileResourceTypes['create'], 'request'> & { request: FormData }>({
+    multipartBody.append("name", body.name);
+    multipartBody.append("file", body.file);
+    multipartBody.append("metadata", JSON.stringify(body.metadata));
+    return makeCreate<
+      Omit<FileResourceTypes["create"], "request"> & { request: FormData }
+    >({
       routeNamespace,
       transformValid: rawFileRecordToFileRecord
     })(multipartBody);
@@ -998,7 +1250,14 @@ export const noteFiles: CrudApi<FileResourceTypes> = {
   create: makeCreateFileAction(NOTE_FILES_ROUTE_NAMESPACE)
 };
 
-export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
+export async function uploadFiles(
+  filesToUpload: CreateFileRequestBody[]
+): Promise<
+  ResponseValidation<
+    FileResource.FileRecord[],
+    FileResource.CreateValidationErrors[]
+  >
+> {
   const validResults: FileResource.FileRecord[] = [];
   let isInvalid = false;
   const invalidResults: FileResource.CreateValidationErrors[] = [];
@@ -1010,15 +1269,15 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
     }
     const result = await files.create(file);
     switch (result.tag) {
-      case 'valid':
+      case "valid":
         validResults.push(result.value);
         invalidResults.push({});
         break;
-      case 'invalid':
+      case "invalid":
         isInvalid = true;
         invalidResults.push(result.value);
         break;
-      case 'unhandled':
+      case "unhandled":
         return result;
     }
   }
@@ -1029,7 +1288,14 @@ export async function uploadFiles(filesToUpload: CreateFileRequestBody[]): Promi
   }
 }
 
-export async function uploadNoteFiles(filesToUpload: CreateFileRequestBody[]): Promise<ResponseValidation<FileResource.FileRecord[], FileResource.CreateValidationErrors[]>> {
+export async function uploadNoteFiles(
+  filesToUpload: CreateFileRequestBody[]
+): Promise<
+  ResponseValidation<
+    FileResource.FileRecord[],
+    FileResource.CreateValidationErrors[]
+  >
+> {
   const validResults: FileResource.FileRecord[] = [];
   let isInvalid = false;
   const invalidResults: FileResource.CreateValidationErrors[] = [];
@@ -1041,15 +1307,15 @@ export async function uploadNoteFiles(filesToUpload: CreateFileRequestBody[]): P
     }
     const result = await noteFiles.create(file);
     switch (result.tag) {
-      case 'valid':
+      case "valid":
         validResults.push(result.value);
         invalidResults.push({});
         break;
-      case 'invalid':
+      case "invalid":
         isInvalid = true;
         invalidResults.push(result.value);
         break;
-      case 'unhandled':
+      case "unhandled":
         return result;
     }
   }
@@ -1060,8 +1326,10 @@ export async function uploadNoteFiles(filesToUpload: CreateFileRequestBody[]): P
   }
 }
 
-export function makeUploadMarkdownImage(metadata: FileResource.FileUploadMetadata = [adt('any')]): RichMarkdownEditor.UploadImage {
-  return async file => {
+export function makeUploadMarkdownImage(
+  metadata: FileResource.FileUploadMetadata = [adt("any")]
+): RichMarkdownEditor.UploadImage {
+  return async (file) => {
     const result = await files.create({
       name: file.name,
       file,
@@ -1073,20 +1341,17 @@ export function makeUploadMarkdownImage(metadata: FileResource.FileUploadMetadat
         url: FileResource.encodeFileIdToMarkdownImageUrl(result.value.id)
       });
     } else {
-      return invalid([
-        'Unable to upload file.'
-      ]);
+      return invalid(["Unable to upload file."]);
     }
   };
 }
 
 // Avatars.
 
-type AvatarResourceTypes
-  = Pick<FileResourceTypes, 'create'>
-  & Omit<UndefinedResourceTypes, 'create'>;
+type AvatarResourceTypes = Pick<FileResourceTypes, "create"> &
+  Omit<UndefinedResourceTypes, "create">;
 
 export const avatars: CrudApi<AvatarResourceTypes> = {
   ...undefinedActions,
-  create: makeCreateFileAction(apiNamespace('avatars'))
+  create: makeCreateFileAction(apiNamespace("avatars"))
 };

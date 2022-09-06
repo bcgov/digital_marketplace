@@ -4,10 +4,5 @@
     "target": "es5",
     "skipLibCheck": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.json",
-    "**/*.js"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"]
 }

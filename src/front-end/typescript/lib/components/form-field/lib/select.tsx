@@ -1,11 +1,11 @@
-import { View } from 'front-end/lib/framework';
-import Icon from 'front-end/lib/views/icon';
-import React from 'react';
-import Select from 'react-select';
-import { Props as SelectProps } from 'react-select/base';
-import SelectCreatable from 'react-select/creatable';
-import { Spinner } from 'reactstrap';
-import { adt, ADT } from 'shared/lib/types';
+import { View } from "front-end/lib/framework";
+import Icon from "front-end/lib/views/icon";
+import React from "react";
+import Select from "react-select";
+import { Props as SelectProps } from "react-select/base";
+import SelectCreatable from "react-select/creatable";
+import { Spinner } from "reactstrap";
+import { adt, ADT } from "shared/lib/types";
 
 export interface Option<Value = string> {
   value: Value;
@@ -17,20 +17,26 @@ export interface OptionGroup<Value = string> {
   options: Array<Option<Value>>;
 }
 
-export type Options
-  = ADT<'options', Option[]>
-  | ADT<'optionGroups', OptionGroup[]>;
+export type Options =
+  | ADT<"options", Option[]>
+  | ADT<"optionGroups", OptionGroup[]>;
 
-export function stringsToOptions(values: string[]): ADT<'options', Option[]> {
-  return adt('options', values.map(value => ({ value, label: value })));
+export function stringsToOptions(values: string[]): ADT<"options", Option[]> {
+  return adt(
+    "options",
+    values.map((value) => ({ value, label: value }))
+  );
 }
 
 export function coalesceOptions(options: Options): Option[] {
   switch (options.tag) {
-    case 'options':
+    case "options":
       return options.value;
-    case 'optionGroups':
-      return options.value.reduce<Option[]>((acc, { options }) => [...acc, ...options], []);
+    case "optionGroups":
+      return options.value.reduce<Option[]>(
+        (acc, { options }) => [...acc, ...options],
+        []
+      );
   }
 }
 
@@ -65,8 +71,14 @@ export interface MultiProps extends BaseProps {
 
 export type Props = SingleProps | MultiProps;
 
-export const view: View<Props> = props => {
-  const { options, formatGroupLabel, disabled = false, loading = false, className = '' } = props;
+export const view: View<Props> = (props) => {
+  const {
+    options,
+    formatGroupLabel,
+    disabled = false,
+    loading = false,
+    className = ""
+  } = props;
   const baseProps = {
     ...props,
     value: undefined,
@@ -78,50 +90,61 @@ export const view: View<Props> = props => {
     isClearable: true,
     isDisabled: disabled,
     className: `${className} react-select-container`,
-    classNamePrefix: 'react-select',
-    menuPlacement: 'auto',
+    classNamePrefix: "react-select",
+    menuPlacement: "auto",
     components: {
       ClearIndicator: ({ clearValue, hasValue, innerProps }) => {
-        if (!hasValue || disabled) { return null; }
+        if (!hasValue || disabled) {
+          return null;
+        }
         return (
-          <div className='d-flex align-items-center justify-content-center' style={{ lineHeight: 0 }} onMouseDown={innerProps.onMouseDown} onTouchEnd={innerProps.onTouchEnd}>
+          <div
+            className="d-flex align-items-center justify-content-center"
+            style={{ lineHeight: 0 }}
+            onMouseDown={innerProps.onMouseDown}
+            onTouchEnd={innerProps.onTouchEnd}>
             <Icon
               hover
-              color='gray-500'
+              color="gray-500"
               onClick={() => clearValue()}
-              name='times' />
+              name="times"
+            />
           </div>
         );
       },
       IndicatorSeparator: () => {
         return (
-          <div className='h-100 d-flex align-items-stretch justify-content-center py-1'>
-            <div className='d-flex align-items-center justify-content-center border-right pr-2 mr-2'>
-            </div>
+          <div className="h-100 d-flex align-items-stretch justify-content-center py-1">
+            <div className="d-flex align-items-center justify-content-center border-right pr-2 mr-2"></div>
           </div>
         );
       },
       DropdownIndicator: ({ innerProps }) => {
         return (
-          <div className='d-flex align-items-center justify-content-center pr-2' style={{ lineHeight: 0 }} onMouseDown={innerProps.onMouseDown} onTouchEnd={innerProps.onTouchEnd}>
-            {loading
-              ? (<Spinner color='gray-500' size='sm' />)
-              : (<Icon
-                  hover
-                  color='gray-500'
-                  name='caret-down' />)}
+          <div
+            className="d-flex align-items-center justify-content-center pr-2"
+            style={{ lineHeight: 0 }}
+            onMouseDown={innerProps.onMouseDown}
+            onTouchEnd={innerProps.onTouchEnd}>
+            {loading ? (
+              <Spinner color="gray-500" size="sm" />
+            ) : (
+              <Icon hover color="gray-500" name="caret-down" />
+            )}
           </div>
         );
       },
       MultiValueRemove: ({ innerProps }) => {
-        if (disabled) { return null; }
+        if (disabled) {
+          return null;
+        }
         return (
-          <div className={innerProps.className} onClick={innerProps.onClick} onTouchEnd={innerProps.onTouchEnd} onMouseDown={innerProps.onMouseDown}>
-            <Icon
-              hover
-              width={0.8}
-              height={0.8}
-              name='times' />
+          <div
+            className={innerProps.className}
+            onClick={innerProps.onClick}
+            onTouchEnd={innerProps.onTouchEnd}
+            onMouseDown={innerProps.onMouseDown}>
+            <Icon hover width={0.8} height={0.8} name="times" />
           </div>
         );
       }
@@ -135,7 +158,7 @@ export const view: View<Props> = props => {
           borderColor: undefined,
           borderStyle: undefined,
           boxShadow: undefined,
-          '&:hover': undefined
+          "&:hover": undefined
         };
       },
       placeholder(styles) {
@@ -154,7 +177,7 @@ export const view: View<Props> = props => {
         return {
           ...styles,
           backgroundColor: undefined,
-          ':active': undefined
+          ":active": undefined
         };
       },
       groupHeading(styles) {
@@ -168,28 +191,28 @@ export const view: View<Props> = props => {
       multiValue(styles) {
         return {
           ...styles,
-          backgroundColor: 'var(--c-multi-select-item-bg)',
+          backgroundColor: "var(--c-multi-select-item-bg)",
           opacity: disabled ? 0.75 : undefined
         };
       },
       multiValueLabel(styles) {
         return {
           ...styles,
-          color: 'white',
-          padding: '3px 8px',
+          color: "white",
+          padding: "3px 8px",
           paddingLeft: undefined
         };
       },
       multiValueRemove(styles) {
         return {
           ...styles,
-          borderRadius: '0 2px 2px 0',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
-          color: 'var(--c-multi-select-item-remove)',
-          ':hover': {
-            cursor: 'pointer',
-            color: '#fff',
-            backgroundColor: 'var(--danger)'
+          borderRadius: "0 2px 2px 0",
+          borderLeft: "1px solid rgba(255, 255, 255, 0.1)",
+          color: "var(--c-multi-select-item-remove)",
+          ":hover": {
+            cursor: "pointer",
+            color: "#fff",
+            backgroundColor: "var(--danger)"
           }
         };
       }
@@ -229,9 +252,9 @@ export const view: View<Props> = props => {
     }
   })();
   if (props.creatable) {
-    return (<SelectCreatable {...selectProps} />);
+    return <SelectCreatable {...selectProps} />;
   } else {
-    return (<Select {...selectProps} />);
+    return <Select {...selectProps} />;
   }
 };
 

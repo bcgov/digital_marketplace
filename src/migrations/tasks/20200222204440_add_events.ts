@@ -1,22 +1,22 @@
-import { makeDomainLogger } from 'back-end/lib/logger';
-import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import Knex from 'knex';
+import { makeDomainLogger } from "back-end/lib/logger";
+import { console as consoleAdapter } from "back-end/lib/logger/adapters";
+import Knex from "knex";
 
 enum CWUOpportunityEvent {
-  Edited = 'EDITED',
-  AddendumAdded = 'ADDENDUM_ADDED'
+  Edited = "EDITED",
+  AddendumAdded = "ADDENDUM_ADDED"
 }
 
 enum CWUProposalEvent {
-  ScoreEntered = 'SCORE_ENTERED'
+  ScoreEntered = "SCORE_ENTERED"
 }
 
-const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
+const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
 
 export async function up(connection: Knex): Promise<void> {
-  await connection.schema.alterTable('cwuOpportunityStatuses', table => {
-    table.enu('event', Object.values(CWUOpportunityEvent)).nullable();
-    table.string('status').nullable().alter();
+  await connection.schema.alterTable("cwuOpportunityStatuses", (table) => {
+    table.enu("event", Object.values(CWUOpportunityEvent)).nullable();
+    table.string("status").nullable().alter();
   });
 
   await connection.schema.raw(`
@@ -28,11 +28,11 @@ export async function up(connection: Knex): Promise<void> {
     )
   `);
 
-  logger.info('Completed modifying cwuOpportunityStatus table.');
+  logger.info("Completed modifying cwuOpportunityStatus table.");
 
-  await connection.schema.alterTable('cwuProposalStatuses', table => {
-    table.enu('event', Object.values(CWUProposalEvent)).nullable();
-    table.string('status').nullable().alter();
+  await connection.schema.alterTable("cwuProposalStatuses", (table) => {
+    table.enu("event", Object.values(CWUProposalEvent)).nullable();
+    table.string("status").nullable().alter();
   });
 
   await connection.schema.raw(`
@@ -44,7 +44,7 @@ export async function up(connection: Knex): Promise<void> {
     )
   `);
 
-  logger.info('Completed modifying cwuProposalStatuses table.');
+  logger.info("Completed modifying cwuProposalStatuses table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
@@ -53,22 +53,22 @@ export async function down(connection: Knex): Promise<void> {
     DROP CONSTRAINT "eitherEventOrStatus"
   `);
 
-  await connection.schema.alterTable('cwuOpportunityStatuses', table => {
-    table.dropColumn('event');
-    table.string('status').notNullable().alter();
+  await connection.schema.alterTable("cwuOpportunityStatuses", (table) => {
+    table.dropColumn("event");
+    table.string("status").notNullable().alter();
   });
 
-  logger.info('Completed reverting cwuOpportunityStatuses table.');
+  logger.info("Completed reverting cwuOpportunityStatuses table.");
 
   await connection.schema.raw(`
     ALTER TABLE "cwuProposalStatuses"
     DROP CONSTRAINT "eitherEventOrStatus"
   `);
 
-  await connection.schema.alterTable('cwuProposalStatuses', table => {
-    table.dropColumn('event');
-    table.string('status').notNullable().alter();
+  await connection.schema.alterTable("cwuProposalStatuses", (table) => {
+    table.dropColumn("event");
+    table.string("status").notNullable().alter();
   });
 
-  logger.info('Completed reverting cwuProposals table.');
+  logger.info("Completed reverting cwuProposals table.");
 }
