@@ -203,7 +203,7 @@ objects:
       apiVersion: apps.openshift.io/v1
       kind: DeploymentConfig
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    minReplicas: 1
+    minReplicas: 3
     maxReplicas: 6
     metrics:
     - type: Resource
