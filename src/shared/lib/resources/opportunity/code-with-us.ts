@@ -1,40 +1,49 @@
-import { CWU_MAX_BUDGET } from 'shared/config';
-import { formatAmount, isDateInTheFuture, isDateInThePast } from 'shared/lib';
-import { Addendum } from 'shared/lib/resources/addendum';
-import { FileRecord } from 'shared/lib/resources/file';
-import { UserSlim } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
+import { CWU_MAX_BUDGET } from "shared/config";
+import { formatAmount, isDateInTheFuture, isDateInThePast } from "shared/lib";
+import { Addendum } from "shared/lib/resources/addendum";
+import { FileRecord } from "shared/lib/resources/file";
+import { UserSlim } from "shared/lib/resources/user";
+import { ADT, BodyWithErrors, Id } from "shared/lib/types";
+import { ErrorTypeFrom } from "shared/lib/validation";
 
-export { Addendum } from 'shared/lib/resources/addendum';
+export { Addendum } from "shared/lib/resources/addendum";
 
-export const DEFAULT_OPPORTUNITY_TITLE = 'Untitled';
-export const FORMATTED_MAX_BUDGET = formatAmount(CWU_MAX_BUDGET, '$');
+export const DEFAULT_OPPORTUNITY_TITLE = "Untitled";
+export const FORMATTED_MAX_BUDGET = formatAmount(CWU_MAX_BUDGET, "$");
 
 export enum CWUOpportunityStatus {
-  Draft = 'DRAFT',
-  Published = 'PUBLISHED',
-  Evaluation = 'EVALUATION',
-  Awarded = 'AWARDED',
-  Suspended = 'SUSPENDED',
-  Canceled = 'CANCELED'
+  Draft = "DRAFT",
+  Published = "PUBLISHED",
+  Evaluation = "EVALUATION",
+  Awarded = "AWARDED",
+  Suspended = "SUSPENDED",
+  Canceled = "CANCELED"
 }
 
 export enum CWUOpportunityEvent {
-  Edited = 'EDITED',
-  AddendumAdded = 'ADDENDUM_ADDED',
-  NoteAdded = 'NOTE_ADDED'
+  Edited = "EDITED",
+  AddendumAdded = "ADDENDUM_ADDED",
+  NoteAdded = "NOTE_ADDED"
 }
 
-export function parseCWUOpportunityStatus(raw: string): CWUOpportunityStatus | null {
+export function parseCWUOpportunityStatus(
+  raw: string
+): CWUOpportunityStatus | null {
   switch (raw) {
-    case CWUOpportunityStatus.Draft: return CWUOpportunityStatus.Draft;
-    case CWUOpportunityStatus.Published: return CWUOpportunityStatus.Published;
-    case CWUOpportunityStatus.Evaluation: return CWUOpportunityStatus.Evaluation;
-    case CWUOpportunityStatus.Awarded: return CWUOpportunityStatus.Awarded;
-    case CWUOpportunityStatus.Suspended: return CWUOpportunityStatus.Suspended;
-    case CWUOpportunityStatus.Canceled: return CWUOpportunityStatus.Canceled;
-    default: return null;
+    case CWUOpportunityStatus.Draft:
+      return CWUOpportunityStatus.Draft;
+    case CWUOpportunityStatus.Published:
+      return CWUOpportunityStatus.Published;
+    case CWUOpportunityStatus.Evaluation:
+      return CWUOpportunityStatus.Evaluation;
+    case CWUOpportunityStatus.Awarded:
+      return CWUOpportunityStatus.Awarded;
+    case CWUOpportunityStatus.Suspended:
+      return CWUOpportunityStatus.Suspended;
+    case CWUOpportunityStatus.Canceled:
+      return CWUOpportunityStatus.Canceled;
+    default:
+      return null;
   }
 }
 
@@ -42,7 +51,7 @@ export interface CWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
   createdBy: UserSlim | null;
-  type: ADT<'status', CWUOpportunityStatus> | ADT<'event', CWUOpportunityEvent>;
+  type: ADT<"status", CWUOpportunityStatus> | ADT<"event", CWUOpportunityEvent>;
   note: string;
   attachments: FileRecord[];
 }
@@ -83,7 +92,7 @@ export interface CWUOpportunity {
 }
 
 export interface CWUSuccessfulProponent {
-  id: ADT<'individual', Id> | ADT<'organization', Id>;
+  id: ADT<"individual", Id> | ADT<"organization", Id>;
   name: string;
   email?: string;
   score?: number;
@@ -117,13 +126,37 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
 
 export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
   // Return true if the opportunity has ever had the `Evaluation` status.
-  return !!o.history && o.history.reduce((acc, record) => acc || record.type.tag === 'status' && record.type.value === CWUOpportunityStatus.Evaluation, false as boolean);
+  return (
+    !!o.history &&
+    o.history.reduce(
+      (acc, record) =>
+        acc ||
+        (record.type.tag === "status" &&
+          record.type.value === CWUOpportunityStatus.Evaluation),
+      false as boolean
+    )
+  );
 }
 
-export type CWUOpportunitySlim = Pick<CWUOpportunity, 'id' | 'title' | 'teaser' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'status' | 'proposalDeadline' | 'remoteOk' | 'reward' | 'location' | 'subscribed'>;
+export type CWUOpportunitySlim = Pick<
+  CWUOpportunity,
+  | "id"
+  | "title"
+  | "teaser"
+  | "createdAt"
+  | "createdBy"
+  | "updatedAt"
+  | "updatedBy"
+  | "status"
+  | "proposalDeadline"
+  | "remoteOk"
+  | "reward"
+  | "location"
+  | "subscribed"
+>;
 
-export type CreateCWUOpportunityStatus
-  = CWUOpportunityStatus.Published
+export type CreateCWUOpportunityStatus =
+  | CWUOpportunityStatus.Published
   | CWUOpportunityStatus.Draft;
 
 export interface CreateRequestBody {
@@ -146,60 +179,80 @@ export interface CreateRequestBody {
   status: CreateCWUOpportunityStatus;
 }
 
-export interface CreateValidationErrors extends Omit<ErrorTypeFrom<CreateRequestBody> & BodyWithErrors, 'skills' | 'attachments'> {
+export interface CreateValidationErrors
+  extends Omit<
+    ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
+    "skills" | "attachments"
+  > {
   skills?: string[][];
   attachments?: string[][];
 }
 
-export type UpdateRequestBody
-  = ADT<'edit', UpdateEditRequestBody>
-  | ADT<'publish', string>
-  | ADT<'suspend', string>
-  | ADT<'cancel', string>
-  | ADT<'addAddendum', string>
-  | ADT<'addNote', UpdateWithNoteRequestBody>;
+export type UpdateRequestBody =
+  | ADT<"edit", UpdateEditRequestBody>
+  | ADT<"publish", string>
+  | ADT<"suspend", string>
+  | ADT<"cancel", string>
+  | ADT<"addAddendum", string>
+  | ADT<"addNote", UpdateWithNoteRequestBody>;
 
-export type UpdateEditRequestBody = Omit<CreateRequestBody, 'status'>;
+export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
 export interface UpdateWithNoteRequestBody {
   note: string;
   attachments: Id[];
 }
 
-export interface UpdateWithNoteValidationErrors extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, 'attachments'> {
+export interface UpdateWithNoteValidationErrors
+  extends Omit<ErrorTypeFrom<UpdateWithNoteRequestBody>, "attachments"> {
   attachments?: string[][];
 }
 
-type UpdateADTErrors
-  = ADT<'edit', UpdateEditValidationErrors>
-  | ADT<'publish', string[]>
-  | ADT<'suspend', string[]>
-  | ADT<'cancel', string[]>
-  | ADT<'addAddendum', string[]>
-  | ADT<'parseFailure'>
-  | ADT<'addNote', UpdateWithNoteValidationErrors>;
+type UpdateADTErrors =
+  | ADT<"edit", UpdateEditValidationErrors>
+  | ADT<"publish", string[]>
+  | ADT<"suspend", string[]>
+  | ADT<"cancel", string[]>
+  | ADT<"addAddendum", string[]>
+  | ADT<"parseFailure">
+  | ADT<"addNote", UpdateWithNoteValidationErrors>;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   opportunity?: UpdateADTErrors;
 }
 
-export interface UpdateEditValidationErrors extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, 'attachments' | 'skills'> {
+export interface UpdateEditValidationErrors
+  extends Omit<ErrorTypeFrom<UpdateEditRequestBody>, "attachments" | "skills"> {
   attachments?: string[][];
   skills?: string[][];
 }
 
 export type DeleteValidationErrors = BodyWithErrors;
 
-export function isValidStatusChange(from: CWUOpportunityStatus, to: CWUOpportunityStatus): boolean {
+export function isValidStatusChange(
+  from: CWUOpportunityStatus,
+  to: CWUOpportunityStatus
+): boolean {
   switch (from) {
     case CWUOpportunityStatus.Draft:
       return to === CWUOpportunityStatus.Published;
     case CWUOpportunityStatus.Published:
-      return [CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended, CWUOpportunityStatus.Evaluation].includes(to);
+      return [
+        CWUOpportunityStatus.Canceled,
+        CWUOpportunityStatus.Suspended,
+        CWUOpportunityStatus.Evaluation
+      ].includes(to);
     case CWUOpportunityStatus.Evaluation:
-      return [CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended, CWUOpportunityStatus.Awarded].includes(to);
+      return [
+        CWUOpportunityStatus.Canceled,
+        CWUOpportunityStatus.Suspended,
+        CWUOpportunityStatus.Awarded
+      ].includes(to);
     case CWUOpportunityStatus.Suspended:
-      return [CWUOpportunityStatus.Published, CWUOpportunityStatus.Canceled].includes(to);
+      return [
+        CWUOpportunityStatus.Published,
+        CWUOpportunityStatus.Canceled
+      ].includes(to);
     default:
       return false;
   }
@@ -226,28 +279,49 @@ export function canCWUOpportunityDetailsBeEdited(o: CWUOpportunity): boolean {
   }
 }
 
-export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Published, CWUOpportunityStatus.Evaluation, CWUOpportunityStatus.Awarded];
+export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [
+  CWUOpportunityStatus.Published,
+  CWUOpportunityStatus.Evaluation,
+  CWUOpportunityStatus.Awarded
+];
 
-export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [CWUOpportunityStatus.Draft, CWUOpportunityStatus.Canceled, CWUOpportunityStatus.Suspended];
+export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [
+  CWUOpportunityStatus.Draft,
+  CWUOpportunityStatus.Canceled,
+  CWUOpportunityStatus.Suspended
+];
 
-export function isCWUOpportunityAcceptingProposals(o: Pick<CWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
-  return o.status === CWUOpportunityStatus.Published && isDateInTheFuture(o.proposalDeadline);
+export function isCWUOpportunityAcceptingProposals(
+  o: Pick<CWUOpportunity, "status" | "proposalDeadline">
+): boolean {
+  return (
+    o.status === CWUOpportunityStatus.Published &&
+    isDateInTheFuture(o.proposalDeadline)
+  );
 }
 
-export function isUnpublished(o: Pick<CWUOpportunity, 'status'>): boolean {
-  return o.status === CWUOpportunityStatus.Draft
-      || o.status === CWUOpportunityStatus.Suspended;
+export function isUnpublished(o: Pick<CWUOpportunity, "status">): boolean {
+  return (
+    o.status === CWUOpportunityStatus.Draft ||
+    o.status === CWUOpportunityStatus.Suspended
+  );
 }
 
-export function isOpen(o: Pick<CWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
+export function isOpen(
+  o: Pick<CWUOpportunity, "status" | "proposalDeadline">
+): boolean {
   return isCWUOpportunityAcceptingProposals(o);
 }
 
-export function isClosed(o: Pick<CWUOpportunity, 'status' | 'proposalDeadline'>): boolean {
+export function isClosed(
+  o: Pick<CWUOpportunity, "status" | "proposalDeadline">
+): boolean {
   return !isOpen(o) && !isUnpublished(o);
 }
 
-export function doesCWUOpportunityStatusAllowGovToViewProposals(s: CWUOpportunityStatus): boolean {
+export function doesCWUOpportunityStatusAllowGovToViewProposals(
+  s: CWUOpportunityStatus
+): boolean {
   switch (s) {
     case CWUOpportunityStatus.Draft:
     case CWUOpportunityStatus.Published:
@@ -258,8 +332,10 @@ export function doesCWUOpportunityStatusAllowGovToViewProposals(s: CWUOpportunit
 }
 
 export function isCWUOpportunityClosed(o: CWUOpportunity): boolean {
-  return isDateInThePast(o.proposalDeadline)
-      && o.status !== CWUOpportunityStatus.Published
-      && o.status !== CWUOpportunityStatus.Draft
-      && o.status !== CWUOpportunityStatus.Suspended;
+  return (
+    isDateInThePast(o.proposalDeadline) &&
+    o.status !== CWUOpportunityStatus.Published &&
+    o.status !== CWUOpportunityStatus.Draft &&
+    o.status !== CWUOpportunityStatus.Suspended
+  );
 }

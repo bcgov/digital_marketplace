@@ -1,15 +1,29 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import * as RichMarkdownEditor from 'front-end/lib/components/form-field/rich-markdown-editor';
-import { ComponentViewProps, Dispatch, immutable, Immutable, Init, mapComponentDispatch, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import Accordion from 'front-end/lib/views/accordion';
-import Separator from 'front-end/lib/views/separator';
-import { find } from 'lodash';
-import React from 'react';
-import { Alert, Col, Row } from 'reactstrap';
-import { SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { CreateSWUProposalTeamQuestionResponseBody, CreateSWUProposalTeamQuestionResponseValidationErrors, SWUProposalTeamQuestionResponse } from 'shared/lib/resources/proposal/sprint-with-us';
-import { adt, ADT } from 'shared/lib/types';
-import * as proposalValidation from 'shared/lib/validation/proposal/sprint-with-us';
+import * as FormField from "front-end/lib/components/form-field";
+import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
+import {
+  ComponentViewProps,
+  Dispatch,
+  immutable,
+  Immutable,
+  Init,
+  mapComponentDispatch,
+  Update,
+  updateComponentChild,
+  View
+} from "front-end/lib/framework";
+import Accordion from "front-end/lib/views/accordion";
+import Separator from "front-end/lib/views/separator";
+import { find } from "lodash";
+import React from "react";
+import { Alert, Col, Row } from "reactstrap";
+import { SWUTeamQuestion } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  CreateSWUProposalTeamQuestionResponseBody,
+  CreateSWUProposalTeamQuestionResponseValidationErrors,
+  SWUProposalTeamQuestionResponse
+} from "shared/lib/resources/proposal/sprint-with-us";
+import { adt, ADT } from "shared/lib/types";
+import * as proposalValidation from "shared/lib/validation/proposal/sprint-with-us";
 
 interface ResponseState {
   isAccordianOpen: boolean;
@@ -21,9 +35,9 @@ export interface State {
   responses: ResponseState[];
 }
 
-export type Msg
-  = ADT<'toggleAccordion', number>
-  | ADT<'response', [number, RichMarkdownEditor.Msg]>;
+export type Msg =
+  | ADT<"toggleAccordion", number>
+  | ADT<"response", [number, RichMarkdownEditor.Msg]>;
 
 export interface Params {
   questions: SWUTeamQuestion[];
@@ -32,38 +46,50 @@ export interface Params {
 
 export const init: Init<Params, State> = async ({ questions, responses }) => {
   return {
-    responses: await Promise.all(questions.map(async question => ({
-      isAccordianOpen: false,
-      question,
-      response: immutable(await RichMarkdownEditor.init({
-        errors: [],
-        validate: v => proposalValidation.validateSWUProposalTeamQuestionResponseResponse(v, question.wordLimit),
-        child: {
-          value: find(responses, { order: question.order })?.response || '',
-          id: `swu-proposal-team-question-response-${question.order}`,
-          wordLimit: question.wordLimit
-        }
+    responses: await Promise.all(
+      questions.map(async (question) => ({
+        isAccordianOpen: false,
+        question,
+        response: immutable(
+          await RichMarkdownEditor.init({
+            errors: [],
+            validate: (v) =>
+              proposalValidation.validateSWUProposalTeamQuestionResponseResponse(
+                v,
+                question.wordLimit
+              ),
+            child: {
+              value: find(responses, { order: question.order })?.response || "",
+              id: `swu-proposal-team-question-response-${question.order}`,
+              wordLimit: question.wordLimit
+            }
+          })
+        )
       }))
-    })))
+    )
   };
 };
 
 export const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'toggleAccordion':
-      return [state.update('responses', rs => rs.map((r, i) => {
-        return i === msg.value
-          ? { ...r, isAccordianOpen: !r.isAccordianOpen }
-          : r;
-      }))];
+    case "toggleAccordion":
+      return [
+        state.update("responses", (rs) =>
+          rs.map((r, i) => {
+            return i === msg.value
+              ? { ...r, isAccordianOpen: !r.isAccordianOpen }
+              : r;
+          })
+        )
+      ];
 
-    case 'response':
+    case "response":
       return updateComponentChild({
         state,
-        childStatePath: ['responses', String(msg.value[0]), 'response'],
+        childStatePath: ["responses", String(msg.value[0]), "response"],
         childUpdate: RichMarkdownEditor.update,
         childMsg: msg.value[1],
-        mapChildMsg: value => adt('response', [msg.value[0], value]) as Msg
+        mapChildMsg: (value) => adt("response", [msg.value[0], value]) as Msg
       });
   }
 };
@@ -71,7 +97,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
 export type Values = CreateSWUProposalTeamQuestionResponseBody[];
 
 export function getValues(state: Immutable<State>): Values {
-  return state.responses.map(r => ({
+  return state.responses.map((r) => ({
     response: FormField.getValue(r.response),
     order: r.question.order
   }));
@@ -79,17 +105,22 @@ export function getValues(state: Immutable<State>): Values {
 
 export type Errors = CreateSWUProposalTeamQuestionResponseValidationErrors[];
 
-export function setErrors(state: Immutable<State>, errors: Errors | any = []): Immutable<State> {
+export function setErrors(
+  state: Immutable<State>,
+  errors: Errors | any = []
+): Immutable<State> {
   return errors.reduce((acc, e, i) => {
-    return acc
-      .updateIn(['responses', i, 'response'], s => FormField.setErrors(s, e.response || []));
+    return acc.updateIn(["responses", i, "response"], (s) =>
+      FormField.setErrors(s, e.response || [])
+    );
   }, state);
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
   return state.responses.reduce((acc, r, i) => {
-    return acc
-      .updateIn(['responses', i, 'response'], s => FormField.validate(s));
+    return acc.updateIn(["responses", i, "response"], (s) =>
+      FormField.validate(s)
+    );
   }, state);
 }
 
@@ -110,32 +141,36 @@ interface ResponseViewProps {
   dispatch: Dispatch<Msg>;
 }
 
-const ResponseView: View<ResponseViewProps> = props => {
+const ResponseView: View<ResponseViewProps> = (props) => {
   const { response, dispatch, index, disabled } = props;
   const isValid = isResponseValid(response);
   const title = `Question ${index + 1}`;
   return (
     <Accordion
-      className={''}
-      toggle={() => dispatch(adt('toggleAccordion', index))}
-      color='info'
+      className={""}
+      toggle={() => dispatch(adt("toggleAccordion", index))}
+      color="info"
       title={title}
-      titleClassName='h3 mb-0'
-      icon={isValid ? undefined : 'exclamation-circle'}
-      iconColor={isValid ? undefined : 'warning'}
+      titleClassName="h3 mb-0"
+      icon={isValid ? undefined : "exclamation-circle"}
+      iconColor={isValid ? undefined : "warning"}
       iconWidth={2}
       iconHeight={2}
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={response.isAccordianOpen}>
-      <p style={{ whiteSpace: 'pre-line' }}>{response.question.question}</p>
-      <div className='mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap'>
-        <div className='mb-2 mb-md-0'>{response.question.wordLimit} word limit</div>
-        <Separator spacing='2' color='secondary' className='d-none d-md-block'>|</Separator>
+      <p style={{ whiteSpace: "pre-line" }}>{response.question.question}</p>
+      <div className="mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap">
+        <div className="mb-2 mb-md-0">
+          {response.question.wordLimit} word limit
+        </div>
+        <Separator spacing="2" color="secondary" className="d-none d-md-block">
+          |
+        </Separator>
         <div>Scored out of {response.question.score}</div>
       </div>
-      <Alert color='primary' fade={false} className='mb-4'>
-        <div style={{ whiteSpace: 'pre-line' }}>
+      <Alert color="primary" fade={false} className="mb-4">
+        <div style={{ whiteSpace: "pre-line" }}>
           {response.question.guideline}
         </div>
       </Alert>
@@ -145,12 +180,16 @@ const ResponseView: View<ResponseViewProps> = props => {
         placeholder={`${title} Response`}
         help={`Provide your response to this question. You may use Markdown to write your response, however please do not include any images or links, as they will be redacted. Please ensure to stay within the question's response word limit.`}
         extraChildProps={{
-          style: { height: '50vh', minHeight: '400px' }
+          style: { height: "50vh", minHeight: "400px" }
         }}
-        className='mb-0'
+        className="mb-0"
         disabled={disabled}
         state={response.response}
-        dispatch={mapComponentDispatch(dispatch, value => adt('response', [index, value]) as Msg)} />
+        dispatch={mapComponentDispatch(
+          dispatch,
+          (value) => adt("response", [index, value]) as Msg
+        )}
+      />
     </Accordion>
   );
 };
@@ -159,13 +198,13 @@ interface Props extends ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = props => {
+export const view: View<Props> = (props) => {
   const { state, disabled } = props;
   return (
     <div>
       {state.responses.map((response, i) => (
         <Row key={`swu-proposal-team-question-response-${i}`}>
-          <Col xs='12' className={i < state.responses.length - 1 ? 'mb-4' : ''}>
+          <Col xs="12" className={i < state.responses.length - 1 ? "mb-4" : ""}>
             <ResponseView
               index={i}
               disabled={disabled}

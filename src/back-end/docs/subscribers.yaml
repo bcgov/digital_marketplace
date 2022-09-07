@@ -1,7 +1,5 @@
-
 paths:
   /subscribers/code-with-us:
-
     post:
       summary: Creates a new Subscription to a Code-With-Us opportunity.
       tags:
@@ -55,7 +53,6 @@ paths:
           description: A database error has occurred or the Subscription could not be deleted.
 
   /subscribers/sprint-with-us:
-
     post:
       summary: Creates a new Subscription to a Sprint-With-Us opportunity.
       tags:

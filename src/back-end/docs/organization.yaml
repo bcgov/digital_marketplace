@@ -1,4 +1,3 @@
-
 paths:
   /organizations:
     get:
@@ -26,10 +25,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Organization'
+              $ref: "#/components/schemas/Organization"
             examples:
               createOrganizationRequestBody:
-                $ref: '#/components/examples/createOrganizationRequestBody'
+                $ref: "#/components/examples/createOrganizationRequestBody"
       responses:
         201:
           description: Receive the created Organization
@@ -72,12 +71,12 @@ paths:
                   type: string
                 value:
                   nullable: true
-                  $ref: '#/components/schemas/Organization'
+                  $ref: "#/components/schemas/Organization"
             examples:
               acceptSWUTerms:
-                $ref: '#/components/examples/acceptSWUTerms'
+                $ref: "#/components/examples/acceptSWUTerms"
               updateProfile:
-                $ref: '#/components/examples/updateProfile'
+                $ref: "#/components/examples/updateProfile"
       responses:
         200:
           description: Received the updated Organization
@@ -87,8 +86,7 @@ paths:
       tags:
         - Organizations
       description: Marks the specified Organization as 'Inactive'.
-      consumes:
-        — application/json
+      consumes: — application/json
       parameters:
         - name: id
           in: path

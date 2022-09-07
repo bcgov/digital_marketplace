@@ -1,5 +1,5 @@
-import { View, ViewElementChildren } from 'front-end/lib/framework';
-import React from 'react';
+import { View, ViewElementChildren } from "front-end/lib/framework";
+import React from "react";
 
 /**
  * This view makes it children sticky (to the top)
@@ -11,12 +11,8 @@ export interface Props {
   className?: string;
 }
 
-export const view: View<Props> = ({ children, className = '' }) => {
-  return (
-    <div className={`sticky-md ${className}`}>
-      {children}
-    </div>
-  );
+export const view: View<Props> = ({ children, className = "" }) => {
+  return <div className={`sticky-md ${className}`}>{children}</div>;
 };
 
 export default view;

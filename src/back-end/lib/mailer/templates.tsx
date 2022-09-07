@@ -1,7 +1,7 @@
-import { prefixPath } from 'back-end/lib';
-import { CSSProperties, default as React, Fragment, ReactElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { SHOW_TEST_INDICATOR } from 'shared/config';
+import { prefixPath } from "back-end/lib";
+import { CSSProperties, default as React, Fragment, ReactElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { SHOW_TEST_INDICATOR } from "shared/config";
 
 // Styles.
 
@@ -20,15 +20,17 @@ interface Styles {
     units: (n: number | string, unit: StyleUnit) => string;
     px: (n: number | string) => string;
     style: (property: string, value: string) => Record<string, string>;
-    styleScale: (property: string, n: number, unit: StyleUnit) => Record<string, string>;
+    styleScale: (
+      property: string,
+      n: number,
+      unit: StyleUnit
+    ) => Record<string, string>;
   };
 }
 
 type CSSProperty = keyof CSSProperties;
 
-type StyleUnit
-  = 'px'
-  | 'rem';
+type StyleUnit = "px" | "rem";
 
 type StyleLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -42,20 +44,30 @@ export const styles: Styles = (() => {
   const spacer = 16;
   const scale = (n: number) => n * spacer;
   const units = (n: number | string, unit: StyleUnit) => `${n}${unit}`;
-  const px = (n: number | string) => units(n, 'px');
+  const px = (n: number | string) => units(n, "px");
   const style = (property: string, value: string) => ({ [property]: value });
-  const styleScale = (property: string, n: number, unit: StyleUnit = 'px') => style(property, units(scale(n), unit));
+  const styleScale = (property: string, n: number, unit: StyleUnit = "px") =>
+    style(property, units(scale(n), unit));
   const level = (l: StyleLevel) => {
     switch (l) {
-      case 0: return 0;
-      case 1: return 0.25;
-      case 2: return 0.5;
-      case 3: return 1;
-      case 4: return 2;
-      case 5: return 3;
+      case 0:
+        return 0;
+      case 1:
+        return 0.25;
+      case 2:
+        return 0.5;
+      case 3:
+        return 1;
+      case 4:
+        return 2;
+      case 5:
+        return 3;
     }
   };
-  const levelUtilties = (name: string, property: CSSProperty): StyleLevelUtilities => {
+  const levelUtilties = (
+    name: string,
+    property: CSSProperty
+  ): StyleLevelUtilities => {
     return STYLE_LEVELS.reduce((acc, l) => {
       acc[l] = styleScale(property, level(l));
       return acc;
@@ -66,43 +78,43 @@ export const styles: Styles = (() => {
       borderRadius: px(scale(0.25))
     },
     colors: {
-      logoBackground: '#003366',
-      bodyBackground: '#fff',
-      linkText: '#0c99d6',
-      buttonPrimaryText: '#fff',
-      buttonPrimaryBackground: '#0c99d6',
-      buttonInfoText: '#fff',
-      buttonInfoBackground: '#0f4c8b',
-      buttonSuccessText: '#fff',
-      buttonSuccessBackground: '#2E8540',
-      buttonDangerText: '#fff',
-      buttonDangerBackground: '#dc3545'
+      logoBackground: "#003366",
+      bodyBackground: "#fff",
+      linkText: "#0c99d6",
+      buttonPrimaryText: "#fff",
+      buttonPrimaryBackground: "#0c99d6",
+      buttonInfoText: "#fff",
+      buttonInfoBackground: "#0f4c8b",
+      buttonSuccessText: "#fff",
+      buttonSuccessBackground: "#2E8540",
+      buttonDangerText: "#fff",
+      buttonDangerBackground: "#dc3545"
     }
   };
   const utilities: StyleUtilities = {
-    p: levelUtilties('p', 'padding'),
-    pt: levelUtilties('pt', 'paddingTop'),
-    pr: levelUtilties('pr', 'paddingRight'),
-    pb: levelUtilties('pb', 'paddingBottom'),
-    pl: levelUtilties('pl', 'paddingLeft'),
-    m: levelUtilties('m', 'margin'),
-    mt: levelUtilties('mt', 'marginTop'),
-    mr: levelUtilties('mr', 'marginRight'),
-    mb: levelUtilties('mb', 'marginBottom'),
-    ml: levelUtilties('ml', 'marginLeft'),
+    p: levelUtilties("p", "padding"),
+    pt: levelUtilties("pt", "paddingTop"),
+    pr: levelUtilties("pr", "paddingRight"),
+    pb: levelUtilties("pb", "paddingBottom"),
+    pl: levelUtilties("pl", "paddingLeft"),
+    m: levelUtilties("m", "margin"),
+    mt: levelUtilties("mt", "marginTop"),
+    mr: levelUtilties("mr", "marginRight"),
+    mb: levelUtilties("mb", "marginBottom"),
+    ml: levelUtilties("ml", "marginLeft"),
     text: {
-      left: { textAlign: 'left' },
-      right: { textAlign: 'right' },
-      center: { textAlign: 'center' }
+      left: { textAlign: "left" },
+      right: { textAlign: "right" },
+      center: { textAlign: "center" }
     },
     font: {
-      sans: { fontFamily: 'sans-serif' },
+      sans: { fontFamily: "sans-serif" },
       sm: { fontSize: px(scale(0.9)) },
       md: { fontSize: px(scale(1)) },
       lg: { fontSize: px(scale(1.1)) },
       xl: { fontSize: px(scale(1.3)) },
-      bold: { fontWeight: 'bold' },
-      italic: { fontStyle: 'italic' }
+      bold: { fontWeight: "bold" },
+      italic: { fontStyle: "italic" }
     },
     border: {
       radius: {
@@ -115,10 +127,10 @@ export const styles: Styles = (() => {
     ...utilities.font.lg,
     ...utilities.text.center,
     padding: `${px(scale(0.75))} ${px(scale(1.5))}`,
-    margin: '0 auto',
-    cursor: 'pointer',
-    display: 'inline-block',
-    textDecoration: 'none'
+    margin: "0 auto",
+    cursor: "pointer",
+    display: "inline-block",
+    textDecoration: "none"
   };
   const classes: StyleClasses = {
     body: {
@@ -127,16 +139,16 @@ export const styles: Styles = (() => {
       ...utilities.font.sans,
       ...utilities.font.md,
       backgroundColor: variables.colors.bodyBackground,
-      width: '100%'
+      width: "100%"
     },
     table: {
       ...utilities.pt[4],
       ...utilities.pb[4],
       ...utilities.pr[3],
       ...utilities.pl[3],
-      margin: '0 auto',
+      margin: "0 auto",
       border: 0,
-      width: '100%',
+      width: "100%",
       maxWidth: px(scale(30)),
       lineHeight: 1.4
     },
@@ -172,8 +184,8 @@ export const styles: Styles = (() => {
     },
     link: {
       color: variables.colors.linkText,
-      cursor: 'pointer',
-      textDecoration: 'underline'
+      cursor: "pointer",
+      textDecoration: "underline"
     },
     buttonPrimary: {
       ...button,
@@ -200,7 +212,7 @@ export const styles: Styles = (() => {
       ...utilities.p[3],
       ...utilities.text.center,
       backgroundColor: variables.colors.logoBackground,
-      display: 'block'
+      display: "block"
     },
     logo: {
       height: px(42)
@@ -217,7 +229,8 @@ export const styles: Styles = (() => {
       px,
       style,
       styleScale
-    }};
+    }
+  };
 })();
 
 // Utility types and functions.
@@ -238,7 +251,7 @@ interface WithStyle {
 
 export type View<Props> = (props: Props) => ReactElement | null;
 
-type TemplateBaseProps = Omit<LayoutProps, 'children'>;
+type TemplateBaseProps = Omit<LayoutProps, "children">;
 
 export interface LinkProps {
   text: string;
@@ -247,16 +260,29 @@ export interface LinkProps {
 
 export const Link: View<LinkProps> = ({ text, url }) => {
   return (
-    <a href={url} target='_blank' rel="noreferrer" style={styles.classes.link}>
+    <a href={url} target="_blank" rel="noreferrer" style={styles.classes.link}>
       {text}
     </a>
   );
 };
 
-const CallToAction: View<LinkProps & Partial<WithStyle>> = ({ text, url, style = {} }) => {
+const CallToAction: View<LinkProps & Partial<WithStyle>> = ({
+  text,
+  url,
+  style = {}
+}) => {
   return (
     <Fragment>
-      <a href={url} target='_blank' rel="noreferrer" style={{ ...styles.classes.buttonPrimary, ...style, marginLeft: '1em', marginRight: '1em' }}>
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          ...styles.classes.buttonPrimary,
+          ...style,
+          marginLeft: "1em",
+          marginRight: "1em"
+        }}>
         {text}
       </a>
     </Fragment>
@@ -269,10 +295,12 @@ interface LinkListProps {
 }
 
 const LinkList: View<LinkListProps> = ({ title, links }) => {
-  if (!links.length) { return null; }
+  if (!links.length) {
+    return null;
+  }
   return (
     <Row style={styles.utilities.text.center}>
-      {title ? (<div style={styles.classes.linkListTitle}>{title}</div>) : null}
+      {title ? <div style={styles.classes.linkListTitle}>{title}</div> : null}
       <Fragment>
         {links.map((link, i) => (
           <div key={`link-list-link-${i}`} style={styles.classes.linkListLink}>
@@ -306,9 +334,13 @@ export interface DescriptionListProps {
 const DescriptionList: View<DescriptionListProps> = ({ title, items }) => {
   return (
     <Row style={styles.utilities.text.center}>
-      {title ? (<div style={styles.classes.descriptionListTitle}>{title}</div>) : null}
+      {title ? (
+        <div style={styles.classes.descriptionListTitle}>{title}</div>
+      ) : null}
       <Fragment>
-        {items.map((item, i) => (<DescriptionItem key={`dl-di-${i}`} {...item} />))}
+        {items.map((item, i) => (
+          <DescriptionItem key={`dl-di-${i}`} {...item} />
+        ))}
       </Fragment>
     </Row>
   );
@@ -317,23 +349,20 @@ const DescriptionList: View<DescriptionListProps> = ({ title, items }) => {
 type Template<Props> = (props: Props) => string;
 
 function makeTemplate<Props>(Template: View<Props>): Template<Props> {
-  return props => renderToStaticMarkup(<Template {...props} />);
+  return (props) => renderToStaticMarkup(<Template {...props} />);
 }
 
 const Container: View<WithChildren> = ({ children }) => {
-  return (
-    <table style={styles.classes.table}>
-      {children}
-    </table>
-  );
+  return <table style={styles.classes.table}>{children}</table>;
 };
 
-const Row: View<WithChildren & Partial<WithStyle>> = ({ children, style = {} }) => {
+const Row: View<WithChildren & Partial<WithStyle>> = ({
+  children,
+  style = {}
+}) => {
   return (
     <tr>
-      <td style={{ ...styles.classes.row, ...style }}>
-        {children}
-      </td>
+      <td style={{ ...styles.classes.row, ...style }}>{children}</td>
     </tr>
   );
 };
@@ -349,22 +378,32 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
   return (
     <html style={styles.classes.body}>
       <head>
-        <meta charSet='utf8' />
+        <meta charSet="utf8" />
       </head>
       <body style={styles.classes.body}>
         <Container>
           <Row>
-            <a href={makeUrl('')} target='_blank' rel="noreferrer" style={styles.classes.logoBackground}>
-              <img src={makeUrl(SHOW_TEST_INDICATOR ? 'images/logo_test.png' : 'images/logo.png')} alt='Digital Marketplace' style={styles.classes.logo} />
+            <a
+              href={makeUrl("")}
+              target="_blank"
+              rel="noreferrer"
+              style={styles.classes.logoBackground}>
+              <img
+                src={makeUrl(
+                  SHOW_TEST_INDICATOR
+                    ? "images/logo_test.png"
+                    : "images/logo.png"
+                )}
+                alt="Digital Marketplace"
+                style={styles.classes.logo}
+              />
             </a>
           </Row>
-          <Row style={styles.classes.title}>
-            {title}
-          </Row>
-          {description ? (<Row style={styles.classes.description}>{description}</Row>) : null}
-          <Fragment>
-            {children}
-          </Fragment>
+          <Row style={styles.classes.title}>{title}</Row>
+          {description ? (
+            <Row style={styles.classes.description}>{description}</Row>
+          ) : null}
+          <Fragment>{children}</Fragment>
         </Container>
       </body>
     </html>
@@ -382,31 +421,35 @@ export interface SimpleProps extends TemplateBaseProps {
   body?: string | ReactElement;
 }
 
-const Simple: View<SimpleProps> = props => {
+const Simple: View<SimpleProps> = (props) => {
   const { linkLists, descriptionLists, callsToAction, body } = props;
   return (
     <Layout {...props}>
       <Fragment>
         {linkLists
-          ? linkLists.map((list, i) => (<LinkList key={`link-list-${i}`} {...list} />))
+          ? linkLists.map((list, i) => (
+              <LinkList key={`link-list-${i}`} {...list} />
+            ))
           : null}
       </Fragment>
       <Fragment>
         {descriptionLists
-          ? descriptionLists.map((list, i) => (<DescriptionList key={`description-list-${i}`} {...list} />))
+          ? descriptionLists.map((list, i) => (
+              <DescriptionList key={`description-list-${i}`} {...list} />
+            ))
           : null}
       </Fragment>
       <Fragment>
-        {body
-          ? (<Row style={{ textAlign: 'center' }}>{body}</Row>)
-          : null}
+        {body ? <Row style={{ textAlign: "center" }}>{body}</Row> : null}
       </Fragment>
       <Fragment>
-        {callsToAction
-          ? <Row style={{...styles.utilities.text.center}}>
-              {callsToAction.map((call, i) => (<CallToAction key={`call-to-action-${i}`} {...call} />))}
-            </Row>
-          : null}
+        {callsToAction ? (
+          <Row style={{ ...styles.utilities.text.center }}>
+            {callsToAction.map((call, i) => (
+              <CallToAction key={`call-to-action-${i}`} {...call} />
+            ))}
+          </Row>
+        ) : null}
       </Fragment>
     </Layout>
   );

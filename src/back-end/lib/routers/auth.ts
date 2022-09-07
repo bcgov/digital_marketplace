@@ -1,46 +1,74 @@
-import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_REALM, KEYCLOAK_URL } from 'back-end/config';
-import { prefixPath } from 'back-end/lib';
-import { Connection, createSession, createUser, findOneUserByTypeAndIdp, updateUser } from 'back-end/lib/db';
-import { accountReactivatedSelf, userAccountRegistered } from 'back-end/lib/mailer/notifications/user';
-import { makeErrorResponseBody, makeTextResponseBody, nullRequestBodyHandler, Request, Router, TextResponseBody } from 'back-end/lib/server';
-import { ServerHttpMethod } from 'back-end/lib/types';
-import { generators, TokenSet, TokenSetParameters } from 'openid-client';
-import qs from 'querystring';
-import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
-import { getString } from 'shared/lib';
-import { request as httpRequest } from 'shared/lib/http';
-import { Session } from 'shared/lib/resources/session';
-import { KeyCloakIdentityProvider, User, UserStatus, UserType } from 'shared/lib/resources/user';
-import { ClientHttpMethod } from 'shared/lib/types';
-import { getValidValue, isInvalid, isValid } from 'shared/lib/validation';
+import {
+  KEYCLOAK_CLIENT_ID,
+  KEYCLOAK_CLIENT_SECRET,
+  KEYCLOAK_REALM,
+  KEYCLOAK_URL
+} from "back-end/config";
+import { prefixPath } from "back-end/lib";
+import {
+  Connection,
+  createSession,
+  createUser,
+  findOneUserByTypeAndIdp,
+  updateUser
+} from "back-end/lib/db";
+import {
+  accountReactivatedSelf,
+  userAccountRegistered
+} from "back-end/lib/mailer/notifications/user";
+import {
+  makeErrorResponseBody,
+  makeTextResponseBody,
+  nullRequestBodyHandler,
+  Request,
+  Router,
+  TextResponseBody
+} from "back-end/lib/server";
+import { ServerHttpMethod } from "back-end/lib/types";
+import { generators, TokenSet, TokenSetParameters } from "openid-client";
+import qs from "querystring";
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from "shared/config";
+import { getString } from "shared/lib";
+import { request as httpRequest } from "shared/lib/http";
+import { Session } from "shared/lib/resources/session";
+import {
+  KeyCloakIdentityProvider,
+  User,
+  UserStatus,
+  UserType
+} from "shared/lib/resources/user";
+import { ClientHttpMethod } from "shared/lib/types";
+import { getValidValue, isInvalid, isValid } from "shared/lib/validation";
 
 interface KeyCloakAuthQuery {
   client_id: string;
   client_secret: string;
   redirect_uri: string;
-  response_mode: 'query';
-  response_type: 'code';
-  scope: 'openid';
+  response_mode: "query";
+  response_type: "code";
+  scope: "openid";
   nonce: string;
   kc_idp_hint?: KeyCloakIdentityProvider;
 }
 
 interface KeyCloakTokenRequestData {
   code: string;
-  grant_type: 'authorization_code';
+  grant_type: "authorization_code";
   client_id: string;
   client_secret: string;
-  scope: 'openid';
+  scope: "openid";
   redirect_uri: string;
 }
 
-async function makeRouter(connection: Connection): Promise<Router<any, any, any, any, TextResponseBody, any, any>> {
+async function makeRouter(
+  connection: Connection
+): Promise<Router<any, any, any, any, TextResponseBody, any, any>> {
   // @ts-ignore
   const router: Router<any, any, any, any, TextResponseBody, any, any> = [
     {
       method: ServerHttpMethod.Get,
-      path: '/auth/sign-in',
-      handler: nullRequestBodyHandler(async request => {
+      path: "/auth/sign-in",
+      handler: nullRequestBodyHandler(async (request) => {
         try {
           const provider = request.query.provider;
           const redirectOnSuccess = request.query.redirectOnSuccess;
@@ -48,10 +76,10 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           const authQuery: KeyCloakAuthQuery = {
             client_id: KEYCLOAK_CLIENT_ID,
             client_secret: KEYCLOAK_CLIENT_SECRET,
-            redirect_uri: prefixPath('auth/callback'),
-            response_mode: 'query',
-            response_type: 'code',
-            scope: 'openid',
+            redirect_uri: prefixPath("auth/callback"),
+            response_mode: "query",
+            response_type: "code",
+            scope: "openid",
             nonce
           };
 
@@ -73,21 +101,24 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           return {
             code: 302,
             headers: {
-              'Location': authUrl
+              Location: authUrl
             },
             session: request.session,
-            body: makeTextResponseBody('')
+            body: makeTextResponseBody("")
           };
         } catch (error) {
-          request.logger.error('authorization failed', makeErrorResponseBody(error));
+          request.logger.error(
+            "authorization failed",
+            makeErrorResponseBody(error)
+          );
           return makeAuthErrorRedirect(request);
         }
       })
     },
     {
       method: ServerHttpMethod.Get,
-      path: '/auth/callback',
-      handler: nullRequestBodyHandler(async request => {
+      path: "/auth/callback",
+      handler: nullRequestBodyHandler(async (request) => {
         try {
           // Retrieve authorization code and redirect
           const { code, redirectOnSuccess } = request.query;
@@ -95,11 +126,11 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
           // Use auth code to retrieve token asynchronously
           const data: KeyCloakTokenRequestData = {
             code,
-            grant_type: 'authorization_code',
+            grant_type: "authorization_code",
             client_id: KEYCLOAK_CLIENT_ID,
             client_secret: KEYCLOAK_CLIENT_SECRET,
-            scope: 'openid',
-            redirect_uri: prefixPath('auth/callback')
+            scope: "openid",
+            redirect_uri: prefixPath("auth/callback")
           };
 
           // If redirectOnSuccess was provided on callback, this must also be provided on token request (redirect_uri must match for each request)
@@ -107,184 +138,233 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
             data.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
           }
 
-          const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+          const headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+          };
           // data as any --> pacify the compiler
-          const response = await httpRequest(ClientHttpMethod.Post, `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`, qs.stringify(data as any), headers);
+          const response = await httpRequest(
+            ClientHttpMethod.Post,
+            `${KEYCLOAK_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`,
+            qs.stringify(data as any),
+            headers
+          );
 
           if (response.status !== 200) {
             return makeAuthErrorRedirect(request);
           }
 
           const tokenSet = new TokenSet(response.data as TokenSetParameters);
-          const { session, existingUser } = await establishSessionWithClaims(connection, request, tokenSet) || {};
+          const { session, existingUser } =
+            (await establishSessionWithClaims(connection, request, tokenSet)) ||
+            {};
           if (!session) {
-            throw new Error('unable to create session');
+            throw new Error("unable to create session");
           }
 
-          const signinCompleteLocation = redirectOnSuccess ? redirectOnSuccess : (existingUser ? prefixPath('/dashboard') : prefixPath('/sign-up/complete'));
+          const signinCompleteLocation = redirectOnSuccess
+            ? redirectOnSuccess
+            : existingUser
+            ? prefixPath("/dashboard")
+            : prefixPath("/sign-up/complete");
 
           return {
             code: 302,
             headers: {
-              'Location': signinCompleteLocation
+              Location: signinCompleteLocation
             },
             session,
-            body: makeTextResponseBody('')
+            body: makeTextResponseBody("")
           };
         } catch (error) {
-          request.logger.error('authentication failed', makeErrorResponseBody(error));
+          request.logger.error(
+            "authentication failed",
+            makeErrorResponseBody(error)
+          );
           return makeAuthErrorRedirect(request);
         }
       })
     },
     // /auth/createsessiongov is for testing only, so only exists outside of production
 
-    ...(process.env.NODE_ENV === 'development' ? [{
-      method: ServerHttpMethod.Get,
-      path: '/auth/createsessiongov',
-      handler: nullRequestBodyHandler(async request => {
-        try {
-          const userType = UserType.Government;
-          const idpId = 'test-gov'
-          const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
-          if (isInvalid(dbResult)) {
-           // @ts-ignore
-            makeAuthErrorRedirect(request);
-          }
-          const user = dbResult.value as User | null;
+    ...(process.env.NODE_ENV === "development"
+      ? [
+          {
+            method: ServerHttpMethod.Get,
+            path: "/auth/createsessiongov",
+            handler: nullRequestBodyHandler(async (request) => {
+              try {
+                const userType = UserType.Government;
+                const idpId = "test-gov";
+                const dbResult = await findOneUserByTypeAndIdp(
+                  connection,
+                  userType,
+                  idpId
+                );
+                if (isInvalid(dbResult)) {
+                  // @ts-ignore
+                  makeAuthErrorRedirect(request);
+                }
+                const user = dbResult.value as User | null;
 
-          if (!user) {
-            console.log('Error: Test user does not exist in database')
-            return;
-          }
-          const result = await createSession(connection, {
-            user: user && user.id,
-            accessToken: '' // This token isn't required anywhere
-          });
-          if (isInvalid(result)) {
-            // @ts-ignore
-            makeAuthErrorRedirect(request);
-            console.log('Error: Unsuccessful login')
-            return null;
-          }
+                if (!user) {
+                  console.log("Error: Test user does not exist in database");
+                  return;
+                }
+                const result = await createSession(connection, {
+                  user: user && user.id,
+                  accessToken: "" // This token isn't required anywhere
+                });
+                if (isInvalid(result)) {
+                  // @ts-ignore
+                  makeAuthErrorRedirect(request);
+                  console.log("Error: Unsuccessful login");
+                  return null;
+                }
 
-          const session = result.value;
+                const session = result.value;
 
-          const signinCompleteLocation = prefixPath('/dashboard');
-          return {
-            code: 302,
-            headers: {
-              'Location': signinCompleteLocation
-            },
-            session,
-            body: makeTextResponseBody('')
-          };
-        } catch (error) {
-          request.logger.error('authentication failed', makeErrorResponseBody(error));
-          console.log('Error: Unsuccessful login')
-          // @ts-ignore
-          return makeAuthErrorRedirect(request);
-        }
-      })
-    }] : []),
+                const signinCompleteLocation = prefixPath("/dashboard");
+                return {
+                  code: 302,
+                  headers: {
+                    Location: signinCompleteLocation
+                  },
+                  session,
+                  body: makeTextResponseBody("")
+                };
+              } catch (error) {
+                request.logger.error(
+                  "authentication failed",
+                  makeErrorResponseBody(error)
+                );
+                console.log("Error: Unsuccessful login");
+                // @ts-ignore
+                return makeAuthErrorRedirect(request);
+              }
+            })
+          }
+        ]
+      : []),
     // /auth/createsessionadmin is for testing only, so only exists outside of production
-    ...(process.env.NODE_ENV === 'development' ? [{
-      method: ServerHttpMethod.Get,
-      path: '/auth/createsessionadmin',
-      handler: nullRequestBodyHandler(async request => {
-        try {
-          const userType = UserType.Admin;
-          const idpId = 'test-admin'
-          const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
-          if (isInvalid(dbResult)) {
-           // @ts-ignore
-            makeAuthErrorRedirect(request);
-          }
-          const user = dbResult.value as User | null;
+    ...(process.env.NODE_ENV === "development"
+      ? [
+          {
+            method: ServerHttpMethod.Get,
+            path: "/auth/createsessionadmin",
+            handler: nullRequestBodyHandler(async (request) => {
+              try {
+                const userType = UserType.Admin;
+                const idpId = "test-admin";
+                const dbResult = await findOneUserByTypeAndIdp(
+                  connection,
+                  userType,
+                  idpId
+                );
+                if (isInvalid(dbResult)) {
+                  // @ts-ignore
+                  makeAuthErrorRedirect(request);
+                }
+                const user = dbResult.value as User | null;
 
-          if (!user) {
-            console.log('Error: Test user does not exist in database')
-            return;
-          }
-          const result = await createSession(connection, {
-            user: user && user.id,
-            accessToken: '' // This token isn't required anywhere
-          });
-          if (isInvalid(result)) {
-            // @ts-ignore
-            makeAuthErrorRedirect(request);
-            console.log('Error: Unsuccessful login')
-            return null;
-          }
+                if (!user) {
+                  console.log("Error: Test user does not exist in database");
+                  return;
+                }
+                const result = await createSession(connection, {
+                  user: user && user.id,
+                  accessToken: "" // This token isn't required anywhere
+                });
+                if (isInvalid(result)) {
+                  // @ts-ignore
+                  makeAuthErrorRedirect(request);
+                  console.log("Error: Unsuccessful login");
+                  return null;
+                }
 
-          const session = result.value;
+                const session = result.value;
 
-          const signinCompleteLocation = prefixPath('/dashboard');
-          return {
-            code: 302,
-            headers: {
-              'Location': signinCompleteLocation
-            },
-            session,
-            body: makeTextResponseBody('')
-          };
-        } catch (error) {
-          request.logger.error('authentication failed', makeErrorResponseBody(error));
-          console.log('Error: Unsuccessful login')
-          // @ts-ignore
-          return makeAuthErrorRedirect(request);
-        }
-      })
-    }] : []),
+                const signinCompleteLocation = prefixPath("/dashboard");
+                return {
+                  code: 302,
+                  headers: {
+                    Location: signinCompleteLocation
+                  },
+                  session,
+                  body: makeTextResponseBody("")
+                };
+              } catch (error) {
+                request.logger.error(
+                  "authentication failed",
+                  makeErrorResponseBody(error)
+                );
+                console.log("Error: Unsuccessful login");
+                // @ts-ignore
+                return makeAuthErrorRedirect(request);
+              }
+            })
+          }
+        ]
+      : []),
     // /auth/createsessionvendor is for testing only, so only exists outside of production
-    ...(process.env.NODE_ENV === 'development' ? [{
-      method: ServerHttpMethod.Get,
-      path: '/auth/createsessionvendor/:id',
-      handler: nullRequestBodyHandler(async request => {
-        try {
-          const userType = UserType.Vendor;
-          const idpId = `test-vendor-${request.params.id}`
-          const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
-          if (isInvalid(dbResult)) {
-           // @ts-ignore
-            makeAuthErrorRedirect(request);
-          }
-          const user = dbResult.value as User | null;
+    ...(process.env.NODE_ENV === "development"
+      ? [
+          {
+            method: ServerHttpMethod.Get,
+            path: "/auth/createsessionvendor/:id",
+            handler: nullRequestBodyHandler(async (request) => {
+              try {
+                const userType = UserType.Vendor;
+                const idpId = `test-vendor-${request.params.id}`;
+                const dbResult = await findOneUserByTypeAndIdp(
+                  connection,
+                  userType,
+                  idpId
+                );
+                if (isInvalid(dbResult)) {
+                  // @ts-ignore
+                  makeAuthErrorRedirect(request);
+                }
+                const user = dbResult.value as User | null;
 
-          if (!user) {
-            console.log('Error: Test user does not exist in database')
-            return;
-          }
-          const result = await createSession(connection, {
-            user: user && user.id,
-            accessToken: '' // This token isn't required anywhere
-          });
-          if (isInvalid(result)) {
-            // @ts-ignore
-            makeAuthErrorRedirect(request);
-            console.log('Error: Unsuccessful login')
-            return null;
-          }
+                if (!user) {
+                  console.log("Error: Test user does not exist in database");
+                  return;
+                }
+                const result = await createSession(connection, {
+                  user: user && user.id,
+                  accessToken: "" // This token isn't required anywhere
+                });
+                if (isInvalid(result)) {
+                  // @ts-ignore
+                  makeAuthErrorRedirect(request);
+                  console.log("Error: Unsuccessful login");
+                  return null;
+                }
 
-          const session = result.value;
+                const session = result.value;
 
-          const signinCompleteLocation = prefixPath('/dashboard');
-          return {
-            code: 302,
-            headers: {
-              'Location': signinCompleteLocation
-            },
-            session,
-            body: makeTextResponseBody('')
-          };
-        } catch (error) {
-          request.logger.error('authentication failed', makeErrorResponseBody(error));
-          console.log('Error: Unsuccessful login')
-          // @ts-ignore
-          return makeAuthErrorRedirect(request);
-        }
-      })
-    }] : []),
+                const signinCompleteLocation = prefixPath("/dashboard");
+                return {
+                  code: 302,
+                  headers: {
+                    Location: signinCompleteLocation
+                  },
+                  session,
+                  body: makeTextResponseBody("")
+                };
+              } catch (error) {
+                request.logger.error(
+                  "authentication failed",
+                  makeErrorResponseBody(error)
+                );
+                console.log("Error: Unsuccessful login");
+                // @ts-ignore
+                return makeAuthErrorRedirect(request);
+              }
+            })
+          }
+        ]
+      : [])
   ];
   return router;
 }
@@ -298,10 +378,14 @@ async function makeRouter(connection: Connection): Promise<Router<any, any, any,
  * @param tokenSet
  * @returns
  */
-async function establishSessionWithClaims(connection: Connection, request: Request<any, Session>, tokenSet: TokenSet) {
+async function establishSessionWithClaims(
+  connection: Connection,
+  request: Request<any, Session>,
+  tokenSet: TokenSet
+) {
   const claims = tokenSet.claims();
   let userType: UserType;
-  const identityProvider = getString(claims, 'loginSource');
+  const identityProvider = getString(claims, "loginSource");
   switch (identityProvider) {
     case GOV_IDP_SUFFIX.toUpperCase():
       userType = UserType.Government;
@@ -310,21 +394,34 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
       userType = UserType.Vendor;
       break;
     default:
-      request.logger.error('unknown identity provider', makeErrorResponseBody(new Error(identityProvider)));
+      request.logger.error(
+        "unknown identity provider",
+        makeErrorResponseBody(new Error(identityProvider))
+      );
       makeAuthErrorRedirect(request);
       return null;
   }
 
-  let username = getString(claims, 'preferred_username');
-  const idpId = getString(claims, 'idp_id');
+  let username = getString(claims, "preferred_username");
+  const idpId = getString(claims, "idp_id");
 
   // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
-  if ((username.endsWith('@' + VENDOR_IDP_SUFFIX) && userType === UserType.Vendor) || (username.endsWith('@' + GOV_IDP_SUFFIX) && userType === UserType.Government)) {
-    username = username.slice(0, username.lastIndexOf('@'));
+  if (
+    (username.endsWith("@" + VENDOR_IDP_SUFFIX) &&
+      userType === UserType.Vendor) ||
+    (username.endsWith("@" + GOV_IDP_SUFFIX) &&
+      userType === UserType.Government)
+  ) {
+    username = username.slice(0, username.lastIndexOf("@"));
   }
 
-  if (!username || !idpId || !tokenSet.access_token || !tokenSet.refresh_token) {
-    throw new Error('authentication failure - invalid claims');
+  if (
+    !username ||
+    !idpId ||
+    !tokenSet.access_token ||
+    !tokenSet.refresh_token
+  ) {
+    throw new Error("authentication failure - invalid claims");
   }
 
   const dbResult = await findOneUserByTypeAndIdp(connection, userType, idpId);
@@ -334,15 +431,18 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
   let user = dbResult.value as User | null;
   const existingUser = !!user;
   if (!user) {
-    user = getValidValue(await createUser(connection, {
-      idpId,
-      type: userType,
-      status: UserStatus.Active,
-      name: claims.name || '',
-      email: claims.email || null,
-      jobTitle: '',
-      idpUsername: username
-    }), null);
+    user = getValidValue(
+      await createUser(connection, {
+        idpId,
+        type: userType,
+        status: UserStatus.Active,
+        name: claims.name || "",
+        email: claims.email || null,
+        jobTitle: "",
+        idpUsername: username
+      }),
+      null
+    );
 
     // If email present, notify of successful account creation
     if (user && user.email) {
@@ -350,7 +450,10 @@ async function establishSessionWithClaims(connection: Connection, request: Reque
     }
   } else if (user.status === UserStatus.InactiveByUser) {
     const { id } = user;
-    const dbUserResult = await updateUser(connection, { id, status: UserStatus.Active });
+    const dbUserResult = await updateUser(connection, {
+      id,
+      status: UserStatus.Active
+    });
     // // Send notification
     if (isValid(dbUserResult)) {
       accountReactivatedSelf(dbUserResult.value);
@@ -381,10 +484,10 @@ function makeAuthErrorRedirect(request: Request<any, Session>) {
   return {
     code: 302,
     headers: {
-      'Location': prefixPath('/notice/authFailure')
+      Location: prefixPath("/notice/authFailure")
     },
     session: request.session,
-    body: makeTextResponseBody('')
+    body: makeTextResponseBody("")
   };
 }
 

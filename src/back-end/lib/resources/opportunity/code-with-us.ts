@@ -1,25 +1,73 @@
-import * as crud from 'back-end/lib/crud';
-import * as db from 'back-end/lib/db';
-import * as cwuOpportunityNotifications from 'back-end/lib/mailer/notifications/opportunity/code-with-us';
-import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, nullRequestBodyHandler, wrapRespond } from 'back-end/lib/server';
-import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateAttachments, validateCWUOpportunityId } from 'back-end/lib/validation';
-import { get, omit } from 'lodash';
-import { addDays, getNumber, getString, getStringArray } from 'shared/lib';
-import { FileRecord } from 'shared/lib/resources/file';
-import { CreateCWUOpportunityStatus, CreateRequestBody, CreateValidationErrors, CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus, DeleteValidationErrors, isValidStatusChange, UpdateEditRequestBody, UpdateRequestBody, UpdateValidationErrors, UpdateWithNoteRequestBody } from 'shared/lib/resources/opportunity/code-with-us';
-import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { adt, ADT, Id } from 'shared/lib/types';
-import { allValid, getInvalidValue, getValidValue, invalid, isInvalid, isValid, mapValid, valid, validateUUID, Validation } from 'shared/lib/validation';
-import * as opportunityValidation from 'shared/lib/validation/opportunity/code-with-us';
+import * as crud from "back-end/lib/crud";
+import * as db from "back-end/lib/db";
+import * as cwuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/code-with-us";
+import * as permissions from "back-end/lib/permissions";
+import {
+  basicResponse,
+  JsonResponseBody,
+  makeJsonResponseBody,
+  nullRequestBodyHandler,
+  wrapRespond
+} from "back-end/lib/server";
+import {
+  SupportedRequestBodies,
+  SupportedResponseBodies
+} from "back-end/lib/types";
+import {
+  validateAttachments,
+  validateCWUOpportunityId
+} from "back-end/lib/validation";
+import { get, omit } from "lodash";
+import { addDays, getNumber, getString, getStringArray } from "shared/lib";
+import { FileRecord } from "shared/lib/resources/file";
+import {
+  CreateCWUOpportunityStatus,
+  CreateRequestBody,
+  CreateValidationErrors,
+  CWUOpportunity,
+  CWUOpportunitySlim,
+  CWUOpportunityStatus,
+  DeleteValidationErrors,
+  isValidStatusChange,
+  UpdateEditRequestBody,
+  UpdateRequestBody,
+  UpdateValidationErrors,
+  UpdateWithNoteRequestBody
+} from "shared/lib/resources/opportunity/code-with-us";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
+import { adt, ADT, Id } from "shared/lib/types";
+import {
+  allValid,
+  getInvalidValue,
+  getValidValue,
+  invalid,
+  isInvalid,
+  isValid,
+  mapValid,
+  valid,
+  validateUUID,
+  Validation
+} from "shared/lib/validation";
+import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
 
-export interface ValidatedCreateRequestBody extends Omit<CWUOpportunity, 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'id' | 'addenda'> {
+export interface ValidatedCreateRequestBody
+  extends Omit<
+    CWUOpportunity,
+    "createdAt" | "createdBy" | "updatedAt" | "updatedBy" | "id" | "addenda"
+  > {
   status: CreateCWUOpportunityStatus;
   session: AuthenticatedSession;
 }
 
-interface ValidatedUpdateEditRequestBody extends Omit<UpdateEditRequestBody, 'proposalDeadline' | 'assignmentDate' | 'startDate' | 'completionDate' | 'attachments'> {
+interface ValidatedUpdateEditRequestBody
+  extends Omit<
+    UpdateEditRequestBody,
+    | "proposalDeadline"
+    | "assignmentDate"
+    | "startDate"
+    | "completionDate"
+    | "attachments"
+  > {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
@@ -27,19 +75,21 @@ interface ValidatedUpdateEditRequestBody extends Omit<UpdateEditRequestBody, 'pr
   attachments: FileRecord[];
 }
 
-interface ValidatedUpdateWithNoteRequestBody extends Omit<UpdateWithNoteRequestBody, 'attachments'> {
+interface ValidatedUpdateWithNoteRequestBody
+  extends Omit<UpdateWithNoteRequestBody, "attachments"> {
   attachments: FileRecord[];
 }
 
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
-  body: ADT<'edit', ValidatedUpdateEditRequestBody>
-      | ADT<'publish', string>
-      | ADT<'startEvaluation', string>
-      | ADT<'suspend', string>
-      | ADT<'cancel', string>
-      | ADT<'addAddendum', string>
-      | ADT<'addNote', ValidatedUpdateWithNoteRequestBody>;
+  body:
+    | ADT<"edit", ValidatedUpdateEditRequestBody>
+    | ADT<"publish", string>
+    | ADT<"startEvaluation", string>
+    | ADT<"suspend", string>
+    | ADT<"cancel", string>
+    | ADT<"addAddendum", string>
+    | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>;
 }
 
 type ValidatedDeleteRequestBody = Id;
@@ -47,7 +97,7 @@ type ValidatedDeleteRequestBody = Id;
 type Resource = crud.Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,
-  Omit<CreateRequestBody, 'status'> & { status: string; },
+  Omit<CreateRequestBody, "status"> & { status: string },
   ValidatedCreateRequestBody,
   CreateValidationErrors,
   null,
@@ -62,12 +112,19 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'opportunities/code-with-us',
+  routeNamespace: "opportunities/code-with-us",
 
   readMany(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<CWUOpportunitySlim[] | string[]>, Session>(async request => {
-      const respond = (code: number, body: CWUOpportunitySlim[] | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
-      const dbResult = await db.readManyCWUOpportunities(connection, request.session);
+    return nullRequestBodyHandler<
+      JsonResponseBody<CWUOpportunitySlim[] | string[]>,
+      Session
+    >(async (request) => {
+      const respond = (code: number, body: CWUOpportunitySlim[] | string[]) =>
+        basicResponse(code, request.session, makeJsonResponseBody(body));
+      const dbResult = await db.readManyCWUOpportunities(
+        connection,
+        request.session
+      );
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
@@ -76,19 +133,27 @@ const resource: Resource = {
   },
 
   readOne(connection) {
-    return nullRequestBodyHandler<JsonResponseBody<CWUOpportunity | string[]>, Session>(async request => {
-      const respond = (code: number, body: CWUOpportunity | string[]) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    return nullRequestBodyHandler<
+      JsonResponseBody<CWUOpportunity | string[]>,
+      Session
+    >(async (request) => {
+      const respond = (code: number, body: CWUOpportunity | string[]) =>
+        basicResponse(code, request.session, makeJsonResponseBody(body));
       // Validate the provided id
       const validatedId = validateUUID(request.params.id);
       if (isInvalid(validatedId)) {
         return respond(400, validatedId.value);
       }
-      const dbResult = await db.readOneCWUOpportunity(connection, validatedId.value, request.session);
+      const dbResult = await db.readOneCWUOpportunity(
+        connection,
+        validatedId.value,
+        request.session
+      );
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
       if (!dbResult.value) {
-        return respond(404, ['Opportunity not found.']);
+        return respond(404, ["Opportunity not found."]);
       }
       return respond(200, dbResult.value);
     });
@@ -97,54 +162,62 @@ const resource: Resource = {
   create(connection) {
     return {
       async parseRequestBody(request) {
-        const body: unknown = request.body.tag === 'json' ? request.body.value : {};
+        const body: unknown =
+          request.body.tag === "json" ? request.body.value : {};
         return {
-          title: getString(body, 'title'),
-          teaser: getString(body, 'teaser'),
-          remoteOk: get(body, 'remoteOk'),
-          remoteDesc: getString(body, 'remoteDesc'),
-          location: getString(body, 'location'),
-          reward: getNumber(body, 'reward'),
-          skills: getStringArray(body, 'skills'),
-          description: getString(body, 'description'),
-          proposalDeadline: getString(body, 'proposalDeadline'),
-          assignmentDate: getString(body, 'assignmentDate'),
-          startDate: getString(body, 'startDate'),
-          completionDate: getString(body, 'completionDate'),
-          submissionInfo: getString(body, 'submissionInfo'),
-          acceptanceCriteria: getString(body, 'acceptanceCriteria'),
-          evaluationCriteria: getString(body, 'evaluationCriteria'),
-          attachments: getStringArray(body, 'attachments'),
-          status: getString(body, 'status')
+          title: getString(body, "title"),
+          teaser: getString(body, "teaser"),
+          remoteOk: get(body, "remoteOk"),
+          remoteDesc: getString(body, "remoteDesc"),
+          location: getString(body, "location"),
+          reward: getNumber(body, "reward"),
+          skills: getStringArray(body, "skills"),
+          description: getString(body, "description"),
+          proposalDeadline: getString(body, "proposalDeadline"),
+          assignmentDate: getString(body, "assignmentDate"),
+          startDate: getString(body, "startDate"),
+          completionDate: getString(body, "completionDate"),
+          submissionInfo: getString(body, "submissionInfo"),
+          acceptanceCriteria: getString(body, "acceptanceCriteria"),
+          evaluationCriteria: getString(body, "evaluationCriteria"),
+          attachments: getStringArray(body, "attachments"),
+          status: getString(body, "status")
         };
       },
       async validateRequestBody(request) {
-        if (!permissions.createCWUOpportunity(request.session) || !permissions.isSignedIn(request.session)) {
+        if (
+          !permissions.createCWUOpportunity(request.session) ||
+          !permissions.isSignedIn(request.session)
+        ) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
         const session: AuthenticatedSession = request.session;
 
-        const { title,
-                teaser,
-                remoteOk,
-                remoteDesc,
-                location,
-                reward,
-                skills,
-                description,
-                proposalDeadline,
-                assignmentDate,
-                startDate,
-                completionDate,
-                submissionInfo,
-                acceptanceCriteria,
-                evaluationCriteria,
-                attachments
-              } = request.body;
+        const {
+          title,
+          teaser,
+          remoteOk,
+          remoteDesc,
+          location,
+          reward,
+          skills,
+          description,
+          proposalDeadline,
+          assignmentDate,
+          startDate,
+          completionDate,
+          submissionInfo,
+          acceptanceCriteria,
+          evaluationCriteria,
+          attachments
+        } = request.body;
 
-        const validatedStatus = opportunityValidation.validateCreateCWUOpportunityStatus(request.body.status);
+        const validatedStatus =
+          opportunityValidation.validateCreateCWUOpportunityStatus(
+            request.body.status
+          );
         if (isInvalid(validatedStatus)) {
           return invalid({
             status: validatedStatus.value
@@ -152,19 +225,33 @@ const resource: Resource = {
         }
 
         // Attachments must be validated for both drafts and published opportunities.
-        const validatedAttachments = await validateAttachments(connection, attachments);
+        const validatedAttachments = await validateAttachments(
+          connection,
+          attachments
+        );
         if (isInvalid(validatedAttachments)) {
           return invalid({
             attachments: validatedAttachments.value
           });
         }
 
-        const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline);
-        const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, new Date()));
-        const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, new Date()));
+        const validatedProposalDeadline =
+          opportunityValidation.validateProposalDeadline(proposalDeadline);
+        const validatedAssignmentDate =
+          opportunityValidation.validateAssignmentDate(
+            assignmentDate,
+            getValidValue(validatedProposalDeadline, new Date())
+          );
+        const validatedStartDate = opportunityValidation.validateStartDate(
+          startDate,
+          getValidValue(validatedAssignmentDate, new Date())
+        );
         const validatedCompletionDate = mapValid(
-          opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, new Date())),
-          v => v || null
+          opportunityValidation.validateCompletionDate(
+            completionDate,
+            getValidValue(validatedStartDate, new Date())
+          ),
+          (v) => v || null
         );
 
         // Do not validate other fields if the opportunity is a draft.
@@ -176,7 +263,10 @@ const resource: Resource = {
             status: validatedStatus.value,
             attachments: validatedAttachments.value,
             // Coerce validated dates to default values.
-            proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
+            proposalDeadline: getValidValue(
+              validatedProposalDeadline,
+              defaultDate
+            ),
             assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
             startDate: getValidValue(validatedStartDate, defaultDate),
             completionDate: getValidValue(validatedCompletionDate, null)
@@ -185,33 +275,44 @@ const resource: Resource = {
 
         const validatedTitle = opportunityValidation.validateTitle(title);
         const validatedTeaser = opportunityValidation.validateTeaser(teaser);
-        const validatedRemoteOk = opportunityValidation.validateRemoteOk(remoteOk);
-        const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc, getValidValue(validatedRemoteOk, false));
-        const validatedLocation = opportunityValidation.validateLocation(location);
+        const validatedRemoteOk =
+          opportunityValidation.validateRemoteOk(remoteOk);
+        const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+          remoteDesc,
+          getValidValue(validatedRemoteOk, false)
+        );
+        const validatedLocation =
+          opportunityValidation.validateLocation(location);
         const validatedReward = opportunityValidation.validateReward(reward);
         const validatedSkills = opportunityValidation.validateSkills(skills);
-        const validatedDescription = opportunityValidation.validateDescription(description);
-        const validatedSubmissionInfo = opportunityValidation.validateSubmissionInfo(submissionInfo);
-        const validatedAcceptanceCriteria = opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
-        const validatedEvaluationCriteria = opportunityValidation.validateEvaluationCriteria(evaluationCriteria);
+        const validatedDescription =
+          opportunityValidation.validateDescription(description);
+        const validatedSubmissionInfo =
+          opportunityValidation.validateSubmissionInfo(submissionInfo);
+        const validatedAcceptanceCriteria =
+          opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
+        const validatedEvaluationCriteria =
+          opportunityValidation.validateEvaluationCriteria(evaluationCriteria);
 
-        if (allValid([
-              validatedTitle,
-              validatedTeaser,
-              validatedRemoteOk,
-              validatedRemoteDesc,
-              validatedLocation,
-              validatedReward,
-              validatedSkills,
-              validatedDescription,
-              validatedProposalDeadline,
-              validatedAssignmentDate,
-              validatedStartDate,
-              validatedCompletionDate,
-              validatedSubmissionInfo,
-              validatedAcceptanceCriteria,
-              validatedEvaluationCriteria
-        ])) {
+        if (
+          allValid([
+            validatedTitle,
+            validatedTeaser,
+            validatedRemoteOk,
+            validatedRemoteDesc,
+            validatedLocation,
+            validatedReward,
+            validatedSkills,
+            validatedDescription,
+            validatedProposalDeadline,
+            validatedAssignmentDate,
+            validatedStartDate,
+            validatedCompletionDate,
+            validatedSubmissionInfo,
+            validatedAcceptanceCriteria,
+            validatedEvaluationCriteria
+          ])
+        ) {
           return valid({
             session,
             title: validatedTitle.value,
@@ -242,31 +343,66 @@ const resource: Resource = {
             reward: getInvalidValue(validatedReward, undefined),
             skills: getInvalidValue(validatedSkills, undefined),
             description: getInvalidValue(validatedDescription, undefined),
-            proposalDeadline: getInvalidValue(validatedProposalDeadline, undefined),
+            proposalDeadline: getInvalidValue(
+              validatedProposalDeadline,
+              undefined
+            ),
             assignmentDate: getInvalidValue(validatedAssignmentDate, undefined),
             startDate: getInvalidValue(validatedStartDate, undefined),
             completionDate: getInvalidValue(validatedCompletionDate, undefined),
             submissionInfo: getInvalidValue(validatedSubmissionInfo, undefined),
-            acceptanceCriteria: getInvalidValue(validatedAcceptanceCriteria, undefined),
-            evaluationCrtieria: getInvalidValue(validatedEvaluationCriteria, undefined)
+            acceptanceCriteria: getInvalidValue(
+              validatedAcceptanceCriteria,
+              undefined
+            ),
+            evaluationCrtieria: getInvalidValue(
+              validatedEvaluationCriteria,
+              undefined
+            )
           });
         }
       },
-      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUOpportunity>, JsonResponseBody<CreateValidationErrors>, Session>({
-        valid: (async request => {
-          const dbResult = await db.createCWUOpportunity(connection, omit(request.body, 'session'), request.body.session);
+      respond: wrapRespond<
+        ValidatedCreateRequestBody,
+        CreateValidationErrors,
+        JsonResponseBody<CWUOpportunity>,
+        JsonResponseBody<CreateValidationErrors>,
+        Session
+      >({
+        valid: async (request) => {
+          const dbResult = await db.createCWUOpportunity(
+            connection,
+            omit(request.body, "session"),
+            request.body.session
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
           // If published, notify subscribed users
           if (dbResult.value.status === CWUOpportunityStatus.Published) {
-            cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value, false);
+            cwuOpportunityNotifications.handleCWUPublished(
+              connection,
+              dbResult.value,
+              false
+            );
           }
-          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }),
-        invalid: (async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        })
+          return basicResponse(
+            201,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
+        },
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
+        }
       })
     };
   },
@@ -274,93 +410,118 @@ const resource: Resource = {
   update(connection) {
     return {
       async parseRequestBody(request) {
-        const body = request.body.tag === 'json' ? request.body.value : {};
-        const tag = get(body, 'tag');
-        const value: unknown = get(body, 'value');
+        const body = request.body.tag === "json" ? request.body.value : {};
+        const tag = get(body, "tag");
+        const value: unknown = get(body, "value");
         switch (tag) {
-          case 'edit':
-            return adt('edit', {
-              title: getString(value, 'title'),
-              teaser: getString(value, 'teaser'),
-              remoteOk: get(value, 'remoteOk'),
-              remoteDesc: getString(value, 'remoteDesc'),
-              location: getString(value, 'location'),
-              reward: getNumber<number>(value, 'reward'),
-              skills: getStringArray(value, 'skills'),
-              description: getString(value, 'description'),
-              proposalDeadline: getString(value, 'proposalDeadline'),
-              assignmentDate: getString(value, 'assignmentDate'),
-              startDate: getString(value, 'startDate'),
-              completionDate: getString(value, 'completionDate'),
-              submissionInfo: getString(value, 'submissionInfo'),
-              acceptanceCriteria: getString(value, 'acceptanceCriteria'),
-              evaluationCriteria: getString(value, 'evaluationCriteria'),
-              attachments: getStringArray(value, 'attachments')
+          case "edit":
+            return adt("edit", {
+              title: getString(value, "title"),
+              teaser: getString(value, "teaser"),
+              remoteOk: get(value, "remoteOk"),
+              remoteDesc: getString(value, "remoteDesc"),
+              location: getString(value, "location"),
+              reward: getNumber<number>(value, "reward"),
+              skills: getStringArray(value, "skills"),
+              description: getString(value, "description"),
+              proposalDeadline: getString(value, "proposalDeadline"),
+              assignmentDate: getString(value, "assignmentDate"),
+              startDate: getString(value, "startDate"),
+              completionDate: getString(value, "completionDate"),
+              submissionInfo: getString(value, "submissionInfo"),
+              acceptanceCriteria: getString(value, "acceptanceCriteria"),
+              evaluationCriteria: getString(value, "evaluationCriteria"),
+              attachments: getStringArray(value, "attachments")
             });
-          case 'publish':
-            return adt('publish', getString(body, 'value', ''));
-          case 'suspend':
-            return adt('suspend', getString(body, 'value', ''));
-          case 'cancel':
-            return adt('cancel', getString(body, 'value', ''));
-          case 'addAddendum':
-            return adt('addAddendum', getString(body, 'value', ''));
-          case 'addNote':
-            return adt('addNote', {
-              note: getString(value, 'note'),
-              attachments: getStringArray(value, 'attachments')
+          case "publish":
+            return adt("publish", getString(body, "value", ""));
+          case "suspend":
+            return adt("suspend", getString(body, "value", ""));
+          case "cancel":
+            return adt("cancel", getString(body, "value", ""));
+          case "addAddendum":
+            return adt("addAddendum", getString(body, "value", ""));
+          case "addNote":
+            return adt("addNote", {
+              note: getString(value, "note"),
+              attachments: getStringArray(value, "attachments")
             });
           default:
             return null;
         }
       },
       async validateRequestBody(request) {
-        if (!request.body) { return invalid({ opportunity: adt('parseFailure' as const) }); }
+        if (!request.body) {
+          return invalid({ opportunity: adt("parseFailure" as const) });
+        }
 
-        const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.params.id, request.session);
+        const validatedCWUOpportunity = await validateCWUOpportunityId(
+          connection,
+          request.params.id,
+          request.session
+        );
         if (isInvalid(validatedCWUOpportunity)) {
-          return invalid({ notFound: ['The specified opportunity does not exist.'] });
+          return invalid({
+            notFound: ["The specified opportunity does not exist."]
+          });
         }
         const cwuOpportunity = validatedCWUOpportunity.value;
 
-        if (!await permissions.editCWUOpportunity(connection, request.session, request.params.id) || !permissions.isSignedIn(request.session)) {
+        if (
+          !(await permissions.editCWUOpportunity(
+            connection,
+            request.session,
+            request.params.id
+          )) ||
+          !permissions.isSignedIn(request.session)
+        ) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
 
         switch (request.body.tag) {
-          case 'edit':{
-            const { title,
-                    teaser,
-                    remoteOk,
-                    remoteDesc,
-                    location,
-                    reward,
-                    skills,
-                    description,
-                    proposalDeadline,
-                    assignmentDate,
-                    startDate,
-                    completionDate,
-                    submissionInfo,
-                    acceptanceCriteria,
-                    evaluationCriteria,
-                    attachments
+          case "edit": {
+            const {
+              title,
+              teaser,
+              remoteOk,
+              remoteDesc,
+              location,
+              reward,
+              skills,
+              description,
+              proposalDeadline,
+              assignmentDate,
+              startDate,
+              completionDate,
+              submissionInfo,
+              acceptanceCriteria,
+              evaluationCriteria,
+              attachments
             } = request.body.value;
 
             // CWU Opportunities can only be edited if they are in DRAFT, PUBLISHED, or SUSPENDED
-            if (![CWUOpportunityStatus.Draft, CWUOpportunityStatus.Published, CWUOpportunityStatus.Suspended].includes(cwuOpportunity.status)) {
+            if (
+              ![
+                CWUOpportunityStatus.Draft,
+                CWUOpportunityStatus.Published,
+                CWUOpportunityStatus.Suspended
+              ].includes(cwuOpportunity.status)
+            ) {
               return invalid({
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
 
             // Attachments must be validated for both drafts and published opportunities.
-            const validatedAttachments = await validateAttachments(connection, attachments);
+            const validatedAttachments = await validateAttachments(
+              connection,
+              attachments
+            );
             if (isInvalid(validatedAttachments)) {
               return invalid({
-                opportunity: adt('edit' as const, {
+                opportunity: adt("edit" as const, {
                   attachments: validatedAttachments.value
                 })
               });
@@ -374,12 +535,26 @@ const resource: Resource = {
              * against the current date.
              */
             const now = new Date();
-            const validatedProposalDeadline = opportunityValidation.validateProposalDeadline(proposalDeadline, cwuOpportunity);
-            const validatedAssignmentDate = opportunityValidation.validateAssignmentDate(assignmentDate, getValidValue(validatedProposalDeadline, now));
-            const validatedStartDate = opportunityValidation.validateStartDate(startDate, getValidValue(validatedAssignmentDate, now));
+            const validatedProposalDeadline =
+              opportunityValidation.validateProposalDeadline(
+                proposalDeadline,
+                cwuOpportunity
+              );
+            const validatedAssignmentDate =
+              opportunityValidation.validateAssignmentDate(
+                assignmentDate,
+                getValidValue(validatedProposalDeadline, now)
+              );
+            const validatedStartDate = opportunityValidation.validateStartDate(
+              startDate,
+              getValidValue(validatedAssignmentDate, now)
+            );
             const validatedCompletionDate = mapValid(
-              opportunityValidation.validateCompletionDate(completionDate, getValidValue(validatedStartDate, now)),
-              v => v || null
+              opportunityValidation.validateCompletionDate(
+                completionDate,
+                getValidValue(validatedStartDate, now)
+              ),
+              (v) => v || null
             );
 
             // Do not validate other fields if the opportunity is a draft.
@@ -387,12 +562,18 @@ const resource: Resource = {
               const defaultDate = addDays(new Date(), 14);
               return valid({
                 session: request.session,
-                body: adt('edit' as const, {
+                body: adt("edit" as const, {
                   ...request.body.value,
                   attachments: validatedAttachments.value,
                   // Coerce validated dates to default values.
-                  proposalDeadline: getValidValue(validatedProposalDeadline, defaultDate),
-                  assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
+                  proposalDeadline: getValidValue(
+                    validatedProposalDeadline,
+                    defaultDate
+                  ),
+                  assignmentDate: getValidValue(
+                    validatedAssignmentDate,
+                    defaultDate
+                  ),
                   startDate: getValidValue(validatedStartDate, defaultDate),
                   completionDate: getValidValue(validatedCompletionDate, null)
                 })
@@ -400,38 +581,57 @@ const resource: Resource = {
             }
 
             const validatedTitle = opportunityValidation.validateTitle(title);
-            const validatedTeaser = opportunityValidation.validateTeaser(teaser);
-            const validatedRemoteOk = opportunityValidation.validateRemoteOk(remoteOk);
-            const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(remoteDesc, getValidValue(validatedRemoteOk, false));
-            const validatedLocation = opportunityValidation.validateLocation(location);
-            const validatedReward = opportunityValidation.validateReward(reward);
-            const validatedSkills = opportunityValidation.validateSkills(skills);
-            const validatedDescription = opportunityValidation.validateDescription(description);
-            const validatedSubmissionInfo = opportunityValidation.validateSubmissionInfo(submissionInfo);
-            const validatedAcceptanceCriteria = opportunityValidation.validateAcceptanceCriteria(acceptanceCriteria);
-            const validatedEvaluationCriteria = opportunityValidation.validateEvaluationCriteria(evaluationCriteria);
+            const validatedTeaser =
+              opportunityValidation.validateTeaser(teaser);
+            const validatedRemoteOk =
+              opportunityValidation.validateRemoteOk(remoteOk);
+            const validatedRemoteDesc =
+              opportunityValidation.validateRemoteDesc(
+                remoteDesc,
+                getValidValue(validatedRemoteOk, false)
+              );
+            const validatedLocation =
+              opportunityValidation.validateLocation(location);
+            const validatedReward =
+              opportunityValidation.validateReward(reward);
+            const validatedSkills =
+              opportunityValidation.validateSkills(skills);
+            const validatedDescription =
+              opportunityValidation.validateDescription(description);
+            const validatedSubmissionInfo =
+              opportunityValidation.validateSubmissionInfo(submissionInfo);
+            const validatedAcceptanceCriteria =
+              opportunityValidation.validateAcceptanceCriteria(
+                acceptanceCriteria
+              );
+            const validatedEvaluationCriteria =
+              opportunityValidation.validateEvaluationCriteria(
+                evaluationCriteria
+              );
 
-            if (allValid([
-              validatedTitle,
-              validatedTeaser,
-              validatedRemoteOk,
-              validatedRemoteDesc,
-              validatedLocation,
-              validatedReward,
-              validatedSkills,
-              validatedDescription,
-              validatedProposalDeadline,
-              validatedAssignmentDate,
-              validatedStartDate,
-              validatedCompletionDate,
-              validatedSubmissionInfo,
-              validatedAcceptanceCriteria,
-              validatedEvaluationCriteria,
-              validatedAttachments
-            ])) {
+            if (
+              allValid([
+                validatedTitle,
+                validatedTeaser,
+                validatedRemoteOk,
+                validatedRemoteDesc,
+                validatedLocation,
+                validatedReward,
+                validatedSkills,
+                validatedDescription,
+                validatedProposalDeadline,
+                validatedAssignmentDate,
+                validatedStartDate,
+                validatedCompletionDate,
+                validatedSubmissionInfo,
+                validatedAcceptanceCriteria,
+                validatedEvaluationCriteria,
+                validatedAttachments
+              ])
+            ) {
               return valid({
                 session: request.session,
-                body: adt('edit' as const, {
+                body: adt("edit" as const, {
                   title: validatedTitle.value,
                   teaser: validatedTeaser.value,
                   remoteOk: validatedRemoteOk.value,
@@ -452,7 +652,7 @@ const resource: Resource = {
               } as ValidatedUpdateRequestBody);
             } else {
               return invalid({
-                opportunity: adt('edit' as const, {
+                opportunity: adt("edit" as const, {
                   title: getInvalidValue(validatedTitle, undefined),
                   teaser: getInvalidValue(validatedTeaser, undefined),
                   remoteOk: getInvalidValue(validatedRemoteOk, undefined),
@@ -461,170 +661,343 @@ const resource: Resource = {
                   reward: getInvalidValue(validatedReward, undefined),
                   skills: getInvalidValue(validatedSkills, undefined),
                   description: getInvalidValue(validatedDescription, undefined),
-                  proposalDeadline: getInvalidValue(validatedProposalDeadline, undefined),
-                  assignmentDate: getInvalidValue(validatedAssignmentDate, undefined),
+                  proposalDeadline: getInvalidValue(
+                    validatedProposalDeadline,
+                    undefined
+                  ),
+                  assignmentDate: getInvalidValue(
+                    validatedAssignmentDate,
+                    undefined
+                  ),
                   startDate: getInvalidValue(validatedStartDate, undefined),
-                  completionDate: getInvalidValue(validatedCompletionDate, undefined),
-                  submissionInfo: getInvalidValue(validatedSubmissionInfo, undefined),
-                  acceptanceCriteria: getInvalidValue(validatedAcceptanceCriteria, undefined),
-                  evaluationCrtieria: getInvalidValue(validatedEvaluationCriteria, undefined)
+                  completionDate: getInvalidValue(
+                    validatedCompletionDate,
+                    undefined
+                  ),
+                  submissionInfo: getInvalidValue(
+                    validatedSubmissionInfo,
+                    undefined
+                  ),
+                  acceptanceCriteria: getInvalidValue(
+                    validatedAcceptanceCriteria,
+                    undefined
+                  ),
+                  evaluationCrtieria: getInvalidValue(
+                    validatedEvaluationCriteria,
+                    undefined
+                  )
                 })
               });
             }
           }
-          case 'publish': {
-            if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Published)) {
+          case "publish": {
+            if (
+              !isValidStatusChange(
+                validatedCWUOpportunity.value.status,
+                CWUOpportunityStatus.Published
+              )
+            ) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
             // Perform validation on draft to ensure it's ready for publishing
-            if (!allValid([
-              opportunityValidation.validateTitle(validatedCWUOpportunity.value.title),
-              opportunityValidation.validateTeaser(validatedCWUOpportunity.value.teaser),
-              opportunityValidation.validateRemoteOk(validatedCWUOpportunity.value.remoteOk),
-              opportunityValidation.validateRemoteDesc(validatedCWUOpportunity.value.remoteDesc, validatedCWUOpportunity.value.remoteOk),
-              opportunityValidation.validateLocation(validatedCWUOpportunity.value.location),
-              opportunityValidation.validateReward(validatedCWUOpportunity.value.reward),
-              opportunityValidation.validateSkills(validatedCWUOpportunity.value.skills),
-              opportunityValidation.validateDescription(validatedCWUOpportunity.value.description),
-              opportunityValidation.validateSubmissionInfo(validatedCWUOpportunity.value.submissionInfo),
-              opportunityValidation.validateAcceptanceCriteria(validatedCWUOpportunity.value.acceptanceCriteria),
-              opportunityValidation.validateEvaluationCriteria(validatedCWUOpportunity.value.evaluationCriteria)
-            ])) {
+            if (
+              !allValid([
+                opportunityValidation.validateTitle(
+                  validatedCWUOpportunity.value.title
+                ),
+                opportunityValidation.validateTeaser(
+                  validatedCWUOpportunity.value.teaser
+                ),
+                opportunityValidation.validateRemoteOk(
+                  validatedCWUOpportunity.value.remoteOk
+                ),
+                opportunityValidation.validateRemoteDesc(
+                  validatedCWUOpportunity.value.remoteDesc,
+                  validatedCWUOpportunity.value.remoteOk
+                ),
+                opportunityValidation.validateLocation(
+                  validatedCWUOpportunity.value.location
+                ),
+                opportunityValidation.validateReward(
+                  validatedCWUOpportunity.value.reward
+                ),
+                opportunityValidation.validateSkills(
+                  validatedCWUOpportunity.value.skills
+                ),
+                opportunityValidation.validateDescription(
+                  validatedCWUOpportunity.value.description
+                ),
+                opportunityValidation.validateSubmissionInfo(
+                  validatedCWUOpportunity.value.submissionInfo
+                ),
+                opportunityValidation.validateAcceptanceCriteria(
+                  validatedCWUOpportunity.value.acceptanceCriteria
+                ),
+                opportunityValidation.validateEvaluationCriteria(
+                  validatedCWUOpportunity.value.evaluationCriteria
+                )
+              ])
+            ) {
               return invalid({
-                opportunity: adt('publish' as const, ['This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again.'])
+                opportunity: adt("publish" as const, [
+                  "This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again."
+                ])
               });
             }
 
-            const validatedPublishNote = opportunityValidation.validateNote(request.body.value);
+            const validatedPublishNote = opportunityValidation.validateNote(
+              request.body.value
+            );
             if (isInvalid(validatedPublishNote)) {
-              return invalid({ opportunity: adt('publish' as const, validatedPublishNote.value) });
+              return invalid({
+                opportunity: adt("publish" as const, validatedPublishNote.value)
+              });
             }
             return valid({
               session: request.session,
-              body: adt('publish', validatedPublishNote.value)
+              body: adt("publish", validatedPublishNote.value)
             } as ValidatedUpdateRequestBody);
           }
-          case 'suspend': {
-            if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Suspended)) {
+          case "suspend": {
+            if (
+              !isValidStatusChange(
+                validatedCWUOpportunity.value.status,
+                CWUOpportunityStatus.Suspended
+              )
+            ) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedSuspendNote = opportunityValidation.validateNote(request.body.value);
+            const validatedSuspendNote = opportunityValidation.validateNote(
+              request.body.value
+            );
             if (isInvalid(validatedSuspendNote)) {
-              return invalid({ opportunity: adt('suspend' as const, validatedSuspendNote.value) });
+              return invalid({
+                opportunity: adt("suspend" as const, validatedSuspendNote.value)
+              });
             }
             return valid({
               session: request.session,
-              body: adt('suspend', validatedSuspendNote.value)
+              body: adt("suspend", validatedSuspendNote.value)
             } as ValidatedUpdateRequestBody);
           }
-          case 'cancel':{
-            if (!isValidStatusChange(validatedCWUOpportunity.value.status, CWUOpportunityStatus.Canceled)) {
+          case "cancel": {
+            if (
+              !isValidStatusChange(
+                validatedCWUOpportunity.value.status,
+                CWUOpportunityStatus.Canceled
+              )
+            ) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedCancelNote = opportunityValidation.validateNote(request.body.value);
+            const validatedCancelNote = opportunityValidation.validateNote(
+              request.body.value
+            );
             if (isInvalid(validatedCancelNote)) {
-              return invalid({ opportunity: adt('cancel' as const, validatedCancelNote.value) });
+              return invalid({
+                opportunity: adt("cancel" as const, validatedCancelNote.value)
+              });
             }
             return valid({
               session: request.session,
-              body: adt('cancel', validatedCancelNote.value)
+              body: adt("cancel", validatedCancelNote.value)
             } as ValidatedUpdateRequestBody);
           }
-          case 'addAddendum':{
-            if (validatedCWUOpportunity.value.status === CWUOpportunityStatus.Draft) {
+          case "addAddendum": {
+            if (
+              validatedCWUOpportunity.value.status ===
+              CWUOpportunityStatus.Draft
+            ) {
               return invalid({ permissions: [permissions.ERROR_MESSAGE] });
             }
-            const validatedAddendumText = opportunityValidation.validateAddendumText(request.body.value);
+            const validatedAddendumText =
+              opportunityValidation.validateAddendumText(request.body.value);
             if (isInvalid(validatedAddendumText)) {
-              return invalid({ opportunity: adt('addAddendum' as const, validatedAddendumText.value) });
+              return invalid({
+                opportunity: adt(
+                  "addAddendum" as const,
+                  validatedAddendumText.value
+                )
+              });
             }
             return valid({
               session: request.session,
-              body: adt('addAddendum', validatedAddendumText.value)
+              body: adt("addAddendum", validatedAddendumText.value)
             } as ValidatedUpdateRequestBody);
           }
 
-          case 'addNote':{
-            const { note, attachments : noteAttachments } = request.body.value;
-            const validatedNote = opportunityValidation.validateHistoryNote(note);
-            const validatedNoteAttachments = await validateAttachments(connection, noteAttachments);
+          case "addNote": {
+            const { note, attachments: noteAttachments } = request.body.value;
+            const validatedNote =
+              opportunityValidation.validateHistoryNote(note);
+            const validatedNoteAttachments = await validateAttachments(
+              connection,
+              noteAttachments
+            );
             if (allValid([validatedNote, validatedNoteAttachments])) {
               return valid({
                 session: request.session,
-                body: adt('addNote', {
+                body: adt("addNote", {
                   note: validatedNote.value,
                   attachments: validatedNoteAttachments.value
                 })
               } as ValidatedUpdateRequestBody);
             } else {
-              return invalid({ opportunity: adt('addNote' as const, {
+              return invalid({
+                opportunity: adt("addNote" as const, {
                   note: getInvalidValue(validatedNote, undefined),
-                  attachments: getInvalidValue(validatedNoteAttachments, undefined)
+                  attachments: getInvalidValue(
+                    validatedNoteAttachments,
+                    undefined
+                  )
                 })
               });
             }
           }
           default:
-            return invalid({ opportunity: adt('parseFailure' as const) });
+            return invalid({ opportunity: adt("parseFailure" as const) });
         }
       },
       respond: wrapRespond({
-        valid: async request => {
+        valid: async (request) => {
           let dbResult: Validation<CWUOpportunity, null>;
           const { session, body } = request.body;
           switch (body.tag) {
-            case 'edit':
-              dbResult = await db.updateCWUOpportunityVersion(connection, { ...body.value, id: request.params.id }, session);
+            case "edit":
+              dbResult = await db.updateCWUOpportunityVersion(
+                connection,
+                { ...body.value, id: request.params.id },
+                session
+              );
               // Notify all subscribed users on the opportunity of the update (only if not draft)
-              if (isValid(dbResult) && dbResult.value.status !== CWUOpportunityStatus.Draft) {
-                cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
+              if (
+                isValid(dbResult) &&
+                dbResult.value.status !== CWUOpportunityStatus.Draft
+              ) {
+                cwuOpportunityNotifications.handleCWUUpdated(
+                  connection,
+                  dbResult.value
+                );
               }
               break;
-            case 'publish':{
-
-              const existingOpportunity = getValidValue(await db.readOneCWUOpportunity(connection, request.params.id, session), null);
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Published, body.value, session);
+            case "publish": {
+              const existingOpportunity = getValidValue(
+                await db.readOneCWUOpportunity(
+                  connection,
+                  request.params.id,
+                  session
+                ),
+                null
+              );
+              dbResult = await db.updateCWUOpportunityStatus(
+                connection,
+                request.params.id,
+                CWUOpportunityStatus.Published,
+                body.value,
+                session
+              );
               // Notify subscribers of publication
-              if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUPublished(connection, dbResult.value, existingOpportunity?.status === CWUOpportunityStatus.Suspended);
+              if (
+                isValid(dbResult) &&
+                permissions.isSignedIn(request.session)
+              ) {
+                cwuOpportunityNotifications.handleCWUPublished(
+                  connection,
+                  dbResult.value,
+                  existingOpportunity?.status === CWUOpportunityStatus.Suspended
+                );
               }
               break;
             }
-            case 'startEvaluation':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Evaluation, body.value, session);
+            case "startEvaluation":
+              dbResult = await db.updateCWUOpportunityStatus(
+                connection,
+                request.params.id,
+                CWUOpportunityStatus.Evaluation,
+                body.value,
+                session
+              );
               break;
-            case 'suspend':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Suspended, body.value, session);
+            case "suspend":
+              dbResult = await db.updateCWUOpportunityStatus(
+                connection,
+                request.params.id,
+                CWUOpportunityStatus.Suspended,
+                body.value,
+                session
+              );
               // Notify subscribers of suspension
-              if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUSuspended(connection, dbResult.value);
+              if (
+                isValid(dbResult) &&
+                permissions.isSignedIn(request.session)
+              ) {
+                cwuOpportunityNotifications.handleCWUSuspended(
+                  connection,
+                  dbResult.value
+                );
               }
               break;
-            case 'cancel':
-              dbResult = await db.updateCWUOpportunityStatus(connection, request.params.id, CWUOpportunityStatus.Canceled, body.value, session);
+            case "cancel":
+              dbResult = await db.updateCWUOpportunityStatus(
+                connection,
+                request.params.id,
+                CWUOpportunityStatus.Canceled,
+                body.value,
+                session
+              );
               // Notify subscribers of cancellation
-              if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-                cwuOpportunityNotifications.handleCWUCancelled(connection, dbResult.value);
+              if (
+                isValid(dbResult) &&
+                permissions.isSignedIn(request.session)
+              ) {
+                cwuOpportunityNotifications.handleCWUCancelled(
+                  connection,
+                  dbResult.value
+                );
               }
               break;
-            case 'addAddendum':
-              dbResult = await db.addCWUOpportunityAddendum(connection, request.params.id, body.value, session);
+            case "addAddendum":
+              dbResult = await db.addCWUOpportunityAddendum(
+                connection,
+                request.params.id,
+                body.value,
+                session
+              );
               // Notify all subscribed users on the opportunity of the update
               if (isValid(dbResult)) {
-                cwuOpportunityNotifications.handleCWUUpdated(connection, dbResult.value);
+                cwuOpportunityNotifications.handleCWUUpdated(
+                  connection,
+                  dbResult.value
+                );
               }
               break;
-            case 'addNote':
-              dbResult = await db.addCWUOpportunityNote(connection, request.params.id, body.value, session);
+            case "addNote":
+              dbResult = await db.addCWUOpportunityNote(
+                connection,
+                request.params.id,
+                body.value,
+                session
+              );
               break;
           }
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+          return basicResponse(
+            200,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
         },
-        invalid: async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
         }
       })
     };
@@ -633,30 +1006,57 @@ const resource: Resource = {
   delete(connection) {
     return {
       async validateRequestBody(request) {
-        if (!(await permissions.deleteCWUOpportunity(connection, request.session, request.params.id))) {
+        if (
+          !(await permissions.deleteCWUOpportunity(
+            connection,
+            request.session,
+            request.params.id
+          ))
+        ) {
           return invalid({
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.params.id, request.session);
+        const validatedCWUOpportunity = await validateCWUOpportunityId(
+          connection,
+          request.params.id,
+          request.session
+        );
         if (isInvalid(validatedCWUOpportunity)) {
-          return invalid({ notFound: ['Opportunity not found.'] });
+          return invalid({ notFound: ["Opportunity not found."] });
         }
-        if (validatedCWUOpportunity.value.status !== CWUOpportunityStatus.Draft) {
+        if (
+          validatedCWUOpportunity.value.status !== CWUOpportunityStatus.Draft
+        ) {
           return invalid({ permissions: [permissions.ERROR_MESSAGE] });
         }
         return valid(validatedCWUOpportunity.value.id);
       },
       respond: wrapRespond({
-        valid: async request => {
-          const dbResult = await db.deleteCWUOpportunity(connection, request.body);
+        valid: async (request) => {
+          const dbResult = await db.deleteCWUOpportunity(
+            connection,
+            request.body
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+          return basicResponse(
+            200,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
         },
-        invalid: async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
         }
       })
     };

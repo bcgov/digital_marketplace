@@ -1,7 +1,7 @@
-import { mustAcceptTerms, User } from 'shared/lib/resources/user';
-import { Id } from 'shared/lib/types';
+import { mustAcceptTerms, User } from "shared/lib/resources/user";
+import { Id } from "shared/lib/types";
 
-export const CURRENT_SESSION_ID = 'current';
+export const CURRENT_SESSION_ID = "current";
 
 export type Session = SessionRecord | null;
 

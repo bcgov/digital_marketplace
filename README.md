@@ -112,10 +112,7 @@ cp sample.env .env
 
 ### Install Dependencies
 
-If you are using NixOS or the Nix package manager, running `nix-shell` will install all necessary dependencies,
-and drop you in a shell with them accessible in your `$PATH`.
-
-If you are not using Nix, please ensure the following packages have been installed:
+Please ensure the following packages have been installed:
 
 - yarn
 - Node.js 16.x
@@ -190,23 +187,25 @@ npm run <SCRIPT_NAME>
 
 | Script Name                             | Description                                                                                                                                                                                                        |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cypress:run`                          | Runs the Cypress tests. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.                      |
+| `cypress:run`                           | Runs the Cypress tests. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.                      |
 | `cypress:open`                          | Opens the interactive Cypress test runner. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.   |
 | `start`                                 | Runs the back-end server.                                                                                                                                                                                          |
-| `front-end:lint`                        | Lints the front-end source code using tslint.                                                                                                                                                                      |
+| `front-end:lint`                        | Lints the front-end source code using eslint.                                                                                                                                                                      |
 | `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                    |
 | `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                     |
 | `front-end:build`                       | Builds the front-end using grunt.                                                                                                                                                                                  |
 | `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                              |
 | `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                    |
-| `back-end:lint`                         | Lints the back-end source code using tslint.                                                                                                                                                                       |
+| `back-end:lint`                         | Lints the back-end source code using eslint.                                                                                                                                                                       |
 | `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                     |
 | `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                      |
 | `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                           |
 | `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                            |
 | `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                    |
 | `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                     |
+| `shared:lint`                           | Lints the shared source code using eslint.                                                                                                                                                                         |
 | `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                                                                       |
+| `migrations:lint`                       | Lints the migrations source code using eslint.                                                                                                                                                                     |
 | `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below.                                                      |
 | `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                                                                                |
 | `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                                                                                   |
