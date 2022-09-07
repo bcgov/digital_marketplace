@@ -1,10 +1,10 @@
-import { hashPassword } from 'back-end/lib/security';
-import { Script } from 'scripts/lib/types';
+import { hashPassword } from "back-end/lib/security";
+import { Script } from "scripts/lib/types";
 
 const main: Script = async ({ logger, argv }) => {
-  const pw = String(argv.password || argv.p || '');
+  const pw = String(argv.password || argv.p || "");
   if (!pw) {
-    logger.error('invalid password');
+    logger.error("invalid password");
     return false;
   }
   const hash = await hashPassword(pw);

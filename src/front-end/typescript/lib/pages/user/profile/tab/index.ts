@@ -1,31 +1,35 @@
-import * as MenuSidebar from 'front-end/lib/components/sidebar/menu';
-import * as TabbedPage from 'front-end/lib/components/sidebar/menu/tabbed-page';
-import { immutable, Immutable } from 'front-end/lib/framework';
-import * as CapabilitiesTab from 'front-end/lib/pages/user/profile/tab/capabilities';
-import * as LegalTab from 'front-end/lib/pages/user/profile/tab/legal';
-import * as NotificationsTab from 'front-end/lib/pages/user/profile/tab/notifications';
-import * as OrganizationsTab from 'front-end/lib/pages/user/profile/tab/organizations';
-import * as ProfileTab from 'front-end/lib/pages/user/profile/tab/profile';
-import { routeDest } from 'front-end/lib/views/link';
-import { User, usersAreEquivalent, UserType } from 'shared/lib/resources/user';
-import { adt, Id } from 'shared/lib/types';
+import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
+import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
+import { immutable, Immutable } from "front-end/lib/framework";
+import * as CapabilitiesTab from "front-end/lib/pages/user/profile/tab/capabilities";
+import * as LegalTab from "front-end/lib/pages/user/profile/tab/legal";
+import * as NotificationsTab from "front-end/lib/pages/user/profile/tab/notifications";
+import * as OrganizationsTab from "front-end/lib/pages/user/profile/tab/organizations";
+import * as ProfileTab from "front-end/lib/pages/user/profile/tab/profile";
+import { routeDest } from "front-end/lib/views/link";
+import { User, usersAreEquivalent, UserType } from "shared/lib/resources/user";
+import { adt, Id } from "shared/lib/types";
 
 // Parent page types & functions.
 
 export type ParentState<K extends TabId> = TabbedPage.ParentState<Tabs, K>;
 
-export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<Tabs, K, InnerMsg>;
+export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
+  Tabs,
+  K,
+  InnerMsg
+>;
 
 // Tab component types & functions.
 
-export type InvitationResponseParam
-  = 'approve'
-  | 'reject';
+export type InvitationResponseParam = "approve" | "reject";
 
-export function parseInvitationResponseParam(raw: string): InvitationResponseParam | null {
+export function parseInvitationResponseParam(
+  raw: string
+): InvitationResponseParam | null {
   switch (raw) {
-    case 'approve':
-    case 'reject':
+    case "approve":
+    case "reject":
       return raw;
     default:
       return null;
@@ -41,14 +45,30 @@ export interface Params {
   };
 }
 
-export type Component<State extends object, Msg> = TabbedPage.TabComponent<Params, State, Msg>;
+export type Component<State extends object, Msg> = TabbedPage.TabComponent<
+  Params,
+  State,
+  Msg
+>;
 
 export interface Tabs {
   profile: TabbedPage.Tab<Params, ProfileTab.State, ProfileTab.InnerMsg>;
-  capabilities: TabbedPage.Tab<Params, CapabilitiesTab.State, CapabilitiesTab.InnerMsg>;
-  notifications: TabbedPage.Tab<Params, NotificationsTab.State, NotificationsTab.InnerMsg>;
+  capabilities: TabbedPage.Tab<
+    Params,
+    CapabilitiesTab.State,
+    CapabilitiesTab.InnerMsg
+  >;
+  notifications: TabbedPage.Tab<
+    Params,
+    NotificationsTab.State,
+    NotificationsTab.InnerMsg
+  >;
   legal: TabbedPage.Tab<Params, LegalTab.State, LegalTab.InnerMsg>;
-  organizations: TabbedPage.Tab<Params, OrganizationsTab.State, OrganizationsTab.InnerMsg>;
+  organizations: TabbedPage.Tab<
+    Params,
+    OrganizationsTab.State,
+    OrganizationsTab.InnerMsg
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -57,90 +77,101 @@ export type TabState<K extends TabId> = TabbedPage.TabState<Tabs, K>;
 
 export type TabMsg<K extends TabId> = TabbedPage.TabMsg<Tabs, K>;
 
-export const parseTabId: TabbedPage.ParseTabId<Tabs> = raw => {
+export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   switch (raw) {
-    case 'profile':
-    case 'capabilities':
-    case 'notifications':
-    case 'legal':
-    case 'organizations':
+    case "profile":
+    case "capabilities":
+    case "notifications":
+    case "legal":
+    case "organizations":
       return raw;
     default:
       return null;
   }
 };
 
-export function idToDefinition<K extends TabId>(id: K): TabbedPage.TabDefinition<Tabs, K> {
+export function idToDefinition<K extends TabId>(
+  id: K
+): TabbedPage.TabDefinition<Tabs, K> {
   switch (id) {
-    case 'notifications':
+    case "notifications":
       return {
         component: NotificationsTab.component,
-        icon: 'bell',
-        title: 'Notifications'
+        icon: "bell",
+        title: "Notifications"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case 'legal':
+    case "legal":
       return {
         component: LegalTab.component,
-        icon: 'balance-scale',
-        title: 'Policies, Terms & Agreements'
+        icon: "balance-scale",
+        title: "Policies, Terms & Agreements"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case 'organizations':
+    case "organizations":
       return {
         component: OrganizationsTab.component,
-        icon: 'building',
-        title: 'Organizations'
+        icon: "building",
+        title: "Organizations"
       } as TabbedPage.TabDefinition<Tabs, K>;
 
-    case 'capabilities':
+    case "capabilities":
       return {
         component: CapabilitiesTab.component,
-        icon: 'toolbox',
-        title: 'Capabilities' } as TabbedPage.TabDefinition<Tabs, K>;
+        icon: "toolbox",
+        title: "Capabilities"
+      } as TabbedPage.TabDefinition<Tabs, K>;
 
-    case 'profile':
+    case "profile":
     default:
       return {
         component: ProfileTab.component,
-        icon: 'user',
-        title: 'Profile'
+        icon: "user",
+        title: "Profile"
       } as TabbedPage.TabDefinition<Tabs, K>;
   }
 }
 
-export function makeSidebarLink(tab: TabId, userId: Id, activeTab: TabId): MenuSidebar.SidebarItem {
+export function makeSidebarLink(
+  tab: TabId,
+  userId: Id,
+  activeTab: TabId
+): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
-  return adt('link', {
+  return adt("link", {
     icon,
     text: title,
     active: activeTab === tab,
-    dest: routeDest(adt('userProfile', { userId, tab }))
+    dest: routeDest(adt("userProfile", { userId, tab }))
   });
 }
 
-export async function makeSidebarState(profileUser: User, viewerUser: User, activeTab: TabId): Promise<Immutable<MenuSidebar.State>> {
+export async function makeSidebarState(
+  profileUser: User,
+  viewerUser: User,
+  activeTab: TabId
+): Promise<Immutable<MenuSidebar.State>> {
   const items = (() => {
     switch (viewerUser.type) {
       case UserType.Admin:
         if (usersAreEquivalent(profileUser, viewerUser)) {
           return [
-            makeSidebarLink('profile', profileUser.id, activeTab),
-            makeSidebarLink('notifications', profileUser.id, activeTab)
+            makeSidebarLink("profile", profileUser.id, activeTab),
+            makeSidebarLink("notifications", profileUser.id, activeTab)
           ];
         } else {
           return [];
         }
       case UserType.Government:
         return [
-          makeSidebarLink('profile', profileUser.id, activeTab),
-          makeSidebarLink('notifications', profileUser.id, activeTab)
+          makeSidebarLink("profile", profileUser.id, activeTab),
+          makeSidebarLink("notifications", profileUser.id, activeTab)
         ];
       case UserType.Vendor:
         return [
-          makeSidebarLink('profile', profileUser.id, activeTab),
-          makeSidebarLink('capabilities', profileUser.id, activeTab),
-          makeSidebarLink('organizations', profileUser.id, activeTab),
-          makeSidebarLink('notifications', profileUser.id, activeTab),
-          makeSidebarLink('legal', profileUser.id, activeTab)
+          makeSidebarLink("profile", profileUser.id, activeTab),
+          makeSidebarLink("capabilities", profileUser.id, activeTab),
+          makeSidebarLink("organizations", profileUser.id, activeTab),
+          makeSidebarLink("notifications", profileUser.id, activeTab),
+          makeSidebarLink("legal", profileUser.id, activeTab)
         ];
     }
   })();

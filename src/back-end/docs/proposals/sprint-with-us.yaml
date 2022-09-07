@@ -1,4 +1,3 @@
-
 paths:
   /proposals/sprint-with-us:
     get:
@@ -23,7 +22,6 @@ paths:
         401:
           description: You do not have permissions to view Proposals for the Opportunity or are not signed in.
 
-
     post:
       summary: Create a new Sprint-With-Us Proposal.
       tags:
@@ -38,10 +36,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SWUProposal'
+              $ref: "#/components/schemas/SWUProposal"
             examples:
               createSWUProposal:
-                $ref: '#/components/examples/createSWUProposal'
+                $ref: "#/components/examples/createSWUProposal"
       responses:
         201:
           description: Receive the created Sprint-With-Us Proposal.
@@ -96,32 +94,46 @@ paths:
               properties:
                 tag:
                   type: string
-                  enum: [edit, submit, scoreQuestions, screenInToCodeChallenge, screenOutFromCodeChallenge, scoreCodeChallenge, screenInToTeamScenario, screenOutFromTeamScenario, scoreTeamScenario, award, disqualify, withdraw]
+                  enum:
+                    [
+                      edit,
+                      submit,
+                      scoreQuestions,
+                      screenInToCodeChallenge,
+                      screenOutFromCodeChallenge,
+                      scoreCodeChallenge,
+                      screenInToTeamScenario,
+                      screenOutFromTeamScenario,
+                      scoreTeamScenario,
+                      award,
+                      disqualify,
+                      withdraw
+                    ]
                 value:
                   type: object
             examples:
               edit:
-                $ref: '#/components/examples/editSWUProposal'
+                $ref: "#/components/examples/editSWUProposal"
               submit:
-                $ref: '#/components/examples/submitSWUProposal'
+                $ref: "#/components/examples/submitSWUProposal"
               screenInToCodeChallenge:
-                $ref: '#/components/examples/screenSWUProposalIntoCodeChallenge'
+                $ref: "#/components/examples/screenSWUProposalIntoCodeChallenge"
               screenOutFromCodeChallenge:
-                $ref: '#/components/examples/screenSWUProposalOutFromCodeChallenge'
+                $ref: "#/components/examples/screenSWUProposalOutFromCodeChallenge"
               scoreCodeChallenge:
-                $ref: '#/components/examples/scoreCodeChallengeForSWUProposal'
+                $ref: "#/components/examples/scoreCodeChallengeForSWUProposal"
               screenInToTeamScenario:
-                $ref: '#/components/examples/screenSWUProposalIntoTeamScenario'
+                $ref: "#/components/examples/screenSWUProposalIntoTeamScenario"
               screenOutFromTeamScenario:
-                $ref: '#/components/examples/screenSWUProposalOutFromTeamScenario'
+                $ref: "#/components/examples/screenSWUProposalOutFromTeamScenario"
               scoreTeamScenario:
-                $ref: '#/components/examples/scoreTeamScenarioForSWUProposal'
+                $ref: "#/components/examples/scoreTeamScenarioForSWUProposal"
               award:
-                $ref: '#/components/examples/awardSWUProposal'
+                $ref: "#/components/examples/awardSWUProposal"
               disqualify:
-                $ref: '#/components/examples/disqualifySWUProposal'
+                $ref: "#/components/examples/disqualifySWUProposal"
               withdraw:
-                $ref: '#/components/examples/withdrawSWUProposal'
+                $ref: "#/components/examples/withdrawSWUProposal"
       responses:
         200:
           description: Receive the updated Sprint-With-Us Proposal.
@@ -158,7 +170,6 @@ paths:
           description: A Sprint-With-Us Proposal for the specified ID was not found.
         401:
           description: You do not have permission to delete this Proposal.
-
 
 components:
   schemas:
@@ -227,7 +238,6 @@ components:
         status:
           type: string
           enum: [DRAFT, PUBLISHED]
-
 
   examples:
     createSWUProposal:

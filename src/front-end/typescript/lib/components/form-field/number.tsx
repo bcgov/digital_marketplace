@@ -1,13 +1,15 @@
-import * as FormField from 'front-end/lib/components/form-field';
-import React from 'react';
-import { InputGroup, InputGroupAddon, InputGroupText } from 'reactstrap';
-import { ADT } from 'shared/lib/types';
+import * as FormField from "front-end/lib/components/form-field";
+import React from "react";
+import { InputGroup, InputGroupAddon, InputGroupText } from "reactstrap";
+import { ADT } from "shared/lib/types";
 
 export type Value = number | null;
 
 export function parseValue(raw: string): Value {
   const parsed = parseFloat(raw);
-  if (isNaN(parsed)) { return null; }
+  if (isNaN(parsed)) {
+    return null;
+  }
   return parsed;
 }
 
@@ -17,20 +19,23 @@ interface ChildState extends FormField.ChildStateBase<Value> {
   step: number;
 }
 
-type ChildParams
-  = FormField.ChildParamsBase<Value>
-  & Pick<ChildState, | 'min' | 'max'>
-  & { step?: number };
+type ChildParams = FormField.ChildParamsBase<Value> &
+  Pick<ChildState, "min" | "max"> & { step?: number };
 
-type InnerChildMsg
-  = ADT<'onChange', Value>;
+type InnerChildMsg = ADT<"onChange", Value>;
 
 interface ExtraChildProps {
   prefix?: string;
   suffix?: string;
 }
 
-type ChildComponent = FormField.ChildComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>;
+type ChildComponent = FormField.ChildComponent<
+  Value,
+  ChildParams,
+  ChildState,
+  InnerChildMsg,
+  ExtraChildProps
+>;
 
 export type State = FormField.State<Value, ChildState>;
 
@@ -38,59 +43,81 @@ export type Params = FormField.Params<Value, ChildParams>;
 
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: ChildComponent['init'] = async params => ({
+const childInit: ChildComponent["init"] = async (params) => ({
   ...params,
   step: params.step === undefined ? 1 : params.step
 });
 
-const childUpdate: ChildComponent['update'] = ({ state, msg }) => {
+const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'onChange':
-      return [state.set('value', msg.value)];
+    case "onChange":
+      return [state.set("value", msg.value)];
     default:
       return [state];
   }
 };
 
-const ChildView: ChildComponent['view'] = props => {
-  const { prefix, suffix, state, dispatch, placeholder, className = '', validityClassName, disabled = false } = props;
+const ChildView: ChildComponent["view"] = (props) => {
+  const {
+    prefix,
+    suffix,
+    state,
+    dispatch,
+    placeholder,
+    className = "",
+    validityClassName,
+    disabled = false
+  } = props;
   const input = (
     <input
       id={state.id}
-      type='number'
+      type="number"
       placeholder={placeholder}
       min={state.min}
       max={state.max}
       step={state.step}
-      value={state.value === null ? '' /*enforces controlled component*/ : state.value}
+      value={
+        state.value === null
+          ? "" /*enforces controlled component*/
+          : state.value
+      }
       className={`form-control ${className} ${validityClassName}`}
-      onChange={e => {
+      onChange={(e) => {
         const value = parseValue(e.currentTarget.value);
-        dispatch({ tag: 'onChange', value });
+        dispatch({ tag: "onChange", value });
         // Let the parent form field component know that the value has been updated.
         props.onChange(value);
       }}
-      disabled={disabled} />
+      disabled={disabled}
+    />
   );
-  if (!prefix && !suffix) { return input; }
+  if (!prefix && !suffix) {
+    return input;
+  }
   return (
     <InputGroup>
-      {prefix
-        ? (<InputGroupAddon addonType='prepend'>
-            <InputGroupText>{prefix}</InputGroupText>
-          </InputGroupAddon>)
-        : null}
+      {prefix ? (
+        <InputGroupAddon addonType="prepend">
+          <InputGroupText>{prefix}</InputGroupText>
+        </InputGroupAddon>
+      ) : null}
       {input}
-      {suffix
-        ? (<InputGroupAddon addonType='append'>
-            <InputGroupText>{suffix}</InputGroupText>
-          </InputGroupAddon>)
-        : null}
+      {suffix ? (
+        <InputGroupAddon addonType="append">
+          <InputGroupText>{suffix}</InputGroupText>
+        </InputGroupAddon>
+      ) : null}
     </InputGroup>
   );
 };
 
-export const component = FormField.makeComponent<Value, ChildParams, ChildState, InnerChildMsg, ExtraChildProps>({
+export const component = FormField.makeComponent<
+  Value,
+  ChildParams,
+  ChildState,
+  InnerChildMsg,
+  ExtraChildProps
+>({
   init: childInit,
   update: childUpdate,
   view: ChildView

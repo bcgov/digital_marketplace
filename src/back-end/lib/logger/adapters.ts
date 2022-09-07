@@ -1,4 +1,4 @@
-import { Chalk, default as chalk } from 'chalk';
+import { Chalk, default as chalk } from "chalk";
 
 export type AdapterFunction = (prefix: string, msg: string) => void;
 
@@ -10,11 +10,10 @@ export interface Adapter {
 }
 
 function oneLine(prefix: string, msg: string, prefixColor: Chalk): string {
-  return `${chalk.gray('[')}${prefixColor(prefix)}${chalk.gray(']')} ${msg}\n`;
+  return `${chalk.gray("[")}${prefixColor(prefix)}${chalk.gray("]")} ${msg}\n`;
 }
 
 export const console: Adapter = {
-
   info(prefix, msg) {
     process.stdout.write(oneLine(prefix, msg, chalk.green));
   },
@@ -30,5 +29,4 @@ export const console: Adapter = {
   debug(prefix, msg) {
     process.stdout.write(oneLine(prefix, msg, chalk.blue));
   }
-
 };

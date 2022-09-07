@@ -1,23 +1,56 @@
-import { EMPTY_STRING } from 'front-end/config';
-import { Route } from 'front-end/lib/app/types';
-import * as Table from 'front-end/lib/components/table';
-import { ComponentView, Dispatch, GlobalComponentMsg, immutable, Immutable,  Init, mapComponentDispatch, toast, Update, updateComponentChild, View } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
-import * as Tab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import * as toasts from 'front-end/lib/pages/opportunity/code-with-us/lib/toasts';
-import EditTabHeader from 'front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header';
-import { cwuProposalStatusToColor, cwuProposalStatusToTitleCase } from 'front-end/lib/pages/proposal/code-with-us/lib';
-import Badge from 'front-end/lib/views/badge';
-import Link, { iconLinkSymbol, leftPlacement, rightPlacement, routeDest } from 'front-end/lib/views/link';
-import ReportCardList, { ReportCard } from 'front-end/lib/views/report-card-list';
-import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { canCWUOpportunityBeAwarded, canViewCWUOpportunityProposals, CWUOpportunity, CWUOpportunityStatus, isCWUOpportunityAcceptingProposals } from 'shared/lib/resources/opportunity/code-with-us';
-import { canCWUProposalBeAwarded, compareCWUProposalsForPublicSector, CWUProposalSlim, getCWUProponentName } from 'shared/lib/resources/proposal/code-with-us';
-import { isAdmin } from 'shared/lib/resources/user';
-import { ADT, adt, Id } from 'shared/lib/types';
+import { EMPTY_STRING } from "front-end/config";
+import { Route } from "front-end/lib/app/types";
+import * as Table from "front-end/lib/components/table";
+import {
+  ComponentView,
+  Dispatch,
+  GlobalComponentMsg,
+  immutable,
+  Immutable,
+  Init,
+  mapComponentDispatch,
+  toast,
+  Update,
+  updateComponentChild,
+  View
+} from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
+import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
+import * as toasts from "front-end/lib/pages/opportunity/code-with-us/lib/toasts";
+import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
+import {
+  cwuProposalStatusToColor,
+  cwuProposalStatusToTitleCase
+} from "front-end/lib/pages/proposal/code-with-us/lib";
+import Badge from "front-end/lib/views/badge";
+import Link, {
+  iconLinkSymbol,
+  leftPlacement,
+  rightPlacement,
+  routeDest
+} from "front-end/lib/views/link";
+import ReportCardList, {
+  ReportCard
+} from "front-end/lib/views/report-card-list";
+import React from "react";
+import { Col, Row } from "reactstrap";
+import {
+  canCWUOpportunityBeAwarded,
+  canViewCWUOpportunityProposals,
+  CWUOpportunity,
+  CWUOpportunityStatus,
+  isCWUOpportunityAcceptingProposals
+} from "shared/lib/resources/opportunity/code-with-us";
+import {
+  canCWUProposalBeAwarded,
+  compareCWUProposalsForPublicSector,
+  CWUProposalSlim,
+  getCWUProponentName
+} from "shared/lib/resources/proposal/code-with-us";
+import { isAdmin } from "shared/lib/resources/user";
+import { ADT, adt, Id } from "shared/lib/types";
 
-type ModalId = ADT<'award', Id>;
+type ModalId = ADT<"award", Id>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -28,19 +61,21 @@ export interface State extends Tab.Params {
   table: Immutable<Table.State>;
 }
 
-export type InnerMsg
-  = ADT<'table', Table.Msg>
-  | ADT<'showModal', ModalId>
-  | ADT<'hideModal'>
-  | ADT<'award', Id>;
+export type InnerMsg =
+  | ADT<"table", Table.Msg>
+  | ADT<"showModal", ModalId>
+  | ADT<"hideModal">
+  | ADT<"award", Id>;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async params => {
+const init: Init<Tab.Params, State> = async (params) => {
   const canViewProposals = canViewCWUOpportunityProposals(params.opportunity);
   let proposals: CWUProposalSlim[] = [];
   if (canViewProposals) {
-    const proposalResult = await api.proposals.cwu.readMany(params.opportunity.id);
+    const proposalResult = await api.proposals.cwu.readMany(
+      params.opportunity.id
+    );
     proposals = api
       .getValidValue(proposalResult, [])
       .sort((a, b) => compareCWUProposalsForPublicSector(a, b));
@@ -53,55 +88,81 @@ const init: Init<Tab.Params, State> = async params => {
     // Can be awarded if...
     // - Opportunity has the appropriate status; and
     // - At least one proposal can be awarded.
-    canProposalsBeAwarded: canCWUOpportunityBeAwarded(params.opportunity) && proposals.reduce((acc, p) =>
-      acc || canCWUProposalBeAwarded(p),
-      false as boolean
-    ),
+    canProposalsBeAwarded:
+      canCWUOpportunityBeAwarded(params.opportunity) &&
+      proposals.reduce(
+        (acc, p) => acc || canCWUProposalBeAwarded(p),
+        false as boolean
+      ),
     proposals,
-    table: immutable(await Table.init({
-      idNamespace: 'proposal-table'
-    })),
+    table: immutable(
+      await Table.init({
+        idNamespace: "proposal-table"
+      })
+    ),
     ...params
   };
 };
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-
-    case 'award':
-      state = state.set('showModal', null);
+    case "award":
+      state = state.set("showModal", null);
       return [
-        state.set('awardLoading', msg.value),
+        state.set("awardLoading", msg.value),
         async (state, dispatch) => {
-          state = state.set('awardLoading', null);
-          const updateResult = await api.proposals.cwu.update(msg.value, adt('award', ''));
+          state = state.set("awardLoading", null);
+          const updateResult = await api.proposals.cwu.update(
+            msg.value,
+            adt("award", "")
+          );
           switch (updateResult.tag) {
-            case 'valid':
-              dispatch(toast(adt('success', toasts.statusChanged.success(CWUOpportunityStatus.Awarded))));
-              return immutable(await init({
-                opportunity: api.getValidValue(await api.opportunities.cwu.readOne(state.opportunity.id), state.opportunity),
-                viewerUser: state.viewerUser
-              }));
-            case 'invalid':
-            case 'unhandled':
-              dispatch(toast(adt('error', toasts.statusChanged.error(CWUOpportunityStatus.Awarded))));
+            case "valid":
+              dispatch(
+                toast(
+                  adt(
+                    "success",
+                    toasts.statusChanged.success(CWUOpportunityStatus.Awarded)
+                  )
+                )
+              );
+              return immutable(
+                await init({
+                  opportunity: api.getValidValue(
+                    await api.opportunities.cwu.readOne(state.opportunity.id),
+                    state.opportunity
+                  ),
+                  viewerUser: state.viewerUser
+                })
+              );
+            case "invalid":
+            case "unhandled":
+              dispatch(
+                toast(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(CWUOpportunityStatus.Awarded)
+                  )
+                )
+              );
               return state;
           }
-      }];
+        }
+      ];
 
-    case 'showModal':
-      return [state.set('showModal', msg.value)];
+    case "showModal":
+      return [state.set("showModal", msg.value)];
 
-    case 'hideModal':
-      return [state.set('showModal', null)];
+    case "hideModal":
+      return [state.set("showModal", null)];
 
-    case 'table':
+    case "table":
       return updateComponentChild({
         state,
-        childStatePath: ['table'],
+        childStatePath: ["table"],
         childUpdate: Table.update,
         childMsg: msg.value,
-        mapChildMsg: value => ({ tag: 'table', value })
+        mapChildMsg: (value) => ({ tag: "table", value })
       });
 
     default:
@@ -109,32 +170,40 @@ const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[]): ReportCard[]  => {
+const makeCardData = (
+  opportunity: CWUOpportunity,
+  proposals: CWUProposalSlim[]
+): ReportCard[] => {
   const numProposals = opportunity.reporting?.numProposals || 0;
-  const [highestScore, averageScore] = proposals.reduce(([highest, average], { score }, i) => {
-    if (!score) { return [highest, average]; }
-    return [
-      score > highest ? score : highest,
-      (average * i + score) / (i + 1)
-    ];
-  }, [0, 0]);
+  const [highestScore, averageScore] = proposals.reduce(
+    ([highest, average], { score }, i) => {
+      if (!score) {
+        return [highest, average];
+      }
+      return [
+        score > highest ? score : highest,
+        (average * i + score) / (i + 1)
+      ];
+    },
+    [0, 0]
+  );
   const isAwarded = opportunity.status === CWUOpportunityStatus.Awarded;
   return [
     {
-      icon: 'comment-dollar',
-      name: `Proposal${numProposals === 1 ? '' : 's'}`,
+      icon: "comment-dollar",
+      name: `Proposal${numProposals === 1 ? "" : "s"}`,
       value: numProposals ? String(numProposals) : EMPTY_STRING
     },
     {
-      icon: 'star-full',
-      iconColor: 'c-report-card-icon-highlight',
-      name: 'Winning Score',
+      icon: "star-full",
+      iconColor: "c-report-card-icon-highlight",
+      name: "Winning Score",
       value: isAwarded && highestScore ? `${highestScore}%` : EMPTY_STRING
     },
     {
-      icon: 'star-half',
-      iconColor: 'c-report-card-icon-highlight',
-      name: 'Avg. Score',
+      icon: "star-half",
+      iconColor: "c-report-card-icon-highlight",
+      name: "Avg. Score",
       value: isAwarded && averageScore ? `${averageScore}%` : EMPTY_STRING
     }
   ];
@@ -142,21 +211,31 @@ const makeCardData = (opportunity: CWUOpportunity, proposals: CWUProposalSlim[])
 
 const NotAvailable: ComponentView<State, Msg> = ({ state }) => {
   if (isCWUOpportunityAcceptingProposals(state.opportunity)) {
-    return (<div>Proposals will be displayed here once this opportunity has closed.</div>);
+    return (
+      <div>
+        Proposals will be displayed here once this opportunity has closed.
+      </div>
+    );
   } else {
-    return (<div>No proposals were submitted to this opportunity.</div>);
+    return <div>No proposals were submitted to this opportunity.</div>;
   }
 };
 
-const ContextMenuCell: View<{ loading: boolean; proposal: CWUProposalSlim; dispatch: Dispatch<Msg>; }> = ({ loading, proposal, dispatch }) => {
+const ContextMenuCell: View<{
+  loading: boolean;
+  proposal: CWUProposalSlim;
+  dispatch: Dispatch<Msg>;
+}> = ({ loading, proposal, dispatch }) => {
   return (
     <Link
       button
-      symbol_={leftPlacement(iconLinkSymbol('award'))}
-      color='primary'
-      size='sm'
+      symbol_={leftPlacement(iconLinkSymbol("award"))}
+      color="primary"
+      size="sm"
       loading={loading}
-      onClick={() => dispatch(adt('showModal', adt('award' as const, proposal.id))) }>
+      onClick={() =>
+        dispatch(adt("showModal", adt("award" as const, proposal.id)))
+      }>
       Award
     </Link>
   );
@@ -169,48 +248,83 @@ interface ProponentCellProps {
   linkToProfile: boolean;
 }
 
-const ProponentCell: View<ProponentCellProps> = ({ proposal, opportunity, disabled, linkToProfile }) => {
+const ProponentCell: View<ProponentCellProps> = ({
+  proposal,
+  opportunity,
+  disabled,
+  linkToProfile
+}) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: opportunity.id
   };
   return (
     <div>
-      <Link disabled={disabled} dest={routeDest(adt('proposalCWUView', proposalRouteParams))}>{getCWUProponentName(proposal)}</Link>
-      <div className='small text-secondary text-uppercase'>
-        {linkToProfile
-          ? (<Link disabled={disabled} color='secondary' dest={routeDest(adt('userProfile', { userId: proposal.createdBy.id }))}>
-              {proposal.createdBy.name}
-            </Link>)
-          : proposal.createdBy.name}
+      <Link
+        disabled={disabled}
+        dest={routeDest(adt("proposalCWUView", proposalRouteParams))}>
+        {getCWUProponentName(proposal)}
+      </Link>
+      <div className="small text-secondary text-uppercase">
+        {linkToProfile ? (
+          <Link
+            disabled={disabled}
+            color="secondary"
+            dest={routeDest(
+              adt("userProfile", { userId: proposal.createdBy.id })
+            )}>
+            {proposal.createdBy.name}
+          </Link>
+        ) : (
+          proposal.createdBy.name
+        )}
       </div>
     </div>
   );
 };
 
-function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg>): Table.BodyRows  {
-  return state.proposals.map(p => {
+function evaluationTableBodyRows(
+  state: Immutable<State>,
+  dispatch: Dispatch<Msg>
+): Table.BodyRows {
+  return state.proposals.map((p) => {
     return [
       {
-        className: 'text-nowrap',
+        className: "text-nowrap",
         children: (
           <ProponentCell
             proposal={p}
             opportunity={state.opportunity}
             linkToProfile={isAdmin(state.viewerUser)}
-            disabled={!!state.awardLoading} />
+            disabled={!!state.awardLoading}
+          />
         )
       },
-      { children: (<Badge text={cwuProposalStatusToTitleCase(p.status, state.viewerUser.type)} color={cwuProposalStatusToColor(p.status, state.viewerUser.type)} />) },
       {
-        className: 'text-center',
-        children: (<div>{p.score ? `${p.score}%` : EMPTY_STRING}</div>)
+        children: (
+          <Badge
+            text={cwuProposalStatusToTitleCase(p.status, state.viewerUser.type)}
+            color={cwuProposalStatusToColor(p.status, state.viewerUser.type)}
+          />
+        )
+      },
+      {
+        className: "text-center",
+        children: <div>{p.score ? `${p.score}%` : EMPTY_STRING}</div>
       },
       ...(state.canProposalsBeAwarded
-        ? [{
-            showOnHover: true,
-            children: canCWUProposalBeAwarded(p) ? (<ContextMenuCell dispatch={dispatch} proposal={p} loading={state.awardLoading === p.id} />) : null
-          }]
+        ? [
+            {
+              showOnHover: true,
+              children: canCWUProposalBeAwarded(p) ? (
+                <ContextMenuCell
+                  dispatch={dispatch}
+                  proposal={p}
+                  loading={state.awardLoading === p.id}
+                />
+              ) : null
+            }
+          ]
         : [])
     ];
   });
@@ -219,26 +333,28 @@ function evaluationTableBodyRows(state: Immutable<State>, dispatch: Dispatch<Msg
 function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
-      children: 'Proponent',
-      className: 'text-wrap',
-      style: { width: '100%', minWidth: '240px' }
+      children: "Proponent",
+      className: "text-wrap",
+      style: { width: "100%", minWidth: "240px" }
     },
     {
-      children: 'Status',
-      className: 'text-nowrap',
-      style: { width: '0px' }
+      children: "Status",
+      className: "text-nowrap",
+      style: { width: "0px" }
     },
     {
-      children: 'Score',
-      className: 'text-nowrap text-center',
-      style: { width: '0px' }
+      children: "Score",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
     },
     ...(state.canProposalsBeAwarded
-      ? [{
-          children: '',
-          className: 'text-nowrap text-right',
-          style: { width: '0px' }
-        }]
+      ? [
+          {
+            children: "",
+            className: "text-nowrap text-right",
+            style: { width: "0px" }
+          }
+        ]
       : [])
   ];
 }
@@ -249,7 +365,10 @@ const EvaluationTable: ComponentView<State, Msg> = ({ state, dispatch }) => {
       headCells={evaluationTableHeadCells(state)}
       bodyRows={evaluationTableBodyRows(state, dispatch)}
       state={state.table}
-      dispatch={mapComponentDispatch(dispatch, msg => adt('table' as const, msg))} />
+      dispatch={mapComponentDispatch(dispatch, (msg) =>
+        adt("table" as const, msg)
+      )}
+    />
   );
 };
 
@@ -260,30 +379,36 @@ const view: ComponentView<State, Msg> = (props) => {
   return (
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={state.viewerUser} />
-      <Row className='mt-5'>
-        <Col xs='12'>
+      <Row className="mt-5">
+        <Col xs="12">
           <ReportCardList reportCards={cardData} />
         </Col>
       </Row>
-      <div className='border-top mt-5 pt-5'>
+      <div className="border-top mt-5 pt-5">
         <Row>
-          <Col xs='12' className='d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4'>
-            <h4 className='mb-0'>Proposals</h4>
-            {state.canViewProposals
-              ? (<Link
-                  newTab
-                  color='info'
-                  className='mt-3 mt-md-0'
-                  symbol_={rightPlacement(iconLinkSymbol('file-export'))}
-                  dest={routeDest(adt('proposalCWUExportAll', { opportunityId: opportunity.id }))}>
-                  Export All Proposals
-                </Link>)
-              : null}
+          <Col
+            xs="12"
+            className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
+            <h4 className="mb-0">Proposals</h4>
+            {state.canViewProposals ? (
+              <Link
+                newTab
+                color="info"
+                className="mt-3 mt-md-0"
+                symbol_={rightPlacement(iconLinkSymbol("file-export"))}
+                dest={routeDest(
+                  adt("proposalCWUExportAll", { opportunityId: opportunity.id })
+                )}>
+                Export All Proposals
+              </Link>
+            ) : null}
           </Col>
-          <Col xs='12'>
-            {state.canViewProposals
-              ? (<EvaluationTable {...props} />)
-              : (<NotAvailable {...props} />)}
+          <Col xs="12">
+            {state.canViewProposals ? (
+              <EvaluationTable {...props} />
+            ) : (
+              <NotAvailable {...props} />
+            )}
           </Col>
         </Row>
       </div>
@@ -296,28 +421,31 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
-  getModal: state => {
-    if (!state.showModal) { return null; }
+  getModal: (state) => {
+    if (!state.showModal) {
+      return null;
+    }
     switch (state.showModal.tag) {
-      case 'award':
+      case "award":
         return {
-          title: 'Award Code With Us Opportunity?',
-          onCloseMsg: adt('hideModal'),
+          title: "Award Code With Us Opportunity?",
+          onCloseMsg: adt("hideModal"),
           actions: [
             {
-              text: 'Award Opportunity',
-              icon: 'award',
-              color: 'primary',
+              text: "Award Opportunity",
+              icon: "award",
+              color: "primary",
               button: true,
-              msg: adt('award', state.showModal.value)
+              msg: adt("award", state.showModal.value)
             },
             {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
             }
           ],
-          body: () => 'Are you sure you want to award this opportunity to this vendor? Once awarded, all subscribers and vendors with submitted proposals will be notified accordingly.'
+          body: () =>
+            "Are you sure you want to award this opportunity to this vendor? Once awarded, all subscribers and vendors with submitted proposals will be notified accordingly."
         };
     }
   }

@@ -1,17 +1,19 @@
-import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from 'shared/config';
-import { FileRecord } from 'shared/lib/resources/file';
-import { ADT, BodyWithErrors, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
+import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from "shared/config";
+import { FileRecord } from "shared/lib/resources/file";
+import { ADT, BodyWithErrors, Id } from "shared/lib/types";
+import { ErrorTypeFrom } from "shared/lib/validation";
 
 export type KeyCloakIdentityProvider = string;
 
 export enum UserType {
-  Vendor = 'VENDOR',
-  Government = 'GOV',
-  Admin = 'ADMIN'
+  Vendor = "VENDOR",
+  Government = "GOV",
+  Admin = "ADMIN"
 }
 
-export function userTypeToKeycloakIdentityProvider(userType: UserType): KeyCloakIdentityProvider {
+export function userTypeToKeycloakIdentityProvider(
+  userType: UserType
+): KeyCloakIdentityProvider {
   switch (userType) {
     case UserType.Vendor:
       return VENDOR_IDP_SUFFIX;
@@ -26,9 +28,9 @@ export function gitHubProfileLink(username: string): string {
 }
 
 export enum UserStatus {
-  Active = 'ACTIVE',
-  InactiveByUser = 'INACTIVE_USER',
-  InactiveByAdmin = 'INACTIVE_ADMIN'
+  Active = "ACTIVE",
+  InactiveByUser = "INACTIVE_USER",
+  InactiveByAdmin = "INACTIVE_ADMIN"
 }
 
 export interface User {
@@ -67,19 +69,19 @@ export function usersAreEquivalent(a: User, b: User): boolean {
   return a.id === b.id;
 }
 
-export function isAdmin(user: Pick<User, 'type'>): boolean {
+export function isAdmin(user: Pick<User, "type">): boolean {
   return user.type === UserType.Admin;
 }
 
-export function isGovernment(user: Pick<User, 'type'>): boolean {
+export function isGovernment(user: Pick<User, "type">): boolean {
   return user.type === UserType.Government;
 }
 
-export function isPublicSectorEmployee(user: Pick<User, 'type'>): boolean {
+export function isPublicSectorEmployee(user: Pick<User, "type">): boolean {
   return isAdmin(user) || isGovernment(user);
 }
 
-export function isVendor(user: Pick<User, 'type'>): boolean {
+export function isVendor(user: Pick<User, "type">): boolean {
   return user.type === UserType.Vendor;
 }
 
@@ -87,11 +89,14 @@ export function isPublicSectorUserType(userType: UserType): boolean {
   return isPublicSectorEmployee({ type: userType });
 }
 
-export function mustAcceptTerms(user: Pick<User, 'type'>): boolean {
+export function mustAcceptTerms(user: Pick<User, "type">): boolean {
   return isVendor(user);
 }
 
-export function usersHaveCapability(users: Array<Pick<User, 'capabilities'>>, capability: string): boolean {
+export function usersHaveCapability(
+  users: Array<Pick<User, "capabilities">>,
+  capability: string
+): boolean {
   for (const u of users) {
     if (u.capabilities.indexOf(capability) !== -1) {
       return true;
@@ -107,23 +112,24 @@ export interface UpdateProfileRequestBody {
   avatarImageFile?: Id;
 }
 
-export type UpdateRequestBody
-  = ADT<'updateProfile', UpdateProfileRequestBody>
-  | ADT<'updateCapabilities', string[]>
-  | ADT<'acceptTerms'>
-  | ADT<'updateNotifications', boolean>
-  | ADT<'reactivateUser'>
-  | ADT<'updateAdminPermissions', boolean>;
+export type UpdateRequestBody =
+  | ADT<"updateProfile", UpdateProfileRequestBody>
+  | ADT<"updateCapabilities", string[]>
+  | ADT<"acceptTerms">
+  | ADT<"updateNotifications", boolean>
+  | ADT<"reactivateUser">
+  | ADT<"updateAdminPermissions", boolean>;
 
-export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+export type UpdateProfileValidationErrors =
+  ErrorTypeFrom<UpdateProfileRequestBody>;
 
-type UpdateADTErrors
-  = ADT<'updateProfile', UpdateProfileValidationErrors>
-  | ADT<'updateCapabilities', string[][]>
-  | ADT<'acceptTerms', string[]>
-  | ADT<'updateNotifications', string[]>
-  | ADT<'updateAdminPermissions', string[]>
-  | ADT<'parseFailure'>;
+type UpdateADTErrors =
+  | ADT<"updateProfile", UpdateProfileValidationErrors>
+  | ADT<"updateCapabilities", string[][]>
+  | ADT<"acceptTerms", string[]>
+  | ADT<"updateNotifications", string[]>
+  | ADT<"updateAdminPermissions", string[]>
+  | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   user?: UpdateADTErrors;
@@ -163,6 +169,8 @@ export function adminPermissionsToUserType(admin: boolean): UserType {
   return admin ? UserType.Admin : UserType.Government;
 }
 
-export function notificationsBooleanToNotificationsOn(notificationsOn: boolean): Date | null {
+export function notificationsBooleanToNotificationsOn(
+  notificationsOn: boolean
+): Date | null {
   return notificationsOn ? new Date() : null;
 }

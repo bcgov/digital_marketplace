@@ -1,19 +1,37 @@
-import { EMPTY_STRING } from 'front-end/config';
-import { makePageMetadata, makeStartLoading, makeStopLoading } from 'front-end/lib';
-import { pushState } from 'front-end/lib/app/router';
-import { Route, SharedState } from 'front-end/lib/app/types';
-import * as Table from 'front-end/lib/components/table';
-import { ComponentView, GlobalComponentMsg, immutable, Immutable, mapComponentDispatch, PageComponent, PageInit, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
-import Link, { iconLinkSymbol, leftPlacement, routeDest } from 'front-end/lib/views/link';
-import Pagination from 'front-end/lib/views/pagination';
-import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { DEFAULT_PAGE_SIZE } from 'shared/config';
-import { compareStrings } from 'shared/lib';
-import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { isVendor, User, UserType } from 'shared/lib/resources/user';
-import { ADT, adt } from 'shared/lib/types';
+import { EMPTY_STRING } from "front-end/config";
+import {
+  makePageMetadata,
+  makeStartLoading,
+  makeStopLoading
+} from "front-end/lib";
+import { pushState } from "front-end/lib/app/router";
+import { Route, SharedState } from "front-end/lib/app/types";
+import * as Table from "front-end/lib/components/table";
+import {
+  ComponentView,
+  GlobalComponentMsg,
+  immutable,
+  Immutable,
+  mapComponentDispatch,
+  PageComponent,
+  PageInit,
+  Update,
+  updateComponentChild
+} from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
+import Link, {
+  iconLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
+import Pagination from "front-end/lib/views/pagination";
+import React from "react";
+import { Col, Row } from "reactstrap";
+import { DEFAULT_PAGE_SIZE } from "shared/config";
+import { compareStrings } from "shared/lib";
+import { OrganizationSlim } from "shared/lib/resources/organization";
+import { isVendor, User, UserType } from "shared/lib/resources/user";
+import { ADT, adt } from "shared/lib/types";
 
 type TableOrganization = OrganizationSlim;
 
@@ -26,11 +44,11 @@ export interface State {
   sessionUser: User | null;
 }
 
-type InnerMsg
-  = ADT<'table', Table.Msg>
-  | ADT<'pageChange', number>
-  | ADT<'startLoading'>
-  | ADT<'stopLoading'>;
+type InnerMsg =
+  | ADT<"table", Table.Msg>
+  | ADT<"pageChange", number>
+  | ADT<"startLoading">
+  | ADT<"stopLoading">;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
@@ -39,7 +57,7 @@ export interface RouteParams {
 }
 
 function updateUrl(page: number) {
-  pushState(adt('orgList', { page }));
+  pushState(adt("orgList", { page }));
 }
 
 async function baseState(): Promise<State> {
@@ -48,9 +66,11 @@ async function baseState(): Promise<State> {
     page: 1,
     numPages: 5,
     organizations: [],
-    table: immutable(await Table.init({
-      idNamespace: 'org-list-table'
-    })),
+    table: immutable(
+      await Table.init({
+        idNamespace: "org-list-table"
+      })
+    ),
     sessionUser: null
   };
 }
@@ -59,8 +79,13 @@ async function loadPage(page: number) {
   return await api.organizations.readMany(page, DEFAULT_PAGE_SIZE);
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParams, shared }) => {
-  const result = await loadPage(routeParams.page && routeParams.page > 0 ? routeParams.page : 1);
+const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
+  routeParams,
+  shared
+}) => {
+  const result = await loadPage(
+    routeParams.page && routeParams.page > 0 ? routeParams.page : 1
+  );
   if (!api.isValid(result)) {
     return await baseState();
   }
@@ -70,31 +95,34 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = async ({ routeParam
     sessionUser: shared.session && shared.session.user,
     page,
     numPages: result.value.numPages,
-    organizations: result.value.items
-      .sort((a, b) => compareStrings(a.legalName, b.legalName))
+    organizations: result.value.items.sort((a, b) =>
+      compareStrings(a.legalName, b.legalName)
+    )
   };
 };
 
-const startLoading = makeStartLoading<State>('loading');
-const stopLoading = makeStopLoading<State>('loading');
+const startLoading = makeStartLoading<State>("loading");
+const stopLoading = makeStopLoading<State>("loading");
 
 const update: Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case 'table':
+    case "table":
       return updateComponentChild({
         state,
-        childStatePath: ['table'],
+        childStatePath: ["table"],
         childUpdate: Table.update,
         childMsg: msg.value,
-        mapChildMsg: value => ({ tag: 'table', value })
+        mapChildMsg: (value) => ({ tag: "table", value })
       });
-    case 'pageChange':
+    case "pageChange":
       return [
         startLoading(state),
-        async state => {
+        async (state) => {
           state = stopLoading(state);
           const result = await loadPage(msg.value);
-          if (!api.isValid(result)) { return state; }
+          if (!api.isValid(result)) {
+            return state;
+          }
           const page = result.value.page;
           updateUrl(page);
           window.scrollTo(0, 0);
@@ -116,19 +144,19 @@ function showOwnerColumn(state: Immutable<State>): boolean {
 
 function tableHeadCells(state: Immutable<State>): Table.HeadCells {
   const owner = {
-    children: 'Owner',
-    className: 'text-nowrap',
+    children: "Owner",
+    className: "text-nowrap",
     style: {
-      minWidth: '200px'
+      minWidth: "200px"
     }
   };
   return [
     {
-      children: 'Organization Name',
-      className: 'text-nowrap',
+      children: "Organization Name",
+      className: "text-nowrap",
       style: {
-        width: '100%',
-        minWidth: '240px'
+        width: "100%",
+        minWidth: "240px"
       }
     },
     ...(showOwnerColumn(state) ? [owner] : [])
@@ -136,18 +164,26 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
-  return state.organizations.map(org => {
+  return state.organizations.map((org) => {
     const owner = {
-      className: 'text-nowrap',
-      children: org.owner
-        ? (<Link dest={routeDest(adt('userProfile', { userId: org.owner.id }))}>{org.owner.name}</Link>)
-        : EMPTY_STRING
+      className: "text-nowrap",
+      children: org.owner ? (
+        <Link dest={routeDest(adt("userProfile", { userId: org.owner.id }))}>
+          {org.owner.name}
+        </Link>
+      ) : (
+        EMPTY_STRING
+      )
     };
     return [
       {
-        children: org.owner
-          ? (<Link dest={routeDest(adt('orgEdit', { orgId: org.id })) }>{org.legalName}</Link>)
-          : org.legalName
+        children: org.owner ? (
+          <Link dest={routeDest(adt("orgEdit", { orgId: org.id }))}>
+            {org.legalName}
+          </Link>
+        ) : (
+          org.legalName
+        )
       },
       ...(showOwnerColumn(state) ? [owner] : [])
     ];
@@ -155,30 +191,35 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
 }
 
 const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(dispatch, value => ({ tag: 'table', value }));
+  const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(
+    dispatch,
+    (value) => ({ tag: "table", value })
+  );
   return (
     <div>
-      <h1 className='mb-5'>Digital Marketplace Organizations</h1>
+      <h1 className="mb-5">Digital Marketplace Organizations</h1>
       <Row>
-        <Col xs='12'>
+        <Col xs="12">
           <Table.view
             headCells={tableHeadCells(state)}
             bodyRows={tableBodyRows(state)}
             state={state.table}
-            dispatch={dispatchTable} />
+            dispatch={dispatchTable}
+          />
         </Col>
       </Row>
-      {state.numPages === 1
-        ? null
-        : (<Row>
-            <Col xs='12' className='mt-5 d-flex justify-content-center'>
-              <Pagination
-                page={state.page}
-                numPages={state.numPages}
-                disabled={state.loading > 0}
-                onPageChange={page => dispatch(adt('pageChange', page))} />
-            </Col>
-          </Row>)}
+      {state.numPages === 1 ? null : (
+        <Row>
+          <Col xs="12" className="mt-5 d-flex justify-content-center">
+            <Pagination
+              page={state.page}
+              numPages={state.numPages}
+              disabled={state.loading > 0}
+              onPageChange={(page) => dispatch(adt("pageChange", page))}
+            />
+          </Col>
+        </Row>
+      )}
     </div>
   );
 };
@@ -188,28 +229,32 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   update,
   view,
   getMetadata() {
-    return makePageMetadata('Organizations');
+    return makePageMetadata("Organizations");
   },
   getContextualActions: ({ state, dispatch }) => {
-    if (!state.sessionUser || !isVendor(state.sessionUser)) { return null; }
-    return adt('links', [
+    if (!state.sessionUser || !isVendor(state.sessionUser)) {
+      return null;
+    }
+    return adt("links", [
       {
-        children: 'Create Organization',
+        children: "Create Organization",
         button: true,
-        symbol_: leftPlacement(iconLinkSymbol('plus-circle')),
-        color: 'primary',
-        dest: routeDest(adt('orgCreate', null))
+        symbol_: leftPlacement(iconLinkSymbol("plus-circle")),
+        color: "primary",
+        dest: routeDest(adt("orgCreate", null))
       },
       {
-        children: 'My Organizations',
+        children: "My Organizations",
         button: true,
         outline: true,
-        symbol_: leftPlacement(iconLinkSymbol('building')),
-        color: 'c-nav-fg-alt',
-        dest: routeDest(adt('userProfile', {
-          userId: state.sessionUser.id,
-          tab: 'organizations' as const
-        }))
+        symbol_: leftPlacement(iconLinkSymbol("building")),
+        color: "c-nav-fg-alt",
+        dest: routeDest(
+          adt("userProfile", {
+            userId: state.sessionUser.id,
+            tab: "organizations" as const
+          })
+        )
       }
     ]);
   }

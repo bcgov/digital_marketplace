@@ -1,10 +1,10 @@
-import { getSignInUrl } from 'front-end/lib';
-import { View } from 'front-end/lib/framework';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import Link, { externalDest } from 'front-end/lib/views/link';
-import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { isVendor, UserType } from 'shared/lib/resources/user';
+import { getSignInUrl } from "front-end/lib";
+import { View } from "front-end/lib/framework";
+import Icon, { AvailableIcons } from "front-end/lib/views/icon";
+import Link, { externalDest } from "front-end/lib/views/link";
+import React from "react";
+import { Col, Row } from "reactstrap";
+import { isVendor, UserType } from "shared/lib/resources/user";
 
 export interface Props {
   title: string;
@@ -14,34 +14,37 @@ export interface Props {
   redirectOnSuccess?: string;
 }
 
-function userTypeToIcon(userType: Props['userType']): AvailableIcons {
+function userTypeToIcon(userType: Props["userType"]): AvailableIcons {
   switch (userType) {
     case UserType.Vendor:
-      return 'vendor';
+      return "vendor";
     case UserType.Government:
-      return 'government';
+      return "government";
   }
 }
 
-export const SignInCard: View<Props> = props => {
+export const SignInCard: View<Props> = (props) => {
   return (
     <Row>
-      <Col xs='12'>
-        <div className='mx-auto bg-white p-4 shadow-hover mb-4 border rounded-sm'>
-          <h3 className='d-flex align-items-start flex-nowrap'>
+      <Col xs="12">
+        <div className="mx-auto bg-white p-4 shadow-hover mb-4 border rounded-sm">
+          <h3 className="d-flex align-items-start flex-nowrap">
             <Icon
               name={userTypeToIcon(props.userType)}
               width={isVendor({ type: props.userType }) ? 1.75 : 2}
               height={1.75}
-              className='mt-1 flex-shrink-0'
-              color='info' />
-            <span className='pl-2'>{props.title}</span>
+              className="mt-1 flex-shrink-0"
+              color="info"
+            />
+            <span className="pl-2">{props.title}</span>
           </h3>
           <p>{props.description}</p>
           <Link
             button
-            dest={externalDest(getSignInUrl(props.userType, props.redirectOnSuccess))}
-            className='btn-primary'>
+            dest={externalDest(
+              getSignInUrl(props.userType, props.redirectOnSuccess)
+            )}
+            className="btn-primary">
             {props.buttonText}
           </Link>
         </div>

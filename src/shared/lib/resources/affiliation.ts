@@ -1,17 +1,20 @@
-import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { User, usersHaveCapability } from 'shared/lib/resources/user';
-import { BodyWithErrors, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
+import {
+  Organization,
+  OrganizationSlim
+} from "shared/lib/resources/organization";
+import { User, usersHaveCapability } from "shared/lib/resources/user";
+import { BodyWithErrors, Id } from "shared/lib/types";
+import { ErrorTypeFrom } from "shared/lib/validation";
 
 export enum MembershipType {
-  Owner = 'OWNER',
-  Member = 'MEMBER'
+  Owner = "OWNER",
+  Member = "MEMBER"
 }
 
 export enum MembershipStatus {
-  Active = 'ACTIVE',
-  Inactive = 'INACTIVE',
-  Pending = 'PENDING'
+  Active = "ACTIVE",
+  Inactive = "INACTIVE",
+  Pending = "PENDING"
 }
 
 export interface Affiliation {
@@ -35,7 +38,7 @@ export interface AffiliationMember {
   id: Id;
   membershipType: MembershipType;
   membershipStatus: MembershipStatus;
-  user: Pick<User, 'id' | 'name' | 'avatarImageFile' | 'capabilities'>;
+  user: Pick<User, "id" | "name" | "avatarImageFile" | "capabilities">;
 }
 
 export interface CreateRequestBody {
@@ -44,7 +47,9 @@ export interface CreateRequestBody {
   membershipType: MembershipType;
 }
 
-export interface CreateValidationErrors extends ErrorTypeFrom<CreateRequestBody>, BodyWithErrors {
+export interface CreateValidationErrors
+  extends ErrorTypeFrom<CreateRequestBody>,
+    BodyWithErrors {
   inviteeNotRegistered?: string[];
   affiliation?: string[];
 }
@@ -68,14 +73,24 @@ export function parseMembershipType(raw: string): MembershipType | null {
   }
 }
 
-export function membersHaveCapability(members: AffiliationMember[], capability: string): boolean {
-  return usersHaveCapability(members.map(({ user }) => user), capability);
+export function membersHaveCapability(
+  members: AffiliationMember[],
+  capability: string
+): boolean {
+  return usersHaveCapability(
+    members.map(({ user }) => user),
+    capability
+  );
 }
 
-export function memberIsPending(member: Pick<Affiliation, 'membershipStatus'>): boolean {
+export function memberIsPending(
+  member: Pick<Affiliation, "membershipStatus">
+): boolean {
   return member.membershipStatus === MembershipStatus.Pending;
 }
 
-export function memberIsOwner(member: Pick<Affiliation, 'membershipType'>): boolean {
+export function memberIsOwner(
+  member: Pick<Affiliation, "membershipType">
+): boolean {
   return member.membershipType === MembershipType.Owner;
 }

@@ -1,82 +1,112 @@
-import { compareNumbers, compareStrings, isDateInThePast } from 'shared/lib';
-import { FileRecord } from 'shared/lib/resources/file';
-import { SWUOpportunity, SWUOpportunitySlim, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { OrganizationSlim } from 'shared/lib/resources/organization';
-import { UserSlim, UserType } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Comparison, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
+import { compareNumbers, compareStrings, isDateInThePast } from "shared/lib";
+import { FileRecord } from "shared/lib/resources/file";
+import {
+  SWUOpportunity,
+  SWUOpportunitySlim,
+  SWUTeamQuestion
+} from "shared/lib/resources/opportunity/sprint-with-us";
+import { OrganizationSlim } from "shared/lib/resources/organization";
+import { UserSlim, UserType } from "shared/lib/resources/user";
+import { ADT, BodyWithErrors, Comparison, Id } from "shared/lib/types";
+import { ErrorTypeFrom } from "shared/lib/validation";
 
-export const DEFAULT_SWU_PROPOSAL_TITLE = 'Unknown';
+export const DEFAULT_SWU_PROPOSAL_TITLE = "Unknown";
 export const NUM_SCORE_DECIMALS = 2;
 
 export enum SWUProposalPhaseType {
-  Inception = 'INCEPTION',
-  Prototype = 'PROTOTYPE',
-  Implementation = 'IMPLEMENTATION'
+  Inception = "INCEPTION",
+  Prototype = "PROTOTYPE",
+  Implementation = "IMPLEMENTATION"
 }
 
-export function parseSWUProposalPhaseType(raw: string): SWUProposalPhaseType | null {
+export function parseSWUProposalPhaseType(
+  raw: string
+): SWUProposalPhaseType | null {
   switch (raw) {
-    case SWUProposalPhaseType.Inception: return SWUProposalPhaseType.Inception;
-    case SWUProposalPhaseType.Prototype: return SWUProposalPhaseType.Prototype;
-    case SWUProposalPhaseType.Implementation: return SWUProposalPhaseType.Implementation;
-    default: return null;
+    case SWUProposalPhaseType.Inception:
+      return SWUProposalPhaseType.Inception;
+    case SWUProposalPhaseType.Prototype:
+      return SWUProposalPhaseType.Prototype;
+    case SWUProposalPhaseType.Implementation:
+      return SWUProposalPhaseType.Implementation;
+    default:
+      return null;
   }
 }
 
-export function swuProposalPhaseTypeToTitleCase(phase: SWUProposalPhaseType): string {
+export function swuProposalPhaseTypeToTitleCase(
+  phase: SWUProposalPhaseType
+): string {
   switch (phase) {
-    case SWUProposalPhaseType.Inception: return 'Inception';
-    case SWUProposalPhaseType.Prototype: return 'Proof of Concept';
-    case SWUProposalPhaseType.Implementation: return 'Implementation';
+    case SWUProposalPhaseType.Inception:
+      return "Inception";
+    case SWUProposalPhaseType.Prototype:
+      return "Proof of Concept";
+    case SWUProposalPhaseType.Implementation:
+      return "Implementation";
   }
 }
 
 export enum SWUProposalStatus {
-  Draft                     = 'DRAFT',
-  Submitted                 = 'SUBMITTED',
-  UnderReviewTeamQuestions  = 'UNDER_REVIEW_QUESTIONS',
-  EvaluatedTeamQuestions    = 'EVALUATED_QUESTIONS',
-  UnderReviewCodeChallenge  = 'UNDER_REVIEW_CODE_CHALLENGE',
-  EvaluatedCodeChallenge    = 'EVALUATED_CODE_CHALLENGE',
-  UnderReviewTeamScenario   = 'UNDER_REVIEW_TEAM_SCENARIO',
-  EvaluatedTeamScenario     = 'EVALUATED_TEAM_SCENARIO',
-  Awarded                   = 'AWARDED',
-  NotAwarded                = 'NOT_AWARDED',
-  Disqualified              = 'DISQUALIFIED',
-  Withdrawn                 = 'WITHDRAWN'
+  Draft = "DRAFT",
+  Submitted = "SUBMITTED",
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
+  EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
+  UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
+  EvaluatedTeamScenario = "EVALUATED_TEAM_SCENARIO",
+  Awarded = "AWARDED",
+  NotAwarded = "NOT_AWARDED",
+  Disqualified = "DISQUALIFIED",
+  Withdrawn = "WITHDRAWN"
 }
 
 export enum SWUProposalEvent {
-  QuestionsScoreEntered = 'QUESTIONS_SCORE_ENTERED',
-  ChallengeScoreEntered = 'CHALLENGE_SCORE_ENTERED',
-  ScenarioScoreEntered = 'SCENARIO_SCORE_ENTERED',
-  PriceScoreEntered = 'PRICE_SCORE_ENTERED'
+  QuestionsScoreEntered = "QUESTIONS_SCORE_ENTERED",
+  ChallengeScoreEntered = "CHALLENGE_SCORE_ENTERED",
+  ScenarioScoreEntered = "SCENARIO_SCORE_ENTERED",
+  PriceScoreEntered = "PRICE_SCORE_ENTERED"
 }
 
 export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
   switch (raw) {
-    case SWUProposalStatus.Draft: return SWUProposalStatus.Draft;
-    case SWUProposalStatus.Submitted: return SWUProposalStatus.Submitted;
-    case SWUProposalStatus.UnderReviewTeamQuestions: return SWUProposalStatus.UnderReviewTeamQuestions;
-    case SWUProposalStatus.EvaluatedTeamQuestions: return SWUProposalStatus.EvaluatedTeamQuestions;
-    case SWUProposalStatus.UnderReviewCodeChallenge: return SWUProposalStatus.UnderReviewCodeChallenge;
-    case SWUProposalStatus.EvaluatedCodeChallenge: return SWUProposalStatus.EvaluatedCodeChallenge;
-    case SWUProposalStatus.UnderReviewTeamScenario: return SWUProposalStatus.UnderReviewTeamScenario;
-    case SWUProposalStatus.EvaluatedTeamScenario: return SWUProposalStatus.EvaluatedTeamScenario;
-    case SWUProposalStatus.Awarded: return SWUProposalStatus.Awarded;
-    case SWUProposalStatus.NotAwarded: return SWUProposalStatus.NotAwarded;
-    case SWUProposalStatus.Disqualified: return SWUProposalStatus.Disqualified;
-    case SWUProposalStatus.Withdrawn: return SWUProposalStatus.Withdrawn;
-    default: return null;
+    case SWUProposalStatus.Draft:
+      return SWUProposalStatus.Draft;
+    case SWUProposalStatus.Submitted:
+      return SWUProposalStatus.Submitted;
+    case SWUProposalStatus.UnderReviewTeamQuestions:
+      return SWUProposalStatus.UnderReviewTeamQuestions;
+    case SWUProposalStatus.EvaluatedTeamQuestions:
+      return SWUProposalStatus.EvaluatedTeamQuestions;
+    case SWUProposalStatus.UnderReviewCodeChallenge:
+      return SWUProposalStatus.UnderReviewCodeChallenge;
+    case SWUProposalStatus.EvaluatedCodeChallenge:
+      return SWUProposalStatus.EvaluatedCodeChallenge;
+    case SWUProposalStatus.UnderReviewTeamScenario:
+      return SWUProposalStatus.UnderReviewTeamScenario;
+    case SWUProposalStatus.EvaluatedTeamScenario:
+      return SWUProposalStatus.EvaluatedTeamScenario;
+    case SWUProposalStatus.Awarded:
+      return SWUProposalStatus.Awarded;
+    case SWUProposalStatus.NotAwarded:
+      return SWUProposalStatus.NotAwarded;
+    case SWUProposalStatus.Disqualified:
+      return SWUProposalStatus.Disqualified;
+    case SWUProposalStatus.Withdrawn:
+      return SWUProposalStatus.Withdrawn;
+    default:
+      return null;
   }
 }
 
 function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
   // 0 = first
   switch (a) {
-    case SWUProposalStatus.Awarded: return 0;
-    case SWUProposalStatus.NotAwarded: return 1;
+    case SWUProposalStatus.Awarded:
+      return 0;
+    case SWUProposalStatus.NotAwarded:
+      return 1;
     case SWUProposalStatus.UnderReviewTeamQuestions:
     case SWUProposalStatus.EvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
@@ -84,37 +114,57 @@ function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
     case SWUProposalStatus.UnderReviewTeamScenario:
     case SWUProposalStatus.EvaluatedTeamScenario:
       return 2;
-    case SWUProposalStatus.Withdrawn: return 3;
-    case SWUProposalStatus.Disqualified: return 4;
+    case SWUProposalStatus.Withdrawn:
+      return 3;
+    case SWUProposalStatus.Disqualified:
+      return 4;
     case SWUProposalStatus.Draft:
     case SWUProposalStatus.Submitted:
       return 5;
   }
 }
 
-export function compareSWUProposalStatuses(a: SWUProposalStatus, b: SWUProposalStatus): Comparison {
-  return compareNumbers(quantifySWUProposalStatusForSort(a), quantifySWUProposalStatusForSort(b));
+export function compareSWUProposalStatuses(
+  a: SWUProposalStatus,
+  b: SWUProposalStatus
+): Comparison {
+  return compareNumbers(
+    quantifySWUProposalStatusForSort(a),
+    quantifySWUProposalStatusForSort(b)
+  );
 }
 
-type SWUProposalScore
-  = 'totalScore'
-  | 'questionsScore'
-  | 'challengeScore'
-  | 'scenarioScore';
+type SWUProposalScore =
+  | "totalScore"
+  | "questionsScore"
+  | "challengeScore"
+  | "scenarioScore";
 
-export function compareSWUProposalsForPublicSector(a: SWUProposalSlim, b: SWUProposalSlim, byScore: SWUProposalScore): Comparison {
+export function compareSWUProposalsForPublicSector(
+  a: SWUProposalSlim,
+  b: SWUProposalSlim,
+  byScore: SWUProposalScore
+): Comparison {
   const statusComparison = compareSWUProposalStatuses(a.status, b.status);
-  if (statusComparison !== 0) { return statusComparison; }
+  if (statusComparison !== 0) {
+    return statusComparison;
+  }
   // Compare by score.
   // Give precendence to scored proposals.
   const aScore = a[byScore];
   const bScore = b[byScore];
-  if (aScore === undefined && bScore !== undefined) { return 1; }
-  if (aScore !== undefined && bScore === undefined) { return -1; }
+  if (aScore === undefined && bScore !== undefined) {
+    return 1;
+  }
+  if (aScore !== undefined && bScore === undefined) {
+    return -1;
+  }
   if (aScore !== undefined && bScore !== undefined) {
     // If scores are not the same, sort by score, highest first.
-    const result = (compareNumbers(aScore, bScore) * -1 as Comparison);
-    if (result) { return result; }
+    const result = (compareNumbers(aScore, bScore) * -1) as Comparison;
+    if (result) {
+      return result;
+    }
   }
   // Fallback to sorting by proponent name.
   return compareStrings(getSWUProponentName(a), getSWUProponentName(b));
@@ -177,16 +227,25 @@ export interface SWUProposalTeamQuestionResponse {
 export interface SWUProposalHistoryRecord {
   createdAt: Date;
   createdBy: UserSlim | null;
-  type: ADT<'status', SWUProposalStatus> | ADT<'event', SWUProposalEvent>;
+  type: ADT<"status", SWUProposalStatus> | ADT<"event", SWUProposalEvent>;
   note: string;
 }
 
-export type SWUProposalSlim = Omit<SWUProposal, 'history' | 'attachments' | 'references' | 'teamQuestionResponses' | 'inceptionPhase' | 'prototypePhase' | 'implementationPhase'>;
+export type SWUProposalSlim = Omit<
+  SWUProposal,
+  | "history"
+  | "attachments"
+  | "references"
+  | "teamQuestionResponses"
+  | "inceptionPhase"
+  | "prototypePhase"
+  | "implementationPhase"
+>;
 
 // Create.
 
-export type CreateSWUProposalStatus
-  = SWUProposalStatus.Draft
+export type CreateSWUProposalStatus =
+  | SWUProposalStatus.Draft
   | SWUProposalStatus.Submitted;
 
 export interface CreateSWUProposalTeamMemberBody {
@@ -201,7 +260,8 @@ export interface CreateSWUProposalPhaseBody {
 
 export type CreateSWUProposalReferenceBody = SWUProposalReference;
 
-export type CreateSWUProposalTeamQuestionResponseBody = SWUProposalTeamQuestionResponse;
+export type CreateSWUProposalTeamQuestionResponseBody =
+  SWUProposalTeamQuestionResponse;
 
 export interface CreateRequestBody {
   opportunity: Id;
@@ -221,16 +281,19 @@ export interface CreateSWUProposalPhaseValidationErrors {
   phase?: string[];
 }
 
-export interface CreateSWUProposalTeamMemberValidationErrors extends ErrorTypeFrom<CreateSWUProposalTeamMemberBody> {
+export interface CreateSWUProposalTeamMemberValidationErrors
+  extends ErrorTypeFrom<CreateSWUProposalTeamMemberBody> {
   parseFailure?: string[];
   members?: string[];
 }
 
-export interface CreateSWUProposalReferenceValidationErrors extends ErrorTypeFrom<CreateSWUProposalReferenceBody> {
+export interface CreateSWUProposalReferenceValidationErrors
+  extends ErrorTypeFrom<CreateSWUProposalReferenceBody> {
   parseFailure?: string[];
 }
 
-export interface CreateSWUProposalTeamQuestionResponseValidationErrors extends ErrorTypeFrom<CreateSWUProposalTeamQuestionResponseBody> {
+export interface CreateSWUProposalTeamQuestionResponseValidationErrors
+  extends ErrorTypeFrom<CreateSWUProposalTeamQuestionResponseBody> {
   parseFailure?: string[];
 }
 
@@ -255,36 +318,39 @@ export interface UpdateTeamQuestionScoreBody {
   score: number;
 }
 
-export type UpdateRequestBody
-  = ADT<'edit', UpdateEditRequestBody>
-  | ADT<'submit', string>
-  | ADT<'scoreQuestions', UpdateTeamQuestionScoreBody[]>
-  | ADT<'screenInToCodeChallenge', string>
-  | ADT<'screenOutFromCodeChallenge', string>
-  | ADT<'scoreCodeChallenge', number>
-  | ADT<'screenInToTeamScenario', string>
-  | ADT<'screenOutFromTeamScenario', string>
-  | ADT<'scoreTeamScenario', number>
-  | ADT<'award', string>
-  | ADT<'disqualify', string>
-  | ADT<'withdraw', string>;
+export type UpdateRequestBody =
+  | ADT<"edit", UpdateEditRequestBody>
+  | ADT<"submit", string>
+  | ADT<"scoreQuestions", UpdateTeamQuestionScoreBody[]>
+  | ADT<"screenInToCodeChallenge", string>
+  | ADT<"screenOutFromCodeChallenge", string>
+  | ADT<"scoreCodeChallenge", number>
+  | ADT<"screenInToTeamScenario", string>
+  | ADT<"screenOutFromTeamScenario", string>
+  | ADT<"scoreTeamScenario", number>
+  | ADT<"award", string>
+  | ADT<"disqualify", string>
+  | ADT<"withdraw", string>;
 
-export type UpdateEditRequestBody = Omit<CreateRequestBody, 'opportunity' | 'status'>;
+export type UpdateEditRequestBody = Omit<
+  CreateRequestBody,
+  "opportunity" | "status"
+>;
 
-type UpdateADTErrors
-  = ADT<'edit', UpdateEditValidationErrors>
-  | ADT<'submit', string[]>
-  | ADT<'scoreQuestions', UpdateTeamQuestionScoreValidationErrors[]>
-  | ADT<'screenInToCodeChallenge', string[]>
-  | ADT<'screenOutFromCodeChallenge', string[]>
-  | ADT<'scoreCodeChallenge', string[]>
-  | ADT<'screenInToTeamScenario', string[]>
-  | ADT<'screenOutFromTeamScenario', string[]>
-  | ADT<'scoreTeamScenario', string[]>
-  | ADT<'award', string[]>
-  | ADT<'disqualify', string[]>
-  | ADT<'withdraw', string[]>
-  | ADT<'parseFailure'>;
+type UpdateADTErrors =
+  | ADT<"edit", UpdateEditValidationErrors>
+  | ADT<"submit", string[]>
+  | ADT<"scoreQuestions", UpdateTeamQuestionScoreValidationErrors[]>
+  | ADT<"screenInToCodeChallenge", string[]>
+  | ADT<"screenOutFromCodeChallenge", string[]>
+  | ADT<"scoreCodeChallenge", string[]>
+  | ADT<"screenInToTeamScenario", string[]>
+  | ADT<"screenOutFromTeamScenario", string[]>
+  | ADT<"scoreTeamScenario", string[]>
+  | ADT<"award", string[]>
+  | ADT<"disqualify", string[]>
+  | ADT<"withdraw", string[]>
+  | ADT<"parseFailure">;
 
 export interface UpdateTeamQuestionScoreValidationErrors {
   order?: string[];
@@ -311,7 +377,10 @@ export interface DeleteValidationErrors extends BodyWithErrors {
   status?: string[];
 }
 
-export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus, role: UserType.Government | UserType.Admin): boolean {
+export function isSWUProposalStatusVisibleToGovernment(
+  s: SWUProposalStatus,
+  role: UserType.Government | UserType.Admin
+): boolean {
   switch (s) {
     case SWUProposalStatus.Draft:
     case SWUProposalStatus.Submitted:
@@ -323,93 +392,182 @@ export function isSWUProposalStatusVisibleToGovernment(s: SWUProposalStatus, rol
   }
 }
 
-export const rankableSWUProposalStatuses: readonly SWUProposalStatus[] = [SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded];
+export const rankableSWUProposalStatuses: readonly SWUProposalStatus[] = [
+  SWUProposalStatus.EvaluatedTeamScenario,
+  SWUProposalStatus.Awarded,
+  SWUProposalStatus.NotAwarded
+];
 
-export function isValidStatusChange(from: SWUProposalStatus, to: SWUProposalStatus, userType: UserType, proposalDeadline: Date): boolean {
+export function isValidStatusChange(
+  from: SWUProposalStatus,
+  to: SWUProposalStatus,
+  userType: UserType,
+  proposalDeadline: Date
+): boolean {
   const hasProposalDeadlinePassed = isDateInThePast(proposalDeadline);
   switch (from) {
     case SWUProposalStatus.Draft:
-      return to === SWUProposalStatus.Submitted && userType === UserType.Vendor && !hasProposalDeadlinePassed;
+      return (
+        to === SWUProposalStatus.Submitted &&
+        userType === UserType.Vendor &&
+        !hasProposalDeadlinePassed
+      );
 
     case SWUProposalStatus.Submitted:
-      return (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
-             (to === SWUProposalStatus.UnderReviewTeamQuestions && userType !== UserType.Vendor && hasProposalDeadlinePassed);
+      return (
+        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor) ||
+        (to === SWUProposalStatus.UnderReviewTeamQuestions &&
+          userType !== UserType.Vendor &&
+          hasProposalDeadlinePassed)
+      );
 
     case SWUProposalStatus.UnderReviewTeamQuestions:
-      return (([SWUProposalStatus.EvaluatedTeamQuestions, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
-             hasProposalDeadlinePassed;
+      return (
+        (([
+          SWUProposalStatus.EvaluatedTeamQuestions,
+          SWUProposalStatus.Disqualified
+        ].includes(to) &&
+          userType !== UserType.Vendor) ||
+          (to === SWUProposalStatus.Withdrawn &&
+            userType === UserType.Vendor)) &&
+        hasProposalDeadlinePassed
+      );
 
     case SWUProposalStatus.EvaluatedTeamQuestions:
-      return (([SWUProposalStatus.UnderReviewCodeChallenge, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+      return (
+        ([
+          SWUProposalStatus.UnderReviewCodeChallenge,
+          SWUProposalStatus.Disqualified
+        ].includes(to) &&
+          userType !== UserType.Vendor) ||
+        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+      );
 
     case SWUProposalStatus.UnderReviewCodeChallenge:
-      return (([SWUProposalStatus.EvaluatedCodeChallenge, SWUProposalStatus.Disqualified, SWUProposalStatus.EvaluatedTeamQuestions].includes(to) && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+      return (
+        ([
+          SWUProposalStatus.EvaluatedCodeChallenge,
+          SWUProposalStatus.Disqualified,
+          SWUProposalStatus.EvaluatedTeamQuestions
+        ].includes(to) &&
+          userType !== UserType.Vendor) ||
+        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+      );
 
     case SWUProposalStatus.EvaluatedCodeChallenge:
-      return (([SWUProposalStatus.UnderReviewTeamScenario, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+      return (
+        ([
+          SWUProposalStatus.UnderReviewTeamScenario,
+          SWUProposalStatus.Disqualified
+        ].includes(to) &&
+          userType !== UserType.Vendor) ||
+        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+      );
 
     case SWUProposalStatus.UnderReviewTeamScenario:
-      return (([SWUProposalStatus.EvaluatedTeamScenario, SWUProposalStatus.Disqualified, SWUProposalStatus.EvaluatedCodeChallenge].includes(to) && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor));
+      return (
+        ([
+          SWUProposalStatus.EvaluatedTeamScenario,
+          SWUProposalStatus.Disqualified,
+          SWUProposalStatus.EvaluatedCodeChallenge
+        ].includes(to) &&
+          userType !== UserType.Vendor) ||
+        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+      );
 
     case SWUProposalStatus.EvaluatedTeamScenario:
-      return (([SWUProposalStatus.Awarded, SWUProposalStatus.NotAwarded, SWUProposalStatus.Disqualified].includes(to) && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
-             hasProposalDeadlinePassed;
+      return (
+        (([
+          SWUProposalStatus.Awarded,
+          SWUProposalStatus.NotAwarded,
+          SWUProposalStatus.Disqualified
+        ].includes(to) &&
+          userType !== UserType.Vendor) ||
+          (to === SWUProposalStatus.Withdrawn &&
+            userType === UserType.Vendor)) &&
+        hasProposalDeadlinePassed
+      );
 
     case SWUProposalStatus.Awarded:
-      return ((to === SWUProposalStatus.Disqualified && userType !== UserType.Vendor) ||
-             (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)) &&
-             hasProposalDeadlinePassed;
+      return (
+        ((to === SWUProposalStatus.Disqualified &&
+          userType !== UserType.Vendor) ||
+          (to === SWUProposalStatus.Withdrawn &&
+            userType === UserType.Vendor)) &&
+        hasProposalDeadlinePassed
+      );
 
     case SWUProposalStatus.NotAwarded:
-      return [SWUProposalStatus.Awarded, SWUProposalStatus.Disqualified].includes(to) &&
-             userType !== UserType.Vendor &&
-             hasProposalDeadlinePassed;
+      return (
+        [SWUProposalStatus.Awarded, SWUProposalStatus.Disqualified].includes(
+          to
+        ) &&
+        userType !== UserType.Vendor &&
+        hasProposalDeadlinePassed
+      );
 
     case SWUProposalStatus.Withdrawn:
-      return userType === UserType.Vendor &&
-             !hasProposalDeadlinePassed &&
-             to === SWUProposalStatus.Submitted;
+      return (
+        userType === UserType.Vendor &&
+        !hasProposalDeadlinePassed &&
+        to === SWUProposalStatus.Submitted
+      );
     default:
       return false;
   }
 }
 
 // Return score out of 100 calculated from total points awarded to all questions / max possible
-export function calculateProposalTeamQuestionScore(teamQuestionResponses: SWUProposalTeamQuestionResponse[], teamQuestions: SWUTeamQuestion[]): number {
+export function calculateProposalTeamQuestionScore(
+  teamQuestionResponses: SWUProposalTeamQuestionResponse[],
+  teamQuestions: SWUTeamQuestion[]
+): number {
   const maxPossibleScore = teamQuestions.reduce((acc, v) => acc + v.score, 0);
-  const actualScore = teamQuestionResponses.reduce((acc, v) => acc + (v.score || 0), 0);
-  return actualScore / maxPossibleScore * 100;
+  const actualScore = teamQuestionResponses.reduce(
+    (acc, v) => acc + (v.score || 0),
+    0
+  );
+  return (actualScore / maxPossibleScore) * 100;
 }
 
 // Calculate total score for proposal based on scores for each stage and contributing weight defined on opportunity
-export function calculateTotalProposalScore(proposal: SWUProposal, opportunity: SWUOpportunity): number {
-  const teamQuestionsScore = calculateProposalTeamQuestionScore(proposal.teamQuestionResponses, opportunity.teamQuestions);
-  return (teamQuestionsScore * opportunity.questionsWeight) / 100 +
-         ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) / 100 +
-         ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) / 100 +
-         ((proposal.priceScore || 0) * opportunity.priceWeight) / 100;
+export function calculateTotalProposalScore(
+  proposal: SWUProposal,
+  opportunity: SWUOpportunity
+): number {
+  const teamQuestionsScore = calculateProposalTeamQuestionScore(
+    proposal.teamQuestionResponses,
+    opportunity.teamQuestions
+  );
+  return (
+    (teamQuestionsScore * opportunity.questionsWeight) / 100 +
+    ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) / 100 +
+    ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) / 100 +
+    ((proposal.priceScore || 0) * opportunity.priceWeight) / 100
+  );
 }
 
 type SWUProposalTeamMembersAcc = [Set<string>, SWUProposalTeamMember[]];
 
-export function swuProposalTeamMembers(proposal: SWUProposal, sort = false): SWUProposalTeamMember[] {
-  const compute = (members: SWUProposalTeamMember[]) => members.reduce((acc, m) => {
-    const [set, members] = acc;
-    if (set.has(m.member.id)) {
-      return acc;
-    } else {
-      return [
-        set.add(m.member.id),
-        [...members, m]
-      ] as SWUProposalTeamMembersAcc;
-    }
-  }, [new Set(), []] as SWUProposalTeamMembersAcc);
+export function swuProposalTeamMembers(
+  proposal: SWUProposal,
+  sort = false
+): SWUProposalTeamMember[] {
+  const compute = (members: SWUProposalTeamMember[]) =>
+    members.reduce(
+      (acc, m) => {
+        const [set, members] = acc;
+        if (set.has(m.member.id)) {
+          return acc;
+        } else {
+          return [
+            set.add(m.member.id),
+            [...members, m]
+          ] as SWUProposalTeamMembersAcc;
+        }
+      },
+      [new Set(), []] as SWUProposalTeamMembersAcc
+    );
   const members = compute([
     ...(proposal.inceptionPhase?.members || []),
     ...(proposal.prototypePhase?.members || []),
@@ -436,12 +594,17 @@ export function swuProposalTotalProposedCost(proposal: SWUProposal): number {
 }
 
 export function showScoreAndRankToProponent(proposal: SWUProposal): boolean {
-   return proposal.totalScore !== undefined
-       && proposal.rank !== undefined
-       && (proposal.status === SWUProposalStatus.Awarded || proposal.status === SWUProposalStatus.NotAwarded);
+  return (
+    proposal.totalScore !== undefined &&
+    proposal.rank !== undefined &&
+    (proposal.status === SWUProposalStatus.Awarded ||
+      proposal.status === SWUProposalStatus.NotAwarded)
+  );
 }
 
-export function canSWUProposalBeScreenedToFromCodeChallenge(p: Pick<SWUProposal, 'status'>): boolean {
+export function canSWUProposalBeScreenedToFromCodeChallenge(
+  p: Pick<SWUProposal, "status">
+): boolean {
   switch (p.status) {
     case SWUProposalStatus.EvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
@@ -451,7 +614,9 @@ export function canSWUProposalBeScreenedToFromCodeChallenge(p: Pick<SWUProposal,
   }
 }
 
-export function canSWUProposalBeScreenedToFromTeamScenario(p: Pick<SWUProposal, 'status'>): boolean {
+export function canSWUProposalBeScreenedToFromTeamScenario(
+  p: Pick<SWUProposal, "status">
+): boolean {
   switch (p.status) {
     case SWUProposalStatus.EvaluatedCodeChallenge:
     case SWUProposalStatus.UnderReviewTeamScenario:
@@ -461,7 +626,9 @@ export function canSWUProposalBeScreenedToFromTeamScenario(p: Pick<SWUProposal, 
   }
 }
 
-export function canSWUProposalBeAwarded(p: Pick<SWUProposal, 'status'>): boolean {
+export function canSWUProposalBeAwarded(
+  p: Pick<SWUProposal, "status">
+): boolean {
   switch (p.status) {
     case SWUProposalStatus.NotAwarded:
     case SWUProposalStatus.EvaluatedTeamScenario:
@@ -471,7 +638,9 @@ export function canSWUProposalBeAwarded(p: Pick<SWUProposal, 'status'>): boolean
   }
 }
 
-export function isSWUProposalInTeamQuestions(p: Pick<SWUProposal, 'status' | 'questionsScore'>): boolean {
+export function isSWUProposalInTeamQuestions(
+  p: Pick<SWUProposal, "status" | "questionsScore">
+): boolean {
   switch (p.status) {
     case SWUProposalStatus.UnderReviewTeamQuestions:
     case SWUProposalStatus.EvaluatedTeamQuestions:
@@ -486,7 +655,9 @@ export function isSWUProposalInTeamQuestions(p: Pick<SWUProposal, 'status' | 'qu
   }
 }
 
-export function isSWUProposalInCodeChallenge(p: Pick<SWUProposal, 'status' | 'challengeScore'>): boolean {
+export function isSWUProposalInCodeChallenge(
+  p: Pick<SWUProposal, "status" | "challengeScore">
+): boolean {
   switch (p.status) {
     case SWUProposalStatus.UnderReviewCodeChallenge:
     case SWUProposalStatus.EvaluatedCodeChallenge:
@@ -499,7 +670,9 @@ export function isSWUProposalInCodeChallenge(p: Pick<SWUProposal, 'status' | 'ch
   }
 }
 
-export function isSWUProposalInTeamScenario(p: Pick<SWUProposal, 'status' | 'scenarioScore'>): boolean {
+export function isSWUProposalInTeamScenario(
+  p: Pick<SWUProposal, "status" | "scenarioScore">
+): boolean {
   switch (p.status) {
     case SWUProposalStatus.UnderReviewTeamScenario:
     case SWUProposalStatus.EvaluatedTeamScenario:
@@ -510,6 +683,8 @@ export function isSWUProposalInTeamScenario(p: Pick<SWUProposal, 'status' | 'sce
   }
 }
 
-export function getSWUProponentName(p: Pick<SWUProposal, 'organization' | 'anonymousProponentName'>): string {
-  return p.organization?.legalName || p.anonymousProponentName || 'Proponent';
+export function getSWUProponentName(
+  p: Pick<SWUProposal, "organization" | "anonymousProponentName">
+): string {
+  return p.organization?.legalName || p.anonymousProponentName || "Proponent";
 }

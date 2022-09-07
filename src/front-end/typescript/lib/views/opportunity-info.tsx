@@ -1,7 +1,7 @@
-import { EMPTY_STRING } from 'front-end/config';
-import { View } from 'front-end/lib/framework';
-import { AvailableIcons, IconInfo } from 'front-end/lib/views/icon';
-import React from 'react';
+import { EMPTY_STRING } from "front-end/config";
+import { View } from "front-end/lib/framework";
+import { AvailableIcons, IconInfo } from "front-end/lib/views/icon";
+import React from "react";
 
 export interface Props {
   icon: AvailableIcons;
@@ -10,11 +10,17 @@ export interface Props {
   className?: string;
 }
 
-const OpportunityInfo: View<Props> = ({ icon, name, value, className = '' }) => {
+const OpportunityInfo: View<Props> = ({
+  icon,
+  name,
+  value,
+  className = ""
+}) => {
   return (
-    <div className={`d-flex flex-nowrap flex-column align-items-start text-left ${className}`}>
-      <div className='h5 mb-2'>{value || EMPTY_STRING}</div>
-      <IconInfo small name={icon} value={name} className='font-size-small'/>
+    <div
+      className={`d-flex flex-nowrap flex-column align-items-start text-left ${className}`}>
+      <div className="h5 mb-2">{value || EMPTY_STRING}</div>
+      <IconInfo small name={icon} value={name} className="font-size-small" />
     </div>
   );
 };

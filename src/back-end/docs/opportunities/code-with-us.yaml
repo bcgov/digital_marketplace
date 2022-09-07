@@ -1,4 +1,3 @@
-
 paths:
   /opportunities/code-with-us:
     get:
@@ -28,10 +27,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CWUOpportunity'
+              $ref: "#/components/schemas/CWUOpportunity"
             examples:
               createCWUOpportunity:
-                $ref: '#/components/examples/createCWUOpportunity'
+                $ref: "#/components/examples/createCWUOpportunity"
       responses:
         201:
           description: Receive the created Code-With-Us Opportunity.
@@ -91,15 +90,15 @@ paths:
                   type: object
             examples:
               edit:
-                $ref: '#/components/examples/editCWUOpportunity'
+                $ref: "#/components/examples/editCWUOpportunity"
               publish:
-                $ref: '#/components/examples/publishCWUOpportunity'
+                $ref: "#/components/examples/publishCWUOpportunity"
               suspend:
-                $ref: '#/components/examples/suspendCWUOpportunity'
+                $ref: "#/components/examples/suspendCWUOpportunity"
               cancel:
-                $ref: '#/components/examples/cancelCWUOpportunity'
+                $ref: "#/components/examples/cancelCWUOpportunity"
               addAddendum:
-                $ref: '#/components/examples/addAddendumToCWUOpportunity'
+                $ref: "#/components/examples/addAddendumToCWUOpportunity"
       responses:
         200:
           description: Receive the updated Code-With-Us Opportunity.
@@ -136,7 +135,6 @@ paths:
           description: A Code-With-Us Opportunity for the specified ID was not found.
         401:
           description: You do not have permission to delete this Opportunity.
-
 
 components:
   schemas:
@@ -182,7 +180,6 @@ components:
         status:
           type: string
           enum: [DRAFT, PUBLISHED]
-
 
   examples:
     createCWUOpportunity:

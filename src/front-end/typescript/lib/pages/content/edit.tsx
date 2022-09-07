@@ -1,24 +1,53 @@
-import { APP_TERMS_CONTENT_ID } from 'front-end/config';
-import { getAlertsValid, getContextualActionsValid, getMetadataValid, getModalValid, makePageMetadata, makeStartLoading, makeStopLoading, updateValid, ValidatedState, viewValid } from 'front-end/lib';
-import { isUserType } from 'front-end/lib/access-control';
-import * as router from 'front-end/lib/app/router';
-import { Route, SharedState } from 'front-end/lib/app/types';
-import { ComponentView, emptyPageAlerts, GlobalComponentMsg, Immutable, immutable, mapComponentDispatch, PageComponent, PageInit, replaceRoute, toast, Update, updateComponentChild } from 'front-end/lib/framework';
-import * as api from 'front-end/lib/http/api';
-import * as Form from 'front-end/lib/pages/content/lib/components/form';
-import * as toasts from 'front-end/lib/pages/content/lib/toasts';
-import DateMetadata from 'front-end/lib/views/date-metadata';
-import DescriptionList from 'front-end/lib/views/description-list';
-import Link, { iconLinkSymbol, leftPlacement, Props as LinkProps, routeDest } from 'front-end/lib/views/link';
-import React from 'react';
-import { Col, Row } from 'reactstrap';
-import { COPY } from 'shared/config';
-import { Content } from 'shared/lib/resources/content';
-import { UserType } from 'shared/lib/resources/user';
-import { ADT, adt } from 'shared/lib/types';
-import { invalid, valid } from 'shared/lib/validation';
+import { APP_TERMS_CONTENT_ID } from "front-end/config";
+import {
+  getAlertsValid,
+  getContextualActionsValid,
+  getMetadataValid,
+  getModalValid,
+  makePageMetadata,
+  makeStartLoading,
+  makeStopLoading,
+  updateValid,
+  ValidatedState,
+  viewValid
+} from "front-end/lib";
+import { isUserType } from "front-end/lib/access-control";
+import * as router from "front-end/lib/app/router";
+import { Route, SharedState } from "front-end/lib/app/types";
+import {
+  ComponentView,
+  emptyPageAlerts,
+  GlobalComponentMsg,
+  Immutable,
+  immutable,
+  mapComponentDispatch,
+  PageComponent,
+  PageInit,
+  replaceRoute,
+  toast,
+  Update,
+  updateComponentChild
+} from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
+import * as Form from "front-end/lib/pages/content/lib/components/form";
+import * as toasts from "front-end/lib/pages/content/lib/toasts";
+import DateMetadata from "front-end/lib/views/date-metadata";
+import DescriptionList from "front-end/lib/views/description-list";
+import Link, {
+  iconLinkSymbol,
+  leftPlacement,
+  Props as LinkProps,
+  routeDest
+} from "front-end/lib/views/link";
+import React from "react";
+import { Col, Row } from "reactstrap";
+import { COPY } from "shared/config";
+import { Content } from "shared/lib/resources/content";
+import { UserType } from "shared/lib/resources/user";
+import { ADT, adt } from "shared/lib/types";
+import { invalid, valid } from "shared/lib/validation";
 
-type ModalId = 'save' | 'notifyNewTerms' | 'delete';
+type ModalId = "save" | "notifyNewTerms" | "delete";
 
 interface ValidState {
   startEditingLoading: number;
@@ -34,84 +63,111 @@ interface ValidState {
 
 export type State = ValidatedState<ValidState>;
 
-type InnerMsg
-  = ADT<'form', Form.Msg>
-  | ADT<'showModal', ModalId>
-  | ADT<'hideModal'>
-  | ADT<'startEditing'>
-  | ADT<'stopEditing'>
-  | ADT<'save'>
-  | ADT<'notifyNewTerms'>
-  | ADT<'delete'>;
+type InnerMsg =
+  | ADT<"form", Form.Msg>
+  | ADT<"showModal", ModalId>
+  | ADT<"hideModal">
+  | ADT<"startEditing">
+  | ADT<"stopEditing">
+  | ADT<"save">
+  | ADT<"notifyNewTerms">
+  | ADT<"delete">;
 
 export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export type RouteParams = string; //slug
 
-export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<RouteParams, State, Msg>({
+export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<
+  RouteParams,
+  State,
+  Msg
+>({
   userType: [UserType.Admin],
   async success({ routePath, routeParams, shared, dispatch }) {
     const result = await api.content.readOne(routeParams);
     if (!api.isValid(result)) {
-      dispatch(replaceRoute(adt('notFound' as const, {
-        path: routePath
-      })));
+      dispatch(
+        replaceRoute(
+          adt("notFound" as const, {
+            path: routePath
+          })
+        )
+      );
       return invalid(null);
     }
     const content = result.value;
-    return valid(immutable({
-      startEditingLoading: 0,
-      notifyNewUsersLoading: 0,
-      deleteLoading: 0,
-      saveLoading: 0,
-      showModal: null,
-      isEditing: false,
-      showNotifyNewTerms: content.slug === APP_TERMS_CONTENT_ID,
-      form: immutable(await Form.init({ content })),
-      content
-    }));
+    return valid(
+      immutable({
+        startEditingLoading: 0,
+        notifyNewUsersLoading: 0,
+        deleteLoading: 0,
+        saveLoading: 0,
+        showModal: null,
+        isEditing: false,
+        showNotifyNewTerms: content.slug === APP_TERMS_CONTENT_ID,
+        form: immutable(await Form.init({ content })),
+        content
+      })
+    );
   },
   async fail({ dispatch, routePath }) {
-    dispatch(replaceRoute(adt('notFound' as const, {
-      path: routePath
-    })));
+    dispatch(
+      replaceRoute(
+        adt("notFound" as const, {
+          path: routePath
+        })
+      )
+    );
     return invalid(null);
   }
 });
 
-const startStartEditingLoading = makeStartLoading<ValidState>('startEditingLoading');
-const stopStartEditingLoading = makeStopLoading<ValidState>('startEditingLoading');
-const startNotifyNewUsersLoading = makeStartLoading<ValidState>('notifyNewUsersLoading');
-const stopNotifyNewUsersLoading = makeStopLoading<ValidState>('notifyNewUsersLoading');
-const startDeleteLoading = makeStartLoading<ValidState>('deleteLoading');
-const stopDeleteLoading = makeStopLoading<ValidState>('deleteLoading');
-const startSaveLoading = makeStartLoading<ValidState>('saveLoading');
-const stopSaveLoading = makeStopLoading<ValidState>('saveLoading');
+const startStartEditingLoading = makeStartLoading<ValidState>(
+  "startEditingLoading"
+);
+const stopStartEditingLoading = makeStopLoading<ValidState>(
+  "startEditingLoading"
+);
+const startNotifyNewUsersLoading = makeStartLoading<ValidState>(
+  "notifyNewUsersLoading"
+);
+const stopNotifyNewUsersLoading = makeStopLoading<ValidState>(
+  "notifyNewUsersLoading"
+);
+const startDeleteLoading = makeStartLoading<ValidState>("deleteLoading");
+const stopDeleteLoading = makeStopLoading<ValidState>("deleteLoading");
+const startSaveLoading = makeStartLoading<ValidState>("saveLoading");
+const stopSaveLoading = makeStopLoading<ValidState>("saveLoading");
 
-async function resetForm(state: Immutable<ValidState>, content: Content): Promise<Immutable<ValidState>> {
+async function resetForm(
+  state: Immutable<ValidState>,
+  content: Content
+): Promise<Immutable<ValidState>> {
   return state.merge({
     content,
-    form: immutable(await Form.init({
-      content
-    }))
+    form: immutable(
+      await Form.init({
+        content
+      })
+    )
   });
 }
 
 export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   switch (msg.tag) {
-    case 'form':
+    case "form":
       return updateComponentChild({
         state,
-        childStatePath: ['form'],
+        childStatePath: ["form"],
         childUpdate: Form.update,
         childMsg: msg.value,
-        mapChildMsg: value => adt('form', value)
+        mapChildMsg: (value) => adt("form", value)
       });
-    case 'showModal':
-      return [state.set('showModal', msg.value)];
-    case 'hideModal':
-      return [state.set('showModal', null)];
-    case 'startEditing':
+    case "showModal":
+      return [state.set("showModal", msg.value)];
+    case "hideModal":
+      return [state.set("showModal", null)];
+    case "startEditing":
       return [
         startStartEditingLoading(state),
         async (state, dispatch) => {
@@ -119,14 +175,14 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           const result = await api.content.readOne(state.content.slug);
           if (api.isValid(result)) {
             state = await resetForm(state, result.value);
-            state = state.set('isEditing', true);
+            state = state.set("isEditing", true);
           } else {
-            dispatch(toast(adt('error', toasts.startedEditing.error)));
+            dispatch(toast(adt("error", toasts.startedEditing.error)));
           }
           return state;
         }
       ];
-    case 'stopEditing':
+    case "stopEditing":
       return [
         state,
         async (state, dispatch) => {
@@ -136,53 +192,66 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
           });
         }
       ];
-    case 'save':
+    case "save":
       return [
-        startSaveLoading(state).set('showModal', null),
+        startSaveLoading(state).set("showModal", null),
         async (state, dispatch) => {
           state = stopSaveLoading(state);
           const values = Form.getValues(state.form);
           //Use the old slug to reference the content.
           const result = await api.content.update(state.content.id, values);
           switch (result.tag) {
-            case 'valid':
-              dispatch(toast(adt('success', toasts.changesPublished.success(result.value))));
-              router.replaceState(adt('contentEdit', result.value.slug));
-              return (await resetForm(state, result.value)).set('isEditing', false);
-            case 'invalid':
-              dispatch(toast(adt('error', toasts.changesPublished.error)));
-              return state.update('form', f => Form.setErrors(f, result.value));
-            case 'unhandled':
-              dispatch(toast(adt('error', toasts.changesPublished.error)));
+            case "valid":
+              dispatch(
+                toast(
+                  adt("success", toasts.changesPublished.success(result.value))
+                )
+              );
+              router.replaceState(adt("contentEdit", result.value.slug));
+              return (await resetForm(state, result.value)).set(
+                "isEditing",
+                false
+              );
+            case "invalid":
+              dispatch(toast(adt("error", toasts.changesPublished.error)));
+              return state.update("form", (f) =>
+                Form.setErrors(f, result.value)
+              );
+            case "unhandled":
+              dispatch(toast(adt("error", toasts.changesPublished.error)));
               return state;
           }
         }
       ];
-    case 'notifyNewTerms':
+    case "notifyNewTerms":
       return [
-        startNotifyNewUsersLoading(state).set('showModal', null),
+        startNotifyNewUsersLoading(state).set("showModal", null),
         async (state, dispatch) => {
           state = stopNotifyNewUsersLoading(state);
-          const result = await api.emailNotifications.create(adt('updateTerms'));
+          const result = await api.emailNotifications.create(
+            adt("updateTerms")
+          );
           if (api.isValid(result)) {
-            dispatch(toast(adt('success', toasts.notifiedNewTerms.success)));
+            dispatch(toast(adt("success", toasts.notifiedNewTerms.success)));
           } else {
-            dispatch(toast(adt('error', toasts.notifiedNewTerms.error)));
+            dispatch(toast(adt("error", toasts.notifiedNewTerms.error)));
           }
           return state;
         }
       ];
-    case 'delete':
+    case "delete":
       return [
-        startDeleteLoading(state).set('showModal', null),
+        startDeleteLoading(state).set("showModal", null),
         async (state, dispatch) => {
           const result = await api.content.delete(state.content.id);
           if (api.isValid(result)) {
-            dispatch(replaceRoute(adt('contentList', null) as Route));
-            dispatch(toast(adt('success', toasts.deleted.success(result.value.title))));
+            dispatch(replaceRoute(adt("contentList", null) as Route));
+            dispatch(
+              toast(adt("success", toasts.deleted.success(result.value.title)))
+            );
             return state;
           } else {
-            dispatch(toast(adt('error', toasts.deleted.error)));
+            dispatch(toast(adt("error", toasts.deleted.error)));
             return stopDeleteLoading(state);
           }
         }
@@ -192,69 +261,107 @@ export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
   }
 });
 
-const DEFAULT_USER_NAME = 'System';
+const DEFAULT_USER_NAME = "System";
 
-export const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
-  const content = state.content;
-  const dates = [
-    {
-      tag: 'dateAndTime' as const,
-      date: content.createdAt,
-      label: 'Published'
-    },
-    {
-      tag: 'dateAndTime' as const,
-      date: content.updatedAt,
-      label: 'Updated'
-    }
-  ];
-  const items = [
-    {
-      name: 'Published By',
-      children: content.createdBy ? (<Link newTab dest={routeDest(adt('userProfile', { userId: content.createdBy.id }))}>{content.createdBy.name}</Link>) : DEFAULT_USER_NAME
-    },
-    {
-      name: 'Updated By',
-      children: content.updatedBy ? (<Link newTab dest={routeDest(adt('userProfile', { userId: content.updatedBy.id }))}>{content.updatedBy.name}</Link>) : DEFAULT_USER_NAME
-    }
-  ];
-  const disabled = !state.isEditing || state.startEditingLoading > 0 || state.saveLoading > 0;
-  return (
-    <div>
-      <Row>
-        <Col xs='12' className='mb-5'>
-          <Link className='h1' newTab dest={routeDest(adt('contentView', state.content.slug))}>{state.content.title}</Link>
-          <DateMetadata dates={dates} />
-        </Col>
-      </Row>
-      <div className='mb-5 pb-5 border-bottom'>
+export const view: ComponentView<State, Msg> = viewValid(
+  ({ state, dispatch }) => {
+    const content = state.content;
+    const dates = [
+      {
+        tag: "dateAndTime" as const,
+        date: content.createdAt,
+        label: "Published"
+      },
+      {
+        tag: "dateAndTime" as const,
+        date: content.updatedAt,
+        label: "Updated"
+      }
+    ];
+    const items = [
+      {
+        name: "Published By",
+        children: content.createdBy ? (
+          <Link
+            newTab
+            dest={routeDest(
+              adt("userProfile", { userId: content.createdBy.id })
+            )}>
+            {content.createdBy.name}
+          </Link>
+        ) : (
+          DEFAULT_USER_NAME
+        )
+      },
+      {
+        name: "Updated By",
+        children: content.updatedBy ? (
+          <Link
+            newTab
+            dest={routeDest(
+              adt("userProfile", { userId: content.updatedBy.id })
+            )}>
+            {content.updatedBy.name}
+          </Link>
+        ) : (
+          DEFAULT_USER_NAME
+        )
+      }
+    ];
+    const disabled =
+      !state.isEditing ||
+      state.startEditingLoading > 0 ||
+      state.saveLoading > 0;
+    return (
+      <div>
         <Row>
-          <Col xs='12'>
-            <DescriptionList items={items} />
+          <Col xs="12" className="mb-5">
+            <Link
+              className="h1"
+              newTab
+              dest={routeDest(adt("contentView", state.content.slug))}>
+              {state.content.title}
+            </Link>
+            <DateMetadata dates={dates} />
           </Col>
         </Row>
+        <div className="mb-5 pb-5 border-bottom">
+          <Row>
+            <Col xs="12">
+              <DescriptionList items={items} />
+            </Col>
+          </Row>
+        </div>
+        <Form.view
+          disabled={disabled}
+          state={state.form}
+          dispatch={mapComponentDispatch(dispatch, (msg) =>
+            adt("form" as const, msg)
+          )}
+        />
       </div>
-      <Form.view disabled={disabled} state={state.form} dispatch={mapComponentDispatch(dispatch, msg => adt('form' as const, msg))} />
-    </div>
-  );
-});
+    );
+  }
+);
 
 export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   init,
   update,
   view,
-  getMetadata: getMetadataValid(state => {
+  getMetadata: getMetadataValid((state) => {
     return makePageMetadata(state.content.title);
   }, makePageMetadata()),
-  getAlerts: getAlertsValid(state => {
+  getAlerts: getAlertsValid((state) => {
     if (!state.content.fixed) {
       return emptyPageAlerts();
     } else {
       return {
         ...emptyPageAlerts(),
-        warnings: [{
-          text: 'This is a "fixed" page, which means this web app needs it to exist at a specific slug in order to function correctly. Consequently, this page cannot be deleted and its slug cannot be changed.'
-        }]
+        warnings: [
+          {
+            text: 'This is a "fixed" page, which means this web app needs it to exist at a specific slug in order to function correctly. Consequently, this page cannot be deleted and its slug cannot be changed.'
+          }
+        ]
       };
     }
   }),
@@ -263,135 +370,140 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     if (state.isEditing) {
       const isSaveLoading = state.saveLoading > 0;
       const disabled = isSaveLoading;
-      return adt('links', [
+      return adt("links", [
         {
-          children: 'Publish Changes',
-          onClick: () => dispatch(adt('showModal', 'save') as Msg),
+          children: "Publish Changes",
+          onClick: () => dispatch(adt("showModal", "save") as Msg),
           button: true,
           loading: isSaveLoading,
           disabled,
-          symbol_: leftPlacement(iconLinkSymbol('bullhorn')),
-          color: 'primary'
+          symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
+          color: "primary"
         },
         {
-          children: 'Cancel',
-          color: 'c-nav-fg-alt',
-          onClick: () => dispatch(adt('stopEditing') as Msg)
-
+          children: "Cancel",
+          color: "c-nav-fg-alt",
+          onClick: () => dispatch(adt("stopEditing") as Msg)
         }
       ]);
     } else if (!state.isEditing && state.showNotifyNewTerms) {
       const isStartEditingLoading = state.startEditingLoading > 0;
       const isNotifyNewUsersLoading = state.notifyNewUsersLoading > 0;
       const disabled = isStartEditingLoading || isNotifyNewUsersLoading;
-      return adt('links', [
+      return adt("links", [
         {
-          children: 'Edit',
-          onClick: () => dispatch(adt('startEditing')),
+          children: "Edit",
+          onClick: () => dispatch(adt("startEditing")),
           button: true,
           loading: isStartEditingLoading,
           disabled,
-          symbol_: leftPlacement(iconLinkSymbol('edit')),
-          color: 'primary'
+          symbol_: leftPlacement(iconLinkSymbol("edit")),
+          color: "primary"
         },
         {
-          children: 'Notify Vendors',
-          onClick: () => dispatch(adt('showModal', 'notifyNewTerms') as Msg),
-          symbol_: leftPlacement(iconLinkSymbol('bell')),
+          children: "Notify Vendors",
+          onClick: () => dispatch(adt("showModal", "notifyNewTerms") as Msg),
+          symbol_: leftPlacement(iconLinkSymbol("bell")),
           loading: isNotifyNewUsersLoading,
           button: true,
           disabled,
-          color: 'success'
+          color: "success"
         }
       ]);
-    } else { //!state.isEditing && !state.showNotifyNewTerms
+    } else {
+      //!state.isEditing && !state.showNotifyNewTerms
       const isStartEditingLoading = state.startEditingLoading > 0;
       const isDeleteLoading = state.deleteLoading > 0;
       const disabled = isStartEditingLoading || isDeleteLoading;
-      return adt('links', [
+      return adt("links", [
         {
-          children: 'Edit',
-          onClick: () => dispatch(adt('startEditing')),
+          children: "Edit",
+          onClick: () => dispatch(adt("startEditing")),
           button: true,
           loading: isStartEditingLoading,
           disabled,
-          symbol_: leftPlacement(iconLinkSymbol('edit')),
-          color: 'primary'
+          symbol_: leftPlacement(iconLinkSymbol("edit")),
+          color: "primary"
         },
         ...(content.fixed
           ? []
-          : [{
-              children: 'Delete',
-              color: 'c-nav-fg-alt',
-              button: true,
-              outline: true,
-              loading: isDeleteLoading,
-              disabled,
-              symbol_: leftPlacement(iconLinkSymbol('trash')),
-              onClick: () => dispatch(adt('showModal', 'delete') as Msg)
-            } as LinkProps])
+          : [
+              {
+                children: "Delete",
+                color: "c-nav-fg-alt",
+                button: true,
+                outline: true,
+                loading: isDeleteLoading,
+                disabled,
+                symbol_: leftPlacement(iconLinkSymbol("trash")),
+                onClick: () => dispatch(adt("showModal", "delete") as Msg)
+              } as LinkProps
+            ])
       ]);
     }
   }),
-  getModal: getModalValid<ValidState, Msg>(state => {
+  getModal: getModalValid<ValidState, Msg>((state) => {
     switch (state.showModal) {
-      case 'save':
+      case "save":
         return {
-          title: 'Publish Changes?',
-          body: () => 'Are you sure you want to publish your changes to this page? Once published, they will be visible to all users who navigate to this page\'s URL.',
-          onCloseMsg: adt('hideModal'),
+          title: "Publish Changes?",
+          body: () =>
+            "Are you sure you want to publish your changes to this page? Once published, they will be visible to all users who navigate to this page's URL.",
+          onCloseMsg: adt("hideModal"),
           actions: [
             {
-              text: 'Publish Changes',
-              icon: 'bullhorn',
-              color: 'primary',
-              msg: adt('save'),
+              text: "Publish Changes",
+              icon: "bullhorn",
+              color: "primary",
+              msg: adt("save"),
               button: true
             },
             {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
             }
           ]
         };
-      case 'notifyNewTerms':
+      case "notifyNewTerms":
         return {
-          title: 'Notify vendors of updated terms?',
-          body: () => `Are you sure you want to notify all vendors of updated ${COPY.appTermsTitle}? Vendors will receive a notification email, and will be required to accept the new terms before continuing to submit proposals to opportunities.`,
-          onCloseMsg: adt('hideModal'),
+          title: "Notify vendors of updated terms?",
+          body: () =>
+            `Are you sure you want to notify all vendors of updated ${COPY.appTermsTitle}? Vendors will receive a notification email, and will be required to accept the new terms before continuing to submit proposals to opportunities.`,
+          onCloseMsg: adt("hideModal"),
           actions: [
             {
-              text: 'Notify Vendors',
-              icon: 'bell',
-              color: 'success',
-              msg: adt('notifyNewTerms'),
+              text: "Notify Vendors",
+              icon: "bell",
+              color: "success",
+              msg: adt("notifyNewTerms"),
               button: true
             },
             {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
             }
           ]
         };
-      case 'delete':
+      case "delete":
         return {
-          title: 'Delete page?',
-          body: () => 'Are you sure you want to delete this page? It will no longer be accessible to users if you do.',
-          onCloseMsg: adt('hideModal'),
+          title: "Delete page?",
+          body: () =>
+            "Are you sure you want to delete this page? It will no longer be accessible to users if you do.",
+          onCloseMsg: adt("hideModal"),
           actions: [
             {
-              text: 'Delete Page',
-              icon: 'trash',
-              color: 'danger',
-              msg: adt('delete'),
+              text: "Delete Page",
+              icon: "trash",
+              color: "danger",
+              msg: adt("delete"),
               button: true
             },
             {
-              text: 'Cancel',
-              color: 'secondary',
-              msg: adt('hideModal')
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
             }
           ]
         };

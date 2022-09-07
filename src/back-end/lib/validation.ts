@@ -1,23 +1,61 @@
-import { Content } from 'back-end/../shared/lib/resources/content';
-import * as db from 'back-end/lib/db';
-import { get, union } from 'lodash';
-import { getNumber, getString } from 'shared/lib';
-import { Affiliation, MembershipStatus } from 'shared/lib/resources/affiliation';
-import { FileRecord } from 'shared/lib/resources/file';
-import { CWUOpportunity } from 'shared/lib/resources/opportunity/code-with-us';
-import { SWUOpportunity, SWUOpportunityPhase } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { Organization } from 'shared/lib/resources/organization';
-import { CreateProponentRequestBody, CreateProponentValidationErrors, CWUProposal } from 'shared/lib/resources/proposal/code-with-us';
-import { CreateSWUProposalPhaseBody, CreateSWUProposalPhaseValidationErrors, CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors, SWUProposal } from 'shared/lib/resources/proposal/sprint-with-us';
-import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { User } from 'shared/lib/resources/user';
-import { adt, Id } from 'shared/lib/types';
-import { allValid, ArrayValidation, getInvalidValue, getValidValue, invalid, isInvalid, isValid, optionalAsync, valid, validateArrayAsync, validateArrayCustomAsync, validateGenericString, validateUUID, Validation } from 'shared/lib/validation';
-import { validateIndividualProponent } from 'shared/lib/validation/proposal/code-with-us';
-import { validateSWUPhaseProposedCost, validateSWUProposalTeamCapabilities, validateSWUProposalTeamMemberScrumMaster } from 'shared/lib/validation/proposal/sprint-with-us';
-import { isArray } from 'util';
+import { Content } from "back-end/../shared/lib/resources/content";
+import * as db from "back-end/lib/db";
+import { get, union } from "lodash";
+import { getNumber, getString } from "shared/lib";
+import {
+  Affiliation,
+  MembershipStatus
+} from "shared/lib/resources/affiliation";
+import { FileRecord } from "shared/lib/resources/file";
+import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
+import {
+  SWUOpportunity,
+  SWUOpportunityPhase
+} from "shared/lib/resources/opportunity/sprint-with-us";
+import { Organization } from "shared/lib/resources/organization";
+import {
+  CreateProponentRequestBody,
+  CreateProponentValidationErrors,
+  CWUProposal
+} from "shared/lib/resources/proposal/code-with-us";
+import {
+  CreateSWUProposalPhaseBody,
+  CreateSWUProposalPhaseValidationErrors,
+  CreateSWUProposalTeamMemberBody,
+  CreateSWUProposalTeamMemberValidationErrors,
+  SWUProposal
+} from "shared/lib/resources/proposal/sprint-with-us";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
+import { User } from "shared/lib/resources/user";
+import { adt, Id } from "shared/lib/types";
+import {
+  allValid,
+  ArrayValidation,
+  getInvalidValue,
+  getValidValue,
+  invalid,
+  isInvalid,
+  isValid,
+  optionalAsync,
+  valid,
+  validateArrayAsync,
+  validateArrayCustomAsync,
+  validateGenericString,
+  validateUUID,
+  Validation
+} from "shared/lib/validation";
+import { validateIndividualProponent } from "shared/lib/validation/proposal/code-with-us";
+import {
+  validateSWUPhaseProposedCost,
+  validateSWUProposalTeamCapabilities,
+  validateSWUProposalTeamMemberScrumMaster
+} from "shared/lib/validation/proposal/sprint-with-us";
+import { isArray } from "util";
 
-export async function validateUserId(connection: db.Connection, userId: Id): Promise<Validation<User>> {
+export async function validateUserId(
+  connection: db.Connection,
+  userId: Id
+): Promise<Validation<User>> {
   // Validate the provided id
   const validatedId = validateUUID(userId);
   if (isInvalid(validatedId)) {
@@ -25,14 +63,19 @@ export async function validateUserId(connection: db.Connection, userId: Id): Pro
   }
   const dbResult = await db.readOneUser(connection, userId);
   switch (dbResult.tag) {
-    case 'valid':
-      return dbResult.value ? valid(dbResult.value) : invalid(['This user cannot be found.']);
-    case 'invalid':
-      return invalid(['Please select a valid user']);
+    case "valid":
+      return dbResult.value
+        ? valid(dbResult.value)
+        : invalid(["This user cannot be found."]);
+    case "invalid":
+      return invalid(["Please select a valid user"]);
   }
 }
 
-export async function validateFileRecord(connection: db.Connection, fileId: Id): Promise<Validation<FileRecord>> {
+export async function validateFileRecord(
+  connection: db.Connection,
+  fileId: Id
+): Promise<Validation<FileRecord>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(fileId);
@@ -47,38 +90,56 @@ export async function validateFileRecord(connection: db.Connection, fileId: Id):
     if (file) {
       return valid(file);
     } else {
-      return invalid(['The specified file was not found.']);
+      return invalid(["The specified file was not found."]);
     }
   } catch (e) {
-    return invalid(['Please specify a valid file id.']);
+    return invalid(["Please specify a valid file id."]);
   }
 }
 
-export async function validateAttachments(connection: db.Connection, raw: string[]): Promise<ArrayValidation<FileRecord>> {
-  return await validateArrayAsync(raw, v => validateFileRecord(connection, v));
+export async function validateAttachments(
+  connection: db.Connection,
+  raw: string[]
+): Promise<ArrayValidation<FileRecord>> {
+  return await validateArrayAsync(raw, (v) =>
+    validateFileRecord(connection, v)
+  );
 }
 
-export async function validateOrganizationId(connection: db.Connection, orgId: Id, session: Session, allowInactive = false): Promise<Validation<Organization>> {
+export async function validateOrganizationId(
+  connection: db.Connection,
+  orgId: Id,
+  session: Session,
+  allowInactive = false
+): Promise<Validation<Organization>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(orgId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneOrganization(connection, orgId, allowInactive, session);
+    const dbResult = await db.readOneOrganization(
+      connection,
+      orgId,
+      allowInactive,
+      session
+    );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
     if (!dbResult.value) {
-      return invalid(['The specified organization was not found.']);
+      return invalid(["The specified organization was not found."]);
     }
     return valid(dbResult.value);
   } catch (e) {
-    return invalid(['Please select a valid organization.']);
+    return invalid(["Please select a valid organization."]);
   }
 }
 
-export async function validateAffiliationId(connection: db.Connection, affiliationId: Id): Promise<Validation<Affiliation>> {
+export async function validateAffiliationId(
+  connection: db.Connection,
+  affiliationId: Id
+): Promise<Validation<Affiliation>> {
   try {
     // Validate the provided id
     const validatedId = validateUUID(affiliationId);
@@ -91,140 +152,220 @@ export async function validateAffiliationId(connection: db.Connection, affiliati
     }
     const affiliation = dbResult.value;
     if (!affiliation) {
-      return invalid(['The specified affiliation was not found.']);
+      return invalid(["The specified affiliation was not found."]);
     } else if (affiliation.membershipStatus === MembershipStatus.Inactive) {
-      return invalid(['The specified affiliation is inactive.']);
+      return invalid(["The specified affiliation is inactive."]);
     } else {
       return valid(affiliation);
     }
   } catch (e) {
-    return invalid(['Please select a valid affiliation.']);
+    return invalid(["Please select a valid affiliation."]);
   }
 }
 
 export function validateFilePath(path: string): Validation<string> {
-  return validateGenericString(path, 'File path');
+  return validateGenericString(path, "File path");
 }
 
-export async function validateCWUOpportunityId(connection: db.Connection, opportunityId: Id, session: Session): Promise<Validation<CWUOpportunity>> {
+export async function validateCWUOpportunityId(
+  connection: db.Connection,
+  opportunityId: Id,
+  session: Session
+): Promise<Validation<CWUOpportunity>> {
   try {
     const validatedId = validateUUID(opportunityId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneCWUOpportunity(connection, opportunityId, session);
+    const dbResult = await db.readOneCWUOpportunity(
+      connection,
+      opportunityId,
+      session
+    );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
     const opportunity = dbResult.value;
     if (!opportunity) {
-      return invalid(['The specified Code With Us opportunity was not found.']);
+      return invalid(["The specified Code With Us opportunity was not found."]);
     }
     return valid(opportunity);
-
   } catch (exception) {
-    return invalid(['Please select a valid Code With Us opportunity.']);
+    return invalid(["Please select a valid Code With Us opportunity."]);
   }
 }
 
-export async function validateCWUProposalId(connection: db.Connection, proposalId: Id, session: Session): Promise<Validation<CWUProposal>> {
+export async function validateCWUProposalId(
+  connection: db.Connection,
+  proposalId: Id,
+  session: Session
+): Promise<Validation<CWUProposal>> {
   try {
     const validatedId = validateUUID(proposalId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneCWUProposal(connection, proposalId, session);
+    const dbResult = await db.readOneCWUProposal(
+      connection,
+      proposalId,
+      session
+    );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
     const proposal = dbResult.value;
     if (!proposal) {
-      return invalid(['The specified proposal was not found.']);
+      return invalid(["The specified proposal was not found."]);
     }
     return valid(proposal);
   } catch (exception) {
-    return invalid(['Please select a valid proposal.']);
+    return invalid(["Please select a valid proposal."]);
   }
 }
 
-export async function validateSWUProposalId(connection: db.Connection, proposalId: Id, session: AuthenticatedSession): Promise<Validation<SWUProposal>> {
+export async function validateSWUProposalId(
+  connection: db.Connection,
+  proposalId: Id,
+  session: AuthenticatedSession
+): Promise<Validation<SWUProposal>> {
   try {
     const validatedId = validateUUID(proposalId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneSWUProposal(connection, proposalId, session);
+    const dbResult = await db.readOneSWUProposal(
+      connection,
+      proposalId,
+      session
+    );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
     const proposal = dbResult.value;
     if (!proposal) {
-      return invalid(['The specified proposal was not found.']);
+      return invalid(["The specified proposal was not found."]);
     }
     return valid(proposal);
   } catch (exception) {
-    return invalid(['Please select a valid proposal.']);
+    return invalid(["Please select a valid proposal."]);
   }
 }
 
-export async function validateProponent(connection: db.Connection, session: Session, raw: any): Promise<Validation<CreateProponentRequestBody, CreateProponentValidationErrors>> {
-  switch (get(raw, 'tag')) {
-    case 'individual': {
-      const validatedIndividualProponentRequestBody = validateIndividualProponent(get(raw, 'value'));
+export async function validateProponent(
+  connection: db.Connection,
+  session: Session,
+  raw: any
+): Promise<
+  Validation<CreateProponentRequestBody, CreateProponentValidationErrors>
+> {
+  switch (get(raw, "tag")) {
+    case "individual": {
+      const validatedIndividualProponentRequestBody =
+        validateIndividualProponent(get(raw, "value"));
       if (isValid(validatedIndividualProponentRequestBody)) {
-        return adt(validatedIndividualProponentRequestBody.tag, adt('individual' as const, validatedIndividualProponentRequestBody.value));
+        return adt(
+          validatedIndividualProponentRequestBody.tag,
+          adt(
+            "individual" as const,
+            validatedIndividualProponentRequestBody.value
+          )
+        );
       }
-      return invalid(adt('individual', validatedIndividualProponentRequestBody.value));
+      return invalid(
+        adt("individual", validatedIndividualProponentRequestBody.value)
+      );
     }
-    case 'organization': {
-      const validatedOrganization = await validateOrganizationId(connection, get(raw, 'value'), session, false);
+    case "organization": {
+      const validatedOrganization = await validateOrganizationId(
+        connection,
+        get(raw, "value"),
+        session,
+        false
+      );
       if (isValid(validatedOrganization)) {
-        return valid(adt('organization', validatedOrganization.value.id));
+        return valid(adt("organization", validatedOrganization.value.id));
       }
-      return invalid(adt('organization', validatedOrganization.value));
+      return invalid(adt("organization", validatedOrganization.value));
     }
     default:
-      return invalid(adt('parseFailure' as const, ['Invalid proponent provided.']));
+      return invalid(
+        adt("parseFailure" as const, ["Invalid proponent provided."])
+      );
   }
 }
 
-export async function validateSWUOpportunityId(connection: db.Connection, opportunityId: Id, session: Session): Promise<Validation<SWUOpportunity>> {
+export async function validateSWUOpportunityId(
+  connection: db.Connection,
+  opportunityId: Id,
+  session: Session
+): Promise<Validation<SWUOpportunity>> {
   try {
     const validatedId = validateUUID(opportunityId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneSWUOpportunity(connection, opportunityId, session);
+    const dbResult = await db.readOneSWUOpportunity(
+      connection,
+      opportunityId,
+      session
+    );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
     const opportunity = dbResult.value;
     if (!opportunity) {
-      return invalid(['The specified Sprint With Us opportunity was not found.']);
+      return invalid([
+        "The specified Sprint With Us opportunity was not found."
+      ]);
     }
     return valid(opportunity);
-
   } catch (exception) {
-    return invalid(['Please select a valid Sprint With Us opportunity.']);
+    return invalid(["Please select a valid Sprint With Us opportunity."]);
   }
 }
 
-export async function validateMember(connection: db.Connection, memberId: Id, organization: Id): Promise<Validation<User>> {
+export async function validateMember(
+  connection: db.Connection,
+  memberId: Id,
+  organization: Id
+): Promise<Validation<User>> {
   const validatedUser = await validateUserId(connection, memberId);
   if (isInvalid(validatedUser)) {
     return validatedUser;
   }
-  const affiliation = getValidValue(await db.readOneAffiliation(connection, validatedUser.value.id, organization), null);
+  const affiliation = getValidValue(
+    await db.readOneAffiliation(
+      connection,
+      validatedUser.value.id,
+      organization
+    ),
+    null
+  );
   if (affiliation?.membershipStatus === MembershipStatus.Active) {
     return validatedUser;
   } else {
-    return invalid(['User is not an active member of the organization.']);
+    return invalid(["User is not an active member of the organization."]);
   }
 }
 
-export async function validateTeamMember(connection: db.Connection, raw: any, organization: Id): Promise<Validation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
-  const validatedMember = await validateMember(connection, getString(raw, 'member'), organization);
-  const validatedScrumMaster = validateSWUProposalTeamMemberScrumMaster(get(raw, 'scrumMaster'));
+export async function validateTeamMember(
+  connection: db.Connection,
+  raw: any,
+  organization: Id
+): Promise<
+  Validation<
+    CreateSWUProposalTeamMemberBody,
+    CreateSWUProposalTeamMemberValidationErrors
+  >
+> {
+  const validatedMember = await validateMember(
+    connection,
+    getString(raw, "member"),
+    organization
+  );
+  const validatedScrumMaster = validateSWUProposalTeamMemberScrumMaster(
+    get(raw, "scrumMaster")
+  );
 
   if (allValid([validatedMember, validatedScrumMaster])) {
     return valid({
@@ -239,23 +380,56 @@ export async function validateTeamMember(connection: db.Connection, raw: any, or
   }
 }
 
-export async function validateSWUProposalTeamMembers(connection: db.Connection, raw: any, organization: Id): Promise<ArrayValidation<CreateSWUProposalTeamMemberBody, CreateSWUProposalTeamMemberValidationErrors>> {
-  if (!isArray(raw)) { return invalid([{ parseFailure: ['Please provide an array of selected team members.'] }]); }
-  if (!raw.length) { return invalid([{ members: ['Please select at least one team member.'] }]); }
-  const validatedMembers = await validateArrayCustomAsync(raw, async v => await validateTeamMember(connection, v, organization), {});
-  if (getValidValue(validatedMembers, []).filter(member => member.scrumMaster).length > 1) {
-    return invalid([{
-      members: ['You may only specify a single scrum master.']
-    }]);
+export async function validateSWUProposalTeamMembers(
+  connection: db.Connection,
+  raw: any,
+  organization: Id
+): Promise<
+  ArrayValidation<
+    CreateSWUProposalTeamMemberBody,
+    CreateSWUProposalTeamMemberValidationErrors
+  >
+> {
+  if (!isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of selected team members."] }
+    ]);
+  }
+  if (!raw.length) {
+    return invalid([{ members: ["Please select at least one team member."] }]);
+  }
+  const validatedMembers = await validateArrayCustomAsync(
+    raw,
+    async (v) => await validateTeamMember(connection, v, organization),
+    {}
+  );
+  if (
+    getValidValue(validatedMembers, []).filter((member) => member.scrumMaster)
+      .length > 1
+  ) {
+    return invalid([
+      {
+        members: ["You may only specify a single scrum master."]
+      }
+    ]);
   }
   return validatedMembers;
 }
 
-export async function validateSWUProposalPhase(connection: db.Connection, raw: any, opportunityPhase: SWUOpportunityPhase | null, organization: Id): Promise<Validation<CreateSWUProposalPhaseBody | undefined, CreateSWUProposalPhaseValidationErrors>> {
-
+export async function validateSWUProposalPhase(
+  connection: db.Connection,
+  raw: any,
+  opportunityPhase: SWUOpportunityPhase | null,
+  organization: Id
+): Promise<
+  Validation<
+    CreateSWUProposalPhaseBody | undefined,
+    CreateSWUProposalPhaseValidationErrors
+  >
+> {
   if (!raw && opportunityPhase) {
     return invalid({
-      phase: ['This opportunity requires this phase.']
+      phase: ["This opportunity requires this phase."]
     });
   }
 
@@ -265,12 +439,19 @@ export async function validateSWUProposalPhase(connection: db.Connection, raw: a
 
   if (!opportunityPhase) {
     return invalid({
-      phase: ['This opportunity does not require this phase.']
+      phase: ["This opportunity does not require this phase."]
     });
   }
 
-  const validatedMembers = await validateSWUProposalTeamMembers(connection, get(raw, 'members'), organization);
-  const validatedProposedCost = validateSWUPhaseProposedCost(getNumber<number>(raw, 'proposedCost'), opportunityPhase.maxBudget);
+  const validatedMembers = await validateSWUProposalTeamMembers(
+    connection,
+    get(raw, "members"),
+    organization
+  );
+  const validatedProposedCost = validateSWUPhaseProposedCost(
+    getNumber<number>(raw, "proposedCost"),
+    opportunityPhase.maxBudget
+  );
 
   if (allValid([validatedMembers, validatedProposedCost])) {
     return valid({
@@ -285,34 +466,65 @@ export async function validateSWUProposalPhase(connection: db.Connection, raw: a
   }
 }
 
-export async function validateSWUProposalTeam(connection: db.Connection, opportunity: SWUOpportunity, inceptionMemberIds: Id[], prototypeMemberIds: Id[], implementationMemberIds: Id[]): Promise<Validation<string[]>> {
+export async function validateSWUProposalTeam(
+  connection: db.Connection,
+  opportunity: SWUOpportunity,
+  inceptionMemberIds: Id[],
+  prototypeMemberIds: Id[],
+  implementationMemberIds: Id[]
+): Promise<Validation<string[]>> {
   // Extract a flattened set of team members across phases
-  const teamMemberIds = union(inceptionMemberIds, prototypeMemberIds, implementationMemberIds);
-  const dbResults = (await Promise.all(teamMemberIds.map(async id => await db.readOneUser(connection, id), undefined)));
-  const teamMembers = dbResults.map(v => getValidValue(v, null)).filter(v => !!v) as User[];
+  const teamMemberIds = union(
+    inceptionMemberIds,
+    prototypeMemberIds,
+    implementationMemberIds
+  );
+  const dbResults = await Promise.all(
+    teamMemberIds.map(
+      async (id) => await db.readOneUser(connection, id),
+      undefined
+    )
+  );
+  const teamMembers = dbResults
+    .map((v) => getValidValue(v, null))
+    .filter((v) => !!v) as User[];
   return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
 }
 
-export async function validateSWUProposalOrganization(connection: db.Connection, organization: Id | undefined, session: Session): Promise<Validation<Organization | undefined>> {
-  return await optionalAsync(organization, v => validateOrganizationId(connection, v, session, false));
+export async function validateSWUProposalOrganization(
+  connection: db.Connection,
+  organization: Id | undefined,
+  session: Session
+): Promise<Validation<Organization | undefined>> {
+  return await optionalAsync(organization, (v) =>
+    validateOrganizationId(connection, v, session, false)
+  );
 }
 
-export async function validateContentId(connection: db.Connection, contentId: Id, session: AuthenticatedSession): Promise<Validation<Content>> {
+export async function validateContentId(
+  connection: db.Connection,
+  contentId: Id,
+  session: AuthenticatedSession
+): Promise<Validation<Content>> {
   try {
     const validatedId = validateUUID(contentId);
     if (isInvalid(validatedId)) {
       return validatedId;
     }
-    const dbResult = await db.readOneContentById(connection, contentId, session);
+    const dbResult = await db.readOneContentById(
+      connection,
+      contentId,
+      session
+    );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
     }
     const content = dbResult.value;
     if (!content) {
-      return invalid(['The specified content was not found.']);
+      return invalid(["The specified content was not found."]);
     }
     return valid(content);
   } catch (exception) {
-    return invalid(['Please select a valid content id.']);
+    return invalid(["Please select a valid content id."]);
   }
 }

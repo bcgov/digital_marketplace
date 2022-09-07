@@ -1,4 +1,4 @@
-import { BodyWithErrors, Id } from 'shared/lib/types';
+import { BodyWithErrors, Id } from "shared/lib/types";
 
 export interface Counter {
   name: string;

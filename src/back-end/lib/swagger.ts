@@ -1,8 +1,8 @@
-import { ORIGIN } from 'back-end/config';
-import swaggerJSDoc from 'swagger-jsdoc';
+import { ORIGIN } from "back-end/config";
+import swaggerJSDoc from "swagger-jsdoc";
 
 const options: swaggerJSDoc.Options = {
-  apis: ['src/back-end/docs/**/*.yaml'],
+  apis: ["src/back-end/docs/**/*.yaml"],
   swaggerDefinition: {
     servers: [
       {
@@ -10,11 +10,11 @@ const options: swaggerJSDoc.Options = {
       }
     ],
     info: {
-      description: 'Server API for the Digital Marketplace',
-      title: 'Digital Marketplace',
-      version: '1.0'
+      description: "Server API for the Digital Marketplace",
+      title: "Digital Marketplace",
+      version: "1.0"
     },
-    openapi: '3.0.0'
+    openapi: "3.0.0"
   }
 };
 
