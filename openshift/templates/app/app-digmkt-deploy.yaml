@@ -263,7 +263,7 @@ parameters:
 - name: REPLICAS
   displayName: The number of replicas to run
   required: true
-  value: '2'
+  value: '3'
 
 - name: COOKIE_SECRET
   displayName: Cookie Secret
