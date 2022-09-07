@@ -1,4 +1,3 @@
-
 paths:
   /counters:
     get:
@@ -15,7 +14,10 @@ paths:
           type: array
           items:
             type: string
-          example: [opportunity.code-with-us.5e4fba77-2697-4502-ae85-2cec29127f50.views]
+          example:
+            [
+              opportunity.code-with-us.5e4fba77-2697-4502-ae85-2cec29127f50.views
+            ]
       responses:
         200:
           description: Receive the array of Counters.

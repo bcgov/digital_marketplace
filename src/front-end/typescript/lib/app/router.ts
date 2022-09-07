@@ -1,17 +1,17 @@
-import { prefixPath } from 'front-end/lib';
-import { Route } from 'front-end/lib/app/types';
-import * as Router from 'front-end/lib/framework/router';
-import * as PageNotice from 'front-end/lib/pages/notice';
-import * as CWUOpportunityEditTab from 'front-end/lib/pages/opportunity/code-with-us/edit/tab';
-import * as SWUOpportunityEditTab from 'front-end/lib/pages/opportunity/sprint-with-us/edit/tab';
-import * as OrganizationEditTab from 'front-end/lib/pages/organization/edit/tab';
-import * as CWUProposalEditTab from 'front-end/lib/pages/proposal/code-with-us/edit/tab';
-import * as CWUProposalViewTab from 'front-end/lib/pages/proposal/code-with-us/view/tab';
-import * as SWUProposalEditTab from 'front-end/lib/pages/proposal/sprint-with-us/edit/tab';
-import * as SWUProposalViewTab from 'front-end/lib/pages/proposal/sprint-with-us/view/tab';
-import * as UserProfileTab from 'front-end/lib/pages/user/profile/tab';
-import { getString } from 'shared/lib';
-import { adt } from 'shared/lib/types';
+import { prefixPath } from "front-end/lib";
+import { Route } from "front-end/lib/app/types";
+import * as Router from "front-end/lib/framework/router";
+import * as PageNotice from "front-end/lib/pages/notice";
+import * as CWUOpportunityEditTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
+import * as SWUOpportunityEditTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
+import * as OrganizationEditTab from "front-end/lib/pages/organization/edit/tab";
+import * as CWUProposalEditTab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
+import * as CWUProposalViewTab from "front-end/lib/pages/proposal/code-with-us/view/tab";
+import * as SWUProposalEditTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
+import * as SWUProposalViewTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
+import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
+import { getString } from "shared/lib";
+import { adt } from "shared/lib/types";
 
 export function pushState(route: Route) {
   Router.pushState(router.routeToUrl(route), 0);
@@ -32,44 +32,43 @@ export function back() {
 }
 
 const router: Router.Router<Route> = {
-
   routes: [
     {
-      path: prefixPath('/opportunities/create'),
+      path: prefixPath("/opportunities/create"),
       makeRoute() {
         return {
-          tag: 'opportunityCreate',
+          tag: "opportunityCreate",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/opportunities/sprint-with-us/create'),
+      path: prefixPath("/opportunities/sprint-with-us/create"),
       makeRoute() {
         return {
-          tag: 'opportunitySWUCreate',
+          tag: "opportunitySWUCreate",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId'),
-      makeRoute({params}) {
+      path: prefixPath("/opportunities/sprint-with-us/:opportunityId"),
+      makeRoute({ params }) {
         return {
-          tag: 'opportunitySWUView',
+          tag: "opportunitySWUView",
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/edit'),
+      path: prefixPath("/opportunities/sprint-with-us/:opportunityId/edit"),
       makeRoute({ params, query }) {
         return {
-          tag: 'opportunitySWUEdit',
+          tag: "opportunitySWUEdit",
           value: {
-            opportunityId: params.opportunityId || '',
+            opportunityId: params.opportunityId || "",
             tab: SWUOpportunityEditTab.parseTabId(query.tab) || undefined
           }
         };
@@ -77,24 +76,28 @@ const router: Router.Router<Route> = {
     },
 
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/create'),
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/create"
+      ),
       makeRoute({ params }) {
         return {
-          tag: 'proposalSWUCreate',
+          tag: "proposalSWUCreate",
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/edit'),
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/edit"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalSWUEdit',
+          tag: "proposalSWUEdit",
           value: {
-            proposalId: params.proposalId || '',
-            opportunityId: params.opportunityId || '',
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
             tab: SWUProposalEditTab.parseTabId(query.tab) || undefined
           }
         };
@@ -103,94 +106,104 @@ const router: Router.Router<Route> = {
     // This route needs to be matched before `proposalSWUView`,
     // otherwise "export" gets parsed as a `proposalId`.
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/export'),
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/export"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalSWUExportAll',
+          tag: "proposalSWUExportAll",
           value: {
-            opportunityId: params.opportunityId || '',
-            anonymous: query.anonymous === 'true'
+            opportunityId: params.opportunityId || "",
+            anonymous: query.anonymous === "true"
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId'),
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalSWUView',
+          tag: "proposalSWUView",
           value: {
-            proposalId: params.proposalId || '',
-            opportunityId: params.opportunityId || '',
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
             tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export'),
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalSWUExportOne',
+          tag: "proposalSWUExportOne",
           value: {
-            proposalId: params.proposalId || '',
-            opportunityId: params.opportunityId || ''
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/code-with-us/create'),
+      path: prefixPath("/opportunities/code-with-us/create"),
       makeRoute() {
         return {
-          tag: 'opportunityCWUCreate',
+          tag: "opportunityCWUCreate",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId/edit'),
+      path: prefixPath("/opportunities/code-with-us/:opportunityId/edit"),
       makeRoute({ params, query }) {
         return {
-          tag: 'opportunityCWUEdit',
+          tag: "opportunityCWUEdit",
           value: {
-            opportunityId: params.opportunityId || '',
+            opportunityId: params.opportunityId || "",
             tab: CWUOpportunityEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId'),
-      makeRoute({params}) {
+      path: prefixPath("/opportunities/code-with-us/:opportunityId"),
+      makeRoute({ params }) {
         return {
-          tag: 'opportunityCWUView',
+          tag: "opportunityCWUView",
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
 
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/create'),
+      path: prefixPath(
+        "/opportunities/code-with-us/:opportunityId/proposals/create"
+      ),
       makeRoute({ params }) {
         return {
-          tag: 'proposalCWUCreate',
+          tag: "proposalCWUCreate",
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit'),
+      path: prefixPath(
+        "/opportunities/code-with-us/:opportunityId/proposals/:proposalId/edit"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalCWUEdit',
+          tag: "proposalCWUEdit",
           value: {
-            proposalId: params.proposalId || '',
-            opportunityId: params.opportunityId || '',
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
             tab: CWUProposalEditTab.parseTabId(query.tab) || undefined
           }
         };
@@ -199,341 +212,439 @@ const router: Router.Router<Route> = {
     // This route needs to be matched before `proposalCWUView`,
     // otherwise "export" gets parsed as a `proposalId`.
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/export'),
+      path: prefixPath(
+        "/opportunities/code-with-us/:opportunityId/proposals/export"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalCWUExportAll',
+          tag: "proposalCWUExportAll",
           value: {
-            opportunityId: params.opportunityId || ''
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/:proposalId'),
+      path: prefixPath(
+        "/opportunities/code-with-us/:opportunityId/proposals/:proposalId"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalCWUView',
+          tag: "proposalCWUView",
           value: {
-            proposalId: params.proposalId || '',
-            opportunityId: params.opportunityId || '',
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
             tab: CWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
       }
     },
     {
-      path: prefixPath('/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export'),
+      path: prefixPath(
+        "/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'proposalCWUExportOne',
+          tag: "proposalCWUExportOne",
           value: {
-            proposalId: params.proposalId || '',
-            opportunityId: params.opportunityId || ''
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || ""
           }
         };
       }
     },
 
     {
-      path: prefixPath('/proposals'),
+      path: prefixPath("/proposals"),
       makeRoute() {
         return {
-          tag: 'proposalList',
+          tag: "proposalList",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/organizations'),
+      path: prefixPath("/organizations"),
       makeRoute({ query }) {
         return {
-          tag: 'orgList',
+          tag: "orgList",
           value: {
-            page: parseInt(getString(query, 'page'), 10) || undefined
+            page: parseInt(getString(query, "page"), 10) || undefined
           }
         };
       }
     },
     {
-      path: prefixPath('/organizations/create'),
+      path: prefixPath("/organizations/create"),
       makeRoute() {
         return {
-          tag: 'orgCreate',
+          tag: "orgCreate",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/organizations/:id/edit'),
+      path: prefixPath("/organizations/:id/edit"),
       makeRoute({ params, query }) {
         return {
-          tag: 'orgEdit',
+          tag: "orgEdit",
           value: {
-            orgId: params.id || '',
+            orgId: params.id || "",
             tab: OrganizationEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
     },
     {
-      path: prefixPath('/organizations/:id/sprint-with-us-terms-and-conditions'),
+      path: prefixPath(
+        "/organizations/:id/sprint-with-us-terms-and-conditions"
+      ),
       makeRoute({ params, query }) {
         return {
-          tag: 'orgSWUTerms',
+          tag: "orgSWUTerms",
           value: {
-            orgId: params.id || ''
+            orgId: params.id || ""
           }
         };
       }
     },
     {
-      path: prefixPath('/users/:id'),
+      path: prefixPath("/users/:id"),
       makeRoute({ params, query }) {
-        const affiliationId = getString(query, 'invitationAffiliationId') || undefined;
-        const response = UserProfileTab.parseInvitationResponseParam(getString(query, 'invitationResponse')) || undefined;
+        const affiliationId =
+          getString(query, "invitationAffiliationId") || undefined;
+        const response =
+          UserProfileTab.parseInvitationResponseParam(
+            getString(query, "invitationResponse")
+          ) || undefined;
         return {
-          tag: 'userProfile',
+          tag: "userProfile",
           value: {
-            userId: params.id || '',
+            userId: params.id || "",
             tab: UserProfileTab.parseTabId(query.tab) || undefined,
-            invitation: affiliationId && response
-              ? { affiliationId, response }
-              : undefined
+            invitation:
+              affiliationId && response
+                ? { affiliationId, response }
+                : undefined
           }
         };
       }
     },
     {
-      path: prefixPath('/users'),
+      path: prefixPath("/users"),
       makeRoute() {
         return {
-          tag: 'userList',
+          tag: "userList",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/'),
+      path: prefixPath("/"),
       makeRoute() {
         return {
-          tag: 'landing',
+          tag: "landing",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/dashboard'),
+      path: prefixPath("/dashboard"),
       makeRoute() {
         return {
-          tag: 'dashboard',
+          tag: "dashboard",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/learn-more/code-with-us'),
+      path: prefixPath("/learn-more/code-with-us"),
       makeRoute() {
         return {
-          tag: 'learnMoreCWU',
+          tag: "learnMoreCWU",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/learn-more/sprint-with-us'),
+      path: prefixPath("/learn-more/sprint-with-us"),
       makeRoute() {
         return {
-          tag: 'learnMoreSWU',
+          tag: "learnMoreSWU",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/opportunities'),
+      path: prefixPath("/opportunities"),
       makeRoute() {
         return {
-          tag: 'opportunities',
+          tag: "opportunities",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/content'),
+      path: prefixPath("/content"),
       makeRoute() {
-        return adt('contentList', null);
+        return adt("contentList", null);
       }
     },
     {
-      path: prefixPath('/content/create'),
+      path: prefixPath("/content/create"),
       makeRoute() {
-        return adt('contentCreate', null);
+        return adt("contentCreate", null);
       }
     },
     {
-      path: prefixPath('/content/:contentId/edit'),
+      path: prefixPath("/content/:contentId/edit"),
       makeRoute({ params }) {
-        return adt('contentEdit', getString(params, 'contentId'));
+        return adt("contentEdit", getString(params, "contentId"));
       }
     },
     {
-      path: prefixPath('/content/:contentId'),
+      path: prefixPath("/content/:contentId"),
       makeRoute({ params }) {
-        return adt('contentView', getString(params, 'contentId'));
+        return adt("contentView", getString(params, "contentId"));
       }
     },
     {
-      path: prefixPath('/sign-in'),
+      path: prefixPath("/sign-in"),
       makeRoute({ query }) {
         return {
-          tag: 'signIn',
-          value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
+          tag: "signIn",
+          value: {
+            redirectOnSuccess:
+              getString(query, "redirectOnSuccess") || undefined
+          }
         };
       }
     },
     {
-      path: prefixPath('/sign-out'),
+      path: prefixPath("/sign-out"),
       makeRoute() {
         return {
-          tag: 'signOut',
+          tag: "signOut",
           value: null
         };
       }
     },
     {
-      path: prefixPath('/sign-up'),
+      path: prefixPath("/sign-up"),
       makeRoute({ query }) {
         return {
-          tag: 'signUpStepOne',
-          value: { redirectOnSuccess: getString(query, 'redirectOnSuccess') || undefined }
+          tag: "signUpStepOne",
+          value: {
+            redirectOnSuccess:
+              getString(query, "redirectOnSuccess") || undefined
+          }
         };
       }
     },
     {
-      path: prefixPath('/sign-up/complete'),
+      path: prefixPath("/sign-up/complete"),
       makeRoute() {
         return {
-          tag: 'signUpStepTwo',
+          tag: "signUpStepTwo",
           value: null
         };
       }
     },
 
     {
-      path: prefixPath('/notice/:noticeId'),
+      path: prefixPath("/notice/:noticeId"),
       makeRoute({ path, params, query }) {
         const noticeId = PageNotice.parseNoticeId(params.noticeId, query);
-        return noticeId ? adt('notice', noticeId) : adt('notFound', { path });
+        return noticeId ? adt("notice", noticeId) : adt("notFound", { path });
       }
     },
     {
-      path: '(.*)',
+      path: "(.*)",
       makeRoute({ path }) {
-        return adt('notFound', { path });
+        return adt("notFound", { path });
       }
     }
   ],
 
   routeToUrl(route) {
     switch (route.tag) {
-      case 'landing':
-        return prefixPath('/');
-      case 'dashboard':
-        return prefixPath('/dashboard');
-      case 'opportunities':
-        return prefixPath('/opportunities');
-      case 'opportunityCreate':
-        return prefixPath('/opportunities/create');
-      case 'learnMoreCWU':
-        return prefixPath('/learn-more/code-with-us');
-      case 'learnMoreSWU':
-        return prefixPath('/learn-more/sprint-with-us');
-      case 'contentList':
-        return prefixPath('/content');
-      case 'contentCreate':
-        return prefixPath('/content/create');
-      case 'contentEdit':
+      case "landing":
+        return prefixPath("/");
+      case "dashboard":
+        return prefixPath("/dashboard");
+      case "opportunities":
+        return prefixPath("/opportunities");
+      case "opportunityCreate":
+        return prefixPath("/opportunities/create");
+      case "learnMoreCWU":
+        return prefixPath("/learn-more/code-with-us");
+      case "learnMoreSWU":
+        return prefixPath("/learn-more/sprint-with-us");
+      case "contentList":
+        return prefixPath("/content");
+      case "contentCreate":
+        return prefixPath("/content/create");
+      case "contentEdit":
         return prefixPath(`/content/${route.value}/edit`);
-      case 'contentView':
+      case "contentView":
         return prefixPath(`/content/${route.value}`);
-      case 'signIn':
-        return prefixPath(`/sign-in${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`);
-      case 'signOut':
-        return prefixPath('/sign-out');
-      case 'signUpStepOne':
-        return prefixPath(`/sign-up${route.value.redirectOnSuccess ? `?redirectOnSuccess=${window.encodeURIComponent(route.value.redirectOnSuccess)}` : ''}`);
-      case 'signUpStepTwo':
+      case "signIn":
+        return prefixPath(
+          `/sign-in${
+            route.value.redirectOnSuccess
+              ? `?redirectOnSuccess=${window.encodeURIComponent(
+                  route.value.redirectOnSuccess
+                )}`
+              : ""
+          }`
+        );
+      case "signOut":
+        return prefixPath("/sign-out");
+      case "signUpStepOne":
+        return prefixPath(
+          `/sign-up${
+            route.value.redirectOnSuccess
+              ? `?redirectOnSuccess=${window.encodeURIComponent(
+                  route.value.redirectOnSuccess
+                )}`
+              : ""
+          }`
+        );
+      case "signUpStepTwo":
         return prefixPath(`/sign-up/complete`);
-      case 'userProfile': {
+      case "userProfile": {
         const query: string[] = [];
-        if (route.value.tab) { query.push(`tab=${route.value.tab}`); }
+        if (route.value.tab) {
+          query.push(`tab=${route.value.tab}`);
+        }
         if (route.value.invitation) {
-          query.push(`invitationAffiliationId=${route.value.invitation.affiliationId}`);
+          query.push(
+            `invitationAffiliationId=${route.value.invitation.affiliationId}`
+          );
           query.push(`invitationResponse=${route.value.invitation.response}`);
         }
-        let qs = '';
+        let qs = "";
         if (query.length) {
-          qs = `?${query.join('&')}`;
+          qs = `?${query.join("&")}`;
         }
         return prefixPath(`/users/${route.value.userId}${qs}`);
       }
-      case 'userList':
-        return prefixPath('/users');
-      case 'orgList':
-        return prefixPath(`/organizations${route.value.page ? `?page=${window.encodeURIComponent(route.value.page)}` : ''}`);
-      case 'orgEdit':
-        return prefixPath(`/organizations/${route.value.orgId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'orgSWUTerms':
-        return prefixPath(`/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`);
-      case 'orgCreate':
-        return prefixPath('/organizations/create');
-      case 'proposalSWUCreate':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`);
-      case 'proposalSWUEdit':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'proposalSWUView':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'proposalSWUExportOne':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`);
-      case 'proposalSWUExportAll':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/export/${route.value.anonymous ? `?anonymous=${route.value.anonymous}` : ''}`);
-      case 'opportunitySWUCreate':
-        return prefixPath('/opportunities/sprint-with-us/create');
-      case 'opportunitySWUEdit':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'opportunitySWUView':
-        return prefixPath(`/opportunities/sprint-with-us/${route.value.opportunityId}`);
-      case 'opportunityCWUCreate':
-        return prefixPath('/opportunities/code-with-us/create');
-      case 'opportunityCWUEdit':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'opportunityCWUView':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}`);
-      case 'proposalCWUCreate':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`);
-      case 'proposalCWUEdit':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/edit${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'proposalCWUView':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}${route.value.tab ? `?tab=${route.value.tab}` : ''}`);
-      case 'proposalCWUExportOne':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`);
-      case 'proposalCWUExportAll':
-        return prefixPath(`/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`);
-      case 'proposalList':
-        return prefixPath('/proposals');
-      case 'notice':
+      case "userList":
+        return prefixPath("/users");
+      case "orgList":
+        return prefixPath(
+          `/organizations${
+            route.value.page
+              ? `?page=${window.encodeURIComponent(route.value.page)}`
+              : ""
+          }`
+        );
+      case "orgEdit":
+        return prefixPath(
+          `/organizations/${route.value.orgId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "orgSWUTerms":
+        return prefixPath(
+          `/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`
+        );
+      case "orgCreate":
+        return prefixPath("/organizations/create");
+      case "proposalSWUCreate":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/create`
+        );
+      case "proposalSWUEdit":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${route.value.proposalId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "proposalSWUView":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${route.value.proposalId}${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "proposalSWUExportOne":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`
+        );
+      case "proposalSWUExportAll":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/export/${
+            route.value.anonymous ? `?anonymous=${route.value.anonymous}` : ""
+          }`
+        );
+      case "opportunitySWUCreate":
+        return prefixPath("/opportunities/sprint-with-us/create");
+      case "opportunitySWUEdit":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${route.value.opportunityId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "opportunitySWUView":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${route.value.opportunityId}`
+        );
+      case "opportunityCWUCreate":
+        return prefixPath("/opportunities/code-with-us/create");
+      case "opportunityCWUEdit":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "opportunityCWUView":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}`
+        );
+      case "proposalCWUCreate":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/proposals/create`
+        );
+      case "proposalCWUEdit":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
+      case "proposalCWUView":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
+      case "proposalCWUExportOne":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`
+        );
+      case "proposalCWUExportAll":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/proposals/export`
+        );
+      case "proposalList":
+        return prefixPath("/proposals");
+      case "notice":
         return (() => {
           switch (route.value.tag) {
-            case 'deactivatedOwnAccount':
-            case 'authFailure':
+            case "deactivatedOwnAccount":
+            case "authFailure":
               return prefixPath(`/notice/${route.value.tag}`);
           }
         })();
-      case 'notFound':
-        return route.value.path || prefixPath('/not-found');
+      case "notFound":
+        return route.value.path || prefixPath("/not-found");
     }
   }
-
 };
 
 export default router;

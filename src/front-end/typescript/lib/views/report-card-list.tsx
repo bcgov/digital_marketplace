@@ -1,7 +1,7 @@
-import { View } from 'front-end/lib/framework';
-import { ThemeColor } from 'front-end/lib/types';
-import Icon, { AvailableIcons } from 'front-end/lib/views/icon';
-import React from 'react';
+import { View } from "front-end/lib/framework";
+import { ThemeColor } from "front-end/lib/types";
+import Icon, { AvailableIcons } from "front-end/lib/views/icon";
+import React from "react";
 
 export interface ReportCard {
   icon: AvailableIcons;
@@ -11,15 +11,25 @@ export interface ReportCard {
   className?: string;
 }
 
-export const ReportCard: View<ReportCard> = ({ icon, iconColor = 'c-report-card-icon-default', name, value, className = '' }) => {
+export const ReportCard: View<ReportCard> = ({
+  icon,
+  iconColor = "c-report-card-icon-default",
+  name,
+  value,
+  className = ""
+}) => {
   return (
-    <div style={{ minWidth: '200px', paddingLeft: '1.25rem' }} className={`py-4 pr-4 bg-c-report-card-bg d-flex flex-nowrap align-items-center rounded-lg ${className}`}>
-      <div className='flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-white mr-3' style={{ width: '2.8rem', height: '2.8rem' }}>
+    <div
+      style={{ minWidth: "200px", paddingLeft: "1.25rem" }}
+      className={`py-4 pr-4 bg-c-report-card-bg d-flex flex-nowrap align-items-center rounded-lg ${className}`}>
+      <div
+        className="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-white mr-3"
+        style={{ width: "2.8rem", height: "2.8rem" }}>
         <Icon name={icon} width={1.25} height={1.25} color={iconColor} />
       </div>
-      <div className='flex-grow-1 text-nowrap'>
-        <div className='font-weight-bold'>{value}</div>
-        <div className='font-size-small'>{name}</div>
+      <div className="flex-grow-1 text-nowrap">
+        <div className="font-weight-bold">{value}</div>
+        <div className="font-size-small">{name}</div>
       </div>
     </div>
   );
@@ -30,17 +40,23 @@ export interface ReportCardList {
   className?: string;
 }
 
-export const ReportCardList: View<ReportCardList> = ({ reportCards, className = '' }) => {
+export const ReportCardList: View<ReportCardList> = ({
+  reportCards,
+  className = ""
+}) => {
   return (
-    <div className='d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap mb-n4'>
+    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap mb-n4">
       {reportCards.map((card, i) => {
-        if (!card) { return null; }
+        if (!card) {
+          return null;
+        }
         return (
           <ReportCard
             key={`report-card-${i}`}
-            className={`${i < reportCards.length - 1 ? 'mr-sm-4' : ''} mb-4`}
-            {...card} />
-          );
+            className={`${i < reportCards.length - 1 ? "mr-sm-4" : ""} mb-4`}
+            {...card}
+          />
+        );
       })}
     </div>
   );

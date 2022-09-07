@@ -1,9 +1,14 @@
-import { FileRecord } from 'shared/lib/resources/file';
-import { UserSlim } from 'shared/lib/resources/user';
-import { ADT, BodyWithErrors, Id, ReadManyResponseBodyBase } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation/index';
+import { FileRecord } from "shared/lib/resources/file";
+import { UserSlim } from "shared/lib/resources/user";
+import {
+  ADT,
+  BodyWithErrors,
+  Id,
+  ReadManyResponseBodyBase
+} from "shared/lib/types";
+import { ErrorTypeFrom } from "shared/lib/validation/index";
 
-export { ReadManyResponseValidationErrors } from 'shared/lib/types';
+export { ReadManyResponseValidationErrors } from "shared/lib/types";
 
 // Properties to include on Organization and OrganizationSlim
 // for admins/owners only.
@@ -43,24 +48,38 @@ export interface OrganizationSlim extends OrganizationAdmin {
   active: boolean;
 }
 
-export interface CreateRequestBody extends Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'logoImageFile' | 'active' | 'owner' | 'acceptedSWUTerms' | 'possessAllCapabilities' | 'numTeamMembers'> {
+export interface CreateRequestBody
+  extends Omit<
+    Organization,
+    | "id"
+    | "createdAt"
+    | "updatedAt"
+    | "logoImageFile"
+    | "active"
+    | "owner"
+    | "acceptedSWUTerms"
+    | "possessAllCapabilities"
+    | "numTeamMembers"
+  > {
   logoImageFile?: Id;
 }
 
-export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
+export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> &
+  BodyWithErrors;
 
-export type UpdateRequestBody
-  = ADT<'updateProfile', UpdateProfileRequestBody>
-  | ADT<'acceptSWUTerms'>;
+export type UpdateRequestBody =
+  | ADT<"updateProfile", UpdateProfileRequestBody>
+  | ADT<"acceptSWUTerms">;
 
 export type UpdateProfileRequestBody = CreateRequestBody;
 
-export type UpdateProfileValidationErrors = ErrorTypeFrom<UpdateProfileRequestBody>;
+export type UpdateProfileValidationErrors =
+  ErrorTypeFrom<UpdateProfileRequestBody>;
 
-type UpdateADTErrors
-  = ADT<'updateProfile', UpdateProfileValidationErrors>
-  | ADT<'acceptSWUTerms', string[]>
-  | ADT<'parseFailure'>;
+type UpdateADTErrors =
+  | ADT<"updateProfile", UpdateProfileValidationErrors>
+  | ADT<"acceptSWUTerms", string[]>
+  | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
   organization?: UpdateADTErrors;
@@ -70,14 +89,24 @@ export type DeleteValidationErrors = BodyWithErrors;
 
 export type ReadManyResponseBody = ReadManyResponseBodyBase<OrganizationSlim>;
 
-export function doesOrganizationHaveAdminInfo(organization: Organization | OrganizationSlim): boolean {
+export function doesOrganizationHaveAdminInfo(
+  organization: Organization | OrganizationSlim
+): boolean {
   return organization.owner !== undefined;
 }
 
-export function doesOrganizationMeetSWUQualificationNumTeamMembers(organization: Organization | OrganizationSlim): boolean {
+export function doesOrganizationMeetSWUQualificationNumTeamMembers(
+  organization: Organization | OrganizationSlim
+): boolean {
   return (organization.numTeamMembers || 0) >= 2;
 }
 
-export function doesOrganizationMeetSWUQualification(organization: Organization | OrganizationSlim): boolean {
-  return doesOrganizationMeetSWUQualificationNumTeamMembers(organization) && !!organization.acceptedSWUTerms && !!organization.possessAllCapabilities;
+export function doesOrganizationMeetSWUQualification(
+  organization: Organization | OrganizationSlim
+): boolean {
+  return (
+    doesOrganizationMeetSWUQualificationNumTeamMembers(organization) &&
+    !!organization.acceptedSWUTerms &&
+    !!organization.possessAllCapabilities
+  );
 }

@@ -1,6 +1,6 @@
-import { UserSlim } from 'shared/lib/resources/user';
-import { BodyWithErrors, Id } from 'shared/lib/types';
-import { ErrorTypeFrom } from 'shared/lib/validation';
+import { UserSlim } from "shared/lib/resources/user";
+import { BodyWithErrors, Id } from "shared/lib/types";
+import { ErrorTypeFrom } from "shared/lib/validation";
 
 export interface Content {
   id: Id;
@@ -15,7 +15,10 @@ export interface Content {
   body: string;
 }
 
-export type ContentSlim = Pick<Content, 'id' | 'title' | 'slug' | 'fixed' | 'createdAt' | 'updatedAt'>;
+export type ContentSlim = Pick<
+  Content,
+  "id" | "title" | "slug" | "fixed" | "createdAt" | "updatedAt"
+>;
 
 export interface CreateRequestBody {
   slug: string;
@@ -23,11 +26,14 @@ export interface CreateRequestBody {
   body: string;
 }
 
-export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> & BodyWithErrors;
+export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> &
+  BodyWithErrors;
 
 export type UpdateRequestBody = CreateRequestBody;
 
-export interface UpdateValidationErrors extends ErrorTypeFrom<UpdateRequestBody>, BodyWithErrors {
+export interface UpdateValidationErrors
+  extends ErrorTypeFrom<UpdateRequestBody>,
+    BodyWithErrors {
   fixed?: string[];
 }
 

@@ -22,3 +22,8 @@ Session.vim
 tags
 __tmp/
 /cypress/fixtures/myAccount.sql
+
+# Nix files
+*.nix
+flake.lock
+result

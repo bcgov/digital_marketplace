@@ -1,8 +1,8 @@
-import { makeDomainLogger } from 'back-end/lib/logger';
-import { console as consoleAdapter } from 'back-end/lib/logger/adapters';
-import Knex from 'knex';
+import { makeDomainLogger } from "back-end/lib/logger";
+import { console as consoleAdapter } from "back-end/lib/logger/adapters";
+import Knex from "knex";
 
-const logger = makeDomainLogger(consoleAdapter, 'migrations', 'development');
+const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
 
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.raw(`
@@ -10,7 +10,7 @@ export async function up(connection: Knex): Promise<void> {
     ALTER TABLE "swuProposalTeamMembers" ADD CONSTRAINT swuproposalteammembers_phase_foreign FOREIGN KEY (phase) \
       REFERENCES "swuProposalPhases"(id) ON DELETE CASCADE;
   `);
-  logger.info('Modified swuProposalTeamMembers table.');
+  logger.info("Modified swuProposalTeamMembers table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
@@ -19,5 +19,5 @@ export async function down(connection: Knex): Promise<void> {
     ALTER TABLE "swuProposalTeamMembers" ADD CONSTRAINT swuproposalteammembers_phase_foreign FOREIGN KEY (phase) \
       REFERENCES "swuProposalPhases"(id);
   `);
-  logger.info('Reverted swuProposalTeamMembers table.');
+  logger.info("Reverted swuProposalTeamMembers table.");
 }

@@ -1,4 +1,3 @@
-
 paths:
   /affiliations:
     get:
@@ -17,7 +16,6 @@ paths:
         200:
           description: Receive the array of Affiliations
 
-
     post:
       summary: Creates a new Affiliation.
       tags:
@@ -30,10 +28,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAffiliationRequestBody'
+              $ref: "#/components/schemas/CreateAffiliationRequestBody"
             examples:
               createAffiliationRequestBody:
-                $ref: '#/components/examples/createAffiliationRequestBody'
+                $ref: "#/components/examples/createAffiliationRequestBody"
       responses:
         201:
           descriptions: Receive the created Affiliation
@@ -91,4 +89,4 @@ components:
       value:
         userEmail: john.smith@email.com
         organization: 89fe0644-50e1-4939-a488-aa6cf5977d7b
-        membershipType: 'MEMBER'
+        membershipType: "MEMBER"

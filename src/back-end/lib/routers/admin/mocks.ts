@@ -1,35 +1,67 @@
-import { generateUuid } from 'back-end/lib';
-import { CWU_MAX_BUDGET, SWU_MAX_BUDGET } from 'shared/config';
-import { setDateTo4PM } from 'shared/lib';
-import { Affiliation, MembershipStatus, MembershipType } from 'shared/lib/resources/affiliation';
-import { CWUOpportunity, CWUOpportunitySlim, CWUOpportunityStatus } from 'shared/lib/resources/opportunity/code-with-us';
-import { SWUOpportunity, SWUOpportunityPhase, SWUOpportunityPhaseRequiredCapability, SWUOpportunityPhaseType, SWUOpportunitySlim, SWUOpportunityStatus, SWUTeamQuestion } from 'shared/lib/resources/opportunity/sprint-with-us';
-import { Organization, OrganizationSlim } from 'shared/lib/resources/organization';
-import { CWUIndividualProponent, CWUProposal, CWUProposalStatus } from 'shared/lib/resources/proposal/code-with-us';
-import { SWUProposal, SWUProposalStatus, SWUProposalTeamQuestionResponse } from 'shared/lib/resources/proposal/sprint-with-us';
-import { User, UserSlim, UserStatus, UserType } from 'shared/lib/resources/user';
-import { adt } from 'shared/lib/types';
+import { generateUuid } from "back-end/lib";
+import { CWU_MAX_BUDGET, SWU_MAX_BUDGET } from "shared/config";
+import { setDateTo4PM } from "shared/lib";
+import {
+  Affiliation,
+  MembershipStatus,
+  MembershipType
+} from "shared/lib/resources/affiliation";
+import {
+  CWUOpportunity,
+  CWUOpportunitySlim,
+  CWUOpportunityStatus
+} from "shared/lib/resources/opportunity/code-with-us";
+import {
+  SWUOpportunity,
+  SWUOpportunityPhase,
+  SWUOpportunityPhaseRequiredCapability,
+  SWUOpportunityPhaseType,
+  SWUOpportunitySlim,
+  SWUOpportunityStatus,
+  SWUTeamQuestion
+} from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  Organization,
+  OrganizationSlim
+} from "shared/lib/resources/organization";
+import {
+  CWUIndividualProponent,
+  CWUProposal,
+  CWUProposalStatus
+} from "shared/lib/resources/proposal/code-with-us";
+import {
+  SWUProposal,
+  SWUProposalStatus,
+  SWUProposalTeamQuestionResponse
+} from "shared/lib/resources/proposal/sprint-with-us";
+import {
+  User,
+  UserSlim,
+  UserStatus,
+  UserType
+} from "shared/lib/resources/user";
+import { adt } from "shared/lib/types";
 
 export const id = generateUuid();
 export const date = setDateTo4PM(new Date());
-export const email = 'user@example.com';
+export const email = "user@example.com";
 
 export const vendorUser: User = {
   id,
   type: UserType.Vendor,
   status: UserStatus.Active,
-  name: 'Vendor User',
+  name: "Vendor User",
   email,
-  jobTitle: '',
+  jobTitle: "",
   avatarImageFile: null,
   notificationsOn: null,
   acceptedTermsAt: null,
   lastAcceptedTermsAt: null,
-  idpUsername: 'vendor_user',
+  idpUsername: "vendor_user",
   deactivatedOn: null,
   deactivatedBy: null,
   capabilities: [],
-  idpId: 'vendor_user'
+  idpId: "vendor_user"
 };
 
 export const vendorUserSlim: UserSlim = {
@@ -41,61 +73,61 @@ export const govUser: User = {
   id,
   type: UserType.Government,
   status: UserStatus.Active,
-  name: 'Government User',
+  name: "Government User",
   email,
-  jobTitle: 'Job Title',
+  jobTitle: "Job Title",
   avatarImageFile: null,
   notificationsOn: null,
   acceptedTermsAt: null,
   lastAcceptedTermsAt: null,
-  idpUsername: 'username',
+  idpUsername: "username",
   deactivatedOn: null,
   deactivatedBy: null,
   capabilities: [],
-  idpId: 'username'
+  idpId: "username"
 };
 
 export const adminUser: User = {
   id,
   type: UserType.Admin,
   status: UserStatus.Active,
-  name: 'Admin User',
+  name: "Admin User",
   email,
-  jobTitle: 'Job Title',
+  jobTitle: "Job Title",
   avatarImageFile: null,
   notificationsOn: null,
   acceptedTermsAt: null,
   lastAcceptedTermsAt: null,
-  idpUsername: 'username',
+  idpUsername: "username",
   deactivatedOn: null,
   deactivatedBy: null,
   capabilities: [],
-  idpId: 'username'
+  idpId: "username"
 };
 
 export const cwuOpportunity: CWUOpportunity = {
   id,
   createdAt: date,
   updatedAt: date,
-  title: 'CWU Title',
-  teaser: '',
+  title: "CWU Title",
+  teaser: "",
   remoteOk: true,
-  remoteDesc: '',
-  location: 'Location',
+  remoteDesc: "",
+  location: "Location",
   reward: CWU_MAX_BUDGET,
-  skills: ['Skill'],
-  description: 'Description',
+  skills: ["Skill"],
+  description: "Description",
   proposalDeadline: date,
   assignmentDate: date,
   startDate: date,
   completionDate: null,
-  submissionInfo: '',
-  acceptanceCriteria: '',
-  evaluationCriteria: '',
+  submissionInfo: "",
+  acceptanceCriteria: "",
+  evaluationCriteria: "",
   successfulProponent: {
-    id: adt('individual', id),
-    name: 'Successful Proponent',
-    email: 'donotreply_DigitalMarketplace@gov.bc.ca',
+    id: adt("individual", id),
+    name: "Successful Proponent",
+    email: "donotreply_DigitalMarketplace@gov.bc.ca",
     createdBy: vendorUserSlim
   },
   status: CWUOpportunityStatus.Published,
@@ -123,15 +155,15 @@ export const cwuOpportunitySlim: CWUOpportunitySlim = {
 
 export const cwuIndividualProponent: CWUIndividualProponent = {
   id,
-  legalName: 'Legal Name',
+  legalName: "Legal Name",
   email,
-  phone: '(555) 555-5555',
-  street1: 'Street 1',
-  street2: 'Street 2',
-  city: 'City',
-  region: 'Region',
-  mailCode: 'Mail Code',
-  country: 'Country'
+  phone: "(555) 555-5555",
+  street1: "Street 1",
+  street2: "Street 2",
+  city: "City",
+  region: "Region",
+  mailCode: "Mail Code",
+  country: "Country"
 };
 
 export const cwuProposal: CWUProposal = {
@@ -141,18 +173,19 @@ export const cwuProposal: CWUProposal = {
   updatedBy: vendorUserSlim,
   updatedAt: date,
   opportunity: cwuOpportunitySlim,
-  proposalText: 'Proposal Text',
-  additionalComments: 'Additional Comments',
-  proponent: adt('individual', cwuIndividualProponent),
+  proposalText: "Proposal Text",
+  additionalComments: "Additional Comments",
+  proponent: adt("individual", cwuIndividualProponent),
   status: CWUProposalStatus.Submitted,
   attachments: []
 };
 
-export const swuOpportunityRequiredCapability: SWUOpportunityPhaseRequiredCapability = {
-  capability: 'Capability',
-  fullTime: true,
-  createdAt: date
-};
+export const swuOpportunityRequiredCapability: SWUOpportunityPhaseRequiredCapability =
+  {
+    capability: "Capability",
+    fullTime: true,
+    createdAt: date
+  };
 
 export const swuOpportunityImplementationPhase: SWUOpportunityPhase = {
   phase: SWUOpportunityPhaseType.Implementation,
@@ -164,8 +197,8 @@ export const swuOpportunityImplementationPhase: SWUOpportunityPhase = {
 };
 
 export const swuOpportunityTeamQuestion: SWUTeamQuestion = {
-  question: 'Question',
-  guideline: 'Guideline',
+  question: "Question",
+  guideline: "Guideline",
   score: 5,
   wordLimit: 300,
   order: 1,
@@ -176,16 +209,16 @@ export const swuOpportunity: SWUOpportunity = {
   id,
   createdAt: date,
   updatedAt: date,
-  title: 'SWU Title',
-  teaser: '',
+  title: "SWU Title",
+  teaser: "",
   remoteOk: true,
-  remoteDesc: '',
-  location: 'Location',
+  remoteDesc: "",
+  location: "Location",
   totalMaxBudget: SWU_MAX_BUDGET,
   minTeamMembers: 3,
-  mandatorySkills: ['Mandatory Skill'],
+  mandatorySkills: ["Mandatory Skill"],
   optionalSkills: [],
-  description: 'Description',
+  description: "Description",
   proposalDeadline: date,
   assignmentDate: date,
   questionsWeight: 20,
@@ -197,8 +230,8 @@ export const swuOpportunity: SWUOpportunity = {
   teamQuestions: [swuOpportunityTeamQuestion],
   successfulProponent: {
     id,
-    name: 'Successful Proponent',
-    email: 'donotreply_DigitalMarketplace@gov.bc.ca',
+    name: "Successful Proponent",
+    email: "donotreply_DigitalMarketplace@gov.bc.ca",
     createdBy: vendorUserSlim
   },
   attachments: [],
@@ -227,31 +260,32 @@ export const organization: Organization = {
   id,
   createdAt: date,
   updatedAt: date,
-  legalName: 'Organization',
-  streetAddress1: 'Street Address 1',
-  streetAddress2: 'Street Address 2',
-  city: 'City',
-  region: 'Region',
-  mailCode: 'Mail Code',
-  country: 'Country',
-  contactName: 'Contact Name',
-  contactEmail: 'Contact Email',
-  contactTitle: 'Contact Title',
-  contactPhone: 'Contact Phone',
-  websiteUrl: 'Website',
+  legalName: "Organization",
+  streetAddress1: "Street Address 1",
+  streetAddress2: "Street Address 2",
+  city: "City",
+  region: "Region",
+  mailCode: "Mail Code",
+  country: "Country",
+  contactName: "Contact Name",
+  contactEmail: "Contact Email",
+  contactTitle: "Contact Title",
+  contactPhone: "Contact Phone",
+  websiteUrl: "Website",
   active: true
 };
 
 export const organizatonSlim: OrganizationSlim = {
   id,
-  legalName: 'Organization Legal Name',
+  legalName: "Organization Legal Name",
   active: true
 };
 
-export const swuProposalTeamQuestionResponse: SWUProposalTeamQuestionResponse = {
-  response: 'Response',
-  order: 1
-};
+export const swuProposalTeamQuestionResponse: SWUProposalTeamQuestionResponse =
+  {
+    response: "Response",
+    order: 1
+  };
 
 export const swuProposal: SWUProposal = {
   id,
@@ -261,7 +295,7 @@ export const swuProposal: SWUProposal = {
   opportunity: swuOpportunitySlim,
   organization: organizatonSlim,
   teamQuestionResponses: [swuProposalTeamQuestionResponse],
-  anonymousProponentName: 'Proponent 1'
+  anonymousProponentName: "Proponent 1"
 };
 
 export const affiliation: Affiliation = {

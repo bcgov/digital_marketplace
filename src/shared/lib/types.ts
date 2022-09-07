@@ -4,7 +4,12 @@ export type Defined<T> = Exclude<T, undefined>;
 
 export type IfElse<T, Extends, Yes, No> = T extends Extends ? Yes : No;
 
-export type IfDefined<T, IsDefined, IsUndefined = undefined> = IfElse<T, undefined, IsUndefined, IsDefined>;
+export type IfDefined<T, IsDefined, IsUndefined = undefined> = IfElse<
+  T,
+  undefined,
+  IsUndefined,
+  IsDefined
+>;
 
 /**
  * "ADT" stands for "Algebraic Data Type".
@@ -28,21 +33,26 @@ export interface ADT<Tag, Value = undefined> {
 
 export function adt<T>(tag: T, value?: undefined): ADT<T>;
 export function adt<T, V>(tag: T, value: V): ADT<T, V>;
-export function adt<T extends ADT<unknown, unknown>>(tag: T['tag'], value: T['value']): ADT<T['tag'], T['value']> {
+export function adt<T extends ADT<unknown, unknown>>(
+  tag: T["tag"],
+  value: T["value"]
+): ADT<T["tag"], T["value"]> {
   return { tag, value };
 }
 
-export function adtCurried<T extends ADT<unknown, unknown>>(tag: T['tag']): ((value: T['value']) => ADT<T['tag'], T['value']>) {
-  return value => adt(tag, value);
+export function adtCurried<T extends ADT<unknown, unknown>>(
+  tag: T["tag"]
+): (value: T["value"]) => ADT<T["tag"], T["value"]> {
+  return (value) => adt(tag, value);
 }
 
 export enum ClientHttpMethod {
-  Get = 'GET',
-  Post = 'POST',
-  Put = 'PUT',
-  Patch = 'PATCH',
-  Delete = 'DELETE',
-  Options = 'OPTIONS'
+  Get = "GET",
+  Post = "POST",
+  Put = "PUT",
+  Patch = "PATCH",
+  Delete = "DELETE",
+  Options = "OPTIONS"
 }
 
 export interface BodyWithErrors {

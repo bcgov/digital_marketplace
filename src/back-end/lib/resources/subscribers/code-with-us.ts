@@ -1,15 +1,28 @@
-import * as crud from 'back-end/lib/crud';
-import * as db from 'back-end/lib/db';
-import * as permissions from 'back-end/lib/permissions';
-import { basicResponse, JsonResponseBody, makeJsonResponseBody, wrapRespond } from 'back-end/lib/server';
-import { SupportedRequestBodies, SupportedResponseBodies } from 'back-end/lib/types';
-import { validateCWUOpportunityId } from 'back-end/lib/validation';
-import { omit } from 'lodash';
-import { getString } from 'shared/lib';
-import { AuthenticatedSession, Session } from 'shared/lib/resources/session';
-import { CreateRequestBody, CreateValidationErrors, CWUOpportunitySubscriber, DeleteValidationErrors } from 'shared/lib/resources/subscribers/code-with-us';
-import { Id } from 'shared/lib/types';
-import { invalid, isInvalid, valid } from 'shared/lib/validation';
+import * as crud from "back-end/lib/crud";
+import * as db from "back-end/lib/db";
+import * as permissions from "back-end/lib/permissions";
+import {
+  basicResponse,
+  JsonResponseBody,
+  makeJsonResponseBody,
+  wrapRespond
+} from "back-end/lib/server";
+import {
+  SupportedRequestBodies,
+  SupportedResponseBodies
+} from "back-end/lib/types";
+import { validateCWUOpportunityId } from "back-end/lib/validation";
+import { omit } from "lodash";
+import { getString } from "shared/lib";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
+import {
+  CreateRequestBody,
+  CreateValidationErrors,
+  CWUOpportunitySubscriber,
+  DeleteValidationErrors
+} from "shared/lib/resources/subscribers/code-with-us";
+import { Id } from "shared/lib/types";
+import { invalid, isInvalid, valid } from "shared/lib/validation";
 
 interface ValidatedCreateRequestBody {
   opportunity: Id;
@@ -41,14 +54,15 @@ type Resource = crud.Resource<
 >;
 
 const resource: Resource = {
-  routeNamespace: 'subscribers/code-with-us',
+  routeNamespace: "subscribers/code-with-us",
 
   create(connection) {
     return {
       async parseRequestBody(request) {
-        const body: unknown = request.body.tag === 'json' ? request.body.value : {};
+        const body: unknown =
+          request.body.tag === "json" ? request.body.value : {};
         return {
-          opportunity: getString(body, 'opportunity')
+          opportunity: getString(body, "opportunity")
         };
       },
       async validateRequestBody(request) {
@@ -60,22 +74,34 @@ const resource: Resource = {
           });
         }
 
-        const validatedCWUOpportunity = await validateCWUOpportunityId(connection, opportunity, request.session);
+        const validatedCWUOpportunity = await validateCWUOpportunityId(
+          connection,
+          opportunity,
+          request.session
+        );
         if (isInvalid(validatedCWUOpportunity)) {
           return invalid({
-            notFound: ['The specified opportunity does not exist']
+            notFound: ["The specified opportunity does not exist"]
           });
         }
 
         // Don't allow subscribing to owned opportunity
-        if (validatedCWUOpportunity.value.createdBy?.id === request.session.user.id) {
+        if (
+          validatedCWUOpportunity.value.createdBy?.id ===
+          request.session.user.id
+        ) {
           return invalid({
-            opportunity: ['You cannot subscribe to your own opportunity.']
+            opportunity: ["You cannot subscribe to your own opportunity."]
           });
         }
 
         // Check for existing subscription for this user
-        const dbResult = await db.readOneCWUSubscriberByOpportunityAndUser(connection, validatedCWUOpportunity.value.id, request.session.user.id, request.session);
+        const dbResult = await db.readOneCWUSubscriberByOpportunityAndUser(
+          connection,
+          validatedCWUOpportunity.value.id,
+          request.session.user.id,
+          request.session
+        );
         if (isInvalid(dbResult)) {
           return invalid({
             database: [db.ERROR_MESSAGE]
@@ -83,7 +109,7 @@ const resource: Resource = {
         }
         if (dbResult.value) {
           return invalid({
-            conflict: ['This user is already subscribed to this opportunity.']
+            conflict: ["This user is already subscribed to this opportunity."]
           });
         }
 
@@ -93,17 +119,39 @@ const resource: Resource = {
           user: request.session.user.id
         });
       },
-      respond: wrapRespond<ValidatedCreateRequestBody, CreateValidationErrors, JsonResponseBody<CWUOpportunitySubscriber>, JsonResponseBody<CreateValidationErrors>, Session>({
-        valid: (async request => {
-          const dbResult = await db.createCWUOpportunitySubscriber(connection, omit(request.body, 'session'), request.session);
+      respond: wrapRespond<
+        ValidatedCreateRequestBody,
+        CreateValidationErrors,
+        JsonResponseBody<CWUOpportunitySubscriber>,
+        JsonResponseBody<CreateValidationErrors>,
+        Session
+      >({
+        valid: async (request) => {
+          const dbResult = await db.createCWUOpportunitySubscriber(
+            connection,
+            omit(request.body, "session"),
+            request.session
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(201, request.session, makeJsonResponseBody(dbResult.value));
-        }),
-        invalid: (async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
-        })
+          return basicResponse(
+            201,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
+        },
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
+        }
       })
     };
   },
@@ -116,12 +164,21 @@ const resource: Resource = {
             permissions: [permissions.ERROR_MESSAGE]
           });
         }
-        const validatedCWUOpportunity = await validateCWUOpportunityId(connection, request.params.id, request.session);
+        const validatedCWUOpportunity = await validateCWUOpportunityId(
+          connection,
+          request.params.id,
+          request.session
+        );
         if (isInvalid(validatedCWUOpportunity)) {
-          return invalid({ notFound: ['Opportunity not found.'] });
+          return invalid({ notFound: ["Opportunity not found."] });
         }
         // Check for existing subscription for this user
-        const dbResult = await db.readOneCWUSubscriberByOpportunityAndUser(connection, validatedCWUOpportunity.value.id, request.session.user.id, request.session);
+        const dbResult = await db.readOneCWUSubscriberByOpportunityAndUser(
+          connection,
+          validatedCWUOpportunity.value.id,
+          request.session.user.id,
+          request.session
+        );
         if (isInvalid(dbResult)) {
           return invalid({
             database: [db.ERROR_MESSAGE]
@@ -129,7 +186,7 @@ const resource: Resource = {
         }
         if (!dbResult.value) {
           return invalid({
-            notFound: ['This user is not subscribed to this opportunity.']
+            notFound: ["This user is not subscribed to this opportunity."]
           });
         }
         return valid({
@@ -139,15 +196,31 @@ const resource: Resource = {
         });
       },
       respond: wrapRespond({
-        valid: async request => {
-          const dbResult = await db.deleteCWUOpportunitySubscriber(connection, request.body, request.session);
+        valid: async (request) => {
+          const dbResult = await db.deleteCWUOpportunitySubscriber(
+            connection,
+            request.body,
+            request.session
+          );
           if (isInvalid(dbResult)) {
-            return basicResponse(503, request.session, makeJsonResponseBody({ database: [db.ERROR_MESSAGE] }));
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
           }
-          return basicResponse(200, request.session, makeJsonResponseBody(dbResult.value));
+          return basicResponse(
+            200,
+            request.session,
+            makeJsonResponseBody(dbResult.value)
+          );
         },
-        invalid: async request => {
-          return basicResponse(400, request.session, makeJsonResponseBody(request.body));
+        invalid: async (request) => {
+          return basicResponse(
+            400,
+            request.session,
+            makeJsonResponseBody(request.body)
+          );
         }
       })
     };
