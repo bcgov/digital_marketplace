@@ -29,3 +29,6 @@ __tmp/
 *.nix
 flake.lock
 result
+
+# Yarn
+yarn-error.log
