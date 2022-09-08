@@ -48,7 +48,7 @@ More information: https://github.com/bcgov/patroni-postgres-container
  - **What is it used for**
  	- Marketplace project is using it to obtain access to a shared image (postgres/patroni), which is built and maintained by the platform services team.
  - **How is it authenticated**
- 	- every namespace is supplied with a default username/password that follows the pattern `artifacts-default-xxxxx`
+ 	- every namespace is supplied with a default username/password that follows the pattern `artifacts-default-xxxxx`. Run `oc get secrets -n ccc866-tools` to verify.
 
 ## Patroni-Postgres deploy
 To deploy a highly available Patroni-PostgreSQL stateful set (for use in DEV/TEST/PROD), run the following:
