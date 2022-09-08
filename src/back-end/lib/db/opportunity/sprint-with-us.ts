@@ -9,6 +9,7 @@ import {
 import { RawSWUOpportunitySubscriber } from "back-end/lib/db/subscribers/sprint-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
 import * as swuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/sprint-with-us";
+import { QueryBuilder } from "knex";
 import { valid } from "shared/lib/http";
 import { Addendum } from "shared/lib/resources/addendum";
 import { getSWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
@@ -218,8 +219,6 @@ async function rawSWUOpportunityToSWUOpportunity(
     throw new Error("unable to process opportunity");
   }
 
-  delete raw.versionId;
-
   return {
     ...restOfRaw,
     minTeamMembers: minTeamMembers || undefined,
@@ -228,8 +227,8 @@ async function rawSWUOpportunityToSWUOpportunity(
     attachments,
     addenda,
     teamQuestions,
-    inceptionPhase,
-    prototypePhase,
+    inceptionPhase: inceptionPhase ?? undefined,
+    prototypePhase: prototypePhase ?? undefined,
     implementationPhase
   };
 }
@@ -294,8 +293,6 @@ async function rawSWUOpportunityPhaseToSWUOpportunityPhase(
     throw new Error("unable to process opportunity phase");
   }
 
-  delete raw.id;
-
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
@@ -345,7 +342,7 @@ async function rawTeamQuestionToTeamQuestion(
 
 async function rawHistoryRecordToHistoryRecord(
   connection: Connection,
-  session: Session,
+  _session: Session,
   raw: RawSWUOpportunityHistoryRecord
 ): Promise<SWUOpportunityHistoryRecord> {
   const {
@@ -388,7 +385,7 @@ export function generateSWUOpportunityQuery(
   connection: Connection,
   full = false
 ) {
-  const query = connection<RawSWUOpportunity>(
+  const query: QueryBuilder = connection<RawSWUOpportunity>(
     "swuOpportunities as opportunities"
   )
     // Join on latest SWU status
@@ -854,7 +851,7 @@ export const readOneSWUOpportunity = tryDb<
         result.reporting = {
           numViews,
           numWatchers,
-          numProposals
+          numProposals: numProposals ?? 0
         };
       }
     }

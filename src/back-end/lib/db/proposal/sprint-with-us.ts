@@ -167,8 +167,6 @@ async function rawSWUProposalPhaseToSWUProposalPhase(
     throw new Error("unable to process proposal phase");
   }
 
-  delete raw.id;
-
   return {
     ...raw,
     members
@@ -322,8 +320,8 @@ async function rawSWUProposalToSWUProposal(
     opportunity,
     organization: organization || undefined,
     attachments,
-    inceptionPhase,
-    prototypePhase,
+    inceptionPhase: inceptionPhase ?? undefined,
+    prototypePhase: prototypePhase ?? undefined,
     implementationPhase,
     references
   };
@@ -722,14 +720,15 @@ export const readOneSWUProposal = tryDb<
       result.id,
       result.status
     );
-    result.teamQuestionResponses = getValidValue(
-      await readManyProposalTeamQuestionResponses(
-        connection,
-        result.id,
-        canReadScores && session.user.type !== UserType.Vendor
-      ),
-      []
-    );
+    result.teamQuestionResponses =
+      getValidValue(
+        await readManyProposalTeamQuestionResponses(
+          connection,
+          result.id,
+          canReadScores && session.user.type !== UserType.Vendor
+        ),
+        []
+      ) ?? [];
 
     // Check for permissions on viewing scores and rank
     if (canReadScores) {
@@ -778,7 +777,7 @@ export const readOneSWUProposal = tryDb<
 const createSWUProposalPhase = tryDb<
   [Id, CreateSWUProposalPhaseBody, SWUProposalPhaseType, AuthenticatedSession],
   void
->(async (connection, proposalId, phase, type, session) => {
+>(async (connection, proposalId, phase, type, _session) => {
   const { members, proposedCost } = phase;
   await connection.transaction(async (trx) => {
     const [phaseRecord] = await connection<
@@ -1818,10 +1817,15 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
     );
 
   for (const scoring of proposalScorings) {
-    const questionResponses = getValidValue(
-      await readManyProposalTeamQuestionResponses(connection, scoring.id, true),
-      []
-    );
+    const questionResponses =
+      getValidValue(
+        await readManyProposalTeamQuestionResponses(
+          connection,
+          scoring.id,
+          true
+        ),
+        []
+      ) ?? [];
     scoring.questionsScore = calculateProposalTeamQuestionScore(
       questionResponses,
       opportunityTeamQuestions
