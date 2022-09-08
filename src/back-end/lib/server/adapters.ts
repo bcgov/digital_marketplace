@@ -159,8 +159,8 @@ function parseMultipartRequest<FileUploadMetadata>(
     let filePath: string | undefined;
     let metadata = "";
     let fileName = "";
-    let fileSize;
-    let fileFormat;
+    let fileSize: number;
+    let fileFormat: string;
     const form = new multiparty.Form();
     // Listen for files and fields.
     // We only want to receive one file, so we disregard all other files.
@@ -203,7 +203,7 @@ function parseMultipartRequest<FileUploadMetadata>(
                 name: fileName,
                 path: filePath,
                 metadata: parseFileUploadMetadata(jsonMetadata.value),
-                fileSize,
+                fileSize: fileSize.toString(),
                 fileFormat
               })
             );
