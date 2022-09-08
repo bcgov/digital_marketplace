@@ -1,4 +1,6 @@
 {
   "trailingComma": "none",
-  "bracketSameLine": true
+  "bracketSameLine": true,
+  "bracketSpacing": true,
+  "semi": true
 }
