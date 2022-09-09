@@ -229,7 +229,7 @@ const resource: Resource = {
             const validatedCapabilities = userValidation.validateCapabilities(
               request.body.value
             );
-            if (isValid(validatedCapabilities)) {
+            if (isValid<string[]>(validatedCapabilities)) {
               return valid(
                 adt("updateCapabilities" as const, validatedCapabilities.value)
               );
