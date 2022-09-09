@@ -32,3 +32,6 @@ result
 
 # Yarn
 yarn-error.log
+
+# TypeScript
+tsconfig.tsbuildinfo
