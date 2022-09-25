@@ -1,3 +1,4 @@
+import QueryString from "qs";
 import {
   COOKIE_SECRET,
   ENV,
@@ -36,7 +37,7 @@ import corsLib from "cors";
 import expressLib from "express";
 import { createWriteStream, existsSync, unlinkSync } from "fs";
 import { IncomingHttpHeaders } from "http";
-import { castArray } from "lodash";
+import { castArray, isArray } from "lodash";
 import multiparty from "multiparty";
 import * as path from "path";
 import { addDays, parseJsonSafely } from "shared/lib";
@@ -377,6 +378,20 @@ export function express<
           );
         }
 
+        // Process query params but only accept individual string values. We do not handle array inputs on query params
+        const processQueryParams = (
+          query: QueryString.ParsedQs
+        ): Record<string, string> => {
+          const params: Record<string, string> = {};
+          Object.entries(query).forEach(([key, value]) => {
+            if (!value) params[key] = "";
+            else if (!isArray(value) && typeof value === "string")
+              params[key] = params[key] = value;
+          });
+
+          return params;
+        };
+
         // Create the initial request.
         const requestId = generateUuid();
         const initialRequest: Request<
@@ -390,7 +405,7 @@ export function express<
           session,
           logger: makeDomainLogger(consoleAdapter, `request:${requestId}`, ENV),
           params: expressReq.params,
-          query: expressReq.query,
+          query: processQueryParams(expressReq.query),
           body
         };
         // Run the before hook if specified.

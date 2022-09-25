@@ -27,7 +27,7 @@ export interface Request<Body, Session> {
   readonly method: ServerHttpMethod;
   readonly session: Session;
   readonly params: Record<string, string>;
-  readonly query: Record<string, string> | any;
+  readonly query: Record<string, string>;
   readonly body: Body;
 }
 
