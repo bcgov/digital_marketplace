@@ -434,7 +434,7 @@ export function combineHooks<Session>(
 ): RouteHook<any, any, any, any, any, Session> {
   return {
     async before(request) {
-      const results: any = [];
+      const results: Array<any> = [];
       for (const hook of hooks) {
         results.push({
           state: await hook.before(request),

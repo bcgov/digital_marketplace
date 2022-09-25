@@ -616,11 +616,14 @@ const resource: Resource = {
             location: getInvalidValue(validatedLocation, undefined),
             totalMaxBudget: getInvalidValue(validatedTotalMaxBudget, undefined),
             minTeamMembers: getInvalidValue(validatedMinTeamMembers, undefined),
-            mandatorySkills: getInvalidValue(
+            mandatorySkills: getInvalidValue<string[][], undefined>(
               validatedMandatorySkills,
               undefined
             ),
-            optionalSkills: getInvalidValue(validatedOptionalSkills, undefined),
+            optionalSkills: getInvalidValue<string[][], undefined>(
+              validatedOptionalSkills,
+              undefined
+            ),
             description: getInvalidValue(validatedDescription, undefined),
             questionsWeight: getInvalidValue(
               validatedQuestionsWeight,
