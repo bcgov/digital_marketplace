@@ -5,6 +5,8 @@
 *.map
 *.DS_Store
 .env
+.direnv
+.envrc
 make.sh
 .sass-cache/
 node_modules/
@@ -17,6 +19,8 @@ node_modules/
 .vscode/
 /cypress/screenshots/
 /cypress/videos/
+*.tsbuildinfo
+yarn-error.log
 
 Session.vim
 tags
