@@ -1230,11 +1230,11 @@ const resource: Resource = {
                     validatedMinTeamMembers,
                     undefined
                   ),
-                  mandatorySkills: getInvalidValue(
+                  mandatorySkills: getInvalidValue<string[][], undefined>(
                     validatedMandatorySkills,
                     undefined
                   ),
-                  optionalSkills: getInvalidValue(
+                  optionalSkills: getInvalidValue<string[][], undefined>(
                     validatedOptionalSkills,
                     undefined
                   ),
