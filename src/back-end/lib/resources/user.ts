@@ -41,7 +41,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as userValidation from "shared/lib/validation/user";
-import { isArray } from "util";
+import { isArray } from "lodash";
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
@@ -63,7 +63,7 @@ type Resource = crud.Resource<
   null,
   null,
   null,
-  UpdateRequestBody | any,
+  UpdateRequestBody,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
   DeleteValidatedReqBody,
