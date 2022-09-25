@@ -8,6 +8,7 @@ import {
 import { RawCWUOpportunitySubscriber } from "back-end/lib/db/subscribers/code-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
 import * as cwuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/code-with-us";
+import { QueryBuilder } from "knex";
 import { valid } from "shared/lib/http";
 import { getCWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
 import { FileRecord } from "shared/lib/resources/file";
@@ -141,8 +142,6 @@ async function rawCWUOpportunityToCWUOpportunity(
     })
   );
 
-  delete raw.versionId;
-
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
@@ -195,7 +194,7 @@ async function rawCWUOpportunityAddendumToCWUOpportunityAddendum(
 
 async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(
   connection: Connection,
-  session: Session,
+  _session: Session,
   raw: RawCWUOpportunityHistoryRecord
 ): Promise<CWUOpportunityHistoryRecord> {
   const {
@@ -299,7 +298,9 @@ export function generateCWUOpportunityQuery(
   connection: Connection,
   full = false
 ) {
-  const query = connection<RawCWUOpportunity>("cwuOpportunities as opp")
+  const query: QueryBuilder = connection<RawCWUOpportunity>(
+    "cwuOpportunities as opp"
+  )
     // Join on latest CWU status
     .join<RawCWUOpportunity>("cwuOpportunityStatuses as stat", function () {
       this.on("opp.id", "=", "stat.opportunity").andOn(
@@ -529,7 +530,7 @@ export const readOneCWUOpportunity = tryDb<
         result.reporting = {
           numViews,
           numWatchers,
-          numProposals
+          numProposals: numProposals ?? 0
         };
       }
     }
