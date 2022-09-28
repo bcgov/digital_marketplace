@@ -9,10 +9,6 @@ import {
   wrapRespond
 } from "back-end/lib/server";
 import {
-  SupportedRequestBodies,
-  SupportedResponseBodies
-} from "back-end/lib/types";
-import {
   UpdateRequestBody,
   UpdateValidationErrors
 } from "shared/lib/resources/counter";
@@ -30,9 +26,9 @@ import {
 
 type ValidatedUpdateRequestBody = string;
 
-type Resource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
+type Resource = crud.SimpleResource<
+  Session,
+  db.Connection,
   null,
   null,
   null,
@@ -40,11 +36,7 @@ type Resource = crud.Resource<
   null,
   UpdateRequestBody,
   ValidatedUpdateRequestBody,
-  UpdateValidationErrors,
-  null,
-  null,
-  Session,
-  db.Connection
+  UpdateValidationErrors
 >;
 
 const resource: Resource = {

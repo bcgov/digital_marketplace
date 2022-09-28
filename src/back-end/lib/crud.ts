@@ -6,6 +6,10 @@ import {
   Router
 } from "back-end/lib/server";
 import { ServerHttpMethod } from "back-end/lib/types";
+import {
+  SupportedRequestBodies as DefaultSupportedRequestBodies,
+  SupportedResponseBodies as DefaultSupportedResponseBodies
+} from "back-end/lib/types";
 
 export type CrudAction<
   IncomingReqBody,
@@ -118,6 +122,62 @@ export type Delete<
   "validateRequestBody" | "respond"
 >;
 
+/**
+ * A type helper for defining a simplified resource.
+ * Order of type parameters is convenient for defining Resources that do not support many/most of the CRUD operations.
+ * Appropriate defaults are set for the types common to all resources.
+ */
+export type SimpleResource<
+  Session,
+  Connection,
+  ReadOneValidatedReqB = null,
+  ReadOneReqBErrors = null,
+  CreatedParsedReqB = null,
+  CreateValidatedReqB = null,
+  CreateReqBErrors = null,
+  UpdateParsedReqB = null,
+  UpdateValidatedReqB = null,
+  UpdateReqBErrors = null,
+  DeleteValidatedReqB = null,
+  DeleteReqBErrors = null,
+  SupportedRequestBodies = DefaultSupportedRequestBodies,
+  SupportedResponseBodies = DefaultSupportedResponseBodies
+> = Resource<
+  SupportedRequestBodies,
+  SupportedResponseBodies,
+  CreatedParsedReqB,
+  CreateValidatedReqB,
+  CreateReqBErrors,
+  ReadOneValidatedReqB,
+  ReadOneReqBErrors,
+  UpdateParsedReqB,
+  UpdateValidatedReqB,
+  UpdateReqBErrors,
+  DeleteValidatedReqB,
+  DeleteReqBErrors,
+  Session,
+  Connection
+>;
+
+/**
+ * The Resource type for the back-end framework. Defines supported request/response bodies, CRUD operations,
+ * and database connection
+ *
+ * @typeParam SupportedRequestBodies - supported request bodies for this resource
+ * @typeParam SupportedResponseBodies - supported response bodies for this resource
+ * @typeParam CreatedParsedReqB - parsed request body for the Create operation
+ * @typeParam CreateValidatedReqB - validated request body for the Create operation
+ * @typeParam CreateReqBErrors - validation errors for the Create operation request body
+ * @typeParam ReadOneValidatedReqB - validated request body for the Read operation
+ * @typeParam ReadOneReqBErrors - validation errors for the Read operation request body
+ * @typeParam UpdateParsedReqB - parsed request body for the Update operation
+ * @typeParam UpdateValidatedReqB - validated request body for the Update operation
+ * @typeParam UpdateReqBErrors - validation errors for the Update operation request body
+ * @typeParam DeleteValidatedReqB - validated request body for the Delete operation
+ * @typeParam DeleteReqBErrors - validation errors for the Delete operation request body
+ * @typeParam Session - session type for this resource
+ * @typeParam Connection - database connection type for this resource
+ */
 export interface Resource<
   SupportedRequestBodies,
   SupportedResponseBodies,

@@ -7,30 +7,11 @@ import {
   makeJsonResponseBody,
   nullRequestBodyHandler
 } from "back-end/lib/server";
-import {
-  SupportedRequestBodies,
-  SupportedResponseBodies
-} from "back-end/lib/types";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { Session } from "shared/lib/resources/session";
 import { isInvalid } from "shared/lib/validation";
 
-type Resource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  Session,
-  db.Connection
->;
+type Resource = crud.SimpleResource<Session, db.Connection>;
 
 const resource: Resource = {
   routeNamespace: "ownedOrganizations",

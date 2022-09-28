@@ -10,11 +10,7 @@ import {
   nullRequestBodyHandler,
   wrapRespond
 } from "back-end/lib/server";
-import {
-  FileUploadMetadata,
-  SupportedRequestBodies,
-  SupportedResponseBodies
-} from "back-end/lib/types";
+import { FileUploadMetadata } from "back-end/lib/types";
 import { validateFilePath } from "back-end/lib/validation";
 import { lookup } from "mime-types";
 import shajs from "sha.js";
@@ -50,21 +46,14 @@ export interface ValidatedCreateRequestBody
   permissions: Array<FilePermissions<Id, UserType>>;
 }
 
-type Resource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
+type Resource = crud.SimpleResource<
+  Session,
+  db.Connection,
+  null,
+  null,
   CreateRequestBody,
   ValidatedCreateRequestBody,
-  CreateValidationErrors,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  Session,
-  db.Connection
+  CreateValidationErrors
 >;
 
 const resource: Resource = {

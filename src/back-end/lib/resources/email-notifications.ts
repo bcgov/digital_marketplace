@@ -7,10 +7,6 @@ import {
   makeJsonResponseBody,
   wrapRespond
 } from "back-end/lib/server";
-import {
-  SupportedRequestBodies,
-  SupportedResponseBodies
-} from "back-end/lib/types";
 import { getString } from "shared/lib";
 import { invalid, valid } from "shared/lib/http";
 import {
@@ -27,21 +23,14 @@ export interface ValidatedCreateRequestBody {
   body: SharedCreateRequestBody;
 }
 
-type Resource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
+type Resource = crud.SimpleResource<
+  Session,
+  db.Connection,
+  null,
+  null,
   CreateRequestBody,
   ValidatedCreateRequestBody,
-  CreateValidationErrors,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  Session,
-  db.Connection
+  CreateValidationErrors
 >;
 
 const resource: Resource = {

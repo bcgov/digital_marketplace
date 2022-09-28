@@ -12,32 +12,13 @@ import {
   makeJsonResponseBody,
   nullRequestBodyHandler
 } from "back-end/lib/server";
-import {
-  SupportedRequestBodies,
-  SupportedResponseBodies
-} from "back-end/lib/types";
 import qs from "querystring";
 import { request as httpRequest } from "shared/lib/http";
 import { Session } from "shared/lib/resources/session";
 import { ClientHttpMethod } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 
-type Resource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  Session,
-  Connection
->;
+type Resource = crud.SimpleResource<Session, Connection>;
 
 export async function signOut(
   connection: Connection,

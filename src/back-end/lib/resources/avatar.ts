@@ -9,10 +9,6 @@ import FileResource, {
   CreateRequestBody,
   ValidatedCreateRequestBody
 } from "back-end/lib/resources/file";
-import {
-  SupportedRequestBodies,
-  SupportedResponseBodies
-} from "back-end/lib/types";
 import jimp from "jimp";
 import { CreateValidationErrors } from "shared/lib/resources/file";
 import { Session } from "shared/lib/resources/session";
@@ -24,21 +20,14 @@ import {
 } from "shared/lib/validation";
 import * as fileValidation from "shared/lib/validation/file";
 
-type Resource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
+type Resource = crud.SimpleResource<
+  Session,
+  Connection,
+  null,
+  null,
   CreateRequestBody,
   ValidatedCreateRequestBody,
-  CreateValidationErrors,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  Session,
-  Connection
+  CreateValidationErrors
 >;
 
 export async function compressFile(path: string) {
