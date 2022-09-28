@@ -341,7 +341,10 @@ const resource: Resource = {
             remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
             location: getInvalidValue(validatedLocation, undefined),
             reward: getInvalidValue(validatedReward, undefined),
-            skills: getInvalidValue(validatedSkills, undefined),
+            skills: getInvalidValue<string[][], undefined>(
+              validatedSkills,
+              undefined
+            ),
             description: getInvalidValue(validatedDescription, undefined),
             proposalDeadline: getInvalidValue(
               validatedProposalDeadline,
@@ -659,7 +662,10 @@ const resource: Resource = {
                   remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
                   location: getInvalidValue(validatedLocation, undefined),
                   reward: getInvalidValue(validatedReward, undefined),
-                  skills: getInvalidValue(validatedSkills, undefined),
+                  skills: getInvalidValue<string[][], undefined>(
+                    validatedSkills,
+                    undefined
+                  ),
                   description: getInvalidValue(validatedDescription, undefined),
                   proposalDeadline: getInvalidValue(
                     validatedProposalDeadline,

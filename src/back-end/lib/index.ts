@@ -1,9 +1,9 @@
 import { ORIGIN } from "back-end/config";
 import { prefix } from "shared/lib";
-import uuid from "uuid/v4";
+import { v4 } from "uuid";
 
 export function generateUuid(): string {
-  return uuid();
+  return v4();
 }
 
 export function prefixPath(path: string): string {
