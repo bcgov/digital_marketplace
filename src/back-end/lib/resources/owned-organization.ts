@@ -11,31 +11,34 @@ import { OrganizationSlim } from "shared/lib/resources/organization";
 import { Session } from "shared/lib/resources/session";
 import { isInvalid } from "shared/lib/validation";
 
-type Resource = crud.SimpleResource<Session, db.Connection>;
+const routeNamespace = "ownedOrganizations";
 
-const resource: Resource = {
-  routeNamespace: "ownedOrganizations",
+const readMany: crud.ReadMany<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<OrganizationSlim[] | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (code: number, body: OrganizationSlim[] | string[]) =>
+      basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (!permissions.readManyOwnedOrganizations) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    const dbResult = await db.readOwnedOrganizations(
+      connection,
+      request.session
+    );
+    if (isInvalid(dbResult)) {
+      return respond(503, [db.ERROR_MESSAGE]);
+    }
+    return respond(200, dbResult.value);
+  });
+};
 
-  readMany(connection) {
-    return nullRequestBodyHandler<
-      JsonResponseBody<OrganizationSlim[] | string[]>,
-      Session
-    >(async (request) => {
-      const respond = (code: number, body: OrganizationSlim[] | string[]) =>
-        basicResponse(code, request.session, makeJsonResponseBody(body));
-      if (!permissions.readManyOwnedOrganizations) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      const dbResult = await db.readOwnedOrganizations(
-        connection,
-        request.session
-      );
-      if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
-      }
-      return respond(200, dbResult.value);
-    });
-  }
+const resource: crud.BasicCrudResource<Session, db.Connection> = {
+  routeNamespace,
+  readMany
 };
 
 export default resource;

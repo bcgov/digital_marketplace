@@ -65,22 +65,7 @@ import {
 import { Session } from "shared/lib/resources/session";
 import { isValid } from "shared/lib/validation";
 
-type BasicCrudResource = crud.Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any,
-  Session,
-  Connection
->;
+type BasicCrudResource = crud.BasicCrudResource<Session, Connection>;
 
 type BasicRoute = Route<
   SupportedRequestBodies,
@@ -104,16 +89,6 @@ type AppRouter = Router<
 
 const logger = makeDomainLogger(consoleAdapter, "back-end", ENV);
 
-// export function connectToDatabase(postgresUrl: string): Connection {
-//   return Knex({
-//     client: 'pg',
-//     connection: postgresUrl,
-//     migrations: {
-//       tableName: DB_MIGRATIONS_TABLE_NAME
-//     },
-//     debug: KNEX_DEBUG
-//   });
-// }
 export function connectToDatabase(
   connectionConfig: string | ConnectionConfig
 ): Connection {

@@ -12,13 +12,11 @@ import {
   makeJsonResponseBody,
   nullRequestBodyHandler
 } from "back-end/lib/server";
-import qs from "querystring";
+import { stringify } from "querystring";
 import { request as httpRequest } from "shared/lib/http";
 import { Session } from "shared/lib/resources/session";
 import { ClientHttpMethod } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
-
-type Resource = crud.SimpleResource<Session, Connection>;
 
 export async function signOut(
   connection: Connection,
@@ -28,7 +26,7 @@ export async function signOut(
     return valid(session);
   }
   // Sign out of KeyCloak.
-  const formData = qs.stringify({
+  const formData = stringify({
     client_id: KEYCLOAK_CLIENT_ID,
     client_secret: KEYCLOAK_CLIENT_SECRET,
     scope: "openid",
@@ -49,36 +47,42 @@ export async function signOut(
   return valid(session);
 }
 
-const resource: Resource = {
-  routeNamespace: "sessions",
+const routeNamespace = "sessions";
 
-  readOne(connection) {
-    return nullRequestBodyHandler(async (request) => {
-      const respond = (code: number, body: Session | string[]) =>
-        basicResponse(code, request.session, makeJsonResponseBody(body));
-      if (!permissions.readOneSession(request.session, request.params.id)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      return respond(200, request.session);
-    });
-  },
+const readOne: crud.ReadOne<Session, Connection> = (
+  _connection: Connection
+) => {
+  return nullRequestBodyHandler(async (request) => {
+    const respond = (code: number, body: Session | string[]) =>
+      basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (!permissions.readOneSession(request.session, request.params.id)) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    return respond(200, request.session);
+  });
+};
 
-  delete(connection) {
-    return nullRequestBodyHandler(async (request) => {
-      const respond = (code: number, body: null | string[]) =>
-        basicResponse(code, request.session, makeJsonResponseBody(body));
-      if (!permissions.deleteSession(request.session, request.params.id)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      const result = await signOut(connection, request.session);
-      switch (result.tag) {
-        case "valid":
-          return respond(200, null);
-        case "invalid":
-          return respond(400, result.value);
-      }
-    });
-  }
+const delete_: crud.Delete<Session, Connection> = (connection: Connection) => {
+  return nullRequestBodyHandler(async (request) => {
+    const respond = (code: number, body: null | string[]) =>
+      basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (!permissions.deleteSession(request.session, request.params.id)) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    const result = await signOut(connection, request.session);
+    switch (result.tag) {
+      case "valid":
+        return respond(200, null);
+      case "invalid":
+        return respond(400, result.value);
+    }
+  });
+};
+
+const resource: crud.BasicCrudResource<Session, Connection> = {
+  routeNamespace,
+  readOne,
+  delete: delete_
 };
 
 export default resource;

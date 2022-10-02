@@ -42,13 +42,13 @@ export type CrudAction<
 >;
 
 export type Create<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  ParsedReqBody,
-  ValidatedReqBody,
-  ReqBodyErrors,
   Session,
-  Connection
+  Connection,
+  ParsedReqBody = null,
+  ValidatedReqBody = null,
+  ReqBodyErrors = null,
+  SupportedRequestBodies = DefaultSupportedRequestBodies,
+  SupportedResponseBodies = DefaultSupportedResponseBodies
 > = CrudAction<
   SupportedRequestBodies,
   ParsedReqBody,
@@ -60,11 +60,11 @@ export type Create<
 >;
 
 export type ReadOne<
-  SupportedResponseBodies,
-  ValidatedReqBody,
-  ReqBodyErrors,
   Session,
-  Connection
+  Connection,
+  ValidatedReqBody = null,
+  ReqBodyErrors = null,
+  SupportedResponseBodies = DefaultSupportedResponseBodies
 > = CrudAction<
   null,
   null,
@@ -76,7 +76,11 @@ export type ReadOne<
   "validateRequestBody" | "respond"
 >;
 
-export type ReadMany<SupportedResponseBodies, Session, Connection> = CrudAction<
+export type ReadMany<
+  Session,
+  Connection,
+  SupportedResponseBodies = DefaultSupportedResponseBodies
+> = CrudAction<
   null,
   null,
   null,
@@ -88,13 +92,13 @@ export type ReadMany<SupportedResponseBodies, Session, Connection> = CrudAction<
 >;
 
 export type Update<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  ParsedReqBody,
-  ValidatedReqBody,
-  ReqBodyErrors,
   Session,
-  Connection
+  Connection,
+  ParsedReqBody = null,
+  ValidatedReqBody = null,
+  ReqBodyErrors = null,
+  SupportedRequestBodies = DefaultSupportedRequestBodies,
+  SupportedResponseBodies = DefaultSupportedResponseBodies
 > = CrudAction<
   SupportedRequestBodies,
   ParsedReqBody,
@@ -106,11 +110,11 @@ export type Update<
 >;
 
 export type Delete<
-  SupportedResponseBodies,
-  ValidatedReqBody,
-  ReqBodyErrors,
   Session,
-  Connection
+  Connection,
+  ValidatedReqBody = null,
+  ReqBodyErrors = null,
+  SupportedResponseBodies = DefaultSupportedResponseBodies
 > = CrudAction<
   null,
   null,
@@ -159,6 +163,23 @@ export type SimpleResource<
   Connection
 >;
 
+export type BasicCrudResource<Session, Connection> = Resource<
+  DefaultSupportedRequestBodies,
+  DefaultSupportedResponseBodies,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  Session,
+  Connection
+>;
+
 /**
  * The Resource type for the back-end framework. Defines supported request/response bodies, CRUD operations,
  * and database connection
@@ -196,37 +217,37 @@ export interface Resource<
 > {
   routeNamespace: string;
   create?: Create<
-    SupportedRequestBodies,
-    SupportedResponseBodies,
+    Session,
+    Connection,
     CreateParsedReqB,
     CreateValidatedReqB,
     CreateReqBErrors,
-    Session,
-    Connection
+    SupportedRequestBodies,
+    SupportedResponseBodies
   >;
   readOne?: ReadOne<
-    SupportedResponseBodies,
+    Session,
+    Connection,
     ReadOneValidatedReqB,
     ReadOneReqBErrors,
-    Session,
-    Connection
+    SupportedResponseBodies
   >;
-  readMany?: ReadMany<SupportedResponseBodies, Session, Connection>;
+  readMany?: ReadMany<Session, Connection, SupportedResponseBodies>;
   update?: Update<
-    SupportedRequestBodies,
-    SupportedResponseBodies,
+    Session,
+    Connection,
     UpdateParsedReqB,
     UpdateValidatedReqB,
     UpdateReqBErrors,
-    Session,
-    Connection
+    SupportedRequestBodies,
+    SupportedResponseBodies
   >;
   delete?: Delete<
-    SupportedResponseBodies,
+    Session,
+    Connection,
     DeleteValidatedReqB,
     DeleteReqBErrors,
-    Session,
-    Connection
+    SupportedResponseBodies
   >;
 }
 
@@ -241,13 +262,13 @@ export function makeCreateRoute<
 >(
   connection: Connection,
   create: Create<
-    SupportedRequestBodies,
-    SupportedResponseBodies,
+    Session,
+    Connection,
     ParsedReqBody,
     ValidatedReqBody,
     ReqBodyErrors,
-    Session,
-    Connection
+    SupportedRequestBodies,
+    SupportedResponseBodies
   >
 ): Route<
   SupportedRequestBodies,
@@ -276,11 +297,11 @@ export function makeReadOneRoute<
 >(
   connection: Connection,
   readOne: ReadOne<
-    SupportedResponseBodies,
+    Session,
+    Connection,
     ValidatedReqBody,
     ReqBodyErrors,
-    Session,
-    Connection
+    SupportedResponseBodies
   >
 ): Route<
   SupportedRequestBodies,
@@ -309,7 +330,7 @@ export function makeReadManyRoute<
   Connection
 >(
   connection: Connection,
-  readMany: ReadMany<SupportedResponseBodies, Session, Connection>
+  readMany: ReadMany<Session, Connection, SupportedResponseBodies>
 ): Route<
   SupportedRequestBodies,
   null,
@@ -338,13 +359,13 @@ export function makeUpdateRoute<
 >(
   connection: Connection,
   update: Update<
-    SupportedRequestBodies,
-    SupportedResponseBodies,
+    Session,
+    Connection,
     ParsedReqBody,
     ValidatedReqBody,
     ReqBodyErrors,
-    Session,
-    Connection
+    SupportedRequestBodies,
+    SupportedResponseBodies
   >
 ): Route<
   SupportedRequestBodies,
@@ -373,11 +394,11 @@ export function makeDeleteRoute<
 >(
   connection: Connection,
   deleteFn: Delete<
-    SupportedResponseBodies,
+    Session,
+    Connection,
     ValidatedReqBody,
     ReqBodyErrors,
-    Session,
-    Connection
+    SupportedResponseBodies
   >
 ): Route<
   SupportedRequestBodies,
