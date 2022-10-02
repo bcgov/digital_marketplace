@@ -126,43 +126,6 @@ export type Delete<
   "validateRequestBody" | "respond"
 >;
 
-/**
- * A type helper for defining a simplified resource.
- * Order of type parameters is convenient for defining Resources that do not support many/most of the CRUD operations.
- * Appropriate defaults are set for the types common to all resources.
- */
-export type SimpleResource<
-  Session,
-  Connection,
-  ReadOneValidatedReqB = null,
-  ReadOneReqBErrors = null,
-  CreatedParsedReqB = null,
-  CreateValidatedReqB = null,
-  CreateReqBErrors = null,
-  UpdateParsedReqB = null,
-  UpdateValidatedReqB = null,
-  UpdateReqBErrors = null,
-  DeleteValidatedReqB = null,
-  DeleteReqBErrors = null,
-  SupportedRequestBodies = DefaultSupportedRequestBodies,
-  SupportedResponseBodies = DefaultSupportedResponseBodies
-> = Resource<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  CreatedParsedReqB,
-  CreateValidatedReqB,
-  CreateReqBErrors,
-  ReadOneValidatedReqB,
-  ReadOneReqBErrors,
-  UpdateParsedReqB,
-  UpdateValidatedReqB,
-  UpdateReqBErrors,
-  DeleteValidatedReqB,
-  DeleteReqBErrors,
-  Session,
-  Connection
->;
-
 export type BasicCrudResource<Session, Connection> = Resource<
   DefaultSupportedRequestBodies,
   DefaultSupportedResponseBodies,
