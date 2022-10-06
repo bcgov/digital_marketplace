@@ -129,7 +129,7 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
     creationTimestamp:
     labels:
       app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
@@ -137,10 +137,10 @@ objects:
       template: "${NAME}-deploy"
   spec:
     ports:
-    - name: 3000-tcp
+    - name: 3001-tcp
       protocol: TCP
-      port: 3000
-      targetPort: 3000
+      port: 3001
+      targetPort: 3001
     selector:
       deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     type: ClusterIP
@@ -151,25 +151,26 @@ objects:
 - kind: Route
   apiVersion: v1
   metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
     labels:
       app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
       app-group: "${APP_GROUP}"
       template: "${NAME}-deploy"
   spec:
-    host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    host: "${HOST}"
     to:
       kind: Service
-      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
       weight: 100
     port:
-      targetPort: 3000-tcp
+      targetPort: 3001-tcp
     tls:
       termination: edge
+      insecureEdgeTerminationPolicy: Redirect
     wildcardPolicy: None
   status:
     ingress:
-    - host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    - host: "${HOST}"
       routerName: router
       conditions:
       - type: Admitted
@@ -228,6 +229,11 @@ parameters:
   displayName: Environment tag name.
   required: true
   value: dev
+
+- name: HOST
+  displayName: Application URL
+  required: false
+  value : ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
 
 - name: IMAGE_NAMESPACE
   displayName: Image Namespace
