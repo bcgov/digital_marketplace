@@ -18,7 +18,7 @@ export interface SendParams {
 }
 
 export function send(params: SendParams): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     transport.sendMail(
       {
         ...params,

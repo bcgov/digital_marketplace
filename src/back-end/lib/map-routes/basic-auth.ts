@@ -93,7 +93,7 @@ function addBasicAuth<IReq, PReq, VReq, ReqE, Res, Session>(
   });
 }
 
-interface Params<IReq, PReq, VReq, ReqE, Res, HookState, Session> {
+interface Params<IReq, _PReq, VReq, ReqE, Res, HookState, Session> {
   username: string;
   passwordHash: string;
   mapHook: MapHook<
