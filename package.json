@@ -132,7 +132,7 @@
     "cypress": "^9.2.0",
     "cypress-file-upload": "^5.0.8",
     "envify": "^4.1.0",
-    "eslint": "^8.3.0",
+    "eslint": "^8.25.0",
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-mocha": "^10.0.3",
     "eslint-plugin-react": "^7.27.1",
@@ -169,6 +169,6 @@
     "reactstrap": "^8.4.0",
     "require-dir": "^1.2.0",
     "serve": "^11.3.2",
-    "typedoc": "^0.22.10"
+    "typedoc": "^0.23.16"
   }
 }
