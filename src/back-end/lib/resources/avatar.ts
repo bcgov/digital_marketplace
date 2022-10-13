@@ -43,7 +43,12 @@ const create: crud.Create<
   ValidatedCreateRequestBody,
   CreateValidationErrors
 > = (connection: Connection) => {
-  const fileCreateObj = FileResource.create!(connection);
+  if (!FileResource.create) {
+    throw new Error(
+      "Avatar resource cannot be defined without a FileResource.create operation"
+    );
+  }
+  const fileCreateObj = FileResource.create(connection);
   return {
     ...fileCreateObj,
     async validateRequestBody(request) {
