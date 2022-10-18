@@ -11,7 +11,7 @@ import {
   SupportedResponseBodies as DefaultSupportedResponseBodies
 } from "back-end/lib/types";
 
-export type CrudAction<
+type CrudAction<
   IncomingReqBody,
   ParsedReqBody,
   ValidatedReqBody,
@@ -41,6 +41,18 @@ export type CrudAction<
   PickFromHandler
 >;
 
+/**
+ * Defines a Create action with type parameters for session, connection, and supported request and response bodies.
+ * A Create CRUD operation parses and validates the passed request body, and creates a new resource.
+ *
+ * @typeParam Session - The session type
+ * @typeParam Connection - The database connection type
+ * @typeParam ParsedReqBody - The expected parsed request body. (Optional - defaults to `null`)
+ * @typeParam ValidatedReqBody - The expected validated request body. (Optional - defaults to `null`)
+ * @typeParam ReqBodyErrors - The possible request body errors that may occur during parsing or validation (Optional - defaults to `null`)
+ * @typeParam SupportedRequestBodies - The supported request body types (Optional - defaults to {@link DefaultSupportedRequestBodies})
+ * @typeParam SupportedResponseBodies - The supported response body types (Optional - defaults to {@link DefaultSupportedResponseBodies})
+ */
 export type Create<
   Session,
   Connection,
@@ -59,6 +71,16 @@ export type Create<
   Connection
 >;
 
+/**
+ * Defines a ReadOne action with type parameters for session, connection, and supported request and response bodies.
+ * A ReadOne CRUD operation will read an individual resource based on the specified request parameters and return it.
+ *
+ * @typeParam Session - The session type
+ * @typeParam Connection - The database connection type
+ * @typeParam ValidatedReqBody - The expected validated request body. (Optional - defaults to `null`)
+ * @typeParam ReqBodyErrors - The possible request body errors that may occur during parsing or validation (Optional - defaults to `null`)
+ * @typeParam SupportedResponseBodies - The supported response body types (Optional - defaults to {@link DefaultSupportedResponseBodies})
+ */
 export type ReadOne<
   Session,
   Connection,
@@ -76,6 +98,14 @@ export type ReadOne<
   "validateRequestBody" | "respond"
 >;
 
+/**
+ * Defines a ReadMany action with type parameters for session, connection, and supported response bodies.
+ * A ReadMany CRUD operation will read multiple resources and return them.
+ *
+ * @typeParam Session - The session type
+ * @typeParam Connection - The database connection type
+ * @typeParam SupportedResponseBodies - The supported response body types (Optional - defaults to {@link DefaultSupportedResponseBodies})
+ */
 export type ReadMany<
   Session,
   Connection,
@@ -91,6 +121,19 @@ export type ReadMany<
   "respond"
 >;
 
+/**
+ * Defines an Update action with type parameters for session, connection, and supported request and response bodies.
+ * An Update CRUD operation will update an individual resource. The request body defines the full resource definition to be used in the
+ * update (partial updates not supported).
+ *
+ * @typeParam Session - The session type
+ * @typeParam Connection - The database connection type
+ * @typeParam ParsedReqBody - The expected parsed request body. (Optional - defaults to `null`)
+ * @typeParam ValidatedReqBody - The expected validated request body. (Optional - defaults to `null`)
+ * @typeParam ReqBodyErrors - The possible request body errors that may occur during parsing or validation (Optional - defaults to `null`)
+ * @typeParam SupportedRequestBodies - The supported request body types (Optional - defaults to {@link DefaultSupportedRequestBodies})
+ * @typeParam SupportedResponseBodies - The supported response body types (Optional - defaults to {@link DefaultSupportedResponseBodies})
+ */
 export type Update<
   Session,
   Connection,
@@ -109,6 +152,16 @@ export type Update<
   Connection
 >;
 
+/**
+ * Defines a Delete action with type parameters for session, connection, and supported request and response bodies.
+ * A Delete CRUD operation will delete an individual resource based on the provided parameters.
+ *
+ * @typeParam Session - The session type
+ * @typeParam Connection - The database connection type
+ * @typeParam ValidatedReqBody - The expected validated request body. (Optional - defaults to `null`)
+ * @typeParam ReqBodyErrors - The possible request body errors that may occur during parsing or validation (Optional - defaults to `null`)
+ * @typeParam SupportedRequestBodies - The supported request body types (Optional - defaults to {@link DefaultSupportedRequestBodies})
+ */
 export type Delete<
   Session,
   Connection,
@@ -126,6 +179,12 @@ export type Delete<
   "validateRequestBody" | "respond"
 >;
 
+/** A basic CRUD resource that includes type parameters for session and resource.
+ * This is a helper type meant to simplify the creation of new {@link Resources}
+ *
+ * @typeParam Session - The session type
+ * @typeParam Connection - The database connection type
+ */
 export type BasicCrudResource<Session, Connection> = Resource<
   DefaultSupportedRequestBodies,
   DefaultSupportedResponseBodies,
@@ -250,7 +309,7 @@ export function makeCreateRoute<
   };
 }
 
-export function makeReadOneRoute<
+function makeReadOneRoute<
   SupportedRequestBodies,
   SupportedResponseBodies,
   ValidatedReqBody,
@@ -286,7 +345,7 @@ export function makeReadOneRoute<
   };
 }
 
-export function makeReadManyRoute<
+function makeReadManyRoute<
   SupportedRequestBodies,
   SupportedResponseBodies,
   Session,
@@ -311,7 +370,7 @@ export function makeReadManyRoute<
   };
 }
 
-export function makeUpdateRoute<
+function makeUpdateRoute<
   SupportedRequestBodies,
   SupportedResponseBodies,
   ParsedReqBody,
@@ -347,7 +406,7 @@ export function makeUpdateRoute<
   };
 }
 
-export function makeDeleteRoute<
+function makeDeleteRoute<
   SupportedRequestBodies,
   SupportedResponseBodies,
   ValidatedReqBody,
@@ -383,6 +442,13 @@ export function makeDeleteRoute<
   };
 }
 
+/**
+ * Takes a {@link Resource} as an argument, and returns a function that can be passed a {@typeParam Connection} to create a new router
+ * based on the CRUD operations defined in the provided {@link Resource}.
+ *
+ * @param resource - The resource used as the basis for the resulting router.
+ * @returns A function that accepts a {@typeParam Connection} and returns a {@link Router} supported the specified {@link Resource}
+ */
 export function makeRouter<
   SupportedRequestBodies,
   SupportedResponseBodies,
