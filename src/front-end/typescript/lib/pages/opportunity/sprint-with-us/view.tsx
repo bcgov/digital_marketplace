@@ -320,7 +320,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                   className="d-flex justify-content-start align-items-start flex-nowrap">
                   <OpportunityInfo
                     icon="users-outline"
-                    name="Min. Team Size"
+                    name="Recommended Min. Team Size"
                     value={String(opp.minTeamMembers)}
                   />
                 </Col>
