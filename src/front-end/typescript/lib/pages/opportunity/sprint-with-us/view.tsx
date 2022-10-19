@@ -185,7 +185,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   );
   const compNumber =
     opp.publishedAt &&
-    opp.publishedAt.valueOf() < new Date("2022-10-20").valueOf()
+    opp.publishedAt.valueOf() < new Date("2022-08-29").valueOf()
       ? "ON-003166"
       : "ON-003166-1";
 
