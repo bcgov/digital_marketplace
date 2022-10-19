@@ -169,6 +169,7 @@
     "reactstrap": "^8.4.0",
     "require-dir": "^1.2.0",
     "serve": "^11.3.2",
-    "typedoc": "^0.23.16"
+    "typedoc": "^0.23.16",
+    "typedoc-plugin-missing-exports": "^1.0.0"
   }
 }

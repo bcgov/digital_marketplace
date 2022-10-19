@@ -10,7 +10,10 @@ import {
   SERVER_HOST,
   SERVER_PORT
 } from "back-end/config";
-import * as crud from "back-end/lib/crud";
+import {
+  BasicCrudResource as CrudResource,
+  makeRouter
+} from "back-end/lib/crud";
 import { Connection, readOneSession } from "back-end/lib/db";
 import codeWithUsHook from "back-end/lib/hooks/code-with-us";
 import loggerHook from "back-end/lib/hooks/logger";
@@ -65,7 +68,7 @@ import {
 import { Session } from "shared/lib/resources/session";
 import { isValid } from "shared/lib/validation";
 
-type BasicCrudResource = crud.BasicCrudResource<Session, Connection>;
+type BasicCrudResource = CrudResource<Session, Connection>;
 
 type BasicRoute = Route<
   SupportedRequestBodies,
@@ -113,6 +116,11 @@ const addHooks: (
 // We need to use `flippedConcat` as using `concat` binds the routes in the wrong order.
 const flippedConcat = flipCurried(concat);
 
+/**
+ * Creates a router using the provided {@link Connection}.
+ *
+ * @returns a {@link AppRouter} constructed from the Digital Marketplace resources.
+ */
 export async function createRouter(connection: Connection): Promise<AppRouter> {
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
@@ -140,7 +148,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
   const crudRoutes = flow([
     // Create routers from resources.
     map((resource: BasicCrudResource) => {
-      return crud.makeRouter(resource)(connection);
+      return makeRouter(resource)(connection);
     }),
     // Make a flat list of routes.
     flatten,

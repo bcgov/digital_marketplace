@@ -6,6 +6,9 @@ import { invalid, Validation } from "shared/lib/validation";
 
 const logger = makeDomainLogger(consoleAdapter, "back-end", ENV);
 
+/**
+ * A Connection type that wraps a Knex connection.
+ */
 export type Connection = Knex;
 
 export type Transaction = Knex.Transaction;
