@@ -206,7 +206,7 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
       ? [
           {
             icon: "users",
-            name: "Min. Team Size",
+            name: "Recommended Min. Team Size",
             value: String(minTeamMembers)
           } as ReportCard
         ]
