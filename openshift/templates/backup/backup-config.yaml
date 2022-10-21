@@ -18,7 +18,7 @@ parameters:
 - name: DATABASE_SERVICE_NAME
   displayName: Name of database to connect to for backups.
   required: true
-  value: patroni-digmkt-prod
+  value: patroni-pg12-digmkt-prod
 
 - name: DATABASE_PORT
   displayName: Port for the database to backup.
