@@ -183,6 +183,12 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   const isAcceptingProposals = isSWUOpportunityAcceptingProposals(
     state.opportunity
   );
+  const compNumber =
+    opp.publishedAt &&
+    opp.publishedAt.valueOf() < new Date("2022-08-29").valueOf()
+      ? "ON-003166"
+      : "ON-003166-1";
+
   return (
     <div>
       <Container>
@@ -208,7 +214,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
               ]}
             />
             <p className="font-italic small text-secondary mb-5">
-              This RFP is a Competition Notice under RFQ No. ON-003166 and is
+              This RFP is a Competition Notice under RFQ No. {compNumber} and is
               restricted to Proponents that have become Qualified Suppliers
               pursuant to that RFQ.
             </p>
@@ -320,7 +326,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                   className="d-flex justify-content-start align-items-start flex-nowrap">
                   <OpportunityInfo
                     icon="users-outline"
-                    name="Min. Team Size"
+                    name="Recommended Min. Team Size"
                     value={String(opp.minTeamMembers)}
                   />
                 </Col>

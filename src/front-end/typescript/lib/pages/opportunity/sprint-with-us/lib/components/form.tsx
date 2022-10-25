@@ -1238,9 +1238,9 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
       <Col md="8" xs="12">
         <NumberField.view
           extraChildProps={{}}
-          label="Minimum Team Members"
-          placeholder="Minimum Team Members"
-          help="Provide the minimum number of team members that you will require the successful proponent to supply in order to complete the work as outlined in the opportunity’s details."
+          label="Recommended Minimum Team Members"
+          placeholder="Recommended Minimum Team Members"
+          help="Provide the recommended minimum number of team members that you will require the successful proponent to supply in order to complete the work as outlined in the opportunity’s details."
           disabled={disabled}
           state={state.minTeamMembers}
           dispatch={mapComponentDispatch(dispatch, (value) =>

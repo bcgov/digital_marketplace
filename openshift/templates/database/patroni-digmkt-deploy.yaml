@@ -229,22 +229,22 @@ parameters:
 - description: Starting amount of CPU the container can use.
   displayName: CPU REQUEST
   name: CPU_REQUEST
-  value: '30m'
+  value: '60m'
 
 - description: Maximum amount of CPU the container can use.
   displayName: CPU Limit
   name: CPU_LIMIT
-  value: '60m'
+  value: '120m'
 
 - description: Starting amount of memory the container can use.
   displayName: Memory Request
   name: MEMORY_REQUEST
-  value: 100Mi
+  value: 200Mi
 
 - description: Maximum amount of memory the container can use.
   displayName: Memory Limit
   name: MEMORY_LIMIT
-  value: 200Mi
+  value: 400Mi
 
 - description: The OpenShift Namespace where the patroni and postgresql ImageStream
     resides.
@@ -259,7 +259,7 @@ parameters:
 - description: The size of the persistent volume to create.
   displayName: Persistent Volume Size
   name: PVC_SIZE
-  value: 10Gi
+  value: 8Gi
 
 - name: STORAGE_CLASS
   value: netapp-block-standard
