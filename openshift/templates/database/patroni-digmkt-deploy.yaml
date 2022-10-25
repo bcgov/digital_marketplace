@@ -7,7 +7,7 @@ metadata:
     iconClass: icon-postgresql
     openshift.io/display-name: Patroni Postgresql (Persistent)
     openshift.io/long-description: This template deploys a patroni postgresql HA
-      cluster with persistent storage.
+      cluster with persistent storage (Service, StatefulSet).
     tags: postgresql
   name: patroni-pgsql-persistent
 labels:
@@ -140,10 +140,11 @@ objects:
             value: 0.0.0.0:5432
           - name: PATRONI_RESTAPI_LISTEN
             value: 0.0.0.0:8008
-          image: ${IMAGE_REGISTRY}/${IMAGE_STREAM_NAMESPACE}/${IMAGE_STREAM_TAG}
+          image: ${IMAGE_REGISTRY}/${IMAGE_STREAM_NAMESPACE}:${IMAGE_STREAM_TAG}
           # Because we are using image reference to a tag, we need to always pull the image otherwise
           #   we end up with outdated/out-of-sync image depending on the node where it is running
           imagePullPolicy: Always
+          imagePullSecrets: artifacts-default-rbehd
           name: postgresql
           ports:
           - containerPort: 8008
@@ -160,8 +161,9 @@ objects:
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           readinessProbe:
-            initialDelaySeconds: 5
-            timeoutSeconds: 5
+            initialDelaySeconds: 10
+            timeoutSeconds: 40
+            successThreshold: 1
             failureThreshold: 4
             exec:
               command:
@@ -192,10 +194,24 @@ objects:
           requests:
             storage: ${PVC_SIZE}
 
+- kind: PodDisruptionBudget
+  apiVersion: policy/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-pdb"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: patroni-pgsql-persistent
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        statefulset: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+
 parameters:
 - name: NAME
   displayName: Application Name
-  value: patroni
+  value: patroni-pg12
 
 - name: APP_GROUP
   displayName: The application group name.
@@ -213,40 +229,40 @@ parameters:
 - description: Starting amount of CPU the container can use.
   displayName: CPU REQUEST
   name: CPU_REQUEST
-  value: '30m'
+  value: '60m'
 
 - description: Maximum amount of CPU the container can use.
   displayName: CPU Limit
   name: CPU_LIMIT
-  value: '60m'
+  value: '120m'
 
 - description: Starting amount of memory the container can use.
   displayName: Memory Request
   name: MEMORY_REQUEST
-  value: 100Mi
+  value: 200Mi
 
 - description: Maximum amount of memory the container can use.
   displayName: Memory Limit
   name: MEMORY_LIMIT
-  value: 200Mi
+  value: 400Mi
 
 - description: The OpenShift Namespace where the patroni and postgresql ImageStream
     resides.
   displayName: ImageStream Namespace
   name: IMAGE_STREAM_NAMESPACE
-  value: ccc866-tools
+  value: bcgov-docker-local/patroni-postgres
 
 - name: IMAGE_STREAM_TAG
   description: Patroni ImageTag
-  value: patroni:v11-stable
+  value: 2.0.1-12.4-latest
 
 - description: The size of the persistent volume to create.
   displayName: Persistent Volume Size
   name: PVC_SIZE
-  value: 10Gi
+  value: 8Gi
 
 - name: STORAGE_CLASS
   value: netapp-block-standard
 
 - name: IMAGE_REGISTRY
-  value: image-registry.openshift-image-registry.svc:5000
+  value: artifacts.developer.gov.bc.ca

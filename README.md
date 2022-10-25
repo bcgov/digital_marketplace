@@ -317,7 +317,7 @@ To deploy to the Test environment, start a build for "app-digmkt-test", and Open
 
 To deploy to the Production environment, start a build for "app-digmkt-prod", and OpenShift will build HEAD from the `master` branch. You will need to manually deploy the build to the Production environment listed above once it completes by deploying the "app-digmkt-prod" deployment in the "ccc866-prod" project.
 
-For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [openshift/README.md](./openshift/README.md).
+For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [docs/openshift.md](./docs/openshift.md).
 
 #### Running Database Migrations
 

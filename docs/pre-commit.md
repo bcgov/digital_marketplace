@@ -29,6 +29,10 @@ Should you receive the following error, and you have confirmed that the lines it
 
 [Reference documentation](https://github.com/Yelp/detect-secrets#adding-new-secrets-to-baseline)
 
+### HELP I'm stuck in a loop!
+
+- if after following all the prompts that pre-commit is giving you and it's still not passing, check for version consistency between your local version `detect-secrets --version` and what's declared in `.pre-commit-congig.yaml`. It should start to pass once the versions are the same.
+
 ### Running the pre-commit hook directly from the .git folder
 
 - run `bash .git/hooks/pre-commit` to execute pre-commit hook on staged files without committing
