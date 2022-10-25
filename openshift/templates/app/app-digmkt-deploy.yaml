@@ -192,7 +192,7 @@ objects:
         app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
 
 - kind: HorizontalPodAutoscaler
-  apiVersion: autoscaling/v2beta2
+  apiVersion: autoscaling/v2
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-mem"
     labels:

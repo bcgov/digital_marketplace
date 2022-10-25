@@ -95,7 +95,7 @@ oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=1 \
--p ORIGIN=https://digital-gov-frontend-test-c0cce6-test.apps.silver.devops.gov.bc.ca/marketplace \
+-p ORIGIN=https://app-digmkt-test.apps.silver.devops.gov.bc.ca \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-test apply -f -
@@ -108,7 +108,7 @@ oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=0 \
--p ORIGIN=https://digital.gov.bc.ca/marketplace \
+-p ORIGIN=https://marketplace.digital.gov.bc.ca \
 -p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-prod apply -f -
 ```
 

@@ -64,7 +64,7 @@ The Helm chart for this deployment. Requirement includes [BCGov spilo-chart](htt
 These templates create the `digital-marketplace-deployer` service account in the Openshift cluster. This is the account token used for `OPENSHIFT_TOKEN`. Found in Openshift gui when logged in as an admin under `User Management` -> `Service Accounts`.
 
 ### networkPolicies
-These create the network policies `digital-marketplace-allow-route-ingress` and `digital-marketplace-allow-same-namespace`. These allow any pods with a `service` and a `route` to accept traffic from the Openshift router pods, allowing them to be reached from outside the cluster. Found in Openshift gui when logged in as an admin under `Networking` -> `NetowrkPolicies`.
+These create the network policies `digital-marketplace-allow-route-ingress` and `digital-marketplace-allow-same-namespace`. These allow any pods with a `service` and a `route` to accept traffic from the Openshift router pods, allowing them to be reached from outside the cluster. Found in Openshift gui when logged in as an admin under `Networking` -> `NetworkPolicies`.
 
 ### routes
 Sets up the `route` to redirect to the namespace url. Found in Openshift gui when logged in as an admin under `Networking` -> `Routes`.
