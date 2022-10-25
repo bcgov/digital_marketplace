@@ -137,10 +137,10 @@ objects:
       template: "${NAME}-deploy"
   spec:
     ports:
-    - name: 3001-tcp
+    - name: 3000-tcp
       protocol: TCP
-      port: 3001
-      targetPort: 3001
+      port: 3000
+      targetPort: 3000
     selector:
       deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     type: ClusterIP
@@ -163,7 +163,7 @@ objects:
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
       weight: 100
     port:
-      targetPort: 3001-tcp
+      targetPort: 3000-tcp
     tls:
       termination: edge
       insecureEdgeTerminationPolicy: Redirect
@@ -313,3 +313,8 @@ parameters:
   displayName: The vanity url for the deployment
   value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
   required: true
+
+- name: PATH_PREFIX
+  displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
+  required: true
+  value: ''
