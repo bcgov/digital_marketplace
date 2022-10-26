@@ -157,7 +157,7 @@ objects:
       app-group: "${APP_GROUP}"
       template: "${NAME}-deploy"
   spec:
-    host: "${HOST}"
+    host: ${HOST}
     to:
       kind: Service
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
@@ -170,7 +170,7 @@ objects:
     wildcardPolicy: None
   status:
     ingress:
-    - host: "${HOST}"
+    - host: ${HOST}
       routerName: router
       conditions:
       - type: Admitted
@@ -229,11 +229,6 @@ parameters:
   displayName: Environment tag name.
   required: true
   value: dev
-
-- name: HOST
-  displayName: Application URL
-  required: false
-  value : ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
 
 - name: IMAGE_NAMESPACE
   displayName: Image Namespace
@@ -314,7 +309,12 @@ parameters:
   value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
   required: true
 
+- name: HOST
+  displayName: For the Service and Route, url value
+  value: ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+  required: true
+
 - name: PATH_PREFIX
   displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
-  required: true
+  required: false
   value: ''

@@ -21,19 +21,15 @@ To create permissions for image pulls between namespaces, run this in the tools 
 -----
 ### Build Configs
 #### Application Image build
-To create build configs for the application images, run these commands in the tools namespace:
+To apply updated build configs for the application images, run these commands in the tools namespace:
 
 ```
-oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc -n ccc866-tools create -f -
-oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc -n ccc866-tools create -f -
-oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc -n ccc866-tools create -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=dev -p GIT_REF=development | oc -n ccc866-tools apply -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=test -p GIT_REF=master | oc -n ccc866-tools apply -f -
+oc -n ccc866-tools process -f openshift/templates/app/app-digmkt-build.yaml -p ENV_NAME=prod -p GIT_REF=master | oc -n ccc866-tools apply -f -
 ```
 
-**Note**: If the build already exists the `create` option will error out.  This can be fixed by using `apply` instead of `create`.  Once the build config is successfully created, run:
-
-`oc start-build <buildconfig_name>`
-
-to trigger the build.
+**Note**: If the build doesn't already exists the `apply` option may not work as expected.  This can be fixed by using `create` instead of `apply`.  Once the build config is successfully created, run: `oc start-build <buildconfig_name>` to trigger the build.
 
 ------
 #### Patroni-postgres build
@@ -44,11 +40,13 @@ More information: https://github.com/bcgov/patroni-postgres-container
 
 ##### Artifactory Overview
  - **How is the Service Accessed**
- 	- artifacts.developer.gov.bc.ca
+	- artifacts.developer.gov.bc.ca
+
  - **What is it used for**
- 	- Marketplace project is using it to obtain access to a shared image (postgres/patroni), which is built and maintained by the platform services team.
+	- Marketplace project is using it to obtain access to a shared image (postgres/patroni), which is built and maintained by the platform services team.
+
  - **How is it authenticated**
- 	- every namespace is supplied with a default username/password that follows the pattern `artifacts-default-xxxxx`. Run `oc get secrets -n ccc866-tools` to verify.
+	- every namespace is supplied with a default username/password that follows the pattern `artifacts-default-xxxxx`. Run `oc get secrets -n ccc866-tools` to verify.
 
 ## Patroni-Postgres deploy
 To deploy a highly available Patroni-PostgreSQL stateful set (for use in DEV/TEST/PROD), run the following:
@@ -85,6 +83,7 @@ oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p ORIGIN=https://app-digmkt-dev.apps.silver.devops.gov.bc.ca \
+-p HOST=app-digmkt-dev.apps.silver.devops.gov.bc.ca \
 -p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-dev apply -f -
 ```
 
@@ -96,6 +95,7 @@ oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=1 \
 -p ORIGIN=https://app-digmkt-test.apps.silver.devops.gov.bc.ca \
+-p HOST=app-digmkt-test.apps.silver.devops.gov.bc.ca \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-test apply -f -
@@ -109,6 +109,7 @@ oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p KEYCLOAK_URL=https://oidc.gov.bc.ca \
 -p SHOW_TEST_INDICATOR=0 \
 -p ORIGIN=https://marketplace.digital.gov.bc.ca \
+-p HOST=marketplace.digital.gov.bc.ca \
 -p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-prod apply -f -
 ```
 
