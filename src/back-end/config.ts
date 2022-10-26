@@ -64,7 +64,7 @@ export const BASIC_AUTH_PASSWORD_HASH = get("BASIC_AUTH_PASSWORD_HASH", "");
 
 export const ORIGIN = get(
   "ORIGIN",
-  "https://markeplace.digital.gov.bc.ca"
+  "https://marketplace.digital.gov.bc.ca"
 ).replace(/\/*$/, "");
 
 export const SERVICE_TOKEN_HASH = get("SERVICE_TOKEN_HASH", "");
