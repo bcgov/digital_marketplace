@@ -19,6 +19,8 @@ objects:
     DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
     FILE_STORAGE_DIR: "/usr/app"
     ORIGIN: ${ORIGIN}
+    HOST: ${HOST}
+    PATH_PREFIX: ''
     KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
     KEYCLOAK_URL: ${KEYCLOAK_URL}
     KEYCLOAK_REALM: ${KEYCLOAK_REALM}
@@ -129,7 +131,7 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     creationTimestamp:
     labels:
       app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
@@ -151,16 +153,16 @@ objects:
 - kind: Route
   apiVersion: v1
   metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
     labels:
       app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
       app-group: "${APP_GROUP}"
       template: "${NAME}-deploy"
   spec:
-    host: ${HOST}
+    host: "${HOST}"
     to:
       kind: Service
-      name: "${NAME}-${APP_GROUP}-${TAG_NAME}-subdomain"
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
       weight: 100
     port:
       targetPort: 3000-tcp
@@ -170,7 +172,7 @@ objects:
     wildcardPolicy: None
   status:
     ingress:
-    - host: ${HOST}
+    - host: "${HOST}"
       routerName: router
       conditions:
       - type: Admitted
@@ -310,11 +312,10 @@ parameters:
   required: true
 
 - name: HOST
-  displayName: For the Service and Route, url value
+  displayName: For the Service and Route, URL without the protocol. Will be the same as ORIGIN, minus https://.
   value: ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
   required: true
 
 - name: PATH_PREFIX
   displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
   required: false
-  value: ''
