@@ -19,6 +19,8 @@ objects:
     DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
     FILE_STORAGE_DIR: "/usr/app"
     ORIGIN: ${ORIGIN}
+    HOST: ${HOST}
+    PATH_PREFIX: ''
     KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
     KEYCLOAK_URL: ${KEYCLOAK_URL}
     KEYCLOAK_REALM: ${KEYCLOAK_REALM}
@@ -157,7 +159,7 @@ objects:
       app-group: "${APP_GROUP}"
       template: "${NAME}-deploy"
   spec:
-    host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    host: "${HOST}"
     to:
       kind: Service
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
@@ -166,10 +168,11 @@ objects:
       targetPort: 3000-tcp
     tls:
       termination: edge
+      insecureEdgeTerminationPolicy: Redirect
     wildcardPolicy: None
   status:
     ingress:
-    - host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    - host: "${HOST}"
       routerName: router
       conditions:
       - type: Admitted
@@ -191,7 +194,7 @@ objects:
         app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
 
 - kind: HorizontalPodAutoscaler
-  apiVersion: autoscaling/v2beta2
+  apiVersion: autoscaling/v2
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-mem"
     labels:
@@ -307,3 +310,12 @@ parameters:
   displayName: The vanity url for the deployment
   value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
   required: true
+
+- name: HOST
+  displayName: For the Service and Route, URL without the protocol. Will be the same as ORIGIN, minus https://.
+  value: ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+  required: true
+
+- name: PATH_PREFIX
+  displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
+  required: false
