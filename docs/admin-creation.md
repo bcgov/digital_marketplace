@@ -20,7 +20,7 @@ _App Environment: (Dev/Test/Prod)_
 
 _Keycloak Environment: Dev/Test/Prod_
 
-**Caution** Be careful writting SQL queries on a production database.  Make sure you know how to restore from backups.  To create a first admin user from an existing public sector employee, log into the OpenShift production namespace via `oc login`. The OCP GUI can also be used: 'Topology' -> 'patroni-digmkt-prod' -> 'patroni-digmkt-prod-0' -> 'Terminal'. Since there are likely multiple instances of the db, make certain you are on the 'leader' instance using `patronictl list` in one of the database pod terminals. The command `psql` can be used in the terminal window to run the appropriate queries.
+**Caution** Be careful writing SQL queries on a production database.  Make sure you know how to restore from backups.  To create a first admin user from an existing public sector employee, log into the OpenShift production namespace via `oc login`. The OCP GUI can also be used: 'Topology' -> 'patroni-pg12-digmkt-prod' -> 'patroni-pg12-digmkt-prod-0' -> 'Terminal'. Since there are likely multiple instances of the db, make certain you are on the 'leader' instance using `patronictl list` in one of the database pod terminals. The command `psql` can be used in the terminal window to run the appropriate queries.
 
 After the `oc login` command and confirming you are in the correct namespace (dev, test, or prod) with `oc project` log into the leader PostgreSQL pod. Use `oc get pods` to see the list of running pods. This is most easily done by running this command on your local machine:
 
