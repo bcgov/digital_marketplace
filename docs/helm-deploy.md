@@ -25,7 +25,7 @@ $ bash  ./lib/helm_deploy.sh -n <namespace> \
 namespace: `ccc866-dev`
 app_origin `https://app-digmkt-dev.apps.silver.devops.gov.bc.ca`
 app_host `app-digmkt-dev.apps.silver.devops.gov.bc.ca`
-keycloak_url `https://dev.oidc.gov.bc.ca`
+keycloak_url `https://dev.loginproxy.gov.bc.ca`
 tag `sha-b0086114dfdd9ddcf1f8bb0ad3980dd261a987d6d42f85595da7b24d2f0c3230`
 
 To find the `<tag>` visit [our GitHub packages page](https://github.com/bcgov/digital_marketplace/pkgs/container/digital_marketplace) and use the latest docker image sha.
