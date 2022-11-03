@@ -286,7 +286,7 @@ parameters:
 - name: KEYCLOAK_URL
   displayName: The URL to the KeyCloak identity broker.
   required: true
-  value: https://dev.loginproxy.gov.bc.ca/auth
+  value: https://dev.loginproxy.gov.bc.ca
 
 - name: KEYCLOAK_REALM
   displayName: The realm for the KeyCloak identity broker.
