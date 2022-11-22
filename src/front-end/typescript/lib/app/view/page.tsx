@@ -19,7 +19,7 @@ import {
   Container,
   Row
 } from "reactstrap";
-import { ADT, adt } from "shared/lib/types";
+import { ADT } from "shared/lib/types";
 
 interface ViewAlertProps {
   messages: Array<component_.page.alerts.Alert<Msg>>;
@@ -172,10 +172,7 @@ export function view<
   const { state, dispatch, mapPageMsg, component, pageState } = props;
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
-  if (!pageState) {
-    dispatch(component_.global.newRouteMsg(adt("notFound" as const, {})));
-    return null;
-  }
+  if (!pageState) return null;
   // pageState is defined, render page.
   const {
     sidebar,
