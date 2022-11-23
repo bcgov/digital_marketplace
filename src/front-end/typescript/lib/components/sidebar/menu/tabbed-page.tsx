@@ -47,7 +47,7 @@ export type TabState<T extends TabsRecord<T>, K extends TabId<T>> = [
 export type TabMsg<
   T extends TabsRecord<T>,
   K extends TabId<T>
-> = component.global.Msg<Tabs<T>[K]["innerMsg"], Route>;
+> = component.page.Msg<Tabs<T>[K]["innerMsg"], Route>;
 
 export interface TabDefinition<T extends TabsRecord<T>, K extends TabId<T>> {
   component: TabComponent<
@@ -278,8 +278,11 @@ export function makeParentUpdate<
           state,
           childStatePath: ["tab", "1"],
           childUpdate: definition.component.update,
-          childMsg: msg.value as component.global.Msg<T[K]["innerMsg"], Route>,
-          mapChildMsg: (value) => adt("tab" as const, value as TabMsg<T, K>)
+          childMsg: msg.value as component.page.Msg<T[K]["innerMsg"], Route>,
+          mapChildMsg: (msg1) =>
+            component.page.mapMsg(msg1, (msg2) =>
+              adt("tab" as const, msg2 as TabMsg<T, K>)
+            )
         });
       }
       case "sidebar":

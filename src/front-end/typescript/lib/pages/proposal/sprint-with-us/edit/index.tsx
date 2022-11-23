@@ -179,7 +179,10 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                     (msg) => adt("tab", msg) as Msg
                   ),
                   component_.cmd.dispatch(
-                    adt("tab", tabComponent.onInitResponse(null))
+                    component_.page.mapMsg(
+                      tabComponent.onInitResponse(null),
+                      (msg) => adt("tab", msg)
+                    ) as Msg
                   )
                 ]
               ];

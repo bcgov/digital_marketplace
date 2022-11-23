@@ -190,14 +190,14 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 state.set("proposal", proposal),
                 [
                   component_.cmd.dispatch(
-                    adt(
-                      "tab",
+                    component_.page.mapMsg(
                       tabComponent.onInitResponse([
                         proposal,
                         opportunity,
                         affiliations
-                      ])
-                    )
+                      ]),
+                      (msg) => adt("tab", msg)
+                    ) as Msg
                   )
                 ]
               ];

@@ -184,10 +184,10 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                     (msg) => adt("sidebar", msg) as Msg
                   ),
                   component_.cmd.dispatch(
-                    adt(
-                      "tab",
-                      tabComponent.onInitResponse([opportunity, proposals])
-                    )
+                    component_.page.mapMsg(
+                      tabComponent.onInitResponse([opportunity, proposals]),
+                      (msg) => adt("tab", msg)
+                    ) as Msg
                   )
                 ]
               ];
