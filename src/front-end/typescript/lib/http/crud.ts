@@ -234,7 +234,7 @@ export function makeDeleteAction<
 ): DeleteAction<ValidResponse, InvalidResponse, Msg> {
   return (id, handleResponse) =>
     component.cmd.httpRequest({
-      method: ClientHttpMethod.Get,
+      method: ClientHttpMethod.Delete,
       url: apiNamespace(`${path}/${id}`),
       transformResponse,
       handleResponse
