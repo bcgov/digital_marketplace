@@ -597,8 +597,6 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         return [state, []];
       } else {
         // Otherwise, continue with the existing incoming route.
-        // Unset the previous page's state.
-        state = state.setIn(["pages", state.activeRoute.tag], undefined);
         // Initialize the incoming page.
         return initPage(state, incomingRoute.route);
       }
@@ -613,6 +611,10 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       if (!incomingRoute) {
         return [state, []];
       } else {
+        // Unset the previous page's state if moving to a different route.
+        if (incomingRoute.route.tag !== state.activeRoute.tag) {
+          state = state.setIn(["pages", state.activeRoute.tag], undefined);
+        }
         return [
           state
             // Unset the app's incoming route.
