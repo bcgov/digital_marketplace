@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import React from "react";
@@ -11,7 +11,7 @@ export interface ReportCard {
   className?: string;
 }
 
-export const ReportCard: View<ReportCard> = ({
+export const ReportCard: component.base.View<ReportCard> = ({
   icon,
   iconColor = "c-report-card-icon-default",
   name,
@@ -40,12 +40,13 @@ export interface ReportCardList {
   className?: string;
 }
 
-export const ReportCardList: View<ReportCardList> = ({
+export const ReportCardList: component.base.View<ReportCardList> = ({
   reportCards,
   className = ""
 }) => {
   return (
-    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap mb-n4">
+    <div
+      className={`d-flex flex-column flex-sm-row align-items-stretch align-items-sm-start flex-sm-wrap mb-n4 ${className}`}>
       {reportCards.map((card, i) => {
         if (!card) {
           return null;

@@ -17,8 +17,6 @@ export interface FileRecord {
   createdAt: Date;
   fileBlob: Id;
   name: string;
-  fileSize?: string;
-  format?: string;
 }
 
 export interface FileBlob {

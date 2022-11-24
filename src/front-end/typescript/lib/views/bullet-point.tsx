@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import React from "react";
@@ -11,7 +11,7 @@ export interface Props {
   className?: string;
 }
 
-export const BulletPoint: View<Props> = ({
+export const BulletPoint: component.base.View<Props> = ({
   icon,
   iconColor = "info",
   header,

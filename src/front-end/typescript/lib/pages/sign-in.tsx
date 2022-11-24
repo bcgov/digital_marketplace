@@ -2,15 +2,9 @@ import { makePageMetadata, sidebarValid, viewValid } from "front-end/lib";
 import { isSignedOut } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  replaceUrl,
-  Update
+  component as component_
 } from "front-end/lib/framework";
 import Link, { routeDest } from "front-end/lib/views/link";
 import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional";
@@ -28,62 +22,82 @@ interface ValidState {
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-export type Msg = GlobalComponentMsg<ADT<"noop">, Route>;
+export type InnerMsg = ADT<"noop">;
+
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = ValidState;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedOut<
+const init: component_.page.Init<
   RouteParams,
+  SharedState,
   State,
-  Msg
->({
-  async success({ routeParams }) {
-    return valid(immutable(routeParams));
+  InnerMsg,
+  Route
+> = isSignedOut<RouteParams, State, Msg>({
+  success({ routeParams }) {
+    return [
+      valid(immutable(routeParams)),
+      [component_.cmd.dispatch(component_.page.readyMsg())]
+    ];
   },
-  async fail({ dispatch, routeParams }) {
-    const msg: Msg = routeParams.redirectOnSuccess
-      ? replaceUrl(routeParams.redirectOnSuccess)
-      : replaceRoute(adt("dashboard" as const, null));
-    dispatch(msg);
-    return invalid(null);
+  fail({ routeParams }) {
+    return [
+      invalid(null),
+      [
+        component_.cmd.dispatch(
+          routeParams.redirectOnSuccess
+            ? component_.global.replaceUrlMsg(routeParams.redirectOnSuccess)
+            : component_.global.replaceRouteMsg(adt("dashboard" as const, null))
+        )
+      ]
+    ];
   }
 });
 
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
+  return [state, []];
 };
 
-const view: ComponentView<State, Msg> = viewValid(({ state }) => {
-  return (
-    <div>
-      <Row className="pb-4">
-        <Col xs="12" className="mx-auto">
-          <h2>Sign In</h2>
-          <p>
-            Select one of the options available below to sign in to your Digital
-            Marketplace account.
-          </p>
-        </Col>
-      </Row>
-      <SignInCard
-        userType={UserType.Vendor}
-        title="Vendor"
-        description={`Use your ${VENDOR_IDP_NAME} account to sign in to the Digital Marketplace.`}
-        redirectOnSuccess={state.redirectOnSuccess}
-        buttonText={`Sign In Using ${VENDOR_IDP_NAME}`}
-      />
-      <SignInCard
-        userType={UserType.Government}
-        redirectOnSuccess={state.redirectOnSuccess}
-        title="Public Sector Employee"
-        description={`Use your ${GOV_IDP_NAME} to sign in to the Digital Marketplace.`}
-        buttonText={`Sign In Using ${GOV_IDP_NAME}`}
-      />
-    </div>
-  );
-});
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state }) => {
+    return (
+      <div>
+        <Row className="pb-4">
+          <Col xs="12" className="mx-auto">
+            <h2>Sign In</h2>
+            <p>
+              Select one of the options available below to sign in to your
+              Digital Marketplace account.
+            </p>
+          </Col>
+        </Row>
+        <SignInCard
+          userType={UserType.Vendor}
+          title="Vendor"
+          description={`Use your ${VENDOR_IDP_NAME} account to sign in to the Digital Marketplace.`}
+          redirectOnSuccess={state.redirectOnSuccess}
+          buttonText={`Sign In Using ${VENDOR_IDP_NAME}`}
+        />
+        <SignInCard
+          userType={UserType.Government}
+          redirectOnSuccess={state.redirectOnSuccess}
+          title="Public Sector Employee"
+          description={`Use your ${GOV_IDP_NAME} to sign in to the Digital Marketplace.`}
+          buttonText={`Sign In Using ${GOV_IDP_NAME}`}
+        />
+      </div>
+    );
+  }
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,

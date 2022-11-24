@@ -1,16 +1,16 @@
-import { View, ViewElementChildren } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import React from "react";
 
 export interface Props {
   spacing: "1" | "2" | "3" | "4" | "5" | "6" | "7" | 1 | 2 | 3 | 4 | 5 | 6 | 7;
   direction?: "x" | "y";
-  children: ViewElementChildren;
+  children: component.base.ViewElementChildren;
   color?: ThemeColor;
   className?: string;
 }
 
-const Separator: View<Props> = ({
+const Separator: component.base.View<Props> = ({
   spacing,
   direction = "x",
   children,

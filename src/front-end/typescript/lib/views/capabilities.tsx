@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -20,14 +20,12 @@ export interface Props {
 interface CapabilityProps extends Capability {
   showFullOrPartTime: boolean;
   showChecked: boolean;
-  index: number;
 }
 
-const Capability: View<CapabilityProps> = ({
+const Capability: component.base.View<CapabilityProps> = ({
   capability,
   fullTime,
   checked,
-  index,
   showChecked,
   showFullOrPartTime
 }) => {
@@ -61,7 +59,7 @@ const Capability: View<CapabilityProps> = ({
   );
 };
 
-const Capabilities: View<Props> = ({
+const Capabilities: component.base.View<Props> = ({
   className = "",
   capabilities,
   grid,
@@ -76,7 +74,6 @@ const Capabilities: View<Props> = ({
             {...c}
             showChecked={showChecked}
             showFullOrPartTime={showFullOrPartTime}
-            index={i}
           />
         </Col>
       ))}

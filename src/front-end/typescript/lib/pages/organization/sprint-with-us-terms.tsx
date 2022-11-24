@@ -8,19 +8,11 @@ import {
   viewValid
 } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
-import router from "front-end/lib/app/router";
 import { Route, SharedState } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  newRoute,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  toast,
-  Update
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/organization/lib/toasts";
@@ -53,155 +45,219 @@ export interface RouteParams {
 
 interface ValidState {
   acceptLoading: number;
-  organization: Organization;
+  organization: Organization | null;
   viewerUser: User;
   body: string;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-type InnerMsg = ADT<"accept">;
+type InnerMsg =
+  | ADT<"onInitResponse", [string, Organization | null, string | null]>
+  | ADT<"accept">
+  | ADT<"onAcceptResponse", boolean>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = isUserType<RouteParams, State, Msg>({
   userType: [UserType.Vendor, UserType.Admin],
-
-  async success({ shared, routePath, routeParams, dispatch }) {
-    const fail = () => {
-      dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-      return invalid(null);
-    };
-    const orgResult = await api.organizations.readOne(routeParams.orgId);
-    if (!api.isValid(orgResult)) {
-      return fail();
-    }
-    const markdownResult = await api.content.readOne(
-      SWU_QUALIFICATION_TERMS_ID
-    );
-    if (!api.isValid(markdownResult)) {
-      return fail();
-    }
-    return valid(
-      immutable({
-        acceptLoading: 0,
-        organization: orgResult.value,
-        viewerUser: shared.sessionUser,
-        body: markdownResult.value.body
-      })
-    );
-  },
-
-  async fail({ shared, routePath, routeParams, dispatch }) {
-    if (!shared.session) {
-      dispatch(
-        replaceRoute(
-          adt("signIn" as const, {
-            redirectOnSuccess: router.routeToUrl(
-              adt("orgSWUTerms", { orgId: routeParams.orgId })
-            )
-          })
+  success({ shared, routePath, routeParams }) {
+    return [
+      valid(
+        immutable({
+          acceptLoading: 0,
+          organization: null,
+          viewerUser: shared.sessionUser,
+          body: ""
+        })
+      ),
+      [
+        component_.cmd.join(
+          api.organizations.readOne(routeParams.orgId, (response) =>
+            api.isValid(response) ? response.value : null
+          ) as component_.Cmd<Organization | null>,
+          api.content.readOne(SWU_QUALIFICATION_TERMS_ID, (response) =>
+            api.isValid(response) ? response.value : null
+          ) as component_.Cmd<string | null>,
+          (organization, body) =>
+            adt("onInitResponse", [routePath, organization, body]) as Msg
         )
-      );
+      ]
+    ];
+  },
+  fail({ shared, routePath }) {
+    if (!shared.session) {
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(
+              adt("signIn" as const, {
+                redirectOnSuccess: routePath
+              })
+            )
+          )
+        ]
+      ];
     } else {
-      dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(
+              adt("notFound" as const, { path: routePath })
+            )
+          )
+        ]
+      ];
     }
-    return invalid(null);
   }
 });
 
 const startAcceptLoading = makeStartLoading<ValidState>("acceptLoading");
 const stopAcceptLoading = makeStopLoading<ValidState>("acceptLoading");
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "accept":
-      return [
-        startAcceptLoading(state),
-        async (state, dispatch) => {
-          const orgId = state.organization.id;
-          const result = await api.organizations.update(
-            orgId,
-            adt("acceptSWUTerms")
-          );
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(
-                adt("error", toasts.acceptedSWUTerms.error(state.organization))
+const update: component_.base.Update<State, Msg> = updateValid(
+  ({ state, msg }) => {
+    switch (msg.tag) {
+      case "onInitResponse": {
+        const [routePath, organization, body] = msg.value;
+        if (!organization || !body) {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(
+                  adt("notFound" as const, { path: routePath })
+                )
               )
-            );
-            return stopAcceptLoading(state);
-          }
-          dispatch(
-            toast(
-              adt(
-                "success",
-                toasts.acceptedSWUTerms.success(state.organization)
-              )
-            )
-          );
-          dispatch(
-            newRoute(
-              adt("orgEdit", {
-                orgId,
-                tab: "qualification"
-              }) as Route
-            )
-          );
-          return state;
+            ]
+          ];
         }
-      ];
-    default:
-      return [state];
-  }
-});
-
-const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
-  const { acceptedSWUTerms } = state.organization;
-  return (
-    <Row>
-      <Col xs="12">
-        <h1 className="mb-5">{TITLE}</h1>
-        <Markdown
-          source={state.body}
-          openLinksInNewTabs
-          className={acceptedSWUTerms ? "" : "mb-5"}
-        />
-        {acceptedSWUTerms || isAdmin(state.viewerUser) ? null : (
-          <div className="d-flex flex-nowrap flex-row-reverse">
-            <Link
-              button
-              className="ml-3"
-              color="primary"
-              onClick={() => dispatch(adt("accept"))}>
-              Accept Terms & Conditions
-            </Link>
-            <Link
-              color="secondary"
-              dest={routeDest(
+        return [
+          state.set("organization", organization).set("body", body),
+          [component_.cmd.dispatch(component_.page.readyMsg())]
+        ];
+      }
+      case "accept": {
+        const organization = state.organization;
+        if (!organization) return [state, []];
+        return [
+          startAcceptLoading(state),
+          [
+            api.organizations.update(
+              organization.id,
+              adt("acceptSWUTerms"),
+              (response) => adt("onAcceptResponse", api.isValid(response))
+            ) as component_.Cmd<Msg>
+          ]
+        ];
+      }
+      case "onAcceptResponse": {
+        const organization = state.organization;
+        if (!organization) return [state, []];
+        const succeeded = msg.value;
+        if (!succeeded) {
+          return [
+            stopAcceptLoading(state),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.acceptedSWUTerms.error(organization))
+                )
+              )
+            ]
+          ];
+        }
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("success", toasts.acceptedSWUTerms.success(organization))
+              )
+            ),
+            component_.cmd.dispatch(
+              component_.global.newRouteMsg(
                 adt("orgEdit", {
-                  orgId: state.organization.id,
+                  orgId: organization.id,
                   tab: "qualification"
                 }) as Route
-              )}>
-              Cancel
-            </Link>
-          </div>
-        )}
-      </Col>
-    </Row>
-  );
-});
+              )
+            )
+          ]
+        ];
+      }
+      default:
+        return [state, []];
+    }
+  }
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state, dispatch }) => {
+    const organization = state.organization;
+    if (!organization) return null;
+    const { acceptedSWUTerms } = organization;
+    return (
+      <Row>
+        <Col xs="12">
+          <h1 className="mb-5">{TITLE}</h1>
+          <Markdown
+            source={state.body}
+            openLinksInNewTabs
+            className={acceptedSWUTerms ? "" : "mb-5"}
+          />
+          {acceptedSWUTerms || isAdmin(state.viewerUser) ? null : (
+            <div className="d-flex flex-nowrap flex-row-reverse">
+              <Link
+                button
+                className="ml-3"
+                color="primary"
+                onClick={() => dispatch(adt("accept"))}>
+                Accept Terms & Conditions
+              </Link>
+              <Link
+                color="secondary"
+                dest={routeDest(
+                  adt("orgEdit", {
+                    orgId: organization.id,
+                    tab: "qualification"
+                  }) as Route
+                )}>
+                Cancel
+              </Link>
+            </div>
+          )}
+        </Col>
+      </Row>
+    );
+  }
+);
+
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
-  getMetadata(state) {
+  getMetadata() {
     return makePageMetadata(TITLE);
   },
   getAlerts: getAlertsValid((state) => {
-    const acceptedText = acceptedSWUTermsText(state.organization, "");
+    const organization = state.organization;
+    if (!organization) return component_.page.alerts.empty();
+    const acceptedText = acceptedSWUTermsText(organization, "");
     return {
       info: acceptedText ? [{ text: acceptedText }] : []
     };

@@ -1,6 +1,6 @@
 import {
   getAlertsValid,
-  getContextualActionsValid,
+  getActionsValid,
   getModalValid,
   makePageMetadata,
   makeStartLoading,
@@ -12,19 +12,9 @@ import {
 import { isUserType } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  emptyPageAlerts,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  mapComponentDispatch,
-  newRoute,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as Form from "front-end/lib/pages/opportunity/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/code-with-us/lib/toasts";
@@ -55,42 +45,59 @@ interface ValidState {
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-type InnerMsg =
+export type InnerMsg =
   | ADT<"dismissErrorAlert">
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"publish">
+  | ADT<"onPublishResponse", Form.PersistResult>
   | ADT<"saveDraft">
+  | ADT<"onSaveDraftResponse", Form.PersistResult>
   | ADT<"form", Form.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<
+const init: component_.page.Init<
   RouteParams,
+  SharedState,
   State,
-  Msg
->({
+  InnerMsg,
+  Route
+> = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Government, UserType.Admin],
-  async success() {
-    return valid(
-      immutable({
-        showModal: null,
-        publishLoading: 0,
-        saveDraftLoading: 0,
-        showErrorAlert: null,
-        form: immutable(
-          await Form.init({
-            canRemoveExistingAttachments: true //moot
-          })
-        )
-      })
-    );
+  success() {
+    const [formState, formCmds] = Form.init({
+      canRemoveExistingAttachments: true //moot
+    });
+    return [
+      valid(
+        immutable({
+          showModal: null,
+          publishLoading: 0,
+          saveDraftLoading: 0,
+          showErrorAlert: null,
+          form: immutable(formState)
+        })
+      ),
+      [
+        ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+        component_.cmd.dispatch(component_.page.readyMsg())
+      ]
+    ];
   },
-  async fail({ routePath, dispatch }) {
-    dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-    return invalid(null);
+  fail({ routePath }) {
+    return [
+      invalid(null),
+      [
+        component_.cmd.dispatch(
+          component_.global.replaceRouteMsg(
+            adt("notFound", { path: routePath }) as Route
+          )
+        )
+      ]
+    ];
   }
 });
 
@@ -99,109 +106,173 @@ const stopPublishLoading = makeStopLoading<ValidState>("publishLoading");
 const startSaveDraftLoading = makeStartLoading<ValidState>("saveDraftLoading");
 const stopSaveDraftLoading = makeStopLoading<ValidState>("saveDraftLoading");
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "dismissErrorAlert":
-      return [state.set("showErrorAlert", null)];
-    case "showModal":
-      return [state.set("showModal", msg.value)];
-    case "hideModal":
-      return [state.set("showModal", null)];
-    case "publish":
-    case "saveDraft": {
-      const isPublish = msg.tag === "publish";
-      state = state.set("showModal", null);
-      return [
-        isPublish ? startPublishLoading(state) : startSaveDraftLoading(state),
-        async (state, dispatch) => {
-          const result = await Form.persist(
-            state.form,
-            adt(
-              "create",
-              isPublish
-                ? (CWUOpportunityStatus.Published as const)
-                : (CWUOpportunityStatus.Draft as const)
+const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
+  ({ state, msg }) => {
+    switch (msg.tag) {
+      case "dismissErrorAlert":
+        return [state.set("showErrorAlert", null), []];
+      case "showModal":
+        return [state.set("showModal", msg.value), []];
+      case "hideModal":
+        return [state.set("showModal", null), []];
+      case "publish": {
+        state = state.set("showModal", null);
+        return [
+          startPublishLoading(state),
+          [
+            component_.cmd.map(
+              Form.persist(
+                state.form,
+                adt("create", CWUOpportunityStatus.Published)
+              ),
+              (result) => adt("onPublishResponse", result)
             )
-          );
-          switch (result.tag) {
-            case "valid": {
-              const opportunityId = result.value[1].id;
-              dispatch(
-                newRoute(
-                  adt("opportunityCWUEdit" as const, {
-                    opportunityId,
-                    tab: isPublish
-                      ? ("summary" as const)
-                      : ("opportunity" as const)
-                  })
-                )
-              );
-              dispatch(
-                toast(
-                  adt(
-                    "success",
-                    isPublish
-                      ? toasts.published.success(opportunityId)
-                      : toasts.draftCreated.success
+          ]
+        ];
+      }
+      case "onPublishResponse": {
+        const result = msg.value;
+        switch (result.tag) {
+          case "valid": {
+            const [resultFormState, resultCmds, opportunity] = result.value;
+            return [
+              state.set("form", resultFormState),
+              [
+                ...component_.cmd.mapMany(
+                  resultCmds,
+                  (msg) => adt("form", msg) as Msg
+                ),
+                component_.cmd.dispatch(
+                  component_.global.newRouteMsg(
+                    adt("opportunityCWUEdit", {
+                      opportunityId: opportunity.id,
+                      tab: "summary" as const
+                    }) as Route
+                  )
+                ),
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("success", toasts.published.success(opportunity.id))
                   )
                 )
-              );
-              return state.set("form", result.value[0]);
-            }
-            case "invalid":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    isPublish
-                      ? toasts.published.error
-                      : toasts.draftCreated.error
-                  )
-                )
-              );
-              state = isPublish
-                ? stopPublishLoading(state)
-                : stopSaveDraftLoading(state);
-              return state
-                .set("showErrorAlert", isPublish ? "publish" : "save")
-                .set("form", result.value);
+              ]
+            ];
           }
+          case "invalid":
+          default:
+            state = stopPublishLoading(state);
+            return [
+              state.set("showErrorAlert", "publish").set("form", result.value),
+              [
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("error", toasts.published.error)
+                  )
+                )
+              ]
+            ];
         }
-      ];
+      }
+      case "saveDraft": {
+        state = state.set("showModal", null);
+        return [
+          startSaveDraftLoading(state),
+          [
+            component_.cmd.map(
+              Form.persist(
+                state.form,
+                adt("create", CWUOpportunityStatus.Draft)
+              ),
+              (result) => adt("onSaveDraftResponse", result)
+            )
+          ]
+        ];
+      }
+      case "onSaveDraftResponse": {
+        const result = msg.value;
+        switch (result.tag) {
+          case "valid": {
+            const [resultFormState, resultCmds, opportunity] = result.value;
+            return [
+              state.set("form", resultFormState),
+              [
+                ...component_.cmd.mapMany(
+                  resultCmds,
+                  (msg) => adt("form", msg) as Msg
+                ),
+                component_.cmd.dispatch(
+                  component_.global.newRouteMsg(
+                    adt("opportunityCWUEdit", {
+                      opportunityId: opportunity.id,
+                      tab: "opportunity" as const
+                    }) as Route
+                  )
+                ),
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("success", toasts.draftCreated.success)
+                  )
+                )
+              ]
+            ];
+          }
+          case "invalid":
+          default:
+            state = stopSaveDraftLoading(state);
+            return [
+              state.set("showErrorAlert", "save").set("form", result.value),
+              [
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("error", toasts.draftCreated.error)
+                  )
+                )
+              ]
+            ];
+        }
+      }
+      case "form":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["form"],
+          childUpdate: Form.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("form", value)
+        });
+
+      default:
+        return [state, []];
     }
-
-    case "form":
-      return updateComponentChild({
-        state,
-        childStatePath: ["form"],
-        childUpdate: Form.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("form", value)
-      });
-
-    default:
-      return [state];
   }
-});
+);
 
-const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
-  const isPublishLoading = state.publishLoading > 0;
-  const isSaveDraftLoading = state.saveDraftLoading > 0;
-  const isDisabled = isSaveDraftLoading || isPublishLoading;
-  return (
-    <div className="d-flex flex-column h-100 justify-content-between">
-      <Form.view
-        state={state.form}
-        dispatch={mapComponentDispatch(dispatch, (value) =>
-          adt("form" as const, value)
-        )}
-        disabled={isDisabled}
-      />
-    </div>
-  );
-});
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state, dispatch }) => {
+    const isPublishLoading = state.publishLoading > 0;
+    const isSaveDraftLoading = state.saveDraftLoading > 0;
+    const isDisabled = isSaveDraftLoading || isPublishLoading;
+    return (
+      <div className="d-flex flex-column h-100 justify-content-between">
+        <Form.view
+          state={state.form}
+          dispatch={component_.base.mapDispatch(
+            dispatch,
+            (value) => adt("form", value) as Msg
+          )}
+          disabled={isDisabled}
+        />
+      </div>
+    );
+  }
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
@@ -240,7 +311,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
       )
     })
   }),
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  getActions: getActionsValid(({ state, dispatch }) => {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
     const isLoading = isPublishLoading || isSaveDraftLoading;
@@ -273,7 +344,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     ]);
   }),
   getAlerts: getAlertsValid((state) => ({
-    ...emptyPageAlerts(),
+    ...component_.page.alerts.empty(),
     errors: state.showErrorAlert
       ? [
           {
@@ -286,7 +357,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getModal: getModalValid<ValidState, Msg>((state) => {
     switch (state.showModal) {
       case "publish":
-        return {
+        return component_.page.modal.show({
           title: "Publish Code With Us Opportunity?",
           body: () =>
             "Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.",
@@ -296,7 +367,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               text: "Publish Opportunity",
               icon: "bullhorn",
               color: "primary",
-              msg: adt("publish"),
+              msg: adt("publish") as Msg,
               button: true
             },
             {
@@ -305,9 +376,9 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "cancel":
-        return {
+        return component_.page.modal.show({
           title: "Cancel New Code With Us Opportunity?",
           body: () =>
             "Are you sure you want to cancel? Any information you may have entered will be lost if you do so.",
@@ -316,7 +387,9 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             {
               text: "Yes, I want to cancel",
               color: "danger",
-              msg: newRoute(adt("opportunities" as const, null)),
+              msg: component_.global.newRouteMsg(
+                adt("opportunities" as const, null)
+              ) as Msg,
               button: true
             },
             {
@@ -325,9 +398,9 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
   }),
   getMetadata() {

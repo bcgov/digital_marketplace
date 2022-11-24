@@ -1,13 +1,16 @@
-import { View, ViewElementChildren } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import React from "react";
 import { Col, Row } from "reactstrap";
 
 export interface Props {
   className?: string;
-  children: ViewElementChildren;
+  children: component.base.ViewElementChildren;
 }
 
-const FormButtonsContainer: View<Props> = ({ className, children }) => {
+const FormButtonsContainer: component.base.View<Props> = ({
+  className,
+  children
+}) => {
   return (
     <Row className={className}>
       <Col

@@ -3,15 +3,9 @@ import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as AcceptNewTerms from "front-end/lib/components/accept-new-app-terms";
 import {
-  ComponentView,
-  GlobalComponentMsg,
-  immutable,
   Immutable,
-  Init,
-  Update,
-  updateComponentChild,
-  View,
-  ViewElementChildren
+  immutable,
+  component as component_
 } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/user/profile/tab";
 import Link, {
@@ -40,26 +34,34 @@ export type InnerMsg =
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"acceptNewTerms", AcceptNewTerms.Msg>
-  | ADT<"submitAcceptNewTerms">;
+  | ADT<"submitAcceptNewTerms">
+  | ADT<"onAcceptNewTermsResponse", AcceptNewTerms.AcceptNewTermsResponse>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
-  return {
-    profileUser,
-    viewerUser,
-    showModal: null,
-    acceptNewTermsLoading: 0,
-    acceptNewTerms: immutable(
-      await AcceptNewTerms.init({
-        errors: [],
-        child: {
-          value: !!profileUser.acceptedTermsAt,
-          id: "profile-legal-accept-new-terms"
-        }
-      })
+const init: component_.base.Init<Tab.Params, State, Msg> = ({
+  viewerUser,
+  profileUser
+}) => {
+  const [acceptNewTermsState, acceptNewTermsCmds] = AcceptNewTerms.init({
+    errors: [],
+    child: {
+      value: !!profileUser.acceptedTermsAt,
+      id: "profile-legal-accept-new-terms"
+    }
+  });
+  return [
+    {
+      profileUser,
+      viewerUser,
+      showModal: null,
+      acceptNewTermsLoading: 0,
+      acceptNewTerms: immutable(acceptNewTermsState)
+    },
+    component_.cmd.mapMany(acceptNewTermsCmds, (msg) =>
+      adt("acceptNewTerms", msg)
     )
-  };
+  ];
 };
 
 function hideModal(state: Immutable<State>): Immutable<State> {
@@ -73,14 +75,14 @@ const stopAcceptNewTermsLoading = makeStopLoading<State>(
   "acceptNewTermsLoading"
 );
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
-      return [hideModal(state)];
+      return [hideModal(state), []];
     case "acceptNewTerms":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["acceptNewTerms"],
         childUpdate: AcceptNewTerms.update,
@@ -92,20 +94,31 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         state,
         userId: state.profileUser.id,
         startLoading: startAcceptNewTermsLoading,
-        stopLoading: stopAcceptNewTermsLoading
+        onAcceptNewTermsResponse(response) {
+          return adt("onAcceptNewTermsResponse", response);
+        }
+      });
+    case "onAcceptNewTermsResponse":
+      return AcceptNewTerms.onAcceptNewTermsResponse<State, InnerMsg>({
+        state,
+        stopLoading: stopAcceptNewTermsLoading,
+        response: msg.value
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const TermsSubtext: View<{ children: ViewElementChildren }> = ({
-  children
-}) => {
+const TermsSubtext: component_.base.View<{
+  children: component_.base.ViewElementChildren;
+}> = ({ children }) => {
   return <div className="mt-2 text-secondary font-size-small">{children}</div>;
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const acceptedTerms = state.profileUser.acceptedTermsAt;
   const hasAcceptedLatest = !!acceptedTerms;
   return (
@@ -212,13 +225,15 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  },
   getModal(state) {
-    if (!state.showModal) {
-      return null;
-    }
     const hasAcceptedTerms = AcceptNewTerms.getCheckbox(state.acceptNewTerms);
     const isAcceptNewTermsLoading = state.acceptNewTermsLoading > 0;
     switch (state.showModal) {
+      case null:
+        return component_.page.modal.hide();
       case "acceptNewTerms":
         return AcceptNewTerms.makeModal<Msg>({
           loading: isAcceptNewTermsLoading,

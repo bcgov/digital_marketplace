@@ -1,7 +1,8 @@
 import * as Nav from "front-end/lib/app/view/nav";
 import * as AcceptNewTerms from "front-end/lib/components/accept-new-app-terms";
-import { AppMsg, Immutable, Toast } from "front-end/lib/framework";
+import { component, Immutable, router } from "front-end/lib/framework";
 import * as PageContentCreate from "front-end/lib/pages/content/create";
+import * as api from "front-end/lib/http/api";
 import * as PageContentEdit from "front-end/lib/pages/content/edit";
 import * as PageContentList from "front-end/lib/pages/content/list";
 import * as PageContentView from "front-end/lib/pages/content/view";
@@ -108,10 +109,10 @@ export type ModalId = "acceptNewTerms";
 export interface State {
   //App Internal State
   ready: boolean;
-  transitionLoading: number;
+  incomingRoute: router.IncomingRoute<Route> | null;
   activeRoute: Route;
   //Toasts
-  toasts: Array<Toast & { timestamp: number }>;
+  toasts: Array<component.global.Toast & { timestamp: number }>;
   //Modals
   showModal: ModalId | null;
   acceptNewTerms: Immutable<AcceptNewTerms.State>;
@@ -164,8 +165,13 @@ export interface State {
   };
 }
 
-type InnerMsg =
+export type InnerMsg =
   | ADT<"noop">
+  | ADT<
+      "onSessionResponseDuringTransition",
+      api.ResponseValidation<Session, string[]>
+    >
+  | ADT<"onSessionResponse", api.ResponseValidation<Session, string[]>>
   | ADT<"scrollTo", number> //Y position
   | ADT<"dismissToast", number>
   | ADT<"dismissLapsedToasts">
@@ -173,6 +179,7 @@ type InnerMsg =
   | ADT<"hideModal">
   | ADT<"acceptNewTerms", AcceptNewTerms.Msg>
   | ADT<"submitAcceptNewTerms">
+  | ADT<"onAcceptNewTermsResponse", AcceptNewTerms.AcceptNewTermsResponse>
   | ADT<"nav", Nav.Msg>
   | ADT<"pageLanding", PageLanding.Msg>
   | ADT<"pageDashboard", PageDashboard.Msg>
@@ -214,4 +221,4 @@ type InnerMsg =
   | ADT<"pageProposalCWUExportAll", PageProposalCWUExportAll.Msg>
   | ADT<"pageProposalList", PageProposalList.Msg>;
 
-export type Msg = AppMsg<InnerMsg, Route>;
+export type Msg = component.app.Msg<InnerMsg, Route>;

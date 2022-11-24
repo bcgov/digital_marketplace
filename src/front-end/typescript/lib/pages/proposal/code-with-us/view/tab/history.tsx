@@ -1,16 +1,11 @@
 import { Route } from "front-end/lib/app/types";
 import * as History from "front-end/lib/components/table/history";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
-import * as Tab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
+import * as Tab from "front-end/lib/pages/proposal/code-with-us/view/tab";
 import {
   cwuProposalEventToTitleCase,
   cwuProposalStatusToColor,
@@ -24,12 +19,15 @@ import { UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 
 export interface State extends Tab.Params {
-  history: Immutable<History.State>;
+  proposal: CWUProposal | null;
+  history: Immutable<History.State> | null;
 }
 
-export type InnerMsg = ADT<"history", History.Msg>;
+export type InnerMsg =
+  | ADT<"onInitResponse", Tab.InitResponse>
+  | ADT<"history", History.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 function getHistoryItems(
   { history }: CWUProposal,
@@ -55,23 +53,42 @@ function getHistoryItems(
   }));
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    history: immutable(
-      await History.init({
-        idNamespace: "cwu-proposal-history",
-        items: getHistoryItems(params.proposal, params.viewerUser.type),
-        viewerUser: params.viewerUser
-      })
-    )
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  return [
+    {
+      ...params,
+      proposal: null,
+      history: null
+    },
+    []
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const proposal = msg.value[0];
+      const [historyState, historyCmds] = History.init({
+        idNamespace: "cwu-proposal-history",
+        items: getHistoryItems(proposal, state.viewerUser.type),
+        viewerUser: state.viewerUser
+      });
+      return [
+        state.set("proposal", proposal).set("history", immutable(historyState)),
+        [
+          ...component_.cmd.mapMany(
+            historyCmds,
+            (msg) => adt("history", msg) as Msg
+          ),
+          component_.cmd.dispatch(component_.page.readyMsg())
+        ]
+      ];
+    }
     case "history":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["history"],
         childUpdate: History.update,
@@ -79,11 +96,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => ({ tag: "history", value })
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
+  if (!state.proposal || !state.history) return null;
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
@@ -93,7 +114,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             <h3 className="mb-4">History</h3>
             <History.view
               state={state.history}
-              dispatch={mapComponentDispatch(dispatch, (msg) =>
+              dispatch={component_.base.mapDispatch(dispatch, (msg) =>
                 adt("history" as const, msg)
               )}
             />
@@ -104,8 +125,11 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> = {
+export const component: Tab.Component<State, InnerMsg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse(response) {
+    return adt("onInitResponse", response);
+  }
 };

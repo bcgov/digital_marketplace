@@ -1,29 +1,16 @@
 import { EMPTY_STRING } from "front-end/config";
-import {
-  getContextualActionsValid,
-  getModalValid,
-  makeStartLoading,
-  makeStopLoading,
-  updateValid,
-  viewValid
-} from "front-end/lib";
+import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import * as Tab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
+import * as Tab from "front-end/lib/pages/proposal/code-with-us/view/tab";
 import * as Form from "front-end/lib/pages/proposal/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/proposal/code-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header";
@@ -38,11 +25,12 @@ import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CWUProposal,
   CWUProposalStatus,
-  NUM_SCORE_DECIMALS
+  NUM_SCORE_DECIMALS,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/code-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import { invalid, valid, Validation } from "shared/lib/validation";
+import { invalid } from "shared/lib/validation";
 import {
   validateDisqualificationReason,
   validateScore
@@ -50,119 +38,159 @@ import {
 
 type ModalId = "score" | "disqualify" | "award";
 
-interface ValidState extends Tab.Params {
+export interface State extends Tab.Params {
+  proposal: CWUProposal | null;
+  opportunity: CWUOpportunity | null;
+  form: Immutable<Form.State> | null;
   scoreLoading: number;
   disqualifyLoading: number;
   awardLoading: number;
   showModal: ModalId | null;
-  opportunity: CWUOpportunity;
-  form: Immutable<Form.State>;
   score: Immutable<NumberField.State>;
   disqualificationReason: Immutable<LongText.State>;
 }
 
-export type State = Validation<Immutable<ValidState>, null>;
-
 export type InnerMsg =
+  | ADT<"onInitResponse", Tab.InitResponse>
   | ADT<"hideModal">
   | ADT<"showModal", ModalId>
   | ADT<"form", Form.Msg>
   | ADT<"scoreMsg", NumberField.Msg>
   | ADT<"disqualificationReasonMsg", LongText.Msg>
   | ADT<"submitScore">
+  | ADT<
+      "onSubmitScoreResponse",
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
+    >
   | ADT<"disqualify">
-  | ADT<"award">;
+  | ADT<
+      "onDisqualifyResponse",
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
+    >
+  | ADT<"award">
+  | ADT<
+      "onAwardResponse",
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-async function initForm(
+function initForm(
   opportunity: CWUOpportunity,
   proposal: CWUProposal,
   viewerUser: User
-): Promise<Immutable<Form.State>> {
-  return immutable(
-    await Form.init({
-      viewerUser,
-      opportunity,
-      proposal,
-      affiliations: [],
-      canRemoveExistingAttachments: false
-    })
-  );
+): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
+  const [formState, formCmds] = Form.init({
+    viewerUser,
+    opportunity,
+    proposal,
+    affiliations: [],
+    canRemoveExistingAttachments: false
+  });
+  const immutableFormState = immutable(formState);
+  return [immutableFormState, formCmds];
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  const { proposal } = params;
-  // Fetch opportunity.
-  const opportunityResult = await api.opportunities.cwu.readOne(
-    proposal.opportunity.id
-  );
-  // Redirect to 404 page if there is a server error.
-  if (!api.isValid(opportunityResult)) {
-    return invalid(null);
-  }
-  const opportunity = opportunityResult.value;
-  return valid(
-    immutable({
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [scoreState, scoreCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid score."]);
+      }
+      return validateScore(v);
+    },
+    child: {
+      value: null,
+      id: "cwu-proposal-score",
+      min: 1,
+      max: 100,
+      step: 0.01
+    }
+  });
+  const [disqualificationReasonState, disqualificationReasonCmds] =
+    LongText.init({
+      errors: [],
+      validate: validateDisqualificationReason,
+      child: {
+        value: "",
+        id: "cwu-proposal-disqualification-reason"
+      }
+    });
+  return [
+    {
       ...params,
-      showModal: null,
+      proposal: null,
+      opportunity: null,
+      form: null,
       scoreLoading: 0,
       disqualifyLoading: 0,
       awardLoading: 0,
-      opportunity,
-      form: await initForm(opportunity, proposal, params.viewerUser),
-      score: immutable(
-        await NumberField.init({
-          errors: [],
-          validate: (v) => {
-            if (v === null) {
-              return invalid(["Please enter a valid score."]);
-            }
-            return validateScore(v);
-          },
-          child: {
-            value: proposal.score !== undefined ? proposal.score : null,
-            id: "cwu-proposal-score",
-            min: 1,
-            max: 100,
-            step: 0.01
-          }
-        })
+      showModal: null,
+      score: immutable(scoreState),
+      disqualificationReason: immutable(disqualificationReasonState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        scoreCmds,
+        (msg) => adt("scoreMsg", msg) as Msg
       ),
-      disqualificationReason: immutable(
-        await LongText.init({
-          errors: [],
-          validate: validateDisqualificationReason,
-          child: {
-            value: "",
-            id: "cwu-proposal-disqualification-reason"
-          }
-        })
+      ...component_.cmd.mapMany(
+        disqualificationReasonCmds,
+        (msg) => adt("disqualificationReasonMsg", msg) as Msg
       )
-    })
-  );
+    ]
+  ];
 };
 
-const startScoreLoading = makeStartLoading<ValidState>("scoreLoading");
-const stopScoreLoading = makeStopLoading<ValidState>("scoreLoading");
-const startDisqualifyLoading =
-  makeStartLoading<ValidState>("disqualifyLoading");
-const stopDisqualifyLoading = makeStopLoading<ValidState>("disqualifyLoading");
-const startAwardLoading = makeStartLoading<ValidState>("awardLoading");
-const stopAwardLoading = makeStopLoading<ValidState>("awardLoading");
+const startScoreLoading = makeStartLoading<State>("scoreLoading");
+const stopScoreLoading = makeStopLoading<State>("scoreLoading");
+const startDisqualifyLoading = makeStartLoading<State>("disqualifyLoading");
+const stopDisqualifyLoading = makeStopLoading<State>("disqualifyLoading");
+const startAwardLoading = makeStartLoading<State>("awardLoading");
+const stopAwardLoading = makeStopLoading<State>("awardLoading");
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const [proposal, opportunity] = msg.value;
+      const [formState, formCmds] = initForm(
+        opportunity,
+        proposal,
+        state.viewerUser
+      );
+      return [
+        state
+          .set("proposal", proposal)
+          .set("opportunity", opportunity)
+          .set("form", formState)
+          .update("score", (s) =>
+            FormField.setValue(
+              s,
+              proposal.score === undefined
+                ? FormField.getValue(s)
+                : proposal.score
+            )
+          ),
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(component_.page.readyMsg())
+        ]
+      ];
+    }
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
       if (state.scoreLoading > 0 || state.disqualifyLoading > 0) {
         // Do nothing if the score or disqualify modals are loading.
-        return [state];
+        return [state, []];
       }
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
     case "form":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["form"],
         childUpdate: Form.update,
@@ -170,7 +198,7 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         mapChildMsg: (value) => adt("form", value)
       });
     case "scoreMsg":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["score"],
         childUpdate: NumberField.update,
@@ -178,163 +206,237 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         mapChildMsg: (value) => adt("scoreMsg", value)
       });
     case "disqualificationReasonMsg":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["disqualificationReason"],
         childUpdate: LongText.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("disqualificationReasonMsg", value)
       });
-    case "submitScore":
+    case "submitScore": {
+      const score: NumberField.Value = FormField.getValue(state.score);
+      const proposal = state.proposal;
+      if (!proposal || score === null) {
+        return [state, []];
+      }
       return [
         startScoreLoading(state),
-        async (state, dispatch) => {
-          state = stopScoreLoading(state);
-          const score: any = FormField.getValue(state.score);
-          if (score === null) {
-            return state;
-          }
-          const result = await api.proposals.cwu.update(
-            state.proposal.id,
-            adt("score", score)
+        [
+          api.proposals.cwu.update(
+            proposal.id,
+            adt("score", score),
+            (response) => adt("onSubmitScoreResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onSubmitScoreResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = stopScoreLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [formState, formCmds] = initForm(
+            opportunity,
+            result.value,
+            state.viewerUser
           );
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                toast(
+          return [
+            state
+              .set("form", formState)
+              .set("showModal", null)
+              .set("proposal", result.value),
+            [
+              ...component_.cmd.mapMany(
+                formCmds,
+                (msg) => adt("form", msg) as Msg
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "success",
                     toasts.statusChanged.success(CWUProposalStatus.Evaluated)
                   )
                 )
-              );
-              return state
-                .set(
-                  "form",
-                  await initForm(
-                    state.opportunity,
-                    result.value,
-                    state.viewerUser
-                  )
-                )
-                .set("showModal", null)
-                .set("proposal", result.value);
-            case "invalid":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    toasts.statusChanged.error(CWUProposalStatus.Evaluated)
-                  )
-                )
-              );
-              return state.update("score", (s) => {
-                if (result.value.proposal?.tag !== "score") {
-                  return s;
-                }
-                return FormField.setErrors(s, result.value.proposal.value);
-              });
-            case "unhandled":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    toasts.statusChanged.error(CWUProposalStatus.Evaluated)
-                  )
-                )
-              );
-              return state;
-          }
+              )
+            ]
+          ];
         }
-      ];
-    case "disqualify":
+        case "invalid":
+          return [
+            state.update("score", (s) => {
+              if (result.value.proposal?.tag !== "score") {
+                return s;
+              }
+              return FormField.setErrors(s, result.value.proposal.value);
+            }),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(CWUProposalStatus.Evaluated)
+                  )
+                )
+              )
+            ]
+          ];
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(CWUProposalStatus.Evaluated)
+                  )
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "disqualify": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
+      const reason: LongText.Value = FormField.getValue(
+        state.disqualificationReason
+      );
       return [
         startDisqualifyLoading(state),
-        async (state, dispatch) => {
-          state = stopDisqualifyLoading(state);
-          const reason: any = FormField.getValue(state.disqualificationReason);
-          const result = await api.proposals.cwu.update(
-            state.proposal.id,
-            adt("disqualify", reason)
+        [
+          api.proposals.cwu.update(
+            proposal.id,
+            adt("disqualify", reason),
+            (response) => adt("onDisqualifyResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onDisqualifyResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = stopDisqualifyLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [formState, formCmds] = initForm(
+            opportunity,
+            result.value,
+            state.viewerUser
           );
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                toast(
+          return [
+            state
+              .set("form", formState)
+              .set("showModal", null)
+              .set("proposal", result.value),
+            [
+              ...component_.cmd.mapMany(
+                formCmds,
+                (msg) => adt("form", msg) as Msg
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "success",
                     toasts.statusChanged.success(CWUProposalStatus.Disqualified)
                   )
                 )
-              );
-              return state
-                .set(
-                  "form",
-                  await initForm(
-                    state.opportunity,
-                    result.value,
-                    state.viewerUser
-                  )
-                )
-                .set("showModal", null)
-                .set("proposal", result.value);
-            case "invalid":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    toasts.statusChanged.error(CWUProposalStatus.Disqualified)
-                  )
-                )
-              );
-              return state.update("disqualificationReason", (s) => {
-                if (result.value.proposal?.tag !== "disqualify") {
-                  return s;
-                }
-                return FormField.setErrors(s, result.value.proposal.value);
-              });
-            case "unhandled":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    toasts.statusChanged.error(CWUProposalStatus.Disqualified)
-                  )
-                )
-              );
-              return state;
-          }
+              )
+            ]
+          ];
         }
-      ];
-    case "award":
+        case "invalid":
+          return [
+            state.update("disqualificationReason", (s) => {
+              if (result.value.proposal?.tag !== "disqualify") {
+                return s;
+              }
+              return FormField.setErrors(s, result.value.proposal.value);
+            }),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(CWUProposalStatus.Disqualified)
+                  )
+                )
+              )
+            ]
+          ];
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(CWUProposalStatus.Disqualified)
+                  )
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "award": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
       return [
         startAwardLoading(state).set("showModal", null),
-        async (state, dispatch) => {
-          state = stopAwardLoading(state);
-          const result = await api.proposals.cwu.update(
-            state.proposal.id,
-            adt("award", "")
-          );
-          if (!api.isValid(result)) {
-            dispatch(toast(adt("error", toasts.awarded.error)));
-            return state;
-          }
-          dispatch(toast(adt("success", toasts.awarded.success)));
-          return state
-            .set(
-              "form",
-              await initForm(state.opportunity, result.value, state.viewerUser)
-            )
-            .set("proposal", result.value);
-        }
+        [
+          api.proposals.cwu.update(proposal.id, adt("award", ""), (response) =>
+            adt("onAwardResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
+    case "onAwardResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      const result = msg.value;
+      state = stopAwardLoading(state);
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(adt("error", toasts.awarded.error))
+            )
+          ]
+        ];
+      }
+      const [formState, formCmds] = initForm(
+        opportunity,
+        result.value,
+        state.viewerUser
+      );
+      return [
+        state.set("form", formState).set("proposal", result.value),
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.awarded.success)
+            )
+          )
+        ]
+      ];
+    }
     default:
-      return [state];
+      return [state, []];
   }
-});
+};
 
-const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
+const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const proposal = state.proposal;
+  if (!proposal) return null;
   const reportCards: ReportCard[] = [
     {
       icon: "star-full",
@@ -362,18 +464,21 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid((props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
+  const proposal = state.proposal;
+  const form = state.form;
+  if (!proposal || !form) return null;
   return (
     <div>
-      <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
+      <ViewTabHeader proposal={proposal} viewerUser={state.viewerUser} />
       <Reporting {...props} />
       <Row className="mt-5">
         <Col xs="12">
           <Form.view
             disabled
-            state={state.form}
-            dispatch={mapComponentDispatch(dispatch, (v) =>
+            state={form}
+            dispatch={component_.base.mapDispatch(dispatch, (v) =>
               adt("form" as const, v)
             )}
           />
@@ -381,21 +486,25 @@ const view: ComponentView<State, Msg> = viewValid((props) => {
       </Row>
     </div>
   );
-});
+};
 
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
 
-  getModal: getModalValid<ValidState, Msg>((state) => {
+  onInitResponse(response) {
+    return adt("onInitResponse", response) as InnerMsg;
+  },
+
+  getModal: (state) => {
     const isScoreLoading = state.scoreLoading > 0;
     const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
       case "award":
-        return {
+        return component_.page.modal.show({
           title: "Award Code With Us Opportunity?",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Award Opportunity",
@@ -412,11 +521,11 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to award this opportunity to this vendor? Once awarded, all of this opportunity's subscribers and vendors with submitted proposals will be notified accordingly."
-        };
+        });
       case "score":
-        return {
+        return component_.page.modal.show({
           title: "Enter Score",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Submit Score",
@@ -447,18 +556,18 @@ export const component: Tab.Component<State, Msg> = {
                 label="Total Score"
                 placeholder="e.g. 75%"
                 help="Enter a score for the proponent’s proposal as a percentage (up to two decimal places)."
-                dispatch={mapComponentDispatch(dispatch, (v) =>
+                dispatch={component_.base.mapDispatch(dispatch, (v) =>
                   adt("scoreMsg" as const, v)
                 )}
                 state={state.score}
               />
             </div>
           )
-        };
+        });
       case "disqualify":
-        return {
+        return component_.page.modal.show({
           title: "Disqualification Reason",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Disqualify",
@@ -493,25 +602,26 @@ export const component: Tab.Component<State, Msg> = {
                 label="Reason"
                 placeholder="Reason"
                 help="Provide a reason for the disqualification of the proponent. This reason will not be shared with the disqualified proponent and is for record-keeping purposes only."
-                dispatch={mapComponentDispatch(dispatch, (v) =>
+                dispatch={component_.base.mapDispatch(dispatch, (v) =>
                   adt("disqualificationReasonMsg" as const, v)
                 )}
                 state={state.disqualificationReason}
               />
             </div>
           )
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
-  }),
+  },
 
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
+    if (!proposal) return component_.page.actions.none();
     const propStatus = proposal.status;
     switch (propStatus) {
       case CWUProposalStatus.UnderReview:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Enter Score",
             symbol_: leftPlacement(iconLinkSymbol("star-full")),
@@ -529,7 +639,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       case CWUProposalStatus.Evaluated:
-        return adt("dropdown", {
+        return component_.page.actions.dropdown({
           text: "Actions",
           loading: false,
           linkGroups: [
@@ -560,7 +670,7 @@ export const component: Tab.Component<State, Msg> = {
           ]
         });
       case CWUProposalStatus.NotAwarded:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Award",
             symbol_: leftPlacement(iconLinkSymbol("award")),
@@ -570,7 +680,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       default:
-        return null;
+        return component_.page.actions.none();
     }
-  })
+  }
 };

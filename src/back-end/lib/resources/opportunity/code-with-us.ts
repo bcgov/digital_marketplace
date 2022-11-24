@@ -827,8 +827,7 @@ const resource: Resource = {
 
           case "addNote": {
             const { note, attachments: noteAttachments } = request.body.value;
-            const validatedNote =
-              opportunityValidation.validateHistoryNote(note);
+            const validatedNote = opportunityValidation.validateNote(note); //TODO changed to validateNote from validateHistoryNote as note-taking was removed from shared
             const validatedNoteAttachments = await validateAttachments(
               connection,
               noteAttachments

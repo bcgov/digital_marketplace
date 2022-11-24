@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import {
   swuProposalStatusToColor,
   swuProposalStatusToTitleCase
@@ -25,7 +25,10 @@ export interface Props {
   viewerUser: User;
 }
 
-const ViewTabHeader: View<Props> = ({ proposal, viewerUser }) => {
+const ViewTabHeader: component.base.View<Props> = ({
+  proposal,
+  viewerUser
+}) => {
   const createdBy = proposal.createdBy;
   const propStatus = proposal.status;
   const items = [

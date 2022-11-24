@@ -1,5 +1,5 @@
 import { PROCUREMENT_CONCIERGE_URL, SOURCE_CODE_URL } from "front-end/config";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Link, {
   AnchorProps,
   emailDest,
@@ -58,7 +58,7 @@ const links: AnchorProps[] = [
   }
 ];
 
-const Footer: View<Record<string, never>> = () => {
+const Footer: component.base.View<Record<string, never>> = () => {
   return (
     <footer className="w-100 bg-c-footer-bg text-light d-print-none">
       <Container>

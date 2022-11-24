@@ -7,46 +7,33 @@
 import { makePageMetadata } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
-import {
-  ComponentView,
-  emptyPageAlerts,
-  GlobalComponentMsg,
-  Immutable,
-  Init,
-  mapComponentDispatch,
-  mapPageAlerts,
-  mapPageModalGlobalComponentMsg,
-  PageComponent,
-  PageGetAlerts,
-  PageGetContextualActions,
-  PageGetMetadata,
-  PageGetModal,
-  PageSidebar,
-  Update,
-  updateComponentChild,
-  updateGlobalComponentChild
-} from "front-end/lib/framework";
+import { component, Immutable } from "front-end/lib/framework";
 import { AvailableIcons } from "front-end/lib/views/icon";
 import React from "react";
 import { adt, ADT } from "shared/lib/types";
 
 // Types & functions to assist with constructing TabComponents inside a PageComponent.
 
-export interface TabComponent<Params, State extends object, Msg>
+export interface TabComponent<Params, State, InnerMsg, Response>
   extends Omit<
-    PageComponent<never, never, State, Msg>,
+    component.page.Component<never, never, State, InnerMsg, Route>,
     "init" | "getMetadata"
   > {
-  init: Init<Params, State>;
+  init: component.base.Init<Params, State, component.page.Msg<InnerMsg, Route>>;
+  onInitResponse(response: Response): InnerMsg;
 }
 
-export interface Tab<Params, State extends object, InnerMsg> {
+export interface Tab<Params, State, InnerMsg, Response> {
   params: Params;
   state: State;
   innerMsg: InnerMsg;
+  response: Response;
 }
 
-type TabsRecord<T> = Record<keyof T, Tab<unknown, any, unknown>>;
+type TabsRecord<T> = Record<
+  keyof T,
+  Tab<unknown, unknown, ADT<unknown, unknown>, unknown>
+>;
 
 type Tabs<T extends TabsRecord<T>> = T;
 
@@ -60,13 +47,14 @@ export type TabState<T extends TabsRecord<T>, K extends TabId<T>> = [
 export type TabMsg<
   T extends TabsRecord<T>,
   K extends TabId<T>
-> = GlobalComponentMsg<Tabs<T>[K]["innerMsg"], Route>;
+> = component.page.Msg<Tabs<T>[K]["innerMsg"], Route>;
 
 export interface TabDefinition<T extends TabsRecord<T>, K extends TabId<T>> {
   component: TabComponent<
     Tabs<T>[K]["params"],
     Tabs<T>[K]["state"],
-    GlobalComponentMsg<Tabs<T>[K]["innerMsg"], Route>
+    Tabs<T>[K]["innerMsg"],
+    Tabs<T>[K]["response"]
   >;
   icon: AvailableIcons;
   title: string;
@@ -91,18 +79,21 @@ export type IdToDefinitionWithState<
 // Types & functions to assist with constructing parents of TabComponents.
 
 export interface ParentState<T extends TabsRecord<T>, K extends TabId<T>> {
-  tab: TabState<T, K>;
-  sidebar: Immutable<MenuSidebar.State>;
+  tab: TabState<T, K> | null;
+  sidebar: Immutable<MenuSidebar.State> | null;
 }
+
+export type ParentInnerMsg<
+  T extends TabsRecord<T>,
+  K extends TabId<T>,
+  InnerMsg
+> = ADT<"tab", TabMsg<T, K>> | ADT<"sidebar", MenuSidebar.Msg> | InnerMsg;
 
 export type ParentMsg<
   T extends TabsRecord<T>,
   K extends TabId<T>,
   InnerMsg
-> = GlobalComponentMsg<
-  ADT<"tab", TabMsg<T, K>> | ADT<"sidebar", MenuSidebar.Msg> | InnerMsg,
-  Route
->;
+> = component.page.Msg<ParentInnerMsg<T, K, InnerMsg>, Route>;
 
 export function makeGetParentModal<
   T extends TabsRecord<T>,
@@ -111,40 +102,48 @@ export function makeGetParentModal<
   InnerMsg
 >(
   idToDefinition: IdToDefinitionWithState<T, K, ExtraState>
-): PageGetModal<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
-  return (state) => {
+): component.page.GetModal<
+  ExtraState & ParentState<T, K>,
+  ParentMsg<T, K, InnerMsg>
+> {
+  return (state): component.page.Modal<ParentMsg<T, K, InnerMsg>> => {
+    if (!state.tab) return component.page.modal.hide();
     const tabId = state.tab[0];
     const definition = idToDefinition(state)(tabId);
     if (!definition.component.getModal) {
-      return null;
+      return component.page.modal.hide();
+    } else {
+      return component.page.modal.map(
+        definition.component.getModal(state.tab[1]),
+        (v) => adt("tab" as const, v)
+      );
     }
-    return mapPageModalGlobalComponentMsg(
-      definition.component.getModal(state.tab[1]),
-      (v) => adt("tab", v)
-    );
   };
 }
 
-export function makeGetParentContextualActions<
+export function makeGetParentActions<
   T extends TabsRecord<T>,
   K extends TabId<T>,
   ExtraState,
   InnerMsg
 >(
   idToDefinition: IdToDefinitionWithState<T, K, ExtraState>
-): PageGetContextualActions<
+): component.page.GetActions<
   ExtraState & ParentState<T, K>,
   ParentMsg<T, K, InnerMsg>
 > {
   return ({ state, dispatch }) => {
+    if (!state.tab) return component.page.actions.none();
     const tabId = state.tab[0];
     const definition = idToDefinition(state)(tabId);
-    if (!definition.component.getContextualActions) {
-      return null;
+    if (!definition.component.getActions) {
+      return component.page.actions.none();
     }
-    return definition.component.getContextualActions({
+    return definition.component.getActions({
       state: state.tab[1],
-      dispatch: mapComponentDispatch(dispatch, (v) => adt("tab" as const, v))
+      dispatch: component.base.mapDispatch(dispatch, (v) =>
+        adt("tab" as const, v)
+      )
     });
   };
 }
@@ -164,8 +163,9 @@ export function makeGetParentMetadata<
   ExtraState
 >(
   params: MakeGetParentMetadataParams<T, K, ExtraState>
-): PageGetMetadata<ExtraState & ParentState<T, K>> {
+): component.page.GetMetadata<ExtraState & ParentState<T, K>> {
   return (state) => {
+    if (!state.tab) return makePageMetadata(params.getTitleSuffix(state));
     return makePageMetadata(
       `${
         params.idToDefinition(state)(state.tab[0]).title
@@ -181,15 +181,20 @@ export function makeGetParentAlerts<
   InnerMsg
 >(
   idToDefinition: IdToDefinitionWithState<T, K, ExtraState>
-): PageGetAlerts<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+): component.page.GetAlerts<
+  ExtraState & ParentState<T, K>,
+  ParentMsg<T, K, InnerMsg>
+> {
   return (state) => {
+    if (!state.tab) return component.page.alerts.empty();
     const tabId = state.tab[0];
     const definition = idToDefinition(state)(tabId);
     if (!definition.component.getAlerts) {
-      return emptyPageAlerts();
+      return component.page.alerts.empty();
     }
-    return mapPageAlerts(definition.component.getAlerts(state.tab[1]), (msg) =>
-      adt("tab" as const, msg)
+    return component.page.alerts.map(
+      definition.component.getAlerts(state.tab[1]),
+      (msg) => adt("tab" as const, msg)
     );
   };
 }
@@ -199,18 +204,23 @@ export function makeParentSidebar<
   K extends TabId<T>,
   ExtraState,
   InnerMsg
->(): PageSidebar<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+>(): component.page.Sidebar<
+  ExtraState & ParentState<T, K>,
+  ParentMsg<T, K, InnerMsg>
+> {
   return {
     size: "medium",
     color: "light",
     isEmptyOnMobile: (state) => {
-      return !state.sidebar.items.length;
+      return !state.sidebar?.items.length;
     },
     view: ({ state, dispatch }) => {
+      const sidebar = state.sidebar;
+      if (!sidebar) return null;
       return (
         <MenuSidebar.view
-          state={state.sidebar}
-          dispatch={mapComponentDispatch(dispatch, (msg) =>
+          state={sidebar as Immutable<MenuSidebar.State>}
+          dispatch={component.base.mapDispatch(dispatch, (msg) =>
             adt("sidebar" as const, msg)
           )}
         />
@@ -223,14 +233,17 @@ type ParentExtraUpdate<
   T extends TabsRecord<T>,
   K extends TabId<T>,
   ExtraState,
-  InnerMsg extends ADT<any, any>
-> = Update<ExtraState & ParentState<T, K>, GlobalComponentMsg<InnerMsg, Route>>;
+  InnerMsg
+> = component.base.Update<
+  ExtraState & ParentState<T, K>,
+  ParentMsg<T, K, InnerMsg>
+>;
 
 interface MakeParentUpdateParams<
   T extends TabsRecord<T>,
   K extends TabId<T>,
   ExtraState,
-  InnerMsg extends ADT<any, any>
+  InnerMsg
 > {
   extraUpdate: ParentExtraUpdate<T, K, ExtraState, InnerMsg>;
   idToDefinition: IdToDefinitionWithState<T, K, ExtraState>;
@@ -240,35 +253,51 @@ export function makeParentUpdate<
   T extends TabsRecord<T>,
   K extends TabId<T>,
   ExtraState,
-  InnerMsg extends ADT<any, any>
+  InnerMsg extends ADT<unknown, unknown>
 >(
   params: MakeParentUpdateParams<T, K, ExtraState, InnerMsg>
-): Update<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
-  return ({ state, msg }) => {
+): component.page.Update<
+  ExtraState & ParentState<T, K>,
+  ParentInnerMsg<T, K, InnerMsg>,
+  Route
+> {
+  return ({
+    state,
+    msg
+  }: component.page.UpdateParams<
+    ExtraState & ParentState<T, K>,
+    ParentInnerMsg<T, K, InnerMsg>,
+    Route
+  >) => {
     switch (msg.tag) {
       case "tab": {
+        if (!state.tab) return [state, []];
         const tabId = state.tab[0];
         const definition = params.idToDefinition(state)(tabId);
-        return updateGlobalComponentChild({
+        return component.base.updateChild({
           state,
           childStatePath: ["tab", "1"],
           childUpdate: definition.component.update,
-          childMsg: msg.value,
-          mapChildMsg: (value) => adt("tab" as const, value as TabMsg<T, K>)
+          childMsg: msg.value as component.page.Msg<T[K]["innerMsg"], Route>,
+          mapChildMsg: (msg1) =>
+            component.page.mapMsg(msg1, (msg2) =>
+              adt("tab" as const, msg2 as TabMsg<T, K>)
+            )
         });
       }
       case "sidebar":
-        return updateComponentChild({
+        return component.base.updateChild({
           state,
           childStatePath: ["sidebar"],
           childUpdate: MenuSidebar.update,
-          childMsg: msg.value,
-          mapChildMsg: (value) => adt("sidebar" as const, value)
+          childMsg: msg.value as MenuSidebar.Msg,
+          mapChildMsg: (value) =>
+            adt("sidebar", value) as ParentMsg<T, K, InnerMsg>
         });
       default:
         return params.extraUpdate({
           state,
-          msg: msg as GlobalComponentMsg<InnerMsg, Route>
+          msg: msg as component.page.Msg<InnerMsg, Route>
         });
     }
   };
@@ -281,13 +310,22 @@ export function makeParentView<
   InnerMsg
 >(
   idToDefinition: IdToDefinitionWithState<T, K, ExtraState>
-): ComponentView<ExtraState & ParentState<T, K>, ParentMsg<T, K, InnerMsg>> {
+): component.page.View<
+  ExtraState & ParentState<T, K>,
+  ParentInnerMsg<T, K, InnerMsg>,
+  Route
+> {
   return function TabWrapper({ state, dispatch }) {
-    const [tabId, tabState] = state.tab;
+    const tab = state.tab;
+    if (!tab) return null;
+    const tabId = tab[0];
+    const tabState = tab[1];
     const definition = idToDefinition(state)(tabId);
     return (
       <definition.component.view
-        dispatch={mapComponentDispatch(dispatch, (v) => adt("tab" as const, v))}
+        dispatch={component.base.mapDispatch(dispatch, (v) =>
+          adt("tab" as const, v)
+        )}
         state={tabState}
       />
     );
