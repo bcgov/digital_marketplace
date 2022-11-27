@@ -1,14 +1,9 @@
 import { Route } from "front-end/lib/app/types";
 import * as History from "front-end/lib/components/table/history";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import {
   swuProposalEventToTitleCase,
@@ -30,7 +25,7 @@ export interface State extends Tab.Params {
 
 export type InnerMsg = ADT<"history", History.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 function getHistoryItems(
   { history }: SWUProposal,
@@ -56,23 +51,25 @@ function getHistoryItems(
   }));
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    history: immutable(
-      await History.init({
-        idNamespace: "swu-proposal-history",
-        items: getHistoryItems(params.proposal, params.viewerUser.type),
-        viewerUser: params.viewerUser
-      })
-    )
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [historyState, historyCmds] = History.init({
+    idNamespace: "swu-proposal-history",
+    items: getHistoryItems(params.proposal, params.viewerUser.type),
+    viewerUser: params.viewerUser
+  });
+  return [
+    {
+      ...params,
+      history: immutable(historyState)
+    },
+    component_.cmd.mapMany(historyCmds, (msg) => adt("history", msg) as Msg)
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "history":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["history"],
         childUpdate: History.update,
@@ -80,11 +77,14 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => ({ tag: "history", value })
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
@@ -97,7 +97,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
                 <h3 className="mb-4">History</h3>
                 <History.view
                   state={state.history}
-                  dispatch={mapComponentDispatch(dispatch, (msg) =>
+                  dispatch={component_.base.mapDispatch(dispatch, (msg) =>
                     adt("history" as const, msg)
                   )}
                 />
@@ -115,5 +115,8 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  }
 };

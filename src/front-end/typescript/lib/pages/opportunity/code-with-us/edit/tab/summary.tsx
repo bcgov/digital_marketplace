@@ -1,11 +1,6 @@
 import { EMPTY_STRING } from "front-end/config";
 import { Route } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  Init,
-  Update
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
 import DescriptionList from "front-end/lib/views/description-list";
@@ -15,29 +10,54 @@ import ReportCardList, {
 } from "front-end/lib/views/report-card-list";
 import Skills from "front-end/lib/views/skills";
 import React from "react";
+import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/code-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 
-export type State = Tab.Params;
+export interface State extends Tab.Params {
+  opportunity: CWUOpportunity | null;
+}
 
-export type InnerMsg = ADT<"noop">;
+export type InnerMsg = ADT<"onInitResponse", Tab.InitResponse> | ADT<"noop">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => params;
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  return [
+    {
+      ...params,
+      opportunity: null
+    },
+    []
+  ];
+};
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const opportunity = msg.value[0];
+      return [
+        state.set("opportunity", opportunity),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
-  const { successfulProponent } = state.opportunity;
+const SuccessfulProponent: component_.page.View<State, InnerMsg, Route> = ({
+  state
+}) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const { successfulProponent } = opportunity;
   if (!successfulProponent || !successfulProponent.score) {
     return null;
   }
@@ -137,8 +157,9 @@ const SuccessfulProponent: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const Details: ComponentView<State, Msg> = ({ state }) => {
+const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   const opportunity = state.opportunity;
+  if (!opportunity) return null;
   const skills = opportunity.skills;
   const items = [
     {
@@ -194,11 +215,13 @@ const Details: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
+  const opportunity = props.state.opportunity;
+  if (!opportunity) return null;
   return (
     <div>
       <EditTabHeader
-        opportunity={props.state.opportunity}
+        opportunity={opportunity}
         viewerUser={props.state.viewerUser}
       />
       <SuccessfulProponent {...props} />
@@ -207,8 +230,11 @@ const view: ComponentView<State, Msg> = (props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> = {
+export const component: Tab.Component<State, InnerMsg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse(response) {
+    return adt("onInitResponse", response);
+  }
 };

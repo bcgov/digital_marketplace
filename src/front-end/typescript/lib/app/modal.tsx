@@ -1,11 +1,11 @@
 import { Msg, State } from "front-end/lib/app/types";
 import * as AcceptNewTerms from "front-end/lib/components/accept-new-app-terms";
-import { PageGetModal } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { adt } from "shared/lib/types";
 
-const getModal: PageGetModal<State, Msg> = (state) => {
+const getModal: component.page.GetModal<State, Msg> = (state) => {
   if (!state.showModal) {
-    return null;
+    return component.page.modal.hide();
   }
   switch (state.showModal) {
     case "acceptNewTerms": {

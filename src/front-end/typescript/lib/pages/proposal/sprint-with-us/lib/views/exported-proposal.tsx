@@ -1,6 +1,6 @@
 import { EMPTY_STRING } from "front-end/config";
 import { fileBlobPath } from "front-end/lib";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import {
   swuProposalStatusToColor,
   swuProposalStatusToTitleCase
@@ -44,12 +44,9 @@ interface TeamQuestionResponseViewProps {
   className?: string;
 }
 
-const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({
-  opportunity,
-  response,
-  index,
-  className
-}) => {
+const TeamQuestionResponseView: component.base.View<
+  TeamQuestionResponseViewProps
+> = ({ opportunity, response, index, className }) => {
   const question = getQuestionByOrder(opportunity, response.order);
   if (!question) {
     return null;
@@ -84,7 +81,7 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({
   );
 };
 
-export const ExportedProposal: View<Props> = ({
+export const ExportedProposal: component.base.View<Props> = ({
   opportunity,
   proposal,
   showOpportunityInformation,

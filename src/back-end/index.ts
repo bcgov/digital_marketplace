@@ -24,7 +24,6 @@ import contentResource from "back-end/lib/resources/content";
 import counterResource from "back-end/lib/resources/counter";
 import emailNotificationsResource from "back-end/lib/resources/email-notifications";
 import fileResource from "back-end/lib/resources/file";
-import noteFileResource from "back-end/lib/resources/note-files";
 import metricsResource from "back-end/lib/resources/metrics";
 import codeWithUsOpportunityResource from "back-end/lib/resources/opportunity/code-with-us";
 import sprintWithUsOpportunityResource from "back-end/lib/resources/opportunity/sprint-with-us";
@@ -151,7 +150,6 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     codeWithUsSubscriberResource,
     sprintWithUsSubscriberResource,
     fileResource,
-    noteFileResource,
     counterResource,
     organizationResource,
     ownedOrganizationResource,

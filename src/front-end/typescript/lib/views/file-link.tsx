@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Link, {
   ExtendAndOmitProps as LinkProps
 } from "front-end/lib/views/link";
@@ -11,7 +11,7 @@ interface ExtraProps {
 
 export type Props = LinkProps<ExtraProps, "dest" | "onClick">;
 
-const FileLink: View<Props> = (props) => {
+const FileLink: component.base.View<Props> = (props) => {
   return (
     <Link
       {...props}

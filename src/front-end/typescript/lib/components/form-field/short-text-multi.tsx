@@ -35,7 +35,7 @@ export type Params = FormField.Params<Value, ChildParams>;
 
 export type Msg = FormField.Msg<InnerChildMsg>;
 
-const childInit: ChildComponent["init"] = async (params) => params;
+const childInit: ChildComponent["init"] = (params) => [params, []];
 
 const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
   switch (msg.tag) {
@@ -47,7 +47,8 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
           });
           msg.value.onChange(vs);
           return vs;
-        })
+        }),
+        []
       ];
     case "add":
       return [
@@ -55,7 +56,8 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
           vs = [...vs, ""];
           msg.value.onChange(vs);
           return vs;
-        })
+        }),
+        []
       ];
     case "remove":
       return [
@@ -63,10 +65,11 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
           vs = vs.filter((v, i) => i !== msg.value.index);
           msg.value.onChange(vs);
           return vs;
-        })
+        }),
+        []
       ];
     default:
-      return [state];
+      return [state, []];
   }
 };
 

@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React from "react";
 import Select from "react-select";
@@ -52,7 +52,7 @@ export interface BaseProps {
   loading?: boolean;
   autoFocus?: boolean;
   options: Options;
-  formatGroupLabel?: View<OptionGroup>;
+  formatGroupLabel?: component.base.View<OptionGroup>;
   className?: string;
   creatable?: boolean;
 }
@@ -71,7 +71,7 @@ export interface MultiProps extends BaseProps {
 
 export type Props = SingleProps | MultiProps;
 
-export const view: View<Props> = (props) => {
+export const view: component.base.View<Props> = (props) => {
   const {
     options,
     formatGroupLabel,
@@ -224,7 +224,7 @@ export const view: View<Props> = (props) => {
         ...baseProps,
         isMulti: true,
         value: props.value,
-        onChange(value, action) {
+        onChange(value) {
           if (value && Array.isArray(value)) {
             props.onChange(value);
           } else if (value) {
@@ -239,7 +239,7 @@ export const view: View<Props> = (props) => {
         ...baseProps,
         isMulti: false,
         value: props.value,
-        onChange(value, action) {
+        onChange(value) {
           if (value && Array.isArray(value)) {
             props.onChange(value[0]);
           } else if (value) {

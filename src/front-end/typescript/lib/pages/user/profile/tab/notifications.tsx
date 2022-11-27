@@ -3,15 +3,9 @@ import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/user/lib/toasts";
@@ -19,46 +13,59 @@ import * as Tab from "front-end/lib/pages/user/profile/tab";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { adt, ADT } from "shared/lib/types";
+import { User, UpdateValidationErrors } from "shared/lib/resources/user";
 
 export interface State extends Tab.Params {
   newOpportunitiesLoading: number;
   newOpportunities: Immutable<Checkbox.State>;
 }
 
-export type InnerMsg = ADT<"newOpportunities", Checkbox.Msg>;
+export type InnerMsg =
+  | ADT<"newOpportunities", Checkbox.Msg>
+  | ADT<
+      "onToggleNewOpportunitiesResponse",
+      api.ResponseValidation<User, UpdateValidationErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
-  return {
-    profileUser,
-    viewerUser,
-    newOpportunitiesLoading: 0,
-    newOpportunities: immutable(
-      await Checkbox.init({
-        errors: [],
-        child: {
-          value: !!profileUser.notificationsOn,
-          id: "user-notifications-new-opportunities"
-        }
-      })
+const init: component_.base.Init<Tab.Params, State, Msg> = ({
+  viewerUser,
+  profileUser
+}) => {
+  const [newOpportunitiesState, newOpportunitiesCmds] = Checkbox.init({
+    errors: [],
+    child: {
+      value: !!profileUser.notificationsOn,
+      id: "user-notifications-new-opportunities"
+    }
+  });
+  return [
+    {
+      profileUser,
+      viewerUser,
+      newOpportunitiesLoading: 0,
+      newOpportunities: immutable(newOpportunitiesState)
+    },
+    component_.cmd.mapMany(newOpportunitiesCmds, (msg) =>
+      adt("newOpportunities", msg)
     )
-  };
+  ];
 };
 
-const startNewOpportunitiesLoading: any = makeStartLoading<State>(
+const startNewOpportunitiesLoading = makeStartLoading<State>(
   "newOpportunitiesLoading"
 );
 const stopNewOpportunitiesLoading = makeStopLoading<State>(
   "newOpportunitiesLoading"
 );
 
-const update: Update<State, Msg> | any = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "newOpportunities": {
       const valueChanged =
         msg.value.tag === "child" && msg.value.value.tag === "onChange";
-      const newOppResult = updateComponentChild({
+      const newOppResult = component_.base.updateChild({
         state,
         childStatePath: ["newOpportunities"],
         childUpdate: Checkbox.update,
@@ -69,45 +76,62 @@ const update: Update<State, Msg> | any = ({ state, msg }) => {
         return newOppResult;
       }
       // Checkbox value has changed, so persist to back-end.
+      const [newState, cmds] = newOppResult;
       return [
-        startNewOpportunitiesLoading(newOppResult[0]),
-        async (state, dispatch) => {
-          // Ensure async updates from child component have been run.
-          if (newOppResult[1]) {
-            const newState = await newOppResult[1](state, dispatch);
-            state = newState || state;
-          }
-          // Persist change to back-end.
-          state = stopNewOpportunitiesLoading(state);
-          const result = await api.users.update(
-            state.profileUser.id,
+        startNewOpportunitiesLoading(newState),
+        [
+          ...cmds,
+          api.users.update(
+            newState.profileUser.id,
             adt(
               "updateNotifications",
-              FormField.getValue(state.newOpportunities)
-            )
-          );
-          if (api.isValid(result)) {
-            dispatch(toast(adt("success", toasts.updated.success)));
-            return state
-              .set("profileUser", result.value)
-              .update("newOpportunities", (v) =>
-                FormField.setValue(v, !!result.value.notificationsOn)
-              );
-          } else {
-            dispatch(toast(adt("error", toasts.updated.error)));
-            return state.update("newOpportunities", (v) =>
-              FormField.setValue(v, !!state.profileUser.notificationsOn)
-            );
-          }
-        }
+              FormField.getValue(newState.newOpportunities)
+            ),
+            (response) => adt("onToggleNewOpportunitiesResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
     }
+    case "onToggleNewOpportunitiesResponse": {
+      state = stopNewOpportunitiesLoading(state);
+      const response = msg.value;
+      if (api.isValid(response)) {
+        return [
+          state
+            .set("profileUser", response.value)
+            .update("newOpportunities", (v) =>
+              FormField.setValue(v, !!response.value.notificationsOn)
+            ),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("success", toasts.updated.success)
+              )
+            )
+          ]
+        ];
+      } else {
+        return [
+          state.update("newOpportunities", (v) =>
+            FormField.setValue(v, !!state.profileUser.notificationsOn)
+          ),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(adt("error", toasts.updated.error))
+            )
+          ]
+        ];
+      }
+    }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   const isNewOpportunitiesLoading = state.newOpportunitiesLoading > 0;
   const isLoading = isNewOpportunitiesLoading;
   return (
@@ -132,7 +156,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
             label="Notify me about..."
             disabled={isLoading}
             state={state.newOpportunities}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("newOpportunities" as const, value)
             )}
           />
@@ -145,5 +169,8 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  }
 };

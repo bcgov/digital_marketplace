@@ -1,11 +1,4 @@
-import {
-  ComponentViewProps,
-  Dispatch,
-  Immutable,
-  Init,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import Link, { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -78,20 +71,23 @@ export function setCapabilities(
   );
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   capabilities,
   showFullTimeSwitch = false
 }) => {
-  return {
-    showFullTimeSwitch,
-    capabilities: capabilities.map((c) => ({
-      ...c,
-      fullTime: !!c.fullTime
-    }))
-  };
+  return [
+    {
+      showFullTimeSwitch,
+      capabilities: capabilities.map((c) => ({
+        ...c,
+        fullTime: !!c.fullTime
+      }))
+    },
+    []
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleChecked":
       return [
@@ -99,7 +95,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           cs.map((c, i) => {
             return i === msg.value ? { ...c, checked: !c.checked } : c;
           })
-        )
+        ),
+        []
       ];
     case "toggleFullTime":
       return [
@@ -107,7 +104,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           cs.map((c, i) => {
             return i === msg.value ? { ...c, fullTime: !c.fullTime } : c;
           })
-        )
+        ),
+        []
       ];
   }
 };
@@ -116,10 +114,10 @@ interface FullTimeSwitchProps {
   fullTime: boolean;
   disabled?: boolean;
   index: number;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-const FullTimeSwitch: View<FullTimeSwitchProps> = ({
+const FullTimeSwitch: component_.base.View<FullTimeSwitchProps> = ({
   fullTime,
   disabled,
   index,
@@ -163,10 +161,10 @@ interface CapabilityProps extends Capability {
   index: number;
   showFullTimeSwitch: boolean;
   disabled?: boolean;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-const Capability: View<CapabilityProps> = ({
+const Capability: component_.base.View<CapabilityProps> = ({
   capability,
   fullTime,
   checked,
@@ -201,11 +199,15 @@ const Capability: View<CapabilityProps> = ({
   );
 };
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row noGutters className="border-top border-left">
       {state.capabilities.map((c, i) => (

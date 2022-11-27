@@ -1,5 +1,5 @@
 import { Route, SharedState } from "front-end/lib/app/types";
-import { GlobalComponentMsg, PageInit } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { includes } from "lodash";
 import { User, UserType } from "shared/lib/resources/user";
 
@@ -10,8 +10,20 @@ export interface AccessControlParams<
   SuccessSharedState = SharedState,
   FailSharedState = SharedState
 > {
-  success: PageInit<RouteParams, SuccessSharedState, PageState, PageMsg>;
-  fail: PageInit<RouteParams, FailSharedState, PageState, PageMsg>;
+  success: component.page.Init<
+    RouteParams,
+    SuccessSharedState,
+    PageState,
+    PageMsg,
+    Route
+  >;
+  fail: component.page.Init<
+    RouteParams,
+    FailSharedState,
+    PageState,
+    PageMsg,
+    Route
+  >;
 }
 
 export interface SharedStateWithGuaranteedSessionUser {
@@ -23,22 +35,17 @@ export function isSignedOut<RouteParams, PageState, PageMsg>(
   params: AccessControlParams<
     RouteParams,
     PageState,
-    GlobalComponentMsg<PageMsg, Route>,
+    PageMsg,
     SharedState,
     SharedStateWithGuaranteedSessionUser
   >
-): PageInit<
-  RouteParams,
-  SharedState,
-  PageState,
-  GlobalComponentMsg<PageMsg, Route>
-> {
-  return async (initParams) => {
+): component.page.Init<RouteParams, SharedState, PageState, PageMsg, Route> {
+  return (initParams) => {
     const { shared } = initParams;
     if (!shared.session) {
-      return await params.success(initParams);
+      return params.success(initParams);
     } else {
-      return await params.fail({
+      return params.fail({
         ...initParams,
         shared: {
           sessionUser: shared.session.user,
@@ -53,19 +60,14 @@ export function isSignedIn<RouteParams, PageState, PageMsg>(
   params: AccessControlParams<
     RouteParams,
     PageState,
-    GlobalComponentMsg<PageMsg, Route>,
+    PageMsg,
     SharedStateWithGuaranteedSessionUser
   >
-): PageInit<
-  RouteParams,
-  SharedState,
-  PageState,
-  GlobalComponentMsg<PageMsg, Route>
-> {
-  return async (initParams) => {
+): component.page.Init<RouteParams, SharedState, PageState, PageMsg, Route> {
+  return (initParams) => {
     const { shared } = initParams;
     if (shared.session) {
-      return await params.success({
+      return params.success({
         ...initParams,
         shared: {
           sessionUser: shared.session.user,
@@ -73,7 +75,7 @@ export function isSignedIn<RouteParams, PageState, PageMsg>(
         }
       });
     } else {
-      return await params.fail(initParams);
+      return params.fail(initParams);
     }
   };
 }
@@ -82,7 +84,7 @@ interface IsUserTypeParams<RouteParams, PageState, PageMsg>
   extends AccessControlParams<
     RouteParams,
     PageState,
-    GlobalComponentMsg<PageMsg, Route>,
+    PageMsg,
     SharedStateWithGuaranteedSessionUser
   > {
   userType: UserType[];
@@ -90,16 +92,11 @@ interface IsUserTypeParams<RouteParams, PageState, PageMsg>
 
 export function isUserType<RouteParams, PageState, PageMsg>(
   params: IsUserTypeParams<RouteParams, PageState, PageMsg>
-): PageInit<
-  RouteParams,
-  SharedState,
-  PageState,
-  GlobalComponentMsg<PageMsg, Route>
-> {
-  return async (initParams) => {
+): component.page.Init<RouteParams, SharedState, PageState, PageMsg, Route> {
+  return (initParams) => {
     const { shared } = initParams;
     if (shared.session && includes(params.userType, shared.session.user.type)) {
-      return await params.success({
+      return params.success({
         ...initParams,
         shared: {
           sessionUser: shared.session.user,
@@ -107,7 +104,7 @@ export function isUserType<RouteParams, PageState, PageMsg>(
         }
       });
     } else {
-      return await params.fail(initParams);
+      return params.fail(initParams);
     }
   };
 }

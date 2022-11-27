@@ -1,6 +1,6 @@
 import {
   getAlertsValid,
-  getContextualActionsValid,
+  getActionsValid,
   getMetadataValid,
   getModalValid,
   makePageMetadata,
@@ -9,26 +9,29 @@ import {
   viewValid
 } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
-import router from "front-end/lib/app/router";
-import { SharedState } from "front-end/lib/app/types";
+import * as api from "front-end/lib/http/api";
+import { SharedState, Route } from "front-end/lib/app/types";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import {
   Immutable,
   immutable,
-  mergePageAlerts,
-  PageAlerts,
-  PageComponent,
-  PageInit,
-  replaceRoute
+  component as component_
 } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/organization/edit/tab";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
-import { isAdmin, isVendor, UserType } from "shared/lib/resources/user";
+import { isAdmin, isVendor, UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { AffiliationMember } from "shared/lib/resources/affiliation";
+import {
+  Organization,
+  doesOrganizationMeetSWUQualification
+} from "shared/lib/resources/organization";
 
-type ValidState<K extends Tab.TabId> = Tab.ParentState<K>;
+interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
+  viewerUser: User;
+}
 
 export type State_<K extends Tab.TabId> = Validation<
   Immutable<ValidState<K>>,
@@ -37,7 +40,14 @@ export type State_<K extends Tab.TabId> = Validation<
 
 export type State = State_<Tab.TabId>;
 
-export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, ADT<"noop">>;
+export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
+  K,
+  ADT<"onInitResponse", [Tab.TabId, Organization, AffiliationMember[]]>
+>;
+
+export type InnerMsg = InnerMsg_<Tab.TabId>;
+
+export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, InnerMsg>;
 
 export type Msg = Msg_<Tab.TabId>;
 
@@ -46,84 +56,141 @@ export interface RouteParams {
   tab?: Tab.TabId;
 }
 
-function makeInit<K extends Tab.TabId>(): PageInit<
+function makeInit<K extends Tab.TabId>(): component_.page.Init<
   RouteParams,
   SharedState,
   State_<K>,
-  Msg_<K>
+  InnerMsg_<K>,
+  Route
 > {
   return isUserType({
     userType: [UserType.Vendor, UserType.Admin],
-
-    async success({ routePath, dispatch, routeParams, shared }) {
-      const params = await Tab.initParams(
-        routeParams.orgId,
-        shared.sessionUser
-      );
-      if (!params) {
-        dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-        return invalid(null);
-      }
-      // Set up the visible tab state.
-      const tabId = routeParams.tab || "organization";
-      const tabState = immutable(
-        await Tab.idToDefinition(tabId, params.organization).component.init(
-          params
-        )
-      );
-      // Everything checks out, return valid state.
-      return valid(
-        immutable({
-          tab: [tabId, tabState],
-          sidebar: await Tab.makeSidebarState(params.organization, tabId)
-        })
-      ) as State_<K>;
-    },
-    async fail({ routePath, dispatch, shared, routeParams }) {
-      if (!shared.session) {
-        dispatch(
-          replaceRoute(
-            adt("signIn" as const, {
-              redirectOnSuccess: router.routeToUrl(
-                adt("orgEdit", { orgId: routeParams.orgId })
-              )
-            })
+    success({ routePath, routeParams, shared }) {
+      const orgId = routeParams.orgId;
+      const viewerUser = shared.sessionUser;
+      return [
+        valid(
+          immutable({
+            viewerUser,
+            tab: null,
+            sidebar: null
+          })
+        ) as State_<K>,
+        [
+          component_.cmd.join(
+            api.organizations.readOne(orgId, (response) =>
+              api.isValid(response) ? response.value : null
+            ) as component_.Cmd<Organization | null>,
+            api.affiliations.readManyForOrganization(orgId)((response) =>
+              api.isValid(response) ? response.value : null
+            ) as component_.Cmd<AffiliationMember[] | null>,
+            (organization, affiliations) => {
+              if (!organization || !affiliations)
+                return component_.global.replaceRouteMsg(
+                  adt("notFound" as const, { path: routePath })
+                );
+              return adt("onInitResponse", [
+                routeParams.tab || "organization",
+                organization,
+                affiliations
+              ]) as Msg;
+            }
           )
-        );
-      } else {
-        dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-      }
-      return invalid(null);
+        ]
+      ];
+    },
+    fail({ routePath, shared }) {
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(
+              shared.session
+                ? adt("notFound" as const, { path: routePath })
+                : adt("signIn" as const, {
+                    redirectOnSuccess: routePath
+                  })
+            )
+          )
+        ]
+      ];
     }
   });
 }
 
-function makeComponent<K extends Tab.TabId>(): PageComponent<
+function makeComponent<K extends Tab.TabId>(): component_.page.Component<
   RouteParams,
   SharedState,
   State_<K>,
-  Msg_<K>
+  InnerMsg_<K>,
+  Route
 > {
   const idToDefinition: TabbedPage.IdToDefinitionWithState<
     Tab.Tabs,
     K,
     ValidState<K>
-  > = (state) => (id) => Tab.idToDefinition(id, state.tab[1].organization);
+  > = () => Tab.idToDefinition;
   return {
     init: makeInit(),
     update: updateValid(
       TabbedPage.makeParentUpdate({
-        extraUpdate: ({ state }) => [state],
-        idToDefinition
+        idToDefinition,
+        extraUpdate: ({ state, msg }) => {
+          switch (msg.tag) {
+            case "onInitResponse": {
+              const [tabId, organization, affiliations] = msg.value;
+              const swuQualified =
+                doesOrganizationMeetSWUQualification(organization);
+              // Initialize the sidebar.
+              const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
+                tabId,
+                organization
+              );
+              // Initialize the tab.
+              const tabComponent = Tab.idToDefinition(tabId).component;
+              const [tabState, tabCmds] = tabComponent.init({
+                organization,
+                swuQualified,
+                affiliations,
+                viewerUser: state.viewerUser
+              });
+              // Everything checks out, return valid state.
+              return [
+                state
+                  .set("tab", [tabId as K, immutable(tabState)])
+                  .set("sidebar", immutable(sidebarState)),
+                [
+                  ...component_.cmd.mapMany(
+                    sidebarCmds,
+                    (msg) => adt("sidebar", msg) as Msg
+                  ),
+                  ...component_.cmd.mapMany(
+                    tabCmds,
+                    (msg) => adt("tab", msg) as Msg
+                  ),
+                  component_.cmd.dispatch(
+                    component_.page.mapMsg(
+                      tabComponent.onInitResponse(null),
+                      (msg) => adt("tab", msg)
+                    ) as Msg
+                  )
+                ]
+              ];
+            }
+            default:
+              return [state, []];
+          }
+        }
       })
     ),
     view: viewValid(TabbedPage.makeParentView(idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
     getAlerts: getAlertsValid((state) => {
-      return mergePageAlerts(
+      return component_.page.alerts.merge(
         {
           info: (() => {
             if (
+              state.tab &&
               !state.tab[1].swuQualified &&
               state.tab[0] !== "qualification"
             ) {
@@ -164,18 +231,20 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<
             return [];
           })()
         },
-        TabbedPage.makeGetParentAlerts(idToDefinition) as PageAlerts<Msg>
+        TabbedPage.makeGetParentAlerts(
+          idToDefinition
+        ) as component_.page.Alerts<Msg>
       );
     }),
     getModal: getModalValid(TabbedPage.makeGetParentModal(idToDefinition)),
-    getContextualActions: getContextualActionsValid(
-      TabbedPage.makeGetParentContextualActions(idToDefinition)
+    getActions: getActionsValid(
+      TabbedPage.makeGetParentActions(idToDefinition)
     ),
     getMetadata: getMetadataValid(
       TabbedPage.makeGetParentMetadata({
         idToDefinition,
         getTitleSuffix: (state) => {
-          return state.tab[0] === "organization"
+          return !state.tab || state.tab[0] === "organization"
             ? "Edit Organization"
             : `${state.tab[1].organization.legalName} — Edit Organization`;
         }
@@ -185,5 +254,10 @@ function makeComponent<K extends Tab.TabId>(): PageComponent<
   };
 }
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> =
-  makeComponent();
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = makeComponent();

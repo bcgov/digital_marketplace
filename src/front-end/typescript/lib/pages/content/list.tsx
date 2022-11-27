@@ -1,5 +1,5 @@
 import {
-  getContextualActionsValid,
+  getActionsValid,
   makePageMetadata,
   updateValid,
   ValidatedState,
@@ -9,16 +9,9 @@ import { isUserType } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  mapComponentDispatch,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { slugPath } from "front-end/lib/pages/content/lib";
@@ -30,12 +23,12 @@ import Link, {
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { compareStrings, formatDate } from "shared/lib";
-import { Content } from "shared/lib/resources/content";
+import { ContentSlim } from "shared/lib/resources/content";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
 
-interface TableContent extends Content {
+interface TableContent extends ContentSlim {
   slugPath: string;
 }
 
@@ -46,68 +39,90 @@ interface ValidState {
 
 export type State = ValidatedState<ValidState>;
 
-type InnerMsg = ADT<"table", Table.Msg>;
+export type InnerMsg =
+  | ADT<"table", Table.Msg>
+  | ADT<"onInitResponse", api.ResponseValidation<ContentSlim[], string[]>>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<
+export const init: component_.page.Init<
   RouteParams,
+  SharedState,
   State,
-  Msg
->({
+  InnerMsg,
+  Route
+> = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Admin],
-  async success({ routeParams, shared }) {
-    let content: TableContent[] = [];
-    const result = await api.content.readMany();
-    if (api.isValid(result)) {
-      content = result.value
-        .map((c) => ({
-          ...c,
-          slugPath: slugPath(c.slug)
-        }))
-        .sort((a, b) => compareStrings(a.title, b.title));
-    }
-    return valid(
-      immutable({
-        content,
-        table: immutable(
-          await Table.init({
-            idNamespace: "content-list"
-          })
-        )
-      })
-    );
-  },
-  async fail({ dispatch, routePath }) {
-    dispatch(
-      replaceRoute(
-        adt("notFound" as const, {
-          path: routePath
+  success() {
+    const [tableState, tableCmds] = Table.init({
+      idNamespace: "content-list"
+    });
+    return [
+      valid(
+        immutable({
+          content: [] as TableContent[],
+          table: immutable(tableState)
         })
-      )
-    );
-    return invalid(null);
+      ),
+      [
+        ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
+        api.content.readMany((response) =>
+          adt("onInitResponse", response)
+        ) as component_.Cmd<Msg>
+      ]
+    ];
+  },
+  fail({ routePath }) {
+    return [
+      invalid(null),
+      [
+        component_.cmd.dispatch(
+          component_.global.replaceRouteMsg(
+            adt("notFound" as const, {
+              path: routePath
+            })
+          )
+        )
+      ]
+    ];
   }
 });
 
-export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "table":
-      return updateComponentChild({
-        state,
-        childStatePath: ["table"],
-        childUpdate: Table.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("table", value)
-      });
-    default:
-      return [state];
-  }
-});
+export const update: component_.page.Update<State, InnerMsg, Route> =
+  updateValid(({ state, msg }) => {
+    switch (msg.tag) {
+      case "onInitResponse": {
+        const response = msg.value;
+        let content: TableContent[] = [];
+        if (api.isValid(response)) {
+          content = response.value
+            .map((c) => ({
+              ...c,
+              slugPath: slugPath(c.slug)
+            }))
+            .sort((a, b) => compareStrings(a.title, b.title));
+        }
+        return [
+          state.set("content", content),
+          [component_.cmd.dispatch(component_.page.readyMsg())]
+        ];
+      }
+      case "table":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["table"],
+          childUpdate: Table.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("table", value)
+        });
+      default:
+        return [state, []];
+    }
+  });
 
-function tableHeadCells(state: Immutable<ValidState>): Table.HeadCells {
+function tableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Title",
@@ -170,7 +185,7 @@ function tableBodyRows(state: Immutable<ValidState>): Table.BodyRows {
   });
 }
 
-export const view: ComponentView<State, Msg> = viewValid(
+export const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state, dispatch }) => {
     return (
       <div>
@@ -179,10 +194,10 @@ export const view: ComponentView<State, Msg> = viewValid(
             <h1 className="mb-5">Content Management</h1>
             <h2 className="mb-4">Pages</h2>
             <Table.view
-              headCells={tableHeadCells(state)}
+              headCells={tableHeadCells()}
               bodyRows={tableBodyRows(state)}
               state={state.table}
-              dispatch={mapComponentDispatch(dispatch, (msg) =>
+              dispatch={component_.base.mapDispatch(dispatch, (msg) =>
                 adt("table" as const, msg)
               )}
             />
@@ -193,14 +208,20 @@ export const view: ComponentView<State, Msg> = viewValid(
   }
 );
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
   getMetadata() {
     return makePageMetadata("Content");
   },
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  getActions: getActionsValid(() => {
     return adt("links", [
       {
         children: "Create Page",

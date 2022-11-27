@@ -1,27 +1,24 @@
-import * as router from "front-end/lib/app/router";
-import {
-  ComponentView,
-  ComponentViewProps,
-  View,
-  ViewElementChildren
-} from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Link, { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import Sticky from "front-end/lib/views/sidebar/sticky";
 import React from "react";
 
-interface Params<State extends object, Msg> {
-  showBackLink?: boolean;
+interface Params<State, Msg> {
+  showBackLink?: Msg;
   showOnMobile?: boolean;
-  getFooter: ComponentView<State, Msg>;
-  getTitle(state: State): ViewElementChildren;
-  getDescription(state: State): ViewElementChildren;
+  getFooter: component.base.ComponentView<State, Msg>;
+  getTitle(state: State): component.base.ViewElementChildren;
+  getDescription(state: State): component.base.ViewElementChildren;
 }
 
 function makeSidebar<
-  State extends object,
+  State,
   Msg,
-  Props extends ComponentViewProps<State, Msg> = ComponentViewProps<State, Msg>
->(params: Params<State, Msg>): View<Props> {
+  Props extends component.base.ComponentViewProps<
+    State,
+    Msg
+  > = component.base.ComponentViewProps<State, Msg>
+>(params: Params<State, Msg>): component.base.View<Props> {
   const {
     showBackLink = false,
     showOnMobile = true,
@@ -30,7 +27,7 @@ function makeSidebar<
     getDescription
   } = params;
   return function StickyWrapper(props) {
-    const { state } = props;
+    const { state, dispatch } = props;
     const footer = getFooter(props);
     return (
       <div
@@ -43,7 +40,7 @@ function makeSidebar<
               color="secondary"
               className="font-size-small d-flex flex-row flex-nowrap align-items-center mt-md-n5 mb-4"
               symbol_={leftPlacement(iconLinkSymbol("arrow-left"))}
-              onClick={() => router.back()}>
+              onClick={() => dispatch(showBackLink)}>
               Go Back
             </Link>
           ) : null}

@@ -1,16 +1,9 @@
 import { FORM_FIELD_DEBOUNCE_DURATION } from "front-end/config";
 import {
-  ComponentViewProps,
-  Dispatch,
   immutable,
   Immutable,
-  mapComponentDispatch,
-  updateComponentChild,
-  View,
-  ViewElement,
-  ViewElementChildren
+  component as component_
 } from "front-end/lib/framework";
-import * as framework from "front-end/lib/framework";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import { debounce, get } from "lodash";
 import React, { CSSProperties } from "react";
@@ -41,7 +34,7 @@ export interface ChildProps<
   InnerChildMsg
 > {
   state: Immutable<ChildState>;
-  dispatch: Dispatch<ChildMsg<InnerChildMsg>>;
+  dispatch: component_.base.Dispatch<ChildMsg<InnerChildMsg>>;
   validityClassName: string;
   className?: string;
   disabled?: boolean;
@@ -55,7 +48,7 @@ export type ChildComponent<
   ChildState extends ChildStateBase<Value>,
   InnerChildMsg,
   ExtraChildProps = unknown
-> = framework.Component<
+> = component_.base.Component<
   ChildParams,
   ChildState,
   ChildMsg<InnerChildMsg>,
@@ -87,7 +80,10 @@ export interface ViewProps<
   ChildState extends ChildStateBase<Value>,
   InnerChildMsg,
   ExtraChildProps = unknown
-> extends ComponentViewProps<State<Value, ChildState>, Msg<InnerChildMsg>> {
+> extends component_.base.ComponentViewProps<
+    State<Value, ChildState>,
+    Msg<InnerChildMsg>
+  > {
   extraChildProps: ExtraChildProps;
   className?: string;
   labelClassName?: string;
@@ -96,8 +92,8 @@ export interface ViewProps<
   disabled?: boolean;
   placeholder?: string;
   label?: string;
-  help?: ViewElementChildren;
-  hint?: ViewElementChildren;
+  help?: component_.base.ViewElementChildren;
+  hint?: component_.base.ViewElementChildren;
   action?: {
     icon: AvailableIcons;
     onClick(): void;
@@ -110,7 +106,7 @@ export type Component<
   ChildState extends ChildStateBase<Value>,
   InnerChildMsg,
   ExtraChildProps = unknown
-> = framework.Component<
+> = component_.base.Component<
   Params<Value, ChildParams>,
   State<Value, ChildState>,
   Msg<InnerChildMsg>,
@@ -138,13 +134,21 @@ function makeInit<
   InnerChildMsg,
   ExtraChildProps
 >["init"] {
-  return async (params) => ({
-    id: params.child.id,
-    errors: params.errors,
-    showHelp: false,
-    child: immutable(await childInit(params.child)),
-    validate: params.validate || null
-  });
+  return (params) => {
+    const [childState, childCmds] = childInit(params.child);
+    return [
+      {
+        id: params.child.id,
+        errors: params.errors,
+        showHelp: false,
+        child: immutable(childState),
+        validate: params.validate || null
+      },
+      childCmds.map((c) =>
+        component_.cmd.map(c, (childMsg) => adt("child", childMsg))
+      )
+    ];
+  };
 }
 
 function makeUpdate<
@@ -171,11 +175,11 @@ function makeUpdate<
   return ({ state, msg }) => {
     switch (msg.tag) {
       case "toggleHelp":
-        return [state.update("showHelp", (v) => !v)];
+        return [state.update("showHelp", (v: boolean) => !v), []];
       case "validate":
-        return [state, async (state) => validate(state)];
+        return [validate(state), []];
       case "child":
-        return updateComponentChild({
+        return component_.base.updateChild({
           state,
           mapChildMsg: (value) => adt("child" as const, value),
           childStatePath: ["child"],
@@ -183,14 +187,17 @@ function makeUpdate<
           childMsg: msg.value,
           updateAfter: (state) => {
             if (get(msg, ["value", "tag"]) === "@validate") {
-              return [validate(state)];
+              return [
+                state,
+                [component_.cmd.dispatch<Msg<InnerChildMsg>>(adt("validate"))]
+              ];
             } else {
-              return [state];
+              return [state, []];
             }
           }
         });
       default:
-        return [state];
+        return [state, []];
     }
   };
 }
@@ -201,7 +208,7 @@ function ConditionalHelpToggle<
   InnerChildMsg
 >(
   props: ViewProps<Value, ChildState, InnerChildMsg>
-): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { dispatch, help } = props;
   if (help) {
     return (
@@ -223,7 +230,9 @@ function ConditionalHelpToggle<
   }
 }
 
-export const ViewRequiredAsterisk: View<Record<string, never>> = () => {
+export const ViewRequiredAsterisk: component_.base.View<
+  Record<string, never>
+> = () => {
   return (
     <span className="font-weight-bold text-c-form-field-required ml-1">*</span>
   );
@@ -235,7 +244,7 @@ export function ConditionalLabel<
   InnerChildMsg
 >(
   props: ViewProps<Value, ChildState, InnerChildMsg>
-): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state, label, required, disabled, labelClassName, action } = props;
   const className = `font-weight-bold d-flex flex-nowrap align-items-end ${
     labelClassName || ""
@@ -271,7 +280,7 @@ function ConditionalHelp<
   InnerChildMsg
 >(
   props: ViewProps<Value, ChildState, InnerChildMsg>
-): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state, help } = props;
   if (help && state.showHelp) {
     return (
@@ -290,7 +299,7 @@ function ConditionalHint<
   InnerChildMsg
 >(
   props: ViewProps<Value, ChildState, InnerChildMsg>
-): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   if (props.hint) {
     return <FormText color="secondary">{props.hint}</FormText>;
   } else {
@@ -304,7 +313,7 @@ function ConditionalErrors<
   InnerChildMsg
 >(
   props: ViewProps<Value, ChildState, InnerChildMsg>
-): ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
+): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state } = props;
   if (state.errors.length) {
     const errorElements = state.errors.map((error, i) => {
@@ -338,7 +347,8 @@ function makeView<
   ExtraChildProps
 >["view"] {
   const debouncedValidate = debounce(
-    (dispatch: Dispatch<Msg<InnerChildMsg>>) => dispatch(adt("validate")),
+    (dispatch: component_.base.Dispatch<Msg<InnerChildMsg>>) =>
+      dispatch(adt("validate")),
     FORM_FIELD_DEBOUNCE_DURATION
   );
   return function FormWrapper(props) {
@@ -361,7 +371,7 @@ function makeView<
           validityClassName={validityClassName}
           disabled={props.disabled}
           placeholder={props.placeholder}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("child" as const, value)
           )}
           onChange={() => debouncedValidate(dispatch)}
@@ -404,7 +414,7 @@ export function makeComponent<
 
 export function getValue<Value, ChildState extends ChildStateBase<Value>>(
   state: Immutable<State<Value, ChildState>>
-): Value | any {
+): Value {
   return state.child.value;
 }
 
@@ -424,7 +434,7 @@ export function updateValue<Value, ChildState extends ChildStateBase<Value>>(
 }
 
 export function validate<Value, ChildState extends ChildStateBase<Value>>(
-  state: Immutable<State<Value, ChildState>> | any
+  state: Immutable<State<Value, ChildState>>
 ): Immutable<State<Value, ChildState>> {
   return state.validate
     ? validateAndSetValue(state, getValue(state), state.validate)

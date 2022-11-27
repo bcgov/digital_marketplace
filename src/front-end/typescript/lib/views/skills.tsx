@@ -1,5 +1,5 @@
 import { EMPTY_STRING } from "front-end/config";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Badge from "front-end/lib/views/badge";
 import React from "react";
 
@@ -8,7 +8,7 @@ export interface Props {
   className?: string;
 }
 
-const Skills: View<Props> = ({ skills, className = "" }) => {
+const Skills: component.base.View<Props> = ({ skills, className = "" }) => {
   return (
     <div className={`d-flex flex-wrap ${className}`}>
       {skills.length

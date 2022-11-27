@@ -12,16 +12,9 @@ import { Route, SharedState } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  mapComponentDispatch,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import { userTypeToTitleCase } from "front-end/lib/pages/user/lib";
 import * as ProfileForm from "front-end/lib/pages/user/lib/components/profile-form";
@@ -52,54 +45,96 @@ type InnerMsg =
   | ADT<"profileForm", ProfileForm.Msg>
   | ADT<"acceptedTerms", Checkbox.Msg>
   | ADT<"notificationsOn", Checkbox.Msg>
-  | ADT<"completeProfile">;
+  | ADT<"completeProfile">
+  | ADT<"onCompleteProfileResponse", ProfileForm.PersistResult>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = isUserType({
   userType: [UserType.Vendor],
-  async success({ shared, dispatch }) {
+  success({ shared }) {
     const user = shared.sessionUser;
     if (user.lastAcceptedTermsAt) {
-      dispatch(replaceRoute(adt("dashboard" as const, null)));
-      return invalid(null);
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(adt("dashboard" as const, null))
+          )
+        ]
+      ];
     }
-    return valid(
-      immutable({
-        completeProfileLoading: 0,
-        user,
-        mustAcceptTerms: mustAcceptTerms(user),
-        profileForm: immutable(await ProfileForm.init({ user })),
-        acceptedTerms: immutable(
-          await Checkbox.init({
-            errors: [],
-            child: {
-              value: !!user.acceptedTermsAt,
-              id: "user-sign-up-step-two-terms"
-            }
-          })
+    const [profileFormState, profileFormCmds] = ProfileForm.init({ user });
+    const [acceptedTermsState, acceptedTermsCmds] = Checkbox.init({
+      errors: [],
+      child: {
+        value: !!user.acceptedTermsAt,
+        id: "user-sign-up-step-two-terms"
+      }
+    });
+    const [notificationsOnState, notificationsOnCmds] = Checkbox.init({
+      errors: [],
+      child: {
+        value: !!user.notificationsOn,
+        id: "user-sign-up-step-two-notifications"
+      }
+    });
+    return [
+      valid(
+        immutable({
+          completeProfileLoading: 0,
+          user,
+          mustAcceptTerms: mustAcceptTerms(user),
+          profileForm: immutable(profileFormState),
+          acceptedTerms: immutable(acceptedTermsState),
+          notificationsOn: immutable(notificationsOnState)
+        })
+      ) as State,
+      [
+        component_.cmd.dispatch(component_.page.readyMsg()),
+        ...component_.cmd.mapMany(
+          profileFormCmds,
+          (msg) => adt("profileForm", msg) as Msg
         ),
-        notificationsOn: immutable(
-          await Checkbox.init({
-            errors: [],
-            child: {
-              value: !!user.notificationsOn,
-              id: "user-sign-up-step-two-notifications"
-            }
-          })
+        ...component_.cmd.mapMany(
+          acceptedTermsCmds,
+          (msg) => adt("acceptedTerms", msg) as Msg
+        ),
+        ...component_.cmd.mapMany(
+          notificationsOnCmds,
+          (msg) => adt("notificationsOn", msg) as Msg
         )
-      })
-    );
+      ]
+    ];
   },
-  async fail({ shared, dispatch }) {
+  fail({ shared }) {
     if (shared.session?.user) {
-      dispatch(replaceRoute(adt("dashboard" as const, null)));
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(adt("dashboard" as const, null))
+          )
+        ]
+      ];
     } else {
-      dispatch(replaceRoute(adt("signIn" as const, {})));
+      return [
+        invalid(null),
+        [
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(adt("signIn" as const, {}))
+          )
+        ]
+      ];
     }
-    return invalid(null);
   }
 });
 
@@ -110,61 +145,86 @@ const stopCompleteProfileLoading = makeStopLoading<ValidState>(
   "completeProfileLoading"
 );
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "profileForm":
-      return updateComponentChild({
-        state,
-        childStatePath: ["profileForm"],
-        childUpdate: ProfileForm.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("profileForm", value)
-      });
-    case "acceptedTerms":
-      return updateComponentChild({
-        state,
-        childStatePath: ["acceptedTerms"],
-        childUpdate: Checkbox.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("acceptedTerms", value)
-      });
-    case "notificationsOn":
-      return updateComponentChild({
-        state,
-        childStatePath: ["notificationsOn"],
-        childUpdate: Checkbox.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("notificationsOn", value)
-      });
-    case "completeProfile":
-      return [
-        startCompleteProfileLoading(state),
-        async (state, dispatch) => {
-          const result = await ProfileForm.persist({
-            state: state.profileForm,
-            userId: state.user.id,
-            acceptedTerms:
-              state.mustAcceptTerms && FormField.getValue(state.acceptedTerms),
-            notificationsOn: FormField.getValue(state.notificationsOn)
-          });
-          switch (result.tag) {
-            case "valid":
-              dispatch(replaceRoute(adt("dashboard" as const, null)));
-              return (state = state
-                .set("user", result.value[1])
-                .set("profileForm", result.value[0]));
-            case "invalid":
-              return stopCompleteProfileLoading(state).set(
+const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
+  ({ state, msg }) => {
+    switch (msg.tag) {
+      case "profileForm":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["profileForm"],
+          childUpdate: ProfileForm.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("profileForm", value)
+        });
+      case "acceptedTerms":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["acceptedTerms"],
+          childUpdate: Checkbox.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("acceptedTerms", value)
+        });
+      case "notificationsOn":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["notificationsOn"],
+          childUpdate: Checkbox.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("notificationsOn", value)
+        });
+      case "completeProfile":
+        return [
+          startCompleteProfileLoading(state),
+          [
+            component_.cmd.map(
+              ProfileForm.persist({
+                state: state.profileForm,
+                userId: state.user.id,
+                acceptedTerms:
+                  state.mustAcceptTerms &&
+                  FormField.getValue(state.acceptedTerms),
+                notificationsOn: FormField.getValue(state.notificationsOn)
+              }),
+              (result) => adt("onCompleteProfileResponse", result)
+            )
+          ]
+        ];
+      case "onCompleteProfileResponse": {
+        const result = msg.value;
+        switch (result.tag) {
+          case "valid": {
+            const [formState, formCmds, user] = result.value;
+            return [
+              state.set("user", user).set("profileForm", formState),
+              [
+                ...component_.cmd.mapMany(
+                  formCmds,
+                  (msg) => adt("profileForm", msg) as Msg
+                ),
+                component_.cmd.dispatch(
+                  component_.global.replaceRouteMsg(
+                    adt("dashboard" as const, null)
+                  )
+                )
+              ]
+            ];
+          }
+          case "invalid":
+          default:
+            return [
+              stopCompleteProfileLoading(state).set(
                 "profileForm",
                 result.value
-              );
-          }
+              ),
+              []
+            ];
         }
-      ];
-    default:
-      return [state];
+      }
+      default:
+        return [state, []];
+    }
   }
-});
+);
 
 function isValid(state: Immutable<ValidState>): boolean {
   return (
@@ -173,10 +233,10 @@ function isValid(state: Immutable<ValidState>): boolean {
   );
 }
 
-const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({
-  state,
-  dispatch
-}) => {
+const ViewProfileFormCheckboxes: component_.base.ComponentView<
+  ValidState,
+  Msg
+> = ({ state, dispatch }) => {
   const isDisabled = state.completeProfileLoading > 0;
   return (
     <Row className="mt-4">
@@ -202,7 +262,7 @@ const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({
             }}
             disabled={isDisabled}
             state={state.acceptedTerms}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("acceptedTerms" as const, value)
             )}
           />
@@ -213,7 +273,7 @@ const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({
           }}
           disabled={isDisabled}
           state={state.notificationsOn}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("notificationsOn" as const, value)
           )}
         />
@@ -222,10 +282,10 @@ const ViewProfileFormCheckboxes: ComponentView<ValidState, Msg> = ({
   );
 };
 
-const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({
-  state,
-  dispatch
-}) => {
+const ViewProfileFormButtons: component_.base.ComponentView<
+  ValidState,
+  Msg
+> = ({ state, dispatch }) => {
   const isCompleteProfileLoading = state.completeProfileLoading > 0;
   const isDisabled = !isValid(state) || isCompleteProfileLoading;
   return (
@@ -245,25 +305,34 @@ const ViewProfileFormButtons: ComponentView<ValidState, Msg> = ({
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid((props) => {
-  const { state, dispatch } = props;
-  const isDisabled = state.completeProfileLoading > 0;
-  return (
-    <div>
-      <ProfileForm.view
-        disabled={isDisabled}
-        state={state.profileForm}
-        dispatch={mapComponentDispatch(dispatch, (value) =>
-          adt("profileForm" as const, value)
-        )}
-      />
-      <ViewProfileFormCheckboxes {...props} />
-      <ViewProfileFormButtons {...props} />
-    </div>
-  );
-});
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  (props) => {
+    const { state, dispatch } = props;
+    const isDisabled = state.completeProfileLoading > 0;
+    return (
+      <div>
+        <ProfileForm.view
+          disabled={isDisabled}
+          state={state.profileForm}
+          dispatch={component_.base.mapDispatch(
+            dispatch,
+            (value) => adt("profileForm" as const, value) as Msg
+          )}
+        />
+        <ViewProfileFormCheckboxes {...props} />
+        <ViewProfileFormButtons {...props} />
+      </div>
+    );
+  }
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,

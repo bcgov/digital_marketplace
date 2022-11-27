@@ -2,19 +2,15 @@ import {
   getMetadataValid,
   makePageMetadata,
   TITLE_SEPARATOR,
-  viewValid
+  viewValid,
+  updateValid
 } from "front-end/lib";
 import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import ExportedProposal from "front-end/lib/pages/proposal/sprint-with-us/lib/views/exported-proposal";
@@ -31,90 +27,140 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 
 interface ValidState {
-  proposal: SWUProposal;
-  opportunity: SWUOpportunity;
+  proposal: SWUProposal | null;
+  opportunity: SWUOpportunity | null;
   viewerUser: User;
   exportedAt: Date;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-export type Msg = GlobalComponentMsg<ADT<"noop">, Route>;
+export type InnerMsg = ADT<"onInitResponse", [SWUProposal, SWUOpportunity]>;
+
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export interface RouteParams {
   opportunityId: Id;
   proposalId: Id;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn({
-  async success({ routePath, routeParams, shared, dispatch }) {
-    const fail = () => {
-      dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-      return invalid(null);
-    };
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = isSignedIn({
+  success({ routePath, routeParams, shared }) {
     const { proposalId, opportunityId } = routeParams;
-    const proposalResult = await api.proposals.swu.readOne(
-      opportunityId,
-      proposalId
-    );
-    if (!api.isValid(proposalResult)) {
-      return fail();
-    }
-    const proposal = proposalResult.value;
-    const oppResult = await api.opportunities.swu.readOne(
-      proposal.opportunity.id
-    );
-    if (!api.isValid(oppResult)) {
-      return fail();
-    }
-    return valid(
-      immutable({
-        proposal,
-        opportunity: oppResult.value,
-        viewerUser: shared.sessionUser,
-        exportedAt: new Date()
-      })
-    );
+    return [
+      valid(
+        immutable({
+          proposal: null,
+          opportunity: null,
+          viewerUser: shared.sessionUser,
+          exportedAt: new Date()
+        })
+      ) as State,
+      [
+        component_.cmd.join(
+          api.proposals.swu.readOne(opportunityId)(
+            proposalId,
+            (response) => response
+          ) as component_.Cmd<api.ResponseValidation<SWUProposal, string[]>>,
+          api.opportunities.swu.readOne(
+            opportunityId,
+            (response) => response
+          ) as component_.Cmd<api.ResponseValidation<SWUOpportunity, string[]>>,
+          (proposalResponse, opportunityResponse) => {
+            if (
+              !api.isValid(proposalResponse) ||
+              !api.isValid(opportunityResponse)
+            ) {
+              return component_.global.replaceRouteMsg(
+                adt("notFound" as const, { path: routePath })
+              );
+            } else {
+              return adt("onInitResponse", [
+                proposalResponse.value,
+                opportunityResponse.value
+              ]);
+            }
+          }
+        ) as component_.Cmd<Msg>
+      ]
+    ];
   },
-  async fail({ routePath, dispatch }) {
-    dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-    return invalid(null);
+  fail({ routePath }) {
+    return [
+      invalid(null),
+      [
+        component_.cmd.dispatch(
+          component_.global.replaceRouteMsg(
+            adt("notFound" as const, { path: routePath })
+          )
+        )
+      ]
+    ];
   }
 });
 
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
-};
+const update: component_.base.Update<State, Msg> = updateValid(
+  ({ state, msg }) => {
+    switch (msg.tag) {
+      case "onInitResponse":
+        return [
+          state.set("proposal", msg.value[0]).set("opportunity", msg.value[1]),
+          [component_.cmd.dispatch(component_.page.readyMsg())]
+        ];
+      default:
+        return [state, []];
+    }
+  }
+);
 
-const view: ComponentView<State, Msg> = viewValid(({ state }) => {
-  return (
-    <ExportedProposal
-      showOpportunityInformation
-      exportedAt={state.exportedAt}
-      exportedBy={state.viewerUser}
-      opportunity={state.opportunity}
-      proposal={state.proposal}
-      anonymous={
-        state.viewerUser.type !== UserType.Vendor &&
-        !isSWUProposalInCodeChallenge(state.proposal)
-      }
-    />
-  );
-});
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state }) => {
+    const opportunity = state.opportunity;
+    const proposal = state.proposal;
+    if (!opportunity || !proposal) return null;
+    return (
+      <ExportedProposal
+        showOpportunityInformation
+        exportedAt={state.exportedAt}
+        exportedBy={state.viewerUser}
+        opportunity={opportunity}
+        proposal={proposal}
+        anonymous={
+          state.viewerUser.type !== UserType.Vendor &&
+          !isSWUProposalInCodeChallenge(proposal)
+        }
+      />
+    );
+  }
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
   getMetadata: getMetadataValid((state) => {
+    const proposal = state.proposal;
+    if (!proposal) return makePageMetadata("Exported Sprint With Us Proposal");
     return makePageMetadata(
-      `${getSWUProponentName(state.proposal)} ${TITLE_SEPARATOR} ${
-        state.proposal.opportunity.title
+      `${getSWUProponentName(proposal)} ${TITLE_SEPARATOR} ${
+        proposal.opportunity.title
       } ${TITLE_SEPARATOR} Exported Sprint With Us Proposal`
     );
   }, makePageMetadata("Exported Sprint With Us Proposal")),
-  getContextualActions({ state, dispatch }) {
-    return adt("links", [
+  getActions() {
+    return component_.page.actions.links([
       {
         children: "Print",
         symbol_: leftPlacement(iconLinkSymbol("print")),

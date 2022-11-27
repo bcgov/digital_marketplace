@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -8,7 +8,10 @@ export interface Props {
   swuQualified: boolean;
 }
 
-const EditTabHeader: View<Props> = ({ legalName, swuQualified }) => {
+const EditTabHeader: component.base.View<Props> = ({
+  legalName,
+  swuQualified
+}) => {
   return (
     <Row>
       <Col xs="12">

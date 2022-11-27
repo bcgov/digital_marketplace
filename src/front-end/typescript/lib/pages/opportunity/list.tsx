@@ -13,17 +13,9 @@ import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  mapComponentDispatch,
-  PageComponent,
-  PageInit,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import Accordion from "front-end/lib/views/accordion";
@@ -36,18 +28,23 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import ProgramType from "front-end/lib/views/program-type";
-import { debounce, truncate } from "lodash";
+import { truncate } from "lodash";
 import React from "react";
 import { Col, Row, Spinner } from "reactstrap";
 import { compareDates, find, formatAmount, formatDateAtTime } from "shared/lib";
-import * as CWU from "shared/lib/resources/opportunity/code-with-us";
-import * as SWU from "shared/lib/resources/opportunity/sprint-with-us";
-import { isVendor, User, UserType } from "shared/lib/resources/user";
+import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
+import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  isVendor,
+  User,
+  UserType,
+  UpdateValidationErrors as UserUpdateValidationErrors
+} from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 
 type Opportunity =
-  | ADT<"cwu", CWU.CWUOpportunitySlim>
-  | ADT<"swu", SWU.SWUOpportunitySlim>;
+  | ADT<"cwu", CWUO.CWUOpportunitySlim>
+  | ADT<"swu", SWUO.SWUOpportunitySlim>;
 
 interface CategorizedOpportunities {
   unpublished: Opportunity[];
@@ -76,7 +73,15 @@ function isLoading(state: Immutable<State>): boolean {
   return state.toggleNotificationsLoading > 0 || !!state.toggleWatchLoading;
 }
 
-type InnerMsg =
+export type InnerMsg =
+  | ADT<"noop">
+  | ADT<
+      "onInitResponse",
+      [
+        api.ResponseValidation<CWUO.CWUOpportunitySlim[], string[]>,
+        api.ResponseValidation<SWUO.SWUOpportunitySlim[], string[]>
+      ]
+    >
   | ADT<"typeFilter", Select.Msg>
   | ADT<"statusFilter", Select.Msg>
   | ADT<"remoteOkFilter", Checkbox.Msg>
@@ -85,10 +90,15 @@ type InnerMsg =
   | ADT<"toggleOpenList">
   | ADT<"toggleClosedList">
   | ADT<"toggleNotifications">
+  | ADT<
+      "onToggleNotificationsResponse",
+      api.ResponseValidation<User, UserUpdateValidationErrors>
+    >
   | ADT<"toggleWatch", [OpportunityCategory, Id]>
+  | ADT<"onToggleWatchResponse", [OpportunityCategory, Id, boolean]>
   | ADT<"search">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
@@ -97,21 +107,20 @@ function truncateTitle(title: string): string {
 }
 
 function categorizeOpportunities(
-  cwu: CWU.CWUOpportunitySlim[],
-  swu: SWU.SWUOpportunitySlim[],
-  viewerUser?: User
+  cwu: CWUO.CWUOpportunitySlim[],
+  swu: SWUO.SWUOpportunitySlim[]
 ): CategorizedOpportunities {
   const opportunities: Opportunity[] = [
     ...cwu.map((o) =>
       adt("cwu" as const, {
         ...o,
-        title: truncateTitle(o.title || CWU.DEFAULT_OPPORTUNITY_TITLE)
+        title: truncateTitle(o.title || CWUO.DEFAULT_OPPORTUNITY_TITLE)
       })
     ),
     ...swu.map((o) =>
       adt("swu" as const, {
         ...o,
-        title: truncateTitle(o.title || SWU.DEFAULT_OPPORTUNITY_TITLE)
+        title: truncateTitle(o.title || SWUO.DEFAULT_OPPORTUNITY_TITLE)
       })
     )
   ];
@@ -123,20 +132,20 @@ function categorizeOpportunities(
   const result: CategorizedOpportunities = opportunities.reduce((acc, o) => {
     switch (o.tag) {
       case "cwu":
-        if (CWU.isUnpublished(o.value)) {
+        if (CWUO.isUnpublished(o.value)) {
           acc.unpublished.push(o);
-        } else if (CWU.isOpen(o.value)) {
+        } else if (CWUO.isOpen(o.value)) {
           acc.open.push(o);
-        } else if (CWU.isClosed(o.value)) {
+        } else if (CWUO.isClosed(o.value)) {
           acc.closed.push(o);
         }
         break;
       case "swu":
-        if (SWU.isUnpublished(o.value)) {
+        if (SWUO.isUnpublished(o.value)) {
           acc.unpublished.push(o);
-        } else if (SWU.isOpen(o.value)) {
+        } else if (SWUO.isOpen(o.value)) {
           acc.open.push(o);
-        } else if (SWU.isClosed(o.value)) {
+        } else if (SWUO.isClosed(o.value)) {
           acc.closed.push(o);
         }
         break;
@@ -159,82 +168,101 @@ function categorizeOpportunities(
   };
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
-  shared
-}) => {
-  let cwu: CWU.CWUOpportunitySlim[] = [];
-  let swu: SWU.SWUOpportunitySlim[] = [];
-  const cwuR = await api.opportunities.cwu.readMany();
-  const swuR = await api.opportunities.swu.readMany();
-  if (api.isValid(cwuR) && api.isValid(swuR)) {
-    cwu = cwuR.value;
-    swu = swuR.value;
-  }
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = ({ shared }) => {
   const viewerUser = shared.session?.user;
-  const opportunities = categorizeOpportunities(cwu, swu, viewerUser);
-  return {
-    opportunities,
-    visibleOpportunities: opportunities,
-    viewerUser,
-    toggleWatchLoading: null,
-    toggleNotificationsLoading: 0,
-    typeFilter: immutable(
-      await Select.init({
-        errors: [],
-        child: {
-          value: null,
-          id: "opportunity-filter-type",
-          options: adt("options", [
-            { label: "Code With Us", value: "cwu" },
-            { label: "Sprint With Us", value: "swu" }
-          ])
-        }
-      })
-    ),
-    statusFilter: immutable(
-      await Select.init({
-        errors: [],
-        child: {
-          value: null,
-          id: "opportunity-filter-status",
-          options: adt("options", [
-            { label: "Draft", value: "draft" },
-            { label: "Under Review", value: "under_Review" },
-            { label: "Published", value: "published" },
-            { label: "Suspended", value: "suspended" },
-            { label: "Evaluation", value: "evaluation" },
-            { label: "Awarded", value: "awarded" }
-          ])
-        }
-      })
-    ),
-    remoteOkFilter: immutable(
-      await Checkbox.init({
-        errors: [],
-        child: {
-          value: false,
-          id: "opportunity-filter-remote-ok"
-        }
-      })
-    ),
-    searchFilter: immutable(
-      await ShortText.init({
-        errors: [],
-        child: {
-          type: "text",
-          value: "",
-          id: "opportunity-filter-search"
-        }
-      })
-    ),
-    unpublishedListOpen: false,
-    openListOpen: true,
-    closedListOpen: false
-  };
+  const opportunities = categorizeOpportunities([], []);
+  const [typeFilterState, typeFilterCmds] = Select.init({
+    errors: [],
+    child: {
+      value: null,
+      id: "opportunity-filter-type",
+      options: adt("options", [
+        { label: "Code With Us", value: "cwu" },
+        { label: "Sprint With Us", value: "swu" }
+      ])
+    }
+  });
+  const [statusFilterState, statusFilterCmds] = Select.init({
+    errors: [],
+    child: {
+      value: null,
+      id: "opportunity-filter-status",
+      options: adt("options", [
+        { label: "Draft", value: "draft" },
+        { label: "Under Review", value: "under_Review" },
+        { label: "Published", value: "published" },
+        { label: "Suspended", value: "suspended" },
+        { label: "Evaluation", value: "evaluation" },
+        { label: "Awarded", value: "awarded" }
+      ])
+    }
+  });
+  const [remoteOkFilterState, remoteOkFilterCmds] = Checkbox.init({
+    errors: [],
+    child: {
+      value: false,
+      id: "opportunity-filter-remote-ok"
+    }
+  });
+  const [searchFilterState, searchFilterCmds] = ShortText.init({
+    errors: [],
+    child: {
+      type: "text",
+      value: "",
+      id: "opportunity-filter-search"
+    }
+  });
+  return [
+    {
+      opportunities,
+      visibleOpportunities: opportunities,
+      viewerUser,
+      toggleWatchLoading: null,
+      toggleNotificationsLoading: 0,
+      typeFilter: immutable(typeFilterState),
+      statusFilter: immutable(statusFilterState),
+      remoteOkFilter: immutable(remoteOkFilterState),
+      searchFilter: immutable(searchFilterState),
+      unpublishedListOpen: false,
+      openListOpen: true,
+      closedListOpen: false
+    },
+    [
+      component_.cmd.join(
+        api.opportunities.cwu.readMany((response) => response),
+        api.opportunities.swu.readMany((response) => response),
+        (cwuResponse, swuResponse) =>
+          adt("onInitResponse", [cwuResponse, swuResponse] as const)
+      ),
+      ...component_.cmd.mapMany(
+        typeFilterCmds,
+        (msg) => adt("typeFilter", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        statusFilterCmds,
+        (msg) => adt("statusFilter", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        remoteOkFilterCmds,
+        (msg) => adt("remoteOkFilter", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        searchFilterCmds,
+        (msg) => adt("searchFilter", msg) as Msg
+      )
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
-const dispatchSearch = debounce(
-  (dispatch: Dispatch<Msg>) => dispatch(adt("search")),
+const dispatchSearch = component_.cmd.makeDebouncedDispatch(
+  adt("noop") as InnerMsg,
+  adt("search") as InnerMsg,
   SEARCH_DEBOUNCE_DURATION
 );
 
@@ -277,32 +305,33 @@ function filter(
 function doesOppHaveStatus(opp: Opportunity, oppStatus: string): boolean {
   return (
     (oppStatus === "draft" &&
-      [CWU.CWUOpportunityStatus.Draft, SWU.SWUOpportunityStatus.Draft].includes(
-        opp.value.status
-      )) ||
+      [
+        CWUO.CWUOpportunityStatus.Draft,
+        SWUO.SWUOpportunityStatus.Draft
+      ].includes(opp.value.status)) ||
     (oppStatus === "under_review" &&
-      SWU.SWUOpportunityStatus.UnderReview === opp.value.status) ||
+      SWUO.SWUOpportunityStatus.UnderReview === opp.value.status) ||
     (oppStatus === "published" &&
       [
-        CWU.CWUOpportunityStatus.Published,
-        SWU.SWUOpportunityStatus.Published
+        CWUO.CWUOpportunityStatus.Published,
+        SWUO.SWUOpportunityStatus.Published
       ].includes(opp.value.status)) ||
     (oppStatus === "suspended" &&
       [
-        CWU.CWUOpportunityStatus.Suspended,
-        SWU.SWUOpportunityStatus.Suspended
+        CWUO.CWUOpportunityStatus.Suspended,
+        SWUO.SWUOpportunityStatus.Suspended
       ].includes(opp.value.status)) ||
     (oppStatus === "evaluation" &&
       [
-        CWU.CWUOpportunityStatus.Evaluation,
-        SWU.SWUOpportunityStatus.EvaluationCodeChallenge,
-        SWU.SWUOpportunityStatus.EvaluationTeamQuestions,
-        SWU.SWUOpportunityStatus.EvaluationTeamScenario
+        CWUO.CWUOpportunityStatus.Evaluation,
+        SWUO.SWUOpportunityStatus.EvaluationCodeChallenge,
+        SWUO.SWUOpportunityStatus.EvaluationTeamQuestions,
+        SWUO.SWUOpportunityStatus.EvaluationTeamScenario
       ].includes(opp.value.status)) ||
     (oppStatus === "awarded" &&
       [
-        CWU.CWUOpportunityStatus.Awarded,
-        SWU.SWUOpportunityStatus.Awarded
+        CWUO.CWUOpportunityStatus.Awarded,
+        SWUO.SWUOpportunityStatus.Awarded
       ].includes(opp.value.status))
   );
 }
@@ -338,133 +367,160 @@ const stopToggleNotificationsLoading = makeStopLoading<State>(
   "toggleNotificationsLoading"
 );
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const [cwuResponse, swuResponse] = msg.value;
+      let cwu: CWUO.CWUOpportunitySlim[] = [];
+      let swu: SWUO.SWUOpportunitySlim[] = [];
+      if (api.isValid(cwuResponse) && api.isValid(swuResponse)) {
+        cwu = cwuResponse.value;
+        swu = swuResponse.value;
+      }
+      const opportunities = categorizeOpportunities(cwu, swu);
+      return [
+        state
+          .set("opportunities", opportunities)
+          .set("visibleOpportunities", opportunities),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
     case "typeFilter":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["typeFilter"],
         childUpdate: Select.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("typeFilter" as const, value),
-        updateAfter: (state) => [
-          state,
-          async (state, dispatch) => {
-            dispatchSearch(dispatch);
-            return null;
-          }
-        ]
+        mapChildMsg: (msg) => adt("typeFilter", msg),
+        updateAfter: (state) =>
+          [state, [dispatchSearch()]] as component_.page.UpdateReturnValue<
+            State,
+            InnerMsg,
+            Route
+          >
       });
     case "statusFilter":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["statusFilter"],
         childUpdate: Select.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("statusFilter" as const, value),
-        updateAfter: (state) => [
-          state,
-          async (state, dispatch) => {
-            dispatchSearch(dispatch);
-            return null;
-          }
-        ]
+        mapChildMsg: (msg) => adt("statusFilter", msg),
+        updateAfter: (state) =>
+          [state, [dispatchSearch()]] as component_.page.UpdateReturnValue<
+            State,
+            InnerMsg,
+            Route
+          >
       });
     case "remoteOkFilter":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["remoteOkFilter"],
         childUpdate: Checkbox.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("remoteOkFilter" as const, value),
-        updateAfter: (state) => [
-          state,
-          async (state, dispatch) => {
-            dispatchSearch(dispatch);
-            return null;
-          }
-        ]
+        mapChildMsg: (msg) => adt("remoteOkFilter", msg),
+        updateAfter: (state) =>
+          [state, [dispatchSearch()]] as component_.page.UpdateReturnValue<
+            State,
+            InnerMsg,
+            Route
+          >
       });
     case "searchFilter":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["searchFilter"],
         childUpdate: ShortText.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("searchFilter" as const, value),
-        updateAfter: (state) => [
-          state,
-          async (state, dispatch) => {
-            dispatchSearch(dispatch);
-            return null;
-          }
-        ]
+        mapChildMsg: (msg) => adt("searchFilter", msg),
+        updateAfter: (state) =>
+          [state, [dispatchSearch()]] as component_.page.UpdateReturnValue<
+            State,
+            InnerMsg,
+            Route
+          >
       });
     case "toggleNotifications":
+      if (!state.viewerUser) return [state, []];
       return [
         startToggleNotificationsLoading(state),
-        async (state, dispatch) => {
-          state = stopToggleNotificationsLoading(state);
-          if (!state.viewerUser) {
-            return state;
-          }
-          const result = await api.users.update(
+        [
+          api.users.update(
             state.viewerUser.id,
-            adt("updateNotifications", !state.viewerUser.notificationsOn)
-          );
-          if (api.isValid(result)) {
-            return state.set("viewerUser", result.value);
-          }
-          return state;
-        }
+            adt("updateNotifications", !state.viewerUser.notificationsOn),
+            (response) => adt("onToggleNotificationsResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
-    case "toggleWatch":
+    case "onToggleNotificationsResponse": {
+      const response = msg.value;
+      state = stopToggleNotificationsLoading(state);
+      if (api.isValid(response)) {
+        state = state.set("viewerUser", response.value);
+      }
+      return [state, []];
+    }
+    case "toggleWatch": {
+      const category = msg.value[0];
+      const id = msg.value[1];
+      const opportunity: Opportunity | null = find(
+        state.opportunities[category],
+        (o) => o.value.id === id
+      );
+      if (!opportunity) {
+        return [state, []];
+      }
+      const program = opportunity.tag;
+      const makeOnToggleWatchResponse = (
+        response: api.ResponseValidation<unknown, unknown>
+      ) => adt("onToggleWatchResponse", [category, id, api.isValid(response)]);
+      const requestCmd = opportunity.value.subscribed
+        ? api.subscribers[program].delete_(id, makeOnToggleWatchResponse)
+        : api.subscribers[program].create(
+            { opportunity: id },
+            makeOnToggleWatchResponse
+          );
       return [
         state.set("toggleWatchLoading", msg.value),
-        async (state, dispatch) => {
-          state = state.set("toggleWatchLoading", null);
-          const category = msg.value[0];
-          const id = msg.value[1];
-          const opportunity: Opportunity | null = find(
-            state.opportunities[category],
-            (o) => o.value.id === id
-          );
-          if (!opportunity) {
-            return state;
-          }
-          const program = opportunity.tag;
-          const result = opportunity.value.subscribed
-            ? await api.subscribers[program].delete(id)
-            : await api.subscribers[program].create({ opportunity: id });
-          if (result.tag === "valid") {
-            state = state.update("opportunities", (os) => ({
-              ...os,
-              [category]: os[category].map((o) => {
-                if (o.value.id === id) {
-                  o.value.subscribed = !o.value.subscribed;
-                }
-                return o;
-              })
-            }));
-            return runSearch(state);
-          }
-          return state;
-        }
+        [requestCmd as component_.Cmd<Msg>]
       ];
+    }
+    case "onToggleWatchResponse": {
+      const [category, id, isResponseValid] = msg.value;
+      state = state.set("toggleWatchLoading", null);
+      if (isResponseValid) {
+        state = state.update("opportunities", (os) => ({
+          ...os,
+          [category]: os[category].map((o) => {
+            if (o.value.id === id) {
+              o.value.subscribed = !o.value.subscribed;
+            }
+            return o;
+          })
+        }));
+        return [runSearch(state), []];
+      } else {
+        return [state, []];
+      }
+    }
     case "search":
-      return [runSearch(state)];
+      return [runSearch(state), []];
     case "toggleUnpublishedList":
-      return [state.update("unpublishedListOpen", (v) => !v)];
+      return [state.update("unpublishedListOpen", (v) => !v), []];
     case "toggleOpenList":
-      return [state.update("openListOpen", (v) => !v)];
+      return [state.update("openListOpen", (v) => !v), []];
     case "toggleClosedList":
-      return [state.update("closedListOpen", (v) => !v)];
+      return [state.update("closedListOpen", (v) => !v), []];
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const Header: ComponentView<State, Msg> = () => {
+const Header: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <Row>
       <Col xs="12">
@@ -506,7 +562,10 @@ const Header: ComponentView<State, Msg> = () => {
   );
 };
 
-const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const Filters: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   const userIsGov =
     state.viewerUser?.type === UserType.Admin ||
     state.viewerUser?.type === UserType.Government;
@@ -520,7 +579,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           disabled={isLoading(state)}
           state={state.typeFilter}
           className="flex-grow-1"
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("typeFilter" as const, value)
           )}
         />
@@ -533,7 +592,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
             disabled={isLoading(state)}
             state={state.statusFilter}
             className="flex-grow-1"
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("statusFilter" as const, value)
             )}
           />
@@ -545,7 +604,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           disabled={isLoading(state)}
           state={state.remoteOkFilter}
           className="flex-grow-1 mt-n2 mt-md-0"
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("remoteOkFilter" as const, value)
           )}
         />
@@ -560,7 +619,7 @@ const Filters: ComponentView<State, Msg> = ({ state, dispatch }) => {
           disabled={isLoading(state)}
           state={state.searchFilter}
           className="flex-grow-1"
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("searchFilter" as const, value)
           )}
         />
@@ -577,7 +636,7 @@ interface OpportunityCardProps {
   toggleWatch(): void;
 }
 
-const OpportunityCard: View<OpportunityCardProps> = ({
+const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
   opportunity,
   viewerUser,
   toggleWatch,
@@ -613,8 +672,8 @@ const OpportunityCard: View<OpportunityCardProps> = ({
   })();
   const isAcceptingProposals =
     opportunity.tag === "cwu"
-      ? CWU.isCWUOpportunityAcceptingProposals(opportunity.value)
-      : SWU.isSWUOpportunityAcceptingProposals(opportunity.value);
+      ? CWUO.isCWUOpportunityAcceptingProposals(opportunity.value)
+      : SWUO.isSWUOpportunityAcceptingProposals(opportunity.value);
   return (
     <Col xs="12" md="6" className="mb-4h" style={{ minHeight: "320px" }}>
       <div className="overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch">
@@ -715,7 +774,7 @@ interface OpportunityListProps {
   toggleAccordion(): void;
 }
 
-const OpportunityList: View<OpportunityListProps> = ({
+const OpportunityList: component_.base.View<OpportunityListProps> = ({
   isOpen,
   disabled,
   toggleWatchLoading,
@@ -809,7 +868,10 @@ const OpportunityList: View<OpportunityListProps> = ({
   );
 };
 
-const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const Opportunities: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   const toggleWatch = (category: OpportunityCategory) => (id: Id) =>
     dispatch(adt("toggleWatch", [category, id]) as Msg);
   const toggleNotifications = () => dispatch(adt("toggleNotifications"));
@@ -884,7 +946,7 @@ const Opportunities: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   return (
     <div>
       <Header {...props} />
@@ -894,18 +956,24 @@ const view: ComponentView<State, Msg> = (props) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
   getMetadata() {
     return makePageMetadata("Opportunities");
   },
-  getContextualActions({ state }) {
+  getActions({ state }) {
     if (!state.viewerUser || isVendor(state.viewerUser)) {
-      return null;
+      return component_.page.actions.none();
     }
-    return adt("links", [
+    return component_.page.actions.links([
       {
         children: "Create Opportunity",
         button: true,

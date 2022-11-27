@@ -1,12 +1,6 @@
 import { makePageMetadata } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  PageComponent,
-  PageInit,
-  Update
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -18,19 +12,26 @@ export interface RouteParams {
 
 export type State = RouteParams;
 
-export type Msg = GlobalComponentMsg<ADT<"noop">, Route>;
+export type InnerMsg = ADT<"noop">;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
-  routeParams
-}) => {
-  return routeParams;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
+
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = ({ routeParams }) => [
+  routeParams,
+  [component_.cmd.dispatch(component_.page.readyMsg())]
+];
+
+const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
+  return [state, []];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
-};
-
-const view: ComponentView<State, Msg> = () => {
+const view: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <div>
       <Row className="mb-3">
@@ -54,7 +55,13 @@ const view: ComponentView<State, Msg> = () => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
