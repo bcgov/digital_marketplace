@@ -781,7 +781,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageOrgSWUTerms":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOrgSWUTerms.State,
+        PageOrgSWUTerms.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageOrgSWUTerms", value),
         pageStatePath: ["pages", "orgSWUTerms"],
@@ -791,7 +797,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageProposalSWUCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalSWUCreate.State,
+        PageProposalSWUCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => ({
           tag: "pageProposalSWUCreate" as const,
@@ -840,7 +852,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageMsg: msg.value
       });
     case "pageOpportunitySWUCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunitySWUCreate.State,
+        PageOpportunitySWUCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => ({
           tag: "pageOpportunitySWUCreate" as const,
@@ -852,7 +870,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageMsg: msg.value
       });
     case "pageOpportunitySWUView":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunitySWUView.State,
+        PageOpportunitySWUView.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => ({
           tag: "pageOpportunitySWUView" as const,
@@ -865,7 +889,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageOpportunityCWUCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityCWUCreate.State,
+        PageOpportunityCWUCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => ({
           tag: "pageOpportunityCWUCreate" as const,
@@ -889,7 +919,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageMsg: msg.value
       });
     case "pageOpportunityCWUView":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityCWUView.State,
+        PageOpportunityCWUView.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageOpportunityCWUView", value),
         pageStatePath: ["pages", "opportunityCWUView"],
@@ -899,7 +935,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageProposalCWUCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalCWUCreate.State,
+        PageProposalCWUCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => ({
           tag: "pageProposalCWUCreate" as const,
@@ -981,7 +1023,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageMsg: msg.value
       });
     case "pageProposalList":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalList.State,
+        PageProposalList.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageProposalList", value),
         pageStatePath: ["pages", "proposalList"],
@@ -991,7 +1039,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageOrgCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOrgCreate.State,
+        PageOrgCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageOrgCreate", value),
         pageStatePath: ["pages", "orgCreate"],
@@ -1001,7 +1055,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageOrgList":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOrgList.State,
+        PageOrgList.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageOrgList", value),
         pageStatePath: ["pages", "orgList"],
@@ -1041,7 +1101,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageSignUpStepOne":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageSignUpStepOne.State,
+        PageSignUpStepOne.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageSignUpStepOne", value),
         pageStatePath: ["pages", "signUpStepOne"],
@@ -1051,7 +1117,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageSignUpStepTwo":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageSignUpStepTwo.State,
+        PageSignUpStepTwo.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageSignUpStepTwo", value),
         pageStatePath: ["pages", "signUpStepTwo"],
@@ -1061,7 +1133,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageSignIn":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageSignIn.State,
+        PageSignIn.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageSignIn", value),
         pageStatePath: ["pages", "signIn"],
@@ -1081,7 +1159,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageDashboard":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageDashboard.State,
+        PageDashboard.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageDashboard", value),
         pageStatePath: ["pages", "dashboard"],
@@ -1091,7 +1175,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageOpportunities":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunities.State,
+        PageOpportunities.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageOpportunities", value),
         pageStatePath: ["pages", "opportunities"],
@@ -1101,7 +1191,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageOpportunityCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityCreate.State,
+        PageOpportunityCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageOpportunityCreate", value),
         pageStatePath: ["pages", "opportunityCreate"],
@@ -1111,7 +1207,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageLearnMoreCWU":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageLearnMoreCWU.State,
+        PageLearnMoreCWU.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageLearnMoreCWU", value),
         pageStatePath: ["pages", "learnMoreCWU"],
@@ -1121,7 +1223,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageLearnMoreSWU":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageLearnMoreSWU.State,
+        PageLearnMoreSWU.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageLearnMoreSWU", value),
         pageStatePath: ["pages", "learnMoreSWU"],
@@ -1131,7 +1239,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageContentView":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageContentView.State,
+        PageContentView.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageContentView", value),
         pageStatePath: ["pages", "contentView"],
@@ -1141,7 +1255,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageContentCreate":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageContentCreate.State,
+        PageContentCreate.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageContentCreate", value),
         pageStatePath: ["pages", "contentCreate"],
@@ -1151,7 +1271,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageContentEdit":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageContentEdit.State,
+        PageContentEdit.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageContentEdit", value),
         pageStatePath: ["pages", "contentEdit"],
@@ -1171,7 +1297,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageNotice":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageNotice.State,
+        PageNotice.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageNotice", value),
         pageStatePath: ["pages", "notice"],
@@ -1181,7 +1313,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageNotFound":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageNotFound.State,
+        PageNotFound.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageNotFound", value),
         pageStatePath: ["pages", "notFound"],
