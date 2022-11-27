@@ -1,8 +1,7 @@
 import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React from "react";
-import Select from "react-select";
-import { Props as SelectProps } from "react-select/base";
+import Select, { Props as SelectProps } from "react-select";
 import SelectCreatable from "react-select/creatable";
 import { Spinner } from "reactstrap";
 import { adt, ADT } from "shared/lib/types";
