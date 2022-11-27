@@ -1,67 +1,62 @@
-import {
-  Component,
-  ComponentViewProps,
-  Dispatch,
-  Init,
-  Update,
-  View,
-  ViewElementChildren
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React, { CSSProperties, ReactElement } from "react";
 import { Table, Tooltip } from "reactstrap";
-import { ADT } from "shared/lib/types";
+import { ADT, adt } from "shared/lib/types";
 
 export interface State {
   idNamespace: string;
-  THView: View<THProps>;
-  TDView: View<TDProps>;
+  THView: component_.base.View<THProps>;
+  TDView: component_.base.View<TDProps>;
   activeTooltipThIndex: number | null;
   activeTooltipTdIndex: [number, number] | null; // [row, cell]
 }
 
 export interface Params {
   idNamespace: string;
-  THView?: View<THProps>;
-  TDView?: View<TDProps>;
+  THView?: component_.base.View<THProps>;
+  TDView?: component_.base.View<TDProps>;
 }
 
 export type Msg =
   | ADT<"toggleTooltipTh", number>
   | ADT<"toggleTooltipTd", [number, number]>; // [row, cell]
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   idNamespace,
   THView = DefaultTHView,
   TDView = DefaultTDView
-}) => ({
-  idNamespace,
-  THView,
-  TDView,
-  activeTooltipThIndex: null,
-  activeTooltipTdIndex: null
-});
+}) => [
+  {
+    idNamespace,
+    THView,
+    TDView,
+    activeTooltipThIndex: null,
+    activeTooltipTdIndex: null
+  },
+  []
+];
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleTooltipTh": {
       const currentThIndex = state.activeTooltipThIndex;
       if (!currentThIndex) {
-        return [state.set("activeTooltipThIndex", msg.value)];
+        return [state.set("activeTooltipThIndex", msg.value), []];
       } else {
-        return [state.set("activeTooltipThIndex", null)];
+        return [state.set("activeTooltipThIndex", null), []];
       }
     }
     case "toggleTooltipTd": {
       const currentTdIndex = state.activeTooltipTdIndex;
       if (!currentTdIndex) {
-        return [state.set("activeTooltipTdIndex", msg.value)];
+        return [state.set("activeTooltipTdIndex", msg.value), []];
       } else {
-        return [state.set("activeTooltipTdIndex", null)];
+        return [state.set("activeTooltipTdIndex", null), []];
       }
     }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
@@ -69,10 +64,10 @@ interface TableTooltipProps {
   text: string;
   isOpen: boolean;
   target: string;
-  toggle(): any;
+  toggle(): void;
 }
 
-const TableTooltip: View<TableTooltipProps> = (props) => {
+const TableTooltip: component_.base.View<TableTooltipProps> = (props) => {
   return (
     <Tooltip
       autohide={false}
@@ -85,20 +80,20 @@ const TableTooltip: View<TableTooltipProps> = (props) => {
 };
 
 export interface THSpec {
-  children: ViewElementChildren;
+  children: component_.base.ViewElementChildren;
   style?: CSSProperties;
   className?: string;
   tooltipText?: string;
 }
 
 export interface THProps extends THSpec {
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
   index: number;
   tooltipIsOpen: boolean;
   id: string;
 }
 
-export const DefaultTHView: View<THProps> = ({
+export const DefaultTHView: component_.base.View<THProps> = ({
   id,
   style,
   className,
@@ -114,7 +109,7 @@ export const DefaultTHView: View<THProps> = ({
         text: tooltipText,
         isOpen: tooltipIsOpen,
         target: id,
-        toggle: () => dispatch({ tag: "toggleTooltipTh", value: index })
+        toggle: () => dispatch(adt("toggleTooltipTh", index))
       };
   return (
     <th key={id} style={style} className={className}>
@@ -132,10 +127,10 @@ export const DefaultTHView: View<THProps> = ({
 
 interface THeadProps {
   cells: THProps[];
-  THView: View<THProps>;
+  THView: component_.base.View<THProps>;
 }
 
-export const THead: View<THeadProps> = ({ cells, THView }) => {
+export const THead: component_.base.View<THeadProps> = ({ cells, THView }) => {
   const children = cells.map((cell, i) => (
     <THView key={`table-thead-${i}`} {...cell} />
   ));
@@ -147,7 +142,7 @@ export const THead: View<THeadProps> = ({ cells, THView }) => {
 };
 
 export interface TDSpec {
-  children: ViewElementChildren;
+  children: component_.base.ViewElementChildren;
   style?: CSSProperties;
   className?: string;
   tooltipText?: string;
@@ -156,7 +151,7 @@ export interface TDSpec {
 }
 
 export interface TDProps extends TDSpec {
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
   index: [number, number]; // [row, cell]
   tooltipIsOpen: boolean;
   id: string;
@@ -181,7 +176,7 @@ export function DefaultTDView(props: TDProps): ReactElement {
         text: tooltipText,
         isOpen: tooltipIsOpen,
         target: id,
-        toggle: () => dispatch({ tag: "toggleTooltipTd", value: index })
+        toggle: () => dispatch(adt("toggleTooltipTd", index))
       };
   return (
     <td key={id} style={style} className={className} colSpan={colSpan}>
@@ -210,11 +205,16 @@ export type RowsProps = RowProps[];
 interface TBodyProps {
   id: string;
   rows: RowsProps;
-  TDView: View<TDProps>;
+  TDView: component_.base.View<TDProps>;
   borderless?: boolean;
 }
 
-const TBody: View<TBodyProps> = ({ id, rows, TDView, borderless }) => {
+const TBody: component_.base.View<TBodyProps> = ({
+  id,
+  rows,
+  TDView,
+  borderless
+}) => {
   const children = rows.map((row, rowIndex) => {
     const cellChildren = row.map((cell) => (
       <TDView key={`${cell.id}-wrapper`} {...cell} />
@@ -233,7 +233,7 @@ export type HeadCells = THSpec[];
 
 export type BodyRows = RowsSpec;
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   headCells: HeadCells;
   bodyRows: BodyRows;
   className?: string;
@@ -242,7 +242,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
   hover?: boolean;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const {
     state,
     dispatch,
@@ -296,7 +296,12 @@ export const view: View<Props> = (props) => {
   );
 };
 
-export type TableComponent = Component<Params, State, Msg, Props>;
+export type TableComponent = component_.base.Component<
+  Params,
+  State,
+  Msg,
+  Props
+>;
 
 export const component: TableComponent = {
   init,
@@ -306,7 +311,9 @@ export const component: TableComponent = {
 
 // Misc views.
 
-export const Check: View<{ checked: boolean }> = ({ checked }) => {
+export const Check: component_.base.View<{ checked: boolean }> = ({
+  checked
+}) => {
   return (
     <Icon
       name={checked ? "check" : "times"}

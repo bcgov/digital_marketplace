@@ -3,15 +3,9 @@ import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import {
-  Component,
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
@@ -30,17 +24,31 @@ export interface Params {
   app: Checkbox.Params;
 }
 
-export const init: Init<Params, State> = async ({ proposal, app }) => {
-  return {
-    proposal: immutable(await Checkbox.init(proposal)),
-    app: immutable(await Checkbox.init(app))
-  };
+export const init: component_.base.Init<Params, State, Msg> = ({
+  proposal,
+  app
+}) => {
+  const [proposalState, proposalCmds] = Checkbox.init(proposal);
+  const [appState, appCmds] = Checkbox.init(app);
+  return [
+    {
+      proposal: immutable(proposalState),
+      app: immutable(appState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        proposalCmds,
+        (msg) => adt("proposal", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(appCmds, (msg) => adt("app", msg) as Msg)
+    ]
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "proposal":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["proposal"],
         childUpdate: Checkbox.update,
@@ -48,7 +56,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (v) => adt("proposal", v) as Msg
       });
     case "app":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["app"],
         childUpdate: Checkbox.update,
@@ -80,14 +88,14 @@ export function getAppCheckbox(state: Immutable<State>): Checkbox.Value {
   return FormField.getValue(state.app);
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   opportunityType: "Sprint With Us" | "Code With Us";
   action: "submitting" | "submitting changes to";
   termsTitle: string;
   termsRoute: Route;
 }
 
-export const view: View<Props> = ({
+export const view: component_.base.View<Props> = ({
   opportunityType,
   action,
   termsTitle,
@@ -119,7 +127,7 @@ export const view: View<Props> = ({
         }}
         className="font-weight-bold"
         state={state.proposal}
-        dispatch={mapComponentDispatch(
+        dispatch={component_.base.mapDispatch(
           dispatch,
           (v) => adt("proposal", v) as Msg
         )}
@@ -135,13 +143,16 @@ export const view: View<Props> = ({
         }}
         className="font-weight-bold"
         state={state.app}
-        dispatch={mapComponentDispatch(dispatch, (v) => adt("app", v) as Msg)}
+        dispatch={component_.base.mapDispatch(
+          dispatch,
+          (v) => adt("app", v) as Msg
+        )}
       />
     </div>
   );
 };
 
-export const component: Component<Params, State, Msg, Props> = {
+export const component: component_.base.Component<Params, State, Msg, Props> = {
   init,
   update,
   view

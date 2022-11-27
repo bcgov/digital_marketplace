@@ -1,28 +1,13 @@
 import { EMPTY_STRING } from "front-end/config";
 import {
-  getAlertsValid,
-  getContextualActionsValid,
-  getMetadataValid,
   makePageMetadata,
   makeStartLoading,
-  makeStopLoading,
-  updateValid,
-  viewValid
+  makeStopLoading
 } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
 import { AddendaList } from "front-end/lib/components/addenda";
 import { AttachmentList } from "front-end/lib/components/attachments";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  Immutable,
-  immutable,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { OpportunityBadge } from "front-end/lib/views/badge";
 import DateMetadata from "front-end/lib/views/date-metadata";
@@ -52,96 +37,151 @@ import {
 import { CWUProposalSlim } from "shared/lib/resources/proposal/code-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { invalid, valid, Validation } from "shared/lib/validation";
 
 type InfoTab = "details" | "attachments" | "addenda";
 
-interface ValidState {
+export interface State {
   toggleWatchLoading: number;
-  opportunity: CWUOpportunity;
-  existingProposal?: CWUProposalSlim;
-  viewerUser?: User;
+  opportunity: CWUOpportunity | null;
+  existingProposal: CWUProposalSlim | null;
+  viewerUser: User | null;
   activeInfoTab: InfoTab;
   routePath: string;
 }
 
-export type State = Validation<Immutable<ValidState>, null>;
+export type InnerMsg =
+  | ADT<"noop">
+  | ADT<
+      "onInitResponse",
+      [
+        string,
+        api.ResponseValidation<CWUOpportunity, string[]>,
+        api.ResponseValidation<CWUProposalSlim, string[]> | null
+      ]
+    >
+  | ADT<"toggleWatch">
+  | ADT<"onToggleWatchResponse", boolean>
+  | ADT<"setActiveInfoTab", InfoTab>;
 
-type InnerMsg = ADT<"toggleWatch"> | ADT<"setActiveInfoTab", InfoTab>;
-
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export interface RouteParams {
   opportunityId: Id;
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
-  dispatch,
-  routeParams,
-  shared,
-  routePath
-}) => {
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = ({ routeParams, shared, routePath }) => {
   const { opportunityId } = routeParams;
-  const viewerUser = shared.session?.user;
-  const oppR = await api.opportunities.cwu.readOne(opportunityId);
-  if (!api.isValid(oppR)) {
-    dispatch(replaceRoute(adt("notFound", { path: routePath }) as Route));
-    return invalid(null);
-  }
-  await api.counters.update(
-    getCWUOpportunityViewsCounterName(opportunityId),
-    null
-  );
-  let existingProposal: CWUProposalSlim | undefined;
-  if (viewerUser && isVendor(viewerUser)) {
-    existingProposal =
-      await api.proposals.cwu.getExistingProposalForOpportunity(opportunityId);
-  }
-  return valid(
-    immutable({
+  const viewerUser = shared.session?.user || null;
+  return [
+    {
       toggleWatchLoading: 0,
       viewerUser,
-      opportunity: oppR.value,
-      existingProposal,
+      opportunity: null,
+      existingProposal: null,
       activeInfoTab: "details",
       routePath
-    })
-  );
+    },
+    [
+      api.counters.update(
+        getCWUOpportunityViewsCounterName(opportunityId),
+        null,
+        () => adt("noop")
+      ) as component_.Cmd<Msg>,
+      component_.cmd.join(
+        api.opportunities.cwu.readOne(opportunityId, (response) => response),
+        viewerUser && isVendor(viewerUser)
+          ? api.proposals.cwu.readExistingProposalForOpportunity(
+              opportunityId,
+              (response) => response
+            )
+          : component_.cmd.dispatch(null),
+        (opportunityResponse, proposalResponse) =>
+          adt("onInitResponse", [
+            routePath,
+            opportunityResponse,
+            proposalResponse
+          ]) as Msg
+      )
+    ]
+  ];
 };
 
-const startToggleWatchLoading =
-  makeStartLoading<ValidState>("toggleWatchLoading");
-const stopToggleWatchLoading =
-  makeStopLoading<ValidState>("toggleWatchLoading");
+const startToggleWatchLoading = makeStartLoading<State>("toggleWatchLoading");
+const stopToggleWatchLoading = makeStopLoading<State>("toggleWatchLoading");
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const [routePath, opportunityResponse, proposalResponse] = msg.value;
+      if (!api.isValid(opportunityResponse)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.replaceRouteMsg(
+                adt("notFound", { path: routePath }) as Route
+              )
+            )
+          ]
+        ];
+      } else {
+        state = state.set("opportunity", opportunityResponse.value);
+      }
+      if (proposalResponse && api.isValid(proposalResponse)) {
+        state = state.set("existingProposal", proposalResponse.value);
+      }
+      return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
+    }
     case "setActiveInfoTab":
-      return [state.set("activeInfoTab", msg.value)];
-    case "toggleWatch":
+      return [state.set("activeInfoTab", msg.value), []];
+    case "toggleWatch": {
+      if (!state.opportunity) return [state, []];
+      const id = state.opportunity.id;
       return [
         startToggleWatchLoading(state),
-        async (state) => {
-          state = stopToggleWatchLoading(state);
-          const id = state.opportunity.id;
-          const result = state.opportunity.subscribed
-            ? await api.subscribers.cwu.delete(id)
-            : await api.subscribers.cwu.create({ opportunity: id });
-          if (result.tag === "valid") {
-            state = state.update("opportunity", (o) => ({
+        [
+          state.opportunity.subscribed
+            ? (api.subscribers.cwu.delete_(id, (response) =>
+                adt("onToggleWatchResponse", api.isValid(response))
+              ) as component_.Cmd<Msg>)
+            : (api.subscribers.cwu.create({ opportunity: id }, (response) =>
+                adt("onToggleWatchResponse", api.isValid(response))
+              ) as component_.Cmd<Msg>)
+        ]
+      ];
+    }
+    case "onToggleWatchResponse": {
+      const isValid = msg.value;
+      if (isValid) {
+        state = state.update(
+          "opportunity",
+          (o) =>
+            o && {
               ...o,
               subscribed: !o.subscribed
-            }));
-          }
-          return state;
-        }
-      ];
+            }
+        );
+      }
+      return [stopToggleWatchLoading(state), []];
+    }
     default:
-      return [state];
+      return [state, []];
   }
-});
-
-const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
+};
+const Header: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
+  if (!state.opportunity) return null;
   const opp = state.opportunity;
   const isToggleWatchLoading = state.toggleWatchLoading > 0;
   const isAcceptingProposals = isCWUOpportunityAcceptingProposals(
@@ -180,7 +220,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
             <div className="d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4">
               <OpportunityBadge
                 opportunity={adt("cwu", opp)}
-                viewerUser={state.viewerUser}
+                viewerUser={state.viewerUser || undefined}
                 className="mb-2 mb-sm-0"
               />
               <IconInfo
@@ -297,10 +337,10 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const InfoDetailsHeading: View<{ icon: AvailableIcons; text: string }> = ({
-  icon,
-  text
-}) => {
+const InfoDetailsHeading: component_.base.View<{
+  icon: AvailableIcons;
+  text: string;
+}> = ({ icon, text }) => {
   return (
     <div className="d-flex align-items-start flex-nowrap mb-3">
       <Icon
@@ -315,8 +355,9 @@ const InfoDetailsHeading: View<{ icon: AvailableIcons; text: string }> = ({
   );
 };
 
-const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
+const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opp = state.opportunity;
+  if (!opp) return null;
   return (
     <Row>
       <Col xs="12">
@@ -362,7 +403,10 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
+const InfoAttachments: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  if (!state.opportunity) return null;
   const attachments = state.opportunity.attachments;
   return (
     <Row>
@@ -380,7 +424,8 @@ const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
+const InfoAddenda: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  if (!state.opportunity) return null;
   const addenda = state.opportunity.addenda;
   return (
     <Row>
@@ -398,9 +443,13 @@ const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
+const InfoTabs: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const activeTab = state.activeInfoTab;
   const opp = state.opportunity;
+  if (!opp) return null;
   const getTabInfo = (tab: InfoTab) => ({
     active: activeTab === tab,
     onClick: () => dispatch(adt("setActiveInfoTab", tab))
@@ -430,8 +479,9 @@ const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const Info: ComponentView<ValidState, Msg> = (props) => {
+const Info: component_.base.ComponentView<State, Msg> = (props) => {
   const { state } = props;
+  if (!state.opportunity) return null;
   const activeTab = (() => {
     switch (state.activeInfoTab) {
       case "details":
@@ -466,8 +516,10 @@ const Info: ComponentView<ValidState, Msg> = (props) => {
   );
 };
 
-const AcceptanceCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
-  if (!state.opportunity.acceptanceCriteria) {
+const AcceptanceCriteria: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  if (!state.opportunity?.acceptanceCriteria) {
     return null;
   }
   return (
@@ -494,8 +546,10 @@ const AcceptanceCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
-  if (!state.opportunity.evaluationCriteria) {
+const EvaluationCriteria: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  if (!state.opportunity?.evaluationCriteria) {
     return null;
   }
   return (
@@ -519,7 +573,8 @@ const EvaluationCriteria: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
+const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  if (!state.opportunity) return null;
   const viewerUser = state.viewerUser;
   if (
     (viewerUser && !isVendor(viewerUser)) ||
@@ -588,7 +643,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid((props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const isDetails = props.state.activeInfoTab === "details";
   return (
     <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
@@ -601,27 +656,34 @@ const view: ComponentView<State, Msg> = viewValid((props) => {
       <HowToApply {...props} />
     </div>
   );
-});
+};
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   fullWidth: true,
   init,
   update,
   view,
 
-  getMetadata: getMetadataValid((state) => {
+  getMetadata: (state) => {
     return makePageMetadata(
-      state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
+      state.opportunity?.title || DEFAULT_OPPORTUNITY_TITLE
     );
-  }, makePageMetadata("Opportunity")),
+  },
 
-  getAlerts: getAlertsValid((state) => {
+  getAlerts: (state) => {
     const viewerUser = state.viewerUser;
     const existingProposal = state.existingProposal;
-    const successfulProponentName = state.opportunity.successfulProponent?.name;
+    const successfulProponentName =
+      state.opportunity?.successfulProponent?.name;
     return {
       info: (() => {
-        const alerts: any = [];
+        const alerts: component_.page.alerts.Alert<Msg>[] = [];
         if (
           viewerUser &&
           isVendor(viewerUser) &&
@@ -642,12 +704,12 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         return alerts;
       })()
     };
-  }),
+  },
 
-  getContextualActions: getContextualActionsValid(({ state }) => {
+  getActions: ({ state }) => {
     const viewerUser = state.viewerUser;
-    if (!viewerUser) {
-      return null;
+    if (!state.opportunity || !viewerUser) {
+      return component_.page.actions.none();
     }
     const isToggleWatchLoading = state.toggleWatchLoading > 0;
     const isAcceptingProposals = isCWUOpportunityAcceptingProposals(
@@ -655,7 +717,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     );
     switch (viewerUser.type) {
       case UserType.Admin:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             disabled: isToggleWatchLoading,
             children: "Edit Opportunity",
@@ -671,7 +733,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
         ]);
       case UserType.Government:
         if (state.opportunity.createdBy?.id === viewerUser.id) {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,
               children: "Edit Opportunity",
@@ -686,11 +748,11 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             }
           ]);
         } else {
-          return null;
+          return component_.page.actions.none();
         }
       case UserType.Vendor:
         if (state.existingProposal) {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,
               children: "View Proposal",
@@ -706,7 +768,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             }
           ]);
         } else if (isAcceptingProposals) {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,
               children: "Start Proposal",
@@ -721,8 +783,8 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             }
           ]);
         } else {
-          return null;
+          return component_.page.actions.none();
         }
     }
-  })
+  }
 };

@@ -204,7 +204,7 @@ parameters:
   description: The name associated to the database deployment resources.  In particular,
     this is used to wire up the credentials associated to the database.
   required: true
-  value: patroni-digmkt-prod
+  value: patroni-pg12-digmkt-prod
 
 - name: DATABASE_USER_KEY_NAME
   displayName: Database User Key Name

@@ -1,13 +1,6 @@
 import { makePageMetadata, prefixPath } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  PageComponent,
-  PageInit,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import Accordion from "front-end/lib/views/accordion";
 import HowItWorksItem from "front-end/lib/views/how-it-works-item";
 import Link, { routeDest } from "front-end/lib/views/link";
@@ -26,27 +19,39 @@ type InnerMsg =
   | ADT<"toggleWhatToExpectAccordion">
   | ADT<"toggleHowToApplyAccordion">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  isWhatToExpectAccordionOpen: true,
-  isHowToApplyAccordionOpen: true
-});
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = () => [
+  {
+    isWhatToExpectAccordionOpen: true,
+    isHowToApplyAccordionOpen: true
+  },
+  [component_.cmd.dispatch(component_.page.readyMsg())]
+];
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
     case "toggleWhatToExpectAccordion":
-      return [state.update("isWhatToExpectAccordionOpen", (v) => !v)];
+      return [state.update("isWhatToExpectAccordionOpen", (v) => !v), []];
     case "toggleHowToApplyAccordion":
-      return [state.update("isHowToApplyAccordionOpen", (v) => !v)];
+      return [state.update("isHowToApplyAccordionOpen", (v) => !v), []];
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const TitleView: View = () => {
+const TitleView: component_.base.View = () => {
   return (
     <div className="bg-c-learn-more-bg pt-4 pb-6 pb-md-7">
       <Container>
@@ -77,7 +82,10 @@ const TitleView: View = () => {
   );
 };
 
-const WhatToExpectView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const WhatToExpectView: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   return (
     <div className="pt-6 bg-white">
       <Container>
@@ -144,7 +152,7 @@ interface InfoBlockProps {
   className?: string;
 }
 
-const InfoBlockView: View<InfoBlockProps> = ({
+const InfoBlockView: component_.base.View<InfoBlockProps> = ({
   title,
   description,
   className
@@ -159,7 +167,7 @@ const InfoBlockView: View<InfoBlockProps> = ({
   );
 };
 
-export const HowToApplyView: ComponentView<State, Msg> = ({
+export const HowToApplyView: component_.page.View<State, InnerMsg, Route> = ({
   state,
   dispatch
 }) => {
@@ -244,7 +252,10 @@ export const HowToApplyView: ComponentView<State, Msg> = ({
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   return (
     <div className="d-flex flex-column flex-grow-1">
       <TitleView />
@@ -255,7 +266,13 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   fullWidth: true,
   backgroundColor: "c-learn-more-bg",
   init,

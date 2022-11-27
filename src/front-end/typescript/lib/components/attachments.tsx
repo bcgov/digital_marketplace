@@ -1,12 +1,6 @@
 import { fileBlobPath } from "front-end/lib";
-import {
-  ComponentViewProps,
-  Immutable,
-  Init,
-  Update,
-  View
-} from "front-end/lib/framework";
-import { CreateFileRequestBody } from "front-end/lib/http/api";
+import { component as component_, Immutable } from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
 import FileLink from "front-end/lib/views/file-link";
 import Icon from "front-end/lib/views/icon";
 import Link, {
@@ -32,7 +26,7 @@ import {
 } from "shared/lib/validation";
 import { validateFileName } from "shared/lib/validation/file";
 
-interface NewAttachment extends CreateFileRequestBody {
+interface NewAttachment extends api.files.CreateFileRequestBody {
   newName: string;
   errors: string[];
   url: string;
@@ -62,9 +56,10 @@ export type Params = Pick<
   | "newAttachmentMetadata"
 >;
 
-export function validate(state: Immutable<State> | any): Immutable<State> {
+export function validate(state: Immutable<State>): Immutable<State> {
   return state.newAttachments.reduce((acc, a, i) => {
-    return acc.updateIn(["newAttachments", i], (newAttachment) => {
+    return acc.updateIn(["newAttachments", i], (value) => {
+      const newAttachment = value as NewAttachment;
       const errors = getInvalidValue(
         validateNewName(newAttachment.newName),
         []
@@ -95,7 +90,7 @@ export function setNewAttachmentErrors(
 
 export function getNewAttachments(
   state: Immutable<State>
-): CreateFileRequestBody[] {
+): api.files.CreateFileRequestBody[] {
   return state.newAttachments.map((a) => ({
     name: a.newName
       ? enforceExtension(a.newName, getExtension(a.name))
@@ -105,14 +100,17 @@ export function getNewAttachments(
   }));
 }
 
-export const init: Init<Params, State> = async (params) => {
-  return {
-    ...params,
-    newAttachments: []
-  };
+export const init: component_.base.Init<Params, State, Msg> = (params) => {
+  return [
+    {
+      ...params,
+      newAttachments: []
+    },
+    []
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "addAttachment":
       return [
@@ -126,19 +124,22 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             newName: "",
             errors: []
           }
-        ])
+        ]),
+        []
       ];
     case "removeExistingAttachment":
       return [
         state.update("existingAttachments", (attachments) =>
           attachments.filter((a, i) => i !== msg.value)
-        )
+        ),
+        []
       ];
     case "removeNewAttachment":
       return [
         state.update("newAttachments", (attachments) =>
           attachments.filter((a, i) => i !== msg.value)
-        )
+        ),
+        []
       ];
     case "onChangeNewAttachmentName":
       return [
@@ -155,7 +156,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               return a;
             }
           })
-        )
+        ),
+        []
       ];
   }
 };
@@ -171,7 +173,7 @@ interface FileFieldProps {
   onRemove(): void;
 }
 
-const FileField: View<FileFieldProps> = (props) => {
+const FileField: component_.base.View<FileFieldProps> = (props) => {
   const {
     defaultName,
     value,
@@ -217,14 +219,14 @@ const FileField: View<FileFieldProps> = (props) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
   className?: string;
   addButtonClassName?: string;
   accept?: readonly string[];
 }
 
-const AddButton: View<Props> = ({
+const AddButton: component_.base.View<Props> = ({
   addButtonClassName = "",
   state,
   dispatch,
@@ -253,7 +255,7 @@ const AddButton: View<Props> = ({
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { className, state, dispatch, disabled } = props;
   return (
     <div className={className}>
@@ -290,7 +292,9 @@ export const view: View<Props> = (props) => {
   );
 };
 
-export const AttachmentList: View<{ files: FileRecord[] }> = ({ files }) => {
+export const AttachmentList: component_.base.View<{ files: FileRecord[] }> = ({
+  files
+}) => {
   return (
     <div className="d-flex flex-column flex-nowrap align-items-start">
       {files.map((f, i) => (

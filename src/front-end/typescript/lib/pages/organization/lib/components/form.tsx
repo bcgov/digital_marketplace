@@ -1,18 +1,11 @@
 import { DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH } from "front-end/config";
 import { fileBlobPath } from "front-end/lib";
-import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import {
-  ComponentViewProps,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { AvatarFiletype } from "front-end/lib/types";
@@ -24,8 +17,7 @@ import { SUPPORTED_IMAGE_EXTENSIONS } from "shared/lib/resources/file";
 import {
   CreateRequestBody,
   Organization,
-  UpdateProfileRequestBody,
-  UpdateProfileValidationErrors
+  UpdateProfileRequestBody
 } from "shared/lib/resources/organization";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
@@ -33,7 +25,8 @@ import {
   invalid,
   valid,
   validateThenMapValid,
-  Validation
+  Validation,
+  isInvalid
 } from "shared/lib/validation";
 import * as orgValidation from "shared/lib/validation/organization";
 
@@ -57,7 +50,7 @@ export interface State extends Params {
   newLogoImage?: AvatarFiletype;
 }
 
-export type InnerMsg =
+export type Msg =
   | ADT<"legalName", ShortText.Msg>
   | ADT<"websiteUrl", ShortText.Msg>
   | ADT<"streetAddress1", ShortText.Msg>
@@ -71,8 +64,6 @@ export type InnerMsg =
   | ADT<"contactPhone", ShortText.Msg>
   | ADT<"region", ShortText.Msg>
   | ADT<"onChangeAvatar", File>;
-
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
 
 export interface Values
   extends Omit<
@@ -163,172 +154,206 @@ export function setErrors(
   }
 }
 
-export const init: Init<Params, State> = async ({ organization }) => {
-  return {
-    organization,
-    newLogoImage: null,
-    legalName: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateLegalName,
-        child: {
-          type: "text",
-          value: getString(organization, "legalName"),
-          id: "organization-gov-legal-name"
-        }
-      })
+export const init: component_.base.Init<Params, State, Msg> = ({
+  organization
+}) => {
+  const [legalNameState, legalNameCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateLegalName,
+    child: {
+      type: "text",
+      value: getString(organization, "legalName"),
+      id: "organization-gov-legal-name"
+    }
+  });
+  const [websiteUrlState, websiteUrlCmds] = ShortText.init({
+    errors: [],
+    validate: validateThenMapValid(
+      orgValidation.validateWebsiteUrl,
+      (a) => a || ""
     ),
-    websiteUrl: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: validateThenMapValid(
-          orgValidation.validateWebsiteUrl,
-          (a) => a || ""
-        ),
-        child: {
-          type: "text",
-          value: getString(organization, "websiteUrl"),
-          id: "organization-gov-website-url"
-        }
-      })
+    child: {
+      type: "text",
+      value: getString(organization, "websiteUrl"),
+      id: "organization-gov-website-url"
+    }
+  });
+  const [streetAddress1State, streetAddress1Cmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateStreetAddress1,
+    child: {
+      type: "text",
+      value: getString(organization, "streetAddress1"),
+      id: "organization-gov-street-address-one"
+    }
+  });
+  const [streetAddress2State, streetAddress2Cmds] = ShortText.init({
+    errors: [],
+    validate: validateThenMapValid(
+      orgValidation.validateStreetAddress2,
+      (a) => a || ""
     ),
-    streetAddress1: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateStreetAddress1,
-        child: {
-          type: "text",
-          value: getString(organization, "streetAddress1"),
-          id: "organization-gov-street-address-one"
-        }
-      })
+    child: {
+      type: "text",
+      value: getString(organization, "streetAddress2"),
+      id: "organization-gov-street-address-two"
+    }
+  });
+  const [cityState, cityCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateCity,
+    child: {
+      type: "text",
+      value: getString(organization, "city"),
+      id: "organization-gov-city"
+    }
+  });
+  const [countryState, countryCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateCountry,
+    child: {
+      type: "text",
+      value: getString(organization, "country"),
+      id: "organization-gov-country"
+    }
+  });
+  const [mailCodeState, mailCodeCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateMailCode,
+    child: {
+      type: "text",
+      value: getString(organization, "mailCode"),
+      id: "organization-gov-mail-code"
+    }
+  });
+  const [contactTitleState, contactTitleCmds] = ShortText.init({
+    errors: [],
+    validate: validateThenMapValid(
+      orgValidation.validateContactTitle,
+      (a) => a || ""
     ),
-    streetAddress2: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: validateThenMapValid(
-          orgValidation.validateStreetAddress2,
-          (a) => a || ""
-        ),
-        child: {
-          type: "text",
-          value: getString(organization, "streetAddress2"),
-          id: "organization-gov-street-address-two"
-        }
-      })
+    child: {
+      type: "text",
+      value: getString(organization, "contactTitle"),
+      id: "organization-gov-contact-title"
+    }
+  });
+  const [contactNameState, contactNameCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateContactName,
+    child: {
+      type: "text",
+      value: getString(organization, "contactName"),
+      id: "organization-gov-contact-name"
+    }
+  });
+  const [contactEmailState, contactEmailCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateContactEmail,
+    child: {
+      type: "text",
+      value: getString(organization, "contactEmail"),
+      id: "organization-gov-contact-email"
+    }
+  });
+  const [contactPhoneState, contactPhoneCmds] = ShortText.init({
+    errors: [],
+    validate: validateThenMapValid(
+      orgValidation.validateContactPhone,
+      (a) => a || ""
     ),
-    city: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateCity,
-        child: {
-          type: "text",
-          value: getString(organization, "city"),
-          id: "organization-gov-city"
-        }
-      })
-    ),
-    country: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateCountry,
-        child: {
-          type: "text",
-          value: getString(organization, "country"),
-          id: "organization-gov-country"
-        }
-      })
-    ),
-    mailCode: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateMailCode,
-        child: {
-          type: "text",
-          value: getString(organization, "mailCode"),
-          id: "organization-gov-mail-code"
-        }
-      })
-    ),
-    contactTitle: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: validateThenMapValid(
-          orgValidation.validateContactTitle,
-          (a) => a || ""
-        ),
-        child: {
-          type: "text",
-          value: getString(organization, "contactTitle"),
-          id: "organization-gov-contact-title"
-        }
-      })
-    ),
-    contactName: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateContactName,
-        child: {
-          type: "text",
-          value: getString(organization, "contactName"),
-          id: "organization-gov-contact-name"
-        }
-      })
-    ),
-    contactEmail: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateContactEmail,
-        child: {
-          type: "text",
-          value: getString(organization, "contactEmail"),
-          id: "organization-gov-contact-email"
-        }
-      })
-    ),
-    contactPhone: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: validateThenMapValid(
-          orgValidation.validateContactPhone,
-          (a) => a || ""
-        ),
-        child: {
-          type: "text",
-          value: getString(organization, "contactPhone"),
-          id: "organization-gov-contact-phone"
-        }
-      })
-    ),
-    region: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: orgValidation.validateRegion,
-        child: {
-          type: "text",
-          value: getString(organization, "region"),
-          id: "organization-gov-region"
-        }
-      })
-    )
-  };
+    child: {
+      type: "text",
+      value: getString(organization, "contactPhone"),
+      id: "organization-gov-contact-phone"
+    }
+  });
+  const [regionState, regionCmds] = ShortText.init({
+    errors: [],
+    validate: orgValidation.validateRegion,
+    child: {
+      type: "text",
+      value: getString(organization, "region"),
+      id: "organization-gov-region"
+    }
+  });
+  return [
+    {
+      organization,
+      newLogoImage: null,
+      legalName: immutable(legalNameState),
+      websiteUrl: immutable(websiteUrlState),
+      streetAddress1: immutable(streetAddress1State),
+      streetAddress2: immutable(streetAddress2State),
+      city: immutable(cityState),
+      country: immutable(countryState),
+      mailCode: immutable(mailCodeState),
+      contactTitle: immutable(contactTitleState),
+      contactName: immutable(contactNameState),
+      contactEmail: immutable(contactEmailState),
+      contactPhone: immutable(contactPhoneState),
+      region: immutable(regionState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        legalNameCmds,
+        (msg) => adt("legalName", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        websiteUrlCmds,
+        (msg) => adt("websiteUrl", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        streetAddress1Cmds,
+        (msg) => adt("streetAddress1", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        streetAddress2Cmds,
+        (msg) => adt("streetAddress2", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(cityCmds, (msg) => adt("city", msg) as Msg),
+      ...component_.cmd.mapMany(
+        countryCmds,
+        (msg) => adt("country", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        mailCodeCmds,
+        (msg) => adt("mailCode", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        contactTitleCmds,
+        (msg) => adt("contactTitle", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        contactNameCmds,
+        (msg) => adt("contactName", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        contactEmailCmds,
+        (msg) => adt("contactEmail", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        contactPhoneCmds,
+        (msg) => adt("contactPhone", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(regionCmds, (msg) => adt("region", msg) as Msg)
+    ]
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "onChangeAvatar":
       return [
-        state,
-        async (state) => {
-          return state.set("newLogoImage", {
-            file: msg.value,
-            path: URL.createObjectURL(msg.value),
-            errors: []
-          });
-        }
+        state.set("newLogoImage", {
+          file: msg.value,
+          path: URL.createObjectURL(msg.value),
+          errors: []
+        }),
+        []
       ];
     case "legalName":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["legalName"],
         childUpdate: ShortText.update,
@@ -336,7 +361,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("legalName", value)
       });
     case "websiteUrl":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["websiteUrl"],
         childUpdate: ShortText.update,
@@ -344,7 +369,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("websiteUrl", value)
       });
     case "streetAddress1":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["streetAddress1"],
         childUpdate: ShortText.update,
@@ -352,7 +377,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("streetAddress1", value)
       });
     case "streetAddress2":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["streetAddress2"],
         childUpdate: ShortText.update,
@@ -360,7 +385,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("streetAddress2", value)
       });
     case "city":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["city"],
         childUpdate: ShortText.update,
@@ -368,7 +393,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("city", value)
       });
     case "country":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["country"],
         childUpdate: ShortText.update,
@@ -376,7 +401,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("country", value)
       });
     case "mailCode":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["mailCode"],
         childUpdate: ShortText.update,
@@ -384,7 +409,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("mailCode", value)
       });
     case "contactTitle":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["contactTitle"],
         childUpdate: ShortText.update,
@@ -392,7 +417,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("contactTitle", value)
       });
     case "contactName":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["contactName"],
         childUpdate: ShortText.update,
@@ -400,7 +425,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("contactName", value)
       });
     case "contactEmail":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["contactEmail"],
         childUpdate: ShortText.update,
@@ -408,7 +433,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("contactEmail", value)
       });
     case "contactPhone":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["contactPhone"],
         childUpdate: ShortText.update,
@@ -416,7 +441,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("contactPhone", value)
       });
     case "region":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["region"],
         childUpdate: ShortText.update,
@@ -424,11 +449,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("region", value)
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled: boolean;
 }
 
@@ -438,7 +463,7 @@ export function orgLogoPath(org?: Organization): string {
     : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch, disabled } = props;
   return (
     <div>
@@ -491,7 +516,7 @@ export const view: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.legalName}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("legalName" as const, value)
             )}
           />
@@ -504,7 +529,7 @@ export const view: View<Props> = (props) => {
               label="Website Url (Optional)"
               disabled={disabled}
               state={state.websiteUrl}
-              dispatch={mapComponentDispatch(dispatch, (value) =>
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("websiteUrl" as const, value)
               )}
             />
@@ -522,7 +547,7 @@ export const view: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.streetAddress1}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("streetAddress1" as const, value)
             )}
           />
@@ -534,7 +559,7 @@ export const view: View<Props> = (props) => {
             label="Street Address"
             disabled={disabled}
             state={state.streetAddress2}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("streetAddress2" as const, value)
             )}
           />
@@ -547,7 +572,7 @@ export const view: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.city}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("city" as const, value)
             )}
           />
@@ -560,7 +585,7 @@ export const view: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.region}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("region" as const, value)
             )}
           />
@@ -576,7 +601,7 @@ export const view: View<Props> = (props) => {
                   required
                   disabled={disabled}
                   state={state.mailCode}
-                  dispatch={mapComponentDispatch(dispatch, (value) =>
+                  dispatch={component_.base.mapDispatch(dispatch, (value) =>
                     adt("mailCode" as const, value)
                   )}
                 />
@@ -589,7 +614,7 @@ export const view: View<Props> = (props) => {
                   required
                   disabled={disabled}
                   state={state.country}
-                  dispatch={mapComponentDispatch(dispatch, (value) =>
+                  dispatch={component_.base.mapDispatch(dispatch, (value) =>
                     adt("country" as const, value)
                   )}
                 />
@@ -609,7 +634,7 @@ export const view: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.contactName}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("contactName" as const, value)
             )}
           />
@@ -621,7 +646,7 @@ export const view: View<Props> = (props) => {
             label="Job Title (Optional)"
             disabled={disabled}
             state={state.contactTitle}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("contactTitle" as const, value)
             )}
           />
@@ -634,7 +659,7 @@ export const view: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.contactEmail}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("contactEmail" as const, value)
             )}
           />
@@ -646,7 +671,7 @@ export const view: View<Props> = (props) => {
             label="Phone Number (Optional)"
             disabled={disabled}
             state={state.contactPhone}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("contactPhone" as const, value)
             )}
           />
@@ -656,87 +681,105 @@ export const view: View<Props> = (props) => {
   );
 };
 
-interface PersistUpdateParams {
+export interface PersistUpdateParams {
   state: Immutable<State>;
   orgId: Id;
   extraBody: Omit<UpdateProfileRequestBody, keyof Values>;
 }
 
-type PersistParams =
+export type PersistParams =
   | ADT<"create", Immutable<State>>
   | ADT<"update", PersistUpdateParams>;
 
-type PersistReturnValue = Validation<
-  [Immutable<State>, Organization],
+export type PersistResult = Validation<
+  [Immutable<State>, component_.Cmd<Msg>[], Organization],
   Immutable<State>
 >;
 
-export async function persist(
-  params: PersistParams
-): Promise<PersistReturnValue> {
+export function persist(params: PersistParams): component_.Cmd<PersistResult> {
   const state = params.tag === "create" ? params.value : params.value.state;
   const values = getValues(state);
-  let logoImageFile: Id | undefined =
+  const newLogoImage = values.newLogoImage;
+  values.newLogoImage = undefined; // So this isn't passed to the back-end.
+  // Cmd Helpers
+  // Update logo image.
+  const existingLogoImageFile: Id | undefined =
     params.tag === "update" ? params.value.extraBody.logoImageFile : undefined;
-  if (values.newLogoImage) {
-    const fileResult = await api.avatars.create({
-      name: values.newLogoImage.name,
-      file: values.newLogoImage,
-      metadata: [adt("any")]
-    });
-    switch (fileResult.tag) {
-      case "valid":
-        logoImageFile = fileResult.value.id;
-        break;
-      case "unhandled":
-      case "invalid":
-        return invalid(
-          setErrors(state, {
-            newLogoImage: ["Please select a different avatar image."]
-          })
-        );
-    }
-  }
-  values.newLogoImage = undefined; // So this property isn't passed to back-end.
-  // Make the back-end request.
-  const result = await (async () => {
+  const uploadLogoImageCmd: component_.Cmd<
+    Validation<Id | undefined, Immutable<State>>
+  > = newLogoImage
+    ? (api.files.avatars.create(
+        {
+          name: newLogoImage.name,
+          file: newLogoImage,
+          metadata: [adt("any")]
+        },
+        (response) => {
+          if (!api.isValid(response)) {
+            return invalid(
+              setErrors(state, {
+                newLogoImage: ["Please select a different logo image."]
+              })
+            );
+          }
+          return valid(response.value.id);
+        }
+      ) as component_.Cmd<Validation<Id, Immutable<State>>>)
+    : component_.cmd.dispatch(valid(existingLogoImageFile));
+  // Complete the flow by updating the organization.
+  return component_.cmd.andThen(uploadLogoImageCmd, (uploadLogoImageResult) => {
+    if (isInvalid(uploadLogoImageResult))
+      return component_.cmd.dispatch(uploadLogoImageResult);
+    const logoImageFile = uploadLogoImageResult.value;
     switch (params.tag) {
       case "create":
-        return api.organizations.create({
-          ...values,
-          logoImageFile
-        });
+        return api.organizations.create(
+          {
+            ...values,
+            logoImageFile
+          },
+          (response) => {
+            switch (response.tag) {
+              case "valid": {
+                const organization = response.value;
+                const [initState, initCmds] = init({ organization });
+                return valid([immutable(initState), initCmds, organization]);
+              }
+              case "invalid":
+                return invalid(setErrors(state, response.value));
+              case "unhandled":
+                return invalid(state);
+            }
+          }
+        ) as component_.Cmd<PersistResult>;
       case "update": {
-        const updateResult = await api.organizations.update(
+        return api.organizations.update(
           params.value.orgId,
           adt("updateProfile", {
             ...params.value.extraBody,
             ...values,
             logoImageFile
-          })
-        );
-        if (api.isInvalid(updateResult)) {
-          if (updateResult.value.organization?.tag === "updateProfile") {
-            return invalid(updateResult.value.organization.value);
-          } else {
-            return invalid({} as UpdateProfileValidationErrors);
+          }),
+          (response) => {
+            switch (response.tag) {
+              case "valid": {
+                const organization = response.value;
+                const [initState, initCmds] = init({ organization });
+                return valid([immutable(initState), initCmds, organization]);
+              }
+              case "invalid":
+                if (response.value.organization?.tag === "updateProfile") {
+                  return invalid(
+                    setErrors(state, response.value.organization.value)
+                  );
+                }
+                return invalid(state);
+              case "unhandled":
+                return invalid(state);
+            }
           }
-        } else {
-          return updateResult;
-        }
+        ) as component_.Cmd<PersistResult>;
       }
     }
-  })();
-  // Handle the back-end response.
-  switch (result.tag) {
-    case "invalid":
-      return invalid(setErrors(state, result.value));
-    case "unhandled":
-      return invalid(state);
-    case "valid":
-      return valid([
-        immutable(await init({ organization: result.value })),
-        result.value
-      ]);
-  }
+  });
 }

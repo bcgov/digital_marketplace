@@ -1,13 +1,6 @@
 import { makePageMetadata, prefixPath } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  PageComponent,
-  PageInit,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { immutable, component as component_ } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { BulletPoint } from "front-end/lib/views/bullet-point";
 import Icon from "front-end/lib/views/icon";
@@ -25,6 +18,7 @@ import { formatAmount } from "shared/lib";
 import * as cwu from "shared/lib/resources/opportunity/code-with-us";
 import * as swu from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
+import { OpportunityMetrics } from "shared/lib/resources/metrics";
 
 const IMG_MAX_WIDTH = "550px";
 
@@ -33,29 +27,57 @@ export interface State {
   totalAwarded: number;
 }
 
-type InnerMsg = ADT<"noop">;
+export type InnerMsg = ADT<
+  "onInitResponse",
+  api.ResponseValidation<OpportunityMetrics[], string[]>
+>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => {
-  const metricsR = await api.metrics.readMany();
-  if (!api.isValid(metricsR)) {
-    return {
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = () => {
+  return [
+    {
       totalCount: 0,
       totalAwarded: 0
-    };
+    },
+    [
+      api.metrics.readMany((response) =>
+        adt("onInitResponse", response)
+      ) as component_.Cmd<Msg>
+    ]
+  ];
+};
+
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
+  switch (msg.tag) {
+    case "onInitResponse": {
+      const response = msg.value;
+      if (api.isValid(response)) {
+        return [
+          immutable(response.value[0]),
+          [component_.cmd.dispatch(component_.page.readyMsg())]
+        ];
+      } else {
+        return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
+      }
+    }
+    default:
+      return [state, []];
   }
-
-  return metricsR.value[0];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
-};
-
-const Hero: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const Hero: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <Container className="pb-7 pb-md-8 pt-sm-4 pt-md-3">
       <Row className="justify-content-center text-center">
@@ -89,7 +111,7 @@ const Hero: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const Stats: ComponentView<State, Msg> = ({ state }) => {
+const Stats: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   return (
     <div className="bg-c-landing-stats-bg py-5">
       <Container>
@@ -113,11 +135,11 @@ const Stats: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const Stat: View<{ stat: string; description: string; className?: string }> = ({
-  stat,
-  description,
-  className
-}) => {
+const Stat: component_.base.View<{
+  stat: string;
+  description: string;
+  className?: string;
+}> = ({ stat, description, className }) => {
   return (
     <div
       className={`d-flex flex-column justify-content-center align-items-center text-center ${className}`}>
@@ -134,7 +156,7 @@ const Stat: View<{ stat: string; description: string; className?: string }> = ({
   );
 };
 
-const Programs: View = () => {
+const Programs: component_.base.View = () => {
   return (
     <div className="bg-c-landing-programs-bg py-7">
       <Container>
@@ -194,7 +216,7 @@ const Programs: View = () => {
   );
 };
 
-const AppInfo: View = () => {
+const AppInfo: component_.base.View = () => {
   return (
     <Container className="mt-7 mt-md-9">
       <Row className="justify-content-center text-center">
@@ -219,7 +241,7 @@ const AppInfo: View = () => {
   );
 };
 
-const VendorRoleInfo: View = () => {
+const VendorRoleInfo: component_.base.View = () => {
   return (
     <Container className="mt-7 mt-md-9">
       <Row>
@@ -268,7 +290,7 @@ const VendorRoleInfo: View = () => {
   );
 };
 
-const GovRoleInfo: View = () => {
+const GovRoleInfo: component_.base.View = () => {
   return (
     <Container className="my-7 my-md-9">
       <Row>
@@ -313,7 +335,7 @@ const GovRoleInfo: View = () => {
   );
 };
 
-const TestimonialsView: View = () => {
+const TestimonialsView: component_.base.View = () => {
   return (
     <div className="bg-info py-7">
       <Container>
@@ -396,7 +418,7 @@ const TestimonialsView: View = () => {
   );
 };
 
-const BottomView: View = () => {
+const BottomView: component_.base.View = () => {
   return (
     <Container className="my-7">
       <Row className="justify-content-center text-center">
@@ -419,7 +441,7 @@ const BottomView: View = () => {
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   return (
     <div>
       <Hero {...props} />
@@ -434,7 +456,13 @@ const view: ComponentView<State, Msg> = (props) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   fullWidth: true,
   init,
   update,

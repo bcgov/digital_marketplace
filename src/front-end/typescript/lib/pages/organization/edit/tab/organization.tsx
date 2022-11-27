@@ -1,16 +1,9 @@
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  replaceRoute,
-  toast,
-  Update,
-  updateGlobalComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/organization/edit/tab";
@@ -37,33 +30,38 @@ export interface State extends Tab.Params {
 export type InnerMsg =
   | ADT<"orgForm", OrgForm.Msg>
   | ADT<"startEditing">
+  | ADT<"onStartEditingResponse", OrgResource.Organization | null>
   | ADT<"cancelEditing">
   | ADT<"saveChanges">
+  | ADT<"onSaveChangesResponse", OrgForm.PersistResult>
   | ADT<"archive">
+  | ADT<"onArchiveResponse", boolean>
   | ADT<"hideArchiveModal">
   | ADT<"hideSaveChangesModal">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-async function resetOrgForm(
+function resetOrgForm(
   organization: OrgResource.Organization
-): Promise<Immutable<OrgForm.State>> {
-  return immutable(await OrgForm.init({ organization }));
+): component_.base.InitReturnValue<OrgForm.State, OrgForm.Msg> {
+  return OrgForm.init({ organization });
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    isEditing: false,
-    editingLoading: 0,
-    saveChangesLoading: 0,
-    archiveLoading: 0,
-    showArchiveModal: false,
-    showSaveChangesModal: false,
-    orgForm: immutable(
-      await OrgForm.init({ organization: params.organization })
-    )
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [orgFormState, orgFormCmds] = resetOrgForm(params.organization);
+  return [
+    {
+      ...params,
+      isEditing: false,
+      editingLoading: 0,
+      saveChangesLoading: 0,
+      archiveLoading: 0,
+      showArchiveModal: false,
+      showSaveChangesModal: false,
+      orgForm: immutable(orgFormState)
+    },
+    component_.cmd.mapMany(orgFormCmds, (msg) => adt("orgForm", msg) as Msg)
+  ];
 };
 
 const startEditingLoading = makeStartLoading<State>("editingLoading");
@@ -77,42 +75,81 @@ function isOwner(user: User, org: OrgResource.Organization): boolean {
   return !!org.owner && user.id === org.owner.id;
 }
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "archive":
+    case "archive": {
+      const organization = state.organization;
       if (!state.showArchiveModal) {
-        return [state.set("showArchiveModal", true)];
+        return [state.set("showArchiveModal", true), []];
       } else {
         state = startArchiveLoading(state).set("showArchiveModal", false);
       }
       return [
         state,
-        async (state, dispatch) => {
-          const result = await api.organizations.delete(state.organization.id);
-          if (api.isValid(result)) {
-            dispatch(toast(adt("success", toasts.archived.success)));
-            if (isOwner(state.viewerUser, state.organization)) {
-              dispatch(
-                replaceRoute(
+        [
+          api.organizations.delete_(organization.id, (response) =>
+            adt(
+              "onArchiveResponse",
+              api.isValid(response) ? response.value : null
+            )
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onArchiveResponse": {
+      const organization = msg.value;
+      if (organization) {
+        if (isOwner(state.viewerUser, state.organization)) {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.archived.success)
+                )
+              ),
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(
                   adt("userProfile" as const, {
                     userId: state.viewerUser.id,
                     tab: "organizations" as const
                   })
                 )
-              );
-            } else {
-              dispatch(replaceRoute(adt("orgList" as const, {})));
-            }
-          } else {
-            dispatch(toast(adt("error", toasts.archived.error)));
-            state = stopArchiveLoading(state);
-          }
-          return state;
+              )
+            ]
+          ];
+        } else {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.archived.success)
+                )
+              ),
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(adt("orgList" as const, {}))
+              )
+            ]
+          ];
         }
-      ];
-    case "saveChanges":
+      } else {
+        return [
+          stopArchiveLoading(state),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.archived.error)
+              )
+            )
+          ]
+        ];
+      }
+    }
+    case "saveChanges": {
+      const organization = state.organization;
       if (!state.showSaveChangesModal) {
-        return [state.set("showSaveChangesModal", true)];
+        return [state.set("showSaveChangesModal", true), []];
       } else {
         state = startSaveChangesLoading(state).set(
           "showSaveChangesModal",
@@ -121,75 +158,114 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       }
       return [
         state,
-        async (state, dispatch) => {
-          state = stopSaveChangesLoading(state);
-          const result = await OrgForm.persist(
-            adt("update", {
-              state: state.orgForm,
-              orgId: state.organization.id,
-              extraBody: {
-                logoImageFile:
-                  state.organization.logoImageFile &&
-                  state.organization.logoImageFile.id
-              }
-            })
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(toast(adt("success", toasts.updated.success)));
-              return (state = state
-                .set("isEditing", false)
-                .set("organization", result.value[1])
-                .set("orgForm", result.value[0]));
-            case "invalid":
-              dispatch(toast(adt("error", toasts.updated.error)));
-              return state.set("orgForm", result.value);
-          }
-        }
+        [
+          component_.cmd.map(
+            OrgForm.persist(
+              adt("update", {
+                state: state.orgForm,
+                orgId: organization.id,
+                extraBody: {
+                  logoImageFile:
+                    organization.logoImageFile && organization.logoImageFile.id
+                }
+              })
+            ),
+            (response) => adt("onSaveChangesResponse", response) as Msg
+          )
+        ]
       ];
+    }
+    case "onSaveChangesResponse": {
+      state = stopSaveChangesLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [formState, formCmds, organization] = result.value;
+          return [
+            state
+              .set("isEditing", false)
+              .set("organization", organization)
+              .set("orgForm", formState),
+            [
+              ...component_.cmd.mapMany(
+                formCmds,
+                (msg) => adt("orgForm", msg) as Msg
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.updated.success)
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid":
+        default:
+          return [
+            state.set("orgForm", result.value),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.updated.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
     case "startEditing":
       return [
         startEditingLoading(state),
-        async (state) => {
-          state = stopEditingLoading(state);
-          const result = await api.organizations.readOne(state.organization.id);
-          if (api.isValid(result)) {
-            state = state
-              .set("isEditing", true)
-              .set("organization", result.value)
-              .set("orgForm", await resetOrgForm(result.value));
-          }
-          // Do nothing if an error occurs.
-          return state;
-        }
+        [
+          api.organizations.readOne(state.organization.id, (response) =>
+            adt(
+              "onStartEditingResponse",
+              api.isValid(response) ? response.value : null
+            )
+          ) as component_.Cmd<Msg>
+        ]
       ];
-    case "cancelEditing":
+    case "onStartEditingResponse": {
+      state = stopEditingLoading(state);
+      const organization = msg.value;
+      if (!organization) return [state, []];
+      const [formState, formCmds] = resetOrgForm(organization);
       return [
-        state,
-        async (state) => {
-          return state
-            .set("isEditing", false)
-            .set("orgForm", await resetOrgForm(state.organization));
-        }
+        state
+          .set("isEditing", true)
+          .set("organization", organization)
+          .set("orgForm", immutable(formState)),
+        component_.cmd.mapMany(formCmds, (msg) => adt("orgForm", msg) as Msg)
       ];
+    }
+    case "cancelEditing": {
+      const [formState, formCmds] = resetOrgForm(state.organization);
+      return [
+        state.set("isEditing", false).set("orgForm", immutable(formState)),
+        component_.cmd.mapMany(formCmds, (msg) => adt("orgForm", msg) as Msg)
+      ];
+    }
     case "hideArchiveModal":
-      return [state.set("showArchiveModal", false)];
+      return [state.set("showArchiveModal", false), []];
     case "hideSaveChangesModal":
-      return [state.set("showSaveChangesModal", false)];
+      return [state.set("showSaveChangesModal", false), []];
     case "orgForm":
-      return updateGlobalComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["orgForm"],
         childUpdate: OrgForm.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("orgForm", value)
+        mapChildMsg: (value) => adt("orgForm", value) as Msg
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   const isEditingLoading = state.editingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isArchiveLoading = state.archiveLoading > 0;
@@ -206,7 +282,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
           <OrgForm.view
             state={state.orgForm}
             disabled={isLoading || !state.isEditing}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("orgForm" as const, value)
             )}
           />
@@ -244,12 +320,15 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  },
   getModal: (state) => {
     if (state.showArchiveModal) {
-      return {
+      return component_.page.modal.show({
         title: "Archive Organization?",
         body: () => "Are you sure you want to archive this organization?",
-        onCloseMsg: adt("hideArchiveModal"),
+        onCloseMsg: adt("hideArchiveModal") as Msg,
         actions: [
           {
             text: "Archive Organization",
@@ -264,13 +343,13 @@ export const component: Tab.Component<State, Msg> = {
             msg: adt("hideArchiveModal")
           }
         ]
-      };
+      });
     } else if (state.showSaveChangesModal) {
-      return {
+      return component_.page.modal.show({
         title: "Save Changes?",
         body: () =>
           "Are you sure you want to save the changes you've made to this organization?",
-        onCloseMsg: adt("hideSaveChangesModal"),
+        onCloseMsg: adt("hideSaveChangesModal") as Msg,
         actions: [
           {
             text: "Save Changes",
@@ -285,11 +364,11 @@ export const component: Tab.Component<State, Msg> = {
             msg: adt("hideSaveChangesModal")
           }
         ]
-      };
+      });
     }
-    return null;
+    return component_.page.modal.hide();
   },
-  getContextualActions: ({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     const isEditingLoading = state.editingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
     const isArchiveLoading = state.archiveLoading > 0;
@@ -297,7 +376,7 @@ export const component: Tab.Component<State, Msg> = {
       isEditingLoading || isSaveChangesLoading || isArchiveLoading;
     const isValid = OrgForm.isValid(state.orgForm);
     if (!state.isEditing) {
-      return adt("links", [
+      return component_.page.actions.links([
         {
           children: "Edit Organization",
           onClick: () => dispatch(adt("startEditing")),
@@ -309,7 +388,7 @@ export const component: Tab.Component<State, Msg> = {
         }
       ]);
     } else {
-      return adt("links", [
+      return component_.page.actions.links([
         {
           children: "Save Changes",
           disabled: !isValid || isLoading,

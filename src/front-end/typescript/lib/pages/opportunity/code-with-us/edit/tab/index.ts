@@ -1,6 +1,6 @@
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
-import { immutable, Immutable } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import * as AddendaTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/addenda";
 import * as HistoryTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity";
@@ -13,10 +13,16 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
+import { CWUProposalSlim } from "shared/lib/resources/proposal/code-with-us";
 
 // Parent page types & functions.
 
 export type ParentState<K extends TabId> = TabbedPage.ParentState<Tabs, K>;
+
+export type ParentInnerMsg<
+  K extends TabId,
+  InnerMsg
+> = TabbedPage.ParentInnerMsg<Tabs, K, InnerMsg>;
 
 export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
   Tabs,
@@ -27,26 +33,49 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 // Tab component types & functions.
 
 export interface Params {
-  opportunity: CWUOpportunity;
   viewerUser: User;
 }
 
-export type Component<State extends object, Msg> = TabbedPage.TabComponent<
+export type InitResponse = [CWUOpportunity, CWUProposalSlim[]];
+
+export type Component<State, Msg> = TabbedPage.TabComponent<
   Params,
   State,
-  Msg
+  Msg,
+  InitResponse
 >;
 
 export interface Tabs {
-  summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
+  summary: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
   opportunity: TabbedPage.Tab<
     Params,
     OpportunityTab.State,
-    OpportunityTab.InnerMsg
+    OpportunityTab.InnerMsg,
+    InitResponse
   >;
-  addenda: TabbedPage.Tab<Params, AddendaTab.State, AddendaTab.InnerMsg>;
-  proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
-  history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
+  addenda: TabbedPage.Tab<
+    Params,
+    AddendaTab.State,
+    AddendaTab.InnerMsg,
+    InitResponse
+  >;
+  proposals: TabbedPage.Tab<
+    Params,
+    ProposalsTab.State,
+    ProposalsTab.InnerMsg,
+    InitResponse
+  >;
+  history: TabbedPage.Tab<
+    Params,
+    HistoryTab.State,
+    HistoryTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -120,33 +149,35 @@ export function makeSidebarLink(
   });
 }
 
-export async function makeSidebarState(
-  opportunity: CWUOpportunity,
-  activeTab: TabId
-): Promise<Immutable<MenuSidebar.State>> {
-  return immutable(
-    await MenuSidebar.init({
-      items: [
-        adt("heading", "Summary"),
-        makeSidebarLink("summary", opportunity.id, activeTab),
-        adt("heading", "Opportunity Management"),
-        makeSidebarLink("opportunity", opportunity.id, activeTab),
-        //Only show Addenda sidebar link if opportunity can have addenda.
-        ...(canAddAddendumToCWUOpportunity(opportunity)
-          ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
-          : []),
-        makeSidebarLink("history", opportunity.id, activeTab),
-        adt("heading", "Opportunity Evaluation"),
-        makeSidebarLink("proposals", opportunity.id, activeTab),
-        adt("heading", "Need Help?"),
-        adt("link", {
-          icon: "external-link-alt",
-          text: "Read Guide",
-          active: false,
-          newTab: true,
-          dest: routeDest(adt("contentView", "code-with-us-opportunity-guide"))
-        })
-      ]
-    })
-  );
+export function makeSidebarState(
+  activeTab: TabId,
+  opportunity?: CWUOpportunity
+): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
+  return MenuSidebar.init({
+    items: opportunity
+      ? [
+          adt("heading", "Summary"),
+          makeSidebarLink("summary", opportunity.id, activeTab),
+          adt("heading", "Opportunity Management"),
+          makeSidebarLink("opportunity", opportunity.id, activeTab),
+          //Only show Addenda sidebar link if opportunity can have addenda.
+          ...(canAddAddendumToCWUOpportunity(opportunity)
+            ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
+            : []),
+          makeSidebarLink("history", opportunity.id, activeTab),
+          adt("heading", "Opportunity Evaluation"),
+          makeSidebarLink("proposals", opportunity.id, activeTab),
+          adt("heading", "Need Help?"),
+          adt("link", {
+            icon: "external-link-alt",
+            text: "Read Guide",
+            active: false,
+            newTab: true,
+            dest: routeDest(
+              adt("contentView", "code-with-us-opportunity-guide")
+            )
+          })
+        ]
+      : []
+  });
 }

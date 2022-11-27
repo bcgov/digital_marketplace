@@ -1,14 +1,9 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
@@ -33,7 +28,8 @@ import {
   invalid,
   mapValid,
   valid,
-  Validation
+  Validation,
+  isInvalid
 } from "shared/lib/validation";
 import {
   validateEmail,
@@ -103,61 +99,67 @@ export function setErrors(
     );
 }
 
-export const init: Init<Params, State> = async ({ user }) => {
-  return {
-    user,
-    newAvatarImage: null,
-    newAvatarImageErrors: [],
-    idpUsername: immutable(
-      await ShortText.init({
-        errors: [],
-        child: {
-          type: "text",
-          value: getString(user, "idpUsername"),
-          id: "user-profile-idp-username"
-        }
-      })
-    ),
-    email: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: validateEmail,
-        child: {
-          type: "text",
-          value: getString(user, "email"),
-          id: "user-profile-email"
-        }
-      })
-    ),
-    name: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: validateName,
-        child: {
-          type: "text",
-          value: getString(user, "name"),
-          id: "user-profile-name"
-        }
-      })
-    ),
-    jobTitle: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: (v) => mapValid(validateJobTitle(v), (w) => w || ""),
-        child: {
-          type: "text",
-          value: getString(user, "jobTitle"),
-          id: "user-profile-job-title"
-        }
-      })
-    )
-  };
+export const init: component_.base.Init<Params, State, Msg> = ({ user }) => {
+  const [idpUsernameState, idpUsernameCmds] = ShortText.init({
+    errors: [],
+    child: {
+      type: "text",
+      value: getString(user, "idpUsername"),
+      id: "user-profile-idp-username"
+    }
+  });
+  const [emailState, emailCmds] = ShortText.init({
+    errors: [],
+    validate: validateEmail,
+    child: {
+      type: "text",
+      value: getString(user, "email"),
+      id: "user-profile-email"
+    }
+  });
+  const [nameState, nameCmds] = ShortText.init({
+    errors: [],
+    validate: validateName,
+    child: {
+      type: "text",
+      value: getString(user, "name"),
+      id: "user-profile-name"
+    }
+  });
+  const [jobTitleState, jobTitleCmds] = ShortText.init({
+    errors: [],
+    validate: (v) => mapValid(validateJobTitle(v), (w) => w || ""),
+    child: {
+      type: "text",
+      value: getString(user, "jobTitle"),
+      id: "user-profile-job-title"
+    }
+  });
+  return [
+    {
+      user,
+      newAvatarImage: null,
+      newAvatarImageErrors: [],
+      idpUsername: immutable(idpUsernameState),
+      email: immutable(emailState),
+      name: immutable(nameState),
+      jobTitle: immutable(jobTitleState)
+    },
+    [
+      ...component_.cmd.mapMany(idpUsernameCmds, (msg) =>
+        adt("idpUsername", msg)
+      ),
+      ...component_.cmd.mapMany(emailCmds, (msg) => adt("email", msg)),
+      ...component_.cmd.mapMany(nameCmds, (msg) => adt("name", msg)),
+      ...component_.cmd.mapMany(jobTitleCmds, (msg) => adt("jobTitle", msg))
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "idpUsername":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["idpUsername"],
         childUpdate: ShortText.update,
@@ -165,7 +167,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("idpUsername", value)
       });
     case "jobTitle":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["jobTitle"],
         childUpdate: ShortText.update,
@@ -173,7 +175,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("jobTitle", value)
       });
     case "email":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["email"],
         childUpdate: ShortText.update,
@@ -181,7 +183,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("email", value)
       });
     case "name":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["name"],
         childUpdate: ShortText.update,
@@ -194,16 +196,17 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           file: msg.value,
           path: URL.createObjectURL(msg.value),
           errors: []
-        })
+        }),
+        []
       ];
   }
 };
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch, disabled } = props;
   return (
     <Row>
@@ -261,7 +264,7 @@ export const view: View<Props> = (props) => {
           }
           disabled
           state={state.idpUsername}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("idpUsername" as const, value)
           )}
         />
@@ -272,7 +275,7 @@ export const view: View<Props> = (props) => {
           required
           disabled={disabled}
           state={state.name}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("name" as const, value)
           )}
         />
@@ -283,7 +286,7 @@ export const view: View<Props> = (props) => {
             label="Job Title"
             disabled={disabled}
             state={state.jobTitle}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("jobTitle" as const, value)
             )}
           />
@@ -295,7 +298,7 @@ export const view: View<Props> = (props) => {
           required
           disabled={disabled}
           state={state.email}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("email" as const, value)
           )}
         />
@@ -304,7 +307,7 @@ export const view: View<Props> = (props) => {
   );
 };
 
-interface PersistParams {
+export interface PersistParams {
   state: Immutable<State>;
   userId: Id;
   existingAvatarImageFile?: Id;
@@ -312,14 +315,12 @@ interface PersistParams {
   notificationsOn?: boolean;
 }
 
-type PersistReturnValue = Validation<
-  [Immutable<State>, User],
+export type PersistResult = Validation<
+  [Immutable<State>, component_.Cmd<Msg>[], User],
   Immutable<State>
 >;
 
-export async function persist(
-  params: PersistParams
-): Promise<PersistReturnValue> {
+export function persist(params: PersistParams): component_.Cmd<PersistResult> {
   const {
     state,
     existingAvatarImageFile,
@@ -328,63 +329,104 @@ export async function persist(
     userId
   } = params;
   const values = getValues(state);
-  let avatarImageFile: Id | undefined = existingAvatarImageFile;
+  // Cmd Helpers
+  // Accept terms.
+  const acceptTermsCmd: component_.Cmd<Validation<null, Immutable<State>>> =
+    acceptedTerms
+      ? (api.users.update(userId, adt("acceptTerms"), (response) => {
+          if (!api.isValid(response)) {
+            return invalid(state);
+          }
+          return valid(null);
+        }) as component_.Cmd<Validation<null, Immutable<State>>>)
+      : component_.cmd.dispatch(valid(null));
+  // Modify notification subscription.
+  const notificationsOnCmd: component_.Cmd<Validation<null, Immutable<State>>> =
+    notificationsOn !== undefined
+      ? (api.users.update(
+          userId,
+          adt("updateNotifications", notificationsOn),
+          (response) => {
+            if (!api.isValid(response)) {
+              return invalid(state);
+            }
+            return valid(null);
+          }
+        ) as component_.Cmd<Validation<null, Immutable<State>>>)
+      : component_.cmd.dispatch(valid(null));
   // Update avatar image.
-  if (values.newAvatarImage) {
-    const fileResult = await api.avatars.create({
-      name: values.newAvatarImage.name,
-      file: values.newAvatarImage,
-      metadata: [adt("any")]
-    });
-    if (!api.isValid(fileResult)) {
-      return invalid(
-        setErrors(state, {
-          newAvatarImage: ["Please select a different avatar image."]
-        })
+  const uploadAvatarImageCmd: component_.Cmd<
+    Validation<Id | undefined, Immutable<State>>
+  > = values.newAvatarImage
+    ? (api.files.avatars.create(
+        {
+          name: values.newAvatarImage.name,
+          file: values.newAvatarImage,
+          metadata: [adt("any")]
+        },
+        (response) => {
+          if (!api.isValid(response)) {
+            return invalid(
+              setErrors(state, {
+                newAvatarImage: ["Please select a different avatar image."]
+              })
+            );
+          }
+          return valid(response.value.id);
+        }
+      ) as component_.Cmd<Validation<Id, Immutable<State>>>)
+    : component_.cmd.dispatch(valid(existingAvatarImageFile));
+  // Combine the above Cmds.
+  const combinedPreparationCmds = component_.cmd.andThen(
+    acceptTermsCmd,
+    (acceptTermsResult) => {
+      if (isInvalid(acceptTermsResult))
+        return component_.cmd.dispatch(acceptTermsResult);
+      return component_.cmd.andThen(
+        notificationsOnCmd,
+        (notificationsOnResult) => {
+          if (isInvalid(notificationsOnResult))
+            return component_.cmd.dispatch(notificationsOnResult);
+          return uploadAvatarImageCmd;
+        }
       );
     }
-    avatarImageFile = fileResult.value.id;
-  }
-  // Accept terms.
-  if (acceptedTerms === true) {
-    const result = await api.users.update(userId, adt("acceptTerms"));
-    if (api.isInvalid(result)) {
-      return invalid(state);
-    }
-  }
-  // Modify notification subscription.
-  if (notificationsOn !== undefined) {
-    const result = await api.users.update(
-      userId,
-      adt("updateNotifications", notificationsOn)
-    );
-    if (api.isInvalid(result)) {
-      return invalid(state);
-    }
-  }
-  // Update the user's profile.
-  const result = await api.users.update(
-    userId,
-    adt("updateProfile", {
-      name: values.name,
-      email: values.email,
-      jobTitle: values.jobTitle,
-      avatarImageFile
-    })
   );
-  switch (result.tag) {
-    case "invalid":
-      if (result.value.user && result.value.user.tag === "updateProfile") {
-        return invalid(setErrors(state, result.value.user.value));
-      } else {
-        return invalid(state);
-      }
-    case "unhandled":
-      return invalid(state);
-    case "valid":
-      return valid([
-        immutable(await init({ user: result.value })),
-        result.value
-      ]);
-  }
+  // Complete the flow by updating the user's profile.
+  return component_.cmd.andThen(
+    combinedPreparationCmds,
+    (uploadAvatarImageResult) => {
+      if (isInvalid(uploadAvatarImageResult))
+        return component_.cmd.dispatch(uploadAvatarImageResult);
+      return api.users.update(
+        userId,
+        adt("updateProfile", {
+          name: values.name,
+          email: values.email,
+          jobTitle: values.jobTitle,
+          avatarImageFile: uploadAvatarImageResult.value
+        }),
+        (response) => {
+          switch (response.tag) {
+            case "invalid":
+              if (
+                response.value.user &&
+                response.value.user.tag === "updateProfile"
+              ) {
+                return invalid(setErrors(state, response.value.user.value));
+              } else {
+                return invalid(state);
+              }
+            case "unhandled":
+              return invalid(state);
+            case "valid": {
+              const user = response.value;
+              const [newState, cmds] = init({ user });
+              return valid([immutable(newState), cmds, user]);
+            }
+          }
+        }
+      ) as component_.Cmd<PersistResult>;
+    }
+  );
 }

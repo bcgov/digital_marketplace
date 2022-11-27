@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Badge from "front-end/lib/views/badge";
 import Link from "front-end/lib/views/link";
 import React from "react";
@@ -17,7 +17,7 @@ export interface Props {
   className?: string;
 }
 
-const TabbedNav: View<Props> = ({ tabs, className = "" }) => {
+const TabbedNav: component.base.View<Props> = ({ tabs, className = "" }) => {
   if (!tabs.length) {
     return null;
   }

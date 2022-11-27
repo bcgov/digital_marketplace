@@ -1,14 +1,9 @@
 import { EMPTY_STRING } from "front-end/config";
 import * as Table from "front-end/lib/components/table";
 import {
-  Component,
-  ComponentView,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Badge from "front-end/lib/views/badge";
@@ -17,19 +12,15 @@ import React from "react";
 import { formatDate, formatTime } from "shared/lib";
 import { isAdmin, User, UserSlim } from "shared/lib/resources/user";
 import { ADT, adt } from "shared/lib/types";
-import { AttachmentList } from "front-end/lib/components/attachments";
-import { FileRecord } from "shared/lib/resources/file";
-import { UpdateWithNoteRequestBody } from "shared/lib/resources/opportunity/sprint-with-us";
 
 export interface Item {
   type: {
     text: string;
     color?: ThemeColor;
   };
+  note?: string;
   createdAt: Date;
   createdBy?: UserSlim;
-  note?: string;
-  attachments?: FileRecord[];
 }
 
 export interface Params {
@@ -40,41 +31,32 @@ export interface Params {
 
 export interface State extends Pick<Params, "items" | "viewerUser"> {
   table: Immutable<Table.State>;
-  publishNewNote?: (
-    value: UpdateWithNoteRequestBody
-  ) => Record<string, unknown>;
 }
 
-export type Msg = ADT<"table", Table.Msg> | ADT<"createHistoryNote", Table.Msg>;
+export type Msg = ADT<"table", Table.Msg>;
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   idNamespace,
   items,
   viewerUser
 }) => {
-  return {
-    viewerUser,
-    items, //items sorted in the http/api module.
-    table: immutable(
-      await Table.init({
-        idNamespace
-      })
-    )
-  };
+  const [tableState, tableCmds] = Table.init({
+    idNamespace
+  });
+  return [
+    {
+      viewerUser,
+      items, //items sorted in the http/api module.
+      table: immutable(tableState)
+    },
+    tableCmds.map((c) => component_.cmd.map(c, (msg) => adt("table", msg)))
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "table":
-      return updateComponentChild({
-        state,
-        childStatePath: ["table"],
-        childUpdate: Table.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => ({ tag: "table", value })
-      });
-    case "createHistoryNote":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -84,7 +66,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function tableHeadCells(state: Immutable<State>): Table.HeadCells {
+function tableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Entry Type",
@@ -122,12 +104,7 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         className: "text-wrap"
       },
       {
-        children: (
-          <>
-            {item.note || EMPTY_STRING}
-            {item.attachments && <AttachmentList files={item.attachments} />}
-          </>
-        )
+        children: item.note || EMPTY_STRING
       },
       {
         className: "text-nowrap",
@@ -167,20 +144,24 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
-export const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+export const view: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   return (
     <Table.view
-      headCells={tableHeadCells(state)}
+      headCells={tableHeadCells()}
       bodyRows={tableBodyRows(state)}
       state={state.table}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
-        adt("table" as const, msg)
+      dispatch={component_.base.mapDispatch(
+        dispatch,
+        (msg) => adt("table", msg) as Msg
       )}
     />
   );
 };
 
-export const component: Component<Params, State, Msg> = {
+export const component: component_.base.Component<Params, State, Msg> = {
   init,
   update,
   view

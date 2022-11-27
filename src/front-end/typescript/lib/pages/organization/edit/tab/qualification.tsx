@@ -1,12 +1,5 @@
 import { Route } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  Init,
-  Update,
-  View,
-  ViewElement
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/organization/edit/tab";
 import EditTabHeader from "front-end/lib/pages/organization/lib/views/edit-tab-header";
 import {
@@ -24,24 +17,24 @@ export type State = Tab.Params;
 
 export type InnerMsg = ADT<"noop">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return params;
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  return [params, []];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+const update: component_.base.Update<State, Msg> = ({ state }) => {
+  return [state, []];
 };
 
 interface RequirementProps {
-  name: string | ViewElement;
+  name: string | component_.base.ViewElement;
   description: string;
   checked: boolean;
   className?: string;
 }
 
-const Requirement: View<RequirementProps> = ({
+const Requirement: component_.base.View<RequirementProps> = ({
   name,
   description,
   checked,
@@ -62,7 +55,7 @@ const Requirement: View<RequirementProps> = ({
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state }) => {
+const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
   return (
     <div>
       <EditTabHeader
@@ -125,5 +118,8 @@ const view: ComponentView<State, Msg> = ({ state }) => {
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
-  view
+  view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  }
 };

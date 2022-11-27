@@ -6,14 +6,9 @@ import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import Icon from "front-end/lib/views/icon";
@@ -31,6 +26,7 @@ import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import {
   createBlankIndividualProponent,
   CreateCWUProposalStatus,
+  UpdateValidationErrors,
   CreateProponentRequestBody,
   CreateRequestBody,
   CreateValidationErrors,
@@ -39,7 +35,12 @@ import {
 } from "shared/lib/resources/proposal/code-with-us";
 import { isVendor, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { invalid, valid, Validation } from "shared/lib/validation";
+import {
+  isValid as isValid_,
+  invalid,
+  valid,
+  Validation
+} from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/code-with-us";
 
 type ProponentType = "individual" | "organization";
@@ -128,7 +129,7 @@ function getProponent(
   return fallback;
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,
   canRemoveExistingAttachments,
   opportunity,
@@ -145,211 +146,209 @@ export const init: Init<Params, State> = async ({
       label: proposal.proponent.value.legalName
     };
   })();
-  return {
-    tabbedForm: immutable(
-      await TabbedFormComponent.init({
-        tabs: ["Proponent", "Proposal", "Attachments"],
-        activeTab
-      })
-    ),
-
-    opportunity,
-    viewerUser,
-    orgId: "",
-    showEvaluationCriteria: true,
-
-    proponentType: immutable(
-      await ProponentTypeRadioGroup.init({
-        errors: [],
-        validate: (v) =>
-          v === null ? invalid(["Please select a proponent type."]) : valid(v),
-        child: {
-          id: "cwu-proposal-proponent-type",
-          value: proposal?.proponent.tag || null,
-          options: [
-            { label: "Individual", value: "individual" },
-            { label: "Organization", value: "organization" }
-          ]
-        }
-      })
-    ),
-
-    // Individual
-    legalName: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentLegalName,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "legalName"),
-          id: "cwu-proposal-individual-legalName"
-        }
-      })
-    ),
-
-    email: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentEmail,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "email"),
-          id: "cwu-proposal-individual-email"
-        }
-      })
-    ),
-
-    phone: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentPhone,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "phone"),
-          id: "cwu-proposal-individual-phone"
-        }
-      })
-    ),
-
-    street1: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentStreet1,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "street1"),
-          id: "cwu-proposal-individual-street1"
-        }
-      })
-    ),
-
-    street2: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentStreet2,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "street2"),
-          id: "cwu-proposal-individual-street2"
-        }
-      })
-    ),
-
-    city: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentCity,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "city"),
-          id: "cwu-proposal-individual-city"
-        }
-      })
-    ),
-
-    region: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentRegion,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "region"),
-          id: "cwu-proposal-individual-region"
-        }
-      })
-    ),
-
-    mailCode: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentMailCode,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "mailCode"),
-          id: "cwu-proposal-individual-mailCode"
-        }
-      })
-    ),
-
-    country: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: proposalValidation.validateIndividualProponentCountry,
-        child: {
-          type: "text",
-          value: getProponent(proposal, "individual", "country"),
-          id: "cwu-proposal-individual-country"
-        }
-      })
-    ),
-
-    organization: immutable(
-      await Select.init({
-        errors: [],
-        validate: (option) => {
-          if (!option) {
-            return invalid(["Please select an organization."]);
-          }
-          return valid(option);
-        },
-        child: {
-          value: selectedOrganizationOption,
-          id: "cwu-proposal-organization-id",
-          options: adt(
-            "options",
-            affiliations
-              .filter((a) => a.membershipType === MembershipType.Owner)
-              .sort((a, b) =>
-                compareStrings(
-                  a.organization.legalName,
-                  b.organization.legalName
-                )
-              )
-              .map((a) => ({
-                value: a.organization.id,
-                label: a.organization.legalName
-              }))
+  const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
+    tabs: ["Proponent", "Proposal", "Attachments"],
+    activeTab
+  });
+  const [proponentTypeState, proponentTypeCmds] = ProponentTypeRadioGroup.init({
+    errors: [],
+    validate: (v) =>
+      v === null ? invalid(["Please select a proponent type."]) : valid(v),
+    child: {
+      id: "cwu-proposal-proponent-type",
+      value: proposal?.proponent.tag || null,
+      options: [
+        { label: "Individual", value: "individual" },
+        { label: "Organization", value: "organization" }
+      ]
+    }
+  });
+  const [legalNameState, legalNameCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentLegalName,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "legalName"),
+      id: "cwu-proposal-individual-legalName"
+    }
+  });
+  const [emailState, emailCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentEmail,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "email"),
+      id: "cwu-proposal-individual-email"
+    }
+  });
+  const [phoneState, phoneCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentPhone,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "phone"),
+      id: "cwu-proposal-individual-phone"
+    }
+  });
+  const [street1State, street1Cmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentStreet1,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "street1"),
+      id: "cwu-proposal-individual-street1"
+    }
+  });
+  const [street2State, street2Cmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentStreet2,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "street2"),
+      id: "cwu-proposal-individual-street2"
+    }
+  });
+  const [cityState, cityCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentCity,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "city"),
+      id: "cwu-proposal-individual-city"
+    }
+  });
+  const [regionState, regionCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentRegion,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "region"),
+      id: "cwu-proposal-individual-region"
+    }
+  });
+  const [mailCodeState, mailCodeCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentMailCode,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "mailCode"),
+      id: "cwu-proposal-individual-mailCode"
+    }
+  });
+  const [countryState, countryCmds] = ShortText.init({
+    errors: [],
+    validate: proposalValidation.validateIndividualProponentCountry,
+    child: {
+      type: "text",
+      value: getProponent(proposal, "individual", "country"),
+      id: "cwu-proposal-individual-country"
+    }
+  });
+  const [organizationState, organizationCmds] = Select.init({
+    errors: [],
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select an organization."]);
+      }
+      return valid(option);
+    },
+    child: {
+      value: selectedOrganizationOption,
+      id: "cwu-proposal-organization-id",
+      options: adt(
+        "options",
+        affiliations
+          .filter((a) => a.membershipType === MembershipType.Owner)
+          .sort((a, b) =>
+            compareStrings(a.organization.legalName, b.organization.legalName)
           )
-        }
-      })
-    ),
-
-    proposalText: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: proposalValidation.validateProposalText,
-        child: {
-          value: proposal?.proposalText || "",
-          id: "cwu-proposal-proposalText"
-        }
-      })
-    ),
-
-    additionalComments: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: proposalValidation.validateAdditionalComments,
-        child: {
-          value: proposal?.additionalComments || "",
-          id: "cwu-proposal-additional-comments"
-        }
-      })
-    ),
-
-    attachments: immutable(
-      await Attachments.init({
-        canRemoveExistingAttachments,
-        existingAttachments: proposal?.attachments || [],
-        newAttachmentMetadata
-      })
-    )
-  };
+          .map((a) => ({
+            value: a.organization.id,
+            label: a.organization.legalName
+          }))
+      )
+    }
+  });
+  const [proposalTextState, proposalTextCmds] = RichMarkdownEditor.init({
+    errors: [],
+    validate: proposalValidation.validateProposalText,
+    child: {
+      value: proposal?.proposalText || "",
+      id: "cwu-proposal-proposalText"
+    }
+  });
+  const [additionalCommentsState, additionalCommentsCmds] =
+    RichMarkdownEditor.init({
+      errors: [],
+      validate: proposalValidation.validateAdditionalComments,
+      child: {
+        value: proposal?.additionalComments || "",
+        id: "cwu-proposal-additional-comments"
+      }
+    });
+  const [attachmentsState, attachmentsCmds] = Attachments.init({
+    canRemoveExistingAttachments,
+    existingAttachments: proposal?.attachments || [],
+    newAttachmentMetadata
+  });
+  return [
+    {
+      opportunity,
+      viewerUser,
+      orgId: "",
+      showEvaluationCriteria: true,
+      tabbedForm: immutable(tabbedFormState),
+      proponentType: immutable(proponentTypeState),
+      legalName: immutable(legalNameState),
+      email: immutable(emailState),
+      phone: immutable(phoneState),
+      street1: immutable(street1State),
+      street2: immutable(street2State),
+      city: immutable(cityState),
+      region: immutable(regionState),
+      mailCode: immutable(mailCodeState),
+      country: immutable(countryState),
+      organization: immutable(organizationState),
+      proposalText: immutable(proposalTextState),
+      additionalComments: immutable(additionalCommentsState),
+      attachments: immutable(attachmentsState)
+    },
+    [
+      ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
+        adt("tabbedForm", msg)
+      ),
+      ...component_.cmd.mapMany(proponentTypeCmds, (msg) =>
+        adt("proponentType", msg)
+      ),
+      ...component_.cmd.mapMany(legalNameCmds, (msg) => adt("legalName", msg)),
+      ...component_.cmd.mapMany(emailCmds, (msg) => adt("email", msg)),
+      ...component_.cmd.mapMany(phoneCmds, (msg) => adt("phone", msg)),
+      ...component_.cmd.mapMany(street1Cmds, (msg) => adt("street1", msg)),
+      ...component_.cmd.mapMany(street2Cmds, (msg) => adt("street2", msg)),
+      ...component_.cmd.mapMany(cityCmds, (msg) => adt("city", msg)),
+      ...component_.cmd.mapMany(regionCmds, (msg) => adt("region", msg)),
+      ...component_.cmd.mapMany(mailCodeCmds, (msg) => adt("mailCode", msg)),
+      ...component_.cmd.mapMany(countryCmds, (msg) => adt("country", msg)),
+      ...component_.cmd.mapMany(organizationCmds, (msg) =>
+        adt("organization", msg)
+      ),
+      ...component_.cmd.mapMany(proposalTextCmds, (msg) =>
+        adt("proposalText", msg)
+      ),
+      ...component_.cmd.mapMany(additionalCommentsCmds, (msg) =>
+        adt("additionalComments", msg)
+      ),
+      ...component_.cmd.mapMany(attachmentsCmds, (msg) =>
+        adt("attachments", msg)
+      )
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "tabbedForm":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["tabbedForm"],
         childUpdate: TabbedFormComponent.update,
@@ -358,7 +357,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "proponentType":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["proponentType"],
         childUpdate: ProponentTypeRadioGroup.update,
@@ -367,7 +366,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "legalName":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["legalName"],
         childUpdate: ShortText.update,
@@ -376,7 +375,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "email":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["email"],
         childUpdate: ShortText.update,
@@ -385,7 +384,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "phone":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["phone"],
         childUpdate: ShortText.update,
@@ -394,7 +393,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "street1":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["street1"],
         childUpdate: ShortText.update,
@@ -403,7 +402,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "street2":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["street2"],
         childUpdate: ShortText.update,
@@ -412,7 +411,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "city":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["city"],
         childUpdate: ShortText.update,
@@ -421,7 +420,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "region":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["region"],
         childUpdate: ShortText.update,
@@ -430,7 +429,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "mailCode":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["mailCode"],
         childUpdate: ShortText.update,
@@ -439,7 +438,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "country":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["country"],
         childUpdate: ShortText.update,
@@ -448,7 +447,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "organization":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["organization"],
         childUpdate: Select.update,
@@ -457,10 +456,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "toggleEvaluationCriteria":
-      return [state.update("showEvaluationCriteria", (v) => !v)];
+      return [state.update("showEvaluationCriteria", (v) => !v), []];
 
     case "proposalText":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["proposalText"],
         childUpdate: RichMarkdownEditor.update,
@@ -469,7 +468,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "additionalComments":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["additionalComments"],
         childUpdate: RichMarkdownEditor.update,
@@ -478,7 +477,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "attachments":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["attachments"],
         childUpdate: Attachments.update,
@@ -553,7 +552,6 @@ export function isProponentTabValid(state: State): boolean {
     case "organization":
       return FormField.isValid(state.organization);
   }
-  return false;
 }
 
 export function isProposalTabValid(state: State): boolean {
@@ -648,86 +646,136 @@ export function validate(state: Immutable<State>): Immutable<State> {
 
 type PersistAction = ADT<"create", CreateCWUProposalStatus> | ADT<"update", Id>;
 
-type ValidPersistResult = [Immutable<State>, CWUProposal];
+export type PersistResult = Validation<
+  [Immutable<State>, component_.Cmd<Msg>[], CWUProposal],
+  Immutable<State>
+>;
 
-type InvalidPersistResult = Immutable<State>;
-
-export async function persist(
+export function persist(
   state: Immutable<State>,
   action: PersistAction
-): Promise<Validation<ValidPersistResult, InvalidPersistResult>> {
-  const formValues = getValues(state);
-
+): component_.Cmd<PersistResult> {
+  const values = getValues(state);
+  // Get new attachments to be uploaded.
   const newAttachments = Attachments.getNewAttachments(state.attachments);
-  // Upload new attachments if necessary.
-  if (newAttachments.length) {
-    const result = await api.uploadFiles(newAttachments);
-    switch (result.tag) {
-      case "valid":
-        formValues.attachments = [
-          ...formValues.attachments,
-          ...result.value.map(({ id }) => id)
-        ];
-        break;
-      case "invalid":
-        return invalid(
-          state.update("attachments", (attachments) =>
-            Attachments.setNewAttachmentErrors(attachments, result.value)
-          )
-        );
-      case "unhandled":
-        return invalid(state);
-    }
-  }
-
-  const actionResult: api.ResponseValidation<
-    CWUProposal,
-    CreateValidationErrors | UpdateEditValidationErrors
-  > = await (async () => {
-    switch (action.tag) {
-      case "create":
-        return await api.proposals.cwu.create({
-          ...formValues,
-          opportunity: state.opportunity.id,
-          status: action.value
-        });
-      case "update": {
-        const updateResult = await api.proposals.cwu.update(
-          action.value,
-          adt("edit" as const, formValues)
-        );
-        return api.mapInvalid(updateResult, (errors) => {
-          if (errors.proposal && errors.proposal.tag === "edit") {
-            return errors.proposal.value;
-          } else {
-            return {};
-          }
-        });
+  const existingAttachments = state.attachments.existingAttachments.map(
+    ({ id }) => id
+  );
+  // Cmd helpers
+  const uploadNewAttachmentsCmd = api.files.createMany(
+    newAttachments,
+    (response) => {
+      switch (response.tag) {
+        case "valid":
+          return valid([
+            ...existingAttachments,
+            ...response.value.map(({ id }) => id)
+          ]);
+        case "invalid":
+          return invalid(
+            state.update("attachments", (attachments) =>
+              Attachments.setNewAttachmentErrors(attachments, response.value)
+            )
+          );
+        case "unhandled":
+          return invalid(state);
       }
     }
-  })();
-
-  switch (actionResult.tag) {
-    case "valid":
-      state = setErrors(state, {});
-      // Update the attachments component accordingly.
-      state = state.set(
-        "attachments",
-        immutable(
-          await Attachments.init({
-            existingAttachments: actionResult.value.attachments || [],
-            newAttachmentMetadata
-          })
-        )
+  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
+  const actionCmd = (
+    attachments: Id[]
+  ): component_.cmd.Cmd<
+    api.ResponseValidation<
+      CWUProposal,
+      UpdateEditValidationErrors | CreateValidationErrors
+    >
+  > => {
+    switch (action.tag) {
+      case "create":
+        return api.proposals.cwu.create(
+          {
+            ...values,
+            opportunity: state.opportunity.id,
+            attachments,
+            status: action.value
+          },
+          (response) => response
+        ) as component_.cmd.Cmd<
+          api.ResponseValidation<CWUProposal, CreateValidationErrors>
+        >;
+      case "update":
+        return api.proposals.cwu.update(
+          action.value,
+          adt("edit" as const, {
+            ...values,
+            attachments
+          }),
+          (
+            response: api.ResponseValidation<
+              CWUProposal,
+              UpdateValidationErrors
+            >
+          ) => {
+            return api.mapInvalid(response, (errors) => {
+              if (errors.proposal && errors.proposal.tag === "edit") {
+                return errors.proposal.value;
+              } else {
+                return {};
+              }
+            });
+          }
+        ) as component_.cmd.Cmd<
+          api.ResponseValidation<CWUProposal, UpdateEditValidationErrors>
+        >;
+    }
+  };
+  // Upload new attachments if necessary.
+  const attachmentsCmd: component_.cmd.Cmd<Validation<Id[], Immutable<State>>> =
+    newAttachments.length
+      ? uploadNewAttachmentsCmd
+      : component_.cmd.dispatch(valid(existingAttachments));
+  return component_.cmd.andThen(attachmentsCmd, (attachmentsResult) => {
+    if (isValid_(attachmentsResult)) {
+      return component_.cmd.map(
+        actionCmd(attachmentsResult.value),
+        (actionResult) => {
+          switch (actionResult.tag) {
+            case "unhandled":
+              return invalid(state);
+            case "invalid":
+              return invalid(setErrors(state, actionResult.value));
+            case "valid": {
+              state = setErrors(state, {});
+              // Update the attachments component accordingly.
+              const [newAttachmentsState, newAttachmentsCmds] =
+                Attachments.init({
+                  existingAttachments: actionResult.value.attachments || [],
+                  newAttachmentMetadata
+                });
+              state = state.set("attachments", immutable(newAttachmentsState));
+              return valid([
+                state,
+                component_.cmd.mapMany(
+                  newAttachmentsCmds,
+                  (msg) => adt("attachments", msg) as Msg
+                ),
+                actionResult.value
+              ]);
+            }
+          }
+        }
       );
-      return valid([state, actionResult.value]);
-    case "unhandled":
-    case "invalid":
-      return invalid(setErrors(state, actionResult.value));
-  }
+    } else {
+      return component_.cmd.dispatch(invalid(attachmentsResult.value));
+    }
+  });
 }
 
-const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
+const IndividualProponent: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -739,7 +787,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Legal Name"
           state={state.legalName}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("legalName" as const, value)
           )}
         />
@@ -753,7 +801,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Email Address"
           state={state.email}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("email" as const, value)
           )}
         />
@@ -766,7 +814,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Phone Number"
           state={state.phone}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("phone" as const, value)
           )}
         />
@@ -780,7 +828,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Street Address"
           state={state.street1}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("street1" as const, value)
           )}
         />
@@ -793,7 +841,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Street Address"
           state={state.street2}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("street2" as const, value)
           )}
         />
@@ -807,7 +855,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="City"
           state={state.city}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("city" as const, value)
           )}
         />
@@ -821,7 +869,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Province / State"
           state={state.region}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("region" as const, value)
           )}
         />
@@ -835,7 +883,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Postal / ZIP Code"
           state={state.mailCode}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("mailCode" as const, value)
           )}
         />
@@ -849,7 +897,7 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
           extraChildProps={{}}
           label="Country"
           state={state.country}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("country" as const, value)
           )}
         />
@@ -858,7 +906,11 @@ const IndividualProponent: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
+const OrganizationProponent: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -892,7 +944,7 @@ const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
           }
           required
           state={state.organization}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("organization" as const, value)
           )}
         />
@@ -901,7 +953,7 @@ const OrganizationProponent: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const ProponentView: View<Props> = (props) => {
+const ProponentView: component_.base.View<Props> = (props) => {
   const { state, dispatch, disabled } = props;
   const proponentType = FormField.getValue(state.proponentType);
   const activeView = (() => {
@@ -931,7 +983,7 @@ const ProponentView: View<Props> = (props) => {
             required
             disabled={disabled}
             state={state.proponentType}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("proponentType" as const, value)
             )}
           />
@@ -956,7 +1008,11 @@ const ProponentView: View<Props> = (props) => {
   );
 };
 
-const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
+const ProposalView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -998,7 +1054,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
           label="Proposal"
           help="Provide your complete proposal here. Be sure to address the Proposal Evaluation Criteria as outlined on the opportunity. You can format your proposal with Markdown."
           state={state.proposalText}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("proposalText" as const, value)
           )}
         />
@@ -1012,7 +1068,7 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
           label="Additional Comments"
           help="Provide any additional information or comments that are relevant to your proposal submission. You can format your additional comments with Markdown."
           state={state.additionalComments}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("additionalComments" as const, value)
           )}
         />
@@ -1021,12 +1077,16 @@ const ProposalView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+const AttachmentsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -1035,7 +1095,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           must be smaller than 10MB.
         </p>
         <Attachments.view
-          dispatch={mapComponentDispatch(dispatch, (msg) =>
+          dispatch={component_.base.mapDispatch(dispatch, (msg) =>
             adt("attachments" as const, msg)
           )}
           state={state.attachments}
@@ -1047,7 +1107,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
@@ -1075,7 +1135,7 @@ export const view: View<Props> = (props) => {
         }
       }}
       state={state.tabbedForm}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)
       )}>
       {activeTab}

@@ -1,13 +1,5 @@
 import { DROPDOWN_CARET_SIZE } from "front-end/config";
-import {
-  ComponentViewProps,
-  Dispatch,
-  Init,
-  PageContextualActions,
-  PageContextualDropdown,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Icon from "front-end/lib/views/icon";
 import Link, {
@@ -51,49 +43,56 @@ export type Msg =
   | ADT<"toggleDesktopContextualDropdown", boolean | undefined>
   | ADT<"toggleMobileContextualDropdown", boolean | undefined>;
 
-export const init: Init<Params, State> = async () => {
-  return {
-    isDesktopAccountDropdownOpen: false,
-    isDesktopContextualDropdownOpen: false,
-    isMobileContextualDropdownOpen: false,
-    isMobileMenuOpen: false
-  };
+export const init: component_.base.Init<Params, State, Msg> = () => {
+  return [
+    {
+      isDesktopAccountDropdownOpen: false,
+      isDesktopContextualDropdownOpen: false,
+      isMobileContextualDropdownOpen: false,
+      isMobileMenuOpen: false
+    },
+    []
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleMobileMenu":
       return [
         state.update("isMobileMenuOpen", (v) =>
           msg.value === undefined ? !v : msg.value
-        )
+        ),
+        []
       ];
     case "toggleDesktopAccountDropdown":
       return [
         state.update("isDesktopAccountDropdownOpen", (v) =>
           msg.value === undefined ? !v : msg.value
-        )
+        ),
+        []
       ];
     case "toggleDesktopContextualDropdown":
       return [
         state.update("isDesktopContextualDropdownOpen", (v) =>
           msg.value === undefined ? !v : msg.value
-        )
+        ),
+        []
       ];
     case "toggleMobileContextualDropdown":
       return [
         state.update("isMobileContextualDropdownOpen", (v) =>
           msg.value === undefined ? !v : msg.value
-        )
+        ),
+        []
       ];
   }
 };
 
 export type NavLink = ExtendLinkProps<{ active?: boolean }>;
 
-type NavLinkProps = NavLink & { dispatch: Dispatch<Msg> };
+type NavLinkProps = NavLink & { dispatch: component_.base.Dispatch<Msg> };
 
-const NavLink: View<NavLinkProps> = (props) => {
+const NavLink: component_.base.View<NavLinkProps> = (props) => {
   const onClick = (e: MouseEvent) => {
     props.dispatch(adt("toggleMobileMenu", false));
     props.dispatch(adt("toggleDesktopAccountDropdown", false));
@@ -116,10 +115,10 @@ const NavLink: View<NavLinkProps> = (props) => {
   );
 };
 
-const ContextualDropdown: View<
-  PageContextualDropdown & {
+const ContextualDropdown: component_.base.View<
+  component_.page.actions.Dropdown & {
     isOpen: boolean;
-    dispatch: Dispatch<Msg>;
+    dispatch: component_.base.Dispatch<Msg>;
     toggle(): void;
   }
 > = (props) => {
@@ -162,12 +161,15 @@ const ContextualDropdown: View<
   );
 };
 
-export interface NavAccountDropdown extends PageContextualDropdown {
+export interface NavAccountDropdown extends component_.page.actions.Dropdown {
   imageUrl: string;
 }
 
-const NavAccountDropdown: View<
-  NavAccountDropdown & { isOpen: boolean; dispatch: Dispatch<Msg> }
+const NavAccountDropdown: component_.base.View<
+  NavAccountDropdown & {
+    isOpen: boolean;
+    dispatch: component_.base.Dispatch<Msg>;
+  }
 > = (props) => {
   const { text, imageUrl, linkGroups, isOpen, dispatch } = props;
   return (
@@ -250,10 +252,10 @@ interface AccountActionProps {
   className?: string;
   color?: ThemeColor;
   action: AccountAction;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-const AccountAction: View<AccountActionProps> = ({
+const AccountAction: component_.base.View<AccountActionProps> = ({
   className = "",
   color = "c-nav-fg",
   action,
@@ -297,7 +299,7 @@ type MobileAccountMenu =
   | AuthenticatedMobileAccountMenu
   | UnauthenticatedAccountMenu;
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   logoImageUrl: string;
   title: string;
   homeDest?: Dest;
@@ -307,10 +309,10 @@ export interface Props extends ComponentViewProps<State, Msg> {
     desktop: DesktopAccountMenu;
   };
   appLinks: NavLink[];
-  contextualActions?: PageContextualActions;
+  contextualActions?: component_.page.Actions;
 }
 
-const DesktopAccountMenu: View<Props> = (props) => {
+const DesktopAccountMenu: component_.base.View<Props> = (props) => {
   const { accountMenus, state, dispatch } = props;
   const menu = accountMenus.desktop;
   switch (menu.tag) {
@@ -341,7 +343,7 @@ const DesktopAccountMenu: View<Props> = (props) => {
   }
 };
 
-const MobileAccountMenu: View<Props> = (props) => {
+const MobileAccountMenu: component_.base.View<Props> = (props) => {
   const menu = props.accountMenus.mobile;
   const viewActions = (actions: AccountAction[], marginClassName: string) => (
     <Fragment>
@@ -389,12 +391,12 @@ const MobileAccountMenu: View<Props> = (props) => {
 };
 
 interface TitleProps extends Pick<Props, "title" | "homeDest"> {
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
   className?: string;
   color?: ThemeColor;
 }
 
-const Title: View<TitleProps> = ({
+const Title: component_.base.View<TitleProps> = ({
   title,
   homeDest,
   dispatch,
@@ -414,7 +416,7 @@ const Title: View<TitleProps> = ({
   </div>
 );
 
-const MobileMenu: View<Props> = (props) => {
+const MobileMenu: component_.base.View<Props> = (props) => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
   const { appLinks } = props;
   const linkClassName = (link: NavLink, numLinks: number, i: number) =>
@@ -463,7 +465,7 @@ const MobileMenu: View<Props> = (props) => {
   );
 };
 
-const TopNavbar: View<Props> = (props) => {
+const TopNavbar: component_.base.View<Props> = (props) => {
   const { state, dispatch, isLoading } = props;
   return (
     <div className="main-nav-top-navbar-wrapper">
@@ -516,20 +518,22 @@ const TopNavbar: View<Props> = (props) => {
   );
 };
 
-const ContextualLinks: View<Props & { isOpen: boolean; toggle(): void }> = (
-  props
-) => {
+const ContextualLinks: component_.base.View<
+  Props & { isOpen: boolean; toggle(): void }
+> = (props) => {
   const { contextualActions, dispatch, isOpen, toggle } = props;
   if (!contextualActions) {
     return null;
   }
   switch (contextualActions.tag) {
+    case "none":
+      return null;
     case "links":
       return (
         <div
           className="d-flex flex-nowrap align-items-center flex-row-reverse py-1 pr-1 mr-n1"
           style={{ overflowX: "auto" }}>
-          {contextualActions.value.map((link, i, links) => {
+          {contextualActions.value.map((link, i) => {
             const linkProps = {
               ...link,
               color: link.color || "c-nav-fg-alt",
@@ -560,7 +564,7 @@ const ContextualLinks: View<Props & { isOpen: boolean; toggle(): void }> = (
   }
 };
 
-const DesktopBottomNavbar: View<Props> = (props) => {
+const DesktopBottomNavbar: component_.base.View<Props> = (props) => {
   const { appLinks, contextualActions } = props;
   const linkClassName = (link: NavLink) =>
     `${link.active && !link.button ? "font-weight-bold" : ""}`;
@@ -605,7 +609,7 @@ const DesktopBottomNavbar: View<Props> = (props) => {
   );
 };
 
-const MobileBottomNavbar: View<Props> = (props) => {
+const MobileBottomNavbar: component_.base.View<Props> = (props) => {
   const { contextualActions } = props;
   if (
     !contextualActions ||
@@ -634,7 +638,7 @@ const MobileBottomNavbar: View<Props> = (props) => {
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   return (
     <nav className="main-nav d-print-none">
       <TopNavbar {...props} />

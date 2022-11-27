@@ -2,17 +2,9 @@ import { EMPTY_STRING } from "front-end/config";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
-  immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  toast,
-  Update,
-  updateComponentChild,
-  View
+  immutable,
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
@@ -45,7 +37,9 @@ import {
   canCWUProposalBeAwarded,
   compareCWUProposalsForPublicSector,
   CWUProposalSlim,
-  getCWUProponentName
+  getCWUProponentName,
+  UpdateValidationErrors,
+  CWUProposal
 } from "shared/lib/resources/proposal/code-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
@@ -53,6 +47,7 @@ import { ADT, adt, Id } from "shared/lib/types";
 type ModalId = ADT<"award", Id>;
 
 export interface State extends Tab.Params {
+  opportunity: CWUOpportunity | null;
   showModal: ModalId | null;
   awardLoading: Id | null;
   canProposalsBeAwarded: boolean;
@@ -62,102 +57,143 @@ export interface State extends Tab.Params {
 }
 
 export type InnerMsg =
+  | ADT<"onInitResponse", Tab.InitResponse>
   | ADT<"table", Table.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
-  | ADT<"award", Id>;
+  | ADT<"award", Id>
+  | ADT<
+      "onAwardResponse",
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  const canViewProposals = canViewCWUOpportunityProposals(params.opportunity);
-  let proposals: CWUProposalSlim[] = [];
-  if (canViewProposals) {
-    const proposalResult = await api.proposals.cwu.readMany(
-      params.opportunity.id
-    );
-    proposals = api
-      .getValidValue(proposalResult, [])
-      .sort((a, b) => compareCWUProposalsForPublicSector(a, b));
-  }
-  return {
-    awardLoading: null,
-    showModal: null,
-    canViewProposals,
-    // Determine whether the "Award" button should be shown at all.
-    // Can be awarded if...
-    // - Opportunity has the appropriate status; and
-    // - At least one proposal can be awarded.
-    canProposalsBeAwarded:
-      canCWUOpportunityBeAwarded(params.opportunity) &&
-      proposals.reduce(
-        (acc, p) => acc || canCWUProposalBeAwarded(p),
-        false as boolean
-      ),
-    proposals,
-    table: immutable(
-      await Table.init({
-        idNamespace: "proposal-table"
-      })
-    ),
-    ...params
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "proposal-table"
+  });
+  return [
+    {
+      ...params,
+      opportunity: null,
+      awardLoading: null,
+      showModal: null,
+      canViewProposals: false,
+      canProposalsBeAwarded: false,
+      proposals: [],
+      table: immutable(tableState)
+    },
+    component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
+  ];
 };
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
-    case "award":
+    case "onInitResponse": {
+      const opportunity = msg.value[0];
+      let proposals = msg.value[1];
+      proposals = proposals.sort((a, b) =>
+        compareCWUProposalsForPublicSector(a, b)
+      );
+      const canViewProposals =
+        canViewCWUOpportunityProposals(opportunity) && !!proposals.length;
+      return [
+        state
+          .set("opportunity", opportunity)
+          .set("proposals", proposals)
+          .set("canViewProposals", canViewProposals)
+          // Determine whether the "Award" button should be shown at all.
+          // Can be awarded if...
+          // - Opportunity has the appropriate status; and
+          // - At least one proposal can be awarded.
+          .set(
+            "canProposalsBeAwarded",
+            canCWUOpportunityBeAwarded(opportunity) &&
+              proposals.reduce(
+                (acc, p) => acc || canCWUProposalBeAwarded(p),
+                false as boolean
+              )
+          ),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
+    case "award": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
       state = state.set("showModal", null);
       return [
         state.set("awardLoading", msg.value),
-        async (state, dispatch) => {
-          state = state.set("awardLoading", null);
-          const updateResult = await api.proposals.cwu.update(
+        [
+          api.proposals.cwu.update(
             msg.value,
-            adt("award", "")
-          );
-          switch (updateResult.tag) {
-            case "valid":
-              dispatch(
-                toast(
+            adt("award", ""),
+            (response) => adt("onAwardResponse", response) as Msg
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+
+    case "onAwardResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = state.set("awardLoading", null);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "success",
                     toasts.statusChanged.success(CWUOpportunityStatus.Awarded)
                   )
                 )
-              );
-              return immutable(
-                await init({
-                  opportunity: api.getValidValue(
-                    await api.opportunities.cwu.readOne(state.opportunity.id),
-                    state.opportunity
-                  ),
-                  viewerUser: state.viewerUser
-                })
-              );
-            case "invalid":
-            case "unhandled":
-              dispatch(
-                toast(
+              ),
+              component_.cmd.join(
+                api.opportunities.cwu.readOne(opportunity.id, (response) =>
+                  api.getValidValue(response, opportunity)
+                ),
+                api.proposals.cwu.readMany(opportunity.id)((response) =>
+                  api.getValidValue(response, state.proposals)
+                ),
+                (newOpp, newProposals) =>
+                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+              )
+            ] as component_.Cmd<Msg>[]
+          ];
+        case "invalid":
+        case "unhandled":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "error",
                     toasts.statusChanged.error(CWUOpportunityStatus.Awarded)
                   )
                 )
-              );
-              return state;
-          }
-        }
-      ];
+              )
+            ]
+          ];
+      }
+      break;
+    }
 
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
 
     case "hideModal":
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
 
     case "table":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -166,7 +202,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     default:
-      return [state];
+      return [state, []];
   }
 };
 
@@ -209,8 +245,10 @@ const makeCardData = (
   ];
 };
 
-const NotAvailable: ComponentView<State, Msg> = ({ state }) => {
-  if (isCWUOpportunityAcceptingProposals(state.opportunity)) {
+const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  if (isCWUOpportunityAcceptingProposals(opportunity)) {
     return (
       <div>
         Proposals will be displayed here once this opportunity has closed.
@@ -221,10 +259,10 @@ const NotAvailable: ComponentView<State, Msg> = ({ state }) => {
   }
 };
 
-const ContextMenuCell: View<{
+const ContextMenuCell: component_.base.View<{
   loading: boolean;
   proposal: CWUProposalSlim;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }> = ({ loading, proposal, dispatch }) => {
   return (
     <Link
@@ -248,7 +286,7 @@ interface ProponentCellProps {
   linkToProfile: boolean;
 }
 
-const ProponentCell: View<ProponentCellProps> = ({
+const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   opportunity,
   disabled,
@@ -285,8 +323,10 @@ const ProponentCell: View<ProponentCellProps> = ({
 
 function evaluationTableBodyRows(
   state: Immutable<State>,
-  dispatch: Dispatch<Msg>
+  dispatch: component_.base.Dispatch<Msg>
 ): Table.BodyRows {
+  const opportunity = state.opportunity;
+  if (!opportunity) return [];
   return state.proposals.map((p) => {
     return [
       {
@@ -294,7 +334,7 @@ function evaluationTableBodyRows(
         children: (
           <ProponentCell
             proposal={p}
-            opportunity={state.opportunity}
+            opportunity={opportunity}
             linkToProfile={isAdmin(state.viewerUser)}
             disabled={!!state.awardLoading}
           />
@@ -359,22 +399,26 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-const EvaluationTable: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   return (
     <Table.view
       headCells={evaluationTableHeadCells(state)}
       bodyRows={evaluationTableBodyRows(state, dispatch)}
       state={state.table}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("table" as const, msg)
       )}
     />
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state } = props;
   const opportunity = state.opportunity;
+  if (!opportunity) return null;
   const cardData = makeCardData(opportunity, state.proposals);
   return (
     <div>
@@ -421,13 +465,18 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
+  onInitResponse(response) {
+    return adt("onInitResponse", response);
+  },
+
   getModal: (state) => {
-    if (!state.showModal) {
-      return null;
+    const opportunity = state.opportunity;
+    if (!opportunity || !state.showModal) {
+      return component_.page.modal.hide();
     }
     switch (state.showModal.tag) {
       case "award":
-        return {
+        return component_.page.modal.show({
           title: "Award Code With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
@@ -442,11 +491,11 @@ export const component: Tab.Component<State, Msg> = {
               text: "Cancel",
               color: "secondary",
               msg: adt("hideModal")
-            }
+            } as component_.page.modal.Action<Msg>
           ],
           body: () =>
             "Are you sure you want to award this opportunity to this vendor? Once awarded, all subscribers and vendors with submitted proposals will be notified accordingly."
-        };
+        });
     }
   }
 };

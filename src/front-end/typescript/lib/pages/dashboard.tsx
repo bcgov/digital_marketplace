@@ -1,6 +1,6 @@
 import {
   getAlertsValid,
-  getContextualActionsValid,
+  getActionsValid,
   makePageMetadata,
   prefixPath,
   updateValid,
@@ -10,18 +10,9 @@ import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  mapComponentDispatch,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
@@ -52,7 +43,10 @@ import { Col, Row } from "reactstrap";
 import { compareDates, formatDate } from "shared/lib";
 import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
 import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
-import { doesOrganizationMeetSWUQualification } from "shared/lib/resources/organization";
+import {
+  doesOrganizationMeetSWUQualification,
+  OrganizationSlim
+} from "shared/lib/resources/organization";
 import * as CWUP from "shared/lib/resources/proposal/code-with-us";
 import * as SWUP from "shared/lib/resources/proposal/sprint-with-us";
 import { isVendor, User } from "shared/lib/resources/user";
@@ -60,7 +54,7 @@ import { adt, ADT, Defined } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 
 interface ValidState {
-  table?: {
+  table: {
     title: string;
     link?: {
       text: string;
@@ -76,9 +70,18 @@ interface ValidState {
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-type InnerMsg = ADT<"table", Table.Msg>;
+type InitResponse =
+  | ADT<
+      "vendor",
+      [CWUP.CWUProposalSlim[], SWUP.SWUProposalSlim[], OrganizationSlim[]]
+    >
+  | ADT<"publicSector", [CWUO.CWUOpportunitySlim[], SWUO.SWUOpportunitySlim[]]>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type InnerMsg =
+  | ADT<"table", Table.Msg>
+  | ADT<"onInitResponse", InitResponse>;
+
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
@@ -201,12 +204,14 @@ function makePublicSectorBodyRows(
     });
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<
+const init: component_.page.Init<
   RouteParams,
+  SharedState,
   State,
-  Msg
->({
-  async success({ shared }) {
+  InnerMsg,
+  Route
+> = isSignedIn<RouteParams, State, Msg>({
+  success({ shared }) {
     const viewerUser = shared.sessionUser;
     const vendor = isVendor(viewerUser);
     const title = vendor ? "My Proposals" : "My Opportunities";
@@ -228,73 +233,136 @@ const init: PageInit<RouteParams, SharedState, State, Msg> = isSignedIn<
         style: { width: "0px" }
       }
     ];
-    let bodyRows: Table.BodyRows = [];
-    let isQualified = false;
-    if (vendor) {
-      const cwu = api.getValidValue(await api.proposals.cwu.readMany(), []);
-      const swu = api.getValidValue(await api.proposals.swu.readMany(), []);
-      bodyRows = makeVendorBodyRows(cwu, swu, viewerUser);
-      const orgs = api.getValidValue(
-        await api.ownedOrganizations.readMany(),
-        []
-      );
-      isQualified = orgs.reduce(
-        (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
-        false as boolean
-      );
-    } else {
-      const cwu = api.getValidValue(await api.opportunities.cwu.readMany(), []);
-      const swu = api.getValidValue(await api.opportunities.swu.readMany(), []);
-      bodyRows = makePublicSectorBodyRows(cwu, swu, viewerUser);
-    }
-    return valid(
-      immutable({
-        isQualified,
-        viewerUser,
-        table: bodyRows.length
-          ? {
-              title,
-              headCells,
-              bodyRows,
-              state: immutable(
-                await Table.init({
-                  idNamespace: "dashboard-table"
-                })
+    const [tableState, tableCmds] = Table.init({
+      idNamespace: "dashboard-table"
+    });
+    const bodyRows: Table.BodyRows = [];
+    return [
+      valid(
+        immutable({
+          isQualified: false,
+          viewerUser,
+          table: {
+            title,
+            headCells,
+            bodyRows,
+            state: immutable(tableState),
+            link: vendor
+              ? undefined
+              : {
+                  text: "View all opportunities",
+                  route: adt("opportunities", null)
+                }
+          }
+        })
+      ),
+      [
+        ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
+        vendor
+          ? (component_.cmd.join3(
+              api.proposals.cwu.readMany()((response) =>
+                api.getValidValue(response, [])
               ),
-              link: vendor
-                ? undefined
-                : {
-                    text: "View all opportunities",
-                    route: adt("opportunities", null)
-                  }
-            }
-          : undefined
-      })
-    );
+              api.proposals.swu.readMany()((response) =>
+                api.getValidValue(response, [])
+              ),
+              api.organizations.owned.readMany((response) =>
+                api.getValidValue(response, [])
+              ),
+              (cwu, swu, orgs) =>
+                adt(
+                  "onInitResponse",
+                  adt("vendor", [cwu, swu, orgs] as const)
+                ) as Msg
+            ) as component_.Cmd<Msg>)
+          : component_.cmd.join(
+              api.opportunities.cwu.readMany((response) =>
+                api.getValidValue(response, [])
+              ),
+              api.opportunities.swu.readMany((response) =>
+                api.getValidValue(response, [])
+              ),
+              (cwu, swu) =>
+                adt(
+                  "onInitResponse",
+                  adt("publicSector", [cwu, swu] as const)
+                ) as Msg
+            )
+      ]
+    ];
   },
 
-  async fail({ dispatch }) {
-    dispatch(replaceRoute(adt("landing" as const, null)));
-    return invalid(null);
+  fail() {
+    return [
+      invalid(null),
+      [
+        component_.cmd.dispatch(
+          component_.global.replaceRouteMsg(adt("landing" as const, null))
+        )
+      ]
+    ];
   }
 });
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "table":
-      return updateComponentChild({
-        state,
-        childStatePath: ["table", "state"],
-        childUpdate: Table.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => ({ tag: "table", value })
-      });
-    default:
-      return [state];
+const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
+  ({ state, msg }) => {
+    switch (msg.tag) {
+      case "onInitResponse": {
+        switch (msg.value.tag) {
+          case "vendor": {
+            const [cwuProposals, swuProposals, organizations] = msg.value.value;
+            const isQualified = organizations.reduce(
+              (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
+              false as boolean
+            );
+            return [
+              state
+                .set("isQualified", isQualified)
+                .setIn(
+                  ["table", "bodyRows"],
+                  makeVendorBodyRows(
+                    cwuProposals,
+                    swuProposals,
+                    state.viewerUser
+                  )
+                ),
+              [component_.cmd.dispatch(component_.page.readyMsg())]
+            ];
+          }
+          case "publicSector":
+          default: {
+            const [cwuOpportunities, swuOpportunities] = msg.value.value;
+            return [
+              state.setIn(
+                ["table", "bodyRows"],
+                makePublicSectorBodyRows(
+                  cwuOpportunities,
+                  swuOpportunities,
+                  state.viewerUser
+                )
+              ),
+              [component_.cmd.dispatch(component_.page.readyMsg())]
+            ];
+          }
+        }
+      }
+      case "table":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["table", "state"],
+          childUpdate: Table.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => ({ tag: "table", value })
+        });
+      default:
+        return [state, []];
+    }
   }
-});
+);
 
-const Welcome: View<Pick<ValidState, "viewerUser">> = ({ viewerUser }) => {
+const Welcome: component_.base.View<Pick<ValidState, "viewerUser">> = ({
+  viewerUser
+}) => {
   const vendor = isVendor(viewerUser);
   return (
     <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">
@@ -338,10 +406,13 @@ const Welcome: View<Pick<ValidState, "viewerUser">> = ({ viewerUser }) => {
 
 interface DashboardProps extends Pick<ValidState, "viewerUser"> {
   table: Defined<ValidState["table"]>;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
+const Dashboard: component_.base.View<DashboardProps> = ({
+  table,
+  dispatch
+}) => {
   return (
     <div>
       <Row className="mb-5">
@@ -369,7 +440,7 @@ const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
               headCells={table.headCells}
               bodyRows={table.bodyRows}
               state={table.state}
-              dispatch={mapComponentDispatch(dispatch, (msg) =>
+              dispatch={component_.base.mapDispatch(dispatch, (msg) =>
                 adt("table" as const, msg)
               )}
             />
@@ -380,20 +451,28 @@ const Dashboard: View<DashboardProps> = ({ table, viewerUser, dispatch }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid(({ state, dispatch }) => {
-  if (state.table) {
-    return (
-      <Dashboard
-        dispatch={dispatch}
-        viewerUser={state.viewerUser}
-        table={state.table}
-      />
-    );
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state, dispatch }) => {
+    if (state.table) {
+      return (
+        <Dashboard
+          dispatch={dispatch}
+          viewerUser={state.viewerUser}
+          table={state.table}
+        />
+      );
+    }
+    return <Welcome viewerUser={state.viewerUser} />;
   }
-  return <Welcome viewerUser={state.viewerUser} />;
-});
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
@@ -429,11 +508,11 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     };
   }),
 
-  getContextualActions: getContextualActionsValid(({ state }) => {
+  getActions: getActionsValid(({ state }) => {
     if (isVendor(state.viewerUser) || !state.table) {
-      return null;
+      return component_.page.actions.none();
     }
-    return adt("links", [
+    return component_.page.actions.links([
       {
         children: "Create Opportunity",
         symbol_: leftPlacement(iconLinkSymbol("plus-circle")),

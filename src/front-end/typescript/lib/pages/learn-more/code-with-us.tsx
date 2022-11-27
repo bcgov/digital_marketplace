@@ -1,14 +1,7 @@
 import { CWU_PAYMENT_OPTIONS_URL } from "front-end/config";
 import { makePageMetadata, prefixPath } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  PageComponent,
-  PageInit,
-  Update,
-  View
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import Accordion from "front-end/lib/views/accordion";
 import HowItWorksItem from "front-end/lib/views/how-it-works-item";
 import Link, {
@@ -31,27 +24,39 @@ type InnerMsg =
   | ADT<"toggleVendorAccordion">
   | ADT<"togglePublicSectorAccordion">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async () => ({
-  isVendorAccordionOpen: true,
-  isPublicSectorAccordionOpen: false
-});
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = () => [
+  {
+    isVendorAccordionOpen: true,
+    isPublicSectorAccordionOpen: false
+  },
+  [component_.cmd.dispatch(component_.page.readyMsg())]
+];
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
     case "toggleVendorAccordion":
-      return [state.update("isVendorAccordionOpen", (v) => !v)];
+      return [state.update("isVendorAccordionOpen", (v) => !v), []];
     case "togglePublicSectorAccordion":
-      return [state.update("isPublicSectorAccordionOpen", (v) => !v)];
+      return [state.update("isPublicSectorAccordionOpen", (v) => !v), []];
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const TitleView: View = () => {
+const TitleView: component_.base.View = () => {
   return (
     <div className="bg-c-learn-more-bg pt-4 pb-6 pb-md-7">
       <Container>
@@ -83,7 +88,10 @@ const TitleView: View = () => {
   );
 };
 
-const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const VendorView: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   return (
     <div className="bg-white pt-6">
       <Container>
@@ -141,7 +149,7 @@ const VendorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const VendorHIW: View = () => {
+const VendorHIW: component_.base.View = () => {
   return (
     <div>
       <h3 className="mb-4">How It Works</h3>
@@ -186,7 +194,10 @@ const VendorHIW: View = () => {
   );
 };
 
-const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const PublicSectorView: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   return (
     <div className="bg-white pt-5 pb-6">
       <Container>
@@ -234,7 +245,10 @@ const PublicSectorView: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
   return (
     <div className="d-flex flex-column flex-grow-1">
       <TitleView />
@@ -245,7 +259,13 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   fullWidth: true,
   backgroundColor: "c-learn-more-bg",
   init,

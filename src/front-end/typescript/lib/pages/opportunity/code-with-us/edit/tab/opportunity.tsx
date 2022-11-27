@@ -1,22 +1,9 @@
-import {
-  AsyncWithState,
-  makeStartLoading,
-  makeStopLoading
-} from "front-end/lib";
+import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  PageContextualActions,
-  reload,
-  replaceRoute,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
@@ -39,7 +26,7 @@ import {
   isUnpublished,
   UpdateValidationErrors
 } from "shared/lib/resources/opportunity/code-with-us";
-import { adt, ADT } from "shared/lib/types";
+import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
 
 type ModalId =
   | "publish"
@@ -50,6 +37,8 @@ type ModalId =
   | "suspend";
 
 export interface State extends Tab.Params {
+  opportunity: CWUOpportunity | null;
+  form: Immutable<Form.State> | null;
   showModal: ModalId | null;
   startEditingLoading: number;
   saveChangesLoading: number;
@@ -57,7 +46,6 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
-  form: Immutable<Form.State>;
 }
 
 type UpdateStatus =
@@ -66,48 +54,65 @@ type UpdateStatus =
   | CWUOpportunityStatus.Suspended;
 
 export type InnerMsg =
+  | ADT<"resetOpportunity", [CWUOpportunity, boolean]>
   | ADT<"form", Form.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"startEditing">
+  | ADT<
+      "onStartEditingResponse",
+      api.ResponseValidation<CWUOpportunity, string[]>
+    >
   | ADT<"cancelEditing">
   | ADT<"saveChanges">
+  | ADT<"onSaveChangesResult", Form.PersistResult>
   | ADT<"saveChangesAndPublish">
+  | ADT<"onSaveChangesAndPublishPersistFormResult", Form.PersistResult>
+  | ADT<"onSaveChangesAndPublishUpdateStatusResult", UpdateStatusResult>
   | ADT<"updateStatus", UpdateStatus>
-  | ADT<"delete">;
+  | ADT<"onUpdateStatusResult", [UpdateStatus, UpdateStatusResult]>
+  | ADT<"delete">
+  | ADT<
+      "onDeleteResult",
+      api.ResponseValidation<CWUOpportunity, BodyWithErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-async function initForm(
+function initForm(
   opportunity: CWUOpportunity,
   activeTab?: Form.TabId,
   validate = false
-): Promise<Immutable<Form.State>> {
-  let state = immutable(
-    await Form.init({
-      opportunity,
-      activeTab,
-      canRemoveExistingAttachments:
-        canCWUOpportunityDetailsBeEdited(opportunity)
-    })
-  );
+): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
+  const [formState, formCmds] = Form.init({
+    opportunity,
+    activeTab,
+    canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(opportunity)
+  });
+  let immutableFormState = immutable(formState);
   if (validate) {
-    state = Form.validate(state);
+    immutableFormState = Form.validate(immutableFormState);
   }
-  return state;
+  return [immutableFormState, formCmds];
 }
 
-const init: Init<Tab.Params, State> = async (params) => ({
-  ...params,
-  showModal: null,
-  startEditingLoading: 0,
-  saveChangesLoading: 0,
-  saveChangesAndUpdateStatusLoading: 0,
-  updateStatusLoading: 0,
-  deleteLoading: 0,
-  isEditing: false,
-  form: await initForm(params.opportunity)
-});
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  return [
+    {
+      ...params,
+      opportunity: null,
+      form: null,
+      showModal: null,
+      startEditingLoading: 0,
+      saveChangesLoading: 0,
+      saveChangesAndUpdateStatusLoading: 0,
+      updateStatusLoading: 0,
+      deleteLoading: 0,
+      isEditing: false
+    },
+    []
+  ];
+};
 
 const startStartEditingLoading = makeStartLoading<State>("startEditingLoading");
 const stopStartEditingLoading = makeStopLoading<State>("startEditingLoading");
@@ -124,31 +129,64 @@ const stopUpdateStatusLoading = makeStopLoading<State>("updateStatusLoading");
 const startDeleteLoading = makeStartLoading<State>("deleteLoading");
 const stopDeleteLoading = makeStopLoading<State>("deleteLoading");
 
-async function saveChanges(
+function persistForm(
+  form: Immutable<Form.State>,
+  mapResult: (result: Form.PersistResult) => InnerMsg
+): component_.Cmd<InnerMsg> {
+  return component_.cmd.map(
+    Form.persist(form, adt("update" as const)),
+    mapResult
+  );
+}
+
+function handlePersistFormResult(
   state: Immutable<State>,
-  onValid?: AsyncWithState<State, [CWUOpportunity]>,
-  onInvalid?: AsyncWithState<State>
-): Promise<Immutable<State>> {
-  const result = await Form.persist(state.form, adt("update" as const));
+  result: Form.PersistResult,
+  onValid?: (
+    state: Immutable<State>
+  ) => component_.base.UpdateReturnValue<State, Msg>,
+  onInvalid?: (
+    state: Immutable<State>
+  ) => component_.base.UpdateReturnValue<State, Msg>
+): component_.base.UpdateReturnValue<State, Msg> {
   switch (result.tag) {
-    case "valid":
+    case "valid": {
+      const [newFormState, formCmds, newOpportunity] = result.value;
       state = state
-        .set("form", result.value[0])
-        .set("opportunity", result.value[1])
+        .set("form", newFormState)
+        .set("opportunity", newOpportunity)
         .set("isEditing", false);
-      return onValid ? await onValid(state, result.value[1]) : state;
-    case "invalid":
+      const [onValidState, onValidCmds] = onValid
+        ? onValid(state)
+        : [state, []];
+      return [
+        onValidState,
+        [
+          ...onValidCmds,
+          ...component_.cmd.mapMany(
+            formCmds,
+            (msg) => adt("form", msg) as InnerMsg
+          )
+        ]
+      ];
+    }
+    case "invalid": {
       state = state.set("form", result.value);
-      return onInvalid ? await onInvalid(state) : state;
+      return onInvalid ? onInvalid(state) : [state, []];
+    }
   }
 }
 
-async function updateStatus(
-  state: Immutable<State>,
+type UpdateStatusResult = api.ResponseValidation<
+  CWUOpportunity,
+  UpdateValidationErrors
+>;
+
+function updateStatus(
+  opportunityId: Id,
   newStatus: UpdateStatus,
-  onValid?: AsyncWithState<State, [CWUOpportunity]>,
-  onInvalid?: AsyncWithState<State, [UpdateValidationErrors?]>
-): Promise<Immutable<State>> {
+  mapResult: (result: UpdateStatusResult) => InnerMsg
+): component_.Cmd<InnerMsg> {
   const updateAction = (() => {
     switch (newStatus) {
       case CWUOpportunityStatus.Published:
@@ -159,29 +197,77 @@ async function updateStatus(
         return "cancel";
     }
   })();
-  const result = await api.opportunities.cwu.update(
-    state.opportunity.id,
-    adt(updateAction, "")
-  );
+  return api.opportunities.cwu.update(
+    opportunityId,
+    adt(updateAction, ""),
+    mapResult
+  ) as component_.Cmd<InnerMsg>;
+}
+
+function handleUpdateStatusResult(
+  state: Immutable<State>,
+  result: UpdateStatusResult,
+  onValid?: (
+    state: Immutable<State>
+  ) => component_.base.UpdateReturnValue<State, Msg>,
+  onInvalid?: (
+    state: Immutable<State>
+  ) => component_.base.UpdateReturnValue<State, Msg>
+): component_.base.UpdateReturnValue<State, Msg> {
+  const currentFormState = state.form;
+  if (!currentFormState) return [state, []];
   switch (result.tag) {
-    case "valid":
-      state = state
-        .set("opportunity", result.value)
-        .set(
-          "form",
-          await initForm(result.value, Form.getActiveTab(state.form))
-        );
-      return onValid ? await onValid(state, result.value) : state;
+    case "valid": {
+      const opportunity = result.value;
+      const [newFormState, formCmds] = initForm(
+        opportunity,
+        Form.getActiveTab(currentFormState)
+      );
+      state = state.set("opportunity", opportunity).set("form", newFormState);
+      const [onValidState, onValidCmds] = onValid
+        ? onValid(state)
+        : [state, []];
+      return [
+        onValidState,
+        [
+          ...onValidCmds,
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg)
+        ]
+      ];
+    }
     case "invalid":
     case "unhandled":
-      return onInvalid ? await onInvalid(state, result.value) : state;
+      //FIXME show validation errors?
+      return onInvalid ? onInvalid(state) : [state, []];
   }
 }
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "resetOpportunity": {
+      const [opportunity, validateForm] = msg.value;
+      const currentFormState = state.form;
+      const activeTab = currentFormState
+        ? Form.getActiveTab(currentFormState)
+        : undefined;
+      const [formState, formCmds] = initForm(
+        opportunity,
+        activeTab,
+        validateForm
+      );
+      return [
+        state.set("opportunity", opportunity).set("form", formState),
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(component_.page.readyMsg())
+        ]
+      ];
+    }
     case "form":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["form"],
         childUpdate: Form.update,
@@ -189,193 +275,307 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("form", value)
       });
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
-      return [state.set("showModal", null)];
-    case "startEditing":
+      return [state.set("showModal", null), []];
+    case "startEditing": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
       return [
         startStartEditingLoading(state),
-        async (state, dispatch) => {
-          state = stopStartEditingLoading(state);
-          const result = await api.opportunities.cwu.readOne(
-            state.opportunity.id
-          );
-          if (api.isValid(result)) {
-            return state
-              .set("isEditing", true)
-              .set(
-                "form",
-                await initForm(
+        [
+          api.opportunities.cwu.readOne(opportunity.id, (result) =>
+            adt("onStartEditingResponse", result)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onStartEditingResponse": {
+      state = stopStartEditingLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid":
+          return [
+            state.set("isEditing", true),
+            [
+              component_.cmd.dispatch(
+                adt("resetOpportunity", [
                   result.value,
-                  Form.getActiveTab(state.form),
                   isUnpublished(result.value)
+                ]) as InnerMsg
+              )
+            ]
+          ];
+        case "invalid":
+        case "unhandled":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.startedEditing.error)
                 )
-              );
-          } else {
-            dispatch(toast(adt("error", toasts.startedEditing.error)));
-            return state;
-          }
-        }
-      ];
-    case "cancelEditing":
+              )
+            ]
+          ];
+      }
+      break;
+    }
+    case "cancelEditing": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
       return [
-        state,
-        async (state) => {
-          return state
-            .set("isEditing", false)
-            .set(
-              "form",
-              await initForm(state.opportunity, Form.getActiveTab(state.form))
-            );
-        }
+        state.set("isEditing", false),
+        [
+          component_.cmd.dispatch(
+            adt("resetOpportunity", [opportunity, false]) as InnerMsg
+          )
+        ]
       ];
-    case "saveChanges":
+    }
+    case "saveChanges": {
+      const form = state.form;
+      if (!form) return [state, []];
       state = state.set("showModal", null);
       return [
         startSaveChangesLoading(state),
-        async (state, dispatch) => {
-          state = stopSaveChangesLoading(state);
-          return await saveChanges(
-            state,
-            async (state1) => {
-              dispatch(
-                toast(
+        [persistForm(form, (result) => adt("onSaveChangesResult", result))]
+      ];
+    }
+    case "onSaveChangesResult": {
+      state = stopSaveChangesLoading(state);
+      return handlePersistFormResult(
+        state,
+        msg.value,
+        (state1) => {
+          return [
+            state1,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "success",
-                    isCWUOpportunityPublic(state1.opportunity)
+                    state1.opportunity &&
+                      isCWUOpportunityPublic(state1.opportunity)
                       ? toasts.changesPublished.success
                       : toasts.changesSaved.success
                   )
                 )
-              );
-              return state1;
-            },
-            async (state1) => {
-              dispatch(
-                toast(
+              )
+            ]
+          ];
+        },
+        (state1) => {
+          return [
+            state1,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "error",
-                    isCWUOpportunityPublic(state1.opportunity)
+                    state1.opportunity &&
+                      isCWUOpportunityPublic(state1.opportunity)
                       ? toasts.changesPublished.error
                       : toasts.changesSaved.error
                   )
                 )
-              );
-              return state1;
-            }
-          );
+              )
+            ]
+          ];
         }
-      ];
-    case "saveChangesAndPublish":
+      );
+    }
+    case "saveChangesAndPublish": {
+      const form = state.form;
+      if (!form) return [state, []];
       state = state.set("showModal", null);
       return [
         startSaveChangesAndUpdateStatusLoading(state),
-        async (state, dispatch) => {
-          state = stopSaveChangesAndUpdateStatusLoading(state);
-          return await saveChanges(
-            state,
-            (state1) =>
-              updateStatus(
-                state1,
-                CWUOpportunityStatus.Published,
-                async (state2) => {
-                  dispatch(reload()); //Reload to show addenda link in sidebar.
-                  dispatch(
-                    toast(
-                      adt(
-                        "success",
-                        toasts.published.success(state.opportunity.id)
-                      )
-                    )
-                  );
-                  return state2;
-                },
-                async (state2) => {
-                  dispatch(toast(adt("error", toasts.published.error)));
-                  return state2;
-                }
-              ),
-            async (state1) => {
-              dispatch(toast(adt("error", toasts.published.error)));
-              return state1;
-            }
-          );
-          return state;
-        }
+        [
+          persistForm(form, (result) =>
+            adt("onSaveChangesAndPublishPersistFormResult", result)
+          )
+        ]
       ];
-    case "updateStatus":
+    }
+    case "onSaveChangesAndPublishPersistFormResult": {
+      const [newState, cmds] = handlePersistFormResult(state, msg.value);
+      const opportunity = state.opportunity;
+      if (!opportunity) return [newState, cmds];
+      return [
+        newState,
+        [
+          ...cmds,
+          updateStatus(
+            opportunity.id,
+            CWUOpportunityStatus.Published,
+            (result) => adt("onSaveChangesAndPublishUpdateStatusResult", result)
+          )
+        ]
+      ];
+    }
+    case "onSaveChangesAndPublishUpdateStatusResult": {
+      state = stopSaveChangesAndUpdateStatusLoading(state);
+      return handleUpdateStatusResult(
+        state,
+        msg.value,
+        (state1) => {
+          const opportunity = state1.opportunity;
+          if (!opportunity) return [state1, []];
+          return [
+            state1,
+            [
+              component_.cmd.dispatch(component_.global.reloadMsg()),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.published.success(opportunity.id))
+                )
+              )
+            ]
+          ];
+        },
+        (state1) => {
+          return [
+            state1,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.published.error)
+                )
+              )
+            ]
+          ];
+        }
+      );
+    }
+    case "updateStatus": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
       state = state.set("showModal", null);
       return [
         startUpdateStatusLoading(state),
-        async (state, dispatch) => {
-          state = stopUpdateStatusLoading(state);
-          const isPublish = msg.value === CWUOpportunityStatus.Published;
-          return await updateStatus(
-            state,
-            msg.value,
-            async (state1, opportunity) => {
-              if (isPublish) {
-                dispatch(reload()); //Reload to show addenda link in sidebar.
-                dispatch(
-                  toast(
-                    adt("success", toasts.published.success(opportunity.id))
-                  )
-                );
-              } else {
-                dispatch(
-                  toast(
-                    adt(
-                      "success",
-                      toasts.statusChanged.success(opportunity.status)
+        [
+          updateStatus(opportunity.id, msg.value, (result) =>
+            adt("onUpdateStatusResult", [msg.value, result])
+          )
+        ]
+      ];
+    }
+    case "onUpdateStatusResult": {
+      const [intendedStatus, result] = msg.value;
+      const isPublish = intendedStatus === CWUOpportunityStatus.Published;
+      state = stopUpdateStatusLoading(state);
+      return handleUpdateStatusResult(
+        state,
+        result,
+        (state1) => {
+          const opportunity = state1.opportunity;
+          if (!opportunity) return [state1, []];
+          return [
+            state1,
+            isPublish
+              ? [
+                  component_.cmd.dispatch(component_.global.reloadMsg()),
+                  component_.cmd.dispatch(
+                    component_.global.showToastMsg(
+                      adt("success", toasts.published.success(opportunity.id))
                     )
                   )
-                );
-              }
-              return state1;
-            },
-            async (state1) => {
-              if (isPublish) {
-                dispatch(toast(adt("error", toasts.published.error)));
-              } else {
-                dispatch(
-                  toast(adt("error", toasts.statusChanged.error(msg.value)))
-                );
-              }
-              return state1;
-            }
-          );
+                ]
+              : [
+                  component_.cmd.dispatch(
+                    component_.global.showToastMsg(
+                      adt(
+                        "success",
+                        toasts.statusChanged.success(opportunity.status)
+                      )
+                    )
+                  )
+                ]
+          ];
+        },
+        (state1) => {
+          const opportunity = state1.opportunity;
+          if (!opportunity) return [state1, []];
+          return [
+            state1,
+            isPublish
+              ? [
+                  component_.cmd.dispatch(
+                    component_.global.showToastMsg(
+                      adt("error", toasts.published.error)
+                    )
+                  )
+                ]
+              : [
+                  component_.cmd.dispatch(
+                    component_.global.showToastMsg(
+                      adt(
+                        "error",
+                        toasts.statusChanged.error(opportunity.status)
+                      )
+                    )
+                  )
+                ]
+          ];
         }
-      ];
-    case "delete":
-      state = state.set("showModal", null);
+      );
+    }
+    case "delete": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
       return [
         startDeleteLoading(state),
-        async (state, dispatch) => {
-          const result = await api.opportunities.cwu.delete(
-            state.opportunity.id
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(replaceRoute(adt("opportunities" as const, null)));
-              dispatch(toast(adt("success", toasts.deleted.success)));
-              return state;
-            default:
-              dispatch(toast(adt("error", toasts.deleted.error)));
-              return stopDeleteLoading(state);
-          }
-        }
+        [
+          api.opportunities.cwu.delete_(opportunity.id, (result) =>
+            adt("onDeleteResult", result)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
+    case "onDeleteResult": {
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(
+                  adt("opportunities" as const, null)
+                )
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.deleted.success)
+                )
+              )
+            ]
+          ];
+        default:
+          return [
+            stopDeleteLoading(state),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.deleted.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const Reporting: ComponentView<State, Msg> = ({ state }) => {
+const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
-  const reporting = opportunity.reporting;
-  if (opportunity.status === CWUOpportunityStatus.Draft) {
+  if (!opportunity || opportunity.status === CWUOpportunityStatus.Draft) {
     return null;
   }
+  const reporting = opportunity.reporting;
   const reportCards: ReportCard[] = [
     {
       icon: "binoculars",
@@ -402,9 +602,11 @@ const Reporting: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
   const opportunity = state.opportunity;
+  const form = state.form;
+  if (!opportunity || !form) return null;
   const viewerUser = state.viewerUser;
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
@@ -423,8 +625,8 @@ const view: ComponentView<State, Msg> = (props) => {
         <Col xs="12">
           <Form.view
             disabled={!state.isEditing || isLoading}
-            state={state.form}
-            dispatch={mapComponentDispatch(dispatch, (msg) =>
+            state={form}
+            dispatch={component_.base.mapDispatch(dispatch, (msg) =>
               adt("form" as const, msg)
             )}
           />
@@ -439,11 +641,17 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
+  onInitResponse(response) {
+    return adt("resetOpportunity", [response[0], false]) as InnerMsg;
+  },
+
   getAlerts(state) {
+    const opportunity = state.opportunity;
+    const form = state.form;
+    if (!opportunity || !form) return component_.page.alerts.empty();
     return {
       warnings:
-        state.opportunity.status === CWUOpportunityStatus.Draft &&
-        !Form.isValid(state.form)
+        opportunity.status === CWUOpportunityStatus.Draft && !Form.isValid(form)
           ? [
               {
                 text: 'This opportunity is a draft. Please select "Edit" from the Actions dropdown to complete and publish this opportunity.'
@@ -454,10 +662,12 @@ export const component: Tab.Component<State, Msg> = {
   },
 
   getModal: (state) => {
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.modal.hide();
     switch (state.showModal) {
       case "saveChangesAndPublish":
       case "publish":
-        return {
+        return component_.page.modal.show({
           title: "Publish Code With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
@@ -479,9 +689,9 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to publish this opportunity? Once published, all subscribers will be notified."
-        };
+        });
       case "publishChanges":
-        return {
+        return component_.page.modal.show({
           title: "Publish Changes to Code With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
@@ -490,19 +700,19 @@ export const component: Tab.Component<State, Msg> = {
               icon: "bullhorn",
               color: "primary",
               button: true,
-              msg: adt("saveChanges") // This is the reason this is a different modal from 'saveChangesAndPublish'
+              msg: adt("saveChanges") as Msg // This is the reason this is a different modal from 'saveChangesAndPublish'
             },
             {
               text: "Cancel",
-              color: "secondary",
+              color: "secondary" as const,
               msg: adt("hideModal")
             }
           ],
           body: () =>
             "Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified."
-        };
+        });
       case "suspend":
-        return {
+        return component_.page.modal.show({
           title: "Suspend Code With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
@@ -521,9 +731,9 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to suspend this opportunity? Once suspended, all subscribers and vendors with pending or submitted proposals will be notified."
-        };
+        });
       case "delete":
-        return {
+        return component_.page.modal.show({
           title: "Delete Code With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
@@ -532,7 +742,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: "trash",
               color: "danger",
               button: true,
-              msg: adt("delete")
+              msg: adt("delete") as Msg
             },
             {
               text: "Cancel",
@@ -542,9 +752,9 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to delete this opportunity? You will not be able to recover it once it has been deleted."
-        };
+        });
       case "cancel":
-        return {
+        return component_.page.modal.show({
           title: "Cancel Code With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
@@ -563,13 +773,13 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to cancel this opportunity? Once cancelled, all subscribers and vendors with pending or submitted proposals will be notified."
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
   },
 
-  getContextualActions({ state, dispatch }) {
+  getActions({ state, dispatch }) {
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
     const isSaveChangesAndUpdateStatusLoading =
@@ -582,11 +792,12 @@ export const component: Tab.Component<State, Msg> = {
       isUpdateStatusLoading ||
       isDeleteLoading;
     const opp = state.opportunity;
+    const form = state.form;
+    if (!opp || !form) return component_.page.actions.none();
     const oppStatus = opp.status;
-    const isValid = () => Form.isValid(state.form);
+    const isValid = () => Form.isValid(form);
     if (state.isEditing) {
-      return adt(
-        "links",
+      return component_.page.actions.links(
         compact([
           // Publish button
           !isCWUOpportunityPublic(opp)
@@ -637,11 +848,11 @@ export const component: Tab.Component<State, Msg> = {
             color: "c-nav-fg-alt"
           }
         ])
-      ) as PageContextualActions; //TypeScript type inference not good enough here
+      );
     }
     switch (oppStatus) {
       case CWUOpportunityStatus.Draft:
-        return adt("dropdown", {
+        return component_.page.actions.dropdown({
           text: "Actions",
           loading: isLoading,
           linkGroups: [
@@ -743,7 +954,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       default:
-        return null;
+        return component_.page.actions.none();
     }
   }
 };

@@ -1,4 +1,4 @@
-import { PageModal, View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import Badge from "front-end/lib/views/badge";
 import Capabilities from "front-end/lib/views/capabilities";
@@ -12,9 +12,9 @@ interface MakeViewTeamMemberModalParams<Msg> {
 
 export function makeViewTeamMemberModal<Msg>(
   params: MakeViewTeamMemberModalParams<Msg>
-): PageModal<Msg> {
+): component.page.Modal<Msg> {
   const { onCloseMsg, member } = params;
-  return {
+  return component.page.modal.show({
     title: "View Team Member",
     onCloseMsg,
     body: () => {
@@ -51,13 +51,13 @@ export function makeViewTeamMemberModal<Msg>(
       );
     },
     actions: []
-  };
+  });
 }
 
-export const PendingBadge: View<{ className?: string }> = ({ className }) => (
-  <Badge text="Pending" color="warning" className={className} />
-);
+export const PendingBadge: component.base.View<{ className?: string }> = ({
+  className
+}) => <Badge text="Pending" color="warning" className={className} />;
 
-export const OwnerBadge: View<{ className?: string }> = ({ className }) => (
-  <Badge text="Owner" color="success" className={className} />
-);
+export const OwnerBadge: component.base.View<{ className?: string }> = ({
+  className
+}) => <Badge text="Owner" color="success" className={className} />;
