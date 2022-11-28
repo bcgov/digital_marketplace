@@ -18,8 +18,8 @@ export function dispatch<Msg>(msg: Msg): Cmd<Msg> {
 }
 
 export function delayedDispatch<Msg>(delay: number, msg: Msg): Cmd<Msg> {
-  return adt("async", async () => {
-    await new Promise((resolve) => {
+  return adt("async", async (): Promise<Msg> => {
+    await new Promise<void>((resolve) => {
       setTimeout(() => resolve(), delay);
     });
     return msg;
@@ -47,7 +47,7 @@ export function makeDebouncedDispatch<Msg>(
         timeout = null;
       }
       let thisTimeoutHasLapsed = false;
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         timeout = setTimeout(() => {
           thisTimeoutHasLapsed = true;
           resolve();

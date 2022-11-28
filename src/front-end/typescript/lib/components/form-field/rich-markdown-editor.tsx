@@ -293,7 +293,7 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
       ];
     case "onUploadImage": {
       state = stopLoading(state);
-      const uploadResult = msg.value;
+      const uploadResult: UploadImageResult = msg.value;
       if (isValid(uploadResult)) {
         return insert(state, {
           text: () => `![${uploadResult.value.name}](${uploadResult.value.url})`

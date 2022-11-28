@@ -194,7 +194,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       ];
     }
     case "onPublishResponse": {
-      const response = msg.value;
+      const response: PublishNewAddendumResponse = msg.value;
       if (validation.isValid(response)) {
         const [initState, initCmds] = init({
           publishNewAddendum: state.publishNewAddendum,
