@@ -13,7 +13,12 @@ import { isValid, Validation } from "shared/lib/validation";
 
 export type Value = string;
 
-export type UploadImageResult = Validation<{ name: string; url: string }>;
+type ImageData = {
+  name: string;
+  url: string;
+};
+
+export type UploadImageResult = Validation<ImageData>;
 
 export type UploadImage = (file: File) => component_.Cmd<UploadImageResult>;
 
@@ -294,7 +299,7 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
     case "onUploadImage": {
       state = stopLoading(state);
       const uploadResult: UploadImageResult = msg.value;
-      if (isValid(uploadResult)) {
+      if (isValid<ImageData>(uploadResult)) {
         return insert(state, {
           text: () => `![${uploadResult.value.name}](${uploadResult.value.url})`
         });
