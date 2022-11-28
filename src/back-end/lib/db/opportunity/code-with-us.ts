@@ -79,7 +79,7 @@ interface RawCWUOpportunity
   updatedBy?: Id;
   attachments: Id[];
   addenda: Id[];
-  versionId: string;
+  versionId?: string;
 }
 
 interface RawCWUOpportunitySlim
@@ -141,6 +141,8 @@ async function rawCWUOpportunityToCWUOpportunity(
       return result;
     })
   );
+
+  delete raw.versionId;
 
   return {
     ...restOfRaw,
