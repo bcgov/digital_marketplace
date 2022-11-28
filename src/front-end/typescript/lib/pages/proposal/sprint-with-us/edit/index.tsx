@@ -119,9 +119,9 @@ function getProposal<K extends Tab.TabId>(
   const tab = state.tab;
   if (!tab) return state.proposal;
   if (tab[0] === "proposal") {
-    return (tab[1] as Immutable<Tab.Tabs["proposal"]["state"]>).proposal;
+    return tab[1].proposal;
   } else if (tab[0] === "scoresheet") {
-    return (tab[1] as Immutable<Tab.Tabs["scoresheet"]["state"]>).proposal;
+    return tab[1].proposal;
   } else {
     return state.proposal;
   }
@@ -166,7 +166,10 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Everything checks out, return valid state.
               return [
                 state
-                  .set("tab", [tabId as K, immutable(tabState)])
+                  .set("tab", [
+                    tabId as K,
+                    immutable<Tab.Tabs[K]["state"]>(tabState)
+                  ])
                   .set("sidebar", immutable(sidebarState))
                   .set("proposal", proposal),
                 [

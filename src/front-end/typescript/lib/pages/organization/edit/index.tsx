@@ -157,7 +157,10 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Everything checks out, return valid state.
               return [
                 state
-                  .set("tab", [tabId as K, immutable(tabState)])
+                  .set("tab", [
+                    tabId as K,
+                    immutable(tabState) as Immutable<Tab.Tabs[K]["state"]>
+                  ])
                   .set("sidebar", immutable(sidebarState)),
                 [
                   ...component_.cmd.mapMany(
