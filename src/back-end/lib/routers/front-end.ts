@@ -8,7 +8,7 @@ import {
   tryMakeAnyCompressedFileResponseBody
 } from "back-end/lib/server";
 import { ServerHttpMethod } from "back-end/lib/types";
-import * as Bowser from "bowser";
+import Bowser from "bowser";
 import { isArray } from "lodash";
 import { join, resolve } from "path";
 

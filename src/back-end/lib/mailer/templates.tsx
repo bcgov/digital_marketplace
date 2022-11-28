@@ -348,7 +348,9 @@ const DescriptionList: View<DescriptionListProps> = ({ title, items }) => {
 
 type Template<Props> = (props: Props) => string;
 
-function makeTemplate<Props>(Template: View<Props>): Template<Props> {
+function makeTemplate<Props>(
+  Template: View<Props>
+): Template<Props & JSX.IntrinsicAttributes> {
   return (props) => renderToStaticMarkup(<Template {...props} />);
 }
 

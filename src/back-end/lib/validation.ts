@@ -459,8 +459,11 @@ export async function validateSWUProposalPhase(
       proposedCost: validatedProposedCost.value
     } as CreateSWUProposalPhaseBody);
   } else {
-    return invalid({
-      members: getInvalidValue(validatedMembers, undefined),
+    return invalid<CreateSWUProposalPhaseValidationErrors>({
+      members: getInvalidValue<
+        CreateSWUProposalTeamMemberValidationErrors[],
+        undefined
+      >(validatedMembers, undefined),
       proposedCost: getInvalidValue(validatedProposedCost, undefined)
     });
   }

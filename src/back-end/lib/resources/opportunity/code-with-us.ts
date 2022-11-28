@@ -229,7 +229,7 @@ const resource: Resource = {
           connection,
           attachments
         );
-        if (isInvalid(validatedAttachments)) {
+        if (isInvalid<string[][]>(validatedAttachments)) {
           return invalid({
             attachments: validatedAttachments.value
           });
@@ -341,7 +341,10 @@ const resource: Resource = {
             remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
             location: getInvalidValue(validatedLocation, undefined),
             reward: getInvalidValue(validatedReward, undefined),
-            skills: getInvalidValue(validatedSkills, undefined),
+            skills: getInvalidValue<string[][], undefined>(
+              validatedSkills,
+              undefined
+            ),
             description: getInvalidValue(validatedDescription, undefined),
             proposalDeadline: getInvalidValue(
               validatedProposalDeadline,
@@ -519,7 +522,7 @@ const resource: Resource = {
               connection,
               attachments
             );
-            if (isInvalid(validatedAttachments)) {
+            if (isInvalid<string[][]>(validatedAttachments)) {
               return invalid({
                 opportunity: adt("edit" as const, {
                   attachments: validatedAttachments.value
@@ -659,7 +662,10 @@ const resource: Resource = {
                   remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
                   location: getInvalidValue(validatedLocation, undefined),
                   reward: getInvalidValue(validatedReward, undefined),
-                  skills: getInvalidValue(validatedSkills, undefined),
+                  skills: getInvalidValue<string[][], undefined>(
+                    validatedSkills,
+                    undefined
+                  ),
                   description: getInvalidValue(validatedDescription, undefined),
                   proposalDeadline: getInvalidValue(
                     validatedProposalDeadline,
@@ -844,7 +850,7 @@ const resource: Resource = {
               return invalid({
                 opportunity: adt("addNote" as const, {
                   note: getInvalidValue(validatedNote, undefined),
-                  attachments: getInvalidValue(
+                  attachments: getInvalidValue<string[][], undefined>(
                     validatedNoteAttachments,
                     undefined
                   )

@@ -268,7 +268,7 @@ async function start() {
           throw new Error(`Failed to read session: ${id}`);
         }
       } catch (e) {
-        logger.warn(e.message);
+        logger.warn((e as Error).message);
         return null;
       }
     },

@@ -25,8 +25,15 @@ import {
 } from "shared/lib/resources/proposal/code-with-us";
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { invalid, valid, Validation } from "shared/lib/validation";
+import {
+  Invalid,
+  invalid,
+  Valid,
+  valid,
+  Validation
+} from "shared/lib/validation";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
+import { InitReturnValue } from "front-end/lib/framework/component/base";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   proposal: CWUProposal | null;
@@ -71,7 +78,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
   InnerMsg_<K>,
   Route
 > {
-  return isUserType({
+  return isUserType<RouteParams, State_<K>, Msg>({
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
       const { opportunityId, proposalId, tab } = routeParams;
@@ -92,7 +99,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             tab: [tabId, immutable(tabState)],
             sidebar: sidebarState
           })
-        ) as State_<K>,
+        ) as Valid<Immutable<ValidState<keyof Tab.Tabs>>>,
         [
           ...component_.cmd.mapMany(
             sidebarCmds,
@@ -117,11 +124,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               ])
           ) as component_.Cmd<Msg>
         ]
-      ];
+      ] as InitReturnValue<State_<K>, Msg>;
     },
     fail({ routePath }) {
       return [
-        invalid(null),
+        invalid(null) as Invalid<null>,
         [
           component_.cmd.dispatch(
             component_.global.replaceRouteMsg(
@@ -129,7 +136,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             )
           )
         ]
-      ];
+      ] as InitReturnValue<State_<K>, Msg>;
     }
   });
 }

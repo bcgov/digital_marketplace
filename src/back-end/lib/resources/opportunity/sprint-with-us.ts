@@ -32,6 +32,7 @@ import {
   CreateSWUOpportunityPhaseBody,
   CreateSWUOpportunityStatus,
   CreateSWUTeamQuestionBody,
+  CreateSWUTeamQuestionValidationErrors,
   CreateValidationErrors,
   DeleteValidationErrors,
   editableOpportunityStatuses,
@@ -267,7 +268,7 @@ const resource: Resource = {
           connection,
           attachments
         );
-        if (isInvalid(validatedAttachments)) {
+        if (isInvalid<string[][]>(validatedAttachments)) {
           return invalid({
             attachments: validatedAttachments.value
           });
@@ -615,11 +616,14 @@ const resource: Resource = {
             location: getInvalidValue(validatedLocation, undefined),
             totalMaxBudget: getInvalidValue(validatedTotalMaxBudget, undefined),
             minTeamMembers: getInvalidValue(validatedMinTeamMembers, undefined),
-            mandatorySkills: getInvalidValue(
+            mandatorySkills: getInvalidValue<string[][], undefined>(
               validatedMandatorySkills,
               undefined
             ),
-            optionalSkills: getInvalidValue(validatedOptionalSkills, undefined),
+            optionalSkills: getInvalidValue<string[][], undefined>(
+              validatedOptionalSkills,
+              undefined
+            ),
             description: getInvalidValue(validatedDescription, undefined),
             questionsWeight: getInvalidValue(
               validatedQuestionsWeight,
@@ -640,7 +644,10 @@ const resource: Resource = {
               validatedImplementationPhase,
               undefined
             ),
-            teamQuestions: getInvalidValue(validatedTeamQuestions, undefined),
+            teamQuestions: getInvalidValue<
+              CreateSWUTeamQuestionValidationErrors[],
+              undefined
+            >(validatedTeamQuestions, undefined),
             proposalDeadline: getInvalidValue(
               validatedProposalDeadline,
               undefined
@@ -827,7 +834,7 @@ const resource: Resource = {
               connection,
               attachments
             );
-            if (isInvalid(validatedAttachments)) {
+            if (isInvalid<string[][]>(validatedAttachments)) {
               return invalid({
                 opportunity: adt("edit" as const, {
                   attachments: validatedAttachments.value
@@ -1226,11 +1233,11 @@ const resource: Resource = {
                     validatedMinTeamMembers,
                     undefined
                   ),
-                  mandatorySkills: getInvalidValue(
+                  mandatorySkills: getInvalidValue<string[][], undefined>(
                     validatedMandatorySkills,
                     undefined
                   ),
-                  optionalSkills: getInvalidValue(
+                  optionalSkills: getInvalidValue<string[][], undefined>(
                     validatedOptionalSkills,
                     undefined
                   ),
@@ -1260,10 +1267,10 @@ const resource: Resource = {
                     validatedImplementationPhase,
                     undefined
                   ),
-                  teamQuestions: getInvalidValue(
-                    validatedTeamQuestions,
+                  teamQuestions: getInvalidValue<
+                    CreateSWUTeamQuestionValidationErrors[],
                     undefined
-                  ),
+                  >(validatedTeamQuestions, undefined),
                   proposalDeadline: getInvalidValue(
                     validatedProposalDeadline,
                     undefined
@@ -1577,7 +1584,7 @@ const resource: Resource = {
               return invalid({
                 opportunity: adt("addNote" as const, {
                   note: getInvalidValue(validatedNote, undefined),
-                  attachments: getInvalidValue(
+                  attachments: getInvalidValue<string[][], undefined>(
                     validatedNoteAttachments,
                     undefined
                   )

@@ -216,11 +216,11 @@ export function validateSWUOpportunityInceptionPhase(
           startDate: getInvalidValue(validatedStartDate, undefined),
           completionDate: getInvalidValue(validatedCompletionDate, undefined),
           maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-          requiredCapabilities: getInvalidValue(
-            validatedRequiredCapabilities,
+          requiredCapabilities: getInvalidValue<
+            CreateSWUOpportunityPhaseRequiredCapabilityErrors[],
             undefined
-          )
-        });
+          >(validatedRequiredCapabilities, undefined)
+        } as CreateSWUOpportunityPhaseValidationErrors);
       }
     }
   );
@@ -278,11 +278,11 @@ export function validateSWUOpportunityPrototypePhase(
           startDate: getInvalidValue(validatedStartDate, undefined),
           completionDate: getInvalidValue(validatedCompletionDate, undefined),
           maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-          requiredCapabilities: getInvalidValue(
-            validatedRequiredCapabilities,
+          requiredCapabilities: getInvalidValue<
+            CreateSWUOpportunityPhaseRequiredCapabilityErrors[],
             undefined
-          )
-        });
+          >(validatedRequiredCapabilities, undefined)
+        } as CreateSWUOpportunityPhaseValidationErrors);
       }
     }
   );
@@ -332,11 +332,11 @@ export function validateSWUOpportunityImplementationPhase(
       startDate: getInvalidValue(validatedStartDate, undefined),
       completionDate: getInvalidValue(validatedCompletionDate, undefined),
       maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-      requiredCapabilities: getInvalidValue(
-        validatedRequiredCapabilities,
+      requiredCapabilities: getInvalidValue<
+        CreateSWUOpportunityPhaseRequiredCapabilityErrors[],
         undefined
-      )
-    });
+      >(validatedRequiredCapabilities, undefined)
+    } as CreateSWUOpportunityPhaseValidationErrors);
   }
 }
 
@@ -473,14 +473,18 @@ export function validateMandatorySkills(
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Mandatory Skill", 1, 100)
   );
-  return mapValid(validatedArray, (skills) => uniq(skills));
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
 }
 
 export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Optional Skill", 1, 100)
   );
-  return mapValid(validatedArray, (skills) => uniq(skills));
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
 }
 
 export function validateDescription(raw: string): Validation<string> {

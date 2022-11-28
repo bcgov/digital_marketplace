@@ -158,7 +158,10 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Everything checks out, return valid state.
               return [
                 state
-                  .set("tab", [tabId as K, immutable(tabState)])
+                  .set("tab", [
+                    tabId as K,
+                    immutable<Tab.Tabs[K]["state"]>(tabState)
+                  ])
                   .set("sidebar", immutable(sidebarState))
                   .set("proposal", proposal),
                 [

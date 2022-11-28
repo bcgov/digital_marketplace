@@ -341,7 +341,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const isSave =
         proposal.status === SWUProposalStatus.Draft ||
         proposal.status === SWUProposalStatus.Withdrawn;
-      if (isInvalid(result)) {
+      if (isInvalid<Immutable<Form.State>>(result)) {
         return [
           state.set("form", result.value),
           [
@@ -431,7 +431,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const proposal = state.proposal;
       if (!proposal) return [state, []];
       const result = msg.value;
-      if (isInvalid(result)) {
+      if (isInvalid<Immutable<Form.State>>(result)) {
         return [
           stopSaveChangesAndSubmitLoading(state).set("form", result.value),
           [

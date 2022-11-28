@@ -308,7 +308,7 @@ const resource: Resource = {
           connection,
           attachments
         );
-        if (isInvalid(validatedAttachments)) {
+        if (isInvalid<string[][]>(validatedAttachments)) {
           return invalid({
             attachments: validatedAttachments.value
           });
@@ -511,7 +511,7 @@ const resource: Resource = {
               connection,
               attachments
             );
-            if (isInvalid(validatedAttachments)) {
+            if (isInvalid<string[][]>(validatedAttachments)) {
               return invalid({
                 proposal: adt("edit" as const, {
                   attachments: validatedAttachments.value

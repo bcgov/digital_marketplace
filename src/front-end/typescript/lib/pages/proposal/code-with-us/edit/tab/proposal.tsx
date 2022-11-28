@@ -372,12 +372,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "onSaveChangesPersistResponse": {
       const proposal = state.proposal;
       if (!proposal) return [state, []];
-      const result = msg.value;
+      const result: Form.PersistResult = msg.value;
       state = stopSaveChangesLoading(state);
       const isSave =
         proposal.status === CWUProposalStatus.Draft ||
         proposal.status === CWUProposalStatus.Withdrawn;
-      if (isInvalid(result)) {
+      if (isInvalid<Immutable<Form.State>>(result)) {
         return [
           state.set("form", result.value),
           [
@@ -467,7 +467,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const proposal = state.proposal;
       if (!proposal) return [state, []];
       const result = msg.value;
-      if (isInvalid(result)) {
+      if (isInvalid<Immutable<Form.State>>(result)) {
         return [
           stopSaveChangesAndSubmitLoading(state).set("form", result.value),
           [

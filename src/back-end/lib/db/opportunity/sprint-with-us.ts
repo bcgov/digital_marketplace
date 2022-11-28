@@ -9,6 +9,7 @@ import {
 import { RawSWUOpportunitySubscriber } from "back-end/lib/db/subscribers/sprint-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
 import * as swuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/sprint-with-us";
+import { QueryBuilder } from "knex";
 import { valid } from "shared/lib/http";
 import { Addendum } from "shared/lib/resources/addendum";
 import { getSWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
@@ -118,7 +119,7 @@ export interface RawSWUOpportunity
   inceptionPhase?: Id;
   prototypePhase?: Id;
   implementationPhase: Id;
-  versionId: Id;
+  versionId?: Id;
 }
 
 export interface RawSWUOpportunitySlim
@@ -194,7 +195,7 @@ async function rawSWUOpportunityToSWUOpportunity(
     undefined
   );
   const teamQuestions = getValidValue(
-    await readManyTeamQuestions(connection, raw.versionId),
+    await readManyTeamQuestions(connection, raw.versionId ?? ""),
     undefined
   );
   const inceptionPhase = inceptionPhaseId
@@ -228,8 +229,8 @@ async function rawSWUOpportunityToSWUOpportunity(
     attachments,
     addenda,
     teamQuestions,
-    inceptionPhase,
-    prototypePhase,
+    inceptionPhase: inceptionPhase ?? undefined,
+    prototypePhase: prototypePhase ?? undefined,
     implementationPhase
   };
 }
@@ -294,8 +295,6 @@ async function rawSWUOpportunityPhaseToSWUOpportunityPhase(
     throw new Error("unable to process opportunity phase");
   }
 
-  delete raw.id;
-
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
@@ -345,7 +344,7 @@ async function rawTeamQuestionToTeamQuestion(
 
 async function rawHistoryRecordToHistoryRecord(
   connection: Connection,
-  session: Session,
+  _session: Session,
   raw: RawSWUOpportunityHistoryRecord
 ): Promise<SWUOpportunityHistoryRecord> {
   const {
@@ -388,7 +387,7 @@ export function generateSWUOpportunityQuery(
   connection: Connection,
   full = false
 ) {
-  const query = connection<RawSWUOpportunity>(
+  const query: QueryBuilder = connection<RawSWUOpportunity>(
     "swuOpportunities as opportunities"
   )
     // Join on latest SWU status
@@ -854,7 +853,7 @@ export const readOneSWUOpportunity = tryDb<
         result.reporting = {
           numViews,
           numWatchers,
-          numProposals
+          numProposals: numProposals ?? 0
         };
       }
     }
@@ -982,20 +981,20 @@ export const createSWUOpportunity = tryDb<
     );
 
     // Create phases
-    if (opportunity.inceptionPhase) {
+    if (inceptionPhase) {
       await createSWUOpportunityPhase(
         trx,
         opportunityVersionRecord.id,
-        opportunity.inceptionPhase,
+        inceptionPhase,
         SWUOpportunityPhaseType.Inception,
         session
       );
     }
-    if (opportunity.prototypePhase) {
+    if (prototypePhase) {
       await createSWUOpportunityPhase(
         trx,
         opportunityVersionRecord.id,
-        opportunity.prototypePhase,
+        prototypePhase,
         SWUOpportunityPhaseType.Prototype,
         session
       );
@@ -1003,7 +1002,7 @@ export const createSWUOpportunity = tryDb<
     await createSWUOpportunityPhase(
       trx,
       opportunityVersionRecord.id,
-      opportunity.implementationPhase,
+      implementationPhase,
       SWUOpportunityPhaseType.Implementation,
       session
     );

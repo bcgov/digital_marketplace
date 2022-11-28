@@ -42,7 +42,7 @@ interface UpdateOrganizationParams
 interface RawOrganization
   extends Omit<Organization, "logoImageFile" | "owner" | "numTeamMembers"> {
   logoImageFile?: Id;
-  owner: Id;
+  owner?: Id;
   numTeamMembers?: string;
 }
 
@@ -307,7 +307,10 @@ export const readManyOrganizations = tryDb<
       countQuery = countQuery.where({ active: true });
     }
     const [{ count }] = await countQuery.count("id", { as: "count" });
-    numPages = Math.ceil(parseInt(count, 10) / pageSize);
+    numPages =
+      typeof count === "string"
+        ? Math.ceil(parseInt(count, 10) / pageSize)
+        : count;
     //Reset page to first page if out of bounds.
     if (page > numPages) {
       page = 1;

@@ -1,36 +1,29 @@
 {
-    "compilerOptions": {
-        "skipLibCheck": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "jsx": "react",
-        "allowJs": true,
-        "strict": true,
-        "noImplicitReturns": true,
-        "noImplicitAny": false,
-        "forceConsistentCasingInFileNames": true,
-        "noUnusedLocals": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true,
-        "noErrorTruncation": true,
-        "baseUrl": ".",
-        "incremental": true,
-        "paths": {
-            "back-end/*": ["./src/back-end/*"],
-            "migrations/*": ["./src/migrations/*"],
-            "shared/*": ["./src/shared/*"],
-            "scripts/*": ["./src/scripts/*"],
-            "front-end/*": ["./src/front-end/typescript/*"]
-        }
-    },
-    "include": [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.json",
-      "**/*.js"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
-  }
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "allowJs": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "noErrorTruncation": true,
+    "baseUrl": ".",
+    "incremental": true,
+    "paths": {
+      "back-end/*": ["./src/back-end/*"],
+      "migrations/*": ["./src/migrations/*"],
+      "shared/*": ["./src/shared/*"],
+      "scripts/*": ["./src/scripts/*"],
+      "front-end/*": ["./src/front-end/typescript/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"],
+  "exclude": ["node_modules"]
+}
