@@ -48,16 +48,16 @@ export type Params<T> = FormField.Params<Value<T>, ChildParams<T>>;
 export type Msg<T> = FormField.Msg<InnerChildMsg<T>>;
 
 function makeChildInit<T>(): ChildComponent<T>["init"] {
-  return async (params) => params;
+  return (params) => [params, []];
 }
 
 function makeChildUpdate<T>(): ChildComponent<T>["update"] {
   return ({ state, msg }) => {
     switch (msg.tag) {
       case "onChange":
-        return [state.set("value", msg.value)];
+        return [state.set("value", msg.value), []];
       default:
-        return [state];
+        return [state, []];
     }
   };
 }

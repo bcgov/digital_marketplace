@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import {
   CSSProperties,
@@ -6,8 +6,6 @@ import {
   MouseEventHandler,
   ReactElement
 } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPenSquare } from "@fortawesome/free-solid-svg-icons";
 
 export const DEFAULT_ICON_WIDTH = 1;
 export const DEFAULT_ICON_HEIGHT = 1;
@@ -121,8 +119,7 @@ export type AvailableIcons =
   | "sack-dollar"
   | "book-user"
   | "github"
-  | "warning"
-  | "file-edit";
+  | "warning";
 
 interface Props {
   name: AvailableIcons;
@@ -143,7 +140,7 @@ interface FontAwesomeProps extends SvgProps {
   viewBox?: string;
 }
 
-const FontAwesome: View<FontAwesomeProps> = (props) => {
+const FontAwesome: component.base.View<FontAwesomeProps> = (props) => {
   const {
     color,
     hover,
@@ -176,16 +173,9 @@ const FontAwesome: View<FontAwesomeProps> = (props) => {
   );
 };
 
-const Icon: View<Props> = (props) => {
+const Icon: component.base.View<Props> = (props) => {
   const { name } = props;
   switch (name) {
-    case "file-edit":
-      return (
-        <FontAwesomeIcon
-          icon={faPenSquare}
-          className="icon  mr-2  flex-shrink-0 flex-grow-0"
-        />
-      );
     case "image":
       return (
         <FontAwesome viewBox="0 0 512 512" {...props}>
@@ -1056,7 +1046,7 @@ export interface IconInfoProps {
   small?: boolean;
 }
 
-export const IconInfo: View<IconInfoProps> = ({
+export const IconInfo: component.base.View<IconInfoProps> = ({
   name,
   value,
   className,

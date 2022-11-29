@@ -1,15 +1,9 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
 import {
-  ComponentViewProps,
-  Dispatch,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import Accordion from "front-end/lib/views/accordion";
 import Separator from "front-end/lib/views/separator";
@@ -44,33 +38,48 @@ export interface Params {
   responses: SWUProposalTeamQuestionResponse[];
 }
 
-export const init: Init<Params, State> = async ({ questions, responses }) => {
-  return {
-    responses: await Promise.all(
-      questions.map(async (question) => ({
+export const init: component_.base.Init<Params, State, Msg> = ({
+  questions,
+  responses
+}) => {
+  const responseInits = questions.map((question, i) => {
+    const [responseState, responseCmds] = RichMarkdownEditor.init({
+      errors: [],
+      validate: (v) =>
+        proposalValidation.validateSWUProposalTeamQuestionResponseResponse(
+          v,
+          question.wordLimit
+        ),
+      child: {
+        value: find(responses, { order: question.order })?.response || "",
+        id: `swu-proposal-team-question-response-${question.order}`,
+        wordLimit: question.wordLimit
+      }
+    });
+    return [
+      {
         isAccordianOpen: false,
         question,
-        response: immutable(
-          await RichMarkdownEditor.init({
-            errors: [],
-            validate: (v) =>
-              proposalValidation.validateSWUProposalTeamQuestionResponseResponse(
-                v,
-                question.wordLimit
-              ),
-            child: {
-              value: find(responses, { order: question.order })?.response || "",
-              id: `swu-proposal-team-question-response-${question.order}`,
-              wordLimit: question.wordLimit
-            }
-          })
-        )
-      }))
+        response: immutable(responseState)
+      },
+      component_.cmd.mapMany(
+        responseCmds,
+        (msg) => adt("response", [i, msg]) as Msg
+      )
+    ] as [ResponseState, component_.Cmd<Msg>[]];
+  });
+  return [
+    {
+      responses: responseInits.map((ri) => ri[0])
+    },
+    responseInits.reduce(
+      (acc, ri) => [...acc, ...ri[1]],
+      [] as component_.Cmd<Msg>[]
     )
-  };
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleAccordion":
       return [
@@ -80,11 +89,12 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               ? { ...r, isAccordianOpen: !r.isAccordianOpen }
               : r;
           })
-        )
+        ),
+        []
       ];
 
     case "response":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["responses", String(msg.value[0]), "response"],
         childUpdate: RichMarkdownEditor.update,
@@ -107,11 +117,14 @@ export type Errors = CreateSWUProposalTeamQuestionResponseValidationErrors[];
 
 export function setErrors(
   state: Immutable<State>,
-  errors: Errors | any = []
+  errors: Errors = []
 ): Immutable<State> {
   return errors.reduce((acc, e, i) => {
     return acc.updateIn(["responses", i, "response"], (s) =>
-      FormField.setErrors(s, e.response || [])
+      FormField.setErrors(
+        s as Immutable<RichMarkdownEditor.State>,
+        e.response || []
+      )
     );
   }, state);
 }
@@ -119,7 +132,7 @@ export function setErrors(
 export function validate(state: Immutable<State>): Immutable<State> {
   return state.responses.reduce((acc, r, i) => {
     return acc.updateIn(["responses", i, "response"], (s) =>
-      FormField.validate(s)
+      FormField.validate(s as Immutable<RichMarkdownEditor.State>)
     );
   }, state);
 }
@@ -138,10 +151,10 @@ interface ResponseViewProps {
   index: number;
   response: ResponseState;
   disabled?: boolean;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-const ResponseView: View<ResponseViewProps> = (props) => {
+const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
   const { response, dispatch, index, disabled } = props;
   const isValid = isResponseValid(response);
   const title = `Question ${index + 1}`;
@@ -185,7 +198,7 @@ const ResponseView: View<ResponseViewProps> = (props) => {
         className="mb-0"
         disabled={disabled}
         state={response.response}
-        dispatch={mapComponentDispatch(
+        dispatch={component_.base.mapDispatch(
           dispatch,
           (value) => adt("response", [index, value]) as Msg
         )}
@@ -194,11 +207,11 @@ const ResponseView: View<ResponseViewProps> = (props) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, disabled } = props;
   return (
     <div>

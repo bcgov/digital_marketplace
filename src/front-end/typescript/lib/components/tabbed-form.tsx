@@ -1,13 +1,5 @@
 import { DROPDOWN_CARET_SIZE } from "front-end/config";
-import {
-  Component,
-  ComponentViewProps,
-  Immutable,
-  Init,
-  Update,
-  View,
-  ViewElementChildren
-} from "front-end/lib/framework";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import Link, {
   emptyIconLinkSymbol,
@@ -31,6 +23,7 @@ export interface Params<TabId> extends Pick<State<TabId>, "tabs"> {
 }
 
 export type Msg<TabId> =
+  | ADT<"noop">
   | ADT<"toggleDropdown">
   | ADT<"setActiveTab", TabId>
   | ADT<"next">
@@ -64,77 +57,88 @@ function showPreviousButton<TabId>(state: Immutable<State<TabId>>): boolean {
   return !!getPreviousTab(state);
 }
 
-export function init<TabId>(): Init<Params<TabId>, State<TabId>> {
-  return async ({ tabs, activeTab }) => {
+export function init<TabId>(): component_.base.Init<
+  Params<TabId>,
+  State<TabId>,
+  Msg<TabId>
+> {
+  return ({ tabs, activeTab }) => {
     if (!tabs.length) {
       throw new Error(
         "Must provide a non-empty array of tabs for tabbed forms."
       );
     }
-    return {
-      id: `tabbed-form-${Math.random()}`,
-      tabs,
-      isDropdownOpen: false,
-      activeTab: activeTab || tabs[0]
-    };
+    return [
+      {
+        id: `tabbed-form-${Math.random()}`,
+        tabs,
+        isDropdownOpen: false,
+        activeTab: activeTab || tabs[0]
+      },
+      []
+    ];
   };
 }
 
-function scrollToFormTop<TabId>(state: Immutable<State<TabId>>): void {
+function scrollToFormTop<TabId>(
+  state: Immutable<State<TabId>>
+): component_.Cmd<Msg<TabId>> {
   const form = document.getElementById(state.id);
   if (!form) {
-    return;
+    return component_.cmd.dispatch(adt("noop"));
   }
   const toY = Math.max(
     0,
     form.getBoundingClientRect().top +
       (window.document.scrollingElement?.scrollTop || 0)
   );
-  window.scrollTo(0, toY - 100); //Offset by 100px to account for nav.
+  return component_.cmd.scrollTo(0, toY - 100, adt("noop")); //Offset by 100px to account for nav.
 }
 
-export function update<TabId>(): Update<State<TabId>, Msg<TabId>> {
+export function update<TabId>(): component_.base.Update<
+  State<TabId>,
+  Msg<TabId>
+> {
   return ({ state, msg }) => {
     switch (msg.tag) {
+      case "noop":
+        return [state, []];
       case "toggleDropdown":
-        return [state.update("isDropdownOpen", (v) => !v)];
+        return [state.update("isDropdownOpen", (v) => !v), []];
       case "setActiveTab":
-        return [state.set("isDropdownOpen", false).set("activeTab", msg.value)];
+        return [
+          state.set("isDropdownOpen", false).set("activeTab", msg.value),
+          []
+        ];
       case "next":
         return [
           state
             .set("isDropdownOpen", false)
             .set("activeTab", getNextTab(state) || state.activeTab),
-          async (state) => {
-            scrollToFormTop(state);
-            return null;
-          }
+          [scrollToFormTop(state)]
         ];
       case "previous":
         return [
           state
             .set("isDropdownOpen", false)
             .set("activeTab", getPreviousTab(state) || state.activeTab),
-          async (state) => {
-            scrollToFormTop(state);
-            return null;
-          }
+          [scrollToFormTop(state)]
         ];
     }
   };
 }
 
 export interface Props<TabId>
-  extends ComponentViewProps<State<TabId>, Msg<TabId>> {
+  extends component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> {
   valid: boolean;
   disabled?: boolean;
-  children: ViewElementChildren;
+  children: component_.base.ViewElementChildren;
   getTabLabel(tabId: TabId): string;
   isTabValid(tabId: TabId): boolean;
 }
 
-export function view<TabId>(): View<Props<TabId>> {
-  const Header: View<Props<TabId>> = ({
+export function view<TabId>(): component_.base.View<Props<TabId>> {
+  const Header: component_.base.View<Props<TabId>> = ({
     valid,
     state,
     dispatch,
@@ -204,7 +208,7 @@ export function view<TabId>(): View<Props<TabId>> {
     );
   };
 
-  const Footer: View<Props<TabId>> = ({ state, dispatch }) => {
+  const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
     return (
       <div className="mt-5 d-flex flex-nowrap justify-content-between align-items-center">
         {showPreviousButton(state) ? (
@@ -247,7 +251,7 @@ export function view<TabId>(): View<Props<TabId>> {
   };
 }
 
-export function makeComponent<TabId>(): Component<
+export function makeComponent<TabId>(): component_.base.Component<
   Params<TabId>,
   State<TabId>,
   Msg<TabId>,

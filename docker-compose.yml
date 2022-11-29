@@ -17,7 +17,7 @@ services:
 
   db:
     container_name: dm_db
-    image: postgres:11
+    image: postgres:12
     volumes:
       - dm-vol:/var/lib/postgresql/data
       - ./:/workspace

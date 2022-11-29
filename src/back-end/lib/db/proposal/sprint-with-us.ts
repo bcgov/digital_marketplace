@@ -881,20 +881,20 @@ export const createSWUProposal = tryDb<
     await createSWUProposalAttachments(trx, proposalRootRecord.id, attachments);
 
     // Create phases
-    if (proposal.inceptionPhase) {
+    if (inceptionPhase) {
       await createSWUProposalPhase(
         trx,
         proposalRootRecord.id,
-        proposal.inceptionPhase,
+        inceptionPhase,
         SWUProposalPhaseType.Inception,
         session
       );
     }
-    if (proposal.prototypePhase) {
+    if (prototypePhase) {
       await createSWUProposalPhase(
         trx,
         proposalRootRecord.id,
-        proposal.prototypePhase,
+        prototypePhase,
         SWUProposalPhaseType.Prototype,
         session
       );
@@ -902,7 +902,7 @@ export const createSWUProposal = tryDb<
     await createSWUProposalPhase(
       trx,
       proposalRootRecord.id,
-      proposal.implementationPhase,
+      implementationPhase,
       SWUProposalPhaseType.Implementation,
       session
     );
@@ -1793,7 +1793,7 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
   const opportunityTeamQuestions =
     opportunity &&
     getValidValue(
-      await readManyTeamQuestions(connection, opportunity.versionId),
+      await readManyTeamQuestions(connection, opportunity.versionId ?? ""),
       null
     );
   if (!opportunity || !opportunityTeamQuestions) {

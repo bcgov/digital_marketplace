@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Separator from "front-end/lib/views/separator";
 import React, { Fragment } from "react";
 import { formatDate, formatDateAndTime, formatTime } from "shared/lib";
@@ -21,7 +21,9 @@ interface DateDefinition<Tag> {
   withTimeZone?: boolean;
 }
 
-export const SingleDate: View<SingleDate & { className?: string }> = (date) => {
+export const SingleDate: component.base.View<
+  SingleDate & { className?: string }
+> = (date) => {
   const label = date.label ? `${date.label} ` : "";
   return (
     <div className={date.className}>
@@ -41,7 +43,10 @@ export interface Props {
   className?: string;
 }
 
-export const DateMetadata: View<Props> = ({ dates, className = "" }) => {
+export const DateMetadata: component.base.View<Props> = ({
+  dates,
+  className = ""
+}) => {
   return (
     <div
       className={`small text-secondary d-flex flex-nowrap flex-column flex-sm-row ${className}`}>

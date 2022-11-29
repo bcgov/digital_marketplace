@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import {
   cwuOpportunityToPublicColor,
   cwuOpportunityToPublicStatus
@@ -22,7 +22,12 @@ export interface Props {
   pill?: boolean;
 }
 
-const Badge: View<Props> = ({ text, color, className = "", pill }) => {
+const Badge: component.base.View<Props> = ({
+  text,
+  color,
+  className = "",
+  pill
+}) => {
   className = `${className} text-capitalize text-nowrap`;
   return (
     <reactstrap.Badge color={color} className={className} pill={pill}>
@@ -49,7 +54,7 @@ interface OpportunityBadgeProps {
   className?: string;
 }
 
-export const OpportunityBadge: View<OpportunityBadgeProps> = ({
+export const OpportunityBadge: component.base.View<OpportunityBadgeProps> = ({
   opportunity,
   viewerUser,
   className

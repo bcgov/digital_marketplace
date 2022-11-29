@@ -1,15 +1,9 @@
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  PageGetModal,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import {
   makeViewTeamMemberModal,
@@ -164,41 +158,46 @@ export function setAffiliations(
   return resetCapabilities(state);
 }
 
-export const init: Init<Params, State> = async (params) => {
+export const init: component_.base.Init<Params, State, Msg> = (params) => {
   const { opportunityPhase, proposalPhase } = params;
   const { affiliations, orgId, ...paramsForState } = params;
   const members = affiliationsToMembers(
     affiliations,
     proposalPhase?.members || []
   );
-  return {
-    ...paramsForState,
-    idNamespace: String(Math.random()),
-    orgId: orgId || null,
-    showModal: null,
-    members,
-    capabilities: determineCapabilities(
-      filterAddedMembers(members, true),
-      opportunityPhase
-    ),
-    membersTable: immutable(
-      await Table.init({
-        idNamespace: `swu-proposal-phase-members-${Math.random()}`
-      })
+  const [membersTableState, membersTableCmds] = Table.init({
+    idNamespace: `swu-proposal-phase-members-${Math.random()}`
+  });
+  return [
+    {
+      ...paramsForState,
+      idNamespace: String(Math.random()),
+      orgId: orgId || null,
+      showModal: null,
+      members,
+      capabilities: determineCapabilities(
+        filterAddedMembers(members, true),
+        opportunityPhase
+      ),
+      membersTable: immutable(membersTableState)
+    },
+    component_.cmd.mapMany(
+      membersTableCmds,
+      (msg) => adt("membersTable", msg) as Msg
     )
-  };
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleAccordion":
-      return [state.update("isAccordionOpen", (v) => !v)];
+      return [state.update("isAccordionOpen", (v) => !v), []];
 
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
 
     case "hideModal":
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
 
     case "toggleAffiliationToBeAdded":
       return [
@@ -208,7 +207,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               ? { ...a, toBeAdded: !a.toBeAdded }
               : a;
           })
-        )
+        ),
+        []
       ];
 
     case "addTeamMembers": {
@@ -220,7 +220,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         }))
       );
       state = enforceScrumMaster(state);
-      return [resetCapabilities(state)];
+      return [resetCapabilities(state), []];
     }
 
     case "setScrumMaster":
@@ -230,7 +230,8 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             ...m,
             scrumMaster: m.user.id === msg.value
           }))
-        )
+        ),
+        []
       ];
 
     case "removeTeamMember":
@@ -245,10 +246,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         })
       );
       state = enforceScrumMaster(state);
-      return [resetCapabilities(state)];
+      return [resetCapabilities(state), []];
 
     case "membersTable":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["membersTable"],
         childUpdate: Table.update,
@@ -323,7 +324,7 @@ export function isValid(state: Immutable<State>): boolean {
   );
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   title: string;
   icon: AvailableIcons;
   iconColor?: ThemeColor;
@@ -331,7 +332,7 @@ export interface Props extends ComponentViewProps<State, Msg> {
   className?: string;
 }
 
-const Dates: View<Props> = ({ state }) => {
+const Dates: component_.base.View<Props> = ({ state }) => {
   const opportunityPhase = state.opportunityPhase;
   if (!opportunityPhase) {
     return null;
@@ -350,7 +351,7 @@ const Dates: View<Props> = ({ state }) => {
   );
 };
 
-function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function membersTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Team Member",
@@ -432,7 +433,11 @@ function membersTableBodyRows(
   ]);
 }
 
-const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
+const TeamMembers: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const addedMembers = getAddedMembers(state);
   return (
     <Row className="mb-5">
@@ -461,7 +466,7 @@ const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
       {addedMembers.length ? (
         <Col xs="12" className="mt-4">
           <Table.view
-            headCells={membersTableHeadCells(state)}
+            headCells={membersTableHeadCells()}
             bodyRows={membersTableBodyRows({
               addedMembers,
               dispatch,
@@ -469,7 +474,7 @@ const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
               idNamespace: state.idNamespace
             })}
             state={state.membersTable}
-            dispatch={mapComponentDispatch(dispatch, (v) =>
+            dispatch={component_.base.mapDispatch(dispatch, (v) =>
               adt("membersTable" as const, v)
             )}
           />
@@ -479,7 +484,7 @@ const TeamMembers: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const CapabilitiesView: View<Props> = ({ state, dispatch }) => {
+const CapabilitiesView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
@@ -498,7 +503,7 @@ const CapabilitiesView: View<Props> = ({ state, dispatch }) => {
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, title, icon, iconColor, dispatch, className } = props;
   return (
     <Accordion
@@ -522,22 +527,22 @@ export const view: View<Props> = (props) => {
   );
 };
 
-export const getModal: PageGetModal<State, Msg> = (state) => {
+export const getModal: component_.page.GetModal<State, Msg> = (state) => {
   if (!state.showModal) {
-    return null;
+    return component_.page.modal.hide();
   }
   switch (state.showModal.tag) {
     case "viewTeamMember":
       return makeViewTeamMemberModal({
         member: state.showModal.value,
-        onCloseMsg: adt("hideModal")
+        onCloseMsg: adt("hideModal") as Msg
       });
 
     case "addTeamMembers": {
       const nonAddedMembers = getNonAddedMembers(state);
-      return {
+      return component_.page.modal.show({
         title: "Add Team Member(s)",
-        onCloseMsg: adt("hideModal"),
+        onCloseMsg: adt("hideModal") as Msg,
         body: (dispatch) => {
           if (!state.orgId) {
             return null;
@@ -623,7 +628,7 @@ export const getModal: PageGetModal<State, Msg> = (state) => {
             msg: adt("hideModal")
           }
         ]
-      };
+      });
     }
   }
 };

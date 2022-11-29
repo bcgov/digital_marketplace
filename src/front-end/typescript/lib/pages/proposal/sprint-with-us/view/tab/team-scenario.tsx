@@ -3,15 +3,9 @@ import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
@@ -25,7 +19,8 @@ import { hasSWUOpportunityPassedTeamScenario } from "shared/lib/resources/opport
 import {
   NUM_SCORE_DECIMALS,
   SWUProposal,
-  SWUProposalStatus
+  SWUProposalStatus,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
@@ -43,100 +38,136 @@ export type InnerMsg =
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"submitScore">
+  | ADT<
+      "onSubmitScoreResponse",
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+    >
   | ADT<"scoreMsg", NumberField.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-async function initScore(
+function initScore(
   p: SWUProposal
-): Promise<Immutable<NumberField.State>> {
-  return immutable(
-    await NumberField.init({
-      errors: [],
-      validate: (v) => {
-        if (v === null) {
-          return invalid(["Please enter a valid score."]);
-        }
-        return validateTeamScenarioScore(v);
-      },
-      child: {
-        step: 0.01,
-        value:
-          p.scenarioScore === null || p.scenarioScore === undefined
-            ? null
-            : p.scenarioScore,
-        id: "swu-proposal-team-scenario-score"
+): component_.base.InitReturnValue<NumberField.State, NumberField.Msg> {
+  return NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid score."]);
       }
-    })
-  );
+      return validateTeamScenarioScore(v);
+    },
+    child: {
+      step: 0.01,
+      value:
+        p.scenarioScore === null || p.scenarioScore === undefined
+          ? null
+          : p.scenarioScore,
+      id: "swu-proposal-team-scenario-score"
+    }
+  });
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    showModal: null,
-    enterScoreLoading: 0,
-    score: await initScore(params.proposal)
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [scoreState, scoreCmds] = initScore(params.proposal);
+  return [
+    {
+      ...params,
+      showModal: null,
+      enterScoreLoading: 0,
+      score: immutable(scoreState)
+    },
+    component_.cmd.mapMany(scoreCmds, (msg) => adt("scoreMsg", msg) as Msg)
+  ];
 };
 
 const startEnterScoreLoading = makeStartLoading<State>("enterScoreLoading");
 const stopEnterScoreLoading = makeStopLoading<State>("enterScoreLoading");
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
       if (state.enterScoreLoading > 0) {
-        return [state];
+        return [state, []];
       }
-      return [state.set("showModal", null)];
-    case "submitScore":
+      return [state.set("showModal", null), []];
+    case "submitScore": {
+      const score = FormField.getValue(state.score);
+      if (score === null) {
+        return [state, []];
+      }
       return [
         startEnterScoreLoading(state),
-        async (state, dispatch) => {
-          state = stopEnterScoreLoading(state);
-          const score = FormField.getValue(state.score);
-          if (score === null) {
-            return state;
-          }
-          const result = await api.proposals.swu.update(
+        [
+          api.proposals.swu.update(
             state.proposal.id,
-            adt("scoreTeamScenario", score)
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                toast(adt("success", toasts.scored.success("Team Scenario")))
-              );
-              return state
-                .set("score", await initScore(result.value))
-                .set("showModal", null)
-                .set("proposal", result.value);
-            case "invalid": {
-              dispatch(
-                toast(adt("error", toasts.scored.error("Team Scenario")))
-              );
-              let score = state.score;
-              if (
-                result.value.proposal &&
-                result.value.proposal.tag === "scoreTeamScenario"
-              ) {
-                score = FormField.setErrors(score, result.value.proposal.value);
-              }
-              return state.set("score", score);
-            }
-            case "unhandled":
-              dispatch(
-                toast(adt("error", toasts.scored.error("Team Scenario")))
-              );
-              return state;
-          }
-        }
+            adt("scoreTeamScenario", score),
+            (response) => adt("onSubmitScoreResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
+    case "onSubmitScoreResponse": {
+      state = stopEnterScoreLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [scoreState, scoreCmds] = initScore(result.value);
+          return [
+            state
+              .set("score", immutable(scoreState))
+              .set("showModal", null)
+              .set("proposal", result.value),
+            [
+              ...component_.cmd.mapMany(
+                scoreCmds,
+                (msg) => adt("scoreMsg", msg) as Msg
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.scored.success("Team Scenario"))
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid": {
+          let score = state.score;
+          if (
+            result.value.proposal &&
+            result.value.proposal.tag === "scoreTeamScenario"
+          ) {
+            score = FormField.setErrors(score, result.value.proposal.value);
+          }
+          return [
+            state.set("score", score),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.scored.error("Team Scenario"))
+                )
+              )
+            ]
+          ];
+        }
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.scored.error("Team Scenario"))
+                )
+              )
+            ]
+          ];
+      }
+    }
     case "scoreMsg":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["score"],
         childUpdate: NumberField.update,
@@ -144,11 +175,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("scoreMsg", value) as Msg
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
@@ -189,14 +220,18 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
+  onInitResponse() {
+    return component_.page.readyMsg();
+  },
+
   getModal: (state) => {
     const isEnterScoreLoading = state.enterScoreLoading > 0;
     const valid = isValid(state);
     switch (state.showModal) {
       case "enterScore":
-        return {
+        return component_.page.modal.show({
           title: "Enter Score",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Submit Score",
@@ -224,28 +259,28 @@ export const component: Tab.Component<State, Msg> = {
                 label="Team Scenario Score"
                 placeholder="Team Scenario Score"
                 help={`Enter this proponent's score for the Team Scenario stage of the evaluation process as a percentage (up to two decimal places).`}
-                dispatch={mapComponentDispatch(dispatch, (v) =>
+                dispatch={component_.base.mapDispatch(dispatch, (v) =>
                   adt("scoreMsg" as const, v)
                 )}
                 state={state.score}
               />
             </div>
           )
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
   },
 
-  getContextualActions: ({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     if (!hasSWUOpportunityPassedTeamScenario(state.opportunity)) {
-      return null;
+      return component_.page.actions.none();
     }
     const proposal = state.proposal;
     const propStatus = proposal.status;
     switch (propStatus) {
       case SWUProposalStatus.UnderReviewTeamScenario:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Enter Score",
             symbol_: leftPlacement(iconLinkSymbol("star-full")),
@@ -255,7 +290,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       case SWUProposalStatus.EvaluatedTeamScenario:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Edit Score",
             symbol_: leftPlacement(iconLinkSymbol("star-full")),
@@ -265,7 +300,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       default:
-        return null;
+        return component_.page.actions.none();
     }
   }
 };

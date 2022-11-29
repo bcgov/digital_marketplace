@@ -1,16 +1,19 @@
 import { APP_TERMS_CONTENT_ID } from "front-end/config";
 import { Msg, State } from "front-end/lib/app/types";
-import { AppGetAlerts, emptyPageAlerts } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { COPY } from "shared/config";
 import { adt } from "shared/lib/types";
 
-const getAlerts: AppGetAlerts<State, Msg> = ({ state, dispatch }) => {
+function getAlerts({
+  state,
+  dispatch
+}: component.base.ComponentViewProps<State, Msg>): component.page.Alerts<Msg> {
   const user = state.shared.session?.user;
   if (user && user.lastAcceptedTermsAt && !user.acceptedTermsAt) {
     return {
-      ...emptyPageAlerts(),
+      ...component.page.alerts.empty(),
       warnings: [
         {
           text: (
@@ -37,8 +40,8 @@ const getAlerts: AppGetAlerts<State, Msg> = ({ state, dispatch }) => {
       ]
     };
   } else {
-    return emptyPageAlerts();
+    return component.page.alerts.empty();
   }
-};
+}
 
 export default getAlerts;

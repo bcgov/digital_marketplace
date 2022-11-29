@@ -2,14 +2,9 @@ import * as FormField from "front-end/lib/components/form-field";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import {
-  ComponentViewProps,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { slugPath } from "front-end/lib/pages/content/lib";
@@ -69,49 +64,55 @@ export function setErrors(
     .update("body", (s) => FormField.setErrors(s, errors.body || []));
 }
 
-export const init: Init<Params, State> = async ({ content = null }) => {
-  return {
-    content,
-    title: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: contentValidation.validateTitle,
-        child: {
-          type: "text",
-          value: content?.title || "",
-          id: "content-title"
-        }
-      })
-    ),
-    slug: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: contentValidation.validateSlug,
-        child: {
-          type: "text",
-          value: content?.slug || "",
-          id: "content-slug"
-        }
-      })
-    ),
-    body: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: contentValidation.validateBody,
-        child: {
-          value: content?.body || "",
-          id: "content-body",
-          uploadImage: api.makeUploadMarkdownImage()
-        }
-      })
-    )
-  };
+export const init: component_.base.Init<Params, State, Msg> = ({
+  content = null
+}) => {
+  const [titleState, titleCmds] = ShortText.init({
+    errors: [],
+    validate: contentValidation.validateTitle,
+    child: {
+      type: "text",
+      value: content?.title || "",
+      id: "content-title"
+    }
+  });
+  const [slugState, slugCmds] = ShortText.init({
+    errors: [],
+    validate: contentValidation.validateSlug,
+    child: {
+      type: "text",
+      value: content?.slug || "",
+      id: "content-slug"
+    }
+  });
+  const [bodyState, bodyCmds] = RichMarkdownEditor.init({
+    errors: [],
+    validate: contentValidation.validateBody,
+    child: {
+      value: content?.body || "",
+      id: "content-body",
+      uploadImage: api.files.markdownImages.makeUploadImage()
+    }
+  });
+  return [
+    {
+      content,
+      title: immutable(titleState),
+      slug: immutable(slugState),
+      body: immutable(bodyState)
+    },
+    [
+      ...component_.cmd.mapMany(titleCmds, (msg) => adt("title", msg) as Msg),
+      ...component_.cmd.mapMany(slugCmds, (msg) => adt("slug", msg) as Msg),
+      ...component_.cmd.mapMany(bodyCmds, (msg) => adt("body", msg) as Msg)
+    ]
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "title":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["title"],
         childUpdate: ShortText.update,
@@ -119,7 +120,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("title", value)
       });
     case "slug":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["slug"],
         childUpdate: ShortText.update,
@@ -127,7 +128,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("slug", value)
       });
     case "body":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["body"],
         childUpdate: RichMarkdownEditor.update,
@@ -137,11 +138,15 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const slug = FormField.getValue(state.slug);
   return (
     <div>
@@ -154,7 +159,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             required
             disabled={disabled}
             state={state.title}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("title" as const, value)
             )}
           />
@@ -178,7 +183,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             required={!state.content?.fixed}
             disabled={disabled || !!state.content?.fixed}
             state={state.slug}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("slug" as const, value)
             )}
           />
@@ -196,7 +201,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
             required
             disabled={disabled}
             state={state.body}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("body" as const, value)
             )}
           />

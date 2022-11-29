@@ -13,52 +13,18 @@ oc tag backup-postgres:latest backup-postgres:prod
 
 -----
 
-To deploy the backup-container image to each applications namespace (dev/test/prod), run the following for each environment:
-
-PROD:
+To deploy the backup-container image to each applications namespace <dev/test/prod>, run the following for each environment:
 
 ```
-oc process -f openshift/templates/backup/backup-config.yaml \
--p DATABASE_SERVICE_NAME=patroni-digmkt-prod \
+oc -n ccc866-<dev/test/prod> process -f openshift/templates/backup/backup-config.yaml \
+-p DATABASE_SERVICE_NAME=patroni-pg12-digmkt-<dev/test/prod> \
 -p DATABASE_PORT=5432 \
--p DATABASE_NAME=digmkt | oc create -f -
+-p DATABASE_NAME=digmkt | oc -n ccc866-<dev/test/prod> apply -f -
 ```
 
 ```
-oc process -f openshift/templates/backup/backup-deploy.yaml \
--p DATABASE_DEPLOYMENT_NAME=patroni-digmkt-prod \
--p TAG_NAME=prod \
--p BACKUP_VOLUME_SIZE=10Gi | oc create -f -
-```
-
-TEST:
-
-```
-oc process -f openshift/templates/backup/backup-config.yaml \
--p DATABASE_SERVICE_NAME=postgresql-digmkt-test \
--p DATABASE_PORT=5432 \
--p DATABASE_NAME=digmkt | oc create -f -
-```
-
-```
-oc process -f openshift/templates/backup/backup-deploy.yaml \
--p DATABASE_DEPLOYMENT_NAME=postgresql-digmkt-test \
--p TAG_NAME=test \
--p BACKUP_VOLUME_SIZE=2Gi | oc create -f -
-```
-
-DEV:
-
-```
-oc process -f openshift/templates/backup/backup-config.yaml \
--p DATABASE_SERVICE_NAME=postgresql-digmkt-dev \
--p DATABASE_PORT=5432 \
--p DATABASE_NAME=digmkt | oc create -f -
-```
-
-```
-oc process -f openshift/templates/backup/backup-deploy.yaml \
--p DATABASE_DEPLOYMENT_NAME=postgresql-digmkt-dev \
--p TAG_NAME=dev \
--p BACKUP_VOLUME_SIZE=2Gi | oc create -f -
+oc -n ccc866-<dev/test/prod> process -f openshift/templates/backup/backup-deploy.yaml \
+-p DATABASE_DEPLOYMENT_NAME=patroni-pg12-digmkt-<dev/test/prod> \
+-p TAG_NAME=<dev/test/prod> \
+-p BACKUP_VOLUME_SIZE=<2Gi/10Gi> | oc -n ccc866-<dev/test/prod> apply -f -
 ```

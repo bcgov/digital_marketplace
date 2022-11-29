@@ -1,14 +1,9 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -51,7 +46,9 @@ function makeBlankReference(order: number): SWUProposalReference {
   };
 }
 
-export const init: Init<Params, State> = async ({ references }) => {
+export const init: component_.base.Init<Params, State, Msg> = ({
+  references
+}) => {
   // References sorted in the http/api module.
   // Ensure there are only three references.
   references = [
@@ -59,62 +56,85 @@ export const init: Init<Params, State> = async ({ references }) => {
     references[1] || makeBlankReference(1),
     references[2] || makeBlankReference(2)
   ];
-  return {
-    references: await Promise.all(
-      references.map(async (r) => ({
-        name: immutable(
-          await ShortText.init({
-            errors: [],
-            validate: proposalValidation.validateSWUProposalReferenceName,
-            child: {
-              type: "text",
-              value: r.name,
-              id: `swu-proposal-reference-${r.order}-name`
-            }
-          })
+  const referenceInits = references.map((r, i) => {
+    const [name, nameCmds] = ShortText.init({
+      errors: [],
+      validate: proposalValidation.validateSWUProposalReferenceName,
+      child: {
+        type: "text",
+        value: r.name,
+        id: `swu-proposal-reference-${r.order}-name`
+      }
+    });
+    const [company, companyCmds] = ShortText.init({
+      errors: [],
+      validate: proposalValidation.validateSWUProposalReferenceCompany,
+      child: {
+        type: "text",
+        value: r.company,
+        id: `swu-proposal-reference-${r.order}-company`
+      }
+    });
+    const [phone, phoneCmds] = ShortText.init({
+      errors: [],
+      validate: proposalValidation.validateSWUProposalReferencePhone,
+      child: {
+        type: "text",
+        value: r.phone,
+        id: `swu-proposal-reference-${r.order}-phone`
+      }
+    });
+    const [email, emailCmds] = ShortText.init({
+      errors: [],
+      validate: proposalValidation.validateSWUProposalReferenceEmail,
+      child: {
+        type: "text",
+        value: r.email,
+        id: `swu-proposal-reference-${r.order}-email`
+      }
+    });
+    return [
+      {
+        name: immutable(name),
+        company: immutable(company),
+        phone: immutable(phone),
+        email: immutable(email)
+      },
+      [
+        ...component_.cmd.mapMany(
+          nameCmds,
+          (msg) => adt("name", [i, msg]) as Msg
         ),
-        company: immutable(
-          await ShortText.init({
-            errors: [],
-            validate: proposalValidation.validateSWUProposalReferenceCompany,
-            child: {
-              type: "text",
-              value: r.company,
-              id: `swu-proposal-reference-${r.order}-company`
-            }
-          })
+        ...component_.cmd.mapMany(
+          companyCmds,
+          (msg) => adt("company", [i, msg]) as Msg
         ),
-        phone: immutable(
-          await ShortText.init({
-            errors: [],
-            validate: proposalValidation.validateSWUProposalReferencePhone,
-            child: {
-              type: "text",
-              value: r.phone,
-              id: `swu-proposal-reference-${r.order}-phone`
-            }
-          })
+        ...component_.cmd.mapMany(
+          phoneCmds,
+          (msg) => adt("phone", [i, msg]) as Msg
         ),
-        email: immutable(
-          await ShortText.init({
-            errors: [],
-            validate: proposalValidation.validateSWUProposalReferenceEmail,
-            child: {
-              type: "text",
-              value: r.email,
-              id: `swu-proposal-reference-${r.order}-email`
-            }
-          })
+        ...component_.cmd.mapMany(
+          emailCmds,
+          (msg) => adt("email", [i, msg]) as Msg
         )
-      }))
+      ]
+    ] as [ReferenceState, component_.Cmd<Msg>[]];
+  });
+  return [
+    {
+      references: referenceInits.map((ri) => ri[0])
+    },
+    referenceInits.reduce(
+      (acc, ri) => [...acc, ...ri[1]],
+      [] as component_.Cmd<Msg>[]
     )
-  };
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "name":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["references", String(msg.value[0]), "name"],
         childUpdate: ShortText.update,
@@ -122,7 +142,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("name", [msg.value[0], value])
       });
     case "company":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["references", String(msg.value[0]), "company"],
         childUpdate: ShortText.update,
@@ -130,7 +150,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("company", [msg.value[0], value])
       });
     case "phone":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["references", String(msg.value[0]), "phone"],
         childUpdate: ShortText.update,
@@ -138,7 +158,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("phone", [msg.value[0], value])
       });
     case "email":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["references", String(msg.value[0]), "email"],
         childUpdate: ShortText.update,
@@ -163,36 +183,44 @@ export function getValues(state: Immutable<State>): Values {
 export type Errors = CreateSWUProposalReferenceValidationErrors[];
 
 export function setErrors(
-  state: Immutable<State> | any,
+  state: Immutable<State>,
   errors: Errors
 ): Immutable<State> {
   return errors.reduce(
     (acc, e, i) =>
       acc
         .updateIn(["references", i, "name"], (s) =>
-          FormField.setErrors(s, e.name || [])
+          FormField.setErrors(s as Immutable<ShortText.State>, e.name || [])
         )
         .updateIn(["references", i, "company"], (s) =>
-          FormField.setErrors(s, e.company || [])
+          FormField.setErrors(s as Immutable<ShortText.State>, e.company || [])
         )
         .updateIn(["references", i, "phone"], (s) =>
-          FormField.setErrors(s, e.phone || [])
+          FormField.setErrors(s as Immutable<ShortText.State>, e.phone || [])
         )
         .updateIn(["references", i, "email"], (s) =>
-          FormField.setErrors(s, e.email || [])
+          FormField.setErrors(s as Immutable<ShortText.State>, e.email || [])
         ),
     state
   );
 }
 
-export function validate(state: Immutable<State> | any): Immutable<State> {
+export function validate(state: Immutable<State>): Immutable<State> {
   return state.references.reduce(
     (acc, r, i) =>
       acc
-        .updateIn(["references", i, "name"], (s) => FormField.validate(s))
-        .updateIn(["references", i, "company"], (s) => FormField.validate(s))
-        .updateIn(["references", i, "phone"], (s) => FormField.validate(s))
-        .updateIn(["references", i, "email"], (s) => FormField.validate(s)),
+        .updateIn(["references", i, "name"], (s) =>
+          FormField.validate(s as Immutable<ShortText.State>)
+        )
+        .updateIn(["references", i, "company"], (s) =>
+          FormField.validate(s as Immutable<ShortText.State>)
+        )
+        .updateIn(["references", i, "phone"], (s) =>
+          FormField.validate(s as Immutable<ShortText.State>)
+        )
+        .updateIn(["references", i, "email"], (s) =>
+          FormField.validate(s as Immutable<ShortText.State>)
+        ),
     state
   );
 }
@@ -209,7 +237,7 @@ export function isValid(state: Immutable<State>): boolean {
   }, true as boolean);
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
@@ -218,7 +246,7 @@ interface ReferenceViewProps extends Pick<Props, "dispatch" | "disabled"> {
   index: number;
 }
 
-export const ReferenceView: View<ReferenceViewProps> = ({
+export const ReferenceView: component_.base.View<ReferenceViewProps> = ({
   dispatch,
   disabled,
   index,
@@ -235,7 +263,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({
             placeholder="Name"
             help="Provide the first and last name of your reference."
             state={reference.name}
-            dispatch={mapComponentDispatch(
+            dispatch={component_.base.mapDispatch(
               dispatch,
               (v) => adt("name", [index, v]) as Msg
             )}
@@ -250,7 +278,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({
             placeholder="Company"
             help="Provide the name of the company that employs your reference."
             state={reference.company}
-            dispatch={mapComponentDispatch(
+            dispatch={component_.base.mapDispatch(
               dispatch,
               (v) => adt("company", [index, v]) as Msg
             )}
@@ -266,7 +294,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({
             label="Phone Number"
             placeholder="Phone Number"
             state={reference.phone}
-            dispatch={mapComponentDispatch(
+            dispatch={component_.base.mapDispatch(
               dispatch,
               (v) => adt("phone", [index, v]) as Msg
             )}
@@ -280,7 +308,7 @@ export const ReferenceView: View<ReferenceViewProps> = ({
             label="Email"
             placeholder="Email"
             state={reference.email}
-            dispatch={mapComponentDispatch(
+            dispatch={component_.base.mapDispatch(
               dispatch,
               (v) => adt("email", [index, v]) as Msg
             )}
@@ -292,7 +320,11 @@ export const ReferenceView: View<ReferenceViewProps> = ({
   );
 };
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <div>
       {state.references.map((r, i) => (

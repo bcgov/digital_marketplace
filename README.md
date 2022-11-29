@@ -238,7 +238,7 @@ Environment variables that affect the back-end server's functionality are stored
 | `SCHEDULED_DOWNTIME`                    | A boolean flag (set to `0` for `false`, `1` for `true`) to turn off CRUD endpoints and vend a downtime HTML page to all users when set to a non-zero number. Defaults to `false` if `SCHEDULED_DOWNTIME` is undefined or invalid.        |
 | `BASIC_AUTH_USERNAME`                   | An HTTP basic auth username to limit access to the web application.                                                                                                                                                                      |
 | `BASIC_AUTH_PASSWORD_HASH`              | A password hash to authenticate HTTP basic auth passwords to limit access to the web application.                                                                                                                                        |
-| `ORIGIN`                                | The root URL of the web app. This is used for authentication and generating URLs in email notifications. The value must include the protocol and any path prefixes. e.g. `https://digital.gov.bc.ca/marketplace`.                        |
+| `ORIGIN`                                | The root URL of the web app. This is used for authentication and generating URLs in email notifications. The value must include the protocol and any path prefixes. e.g. `https://marketplace.digital.gov.bc.ca`.                        |
 | `POSTGRES_URL`                          | The PostgreSQL database to connect to (you only need to use this variable in development, not the other `DATABASE_*` variables defined below).                                                                                           |
 | `DATABASE_SERVICE_NAME`                 | Auto-generated in OpenShift.                                                                                                                                                                                                             |
 | `${DATABASE_SERVICE_NAME}_SERVICE_HOST` | The PostgreSQL host to connect to in OpenShift.                                                                                                                                                                                          |
@@ -317,7 +317,7 @@ To deploy to the Test environment, start a build for "app-digmkt-test", and Open
 
 To deploy to the Production environment, start a build for "app-digmkt-prod", and OpenShift will build HEAD from the `master` branch. You will need to manually deploy the build to the Production environment listed above once it completes by deploying the "app-digmkt-prod" deployment in the "ccc866-prod" project.
 
-For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [openshift/README.md](./openshift/README.md).
+For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [docs/openshift.md](./docs/openshift.md).
 
 #### Running Database Migrations
 

@@ -1,6 +1,7 @@
 name: e2e
 on:
-  push:
+  pull_request:
+    types: [review_requested]
     branches:
       - development
       - master
@@ -15,7 +16,7 @@ jobs:
     services:
       postgres:
         # Docker Hub image
-        image: postgres:11
+        image: postgres:12
         ports:
           - "5432:5432"
         env:

@@ -119,7 +119,7 @@ export interface RawSWUOpportunity
   inceptionPhase?: Id;
   prototypePhase?: Id;
   implementationPhase: Id;
-  versionId: Id;
+  versionId?: Id;
 }
 
 export interface RawSWUOpportunitySlim
@@ -195,7 +195,7 @@ async function rawSWUOpportunityToSWUOpportunity(
     undefined
   );
   const teamQuestions = getValidValue(
-    await readManyTeamQuestions(connection, raw.versionId),
+    await readManyTeamQuestions(connection, raw.versionId ?? ""),
     undefined
   );
   const inceptionPhase = inceptionPhaseId
@@ -218,6 +218,8 @@ async function rawSWUOpportunityToSWUOpportunity(
   if (!addenda || !teamQuestions || !implementationPhase) {
     throw new Error("unable to process opportunity");
   }
+
+  delete raw.versionId;
 
   return {
     ...restOfRaw,
@@ -979,20 +981,20 @@ export const createSWUOpportunity = tryDb<
     );
 
     // Create phases
-    if (opportunity.inceptionPhase) {
+    if (inceptionPhase) {
       await createSWUOpportunityPhase(
         trx,
         opportunityVersionRecord.id,
-        opportunity.inceptionPhase,
+        inceptionPhase,
         SWUOpportunityPhaseType.Inception,
         session
       );
     }
-    if (opportunity.prototypePhase) {
+    if (prototypePhase) {
       await createSWUOpportunityPhase(
         trx,
         opportunityVersionRecord.id,
-        opportunity.prototypePhase,
+        prototypePhase,
         SWUOpportunityPhaseType.Prototype,
         session
       );
@@ -1000,7 +1002,7 @@ export const createSWUOpportunity = tryDb<
     await createSWUOpportunityPhase(
       trx,
       opportunityVersionRecord.id,
-      opportunity.implementationPhase,
+      implementationPhase,
       SWUOpportunityPhaseType.Implementation,
       session
     );

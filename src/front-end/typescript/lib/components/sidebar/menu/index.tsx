@@ -1,5 +1,5 @@
 import { Route } from "front-end/lib/app/types";
-import { ComponentView, Init, Update, View } from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link, {
   Dest,
@@ -38,19 +38,26 @@ export type Params = Pick<State, "items" | "backLink">;
 
 export type Msg = ADT<"toggleOpen", boolean | undefined>;
 
-export const init: Init<Params, State> = async ({ backLink, items }) => ({
-  isOpen: false,
-  items,
-  backLink
-});
+export const init: component_.base.Init<Params, State, Msg> = ({
+  backLink,
+  items
+}) => [
+  {
+    isOpen: false,
+    items,
+    backLink
+  },
+  []
+];
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleOpen":
       return [
         state.update("isOpen", (v) =>
           msg.value !== undefined ? msg.value : !v
-        )
+        ),
+        []
       ];
   }
 };
@@ -60,7 +67,7 @@ interface SidebarLinkProps extends SidebarLink {
   caret?: "up" | "down";
 }
 
-const SidebarLink: View<SidebarLinkProps> = (props) => {
+const SidebarLink: component_.base.View<SidebarLinkProps> = (props) => {
   const {
     caret,
     disabled,
@@ -110,10 +117,10 @@ const SidebarLink: View<SidebarLinkProps> = (props) => {
   );
 };
 
-const SidebarHeading: View<{ className?: string; text: string }> = ({
-  text,
-  className
-}) => {
+const SidebarHeading: component_.base.View<{
+  className?: string;
+  text: string;
+}> = ({ text, className }) => {
   return (
     <div className={`overline mb-3 text-secondary ${className}`}>{text}</div>
   );
@@ -125,7 +132,11 @@ interface SidebarItemProps {
   isFirst: boolean;
 }
 
-const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
+const SidebarItem: component_.base.View<SidebarItemProps> = ({
+  isOpen,
+  item,
+  isFirst
+}) => {
   switch (item.tag) {
     case "link": {
       const caret = (() => {
@@ -150,7 +161,7 @@ const SidebarItem: View<SidebarItemProps> = ({ isOpen, item, isFirst }) => {
   }
 };
 
-const BackLink: View<BackLink> = ({ text, route }) => {
+const BackLink: component_.base.View<BackLink> = ({ text, route }) => {
   return (
     <Link
       dest={routeDest(route)}
@@ -174,7 +185,7 @@ function linksOnly(items: SidebarItem[]): SidebarLink[] {
 const linksByActive = (links: SidebarLink[], activePredicate: boolean) =>
   links.filter((link) => link.active === activePredicate);
 
-export const view: ComponentView<State, Msg> = (props) => {
+export const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   const items = state.items;
   const links = linksOnly(items);
