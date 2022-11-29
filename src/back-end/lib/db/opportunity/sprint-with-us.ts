@@ -928,9 +928,9 @@ export const createSWUOpportunity = tryDb<
     const {
       attachments,
       status,
-      inceptionPhase: _inceptionPhase,
-      prototypePhase: _prototypePhase,
-      implementationPhase: _implementationPhase,
+      inceptionPhase,
+      prototypePhase,
+      implementationPhase,
       teamQuestions,
       ...restOfOpportunity
     } = opportunity;
