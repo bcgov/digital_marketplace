@@ -156,6 +156,7 @@ const Stat: component_.base.View<{
   );
 };
 
+// TODO update Lorem ipsum dolor with real content
 const Programs: component_.base.View = () => {
   return (
     <div className="bg-c-landing-programs-bg py-7">
@@ -192,7 +193,8 @@ const Programs: component_.base.View = () => {
             description={
               <div>
                 <p>
-                  Supply a member of your team to work with a government team.
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                 </p>
                 <p>Get Paid.</p>
                 <div className="mt-3">Opportunities unlimited.</div>

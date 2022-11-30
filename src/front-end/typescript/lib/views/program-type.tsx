@@ -2,7 +2,7 @@ import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import React from "react";
 
-export type ProgramType = "cwu" | "swu";
+export type ProgramType = "cwu" | "swu" | "twu";
 
 export interface Props {
   type_: ProgramType;
@@ -42,9 +42,15 @@ const ProgramType: component.base.View<Props> = ({
         className="mr-2 flex-shrink-0 flex-grow-0"
         width={iconSize}
         height={iconSize}
-        name={type_ === "cwu" ? "code" : "users-class"}
+        name={
+          type_ === "cwu" ? "code" : type_ === "swu" ? "users-class" : "trophy"
+        }
       />
-      {type_ === "cwu" ? "Code With Us" : "Sprint With Us"}
+      {type_ === "cwu"
+        ? "Code With Us"
+        : type_ === "swu"
+        ? "Sprint With Us"
+        : "Team With Us"}
     </div>
   );
 };
