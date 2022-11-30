@@ -19,6 +19,7 @@ import * as PageContentView from "front-end/lib/pages/content/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
+import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
@@ -75,9 +76,15 @@ const stopAcceptNewTermsLoading = makeStopLoading<State>(
 );
 
 /**
- * Give precedence to app modals over page modals.
+ * Initializing a page requires both state and route.
+ * Gives precedence to app modals over page modals
+ *
+ * @param state - of type Immutable from immutable.js. New pages need to be added to State Interface.
+ * @param route - the route.tag value used as the conditional in a switch/case statement to modify what app component is returned
+ * @returns - base component with state, session (shared state), route, path + params, msg, metadata
+ *
+ * @see State in `src/front-end/typescript/lib/app/types.ts`
  */
-
 function initPage(
   state: Immutable<State>,
   route: Route
@@ -412,6 +419,18 @@ function initPage(
         pageGetMetadata: PageLearnMoreCWU.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageLearnMoreCWU", value);
+        }
+      });
+
+    case "learnMoreTWU":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "learnMoreTWU"],
+        pageRouteParams: route.value,
+        pageInit: PageLearnMoreTWU.component.init,
+        pageGetMetadata: PageLearnMoreTWU.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageLearnMoreTWU", value);
         }
       });
 
@@ -1219,6 +1238,22 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "learnMoreCWU"],
         pageUpdate: PageLearnMoreCWU.component.update,
         pageGetMetadata: PageLearnMoreCWU.component.getMetadata,
+        pageMsg: msg.value
+      });
+
+    case "pageLearnMoreTWU":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageLearnMoreTWU.State,
+        PageLearnMoreTWU.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageLearnMoreTWU", value),
+        pageStatePath: ["pages", "learnMoreTWU"],
+        pageUpdate: PageLearnMoreTWU.component.update,
+        pageGetMetadata: PageLearnMoreTWU.component.getMetadata,
         pageMsg: msg.value
       });
 

@@ -64,6 +64,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
   return [state, []];
 };
 
+// TODO update Lorem ipsum dolor with real content
+// TODO create a new route opportunityTWUCreate
 const view: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">
@@ -85,6 +87,49 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
               button: true,
               dest: routeDest(
                 adt("contentView", "code-with-us-opportunity-guide")
+              ),
+              children: ["Read Guide"],
+              color: "info" as TextColor,
+              outline: true
+            },
+            {
+              button: true,
+              dest: routeDest(adt("opportunityCWUCreate", null)),
+              children: ["Get Started"],
+              color: "primary" as TextColor
+            }
+          ]}
+        />
+        <ProgramCard
+          img={prefixPath("/images/illustrations/code_with_us.svg")}
+          title="Team With Us"
+          className="mb-4 mb-md-0"
+          description={
+            <span>
+              Use a <em>Team With Us</em> opportunity to Lorem ipsum dolor sit
+              amet, consectetur adipiscing elit, sed do eiusmod tempor
+              incididunt ut labore et dolore magna aliqua. Amet risus nullam
+              eget felis eget nunc lobortis mattis. Est ullamcorper eget nulla
+              facilisi etiam dignissim diam quis enim. Elementum facilisis leo
+              vel fringilla. Ut placerat orci nulla pellentesque dignissim enim.
+              Sed arcu non odio euismod lacinia at quis risus. Malesuada nunc
+              vel risus commodo viverra maecenas accumsan. Blandit libero
+              volutpat sed cras ornare arcu dui. Eu sem integer vitae justo eget
+              magna fermentum iaculis. Mauris pellentesque pulvinar pellentesque
+              habitant morbi tristique senectus et. Consequat semper viverra nam
+              libero justo laoreet sit amet. Quisque egestas diam in arcu. Sit
+              amet nisl purus in. Nisi vitae suscipit tellus mauris a. Pulvinar
+              etiam non quam lacus suspendisse. Lectus vestibulum mattis
+              ullamcorper velit sed ullamcorper. In cursus turpis massa
+              tincidunt dui ut ornare.
+            </span>
+          }
+          wideLinks
+          links={[
+            {
+              button: true,
+              dest: routeDest(
+                adt("contentView", "team-with-us-opportunity-guide")
               ),
               children: ["Read Guide"],
               color: "info" as TextColor,

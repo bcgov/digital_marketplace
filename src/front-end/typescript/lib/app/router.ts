@@ -21,6 +21,12 @@ export function replaceState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
   return component.cmd.replaceUrlState(router.routeToUrl(route), msg);
 }
 
+/**
+ * An array of route objects defined by an initial path, tag and value
+ *
+ * @typeParam Route - new routes below must be defined explicitly as an ADT in `type Route`
+ * @see Route src/front-end/typescript/lib/app/types.ts
+ */
 const router: router_.Router<Route> = {
   routes: [
     {
@@ -357,6 +363,15 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/learn-more/team-with-us"),
+      makeRoute() {
+        return {
+          tag: "learnMoreTWU",
+          value: null
+        };
+      }
+    },
+    {
       path: prefixPath("/learn-more/sprint-with-us"),
       makeRoute() {
         return {
@@ -468,6 +483,8 @@ const router: router_.Router<Route> = {
         return prefixPath("/opportunities/create");
       case "learnMoreCWU":
         return prefixPath("/learn-more/code-with-us");
+      case "learnMoreTWU":
+        return prefixPath("/learn-more/team-with-us");
       case "learnMoreSWU":
         return prefixPath("/learn-more/sprint-with-us");
       case "contentList":

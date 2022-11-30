@@ -9,6 +9,7 @@ import * as PageContentView from "front-end/lib/pages/content/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
+import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
@@ -45,12 +46,18 @@ import { includes } from "lodash";
 import { Session } from "shared/lib/resources/session";
 import { ADT } from "shared/lib/types";
 
+/**
+ * Union Types combined for the purpose of constraining routes that the application accepts.
+ *
+ * @see const router src/front-end/typescript/lib/app/router.ts
+ */
 export type Route =
   | ADT<"landing", PageLanding.RouteParams>
   | ADT<"dashboard", PageDashboard.RouteParams>
   | ADT<"opportunities", PageOpportunities.RouteParams>
   | ADT<"opportunityCreate", PageOpportunityCreate.RouteParams>
   | ADT<"learnMoreCWU", PageLearnMoreCWU.RouteParams>
+  | ADT<"learnMoreTWU", PageLearnMoreTWU.RouteParams>
   | ADT<"learnMoreSWU", PageLearnMoreSWU.RouteParams>
   | ADT<"contentView", PageContentView.RouteParams>
   | ADT<"contentCreate", PageContentCreate.RouteParams>
@@ -86,10 +93,14 @@ export type Route =
   | ADT<"proposalCWUExportAll", PageProposalCWUExportAll.RouteParams>
   | ADT<"proposalList", PageProposalList.RouteParams>;
 
+/**
+ * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
+ */
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route["tag"]> = [
   "signUpStepTwo",
   "contentView",
   "learnMoreCWU",
+  "learnMoreTWU",
   "learnMoreSWU",
   "signOut"
 ];
@@ -106,6 +117,9 @@ export interface SharedState {
 
 export type ModalId = "acceptNewTerms";
 
+/**
+ * Defines a hierarchical State object
+ */
 export interface State {
   //App Internal State
   ready: boolean;
@@ -128,6 +142,7 @@ export interface State {
     opportunities?: Immutable<PageOpportunities.State>;
     opportunityCreate?: Immutable<PageOpportunityCreate.State>;
     learnMoreCWU?: Immutable<PageLearnMoreCWU.State>;
+    learnMoreTWU?: Immutable<PageLearnMoreTWU.State>;
     learnMoreSWU?: Immutable<PageLearnMoreSWU.State>;
     contentView?: Immutable<PageContentView.State>;
     contentCreate?: Immutable<PageContentCreate.State>;
@@ -186,6 +201,7 @@ export type InnerMsg =
   | ADT<"pageOpportunities", PageOpportunities.Msg>
   | ADT<"pageOpportunityCreate", PageOpportunityCreate.Msg>
   | ADT<"pageLearnMoreCWU", PageLearnMoreCWU.Msg>
+  | ADT<"pageLearnMoreTWU", PageLearnMoreTWU.Msg>
   | ADT<"pageLearnMoreSWU", PageLearnMoreSWU.Msg>
   | ADT<"pageContentView", PageContentView.Msg>
   | ADT<"pageContentCreate", PageContentCreate.Msg>

@@ -186,6 +186,30 @@ const Programs: component_.base.View = () => {
             ]}
           />
           <ProgramCard
+            img={prefixPath("/images/illustrations/code_with_us.svg")}
+            title="Team With Us"
+            className="mb-4 mb-md-0"
+            description={
+              <div>
+                <p>
+                  Supply a member of your team to work with a government team.
+                </p>
+                <p>Get Paid.</p>
+                <div className="mt-3">Opportunities unlimited.</div>
+              </div>
+            }
+            links={[
+              {
+                button: true,
+                dest: routeDest(adt("learnMoreTWU", null)),
+                children: ["Learn More"],
+                color: "primary",
+                outline: true,
+                symbol_: rightPlacement(iconLinkSymbol("arrow-right"))
+              }
+            ]}
+          />
+          <ProgramCard
             img={prefixPath("/images/illustrations/sprint_with_us.svg")}
             title="Sprint With Us"
             description={

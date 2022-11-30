@@ -7,7 +7,9 @@ import getAppModal from "front-end/lib/app/modal";
 import {
   isAllowedRouteForUsersWithUnacceptedTerms,
   Msg,
-  State
+  State,
+  Route,
+  InnerMsg
 } from "front-end/lib/app/types";
 import Footer from "front-end/lib/app/view/footer";
 import * as Nav from "front-end/lib/app/view/nav";
@@ -20,6 +22,7 @@ import * as PageContentView from "front-end/lib/pages/content/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
+import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
@@ -139,6 +142,14 @@ function pageToViewPageProps(
         PageLearnMoreCWU.component,
         (state) => state.pages.learnMoreCWU,
         (value) => ({ tag: "pageLearnMoreCWU", value })
+      );
+
+    case "learnMoreTWU":
+      return makeViewPageProps(
+        props,
+        PageLearnMoreTWU.component,
+        (state) => state.pages.learnMoreTWU,
+        (value) => ({ tag: "pageLearnMoreTWU", value })
       );
 
     case "learnMoreSWU":
@@ -705,7 +716,7 @@ function navContextualLinks(
   return (
     viewPageProps.component.getActions({
       state: viewPageProps.pageState,
-      dispatch: component_.app.mapDispatch(
+      dispatch: component_.app.mapDispatch<InnerMsg, any, Route>(
         props.dispatch,
         viewPageProps.mapPageMsg
       )
