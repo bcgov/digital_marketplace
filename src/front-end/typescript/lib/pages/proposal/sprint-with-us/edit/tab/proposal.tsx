@@ -732,7 +732,7 @@ export const component: Tab.Component<State, Msg> = {
       Form.getModal(state.form),
       (msg) => adt("form", msg) as Msg
     );
-    if (formModal !== null && formModal.tag !== "hide") {
+    if (formModal.tag !== "hide") {
       return formModal;
     }
     const hasAcceptedTerms =
