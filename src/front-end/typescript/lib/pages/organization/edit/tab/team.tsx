@@ -169,9 +169,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "addTeamMembers": {
       state = startAddTeamMembersLoading(state).set("showModal", null);
       let cmd = component_.cmd.dispatch({
-        success: [],
-        warning: [],
-        error: []
+        successToasts: [],
+        warningToasts: [],
+        errorToasts: []
       } as unknown as AddTeamMemberState);
       for (const s of state.addTeamMembersEmails) {
         const userEmail = FormField.getValue(s);
