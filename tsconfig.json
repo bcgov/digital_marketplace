@@ -21,7 +21,8 @@
       "migrations/*": ["./src/migrations/*"],
       "shared/*": ["./src/shared/*"],
       "scripts/*": ["./src/scripts/*"],
-      "front-end/*": ["./src/front-end/typescript/*"]
+      "front-end/*": ["./src/front-end/typescript/*"],
+      "learn-front-end/*": ["./docs/learn/front-end/typescript/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"],

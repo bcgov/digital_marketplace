@@ -1,16 +1,24 @@
-const SassString = require('node-sass').types.String;
+const SassString = require("node-sass").types.String;
 
 module.exports = {
   options: {
     implementation: require("node-sass"),
     sourceMap: false,
     functions: {
-      'prefix-path($path)': path => new SassString(gruntConfig.helpers.prefixPath(path.getValue()))
+      "prefix-path($path)": (path) =>
+        new SassString(gruntConfig.helpers.prefixPath(path.getValue()))
     }
   },
-  dist: {
+  frontEndCss: {
     files: {
-      [gruntConfig.frontEnd.build.css]: `${gruntConfig.frontEnd.src.sass}/index.scss`
+      [gruntConfig.frontEnd.build
+        .css]: `${gruntConfig.frontEnd.src.sass}/index.scss`
+    }
+  },
+  learnFrontEndCss: {
+    files: {
+      [gruntConfig.learnFrontEnd.build
+        .css]: `${gruntConfig.learnFrontEnd.src.sass}/index.scss`
     }
   }
 };
