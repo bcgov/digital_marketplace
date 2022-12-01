@@ -35,7 +35,10 @@
     "typedoc:start": "npx serve --config typedoc/serve.json typedoc",
     "docs:readme-toc": "npx markdown-toc --maxdepth 3 -i README.md",
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > docs/open-source-licenses.txt",
-    "docs:db": "npx pg-doc --out docs/database.md --connection"
+    "docs:db": "npx pg-doc --out docs/database.md --connection",
+    "learn-front-end:build": "npx grunt learn-front-end-build",
+    "learn-front-end:watch": "npx grunt learn-front-end-watch",
+    "learn-front-end:serve": "npx grunt learn-front-end-serve"
   },
   "repository": {
     "type": "git",
