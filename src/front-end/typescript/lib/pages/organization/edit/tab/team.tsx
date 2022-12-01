@@ -172,7 +172,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         successToasts: [],
         warningToasts: [],
         errorToasts: []
-      } as unknown as AddTeamMemberState);
+      } as AddTeamMemberState);
       for (const s of state.addTeamMembersEmails) {
         const userEmail = FormField.getValue(s);
         cmd = component_.cmd.join(
