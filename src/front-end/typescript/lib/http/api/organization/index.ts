@@ -32,11 +32,9 @@ export function readMany<Msg>(
 ): component.Cmd<Msg> {
   return component.cmd.httpRequest({
     method: ClientHttpMethod.Get,
-    url: crud.apiNamespace(
-      `${NAMESPACE}?page=${window.encodeURIComponent(
-        page
-      )}&pageSize=${window.encodeURIComponent(pageSize)}`
-    ),
+    url: `${crud.apiNamespace(NAMESPACE)}?page=${window.encodeURIComponent(
+      page
+    )}&pageSize=${window.encodeURIComponent(pageSize)}`,
     transformResponse: (raw: RawOrganizationReadManyResponse) => {
       return {
         ...raw,

@@ -392,7 +392,7 @@ export const component: Tab.Component<State, Msg> = {
       Form.getModal(form),
       (msg) => adt("form", msg) as Msg
     );
-    if (formModal !== null) {
+    if (formModal.tag !== "hide") {
       return formModal;
     }
     const isDisqualifyLoading = state.disqualifyLoading > 0;

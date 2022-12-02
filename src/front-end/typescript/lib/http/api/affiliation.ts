@@ -21,8 +21,9 @@ export function readManyForOrganization(
   organizationId: Id
 ): crud.ReadManyAction<Resource.AffiliationMember, string[], unknown> {
   return crud.makeReadManyAction(
-    `${NAMESPACE}?organization=${window.encodeURIComponent(organizationId)}`,
-    (a: Resource.AffiliationMember) => a
+    NAMESPACE,
+    (a: Resource.AffiliationMember) => a,
+    `organization=${window.encodeURIComponent(organizationId)}`
   );
 }
 

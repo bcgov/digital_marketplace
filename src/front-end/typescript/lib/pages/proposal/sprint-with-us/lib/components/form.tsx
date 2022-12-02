@@ -1453,7 +1453,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
     Team.getModal(state.team),
     (msg) => adt("team", msg) as Msg
   );
-  if (teamModal) {
+  if (teamModal && teamModal.tag === "show") {
     return teamModal;
   }
   if (!state.showModal) {
