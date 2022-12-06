@@ -4,14 +4,36 @@ import { ReactElement } from "react";
 import { Cmd } from "front-end/lib/framework/component/cmd";
 import * as cmd from "front-end/lib/framework/component/cmd";
 
-// Component
+/**
+ * @remarks
+ * Defines the primitives needed to achieve separation of
+ * concerns and composability objectives.
+ *
+ * Primitives:
+ * (Component + Init + Update + View types,
+ * updateChild + mapDispatch helpers)
+ *
+ * @example
+ * When building a component within another component
+ * such as checkboxes in a page, mechanisms are required
+ * to dispatch a msg from the child to the parent
+ * `mapDispatch` and then passing the updated state
+ * `updateChild` from parent (i.e. page) to the
+ * child components (i.e. checkboxes)
+ *
+ * @example includes everything in the
+ * `/src/front-end/typescript/lib/components` directory
+ */
 
 /**
+ * Describes the shape of the object when building a
+ * component that you can place on any page, or inside
+ * another component.
+ *
  * The optional `Props` type parameter enables you
  * to define views that take additional props in a
  * type-safe manner.
  */
-
 export interface Component<
   Params,
   State,
@@ -62,6 +84,16 @@ export interface UpdateChildParams<
   mapChildMsg(msg: ChildMsg): ParentMsg;
 }
 
+/**
+ * Typically used in the context of an `update`
+ * function. Ensures the passing of the updated state
+ * from the parent to the child.
+ *
+ * @param params - the ParentState, ParentMsg, ChildState, and Child Message
+ * @returns The State and a Msg Array
+ * {@link UpdateChildParams}
+ * {@link UpdateReturnValue}
+ */
 export function updateChild<PS, PM, CS, CM>(
   params: UpdateChildParams<PS, PM, CS, CM>
 ): UpdateReturnValue<PS, PM> {
@@ -126,6 +158,18 @@ export interface ComponentViewProps<State, Msg> {
 
 export type Dispatch<Msg> = (msg: Msg) => void;
 
+/**
+ * Typically used in the context of a view function,
+ * where an event such as a checkbox click needs to
+ * trigger a state change (via Msg).
+ *
+ * Dispatches a message from a child component to a
+ * parent.
+ *
+ * @param dispatch - ParentMsg, ChildMsg
+ * @param fn - typically an adt function
+ * @returns a Msg
+ */
 export function mapDispatch<ParentMsg, ChildMsg>(
   dispatch: Dispatch<ParentMsg>,
   fn: (childMsg: ChildMsg) => ParentMsg
