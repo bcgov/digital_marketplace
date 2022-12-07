@@ -26,13 +26,17 @@ import * as cmd from "front-end/lib/framework/component/cmd";
  */
 
 /**
- * Describes the shape of the object when building a
- * component that you can place on any page, or inside
- * another component.
+ * This interface describes the shape of a component object
+ * including its three required types (`Params`, `State`, `Msg`)
+ * and three required functions (`init`, `update`, `view`).
  *
- * The optional `Props` type parameter enables you
- * to define views that take additional props in a
- * type-safe manner.
+ * A component object that conforms to this interface can be referenced
+ * by types and as a value in application code.
+ *
+ * @typeParam Props - Optional type parameter allows developers to
+ * override the default `ComponentViewProps` expected by the `view` function.
+ * Sometimes, it's better to pass data to a `view` function via its
+ * `Props` instead of `State`.
  */
 export interface Component<
   Params,
@@ -85,12 +89,11 @@ export interface UpdateChildParams<
 }
 
 /**
- * Typically used in the context of an `update`
- * function. Ensures the passing of the updated state
- * from the parent to the child.
+ * Updates a child component's state inside
+ * a parent component's update function
  *
- * @param params - the ParentState, ParentMsg, ChildState, and Child Message
- * @returns The State and a Msg Array
+ * @param params - the ParentState, ParentMsg, ChildState, and ChildMessage
+ * @returns UpdateReturnValue - the ParentState and ParentMsg Array
  * {@link UpdateChildParams}
  * {@link UpdateReturnValue}
  */
@@ -159,16 +162,14 @@ export interface ComponentViewProps<State, Msg> {
 export type Dispatch<Msg> = (msg: Msg) => void;
 
 /**
- * Typically used in the context of a view function,
- * where an event such as a checkbox click needs to
- * trigger a state change (via Msg).
- *
- * Dispatches a message from a child component to a
- * parent.
+ * Creates dispatch functions for child components inside
+ * parent components. It is typically used inside parent components'
+ * view function.
  *
  * @param dispatch - ParentMsg, ChildMsg
- * @param fn - typically an adt function
- * @returns a Msg
+ * @param fn - a mapping function that converts a child component's Msg
+ * to a parent Msg so it can be handled by the parent component's update function.
+ * @returns Dispatch - the Child Msg
  */
 export function mapDispatch<ParentMsg, ChildMsg>(
   dispatch: Dispatch<ParentMsg>,
