@@ -2,7 +2,7 @@
 
 All below commands should be run from openshift directory in the project root. You will also need to log in with the oc command line tool and a token retrieved from the OpenShift 4 Web GUI.
 
-For instructions on deploying the Backup Container for each environment please refer to [backups.md](../docs/backups.md).
+For instructions on deploying the Backup Container for each environment please refer to [backups.md](../ops/backups.md).
 
 -----
 ## Prerequisites
