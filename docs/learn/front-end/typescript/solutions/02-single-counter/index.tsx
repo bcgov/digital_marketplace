@@ -11,10 +11,6 @@ interface State {
   counter: number;
 }
 
-type Params = null;
-
-// export type Msg = ADT
-
 type InnerMsg = ADT<"increment"> | ADT<"decrement">;
 
 type Msg = component.app.Msg<InnerMsg, Route>;
@@ -55,7 +51,7 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const Counter: component.base.ComponentView<State, Msg> = ({
+const view: component.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
@@ -64,14 +60,6 @@ const Counter: component.base.ComponentView<State, Msg> = ({
       <button onClick={() => dispatch(adt("decrement"))}>- Decrement</button>
       <div>{state.counter}</div>
       <button onClick={() => dispatch(adt("increment"))}>+ Increment</button>
-    </div>
-  );
-};
-
-const view: component.page.View<State, Msg, Route> = ({ state, dispatch }) => {
-  return (
-    <div>
-      <Counter state={state} dispatch={dispatch} />
     </div>
   );
 };
@@ -93,8 +81,9 @@ const router: router_.Router<Route> = {
   }
 };
 
-export const app: component.base.Component<Params, State, Msg, Props> = {
+export const app: component.app.Component<State, Msg, Route> = {
   init,
   update,
-  view
+  view,
+  router
 };
