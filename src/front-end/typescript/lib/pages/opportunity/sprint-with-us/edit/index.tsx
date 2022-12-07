@@ -72,7 +72,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
   return isUserType({
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
-      const tabId = routeParams.tab || "summary";
+      const tabId = routeParams.tab ?? "summary";
       const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
       const tabComponent = Tab.idToDefinition(tabId).component;
       const [tabState, tabCmds] = tabComponent.init({
@@ -97,7 +97,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               routeParams.opportunityId,
               (response) => response
             ),
-            tabId === "proposals"
+            (["proposals", "teamQuestions", "codeChallenge", "teamScenario"] as Tab.TabId[]).includes(tabId)
               ? api.proposals.swu.readMany(routeParams.opportunityId)(
                   (response) => response
                 )
