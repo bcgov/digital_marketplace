@@ -97,7 +97,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               routeParams.opportunityId,
               (response) => response
             ),
-            (["proposals", "teamQuestions", "codeChallenge", "teamScenario"] as Tab.TabId[]).includes(tabId)
+            Tab.shouldLoadProposalsForTab(tabId)
               ? api.proposals.swu.readMany(routeParams.opportunityId)(
                   (response) => response
                 )
