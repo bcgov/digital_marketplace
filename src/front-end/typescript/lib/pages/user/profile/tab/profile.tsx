@@ -321,7 +321,8 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   "updateAdminPermissions",
                   FormField.getValue(state.adminCheckbox)
                 ),
-                (response) => adt("onToggleAdmin", api.isValid(response))
+                (response) =>
+                  adt("onToggleAdmin", api.getValidValue(response, null))
               ) as component_.Cmd<Msg>
             ]
           ];
