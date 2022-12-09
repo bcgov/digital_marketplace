@@ -1,41 +1,39 @@
-import { router as router_, component } from "front-end/lib/framework";
+import {
+  router as router_,
+  component,
+  immutable,
+  Immutable
+} from "front-end/lib/framework";
 import { adt, ADT } from "shared/lib/types";
 import React from "react";
 
-/**
- * Display a number that can be incremented and decremented
- * by clicking buttons.
- */
+import * as Counter from "./counter";
 
 interface State {
-  counter: number;
+  counter: Immutable<Counter.State>;
 }
 
-type InnerMsg = ADT<"increment"> | ADT<"decrement">;
+type InnerMsg = ADT<"counter", Counter.Msg>;
 
 type Msg = component.app.Msg<InnerMsg, Route>;
 
 type Route = ADT<"any", string>;
 
 const init: component.base.Init<null, State, Msg> = () => {
-  return [
-    {
-      counter: 0
-    },
-    []
-  ];
+  const [counterState, _] = Counter.component.init(null);
+  return [{ counter: immutable(counterState) }, []];
 };
 
 const update: component.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "increment": {
-      return [state.update("counter", (n) => n + 1), []];
-    }
-
-    case "decrement": {
-      return [state.update("counter", (n) => n - 1), []];
-    }
-
+    case "counter":
+      return component.base.updateChild({
+        state,
+        childStatePath: ["counter"],
+        childUpdate: Counter.component.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => ({ tag: "counter", value })
+      });
     case "@incomingRoute":
     case "@pageReady":
     case "@reload":
@@ -56,11 +54,12 @@ const view: component.base.ComponentView<State, Msg> = ({
   dispatch
 }) => {
   return (
-    <div>
-      <button onClick={() => dispatch(adt("decrement"))}>- Decrement</button>
-      <div>{state.counter}</div>
-      <button onClick={() => dispatch(adt("increment"))}>+ Increment</button>
-    </div>
+    <Counter.component.view
+      state={state.counter}
+      dispatch={component.base.mapDispatch(dispatch, (msg) =>
+        adt("counter" as const, msg)
+      )}
+    />
   );
 };
 

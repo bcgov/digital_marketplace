@@ -56,5 +56,5 @@ const view: component_.base.ComponentView<State, Msg> = ({
 export const component: component_.base.Component<Params, State, Msg, Props> = {
   init,
   update,
-  view,
+  view
 };
